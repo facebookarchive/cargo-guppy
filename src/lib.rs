@@ -1,5 +1,6 @@
 pub mod diff;
 mod errors;
+pub mod graph;
 pub mod lockfile;
 
 pub use errors::Error;
