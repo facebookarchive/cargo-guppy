@@ -1,213 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-#![allow(unused_variables)]
-#![allow(dead_code)]
-use serde::Deserialize;
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::convert::TryInto;
-use std::fs::File;
-use std::io::Read;
-use std::str::FromStr;
-use toml;
-
 mod errors;
+pub mod lockfile;
 
-#[derive(Debug, Deserialize)]
-struct RawLockfile {
-    metadata: HashMap<String, String>,
-    package: Vec<RawPackage>,
-}
-
-#[derive(Debug, Deserialize)]
-struct RawPackage {
-    name: String,
-    version: String,
-    source: Option<String>,
-    dependencies: Option<Vec<String>>,
-}
-
-#[derive(Debug)]
-enum Source {
-    Path,
-    Registry(String),
-    Git { url: String, rev: String },
-}
-
-impl Source {
-    fn get_url(&self) -> Option<String> {
-        match &self {
-            Source::Path => None,
-            Source::Registry(url) => Some(format!("registry+{}", url)),
-            Source::Git { url, .. } => Some(format!("git+{}", url)),
-        }
-    }
-}
-
-impl FromStr for Source {
-    type Err = ::std::io::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let idx = s.find('+').ok_or(::std::io::ErrorKind::InvalidInput)?;
-        let (source_type, url) = (&s[..idx], &s[idx + 1..]);
-
-        match source_type {
-            "registry" => Ok(Source::Registry(url.to_string())),
-            "git" => {
-                let idx = url.find('#').ok_or(::std::io::ErrorKind::InvalidInput)?;
-                let (url, rev) = (&url[..idx], &url[idx + 1..]);
-
-                Ok(Source::Git {
-                    url: url.to_string(),
-                    rev: rev.to_string(),
-                })
-            }
-            _ => Err(::std::io::ErrorKind::InvalidInput.into()),
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Package {
-    name: String,
-    version: String,
-    source: Source,
-    checksum: Option<String>,
-    dependencies: Option<Vec<PackageId>>,
-}
-
-impl Package {
-    fn pkg_id(&self) -> PackageId {
-        PackageId::new(
-            self.name.clone(),
-            self.version.clone(),
-            self.source.get_url(),
-        )
-    }
-}
-
-#[derive(Debug)]
-pub struct Lockfile {
-    packages: HashMap<PackageId, Package>,
-}
-
-impl TryFrom<RawLockfile> for Lockfile {
-    type Error = ::std::io::Error;
-
-    fn try_from(value: RawLockfile) -> Result<Self, Self::Error> {
-        let mut checksums = value
-            .metadata
-            .into_iter()
-            .filter(|(k, _)| k.starts_with("checksum "))
-            .map(|(k, v)| {
-                let k = k.trim_start_matches("checksum ");
-                let pkg_id: PackageId = k.parse()?;
-                Ok((pkg_id, v))
-            })
-            .collect::<Result<HashMap<_, _>, Self::Error>>()?;
-
-        let packages = value
-            .package
-            .into_iter()
-            .map(|raw_pkg| {
-                let source = match raw_pkg.source {
-                    None => Source::Path,
-                    Some(s) => s.parse()?,
-                };
-                let pkg_id = PackageId::new(
-                    raw_pkg.name.clone(),
-                    raw_pkg.version.clone(),
-                    source.get_url(),
-                );
-                let checksum = checksums.remove(&pkg_id);
-                let dependencies = match raw_pkg.dependencies {
-                    None => None,
-                    Some(deps) => Some(deps.into_iter().map(|s| s.parse()).collect::<Result<
-                        Vec<PackageId>,
-                        Self::Error,
-                    >>(
-                    )?),
-                };
-
-                let package = Package {
-                    name: raw_pkg.name,
-                    version: raw_pkg.version,
-                    source,
-                    checksum,
-                    dependencies,
-                };
-
-                Ok((pkg_id, package))
-            })
-            .collect::<Result<HashMap<_, _>, Self::Error>>()?;
-
-        // Maybe check that checksums is empty?
-
-        Ok(Lockfile { packages })
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
-struct PackageId {
-    name: String,
-    version: String,
-    source: Option<String>,
-}
-
-impl PackageId {
-    pub fn new(name: String, version: String, source: Option<String>) -> Self {
-        Self {
-            name,
-            version,
-            source,
-        }
-    }
-}
-
-impl FromStr for PackageId {
-    type Err = ::std::io::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut iter = s.split_whitespace();
-        let name = iter
-            .next()
-            .ok_or(::std::io::ErrorKind::InvalidInput)?
-            .to_string();
-        let version = iter
-            .next()
-            .ok_or(::std::io::ErrorKind::InvalidInput)?
-            .to_string();
-        let source = match iter.next() {
-            Some(url) => {
-                if url.starts_with('(') && url.ends_with(')') {
-                    Some(url[1..url.len() - 1].to_string())
-                } else {
-                    return Err(::std::io::ErrorKind::InvalidInput.into());
-                }
-            }
-            None => None,
-        };
-
-        Ok(Self::new(name, version, source))
-    }
-}
-
-fn load_lockfile() {
-    let path = "Cargo.lock";
-    let mut file = File::open(path).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-
-    //println!("{}", contents);
-
-    let lockfile: toml::Value = toml::from_str(&contents).unwrap();
-    //println!("{:#?}", lockfile);
-    let lockfile: RawLockfile = toml::from_str(&contents).unwrap();
-    //println!("{:#?}", lockfile);
-    let lockfile: Lockfile = lockfile.try_into().unwrap();
-    println!("{:#?}", lockfile);
-}
+pub use errors::Error;
+use lockfile::{load_lockfile, Lockfile};
 
 pub fn diff_lockfiles(old: Lockfile, new: Lockfile) {
     let old = old.packages;
@@ -226,31 +24,17 @@ pub fn diff_lockfiles(old: Lockfile, new: Lockfile) {
         .collect::<Vec<_>>();
 
     for pkg_id in removed {
-        println!("Removed '{} {}'", pkg_id.name, pkg_id.version);
+        println!("-{} {}", pkg_id.name(), pkg_id.version());
     }
 
     for pkg_id in added {
-        println!("Added '{} {}'", pkg_id.name, pkg_id.version);
+        println!("+{} {}", pkg_id.name(), pkg_id.version());
     }
 }
 
-pub fn cmd_diff(old: &str, new: &str) -> Result<(), ::std::io::Error> {
-    let mut file = File::open(old).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-
-    let old: Lockfile = toml::from_str::<RawLockfile>(&contents)
-        .unwrap()
-        .try_into()
-        .unwrap();
-
-    let mut file = File::open(new).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-    let new: Lockfile = toml::from_str::<RawLockfile>(&contents)
-        .unwrap()
-        .try_into()
-        .unwrap();
+pub fn cmd_diff(old: &str, new: &str) -> Result<(), Error> {
+    let old = load_lockfile(old)?;
+    let new = load_lockfile(new)?;
 
     diff_lockfiles(old, new);
 
@@ -259,11 +43,14 @@ pub fn cmd_diff(old: &str, new: &str) -> Result<(), ::std::io::Error> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{
+        diff_lockfiles,
+        lockfile::{load_lockfile, Lockfile, PackageId},
+    };
 
     #[test]
     fn it_works() {
-        load_lockfile()
+        load_lockfile("Cargo.lock").unwrap();
     }
 
     #[test]
@@ -379,14 +166,8 @@ mod tests {
             "checksum unicode-xid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
         "#;
 
-        let old: Lockfile = toml::from_str::<RawLockfile>(&old)
-            .unwrap()
-            .try_into()
-            .unwrap();
-        let new: Lockfile = toml::from_str::<RawLockfile>(&new)
-            .unwrap()
-            .try_into()
-            .unwrap();
+        let old: Lockfile = old.parse().unwrap();
+        let new: Lockfile = new.parse().unwrap();
 
         diff_lockfiles(old, new);
     }
