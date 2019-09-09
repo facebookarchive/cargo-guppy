@@ -26,7 +26,7 @@ struct RawPackage {
     dependencies: Option<Vec<String>>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Source {
     Path,
     Registry(String),
@@ -66,7 +66,7 @@ impl FromStr for Source {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Package {
     name: String,
     version: String,
@@ -87,7 +87,13 @@ impl Package {
 
 #[derive(Debug)]
 pub struct Lockfile {
-    pub packages: HashMap<PackageId, Package>,
+    packages: HashMap<PackageId, Package>,
+}
+
+impl Lockfile {
+    pub fn packages(&self) -> &HashMap<PackageId, Package> {
+        &self.packages
+    }
 }
 
 impl TryFrom<RawLockfile> for Lockfile {

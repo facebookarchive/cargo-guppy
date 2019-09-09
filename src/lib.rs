@@ -1,42 +1,18 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+pub mod diff;
 mod errors;
 pub mod lockfile;
 
 pub use errors::Error;
 use lockfile::{load_lockfile, Lockfile};
 
-pub fn diff_lockfiles(old: Lockfile, new: Lockfile) {
-    let old = old.packages;
-    let mut new = new.packages;
-
-    let mut removed = Vec::new();
-    for (pkg_id, _pkg) in old {
-        if new.remove(&pkg_id).is_none() {
-            removed.push(pkg_id);
-        }
-    }
-
-    let added = new
-        .into_iter()
-        .map(|(pkg_id, _pkg)| pkg_id)
-        .collect::<Vec<_>>();
-
-    for pkg_id in removed {
-        println!("-{} {}", pkg_id.name(), pkg_id.version());
-    }
-
-    for pkg_id in added {
-        println!("+{} {}", pkg_id.name(), pkg_id.version());
-    }
-}
-
 pub fn cmd_diff(old: &str, new: &str) -> Result<(), Error> {
     let old = load_lockfile(old)?;
     let new = load_lockfile(new)?;
 
-    diff_lockfiles(old, new);
+    diff::DiffOptions::default().diff(&old, &new);
 
     Ok(())
 }
@@ -44,7 +20,7 @@ pub fn cmd_diff(old: &str, new: &str) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        diff_lockfiles,
+        diff::DiffOptions,
         lockfile::{load_lockfile, Lockfile, PackageId},
     };
 
@@ -169,6 +145,6 @@ mod tests {
         let old: Lockfile = old.parse().unwrap();
         let new: Lockfile = new.parse().unwrap();
 
-        diff_lockfiles(old, new);
+        DiffOptions::default().diff(&old, &new);
     }
 }
