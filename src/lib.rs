@@ -6,13 +6,14 @@ mod errors;
 pub mod lockfile;
 
 pub use errors::Error;
-use lockfile::{load_lockfile, Lockfile};
+use lockfile::load_lockfile;
+pub use lockfile::{Lockfile, Package, PackageId};
 
 pub fn cmd_diff(old: &str, new: &str) -> Result<(), Error> {
     let old = load_lockfile(old)?;
     let new = load_lockfile(new)?;
 
-    diff::DiffOptions::default().diff(&old, &new);
+    print!("{}", diff::DiffOptions::default().diff(&old, &new));
 
     Ok(())
 }
