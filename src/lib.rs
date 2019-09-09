@@ -9,6 +9,8 @@ use std::io::Read;
 use std::str::FromStr;
 use toml;
 
+mod errors;
+
 #[derive(Debug, Deserialize)]
 struct RawLockfile {
     metadata: HashMap<String, String>,
