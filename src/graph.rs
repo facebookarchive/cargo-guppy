@@ -8,6 +8,7 @@ use std::collections::{HashMap, HashSet};
 
 pub struct PackageGraph {
     packages: HashMap<PackageId, PackageData>,
+    dep_graph: Graph<PackageId, ()>,
 }
 
 #[derive(Clone, Debug)]
@@ -42,13 +43,13 @@ impl PackageGraph {
             .into_iter()
             .collect::<HashSet<_>>();
 
-        let mut graph: Graph<_, ()> = Graph::new();
+        let mut dep_graph: Graph<_, ()> = Graph::new();
 
-        let packages = metadata
+        let packages: HashMap<_, _> = metadata
             .packages
             .into_iter()
             .map(|package| {
-                let node_idx = graph.add_node(package.id.clone());
+                let node_idx = dep_graph.add_node(package.id.clone());
                 let in_workspace = workspace_members.contains(&package.id);
                 let (resolved_deps, resolved_features) = match resolve_data.remove(&package.id) {
                     Some(resolve_data) => resolve_data,
@@ -70,14 +71,26 @@ impl PackageGraph {
                     },
                 ))
             })
-            .collect::<Result<HashMap<_, _>, Error>>()?;
+            .collect::<Result<_, _>>()?;
 
         for (id, data) in &packages {
             // TODO: use the resolved deps to figure out what deps are being used
             // see https://github.com/sfackler/cargo-tree/blob/master/src/main.rs#L388
-
+            for dep in &data.resolved_deps {
+                let dep_id = &dep.pkg;
+                let dep_data = packages.get(dep_id).ok_or_else(|| {
+                    Error::DepGraphError(format!(
+                        "for package '{}', no package data found for dependency '{}'",
+                        id, dep_id
+                    ))
+                })?;
+                dep_graph.add_edge(data.node_idx, dep_data.node_idx, ());
+            }
         }
 
-        Ok(Self { packages })
+        Ok(Self {
+            packages,
+            dep_graph,
+        })
     }
 }
