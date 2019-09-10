@@ -22,6 +22,14 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), Error> {
     Ok(())
 }
 
+pub fn cmd_count() -> Result<(), Error> {
+    let lockfile = load_lockfile("Cargo.lock")?;
+
+    println!("Third-party Packages: {}", lockfile.third_party_packages());
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
