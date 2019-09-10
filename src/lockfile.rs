@@ -95,6 +95,19 @@ impl Lockfile {
     pub fn packages(&self) -> &HashMap<PackageId, Package> {
         &self.packages
     }
+
+    pub fn third_party_packages(&self) -> usize {
+        self.packages
+            .iter()
+            .filter(|(_pkg_id, pkg)| {
+                if let Source::Path = pkg.source {
+                    false
+                } else {
+                    true
+                }
+            })
+            .count()
+    }
 }
 
 impl TryFrom<RawLockfile> for Lockfile {
