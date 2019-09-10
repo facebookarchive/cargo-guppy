@@ -14,14 +14,19 @@ struct Args {
 enum Command {
     #[structopt(name = "diff")]
     /// Perform a diff of two Cargo.lock files
-    Diff { old: String, new: String },
+    Diff {
+        #[structopt(long)]
+        json: bool,
+        old: String,
+        new: String,
+    },
 }
 
 fn main() {
     let args = Args::from_args();
 
     let result = match args.cmd {
-        Command::Diff { old, new } => cargo_guppy::cmd_diff(&old, &new),
+        Command::Diff { json, old, new } => cargo_guppy::cmd_diff(json, &old, &new),
     };
 
     match result {
