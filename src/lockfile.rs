@@ -1,5 +1,6 @@
 use crate::Error;
 use serde::Deserialize;
+use serde::Serialize;
 use std::{
     collections::HashMap,
     convert::{TryFrom, TryInto},
@@ -167,7 +168,7 @@ pub fn load_lockfile(path: &str) -> Result<Lockfile, Error> {
     contents.parse()
 }
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize)]
 pub struct PackageId {
     name: String,
     version: String,

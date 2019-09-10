@@ -5,12 +5,19 @@ pub mod lockfile;
 pub use errors::Error;
 use lockfile::load_lockfile;
 pub use lockfile::{Lockfile, Package, PackageId};
+use serde_json;
 
-pub fn cmd_diff(old: &str, new: &str) -> Result<(), Error> {
+pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), Error> {
     let old = load_lockfile(old)?;
     let new = load_lockfile(new)?;
 
-    print!("{}", diff::DiffOptions::default().diff(&old, &new));
+    let diff = diff::DiffOptions::default().diff(&old, &new);
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&diff).unwrap());
+    } else {
+        print!("{}", diff);
+    }
 
     Ok(())
 }
@@ -143,6 +150,8 @@ mod tests {
         let old: Lockfile = old.parse().unwrap();
         let new: Lockfile = new.parse().unwrap();
 
-        DiffOptions::default().diff(&old, &new);
+        let diff = DiffOptions::default().diff(&old, &new);
+
+        serde_json::to_string(&diff).unwrap();
     }
 }
