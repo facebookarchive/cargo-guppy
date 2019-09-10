@@ -5,6 +5,7 @@ use crate::Lockfile;
 use crate::PackageId;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[derive(Debug, Default)]
 pub struct DiffOptions;
@@ -13,19 +14,17 @@ impl DiffOptions {
     pub fn diff(&self, old_lockfile: &Lockfile, new_lockfile: &Lockfile) -> Diff {
         let mut new = new_lockfile.packages().clone();
 
-        let mut removed = Vec::new();
+        let mut removed = HashSet::new();
         for (pkg_id, _pkg) in old_lockfile.packages() {
             if new.remove(pkg_id).is_none() {
-                removed.push(pkg_id.clone());
+                removed.insert(pkg_id.clone());
             }
         }
-        removed.sort_by(|a, b| a.name().cmp(b.name()));
 
         let mut added = new
             .into_iter()
             .map(|(pkg_id, _pkg)| pkg_id)
-            .collect::<Vec<_>>();
-        added.sort_by(|a, b| a.name().cmp(b.name()));
+            .collect::<HashSet<_>>();
 
         let duplicates_added = added
             .iter()
@@ -47,7 +46,7 @@ impl DiffOptions {
             })
             .collect::<HashMap<_, _>>();
 
-        let updated = removed
+        let mut updated = removed
             .iter()
             .filter_map(|removed_pkg_id| {
                 if let Some(updated) = added
@@ -60,6 +59,13 @@ impl DiffOptions {
                 }
             })
             .collect::<Vec<_>>();
+        updated.sort_by(|a, b| a.0.name().cmp(b.0.name()));
+
+        // Remove entries from Added and Removed
+        for (removed_pkg_id, added_pkg_id) in &updated {
+            removed.remove(removed_pkg_id);
+            added.remove(added_pkg_id);
+        }
 
         Diff {
             updated,
@@ -73,8 +79,8 @@ impl DiffOptions {
 #[derive(Debug, Serialize)]
 pub struct Diff {
     updated: Vec<(PackageId, PackageId)>,
-    removed: Vec<PackageId>,
-    added: Vec<PackageId>,
+    removed: HashSet<PackageId>,
+    added: HashSet<PackageId>,
     duplicates_added: HashMap<PackageId, Vec<PackageId>>,
 }
 
@@ -96,7 +102,9 @@ impl ::std::fmt::Display for Diff {
 
         if !self.removed.is_empty() {
             writeln!(f, "Removed Packages:")?;
-            for removed in &self.removed {
+            let mut removed_sorted = self.removed.iter().collect::<Vec<_>>();
+            removed_sorted.sort_by(|a, b| a.name().cmp(b.name()));
+            for removed in removed_sorted {
                 writeln!(f, "\t{} {}", removed.name(), removed.version(),)?;
             }
             writeln!(f)?;
@@ -104,7 +112,9 @@ impl ::std::fmt::Display for Diff {
 
         if !self.added.is_empty() {
             writeln!(f, "Added Packages:")?;
-            for added in &self.added {
+            let mut added_sorted = self.added.iter().collect::<Vec<_>>();
+            added_sorted.sort_by(|a, b| a.name().cmp(b.name()));
+            for added in added_sorted {
                 writeln!(f, "\t{} {}", added.name(), added.version(),)?;
             }
             writeln!(f)?;
