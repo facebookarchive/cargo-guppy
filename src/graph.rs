@@ -29,6 +29,28 @@ pub struct PackageMetadata {
     resolved_features: Vec<String>,
 }
 
+impl PackageMetadata {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn version(&self) -> &Version {
+        &self.version
+    }
+
+    pub fn authors(&self) -> &[String] {
+        &self.authors
+    }
+
+    pub fn description(&self) -> Option<&str> {
+        self.description.as_ref().map(|x| x.as_str())
+    }
+
+    pub fn license(&self) -> Option<&str> {
+        self.license.as_ref().map(|x| x.as_str())
+    }
+}
+
 impl PackageGraph {
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
         Self::new(command.exec().map_err(Error::CommandError)?)
