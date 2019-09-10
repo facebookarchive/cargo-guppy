@@ -65,24 +65,10 @@ impl PackageGraph {
         let packages: HashMap<_, _> = metadata
             .packages
             .into_iter()
-            .map(|package| build_state.add_package(package))
+            .map(|package| build_state.process_package(package))
             .collect::<Result<_, _>>()?;
 
-        let mut dep_graph = build_state.finish();
-
-        for (id, data) in &packages {
-            for dep in &data.resolved_deps {
-                let dep_id = &dep.pkg;
-                let dep_data = packages.get(dep_id).ok_or_else(|| {
-                    Error::DepGraphError(format!(
-                        "for package '{}', no package data found for dependency '{}'",
-                        id, dep_id
-                    ))
-                })?;
-
-                dep_graph.add_edge(data.node_idx, dep_data.node_idx, ());
-            }
-        }
+        let dep_graph = build_state.finish();
 
         Ok(Self {
             packages,
@@ -91,16 +77,22 @@ impl PackageGraph {
     }
 }
 
-// Helper struct for building up graph nodes (not edges, those are done afterwards)
+/// Helper struct for building up dependency graph.
 struct GraphBuildState {
     dep_graph: Graph<PackageId, ()>,
+    id_to_node: HashMap<PackageId, NodeIndex<u32>>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
     workspace_members: HashSet<PackageId>,
 }
 
 impl GraphBuildState {
     fn new(resolve: Resolve, workspace_members: Vec<PackageId>) -> Self {
-        let dep_graph = Graph::new();
+        let mut dep_graph = Graph::new();
+        let id_to_node: HashMap<_, _> = resolve
+            .nodes
+            .iter()
+            .map(|node| (node.id.clone(), dep_graph.add_node(node.id.clone())))
+            .collect();
 
         let resolve_data: HashMap<_, _> = resolve
             .nodes
@@ -112,21 +104,29 @@ impl GraphBuildState {
 
         Self {
             dep_graph,
-            workspace_members,
+            id_to_node,
             resolve_data,
+            workspace_members,
         }
     }
 
-    fn add_package(&mut self, package: Package) -> Result<(PackageId, PackageMetadata), Error> {
-        let node_idx = self.dep_graph.add_node(package.id.clone());
+    fn process_package(&mut self, package: Package) -> Result<(PackageId, PackageMetadata), Error> {
+        let node_idx = self.node_idx(&package.id)?;
         let in_workspace = self.workspace_members.contains(&package.id);
         let (resolved_deps, resolved_features) =
             self.resolve_data.remove(&package.id).ok_or_else(|| {
                 Error::DepGraphError(format!(
-                    "no resolve data found for package '{}'",
+                    "no resolved dependency data found for package '{}'",
                     package.id
                 ))
             })?;
+
+        // TODO: track features and normal/build/dev
+        for dep in &resolved_deps {
+            let dep_idx = self.node_idx(&dep.pkg)?;
+            self.dep_graph.add_edge(node_idx, dep_idx, ());
+        }
+
         Ok((
             package.id,
             PackageMetadata {
@@ -143,6 +143,13 @@ impl GraphBuildState {
                 resolved_features,
             },
         ))
+    }
+
+    fn node_idx(&self, id: &PackageId) -> Result<NodeIndex<u32>, Error> {
+        self.id_to_node
+            .get(&id)
+            .copied()
+            .ok_or_else(|| Error::DepGraphError(format!("no node data found for package '{}'", id)))
     }
 
     fn finish(self) -> Graph<PackageId, ()> {
