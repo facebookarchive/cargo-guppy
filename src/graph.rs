@@ -1,5 +1,5 @@
 use crate::errors::Error;
-use cargo_metadata::{Metadata, MetadataCommand, NodeDep, Package, PackageId, Resolve};
+use cargo_metadata::{Dependency, Metadata, MetadataCommand, NodeDep, Package, PackageId, Resolve};
 use petgraph::prelude::*;
 use semver::Version;
 use std::collections::{HashMap, HashSet};
@@ -17,6 +17,7 @@ pub struct PackageMetadata {
     authors: Vec<String>,
     description: Option<String>,
     license: Option<String>,
+    deps: Vec<Dependency>,
 
     // Other information.
     node_idx: NodeIndex<u32>,
@@ -112,6 +113,7 @@ impl GraphBuildState {
                 authors: package.authors,
                 description: package.description,
                 license: package.license,
+                deps: package.dependencies,
 
                 node_idx,
                 in_workspace,
