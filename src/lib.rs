@@ -30,6 +30,14 @@ pub fn cmd_count() -> Result<(), Error> {
     Ok(())
 }
 
+pub fn cmd_dups() -> Result<(), Error> {
+    let lockfile = load_lockfile("Cargo.lock")?;
+
+    lockfile.duplicate_packages();
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
