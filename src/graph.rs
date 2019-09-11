@@ -12,8 +12,12 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
+    // Source of truth data.
     packages: HashMap<PackageId, PackageMetadata>,
     dep_graph: Graph<PackageId, DependencyEdge>,
+
+    // Caches, already present at construction time.
+    workspace_members: HashSet<PackageId>,
 }
 impl PackageGraph {
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
@@ -27,8 +31,9 @@ impl PackageGraph {
             )
         })?;
 
-        let mut build_state =
-            GraphBuildState::new(&metadata.packages, resolve, metadata.workspace_members);
+        let workspace_members: HashSet<_> = metadata.workspace_members.into_iter().collect();
+
+        let mut build_state = GraphBuildState::new(&metadata.packages, resolve, &workspace_members);
 
         let packages: HashMap<_, _> = metadata
             .packages
@@ -41,7 +46,16 @@ impl PackageGraph {
         Ok(Self {
             packages,
             dep_graph,
+            workspace_members,
         })
+    }
+
+    pub fn workspace_members(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
+        self.workspace_members.iter()
+    }
+
+    pub fn in_workspace(&self, package_id: &PackageId) -> bool {
+        self.workspace_members.contains(package_id)
     }
 
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
@@ -164,19 +178,19 @@ pub struct DependencyMetadata {
 }
 
 /// Helper struct for building up dependency graph.
-struct GraphBuildState {
+struct GraphBuildState<'a> {
     dep_graph: Graph<PackageId, DependencyEdge>,
     // The values of package_data are (node_idx, name, version).
     package_data: HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
-    workspace_members: HashSet<PackageId>,
+    workspace_members: &'a HashSet<PackageId>,
 }
 
-impl GraphBuildState {
-    fn new<'a>(
-        packages: impl IntoIterator<Item = &'a Package>,
+impl<'a> GraphBuildState<'a> {
+    fn new<'b>(
+        packages: impl IntoIterator<Item = &'b Package>,
         resolve: Resolve,
-        workspace_members: Vec<PackageId>,
+        workspace_members: &'a HashSet<PackageId>,
     ) -> Self {
         let mut dep_graph = Graph::new();
         let package_data: HashMap<_, _> = packages
@@ -195,8 +209,6 @@ impl GraphBuildState {
             .into_iter()
             .map(|node| (node.id, (node.deps, node.features)))
             .collect();
-
-        let workspace_members = workspace_members.into_iter().collect::<HashSet<_>>();
 
         Self {
             dep_graph,
@@ -218,6 +230,7 @@ impl GraphBuildState {
             })?;
 
         for dep in &resolved_deps {
+            // TODO: handle renamed packages -- the current handling is incorrect
             let (dep_idx, dep_name, dep_version) = self.package_data(&dep.pkg)?;
             let edge = DependencyEdge::new(dep_name, dep_version, &package.dependencies)?;
             self.dep_graph.add_edge(node_idx, dep_idx, edge);
