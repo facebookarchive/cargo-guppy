@@ -25,8 +25,22 @@ enum Command {
     Duplicates,
 }
 
+// When invoked as a cargo subcommand, cargo passes too many arguments so we need to filter out
+// arg[1] if it matches the end of arg[0], e.i. "cargo-X X foo" should become "cargo-X foo".
+fn args() -> impl Iterator<Item = String> {
+    let mut args: Vec<String> = ::std::env::args().collect();
+
+    if args.len() >= 2 {
+        if args[0].ends_with(&format!("cargo-{}", args[1])) {
+            args.remove(1);
+        }
+    }
+
+    args.into_iter()
+}
+
 fn main() {
-    let args = Args::from_args();
+    let args = Args::from_iter(args());
 
     let result = match args.cmd {
         Command::Diff { json, old, new } => cargo_guppy::cmd_diff(json, &old, &new),
