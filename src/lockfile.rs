@@ -108,6 +108,27 @@ impl Lockfile {
             })
             .count()
     }
+
+    pub fn duplicate_packages(&self) {
+        let mut map = HashMap::new();
+
+        for (pkg_id, _pkg) in &self.packages {
+            map.entry(pkg_id.name()).or_insert(Vec::new()).push(pkg_id);
+        }
+
+        for (name, duplicates) in map {
+            if duplicates.len() <= 1 {
+                continue;
+            }
+
+            print!("{} ({}", name, duplicates[0].version());
+
+            for pkg_id in &duplicates[1..] {
+                print!(", {}", pkg_id.version());
+            }
+            println!(")");
+        }
+    }
 }
 
 impl TryFrom<RawLockfile> for Lockfile {
