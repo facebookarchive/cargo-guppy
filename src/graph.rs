@@ -163,6 +163,25 @@ pub struct DependencyEdge {
     dev: Option<DependencyMetadata>,
 }
 
+impl DependencyEdge {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn normal(&self) -> Option<&DependencyMetadata> {
+        self.normal.as_ref()
+    }
+
+    pub fn build(&self) -> Option<&DependencyMetadata> {
+        self.build.as_ref()
+    }
+
+    pub fn dev(&self) -> Option<&DependencyMetadata> {
+        // XXX should dev dependencies fall back to normal if no dev-specific data was found?
+        self.dev.as_ref()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct DependencyMetadata {
     // Normal/dev/build can have different version requirements even if they resolve to the same
@@ -172,6 +191,28 @@ pub struct DependencyMetadata {
     uses_default_features: bool,
     features: Vec<String>,
     target: Option<String>,
+}
+
+impl DependencyMetadata {
+    pub fn req(&self) -> &VersionReq {
+        &self.req
+    }
+
+    pub fn optional(&self) -> bool {
+        self.optional
+    }
+
+    pub fn uses_default_features(&self) -> bool {
+        self.uses_default_features
+    }
+
+    pub fn features(&self) -> &[String] {
+        &self.features
+    }
+
+    pub fn target(&self) -> Option<&str> {
+        self.target.as_ref().map(|x| x.as_str())
+    }
 }
 
 /// Helper struct for building up dependency graph.
