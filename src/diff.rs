@@ -23,25 +23,20 @@ impl DiffOptions {
 
         let mut added = new
             .into_iter()
-            .map(|(pkg_id, _pkg)| pkg_id)
-            .collect::<HashSet<_>>();
-
-        let duplicates_added = added
-            .iter()
-            .filter_map(|added_pkg_id| {
+            .map(|(added_pkg_id, _pkg)| {
                 let existing_packages = new_lockfile
                     .packages()
                     .iter()
                     .filter(|(pkg_id, _)| {
-                        (*pkg_id != added_pkg_id) && (pkg_id.name() == added_pkg_id.name())
+                        (**pkg_id != added_pkg_id) && (pkg_id.name() == added_pkg_id.name())
                     })
                     .map(|(pkg_id, _)| pkg_id.clone())
                     .collect::<Vec<_>>();
 
-                if !existing_packages.is_empty() {
-                    Some((added_pkg_id.clone(), existing_packages))
+                if existing_packages.is_empty() {
+                    (added_pkg_id, None)
                 } else {
-                    None
+                    (added_pkg_id, Some(existing_packages))
                 }
             })
             .collect::<HashMap<_, _>>();
@@ -49,9 +44,9 @@ impl DiffOptions {
         let mut updated = removed
             .iter()
             .filter_map(|removed_pkg_id| {
-                if let Some(updated) = added
+                if let Some((updated, _)) = added
                     .iter()
-                    .find(|added_pkg_id| removed_pkg_id.name() == added_pkg_id.name())
+                    .find(|added_pkg| removed_pkg_id.name() == added_pkg.0.name())
                 {
                     Some((removed_pkg_id.clone(), updated.clone()))
                 } else {
@@ -67,11 +62,13 @@ impl DiffOptions {
             added.remove(added_pkg_id);
         }
 
+        let mut added = added.into_iter().collect::<Vec<_>>();
+        added.sort_by(|(a, _), (b, _)| a.name().cmp(b.name()));
+
         Diff {
             updated,
             removed,
             added,
-            duplicates_added,
         }
     }
 }
@@ -80,8 +77,7 @@ impl DiffOptions {
 pub struct Diff {
     updated: Vec<(PackageId, PackageId)>,
     removed: HashSet<PackageId>,
-    added: HashSet<PackageId>,
-    duplicates_added: HashMap<PackageId, Vec<PackageId>>,
+    added: Vec<(PackageId, Option<Vec<PackageId>>)>,
 }
 
 impl ::std::fmt::Display for Diff {
@@ -111,27 +107,20 @@ impl ::std::fmt::Display for Diff {
         }
 
         if !self.added.is_empty() {
-            writeln!(f, "Added Packages:")?;
-            let mut added_sorted = self.added.iter().collect::<Vec<_>>();
-            added_sorted.sort_by(|a, b| a.name().cmp(b.name()));
-            for added in added_sorted {
-                writeln!(f, "\t{} {}", added.name(), added.version(),)?;
+            writeln!(f, "Added Packages (existing duplicates in '()'):")?;
+            for (added, dups) in &self.added {
+                write!(f, "\t{} {}", added.name(), added.version(),)?;
+
+                if let Some(dups) = dups {
+                    write!(f, " ({}", dups[0].version())?;
+                    for p in &dups[1..] {
+                        write!(f, ", {}", p.version())?;
+                    }
+                    write!(f, ")")?;
+                }
+                writeln!(f)?;
             }
             writeln!(f)?;
-        }
-
-        if !self.duplicates_added.is_empty() {
-            writeln!(f, "Duplicate Packages Added:")?;
-            let mut sorted = self.duplicates_added.iter().collect::<Vec<_>>();
-            sorted.sort_by(|(a, _), (b, _)| a.name().cmp(b.name()));
-            for (added, existing) in sorted {
-                write!(f, "\t{} {}", added.name(), added.version())?;
-                write!(f, " ({}", existing[0].version())?;
-                for p in &existing[1..] {
-                    write!(f, ", {}", p.version())?;
-                }
-                writeln!(f, ")")?;
-            }
         }
 
         Ok(())
