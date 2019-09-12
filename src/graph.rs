@@ -5,7 +5,7 @@ use cargo_metadata::{
 };
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
@@ -14,7 +14,9 @@ pub struct PackageGraph {
     dep_graph: Graph<PackageId, DependencyEdge>,
 
     // Caches, already present at construction time.
-    workspace_members: HashSet<PackageId>,
+
+    // workspace_members is a BTreeSet so that its return value is ordered.
+    workspace_members: BTreeSet<PackageId>,
 }
 impl PackageGraph {
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
@@ -28,7 +30,7 @@ impl PackageGraph {
             )
         })?;
 
-        let workspace_members: HashSet<_> = metadata.workspace_members.into_iter().collect();
+        let workspace_members: BTreeSet<_> = metadata.workspace_members.into_iter().collect();
 
         let mut build_state = GraphBuildState::new(&metadata.packages, resolve, &workspace_members);
 
@@ -47,6 +49,7 @@ impl PackageGraph {
         })
     }
 
+    /// Returns a list of workspace members, sorted by package ID.
     pub fn workspace_members(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
         self.workspace_members.iter()
     }
@@ -86,19 +89,20 @@ impl PackageGraph {
     ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
         #[auto_enum(Iterator)]
         match self.metadata(package_id) {
-            Some(metadata) => self
-                .dep_graph
-                .edges_directed(metadata.node_idx, Outgoing)
-                .map(move |edge| {
-                    let from = self
-                        .metadata(&self.dep_graph[edge.source()])
-                        .expect("'from' should have associated metadata");
-                    let to = self
-                        .metadata(&self.dep_graph[edge.target()])
-                        .expect("'to' should have associated metadata");
-                    let edge = edge.weight();
-                    PackageDep { from, to, edge }
-                }),
+            Some(metadata) => {
+                self.dep_graph
+                    .edges_directed(metadata.node_idx, dir)
+                    .map(move |edge| {
+                        let from = self
+                            .metadata(&self.dep_graph[edge.source()])
+                            .expect("'from' should have associated metadata");
+                        let to = self
+                            .metadata(&self.dep_graph[edge.target()])
+                            .expect("'to' should have associated metadata");
+                        let edge = edge.weight();
+                        PackageDep { from, to, edge }
+                    })
+            }
             None => ::std::iter::empty(),
         }
     }
@@ -221,14 +225,14 @@ struct GraphBuildState<'a> {
     // The values of package_data are (node_idx, name, version).
     package_data: HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
-    workspace_members: &'a HashSet<PackageId>,
+    workspace_members: &'a BTreeSet<PackageId>,
 }
 
 impl<'a> GraphBuildState<'a> {
     fn new<'b>(
         packages: impl IntoIterator<Item = &'b Package>,
         resolve: Resolve,
-        workspace_members: &'a HashSet<PackageId>,
+        workspace_members: &'a BTreeSet<PackageId>,
     ) -> Self {
         let mut dep_graph = Graph::new();
         let package_data: HashMap<_, _> = packages

@@ -1,61 +1,220 @@
-use crate::graph::{PackageDep, PackageMetadata};
-use cargo_metadata::Metadata;
+use crate::graph::{PackageDep, PackageGraph, PackageMetadata};
+use cargo_metadata::PackageId;
 use semver::Version;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
-// Metadata along with interesting crate names in the m
+// Metadata along with interesting crate names.
 pub(crate) static METADATA1: &str = include_str!("../../fixtures/metadata1.json");
 pub(crate) static METADATA1_TESTCRATE: &str = "testcrate 0.1.0 (path+file:///fakepath/testcrate)";
 pub(crate) static METADATA1_DATATEST: &str =
     "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub(crate) fn parse_metadata(json: &str) -> Metadata {
-    serde_json::from_str(json).expect("parsing metadata JSON should succeed")
+pub(crate) struct Fixture {
+    graph: PackageGraph,
+    details: FixtureDetails,
+}
+
+impl Fixture {
+    /// Returns the package graph for this fixture.
+    pub(crate) fn graph(&self) -> &PackageGraph {
+        &self.graph
+    }
+
+    /// Returns the test details for this fixture.
+    pub(crate) fn details(&self) -> &FixtureDetails {
+        &self.details
+    }
+
+    /// Verifies that the parsed metadata matches known details.
+    pub(crate) fn verify(&self) {
+        self.details
+            .assert_workspace_members(self.graph.workspace_members());
+
+        for id in self.details.known_ids() {
+            let msg = format!("error while verifying package '{}'", id);
+            let metadata = self.graph.metadata(id).expect(&msg);
+            self.details.assert_metadata(id, &metadata, &msg);
+
+            if self.details.has_deps(id) {
+                self.details.assert_deps(id, self.graph.deps(id), &msg);
+            }
+            if self.details.has_reverse_deps(id) {
+                self.details
+                    .assert_reverse_deps(id, self.graph.reverse_deps(id), &msg);
+            }
+        }
+    }
+
+    // Specific fixtures follow.
+
+    pub(crate) fn metadata1() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA1),
+            details: FixtureDetails::metadata1(),
+        }
+    }
+
+    fn parse_graph(json: &str) -> PackageGraph {
+        let metadata = serde_json::from_str(json).expect("parsing metadata JSON should succeed");
+        PackageGraph::new(metadata).expect("constructing package graph should succeed")
+    }
 }
 
 /// This captures metadata fields that are relevant for tests. They are meant to be written out
 /// lazily as tests are filled out -- feel free to add more details as necessary!
 pub(crate) struct FixtureDetails {
-    details: HashMap<&'static str, PackageDetails>,
+    workspace_members: BTreeSet<PackageId>,
+    package_details: HashMap<PackageId, PackageDetails>,
 }
 
 impl FixtureDetails {
-    pub(crate) fn assert_metadata(&self, id: &str, metadata: &PackageMetadata, msg: &str) {
-        let details = &self.details[id];
+    pub(crate) fn new<'a>(
+        workspace_members: impl IntoIterator<Item = &'a str>,
+        package_details: HashMap<PackageId, PackageDetails>,
+    ) -> Self {
+        let workspace_members = workspace_members.into_iter().map(package_id).collect();
+        Self {
+            workspace_members,
+            package_details,
+        }
+    }
+
+    pub(crate) fn known_ids<'a>(&'a self) -> impl Iterator<Item = &'a PackageId> + 'a {
+        self.package_details.keys()
+    }
+
+    pub(crate) fn assert_workspace_members<'a>(
+        &self,
+        members: impl IntoIterator<Item = &'a PackageId>,
+    ) {
+        let members: Vec<_> = members.into_iter().collect();
+        assert_eq!(
+            self.workspace_members.iter().collect::<Vec<_>>(),
+            members,
+            "workspace members should be correct"
+        );
+    }
+
+    pub(crate) fn assert_metadata(&self, id: &PackageId, metadata: &PackageMetadata, msg: &str) {
+        let details = &self.package_details[id];
         details.assert_metadata(metadata, msg);
     }
 
-    pub(crate) fn assert_dependencies<'a>(
+    /// Returns true if the deps for this package are available to test against.
+    pub(crate) fn has_deps<'a>(&self, id: &PackageId) -> bool {
+        let details = &self.package_details[id];
+        details.deps.is_some()
+    }
+
+    pub(crate) fn assert_deps<'a>(
         &self,
-        id: &str,
+        id: &PackageId,
         deps: impl IntoIterator<Item = PackageDep<'a>>,
         msg: &str,
     ) {
-        let details = &self.details[id];
+        let details = &self.package_details[id];
         let expected_dep_ids = details.deps.as_ref().expect("deps should be present");
         let actual_deps: Vec<PackageDep> = deps.into_iter().collect();
+        self.assert_deps_internal(true, details, expected_dep_ids.as_slice(), actual_deps, msg);
+    }
+
+    /// Returns true if the reverse deps for this package are available to test against.
+    pub(crate) fn has_reverse_deps(&self, id: &PackageId) -> bool {
+        let details = &self.package_details[id];
+        details.reverse_deps.is_some()
+    }
+
+    pub(crate) fn assert_reverse_deps<'a>(
+        &self,
+        id: &PackageId,
+        reverse_deps: impl IntoIterator<Item = PackageDep<'a>>,
+        msg: &str,
+    ) {
+        let details = &self.package_details[id];
+        let expected_dep_ids = details
+            .reverse_deps
+            .as_ref()
+            .expect("reverse_deps should be present");
+        let actual_deps: Vec<PackageDep> = reverse_deps.into_iter().collect();
+        self.assert_deps_internal(
+            false,
+            details,
+            expected_dep_ids.as_slice(),
+            actual_deps,
+            msg,
+        );
+    }
+
+    fn assert_deps_internal<'a>(
+        &self,
+        forward: bool,
+        known_details: &PackageDetails,
+        expected_dep_ids: &[(&str, &str)],
+        actual_deps: Vec<PackageDep<'a>>,
+        msg: &str,
+    ) {
+        // Some of the messages are different based on whether we're testing forward deps or reverse
+        // ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
+        // reverse deps it's the other way round.
+
+        fn __from_metadata<'a>(dep: &PackageDep<'a>) -> &'a PackageMetadata {
+            dep.from
+        }
+        fn __to_metadata<'a>(dep: &PackageDep<'a>) -> &'a PackageMetadata {
+            dep.to
+        }
+        type DepToMetadata<'a> = fn(&PackageDep<'a>) -> &'a PackageMetadata;
+
+        let (direction_desc, known_desc, variable_desc, known_metadata, variable_metadata) =
+            if forward {
+                (
+                    "forward",
+                    "from",
+                    "to",
+                    __from_metadata as DepToMetadata<'a>,
+                    __to_metadata as DepToMetadata<'a>,
+                )
+            } else {
+                (
+                    "reverse",
+                    "to",
+                    "from",
+                    __to_metadata as DepToMetadata<'a>,
+                    __from_metadata as DepToMetadata<'a>,
+                )
+            };
+
         let mut actual_dep_ids: Vec<(&str, &str)> = actual_deps
             .iter()
-            .map(|dep| (dep.edge.name(), dep.to.id().repr.as_str()))
+            .map(|dep| (dep.edge.name(), variable_metadata(dep).id().repr.as_str()))
             .collect();
         actual_dep_ids.sort();
 
         assert_eq!(
-            expected_dep_ids, &actual_dep_ids,
-            "{}: expected dependencies",
-            msg
+            expected_dep_ids,
+            actual_dep_ids.as_slice(),
+            "{}: expected {} dependencies",
+            msg,
+            direction_desc,
         );
 
         // Check that the dependency metadata returned is consistent with what we expect.
-        let from_msg = format!("{}: dependency 'from'", msg);
+        let known_msg = format!(
+            "{}: {} dependency edge '{}'",
+            msg, direction_desc, known_desc
+        );
         for actual_dep in &actual_deps {
-            details.assert_metadata(&actual_dep.from, &from_msg);
-            // The 'to' metadata might be missing -- only compare it if it's present.
-            let to_id = actual_dep.to.id();
-            if let Some(to_details) = self.details.get(to_id.repr.as_str()) {
-                to_details.assert_metadata(
-                    &actual_dep.to,
-                    &format!("{}: dependency from this crate 'to' {}", msg, to_id),
+            known_details.assert_metadata(known_metadata(&actual_dep), &known_msg);
+            // The variable metadata might be missing -- only compare it if it's present.
+            let variable = variable_metadata(&actual_dep);
+            let variable_id = variable.id();
+            if let Some(variable_details) = self.package_details.get(variable_id) {
+                variable_details.assert_metadata(
+                    &variable,
+                    &format!(
+                        "{}: {} dependency edge '{}': {}",
+                        msg, direction_desc, variable_desc, variable_id
+                    ),
                 );
             }
             // XXX maybe compare version requirements?
@@ -76,6 +235,7 @@ impl FixtureDetails {
             None,
             None,
             Some(vec![("datatest", METADATA1_DATATEST)]),
+            Some(vec![]),
         );
         add(
             &mut details,
@@ -98,14 +258,15 @@ impl FixtureDetails {
                 ("walkdir", "walkdir 2.2.9 (git+https://github.com/BurntSushi/walkdir?tag=2.2.9#7c7013259eb9db400b3e5c7bc60330ca08068826)"),
                 ("yaml-rust", "yaml-rust 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)")
             ]),
+            Some(vec![("datatest", METADATA1_TESTCRATE)]),
         );
 
-        Self { details }
+        Self::new(vec![METADATA1_TESTCRATE], details)
     }
 }
 
 pub(crate) struct PackageDetails {
-    id: &'static str,
+    id: PackageId,
     name: &'static str,
     version: Version,
     authors: Vec<&'static str>,
@@ -115,11 +276,12 @@ pub(crate) struct PackageDetails {
     // The vector items are (name, package id).
     // XXX add more details about dependency edges here?
     deps: Option<Vec<(&'static str, &'static str)>>,
+    reverse_deps: Option<Vec<(&'static str, &'static str)>>,
 }
 
 impl PackageDetails {
     fn assert_metadata(&self, metadata: &PackageMetadata, msg: &str) {
-        assert_eq!(self.id, &metadata.id().repr, "{}: same package ID", msg);
+        assert_eq!(&self.id, metadata.id(), "{}: same package ID", msg);
         assert_eq!(self.name, metadata.name(), "{}: same name", msg);
         assert_eq!(&self.version, metadata.version(), "{}: same version", msg);
         assert_eq!(
@@ -143,7 +305,7 @@ impl PackageDetails {
 }
 
 fn add(
-    map: &mut HashMap<&'static str, PackageDetails>,
+    map: &mut HashMap<PackageId, PackageDetails>,
     id: &'static str,
     name: &'static str,
     version: &'static str,
@@ -151,9 +313,19 @@ fn add(
     description: Option<&'static str>,
     license: Option<&'static str>,
     deps: Option<Vec<(&'static str, &'static str)>>,
+    reverse_deps: Option<Vec<(&'static str, &'static str)>>,
 ) {
+    fn sort_opt<T: Ord>(v: Option<Vec<T>>) -> Option<Vec<T>> {
+        v.map(|mut val| {
+            val.sort();
+            val
+        })
+    }
+
+    let id = package_id(id);
+
     map.insert(
-        id,
+        id.clone(),
         PackageDetails {
             id,
             name,
@@ -161,10 +333,13 @@ fn add(
             authors,
             description,
             license,
-            deps: deps.map(|mut deps| {
-                deps.sort();
-                deps
-            }),
+            deps: sort_opt(deps),
+            reverse_deps: sort_opt(reverse_deps),
         },
     );
+}
+
+/// Helper for creating `PackageId` instances in test code.
+pub(crate) fn package_id(s: impl Into<String>) -> PackageId {
+    PackageId { repr: s.into() }
 }
