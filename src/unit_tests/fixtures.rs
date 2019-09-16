@@ -12,6 +12,15 @@ pub(crate) static METADATA1_TESTCRATE: &str = "testcrate 0.1.0 (path+file:///fak
 pub(crate) static METADATA1_DATATEST: &str =
     "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)";
 
+pub(crate) static METADATA2: &str = include_str!("../../fixtures/metadata2.json");
+pub(crate) static METADATA2_TESTCRATE: &str =
+    "testworkspace-crate 0.1.0 (path+file:///Users/fakeuser/local/testworkspace/testcrate)";
+pub(crate) static METADATA2_WALKDIR: &str =
+    "walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)";
+pub(crate) static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
+
+pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
+
 pub(crate) struct Fixture {
     graph: PackageGraph,
     details: FixtureDetails,
@@ -54,6 +63,13 @@ impl Fixture {
         Self {
             graph: Self::parse_graph(METADATA1),
             details: FixtureDetails::metadata1(),
+        }
+    }
+
+    pub(crate) fn metadata2() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA2),
+            details: FixtureDetails::metadata2(),
         }
     }
 
@@ -240,7 +256,7 @@ impl FixtureDetails {
             METADATA1_TESTCRATE,
             "testcrate",
             "0.1.0",
-            vec!["Fake Author <fakeauthor@example.com>"],
+            vec![FAKE_AUTHOR],
             None,
             None,
             Some(vec![("datatest", METADATA1_DATATEST)]),
@@ -271,6 +287,79 @@ impl FixtureDetails {
         );
 
         Self::new(vec![METADATA1_TESTCRATE], details)
+    }
+
+    pub(crate) fn metadata2() -> Self {
+        let mut details = HashMap::new();
+
+        add(
+            &mut details,
+            METADATA2_TESTCRATE,
+            "testworkspace-crate",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+            Some(vec![
+                (
+                    "datatest",
+                    "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+                ),
+                // There are three instances of walkdir in the dependencies -- ensure they all
+                // link up correctly.
+                ("walkdir", METADATA2_WALKDIR),
+                (
+                    "walkdir-crates-io",
+                    "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+                ),
+                (
+                    "walkdir-nuevo",
+                    "walkdir 0.1.0 (path+file:///Users/fakeuser/local/walkdir)",
+                ),
+            ]),
+            Some(vec![]),
+        );
+        add(
+            &mut details,
+            METADATA2_WALKDIR,
+            "walkdir",
+            "2.2.9",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+            Some(vec![]),
+            Some(vec![("walkdir", METADATA2_TESTCRATE)]),
+        );
+        // quote was replaced with [patch].
+        add(
+            &mut details,
+            METADATA2_QUOTE,
+            "quote",
+            "1.0.2",
+            vec!["David Tolnay <dtolnay@gmail.com>"],
+            Some("Quasi-quoting macro quote!(...)"),
+            Some("MIT OR Apache-2.0"),
+            Some(vec![(
+                "proc-macro2",
+                "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+            )]),
+            Some(vec![
+                (
+                    "quote",
+                    "ctor 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
+                ),
+                (
+                    "quote",
+                    "datatest-derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+                ),
+                (
+                    "quote",
+                    "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+                ),
+            ]),
+        );
+
+        Self::new(vec![METADATA2_TESTCRATE, METADATA2_WALKDIR], details)
     }
 }
 
