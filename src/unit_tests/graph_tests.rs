@@ -21,3 +21,9 @@ fn metadata1() {
     assert!(dep.edge.build().is_some(), "build dependency is defined");
     assert!(dep.edge.dev().is_some(), "dev dependency is defined");
 }
+
+#[test]
+fn metadata2() {
+    let metadata2 = Fixture::metadata2();
+    metadata2.verify();
+}
