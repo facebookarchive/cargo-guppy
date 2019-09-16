@@ -184,9 +184,15 @@ impl FixtureDetails {
                 )
             };
 
+        // TODO: also test resolved_name.
         let mut actual_dep_ids: Vec<(&str, &str)> = actual_deps
             .iter()
-            .map(|dep| (dep.edge.name(), variable_metadata(dep).id().repr.as_str()))
+            .map(|dep| {
+                (
+                    dep.edge.dep_name(),
+                    variable_metadata(dep).id().repr.as_str(),
+                )
+            })
             .collect();
         actual_dep_ids.sort();
 

@@ -49,6 +49,8 @@ impl PackageGraph {
         })
     }
 
+    // TODO: add method to verify for internal consistency
+
     /// Returns a list of workspace members, sorted by package ID.
     pub fn workspace_members(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
         self.workspace_members.iter()
@@ -161,15 +163,23 @@ impl PackageMetadata {
 
 #[derive(Clone, Debug)]
 pub struct DependencyEdge {
-    name: String,
+    dep_name: String,
+    resolved_name: String,
     normal: Option<DependencyMetadata>,
     build: Option<DependencyMetadata>,
     dev: Option<DependencyMetadata>,
 }
 
 impl DependencyEdge {
-    pub fn name(&self) -> &str {
-        &self.name
+    /// Returns the name for this dependency edge. This can be affected by a crate rename.
+    pub fn dep_name(&self) -> &str {
+        &self.dep_name
+    }
+
+    /// Returns the resolved name for this dependency edge. This may involve renaming the crate and
+    /// replacing - with _.
+    pub fn resolved_name(&self) -> &str {
+        &self.resolved_name
     }
 
     pub fn normal(&self) -> Option<&DependencyMetadata> {
@@ -271,10 +281,34 @@ impl<'a> GraphBuildState<'a> {
                 ))
             })?;
 
-        for dep in &resolved_deps {
+        // Build an index from resolved name to dependency name and known dependency data from
+        // package.dependencies.
+        let mut resolved_name_to_dep: HashMap<String, (&str, Vec<_>)> = HashMap::new();
+        for dep in &package.dependencies {
+            let dep_name = dep.rename.as_ref().unwrap_or(&dep.name);
+            // cargo automatically turns - to _ during resolution.
+            let resolved_name = dep_name.replace("-", "_");
+            let (_, deps) = resolved_name_to_dep
+                .entry(resolved_name)
+                .or_insert_with(|| (dep_name, vec![]));
+            deps.push(dep);
+        }
+
+        for NodeDep {
+            name: resolved_name,
+            pkg,
+            ..
+        } in &resolved_deps
+        {
+            let (name, deps) = resolved_name_to_dep.get(resolved_name).ok_or_else(|| {
+                Error::DepGraphError(format!(
+                    "{}: no dependencies found for '{}'",
+                    package.id, resolved_name
+                ))
+            })?;
             // TODO: handle renamed packages -- the current handling is incorrect
-            let (dep_idx, dep_name, dep_version) = self.package_data(&dep.pkg)?;
-            let edge = DependencyEdge::new(dep_name, dep_version, &package.dependencies)?;
+            let (dep_idx, _, _) = self.package_data(pkg)?;
+            let edge = DependencyEdge::new(name, resolved_name, deps)?;
             self.dep_graph.add_edge(node_idx, dep_idx, edge);
         }
 
@@ -310,19 +344,12 @@ impl<'a> GraphBuildState<'a> {
 }
 
 impl DependencyEdge {
-    fn new(dep_name: &str, dep_version: &Version, all_deps: &[Dependency]) -> Result<Self, Error> {
-        // Some of the all_deps will match these name/version constraints. Grab all of them. (Note
-        // that if a dependency can be listed multiple times as normal/dev/build.)
-        let matches: Vec<&Dependency> = all_deps
-            .iter()
-            .filter(|&dep| &dep.name == dep_name && dep.req.matches(dep_version))
-            .collect();
-
-        // matches should have at most 1 normal dependency, 1 build dep and 1 dev dep.
+    fn new(name: &str, resolved_name: &str, deps: &Vec<&Dependency>) -> Result<Self, Error> {
+        // deps should have at most 1 normal dependency, 1 build dep and 1 dev dep.
         let mut normal = None;
         let mut build = None;
         let mut dev = None;
-        for dep in matches {
+        for &dep in deps {
             let to_set = match dep.kind {
                 DependencyKind::Normal => &mut normal,
                 DependencyKind::Build => &mut build,
@@ -341,16 +368,16 @@ impl DependencyEdge {
             };
             if let Some(old) = to_set.replace(metadata) {
                 return Err(Error::DepGraphError(format!(
-                    "Duplicate dependencies found for '{} {}' (kind: {})",
-                    dep_name,
-                    dep_version,
+                    "Duplicate dependencies found for '{}' (kind: {})",
+                    name,
                     kind_str(dep.kind)
                 )));
             }
         }
 
         Ok(DependencyEdge {
-            name: dep_name.into(),
+            dep_name: name.into(),
+            resolved_name: resolved_name.into(),
             normal,
             build,
             dev,
