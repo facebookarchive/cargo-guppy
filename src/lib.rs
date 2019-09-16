@@ -3,13 +3,12 @@ mod errors;
 pub mod lockfile;
 
 pub use errors::Error;
-use lockfile::load_lockfile;
 pub use lockfile::{Lockfile, Package, PackageId};
 use serde_json;
 
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), Error> {
-    let old = load_lockfile(old)?;
-    let new = load_lockfile(new)?;
+    let old = Lockfile::from_file(old)?;
+    let new = Lockfile::from_file(new)?;
 
     let diff = diff::DiffOptions::default().diff(&old, &new);
 
@@ -23,7 +22,7 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), Error> {
 }
 
 pub fn cmd_count() -> Result<(), Error> {
-    let lockfile = load_lockfile("Cargo.lock")?;
+    let lockfile = Lockfile::from_file("Cargo.lock")?;
 
     println!("Third-party Packages: {}", lockfile.third_party_packages());
 
@@ -31,7 +30,7 @@ pub fn cmd_count() -> Result<(), Error> {
 }
 
 pub fn cmd_dups() -> Result<(), Error> {
-    let lockfile = load_lockfile("Cargo.lock")?;
+    let lockfile = Lockfile::from_file("Cargo.lock")?;
 
     lockfile.duplicate_packages();
 
@@ -42,12 +41,12 @@ pub fn cmd_dups() -> Result<(), Error> {
 mod tests {
     use crate::{
         diff::DiffOptions,
-        lockfile::{load_lockfile, Lockfile, PackageId},
+        lockfile::{Lockfile, PackageId},
     };
 
     #[test]
     fn it_works() {
-        load_lockfile("Cargo.lock").unwrap();
+        Lockfile::from_file("Cargo.lock").unwrap();
     }
 
     #[test]

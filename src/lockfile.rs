@@ -89,6 +89,14 @@ pub struct Lockfile {
 }
 
 impl Lockfile {
+    pub fn from_file(path: &str) -> Result<Self, Error> {
+        let mut file = File::open(path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+
+        contents.parse()
+    }
+
     pub fn packages(&self) -> &HashMap<PackageId, Package> {
         &self.packages
     }
@@ -192,14 +200,6 @@ impl FromStr for Lockfile {
             .map_err(|_| Error::InvalidInput)?
             .try_into()
     }
-}
-
-pub fn load_lockfile(path: &str) -> Result<Lockfile, Error> {
-    let mut file = File::open(path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-
-    contents.parse()
 }
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize)]
