@@ -200,24 +200,26 @@ impl FixtureDetails {
                 )
             };
 
-        // TODO: also test resolved_name.
-        let mut actual_dep_ids: Vec<(&str, &str)> = actual_deps
+        // Compare (dep_name, resolved_name, id) triples.
+        let expected_dep_ids: Vec<_> = expected_dep_ids
+            .iter()
+            .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), *id))
+            .collect();
+        let mut actual_dep_ids: Vec<_> = actual_deps
             .iter()
             .map(|dep| {
                 (
                     dep.edge.dep_name(),
+                    dep.edge.resolved_name().to_string(),
                     variable_metadata(dep).id().repr.as_str(),
                 )
             })
             .collect();
         actual_dep_ids.sort();
-
         assert_eq!(
-            expected_dep_ids,
-            actual_dep_ids.as_slice(),
+            expected_dep_ids, actual_dep_ids,
             "{}: expected {} dependencies",
-            msg,
-            direction_desc,
+            msg, direction_desc,
         );
 
         // Check that the dependency metadata returned is consistent with what we expect.
