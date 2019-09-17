@@ -36,6 +36,10 @@ impl Fixture {
 
     /// Verifies that the parsed metadata matches known details.
     pub(crate) fn verify(&self) {
+        self.graph
+            .verify()
+            .expect("graph verification should succeed");
+
         self.details
             .assert_workspace_members(self.graph.workspace_members());
 

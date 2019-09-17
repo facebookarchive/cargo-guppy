@@ -11,6 +11,7 @@ pub enum Error {
     InvalidInput,
     CommandError(MetadataError),
     DepGraphError(String),
+    DepGraphInternalError(String),
     PackageIdParseError(MetadataPackageId, String),
 }
 
@@ -27,6 +28,7 @@ impl fmt::Display for Error {
             InvalidInput => write!(f, "Failed to read Cargo.lock file"),
             CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
             DepGraphError(msg) => write!(f, "Error while computing dependency graph: {}", msg),
+            DepGraphInternalError(msg) => write!(f, "Internal error in dependency graph: {}", msg),
             PackageIdParseError(id, msg) => write!(f, "Error parsing package ID '{}': {}", id, msg),
         }
     }
@@ -39,6 +41,7 @@ impl error::Error for Error {
             InvalidInput => None,
             CommandError(_) => None,
             DepGraphError(_) => None,
+            DepGraphInternalError(_) => None,
             PackageIdParseError(_, _) => None,
         }
     }
