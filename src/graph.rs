@@ -52,7 +52,57 @@ impl PackageGraph {
         })
     }
 
-    // TODO: add method to verify for internal consistency
+    /// Verifies internal invariants on this graph.
+    pub fn verify(&self) -> Result<(), Error> {
+        for (package_id, metadata) in self.packages() {
+            for dep in self.deps(package_id) {
+                let to_id = dep.to.id();
+                let to_version = dep.to.version();
+
+                let version_check = |dep_metadata: &DependencyMetadata, kind: DependencyKind| {
+                    let req = dep_metadata.req();
+                    if req.matches(to_version) {
+                        Ok(())
+                    } else {
+                        Err(Error::DepGraphInternalError(format!(
+                            "{} -> {} ({}): version ({}) doesn't match requirement ({})",
+                            package_id,
+                            to_id,
+                            kind_str(kind),
+                            to_version,
+                            req,
+                        )))
+                    }
+                };
+
+                // Two invariants:
+                // 1. At least one of the edges should be specified.
+                // 2. The specified package should match the version dependency.
+                let mut edge_set = false;
+                if let Some(dep_metadata) = &dep.edge.normal {
+                    edge_set = true;
+                    version_check(dep_metadata, DependencyKind::Normal)?;
+                }
+                if let Some(dep_metadata) = &dep.edge.build {
+                    edge_set = true;
+                    version_check(dep_metadata, DependencyKind::Build)?;
+                }
+                if let Some(dep_metadata) = &dep.edge.dev {
+                    edge_set = true;
+                    version_check(dep_metadata, DependencyKind::Development)?;
+                }
+
+                if !edge_set {
+                    return Err(Error::DepGraphInternalError(format!(
+                        "{} -> {}: no edge info found",
+                        package_id, to_id,
+                    )));
+                }
+            }
+        }
+
+        Ok(())
+    }
 
     /// Returns a list of workspace members, sorted by package ID.
     pub fn workspace_members(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
