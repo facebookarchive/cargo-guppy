@@ -331,18 +331,8 @@ impl<'a> GraphBuildState<'a> {
                 ))
             })?;
 
-        // Build an index from resolved name to dependency name and known dependency data from
-        // package.dependencies.
-        let mut resolved_name_to_dep: HashMap<String, (&str, Vec<_>)> = HashMap::new();
-        for dep in &package.dependencies {
-            let dep_name = dep.rename.as_ref().unwrap_or(&dep.name);
-            // cargo automatically turns - to _ during resolution.
-            let resolved_name = dep_name.replace("-", "_");
-            let (_, deps) = resolved_name_to_dep
-                .entry(resolved_name)
-                .or_insert_with(|| (dep_name, vec![]));
-            deps.push(dep);
-        }
+        let dep_resolver =
+            DependencyResolver::new(&package.id, &self.package_data, &package.dependencies);
 
         for NodeDep {
             name: resolved_name,
@@ -350,15 +340,9 @@ impl<'a> GraphBuildState<'a> {
             ..
         } in &resolved_deps
         {
-            let (name, deps) = resolved_name_to_dep.get(resolved_name).ok_or_else(|| {
-                Error::DepGraphError(format!(
-                    "{}: no dependencies found for '{}'",
-                    package.id, resolved_name
-                ))
-            })?;
-            // TODO: handle renamed packages -- the current handling is incorrect
+            let (name, deps) = dep_resolver.resolve(resolved_name, pkg)?;
             let (dep_idx, _, _) = self.package_data(pkg)?;
-            let edge = DependencyEdge::new(name, resolved_name, deps)?;
+            let edge = DependencyEdge::new(&package.id, name, resolved_name, deps)?;
             self.dep_graph.add_edge(node_idx, dep_idx, edge);
         }
 
@@ -393,8 +377,134 @@ impl<'a> GraphBuildState<'a> {
     }
 }
 
+struct DependencyResolver<'a> {
+    from_id: &'a PackageId,
+
+    /// The package data, inherited from the graph build state.
+    package_data: &'a HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
+
+    /// This is a mapping of renamed dependencies to their rename sources and dependency info --
+    /// this always takes top priority.
+    ///
+    /// This is an owned string because hyphens can be replaced with underscores in the resolved\
+    /// name. In principle this could be a Cow<'a, str>, but str::replace returns a String.
+    renamed_map: HashMap<Box<str>, (&'a str, Vec<&'a Dependency>)>,
+
+    /// This is a mapping of dependencies using their original names. For these names, dashes are
+    /// not replaced with underscores.
+    ///
+    /// TODO: Change value type to Vec<&'a Dependency> once get_key_value is stable.
+    original_map: HashMap<&'a str, (&'a str, Vec<&'a Dependency>)>,
+}
+
+impl<'a> DependencyResolver<'a> {
+    /// Constructs a new resolver using the provided package data and dependencies.
+    fn new(
+        from_id: &'a PackageId,
+        package_data: &'a HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
+        package_deps: impl IntoIterator<Item = &'a Dependency>,
+    ) -> Self {
+        let mut renamed_map = HashMap::new();
+        let mut original_map = HashMap::new();
+
+        for dep in package_deps {
+            match &dep.rename {
+                // The rename != dep.name check is because of Cargo.toml instances like this:
+                //
+                // [dependencies]
+                // datatest = "0.4.2"
+                //
+                // [build-dependencies]
+                // datatest = { package = "datatest", version = "0.4.2" }
+                //
+                // cargo seems to accept such cases if the name doesn't contain a hyphen.
+                Some(rename) if rename != &dep.name => {
+                    // The resolved name is the same as the renamed name, except dashes are replaced
+                    // with underscores.
+                    let resolved_name = rename.replace("-", "_");
+                    let (_, deps) = renamed_map
+                        .entry(resolved_name.into())
+                        .or_insert_with(|| (rename.as_str(), vec![]));
+                    deps.push(dep);
+                }
+                Some(_) | None => {
+                    let (_, deps) = original_map
+                        .entry(dep.name.as_str())
+                        .or_insert_with(|| (dep.name.as_str(), vec![]));
+                    deps.push(dep);
+                }
+            }
+        }
+
+        Self {
+            from_id,
+            package_data,
+            renamed_map,
+            original_map,
+        }
+    }
+
+    /// Resolves this dependency by finding the `Dependency` corresponding to this resolved name
+    /// and package ID.
+    fn resolve(
+        &self,
+        resolved_name: &str,
+        package_id: &PackageId,
+    ) -> Result<(&'a str, &[&'a Dependency]), Error> {
+        // This method needs to reconcile three separate sources of data:
+        // 1. The metadata for each package, which is basically a parsed version of the Cargo.toml
+        //    for that package.
+        // 2. The list of dependencies for the source package, which is also extracted from
+        //    Cargo.toml for that package.
+        // 3. The "resolve" section of the manifest, which has resolved names and package IDs (this
+        //    is what's passed in).
+        //
+        // The below algorithm does a pretty job, but there are some edge cases it has trouble
+        // handling, primarily around malformed Cargo.toml files. For example, this Cargo.toml file
+        // will result in a metadata JSON (as of Rust 1.37) that will parse incorrectly:
+        //
+        // [dependencies]
+        // lazy_static = "1"
+        //
+        // [build-dependencies]
+        // lazy_static_new = { package = "lazy_static", version = "1", optional = true }
+        //
+        // TODO: Add detection for cases like this.
+
+        // Lookup the name in the renamed map. If a hit is found here we're done.
+        if let Some((name, deps)) = self.renamed_map.get(resolved_name) {
+            return Ok((*name, deps));
+        }
+
+        // Lookup the package ID in the package data.
+        let (_, package_name, _) = self.package_data.get(package_id).ok_or_else(|| {
+            Error::DepGraphError(format!(
+                "{}: no package data found for dependency '{}'",
+                self.from_id, package_id
+            ))
+        })?;
+
+        // Lookup the name in the original map.
+        let (name, deps) = self
+            .original_map
+            .get(package_name.as_str())
+            .ok_or_else(|| {
+                Error::DepGraphError(format!(
+                    "{}: no dependency information found for '{}', package ID '{}'",
+                    self.from_id, package_name, package_id
+                ))
+            })?;
+        Ok((*name, deps))
+    }
+}
+
 impl DependencyEdge {
-    fn new(name: &str, resolved_name: &str, deps: &Vec<&Dependency>) -> Result<Self, Error> {
+    fn new(
+        from_id: &PackageId,
+        name: &str,
+        resolved_name: &str,
+        deps: &[&Dependency],
+    ) -> Result<Self, Error> {
         // deps should have at most 1 normal dependency, 1 build dep and 1 dev dep.
         let mut normal = None;
         let mut build = None;
@@ -418,7 +528,8 @@ impl DependencyEdge {
             };
             if let Some(old) = to_set.replace(metadata) {
                 return Err(Error::DepGraphError(format!(
-                    "Duplicate dependencies found for '{}' (kind: {})",
+                    "{}: duplicate dependencies found for '{}' (kind: {})",
+                    from_id,
                     name,
                     kind_str(dep.kind)
                 )));
