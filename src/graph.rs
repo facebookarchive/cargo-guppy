@@ -3,6 +3,7 @@ use auto_enums::auto_enum;
 use cargo_metadata::{
     Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, Package, PackageId, Resolve,
 };
+use lazy_static::lazy_static;
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
 use std::collections::{BTreeSet, HashMap};
@@ -51,6 +52,10 @@ impl PackageGraph {
 
     /// Verifies internal invariants on this graph.
     pub fn verify(&self) -> Result<(), Error> {
+        lazy_static! {
+            static ref MAJOR_WILDCARD: VersionReq = VersionReq::parse("*").unwrap();
+        }
+
         for (package_id, metadata) in self.packages() {
             for dep in self.deps(package_id) {
                 let to_id = dep.to.id();
@@ -58,11 +63,14 @@ impl PackageGraph {
 
                 let version_check = |dep_metadata: &DependencyMetadata, kind: DependencyKind| {
                     let req = dep_metadata.req();
-                    if req.matches(to_version) {
+                    // A requirement of "*" filters out pre-release versions with the semver crate,
+                    // but cargo accepts them.
+                    // See https://github.com/steveklabnik/semver/issues/98.
+                    if req == &*MAJOR_WILDCARD || req.matches(to_version) {
                         Ok(())
                     } else {
                         Err(Error::DepGraphInternalError(format!(
-                            "{} -> {} ({}): version ({}) doesn't match requirement ({})",
+                            "{} -> {} ({}): version ({}) doesn't match requirement ({:?})",
                             package_id,
                             to_id,
                             kind_str(kind),
