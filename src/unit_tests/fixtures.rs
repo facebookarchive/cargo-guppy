@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{PackageDep, PackageGraph, PackageMetadata};
+use crate::graph_build::{PackageDep, PackageGraph, PackageMetadata};
 use cargo_metadata::PackageId;
 use semver::Version;
 use std::collections::{BTreeSet, HashMap};

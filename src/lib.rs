@@ -4,7 +4,7 @@
 mod config;
 pub mod diff;
 mod errors;
-pub mod graph;
+pub mod graph_build;
 pub mod lockfile;
 #[cfg(test)]
 mod unit_tests;

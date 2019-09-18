@@ -16,6 +16,7 @@ pub enum Error {
     ConfigParseError(toml::de::Error),
     CommandError(MetadataError),
     DepGraphError(String),
+    DepGraphUnknownPackageId(MetadataPackageId),
     DepGraphInternalError(String),
     PackageIdParseError(MetadataPackageId, String),
 }
@@ -35,6 +36,7 @@ impl fmt::Display for Error {
             ConfigParseError(err) => write!(f, "Error while parsing config file: {}", err),
             CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
             DepGraphError(msg) => write!(f, "Error while computing dependency graph: {}", msg),
+            DepGraphUnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
             DepGraphInternalError(msg) => write!(f, "Internal error in dependency graph: {}", msg),
             PackageIdParseError(id, msg) => write!(f, "Error parsing package ID '{}': {}", id, msg),
         }
@@ -50,6 +52,7 @@ impl error::Error for Error {
             ConfigParseError(err) => Some(err),
             CommandError(_) => None,
             DepGraphError(_) => None,
+            DepGraphUnknownPackageId(_) => None,
             DepGraphInternalError(_) => None,
             PackageIdParseError(_, _) => None,
         }
