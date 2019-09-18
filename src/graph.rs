@@ -506,9 +506,9 @@ impl DependencyEdge {
         deps: &[&Dependency],
     ) -> Result<Self, Error> {
         // deps should have at most 1 normal dependency, 1 build dep and 1 dev dep.
-        let mut normal = None;
-        let mut build = None;
-        let mut dev = None;
+        let mut normal: Option<DependencyMetadata> = None;
+        let mut build: Option<DependencyMetadata> = None;
+        let mut dev: Option<DependencyMetadata> = None;
         for &dep in deps {
             let to_set = match dep.kind {
                 DependencyKind::Normal => &mut normal,
@@ -526,13 +526,46 @@ impl DependencyEdge {
                 features: dep.features.clone(),
                 target: dep.target.as_ref().map(|t| format!("{}", t)),
             };
-            if let Some(old) = to_set.replace(metadata) {
-                return Err(Error::DepGraphError(format!(
-                    "{}: duplicate dependencies found for '{}' (kind: {})",
-                    from_id,
-                    name,
-                    kind_str(dep.kind)
-                )));
+
+            // It is typically an error for the same dependency to be listed multiple times for
+            // the same kind, but there are some situations in which it's possible. The main one
+            // is if there's a custom 'target' field -- one real world example is at
+            // https://github.com/alexcrichton/flate2-rs/blob/5751ad9/Cargo.toml#L29-L33:
+            //
+            // [dependencies]
+            // miniz_oxide = { version = "0.3.2", optional = true}
+            //
+            // [target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
+            // miniz_oxide = "0.3.2"
+            //
+            // For now, prefer target = null (the more general target) in such cases, and error out
+            // if both sides are null.
+            //
+            // TODO: Handle this better, probably through some sort of target resolution.
+            let write_to_set = match to_set {
+                Some(old) => match (&old.target, &metadata.target) {
+                    (Some(_), None) => true,
+                    (None, Some(_)) => false,
+                    (Some(_), Some(_)) => {
+                        // Both targets are set. We don't yet know if they are mutually exclusive,
+                        // so take the first one.
+                        // XXX This is wrong and needs to be fixed along with target resolution
+                        // in general.
+                        false
+                    }
+                    (None, None) => {
+                        return Err(Error::DepGraphError(format!(
+                            "{}: duplicate dependencies found for '{}' (kind: {})",
+                            from_id,
+                            name,
+                            kind_str(dep.kind)
+                        )))
+                    }
+                },
+                None => true,
+            };
+            if write_to_set {
+                to_set.replace(metadata);
             }
         }
 
