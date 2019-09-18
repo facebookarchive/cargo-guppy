@@ -5,17 +5,15 @@ use cargo_metadata::{
 };
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
+use petgraph::visit::Visitable;
 use semver::{Version, VersionReq};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
     packages: HashMap<PackageId, PackageMetadata>,
     dep_graph: Graph<PackageId, DependencyEdge>,
-
-    // Caches, already present at construction time.
-
     // workspace_members is a BTreeSet so that its return value is ordered.
     workspace_members: BTreeSet<PackageId>,
 }
@@ -132,6 +130,39 @@ impl PackageGraph {
 
     pub fn deps<'a>(&'a self, package_id: &PackageId) -> impl Iterator<Item = PackageDep<'a>> + 'a {
         self.deps_directed(package_id, Outgoing)
+    }
+
+    // XXX fix this up: this should be a PackageDep but Bfs only returns nodes. Probably need to
+    // implement a custom BFS ourselves with edge indexes.
+    // Also this would ideally be an iterator but that seems harder.
+    pub fn transitive_deps<'a, 'b>(
+        &'a self,
+        package_ids: impl IntoIterator<Item = &'b PackageId>,
+    ) -> Result<Vec<&'a PackageId>, Error> {
+        let node_idxs = package_ids
+            .into_iter()
+            .map(|package_id| {
+                let package_metadata = self
+                    .metadata(package_id)
+                    .ok_or_else(|| Error::DepGraphUnknownPackageId(package_id.clone()))?;
+                Ok(package_metadata.node_idx)
+            })
+            .collect::<Result<VecDeque<_>, Error>>()?;
+
+        let mut bfs = Bfs {
+            stack: node_idxs,
+            discovered: self.dep_graph.visit_map(),
+        };
+
+        let mut transitive_deps = vec![];
+        while let Some(node_idx) = bfs.next(&self.dep_graph) {
+            let dep_id = self
+                .dep_graph
+                .node_weight(node_idx)
+                .expect("bfs should return a valid node");
+            transitive_deps.push(dep_id);
+        }
+        Ok(transitive_deps)
     }
 
     pub fn reverse_deps<'a>(
@@ -351,7 +382,10 @@ impl<'a> GraphBuildState<'a> {
             let (name, deps) = dep_resolver.resolve(resolved_name, pkg)?;
             let (dep_idx, _, _) = self.package_data(pkg)?;
             let edge = DependencyEdge::new(&package.id, name, resolved_name, deps)?;
-            self.dep_graph.add_edge(node_idx, dep_idx, edge);
+            // Use update_edge instead of add_edge to prevent multiple edges from being added
+            // between these two nodes.
+            // XXX maybe check for an existing edge?
+            self.dep_graph.update_edge(node_idx, dep_idx, edge);
         }
 
         Ok((
