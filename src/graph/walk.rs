@@ -2,7 +2,7 @@ use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable};
 use std::collections::VecDeque;
 use std::iter;
 
-pub struct EdgeBfs<E, N, VM> {
+pub(crate) struct EdgeBfs<E, N, VM> {
     /// The queue of edges to visit, along with their target nodes.
     pub queue: VecDeque<(E, N)>,
     /// The map of discovered nodes
@@ -17,7 +17,7 @@ where
 {
     /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `starts`
     /// in the queue of edges to visit.
-    pub fn new<G>(graph: G, starts: impl IntoIterator<Item = N>) -> Self
+    pub(crate) fn new<G>(graph: G, starts: impl IntoIterator<Item = N>) -> Self
     where
         G: Visitable<Map = VM> + IntoEdges<NodeId = N, EdgeId = E>,
     {
@@ -32,7 +32,7 @@ where
 
     /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `start`
     /// in the queue of edges to visit.
-    pub fn new_single<G>(graph: G, start: N) -> Self
+    pub(crate) fn new_single<G>(graph: G, start: N) -> Self
     where
         G: Visitable<Map = VM> + IntoEdges<NodeId = N, EdgeId = E>,
     {
