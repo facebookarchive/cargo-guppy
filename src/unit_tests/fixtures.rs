@@ -1,7 +1,8 @@
 use crate::graph_build::{PackageDep, PackageGraph, PackageMetadata};
 use cargo_metadata::PackageId;
 use semver::Version;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, HashMap};
+use std::path::{Path, PathBuf};
 
 // Metadata along with interesting crate names.
 pub(crate) static METADATA1: &str = include_str!("../../fixtures/metadata1.json");
@@ -83,16 +84,19 @@ impl Fixture {
 /// This captures metadata fields that are relevant for tests. They are meant to be written out
 /// lazily as tests are filled out -- feel free to add more details as necessary!
 pub(crate) struct FixtureDetails {
-    workspace_members: BTreeSet<PackageId>,
+    workspace_members: BTreeMap<PathBuf, PackageId>,
     package_details: HashMap<PackageId, PackageDetails>,
 }
 
 impl FixtureDetails {
     pub(crate) fn new<'a>(
-        workspace_members: impl IntoIterator<Item = &'a str>,
+        workspace_members: impl IntoIterator<Item = (impl Into<PathBuf>, &'a str)>,
         package_details: HashMap<PackageId, PackageDetails>,
     ) -> Self {
-        let workspace_members = workspace_members.into_iter().map(package_id).collect();
+        let workspace_members = workspace_members
+            .into_iter()
+            .map(|(path, id)| (path.into(), package_id(id)))
+            .collect();
         Self {
             workspace_members,
             package_details,
@@ -105,11 +109,14 @@ impl FixtureDetails {
 
     pub(crate) fn assert_workspace_members<'a>(
         &self,
-        members: impl IntoIterator<Item = &'a PackageId>,
+        members: impl IntoIterator<Item = (&'a Path, &'a PackageId)>,
     ) {
         let members: Vec<_> = members.into_iter().collect();
         assert_eq!(
-            self.workspace_members.iter().collect::<Vec<_>>(),
+            self.workspace_members
+                .iter()
+                .map(|(path, id)| (path.as_path(), id))
+                .collect::<Vec<_>>(),
             members,
             "workspace members should be correct"
         );
@@ -289,7 +296,7 @@ impl FixtureDetails {
             Some(vec![("datatest", METADATA1_TESTCRATE)]),
         );
 
-        Self::new(vec![METADATA1_TESTCRATE], details)
+        Self::new(vec![("", METADATA1_TESTCRATE)], details)
     }
 
     pub(crate) fn metadata2() -> Self {
@@ -362,7 +369,13 @@ impl FixtureDetails {
             ]),
         );
 
-        Self::new(vec![METADATA2_TESTCRATE, METADATA2_WALKDIR], details)
+        Self::new(
+            vec![
+                ("testcrate", METADATA2_TESTCRATE),
+                ("walkdir", METADATA2_WALKDIR),
+            ],
+            details,
+        )
     }
 }
 

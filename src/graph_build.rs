@@ -7,15 +7,16 @@ use lazy_static::lazy_static;
 use petgraph::prelude::*;
 use petgraph::visit::Visitable;
 use semver::{Version, VersionReq};
-use std::collections::{BTreeSet, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
     packages: HashMap<PackageId, PackageMetadata>,
     dep_graph: Graph<PackageId, DependencyEdge>,
-    // workspace_members is a BTreeSet so that its return value is ordered.
-    workspace_members: BTreeSet<PackageId>,
+    // This is a BTreeMap to allow presenting data in sorted order.
+    workspace_members_by_path: BTreeMap<PathBuf, PackageId>,
 }
 impl PackageGraph {
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
@@ -29,7 +30,7 @@ impl PackageGraph {
             )
         })?;
 
-        let workspace_members: BTreeSet<_> = metadata.workspace_members.into_iter().collect();
+        let workspace_members: HashSet<_> = metadata.workspace_members.into_iter().collect();
 
         let mut build_state = GraphBuildState::new(&metadata.packages, resolve, &workspace_members);
 
@@ -41,10 +42,37 @@ impl PackageGraph {
 
         let dep_graph = build_state.finish();
 
+        // Build up the workspace members by path, since most interesting queries are going to
+        // happen by path.
+        let workspace_root = metadata.workspace_root;
+        let workspace_members_by_path = workspace_members
+            .into_iter()
+            .map(|id| {
+                // Strip off the workspace path from the manifest path.
+                let package_metadata = packages.get(&id).ok_or_else(|| {
+                    Error::DepGraphError(format!("workspace member '{}' not found", id))
+                })?;
+                let manifest_path = &package_metadata.manifest_path;
+                let workspace_path = manifest_path.strip_prefix(&workspace_root).map_err(|_| {
+                    Error::DepGraphError(format!(
+                        "workspace member '{}' at path {:?} not in workspace (root: {:?})",
+                        id, manifest_path, workspace_root
+                    ))
+                })?;
+                let workspace_path = workspace_path.parent().ok_or_else(|| {
+                    Error::DepGraphError(format!(
+                        "workspace member '{}' has invalid manifest path {:?}",
+                        id, manifest_path
+                    ))
+                })?;
+                Ok((workspace_path.to_path_buf(), id))
+            })
+            .collect::<Result<BTreeMap<PathBuf, PackageId>, Error>>()?;
+
         Ok(Self {
             packages,
             dep_graph,
-            workspace_members,
+            workspace_members_by_path,
         })
     }
 
@@ -107,13 +135,19 @@ impl PackageGraph {
         Ok(())
     }
 
-    /// Returns a list of workspace members, sorted by package ID.
-    pub fn workspace_members(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
-        self.workspace_members.iter()
+    /// Returns a list of workspace paths and members, sorted by the path they're in.
+    pub fn workspace_members(
+        &self,
+    ) -> impl Iterator<Item = (&Path, &PackageId)> + ExactSizeIterator {
+        self.workspace_members_by_path
+            .iter()
+            .map(|(path, id)| (path.as_path(), id))
     }
 
-    pub fn in_workspace(&self, package_id: &PackageId) -> bool {
-        self.workspace_members.contains(package_id)
+    // XXX this is not a great API design, ugh.
+    /// Maps the given path to the corresponding workspace member.
+    pub fn workspace_member_by_path(&self, path: impl AsRef<Path>) -> Option<&PackageId> {
+        self.workspace_members_by_path.get(path.as_ref())
     }
 
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
@@ -216,6 +250,7 @@ pub struct PackageMetadata {
     description: Option<String>,
     license: Option<String>,
     deps: Vec<Dependency>,
+    manifest_path: PathBuf,
 
     // Other information.
     node_idx: NodeIndex<u32>,
@@ -324,14 +359,14 @@ struct GraphBuildState<'a> {
     // The values of package_data are (node_idx, name, version).
     package_data: HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
-    workspace_members: &'a BTreeSet<PackageId>,
+    workspace_members: &'a HashSet<PackageId>,
 }
 
 impl<'a> GraphBuildState<'a> {
     fn new<'b>(
         packages: impl IntoIterator<Item = &'b Package>,
         resolve: Resolve,
-        workspace_members: &'a BTreeSet<PackageId>,
+        workspace_members: &'a HashSet<PackageId>,
     ) -> Self {
         let mut dep_graph = Graph::new();
         let package_data: HashMap<_, _> = packages
@@ -398,6 +433,7 @@ impl<'a> GraphBuildState<'a> {
                 description: package.description,
                 license: package.license,
                 deps: package.dependencies,
+                manifest_path: package.manifest_path,
 
                 node_idx,
                 in_workspace,
