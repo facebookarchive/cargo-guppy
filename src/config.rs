@@ -5,12 +5,12 @@ use crate::errors::Error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct Config {
-    /// Groups defined.
-    pub groups: HashMap<String, Vec<String>>,
+    /// Groups defined within this workspace.
+    pub workspace_groups: HashMap<String, Vec<PathBuf>>,
 }
 
 //#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
