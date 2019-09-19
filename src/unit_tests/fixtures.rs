@@ -52,11 +52,22 @@ impl Fixture {
             self.details.assert_metadata(id, &metadata, &msg);
 
             if self.details.has_deps(id) {
-                self.details.assert_deps(id, self.graph.deps(id), &msg);
+                self.details.assert_deps(
+                    id,
+                    self.graph
+                        .deps(id)
+                        .unwrap_or_else(|| panic!("{}: deps for package not found", msg)),
+                    &msg,
+                );
             }
             if self.details.has_reverse_deps(id) {
-                self.details
-                    .assert_reverse_deps(id, self.graph.reverse_deps(id), &msg);
+                self.details.assert_reverse_deps(
+                    id,
+                    self.graph
+                        .reverse_deps(id)
+                        .unwrap_or_else(|| panic!("{}: reverse deps for package not found", msg)),
+                    &msg,
+                );
             }
         }
     }

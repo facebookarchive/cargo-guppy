@@ -3,7 +3,6 @@
 
 use crate::errors::Error;
 use crate::graph::walk::EdgeBfs;
-use auto_enums::auto_enum;
 use cargo_metadata::{Dependency, DependencyKind, MetadataCommand, NodeDep, PackageId};
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
@@ -37,7 +36,7 @@ impl PackageGraph {
         }
 
         for (package_id, metadata) in self.packages() {
-            for dep in self.deps(package_id) {
+            for dep in self.deps_node_idx_directed(metadata.node_idx, Outgoing) {
                 let to_id = dep.to.id();
                 let to_version = dep.to.version();
 
@@ -106,31 +105,37 @@ impl PackageGraph {
         self.packages.get(package_id)
     }
 
-    pub fn deps<'a>(&'a self, package_id: &PackageId) -> impl Iterator<Item = PackageDep<'a>> + 'a {
+    pub fn deps<'a>(
+        &'a self,
+        package_id: &PackageId,
+    ) -> Option<impl Iterator<Item = PackageDep<'a>> + 'a> {
         self.deps_directed(package_id, Outgoing)
     }
 
     pub fn reverse_deps<'a>(
         &'a self,
         package_id: &PackageId,
-    ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
+    ) -> Option<impl Iterator<Item = PackageDep<'a>> + 'a> {
         self.deps_directed(package_id, Incoming)
     }
 
-    #[auto_enum]
     fn deps_directed<'a>(
         &'a self,
         package_id: &PackageId,
         dir: Direction,
+    ) -> Option<impl Iterator<Item = PackageDep<'a>> + 'a> {
+        self.metadata(package_id)
+            .map(|metadata| self.deps_node_idx_directed(metadata.node_idx, dir))
+    }
+
+    fn deps_node_idx_directed<'a>(
+        &'a self,
+        node_idx: NodeIndex<u32>,
+        dir: Direction,
     ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
-        #[auto_enum(Iterator)]
-        match self.metadata(package_id) {
-            Some(metadata) => self
-                .dep_graph
-                .edges_directed(metadata.node_idx, dir)
-                .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight())),
-            None => ::std::iter::empty(),
-        }
+        self.dep_graph
+            .edges_directed(node_idx, dir)
+            .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
     }
 
     // XXX this would ideally be an iterator but that seems harder.

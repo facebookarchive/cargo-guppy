@@ -15,6 +15,7 @@ fn metadata1() {
         .deps(&PackageId {
             repr: fixtures::METADATA1_TESTCRATE.into(),
         })
+        .expect("root crate deps should exist")
         .collect();
 
     assert_eq!(root_deps.len(), 1, "the root crate has one dependency");
