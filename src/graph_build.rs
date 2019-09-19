@@ -18,8 +18,7 @@ pub struct PackageGraph {
     // Source of truth data.
     packages: HashMap<PackageId, PackageMetadata>,
     dep_graph: Graph<PackageId, DependencyEdge>,
-    // This is a BTreeMap to allow presenting data in sorted order.
-    workspace_members_by_path: BTreeMap<PathBuf, PackageId>,
+    workspace: Workspace,
 }
 impl PackageGraph {
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
@@ -45,37 +44,12 @@ impl PackageGraph {
 
         let dep_graph = build_state.finish();
 
-        // Build up the workspace members by path, since most interesting queries are going to
-        // happen by path.
-        let workspace_root = metadata.workspace_root;
-        let workspace_members_by_path = workspace_members
-            .into_iter()
-            .map(|id| {
-                // Strip off the workspace path from the manifest path.
-                let package_metadata = packages.get(&id).ok_or_else(|| {
-                    Error::DepGraphError(format!("workspace member '{}' not found", id))
-                })?;
-                let manifest_path = &package_metadata.manifest_path;
-                let workspace_path = manifest_path.strip_prefix(&workspace_root).map_err(|_| {
-                    Error::DepGraphError(format!(
-                        "workspace member '{}' at path {:?} not in workspace (root: {:?})",
-                        id, manifest_path, workspace_root
-                    ))
-                })?;
-                let workspace_path = workspace_path.parent().ok_or_else(|| {
-                    Error::DepGraphError(format!(
-                        "workspace member '{}' has invalid manifest path {:?}",
-                        id, manifest_path
-                    ))
-                })?;
-                Ok((workspace_path.to_path_buf(), id))
-            })
-            .collect::<Result<BTreeMap<PathBuf, PackageId>, Error>>()?;
+        let workspace = Workspace::new(metadata.workspace_root, &packages, workspace_members)?;
 
         Ok(Self {
             packages,
             dep_graph,
-            workspace_members_by_path,
+            workspace,
         })
     }
 
@@ -138,19 +112,9 @@ impl PackageGraph {
         Ok(())
     }
 
-    /// Returns a list of workspace paths and members, sorted by the path they're in.
-    pub fn workspace_members(
-        &self,
-    ) -> impl Iterator<Item = (&Path, &PackageId)> + ExactSizeIterator {
-        self.workspace_members_by_path
-            .iter()
-            .map(|(path, id)| (path.as_path(), id))
-    }
-
-    // XXX this is not a great API design, ugh.
-    /// Maps the given path to the corresponding workspace member.
-    pub fn workspace_member_by_path(&self, path: impl AsRef<Path>) -> Option<&PackageId> {
-        self.workspace_members_by_path.get(path.as_ref())
+    /// Returns information about the workspace for this metadata.
+    pub fn workspace(&self) -> &Workspace {
+        &self.workspace
     }
 
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
@@ -233,6 +197,71 @@ impl PackageGraph {
             }
             None => ::std::iter::empty(),
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Workspace {
+    root: PathBuf,
+    // This is a BTreeMap to allow presenting data in sorted order.
+    members_by_path: BTreeMap<PathBuf, PackageId>,
+}
+
+impl Workspace {
+    /// Indexes and creates a new workspace.
+    fn new(
+        workspace_root: impl Into<PathBuf>,
+        packages: &HashMap<PackageId, PackageMetadata>,
+        members: impl IntoIterator<Item = PackageId>,
+    ) -> Result<Self, Error> {
+        let workspace_root = workspace_root.into();
+        // Build up the workspace members by path, since most interesting queries are going to
+        // happen by path.
+        let members_by_path = members
+            .into_iter()
+            .map(|id| {
+                // Strip off the workspace path from the manifest path.
+                let package_metadata = packages.get(&id).ok_or_else(|| {
+                    Error::DepGraphError(format!("workspace member '{}' not found", id))
+                })?;
+                let manifest_path = &package_metadata.manifest_path;
+                let workspace_path = manifest_path.strip_prefix(&workspace_root).map_err(|_| {
+                    Error::DepGraphError(format!(
+                        "workspace member '{}' at path {:?} not in workspace (root: {:?})",
+                        id, manifest_path, workspace_root
+                    ))
+                })?;
+                let workspace_path = workspace_path.parent().ok_or_else(|| {
+                    Error::DepGraphError(format!(
+                        "workspace member '{}' has invalid manifest path {:?}",
+                        id, manifest_path
+                    ))
+                })?;
+                Ok((workspace_path.to_path_buf(), id))
+            })
+            .collect::<Result<BTreeMap<PathBuf, PackageId>, Error>>()?;
+
+        Ok(Self {
+            root: workspace_root,
+            members_by_path,
+        })
+    }
+
+    /// Returns the workspace root.
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
+    /// Returns an iterator over of workspace paths and members, sorted by the path they're in.
+    pub fn members(&self) -> impl Iterator<Item = (&Path, &PackageId)> + ExactSizeIterator {
+        self.members_by_path
+            .iter()
+            .map(|(path, id)| (path.as_path(), id))
+    }
+
+    /// Maps the given path to the corresponding workspace member.
+    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<&PackageId> {
+        self.members_by_path.get(path.as_ref())
     }
 }
 

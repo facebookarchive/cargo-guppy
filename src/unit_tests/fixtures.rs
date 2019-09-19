@@ -1,11 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph_build::{PackageDep, PackageGraph, PackageMetadata};
+use crate::graph_build::{PackageDep, PackageGraph, PackageMetadata, Workspace};
 use cargo_metadata::PackageId;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 // Metadata along with interesting crate names.
 pub(crate) static METADATA1: &str = include_str!("../../fixtures/metadata1.json");
@@ -44,8 +44,7 @@ impl Fixture {
             .verify()
             .expect("graph verification should succeed");
 
-        self.details
-            .assert_workspace_members(self.graph.workspace_members());
+        self.details.assert_workspace(self.graph.workspace());
 
         for id in self.details.known_ids() {
             let msg = format!("error while verifying package '{}'", id);
@@ -110,11 +109,8 @@ impl FixtureDetails {
         self.package_details.keys()
     }
 
-    pub(crate) fn assert_workspace_members<'a>(
-        &self,
-        members: impl IntoIterator<Item = (&'a Path, &'a PackageId)>,
-    ) {
-        let members: Vec<_> = members.into_iter().collect();
+    pub(crate) fn assert_workspace(&self, workspace: &Workspace) {
+        let members: Vec<_> = workspace.members().into_iter().collect();
         assert_eq!(
             self.workspace_members
                 .iter()
