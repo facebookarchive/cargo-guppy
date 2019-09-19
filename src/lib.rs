@@ -2,6 +2,7 @@ mod config;
 pub mod diff;
 mod errors;
 pub mod graph_build;
+mod graph_walk;
 pub mod lockfile;
 #[cfg(test)]
 mod unit_tests;

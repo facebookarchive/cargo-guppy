@@ -1,4 +1,5 @@
 use crate::errors::Error;
+use crate::graph_walk::EdgeBfs;
 use auto_enums::auto_enum;
 use cargo_metadata::{
     Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, Package, PackageId, Resolve,
@@ -8,6 +9,7 @@ use petgraph::prelude::*;
 use petgraph::visit::Visitable;
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
@@ -130,22 +132,36 @@ impl PackageGraph {
         self.deps_directed(package_id, Outgoing)
     }
 
-    // XXX fix this up: this should be a PackageDep but Bfs only returns nodes. Probably need to
-    // implement a custom BFS ourselves with edge indexes.
-    // Also this would ideally be an iterator but that seems harder.
+    pub fn reverse_deps<'a>(
+        &'a self,
+        package_id: &PackageId,
+    ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
+        self.deps_directed(package_id, Incoming)
+    }
+
+    #[auto_enum]
+    fn deps_directed<'a>(
+        &'a self,
+        package_id: &PackageId,
+        dir: Direction,
+    ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
+        #[auto_enum(Iterator)]
+        match self.metadata(package_id) {
+            Some(metadata) => self
+                .dep_graph
+                .edges_directed(metadata.node_idx, dir)
+                .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight())),
+            None => ::std::iter::empty(),
+        }
+    }
+
+    // XXX this would ideally be an iterator but that seems harder.
+    /// Returns all transitive dependencies for the given package IDs.
     pub fn transitive_deps<'a, 'b>(
         &'a self,
         package_ids: impl IntoIterator<Item = &'b PackageId>,
     ) -> Result<Vec<&'a PackageId>, Error> {
-        let node_idxs = package_ids
-            .into_iter()
-            .map(|package_id| {
-                let package_metadata = self
-                    .metadata(package_id)
-                    .ok_or_else(|| Error::DepGraphUnknownPackageId(package_id.clone()))?;
-                Ok(package_metadata.node_idx)
-            })
-            .collect::<Result<VecDeque<_>, Error>>()?;
+        let node_idxs = self.node_idxs(package_ids)?;
 
         let mut bfs = Bfs {
             stack: node_idxs,
@@ -163,37 +179,61 @@ impl PackageGraph {
         Ok(transitive_deps)
     }
 
-    pub fn reverse_deps<'a>(
+    /// Returns all transitive dependency edges for the given package IDs.
+    pub fn transitive_dep_edges<'a, 'b>(
         &'a self,
-        package_id: &PackageId,
-    ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
-        self.deps_directed(package_id, Incoming)
+        package_ids: impl IntoIterator<Item = &'b PackageId>,
+    ) -> Result<Vec<PackageDep<'a>>, Error> {
+        let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
+        let mut edge_bfs = EdgeBfs::new(&self.dep_graph, node_idxs);
+        let mut transitive_edges = vec![];
+        while let Some(edge_idx) = edge_bfs.next(&self.dep_graph) {
+            let (source, target) = self
+                .dep_graph
+                .edge_endpoints(edge_idx)
+                .expect("edge bfs should return a valid edge");
+            let edge = &self.dep_graph[edge_idx];
+            transitive_edges.push(self.edge_to_dep(source, target, edge))
+        }
+        Ok(transitive_edges)
     }
 
-    #[auto_enum]
-    fn deps_directed<'a>(
+    /// Maps an edge source, target and weight to a package dep.
+    fn edge_to_dep<'a>(
         &'a self,
-        package_id: &PackageId,
-        dir: Direction,
-    ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
-        #[auto_enum(Iterator)]
-        match self.metadata(package_id) {
-            Some(metadata) => {
-                self.dep_graph
-                    .edges_directed(metadata.node_idx, dir)
-                    .map(move |edge| {
-                        let from = self
-                            .metadata(&self.dep_graph[edge.source()])
-                            .expect("'from' should have associated metadata");
-                        let to = self
-                            .metadata(&self.dep_graph[edge.target()])
-                            .expect("'to' should have associated metadata");
-                        let edge = edge.weight();
-                        PackageDep { from, to, edge }
-                    })
-            }
-            None => ::std::iter::empty(),
-        }
+        source: NodeIndex<u32>,
+        target: NodeIndex<u32>,
+        edge: &'a DependencyEdge,
+    ) -> PackageDep<'a> {
+        let from = self
+            .metadata(&self.dep_graph[source])
+            .expect("'from' should have associated metadata");
+        let to = self
+            .metadata(&self.dep_graph[target])
+            .expect("'to' should have associated metadata");
+        PackageDep { from, to, edge }
+    }
+
+    /// Maps an iterator of package IDs to their internal graph node indexes.
+    fn node_idxs<'a, 'b, B>(
+        &'a self,
+        package_ids: impl IntoIterator<Item = &'b PackageId>,
+    ) -> Result<B, Error>
+    where
+        B: FromIterator<NodeIndex<u32>>,
+    {
+        package_ids
+            .into_iter()
+            .map(|package_id| {
+                self.node_idx(package_id)
+                    .ok_or_else(|| Error::DepGraphUnknownPackageId(package_id.clone()))
+            })
+            .collect()
+    }
+
+    /// Maps a package ID to its internal graph node index.
+    fn node_idx(&self, package_id: &PackageId) -> Option<NodeIndex<u32>> {
+        self.metadata(package_id).map(|metadata| metadata.node_idx)
     }
 }
 
