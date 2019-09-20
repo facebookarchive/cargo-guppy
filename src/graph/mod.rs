@@ -344,6 +344,12 @@ impl DependencyEdge {
         // XXX should dev dependencies fall back to normal if no dev-specific data was found?
         self.dev.as_ref()
     }
+
+    /// Return true if this edge is dev-only, i.e. code from this edge will not be included in
+    /// normal builds.
+    pub fn dev_only(&self) -> bool {
+        self.normal().is_none() && self.build.is_none()
+    }
 }
 
 #[derive(Clone, Debug)]
