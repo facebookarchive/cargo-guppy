@@ -1,13 +1,13 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable};
+use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker};
 use std::collections::VecDeque;
 use std::iter;
 
 pub(crate) struct EdgeBfs<E, N, VM> {
-    /// The queue of edges to visit, along with their target nodes.
-    pub queue: VecDeque<(E, N)>,
+    /// The queue of (source, target, edge) to visit.
+    pub queue: VecDeque<(N, N, E)>,
     /// The map of discovered nodes
     pub discovered: VM,
 }
@@ -28,7 +28,7 @@ where
         let mut queue = VecDeque::new();
         queue.extend(starts.into_iter().flat_map(|start| {
             discovered.visit(start);
-            graph.edges(start).map(edge_id_and_target)
+            graph.edges(start).map(edge_triple)
         }));
         Self { queue, discovered }
     }
@@ -43,20 +43,30 @@ where
     }
 
     /// Return the next edge in the bfs, or `None` if no more edges remain.
-    pub fn next<G>(&mut self, graph: G) -> Option<E>
+    pub fn next<G>(&mut self, graph: G) -> Option<(N, N, E)>
     where
         G: IntoEdges<NodeId = N, EdgeId = E>,
     {
-        self.queue.pop_front().map(|(edge, target)| {
+        self.queue.pop_front().map(|(source, target, edge)| {
             if self.discovered.visit(target) {
-                self.queue
-                    .extend(graph.edges(target).map(edge_id_and_target));
+                self.queue.extend(graph.edges(target).map(edge_triple));
             }
-            edge
+            (source, target, edge)
         })
     }
 }
 
-fn edge_id_and_target<ER: EdgeRef>(edge_ref: ER) -> (ER::EdgeId, ER::NodeId) {
-    (edge_ref.id(), edge_ref.target())
+impl<G> Walker<G> for EdgeBfs<G::EdgeId, G::NodeId, G::Map>
+where
+    G: IntoEdges + Visitable,
+{
+    type Item = (G::NodeId, G::NodeId, G::EdgeId);
+
+    fn walk_next(&mut self, context: G) -> Option<Self::Item> {
+        self.next(context)
+    }
+}
+
+fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::EdgeId) {
+    (edge_ref.source(), edge_ref.target(), edge_ref.id())
 }
