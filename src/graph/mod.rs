@@ -156,19 +156,15 @@ impl PackageGraph {
     pub fn transitive_dep_edges<'a, 'b>(
         &'a self,
         package_ids: impl IntoIterator<Item = &'b PackageId>,
-    ) -> Result<Vec<PackageDep<'a>>, Error> {
+    ) -> Result<impl Iterator<Item = PackageDep<'a>> + 'a, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        let mut edge_bfs = EdgeBfs::new(&self.dep_graph, node_idxs);
-        let mut transitive_edges = vec![];
-        while let Some(edge_idx) = edge_bfs.next(&self.dep_graph) {
-            let (source, target) = self
-                .dep_graph
-                .edge_endpoints(edge_idx)
-                .expect("edge bfs should return a valid edge");
-            let edge = &self.dep_graph[edge_idx];
-            transitive_edges.push(self.edge_to_dep(source, target, edge))
-        }
-        Ok(transitive_edges)
+        let edge_bfs = EdgeBfs::new(&self.dep_graph, node_idxs);
+
+        Ok(edge_bfs
+            .iter(&self.dep_graph)
+            .map(move |(source_idx, target_idx, edge_idx)| {
+                self.edge_to_dep(source_idx, target_idx, &self.dep_graph[edge_idx])
+            }))
     }
 
     /// Maps an edge source, target and weight to a package dep.
