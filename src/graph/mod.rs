@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::errors::Error;
+use crate::graph::filter::EdgeFilteredPackageGraph;
 use crate::graph::walk::EdgeBfs;
 use cargo_metadata::{Dependency, DependencyKind, MetadataCommand, NodeDep, PackageId};
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
-use petgraph::visit::{Visitable, Walker};
+use petgraph::visit::{EdgeFiltered, Visitable, Walker};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap};
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
 mod build;
+mod filter;
 mod walk;
 
 #[derive(Clone, Debug)]
@@ -138,6 +140,14 @@ impl PackageGraph {
             .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
     }
 
+    /// Returns a package graph to which the given filter has been applied.
+    pub fn filter_edges<'g, F>(&'g self, filter: F) -> EdgeFilteredPackageGraph<'g, F>
+    where
+        F: Fn(PackageDep<'_>) -> bool,
+    {
+        EdgeFilteredPackageGraph::new(self, filter)
+    }
+
     /// Returns all transitive dependencies for the given package IDs.
     pub fn transitive_deps<'a, 'b>(
         &'a self,
@@ -170,6 +180,14 @@ impl PackageGraph {
             }))
     }
 
+    // ---
+    // Helper methods
+    // ---
+
+    fn dep_graph(&self) -> &Graph<PackageId, DependencyEdge> {
+        &self.dep_graph
+    }
+
     /// Maps an edge source, target and weight to a package dep.
     fn edge_to_dep<'a>(
         &'a self,
@@ -177,6 +195,11 @@ impl PackageGraph {
         target: NodeIndex<u32>,
         edge: &'a DependencyEdge,
     ) -> PackageDep<'a> {
+        // Note: It would be really lovely if this could just take in any EdgeRef with the right
+        // parameters, but 'weight' wouldn't live long enough unfortunately.
+        //
+        // https://docs.rs/petgraph/0.4.13/petgraph/graph/struct.EdgeReference.html#method.weight
+        // is defined separately for the same reason.
         let from = self
             .metadata(&self.dep_graph[source])
             .expect("'from' should have associated metadata");

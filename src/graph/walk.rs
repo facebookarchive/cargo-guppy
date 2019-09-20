@@ -1,10 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker};
+use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker, WalkerIter};
 use std::collections::VecDeque;
 use std::iter;
 
+#[derive(Clone, Debug)]
 pub(crate) struct EdgeBfs<E, N, VM> {
     /// The queue of (source, target, edge) to visit.
     pub queue: VecDeque<(N, N, E)>,
