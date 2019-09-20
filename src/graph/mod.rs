@@ -3,7 +3,7 @@ use crate::graph::walk::EdgeBfs;
 use cargo_metadata::{Dependency, DependencyKind, MetadataCommand, NodeDep, PackageId};
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
-use petgraph::visit::Visitable;
+use petgraph::visit::{Visitable, Walker};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap};
 use std::iter::FromIterator;
@@ -135,28 +135,21 @@ impl PackageGraph {
             .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
     }
 
-    // XXX this would ideally be an iterator but that seems harder.
     /// Returns all transitive dependencies for the given package IDs.
     pub fn transitive_deps<'a, 'b>(
         &'a self,
         package_ids: impl IntoIterator<Item = &'b PackageId>,
-    ) -> Result<Vec<&'a PackageId>, Error> {
+    ) -> Result<impl Iterator<Item = &'a PackageId> + 'a, Error> {
         let node_idxs = self.node_idxs(package_ids)?;
 
-        let mut bfs = Bfs {
+        let bfs = Bfs {
             stack: node_idxs,
             discovered: self.dep_graph.visit_map(),
         };
 
-        let mut transitive_deps = vec![];
-        while let Some(node_idx) = bfs.next(&self.dep_graph) {
-            let dep_id = self
-                .dep_graph
-                .node_weight(node_idx)
-                .expect("bfs should return a valid node");
-            transitive_deps.push(dep_id);
-        }
-        Ok(transitive_deps)
+        Ok(bfs
+            .iter(&self.dep_graph)
+            .map(move |node_idx| &self.dep_graph[node_idx]))
     }
 
     /// Returns all transitive dependency edges for the given package IDs.
