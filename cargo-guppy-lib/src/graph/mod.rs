@@ -6,7 +6,7 @@ use crate::graph::walk::EdgeBfs;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
-use petgraph::visit::{Visitable, Walker};
+use petgraph::visit::{Reversed, Visitable, Walker};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap};
 use std::iter::FromIterator;
@@ -19,8 +19,16 @@ mod walk;
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
-    packages: HashMap<PackageId, PackageMetadata>,
     dep_graph: Graph<PackageId, DependencyEdge>,
+    // XXX Should this be in an Arc for quick cloning? Not clear how this would work with node
+    // filters though.
+    data: PackageGraphData,
+}
+
+/// Per-package data for a PackageGraph instance.
+#[derive(Clone, Debug)]
+pub struct PackageGraphData {
+    packages: HashMap<PackageId, PackageMetadata>,
     workspace: Workspace,
 }
 
@@ -95,24 +103,24 @@ impl PackageGraph {
         Ok(())
     }
 
-    /// Returns information about the workspace for this metadata.
+    /// Returns information about the workspace.
     pub fn workspace(&self) -> &Workspace {
-        &self.workspace
+        &self.data.workspace()
     }
 
-    /// Returns an iterator over all the package IDs present in this metadata.
+    /// Returns an iterator over all the package IDs in this graph.
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
-        self.packages.keys()
+        self.data.package_ids()
     }
 
-    /// Returns an iterator over all the packages present in this metadata.
+    /// Returns an iterator over all the packages in this graph.
     pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> {
-        self.packages.values()
+        self.data.packages()
     }
 
-    /// Returns the metadata for the given package ID in this metadata.
+    /// Returns the metadata for the given package ID.
     pub fn metadata(&self, package_id: &PackageId) -> Option<&PackageMetadata> {
-        self.packages.get(package_id)
+        self.data.metadata(package_id)
     }
 
     /// Returns the direct dependencies for the given package ID.
@@ -155,19 +163,19 @@ impl PackageGraph {
     /// The order edges are visited is not specified.
     pub fn retain_edges<F>(&mut self, visit: F)
     where
-        F: Fn(DependencyInfo<'_>) -> bool,
+        F: Fn(&PackageGraphData, DependencyInfo<'_>) -> bool,
     {
-        let packages = &self.packages;
+        let data = &self.data;
         self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
             // This could use self.edge_to_dep for part of it but that that isn't compatible with
             // the borrow checker :(
             let (source, target) = frozen_graph
                 .edge_endpoints(edge_idx)
                 .expect("edge_idx should be valid");
-            let from = &packages[&frozen_graph[source]];
-            let to = &packages[&frozen_graph[target]];
+            let from = &data.packages[&frozen_graph[source]];
+            let to = &data.packages[&frozen_graph[target]];
             let edge = &frozen_graph[edge_idx];
-            visit(DependencyInfo { from, to, edge })
+            visit(data, DependencyInfo { from, to, edge })
         });
     }
 
@@ -187,6 +195,25 @@ impl PackageGraph {
 
         Ok(bfs
             .iter(&self.dep_graph)
+            .map(move |node_idx| &self.dep_graph[node_idx]))
+    }
+
+    /// Returns the package IDs for all transitive reverse dependencies for the given IDs.
+    ///
+    /// This will also include the original package IDs.
+    pub fn transitive_reverse_dep_ids<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
+        let node_idxs = self.node_idxs(package_ids)?;
+
+        let bfs = Bfs {
+            stack: node_idxs,
+            discovered: self.dep_graph.visit_map(),
+        };
+
+        Ok(bfs
+            .iter(Reversed(&self.dep_graph))
             .map(move |node_idx| &self.dep_graph[node_idx]))
     }
 
@@ -250,6 +277,28 @@ impl PackageGraph {
     /// Maps a package ID to its internal graph node index.
     fn node_idx(&self, package_id: &PackageId) -> Option<NodeIndex<u32>> {
         self.metadata(package_id).map(|metadata| metadata.node_idx)
+    }
+}
+
+impl PackageGraphData {
+    /// Returns information about the workspace.
+    pub fn workspace(&self) -> &Workspace {
+        &self.workspace
+    }
+
+    /// Returns an iterator over all the package IDs in this graph.
+    pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
+        self.packages.keys()
+    }
+
+    /// Returns an iterator over all the packages in this graph.
+    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> {
+        self.packages.values()
+    }
+
+    /// Returns the metadata for the given package ID.
+    pub fn metadata(&self, package_id: &PackageId) -> Option<&PackageMetadata> {
+        self.packages.get(package_id)
     }
 }
 
