@@ -168,8 +168,8 @@ impl PackageGraph {
         });
     }
 
-    /// Returns all transitive dependencies for the given package IDs.
-    pub fn transitive_deps<'a, 'b>(
+    /// Returns the package IDs for all transitive dependencies for the given package IDs.
+    pub fn transitive_dep_ids<'a, 'b>(
         &'a self,
         package_ids: impl IntoIterator<Item = &'b PackageId>,
     ) -> Result<impl Iterator<Item = &'a PackageId> + 'a, Error> {
@@ -186,7 +186,7 @@ impl PackageGraph {
     }
 
     /// Returns all transitive dependency edges for the given package IDs.
-    pub fn transitive_dep_edges<'a, 'b>(
+    pub fn transitive_deps<'a, 'b>(
         &'a self,
         package_ids: impl IntoIterator<Item = &'b PackageId>,
     ) -> Result<impl Iterator<Item = DependencyInfo<'a>> + 'a, Error> {
