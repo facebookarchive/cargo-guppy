@@ -113,35 +113,35 @@ impl PackageGraph {
     }
 
     /// Returns the direct dependencies for the given package ID.
-    pub fn deps<'a>(
-        &'a self,
+    pub fn deps<'g>(
+        &'g self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = DependencyInfo<'a>> + 'a> {
+    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
         self.deps_directed(package_id, Outgoing)
     }
 
     /// Returns the direct reverse dependencies for the given package ID.
-    pub fn reverse_deps<'a>(
-        &'a self,
+    pub fn reverse_deps<'g>(
+        &'g self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = DependencyInfo<'a>> + 'a> {
+    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
         self.deps_directed(package_id, Incoming)
     }
 
-    fn deps_directed<'a>(
-        &'a self,
+    fn deps_directed<'g>(
+        &'g self,
         package_id: &PackageId,
         dir: Direction,
-    ) -> Option<impl Iterator<Item = DependencyInfo<'a>> + 'a> {
+    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
         self.metadata(package_id)
             .map(|metadata| self.deps_node_idx_directed(metadata.node_idx, dir))
     }
 
-    fn deps_node_idx_directed<'a>(
-        &'a self,
+    fn deps_node_idx_directed<'g>(
+        &'g self,
         node_idx: NodeIndex<u32>,
         dir: Direction,
-    ) -> impl Iterator<Item = DependencyInfo<'a>> + 'a {
+    ) -> impl Iterator<Item = DependencyInfo<'g>> + 'g {
         self.dep_graph
             .edges_directed(node_idx, dir)
             .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
@@ -169,10 +169,12 @@ impl PackageGraph {
     }
 
     /// Returns the package IDs for all transitive dependencies for the given package IDs.
-    pub fn transitive_dep_ids<'a, 'b>(
-        &'a self,
-        package_ids: impl IntoIterator<Item = &'b PackageId>,
-    ) -> Result<impl Iterator<Item = &'a PackageId> + 'a, Error> {
+    ///
+    /// This will also include the original package IDs.
+    pub fn transitive_dep_ids<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
         let node_idxs = self.node_idxs(package_ids)?;
 
         let bfs = Bfs {
@@ -186,10 +188,10 @@ impl PackageGraph {
     }
 
     /// Returns all transitive dependency edges for the given package IDs.
-    pub fn transitive_deps<'a, 'b>(
-        &'a self,
-        package_ids: impl IntoIterator<Item = &'b PackageId>,
-    ) -> Result<impl Iterator<Item = DependencyInfo<'a>> + 'a, Error> {
+    pub fn transitive_deps<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<impl Iterator<Item = DependencyInfo<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         let edge_bfs = EdgeBfs::new(&self.dep_graph, node_idxs);
 
@@ -205,12 +207,12 @@ impl PackageGraph {
     // ---
 
     /// Maps an edge source, target and weight to a package dep.
-    fn edge_to_dep<'a>(
-        &'a self,
+    fn edge_to_dep<'g>(
+        &'g self,
         source: NodeIndex<u32>,
         target: NodeIndex<u32>,
-        edge: &'a DependencyEdge,
-    ) -> DependencyInfo<'a> {
+        edge: &'g DependencyEdge,
+    ) -> DependencyInfo<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
         //
@@ -226,9 +228,9 @@ impl PackageGraph {
     }
 
     /// Maps an iterator of package IDs to their internal graph node indexes.
-    fn node_idxs<'a, 'b, B>(
-        &'a self,
-        package_ids: impl IntoIterator<Item = &'b PackageId>,
+    fn node_idxs<'g, 'a, B>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<B, Error>
     where
         B: FromIterator<NodeIndex<u32>>,
@@ -275,10 +277,10 @@ impl Workspace {
 }
 
 #[derive(Clone, Debug)]
-pub struct DependencyInfo<'a> {
-    pub from: &'a PackageMetadata,
-    pub to: &'a PackageMetadata,
-    pub edge: &'a DependencyEdge,
+pub struct DependencyInfo<'g> {
+    pub from: &'g PackageMetadata,
+    pub to: &'g PackageMetadata,
+    pub edge: &'g DependencyEdge,
 }
 
 #[derive(Clone, Debug)]
