@@ -10,11 +10,6 @@ pub struct Config {
     pub workspace_groups: HashMap<String, Vec<PathBuf>>,
 }
 
-//#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
-//pub struct Group {
-//    pub members: Vec<String>,
-//}
-
 impl Config {
     /// Parses and constructs a config from a file.
     pub fn from_file(f: impl AsRef<Path>) -> Result<Self, Error> {

@@ -1,6 +1,6 @@
 use crate::errors::Error;
 use crate::graph::walk::EdgeBfs;
-use cargo_metadata::{Dependency, DependencyKind, MetadataCommand, NodeDep, PackageId};
+use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
 use petgraph::visit::{Visitable, Walker};
@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 mod build;
 mod walk;
 
+/// A graph of packages extracted from a metadata.
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
@@ -19,12 +20,17 @@ pub struct PackageGraph {
     dep_graph: Graph<PackageId, DependencyEdge>,
     workspace: Workspace,
 }
+
 impl PackageGraph {
+    /// Constructs a package graph from the given command.
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
         Self::new(command.exec().map_err(Error::CommandError)?)
     }
 
-    // fn new() is in graph/build.rs.
+    /// Constructs a package graph from the given metadata.
+    pub fn new(metadata: Metadata) -> Result<Self, Error> {
+        Self::build(metadata)
+    }
 
     /// Verifies internal invariants on this graph.
     pub fn verify(&self) -> Result<(), Error> {
@@ -32,7 +38,8 @@ impl PackageGraph {
             static ref MAJOR_WILDCARD: VersionReq = VersionReq::parse("*").unwrap();
         }
 
-        for (package_id, metadata) in self.packages() {
+        for metadata in self.packages() {
+            let package_id = metadata.id();
             for dep in self.deps_node_idx_directed(metadata.node_idx, Outgoing) {
                 let to_id = dep.to.id();
                 let to_version = dep.to.version();
@@ -90,18 +97,22 @@ impl PackageGraph {
         &self.workspace
     }
 
+    /// Returns an iterator over all the package IDs present in this metadata.
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
         self.packages.keys()
     }
 
-    pub fn packages(&self) -> impl Iterator<Item = (&PackageId, &PackageMetadata)> {
-        self.packages.iter()
+    /// Returns an iterator over all the packages present in this metadata.
+    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> {
+        self.packages.values()
     }
 
+    /// Returns the metadata for the given package ID in this metadata.
     pub fn metadata(&self, package_id: &PackageId) -> Option<&PackageMetadata> {
         self.packages.get(package_id)
     }
 
+    /// Returns the direct dependencies for the given package ID.
     pub fn deps<'a>(
         &'a self,
         package_id: &PackageId,
@@ -109,6 +120,7 @@ impl PackageGraph {
         self.deps_directed(package_id, Outgoing)
     }
 
+    /// Returns the direct reverse dependencies for the given package ID.
     pub fn reverse_deps<'a>(
         &'a self,
         package_id: &PackageId,
