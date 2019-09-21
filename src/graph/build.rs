@@ -13,7 +13,7 @@ use std::path::PathBuf;
 
 impl PackageGraph {
     /// Constructs a new `PackageGraph` instances from the given metadata.
-    pub fn new(metadata: Metadata) -> Result<Self, Error> {
+    pub(crate) fn build(metadata: Metadata) -> Result<Self, Error> {
         let resolve = metadata.resolve.ok_or_else(|| {
             Error::DepGraphError(
                 "no 'resolve' entries found: ensure you don't have no_deps set".into(),
