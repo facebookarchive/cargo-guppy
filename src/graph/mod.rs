@@ -2,19 +2,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::errors::Error;
-use crate::graph::filter::EdgeFilteredPackageGraph;
 use crate::graph::walk::EdgeBfs;
 use cargo_metadata::{Dependency, DependencyKind, MetadataCommand, NodeDep, PackageId};
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
-use petgraph::visit::{EdgeFiltered, Visitable, Walker};
+use petgraph::visit::{Visitable, Walker};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap};
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
 mod build;
-mod filter;
 mod walk;
 
 #[derive(Clone, Debug)]
@@ -140,12 +138,25 @@ impl PackageGraph {
             .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
     }
 
-    /// Returns a package graph to which the given filter has been applied.
-    pub fn filter_edges<'g, F>(&'g self, filter: F) -> EdgeFilteredPackageGraph<'g, F>
+    /// Keeps all edges that return true from the visit closure, and removes the others.
+    ///
+    /// The order edges are visited is not specified.
+    pub fn retain_edges<F>(&mut self, visit: F)
     where
         F: Fn(PackageDep<'_>) -> bool,
     {
-        EdgeFilteredPackageGraph::new(self, filter)
+        let packages = &self.packages;
+        self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
+            // This could use self.edge_to_dep for part of it but that that isn't compatible with
+            // the borrow checker :(
+            let (source, target) = frozen_graph
+                .edge_endpoints(edge_idx)
+                .expect("edge_idx should be valid");
+            let from = &packages[&frozen_graph[source]];
+            let to = &packages[&frozen_graph[target]];
+            let edge = &frozen_graph[edge_idx];
+            visit(PackageDep { from, to, edge })
+        });
     }
 
     /// Returns all transitive dependencies for the given package IDs.

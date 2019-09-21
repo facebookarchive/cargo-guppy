@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker, WalkerIter};
+use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker};
 use std::collections::VecDeque;
 use std::iter;
 
