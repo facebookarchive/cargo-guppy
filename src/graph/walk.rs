@@ -1,4 +1,4 @@
-use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker, WalkerIter};
+use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker};
 use std::collections::VecDeque;
 use std::iter;
 

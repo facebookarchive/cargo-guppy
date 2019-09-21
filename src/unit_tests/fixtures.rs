@@ -30,6 +30,11 @@ impl Fixture {
         &self.graph
     }
 
+    /// Returns a mutable reference to the package graph for this fixture.
+    pub(crate) fn graph_mut(&mut self) -> &mut PackageGraph {
+        &mut self.graph
+    }
+
     /// Returns the test details for this fixture.
     pub(crate) fn details(&self) -> &FixtureDetails {
         &self.details
