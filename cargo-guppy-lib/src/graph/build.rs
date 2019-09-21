@@ -1,6 +1,7 @@
 use crate::errors::Error;
 use crate::graph::{
-    kind_str, DependencyEdge, DependencyMetadata, PackageGraph, PackageMetadata, Workspace,
+    kind_str, DependencyEdge, DependencyMetadata, PackageGraph, PackageGraphData, PackageMetadata,
+    Workspace,
 };
 use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, PackageId, Resolve};
 use petgraph::prelude::*;
@@ -32,9 +33,11 @@ impl PackageGraph {
         let workspace = Workspace::new(metadata.workspace_root, &packages, workspace_members)?;
 
         Ok(Self {
-            packages,
             dep_graph,
-            workspace,
+            data: PackageGraphData {
+                packages,
+                workspace,
+            },
         })
     }
 }
