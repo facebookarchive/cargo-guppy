@@ -1,4 +1,4 @@
-use crate::graph::{PackageDep, PackageGraph, PackageMetadata, Workspace};
+use crate::graph::{DependencyInfo, PackageGraph, PackageMetadata, Workspace};
 use cargo_metadata::PackageId;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
@@ -148,12 +148,12 @@ impl FixtureDetails {
     pub(crate) fn assert_deps<'a>(
         &self,
         id: &PackageId,
-        deps: impl IntoIterator<Item = PackageDep<'a>>,
+        deps: impl IntoIterator<Item = DependencyInfo<'a>>,
         msg: &str,
     ) {
         let details = &self.package_details[id];
         let expected_dep_ids = details.deps.as_ref().expect("deps should be present");
-        let actual_deps: Vec<PackageDep> = deps.into_iter().collect();
+        let actual_deps: Vec<DependencyInfo> = deps.into_iter().collect();
         self.assert_deps_internal(true, details, expected_dep_ids.as_slice(), actual_deps, msg);
     }
 
@@ -166,7 +166,7 @@ impl FixtureDetails {
     pub(crate) fn assert_reverse_deps<'a>(
         &self,
         id: &PackageId,
-        reverse_deps: impl IntoIterator<Item = PackageDep<'a>>,
+        reverse_deps: impl IntoIterator<Item = DependencyInfo<'a>>,
         msg: &str,
     ) {
         let details = &self.package_details[id];
@@ -174,7 +174,7 @@ impl FixtureDetails {
             .reverse_deps
             .as_ref()
             .expect("reverse_deps should be present");
-        let actual_deps: Vec<PackageDep> = reverse_deps.into_iter().collect();
+        let actual_deps: Vec<DependencyInfo> = reverse_deps.into_iter().collect();
         self.assert_deps_internal(
             false,
             details,
@@ -189,20 +189,20 @@ impl FixtureDetails {
         forward: bool,
         known_details: &PackageDetails,
         expected_dep_ids: &[(&str, &str)],
-        actual_deps: Vec<PackageDep<'a>>,
+        actual_deps: Vec<DependencyInfo<'a>>,
         msg: &str,
     ) {
         // Some of the messages are different based on whether we're testing forward deps or reverse
         // ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
         // reverse deps it's the other way round.
 
-        fn __from_metadata<'a>(dep: &PackageDep<'a>) -> &'a PackageMetadata {
+        fn __from_metadata<'a>(dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
             dep.from
         }
-        fn __to_metadata<'a>(dep: &PackageDep<'a>) -> &'a PackageMetadata {
+        fn __to_metadata<'a>(dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
             dep.to
         }
-        type DepToMetadata<'a> = fn(&PackageDep<'a>) -> &'a PackageMetadata;
+        type DepToMetadata<'a> = fn(&DependencyInfo<'a>) -> &'a PackageMetadata;
 
         let (direction_desc, known_desc, variable_desc, known_metadata, variable_metadata) =
             if forward {
