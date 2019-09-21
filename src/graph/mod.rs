@@ -108,14 +108,14 @@ impl PackageGraph {
     pub fn deps<'a>(
         &'a self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = PackageDep<'a>> + 'a> {
+    ) -> Option<impl Iterator<Item = DependencyInfo<'a>> + 'a> {
         self.deps_directed(package_id, Outgoing)
     }
 
     pub fn reverse_deps<'a>(
         &'a self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = PackageDep<'a>> + 'a> {
+    ) -> Option<impl Iterator<Item = DependencyInfo<'a>> + 'a> {
         self.deps_directed(package_id, Incoming)
     }
 
@@ -123,7 +123,7 @@ impl PackageGraph {
         &'a self,
         package_id: &PackageId,
         dir: Direction,
-    ) -> Option<impl Iterator<Item = PackageDep<'a>> + 'a> {
+    ) -> Option<impl Iterator<Item = DependencyInfo<'a>> + 'a> {
         self.metadata(package_id)
             .map(|metadata| self.deps_node_idx_directed(metadata.node_idx, dir))
     }
@@ -132,7 +132,7 @@ impl PackageGraph {
         &'a self,
         node_idx: NodeIndex<u32>,
         dir: Direction,
-    ) -> impl Iterator<Item = PackageDep<'a>> + 'a {
+    ) -> impl Iterator<Item = DependencyInfo<'a>> + 'a {
         self.dep_graph
             .edges_directed(node_idx, dir)
             .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
@@ -143,7 +143,7 @@ impl PackageGraph {
     /// The order edges are visited is not specified.
     pub fn retain_edges<F>(&mut self, visit: F)
     where
-        F: Fn(PackageDep<'_>) -> bool,
+        F: Fn(DependencyInfo<'_>) -> bool,
     {
         let packages = &self.packages;
         self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
@@ -155,7 +155,7 @@ impl PackageGraph {
             let from = &packages[&frozen_graph[source]];
             let to = &packages[&frozen_graph[target]];
             let edge = &frozen_graph[edge_idx];
-            visit(PackageDep { from, to, edge })
+            visit(DependencyInfo { from, to, edge })
         });
     }
 
@@ -180,7 +180,7 @@ impl PackageGraph {
     pub fn transitive_dep_edges<'a, 'b>(
         &'a self,
         package_ids: impl IntoIterator<Item = &'b PackageId>,
-    ) -> Result<impl Iterator<Item = PackageDep<'a>> + 'a, Error> {
+    ) -> Result<impl Iterator<Item = DependencyInfo<'a>> + 'a, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         let edge_bfs = EdgeBfs::new(&self.dep_graph, node_idxs);
 
@@ -205,7 +205,7 @@ impl PackageGraph {
         source: NodeIndex<u32>,
         target: NodeIndex<u32>,
         edge: &'a DependencyEdge,
-    ) -> PackageDep<'a> {
+    ) -> DependencyInfo<'a> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
         //
@@ -217,7 +217,7 @@ impl PackageGraph {
         let to = self
             .metadata(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
-        PackageDep { from, to, edge }
+        DependencyInfo { from, to, edge }
     }
 
     /// Maps an iterator of package IDs to their internal graph node indexes.
@@ -270,7 +270,7 @@ impl Workspace {
 }
 
 #[derive(Clone, Debug)]
-pub struct PackageDep<'a> {
+pub struct DependencyInfo<'a> {
     pub from: &'a PackageMetadata,
     pub to: &'a PackageMetadata,
     pub edge: &'a DependencyEdge,
