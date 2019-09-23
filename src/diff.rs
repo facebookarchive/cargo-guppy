@@ -116,16 +116,13 @@ impl ::std::fmt::Display for Diff {
             Ok(())
         }
 
-        if !self.updated.is_empty() {
-            writeln!(f, "Updated Packages:")?;
-            for (removed, added) in &self.updated {
-                writeln!(
-                    f,
-                    "\t{}: {} -> {}",
-                    removed.name(),
-                    removed.version(),
-                    added.version(),
-                )?;
+        if !self.added.is_empty() {
+            writeln!(f, "Added Packages (Duplicate versions in '()'):")?;
+            for (added, dups) in &self.added {
+                write!(f, "\t{} {}", added.name(), added.version(),)?;
+
+                write_dups(f, dups)?;
+                writeln!(f)?;
             }
             writeln!(f)?;
         }
@@ -141,13 +138,16 @@ impl ::std::fmt::Display for Diff {
             writeln!(f)?;
         }
 
-        if !self.added.is_empty() {
-            writeln!(f, "Added Packages (Duplicate versions in '()'):")?;
-            for (added, dups) in &self.added {
-                write!(f, "\t{} {}", added.name(), added.version(),)?;
-
-                write_dups(f, dups)?;
-                writeln!(f)?;
+        if !self.updated.is_empty() {
+            writeln!(f, "Updated Packages:")?;
+            for (removed, added) in &self.updated {
+                writeln!(
+                    f,
+                    "\t{}: {} -> {}",
+                    removed.name(),
+                    removed.version(),
+                    added.version(),
+                )?;
             }
             writeln!(f)?;
         }
