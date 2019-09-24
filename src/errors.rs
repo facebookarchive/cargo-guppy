@@ -11,7 +11,7 @@ use Error::*;
 #[derive(Debug)]
 pub enum Error {
     Io(io::Error),
-    InvalidInput,
+    LockfileParseError(toml::de::Error),
     ConfigIoError(io::Error),
     ConfigParseError(toml::de::Error),
     CommandError(MetadataError),
@@ -31,7 +31,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Io(err) => write!(f, "{}", err),
-            InvalidInput => write!(f, "Failed to read Cargo.lock file"),
+            LockfileParseError(err) => write!(f, "Error while parsing lockfile: {}", err),
             ConfigIoError(err) => write!(f, "Error while reading config file: {}", err),
             ConfigParseError(err) => write!(f, "Error while parsing config file: {}", err),
             CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
@@ -47,7 +47,7 @@ impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Io(err) => Some(err),
-            InvalidInput => None,
+            LockfileParseError(err) => Some(err),
             ConfigIoError(err) => Some(err),
             ConfigParseError(err) => Some(err),
             CommandError(_) => None,

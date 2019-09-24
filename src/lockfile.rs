@@ -2,93 +2,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::Error;
-use serde::Deserialize;
-use serde::Serialize;
-use std::{
-    collections::HashMap,
-    convert::{TryFrom, TryInto},
-    fs::File,
-    io::Read,
-    str::FromStr,
+use serde::{
+    de::{Error as _, IntoDeserializer},
+    Deserialize, Deserializer, Serialize, Serializer,
 };
+use std::{collections::HashMap, fs::File, io::Read, str::FromStr};
 use toml;
 
-#[derive(Debug, Deserialize)]
-struct RawLockfile {
-    metadata: HashMap<String, String>,
-    package: Vec<RawPackage>,
-}
-
-#[derive(Debug, Deserialize)]
-struct RawPackage {
-    name: String,
-    version: String,
-    source: Option<String>,
-    dependencies: Option<Vec<String>>,
-}
-
-#[derive(Clone, Debug)]
-enum Source {
-    Path,
-    Registry(String),
-    Git { url: String, rev: String },
-}
-
-impl Source {
-    fn get_url(&self) -> Option<String> {
-        match &self {
-            Source::Path => None,
-            Source::Registry(url) => Some(format!("registry+{}", url)),
-            Source::Git { url, .. } => Some(format!("git+{}", url)),
-        }
-    }
-}
-
-impl FromStr for Source {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let idx = s.find('+').ok_or(Error::InvalidInput)?;
-        let (source_type, url) = (&s[..idx], &s[idx + 1..]);
-
-        match source_type {
-            "registry" => Ok(Source::Registry(url.to_string())),
-            "git" => {
-                let idx = url.find('#').ok_or(Error::InvalidInput)?;
-                let (url, rev) = (&url[..idx], &url[idx + 1..]);
-
-                Ok(Source::Git {
-                    url: url.to_string(),
-                    rev: rev.to_string(),
-                })
-            }
-            _ => Err(Error::InvalidInput),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Package {
-    name: String,
-    version: String,
-    source: Source,
-    checksum: Option<String>,
-    dependencies: Option<Vec<PackageId>>,
-}
-
-impl Package {
-    pub fn pkg_id(&self) -> PackageId {
-        PackageId::new(
-            self.name.clone(),
-            self.version.clone(),
-            self.source.get_url(),
-        )
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Lockfile {
-    packages: HashMap<PackageId, Package>,
+    package: Vec<Package>,
+    metadata: HashMap<String, String>,
 }
 
 impl Lockfile {
@@ -97,17 +21,20 @@ impl Lockfile {
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
 
-        contents.parse()
+        Self::from_str(&contents)
     }
 
-    pub fn packages(&self) -> &HashMap<PackageId, Package> {
-        &self.packages
+    pub fn from_str(s: &str) -> Result<Self, Error> {
+        Ok(toml::from_str(s).map_err(Error::LockfileParseError)?)
+    }
+
+    pub fn packages(&self) -> impl Iterator<Item = &Package> {
+        self.package.iter()
     }
 
     pub fn third_party_packages(&self) -> usize {
-        self.packages
-            .iter()
-            .filter(|(_pkg_id, pkg)| {
+        self.packages()
+            .filter(|pkg| {
                 if let Source::Path = pkg.source {
                     false
                 } else {
@@ -120,8 +47,10 @@ impl Lockfile {
     pub fn duplicate_packages(&self) {
         let mut map = HashMap::new();
 
-        for (pkg_id, _pkg) in &self.packages {
-            map.entry(pkg_id.name()).or_insert(Vec::new()).push(pkg_id);
+        for pkg in self.packages() {
+            map.entry(pkg.name())
+                .or_insert(Vec::new())
+                .push(pkg.package_id());
         }
 
         for (name, duplicates) in map {
@@ -139,73 +68,107 @@ impl Lockfile {
     }
 }
 
-impl TryFrom<RawLockfile> for Lockfile {
-    type Error = Error;
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Package {
+    name: String,
+    version: String,
+    #[serde(default, skip_serializing_if = "Source::is_path")]
+    source: Source,
+    dependencies: Option<Vec<PackageId>>,
+}
 
-    fn try_from(value: RawLockfile) -> Result<Self, Self::Error> {
-        let mut checksums = value
-            .metadata
-            .into_iter()
-            .filter(|(k, _)| k.starts_with("checksum "))
-            .map(|(k, v)| {
-                let k = k.trim_start_matches("checksum ");
-                let pkg_id: PackageId = k.parse()?;
-                Ok((pkg_id, v))
-            })
-            .collect::<Result<HashMap<_, _>, Self::Error>>()?;
+impl Package {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 
-        let packages = value
-            .package
-            .into_iter()
-            .map(|raw_pkg| {
-                let source = match raw_pkg.source {
-                    None => Source::Path,
-                    Some(s) => s.parse()?,
-                };
-                let pkg_id = PackageId::new(
-                    raw_pkg.name.clone(),
-                    raw_pkg.version.clone(),
-                    source.get_url(),
-                );
-                let checksum = checksums.remove(&pkg_id);
-                let dependencies = match raw_pkg.dependencies {
-                    None => None,
-                    Some(deps) => Some(deps.into_iter().map(|s| s.parse()).collect::<Result<
-                        Vec<PackageId>,
-                        Self::Error,
-                    >>(
-                    )?),
-                };
-
-                let package = Package {
-                    name: raw_pkg.name,
-                    version: raw_pkg.version,
-                    source,
-                    checksum,
-                    dependencies,
-                };
-
-                Ok((pkg_id, package))
-            })
-            .collect::<Result<HashMap<_, _>, Self::Error>>()?;
-
-        // Maybe check that checksums is empty?
-
-        Ok(Lockfile { packages })
+    pub fn package_id(&self) -> PackageId {
+        PackageId::new(
+            self.name.clone(),
+            self.version.clone(),
+            self.source.get_url(),
+        )
     }
 }
 
-impl FromStr for Lockfile {
-    type Err = Error;
+#[derive(Clone, Debug)]
+enum Source {
+    Path,
+    Registry(String),
+    Git { url: String, rev: String },
+}
+
+impl Source {
+    fn get_url(&self) -> Option<String> {
+        match &self {
+            Source::Path => None,
+            Source::Registry(url) => Some(format!("registry+{}", url)),
+            Source::Git { url, .. } => Some(format!("git+{}", url)),
+        }
+    }
+
+    fn is_path(&self) -> bool {
+        match self {
+            Source::Path => true,
+            _ => false,
+        }
+    }
+}
+
+impl Default for Source {
+    fn default() -> Self {
+        Source::Path
+    }
+}
+
+impl Serialize for Source {
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Source::Path => s.serialize_none(),
+            Source::Registry(url) => s.serialize_str(&format!("registry+{}", url)),
+            Source::Git { url, rev } => s.serialize_str(&format!("git+{}#{}", url, rev)),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Source {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let idx = s.find('+').ok_or(D::Error::custom("Invalid Input"))?;
+        let (source_type, url) = (&s[..idx], &s[idx + 1..]);
+
+        match source_type {
+            "registry" => Ok(Source::Registry(url.to_string())),
+            "git" => {
+                let idx = url.find('#').ok_or(D::Error::custom("Invalid Input"))?;
+                let (url, rev) = (&url[..idx], &url[idx + 1..]);
+
+                Ok(Source::Git {
+                    url: url.to_string(),
+                    rev: rev.to_string(),
+                })
+            }
+            _ => Err(D::Error::custom("Invalid Input")),
+        }
+    }
+}
+
+impl FromStr for Source {
+    type Err = serde::de::value::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        toml::from_str::<RawLockfile>(s)
-            .map_err(|_| Error::InvalidInput)?
-            .try_into()
+        Self::deserialize(s.into_deserializer())
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub struct PackageId {
     name: String,
     version: String,
@@ -234,25 +197,56 @@ impl PackageId {
     }
 }
 
-impl FromStr for PackageId {
-    type Err = Error;
+impl Serialize for PackageId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = format!("{} {}", self.name, self.version);
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some(source) = &self.source {
+            s.push_str(&format!(" ({})", source));
+        }
+        serializer.serialize_str(&s)
+    }
+}
+
+impl<'de> Deserialize<'de> for PackageId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
         let mut iter = s.split_whitespace();
-        let name = iter.next().ok_or(Error::InvalidInput)?.to_string();
-        let version = iter.next().ok_or(Error::InvalidInput)?.to_string();
+        let name = iter
+            .next()
+            .ok_or(D::Error::custom("Invalid Input"))?
+            .to_string();
+        let version = iter
+            .next()
+            .ok_or(D::Error::custom("Invalid Input"))?
+            .to_string();
         let source = match iter.next() {
             Some(url) => {
                 if url.starts_with('(') && url.ends_with(')') {
                     Some(url[1..url.len() - 1].to_string())
                 } else {
-                    return Err(Error::InvalidInput);
+                    return Err(D::Error::custom("Invalid Input"));
                 }
             }
             None => None,
         };
 
         Ok(Self::new(name, version, source))
+    }
+}
+
+impl FromStr for PackageId {
+    type Err = serde::de::value::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::deserialize(s.into_deserializer())
     }
 }
 
@@ -267,17 +261,14 @@ mod tests {
 
     #[test]
     fn package_id_from_str() {
-        let pkg = "serde 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)"
-            .parse()
-            .unwrap();
+        let s = "serde 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)";
+        let pkg: PackageId = s.parse().unwrap();
 
+        assert_eq!(pkg.name(), "serde");
+        assert_eq!(pkg.version(), "1.0.99");
         assert_eq!(
-            PackageId::new(
-                "serde".to_string(),
-                "1.0.99".to_string(),
-                Some("registry+https://github.com/rust-lang/crates.io-index".to_string())
-            ),
-            pkg
+            pkg.source(),
+            Some("registry+https://github.com/rust-lang/crates.io-index")
         );
     }
 }
