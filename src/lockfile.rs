@@ -252,3 +252,29 @@ impl FromStr for PackageId {
         Ok(Self::new(name, version, source))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::lockfile::{Lockfile, PackageId};
+
+    #[test]
+    fn from_file() {
+        Lockfile::from_file("Cargo.lock").unwrap();
+    }
+
+    #[test]
+    fn package_id_from_str() {
+        let pkg = "serde 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)"
+            .parse()
+            .unwrap();
+
+        assert_eq!(
+            PackageId::new(
+                "serde".to_string(),
+                "1.0.99".to_string(),
+                Some("registry+https://github.com/rust-lang/crates.io-index".to_string())
+            ),
+            pkg
+        );
+    }
+}
