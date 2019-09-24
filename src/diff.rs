@@ -8,14 +8,17 @@ pub struct DiffOptions;
 
 impl DiffOptions {
     pub fn diff(&self, old_lockfile: &Lockfile, new_lockfile: &Lockfile) -> Diff {
-        let mut new = new_lockfile.packages().clone();
+        let mut new: HashMap<_, _> = new_lockfile
+            .packages()
+            .map(|p| (p.package_id(), p))
+            .collect();
 
         let mut removed = old_lockfile
             .packages()
-            .iter()
-            .filter_map(|(pkg_id, _pkg)| {
-                if new.remove(pkg_id).is_none() {
-                    Some(pkg_id.clone())
+            .filter_map(|package| {
+                let pkg_id = package.package_id();
+                if new.remove(&pkg_id).is_none() {
+                    Some(pkg_id)
                 } else {
                     None
                 }
@@ -23,11 +26,14 @@ impl DiffOptions {
             .map(|removed_pkg_id| {
                 let remaining_packages = new_lockfile
                     .packages()
-                    .iter()
-                    .filter(|(pkg_id, _)| {
-                        (**pkg_id != removed_pkg_id) && (pkg_id.name() == removed_pkg_id.name())
+                    .filter_map(|package| {
+                        let pkg_id = package.package_id();
+                        if (pkg_id != removed_pkg_id) && (pkg_id.name() == removed_pkg_id.name()) {
+                            Some(pkg_id)
+                        } else {
+                            None
+                        }
                     })
-                    .map(|(pkg_id, _)| pkg_id.clone())
                     .collect::<Vec<_>>();
 
                 if remaining_packages.is_empty() {
@@ -43,17 +49,20 @@ impl DiffOptions {
             .map(|(added_pkg_id, _pkg)| {
                 let existing_packages = new_lockfile
                     .packages()
-                    .iter()
-                    .filter(|(pkg_id, _)| {
-                        (**pkg_id != added_pkg_id) && (pkg_id.name() == added_pkg_id.name())
+                    .filter_map(|package| {
+                        let pkg_id = package.package_id();
+                        if (pkg_id != added_pkg_id) && (package.name() == added_pkg_id.name()) {
+                            Some(pkg_id)
+                        } else {
+                            None
+                        }
                     })
-                    .map(|(pkg_id, _)| pkg_id.clone())
                     .collect::<Vec<_>>();
 
                 if existing_packages.is_empty() {
-                    (added_pkg_id, None)
+                    (added_pkg_id.clone(), None)
                 } else {
-                    (added_pkg_id, Some(existing_packages))
+                    (added_pkg_id.clone(), Some(existing_packages))
                 }
             })
             .collect::<HashMap<_, _>>();
@@ -256,8 +265,8 @@ mod tests {
             "checksum unicode-xid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
         "#;
 
-        let old: Lockfile = old.parse().unwrap();
-        let new: Lockfile = new.parse().unwrap();
+        let old = Lockfile::from_str(old).unwrap();
+        let new = Lockfile::from_str(new).unwrap();
 
         let diff = DiffOptions::default().diff(&old, &new);
 
