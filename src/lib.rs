@@ -1,3 +1,4 @@
+mod config;
 pub mod diff;
 mod errors;
 pub mod graph;

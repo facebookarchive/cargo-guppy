@@ -9,6 +9,8 @@ use Error::*;
 pub enum Error {
     Io(io::Error),
     InvalidInput,
+    ConfigIoError(io::Error),
+    ConfigParseError(toml::de::Error),
     CommandError(MetadataError),
     DepGraphError(String),
     DepGraphInternalError(String),
@@ -26,6 +28,8 @@ impl fmt::Display for Error {
         match self {
             Io(err) => write!(f, "{}", err),
             InvalidInput => write!(f, "Failed to read Cargo.lock file"),
+            ConfigIoError(err) => write!(f, "Error while reading config file: {}", err),
+            ConfigParseError(err) => write!(f, "Error while parsing config file: {}", err),
             CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
             DepGraphError(msg) => write!(f, "Error while computing dependency graph: {}", msg),
             DepGraphInternalError(msg) => write!(f, "Internal error in dependency graph: {}", msg),
@@ -39,6 +43,8 @@ impl error::Error for Error {
         match self {
             Io(err) => Some(err),
             InvalidInput => None,
+            ConfigIoError(err) => Some(err),
+            ConfigParseError(err) => Some(err),
             CommandError(_) => None,
             DepGraphError(_) => None,
             DepGraphInternalError(_) => None,
