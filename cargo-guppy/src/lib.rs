@@ -1,14 +1,4 @@
-mod config;
-pub mod diff;
-mod errors;
-pub mod graph;
-pub mod lockfile;
-#[cfg(test)]
-mod unit_tests;
-
-pub use errors::Error;
-pub use lockfile::{Lockfile, Package, PackageId};
-use serde_json;
+use cargo_guppy_lib::{diff, lockfile::Lockfile, Error};
 
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), Error> {
     let old = Lockfile::from_file(old)?;

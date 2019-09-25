@@ -1,5 +1,4 @@
-use crate::Lockfile;
-use crate::PackageId;
+use crate::lockfile::{Lockfile, PackageId};
 use serde::Serialize;
 use std::collections::HashMap;
 

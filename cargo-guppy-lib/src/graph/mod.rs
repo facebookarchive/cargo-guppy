@@ -204,10 +204,6 @@ impl PackageGraph {
     // Helper methods
     // ---
 
-    fn dep_graph(&self) -> &Graph<PackageId, DependencyEdge> {
-        &self.dep_graph
-    }
-
     /// Maps an edge source, target and weight to a package dep.
     fn edge_to_dep<'a>(
         &'a self,
