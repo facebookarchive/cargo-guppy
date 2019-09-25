@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn from_file() {
-        Lockfile::from_file("Cargo.lock").unwrap();
+        Lockfile::from_file("../Cargo.lock").unwrap();
     }
 
     #[test]

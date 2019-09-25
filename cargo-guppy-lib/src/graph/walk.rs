@@ -36,6 +36,7 @@ where
 
     /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `start`
     /// in the queue of edges to visit.
+    #[allow(dead_code)]
     pub(crate) fn new_single<G>(graph: G, start: N) -> Self
     where
         G: Visitable<Map = VM> + IntoEdges<NodeId = N, EdgeId = E>,

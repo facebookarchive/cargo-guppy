@@ -1,8 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::Lockfile;
-use crate::PackageId;
+use crate::lockfile::{Lockfile, PackageId};
 use serde::Serialize;
 use std::collections::HashMap;
 
