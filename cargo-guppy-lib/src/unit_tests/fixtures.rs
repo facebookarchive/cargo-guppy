@@ -17,6 +17,8 @@ pub(crate) static METADATA2_WALKDIR: &str =
     "walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)";
 pub(crate) static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
 
+pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/metadata_libra.json");
+
 pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
 pub(crate) struct Fixture {
@@ -89,6 +91,13 @@ impl Fixture {
         Self {
             graph: Self::parse_graph(METADATA2),
             details: FixtureDetails::metadata2(),
+        }
+    }
+
+    pub(crate) fn metadata_libra() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA_LIBRA),
+            details: FixtureDetails::metadata_libra(),
         }
     }
 
@@ -390,6 +399,91 @@ impl FixtureDetails {
             ],
             details,
         )
+    }
+
+    pub(crate) fn metadata_libra() -> Self {
+        Self::new(vec![
+            ("admission_control/admission-control-proto", "admission-control-proto 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-proto)"),
+            ("admission_control/admission-control-service", "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)"),
+            ("benchmark", "benchmark 0.1.0 (path+file:///Users/fakeuser/local/libra/benchmark)"),
+            ("client", "client 0.1.0 (path+file:///Users/fakeuser/local/libra/client)"),
+            ("client/libra_wallet", "libra-wallet 0.1.0 (path+file:///Users/fakeuser/local/libra/client/libra_wallet)"),
+            ("common/bounded-executor", "bounded-executor 0.1.0 (path+file:///Users/fakeuser/local/libra/common/bounded-executor)"),
+            ("common/channel", "channel 0.1.0 (path+file:///Users/fakeuser/local/libra/common/channel)"),
+            ("common/crash-handler", "crash-handler 0.1.0 (path+file:///Users/fakeuser/local/libra/common/crash-handler)"),
+            ("common/datatest-stable", "datatest-stable 0.1.0 (path+file:///Users/fakeuser/local/libra/common/datatest-stable)"),
+            ("common/debug-interface", "debug-interface 0.1.0 (path+file:///Users/fakeuser/local/libra/common/debug-interface)"),
+            ("common/executable-helpers", "executable-helpers 0.1.0 (path+file:///Users/fakeuser/local/libra/common/executable-helpers)"),
+            ("common/failure-ext", "libra-failure-ext 0.1.0 (path+file:///Users/fakeuser/local/libra/common/failure-ext)"),
+            ("common/failure-ext/failure-macros", "libra-failure-macros 0.1.0 (path+file:///Users/fakeuser/local/libra/common/failure-ext/failure-macros)"),
+            ("common/futures-semaphore", "futures-semaphore 0.1.0 (path+file:///Users/fakeuser/local/libra/common/futures-semaphore)"),
+            ("common/grpc-helpers", "grpc-helpers 0.1.0 (path+file:///Users/fakeuser/local/libra/common/grpc-helpers)"),
+            ("common/lcs", "libra-canonical-serialization 0.1.0 (path+file:///Users/fakeuser/local/libra/common/lcs)"),
+            ("common/logger", "libra-logger 0.1.0 (path+file:///Users/fakeuser/local/libra/common/logger)"),
+            ("common/metrics", "libra-metrics 0.1.0 (path+file:///Users/fakeuser/local/libra/common/metrics)"),
+            ("common/nibble", "libra-nibble 0.1.0 (path+file:///Users/fakeuser/local/libra/common/nibble)"),
+            ("common/proptest-helpers", "libra-proptest-helpers 0.1.0 (path+file:///Users/fakeuser/local/libra/common/proptest-helpers)"),
+            ("common/prost-ext", "libra-prost-ext 0.1.0 (path+file:///Users/fakeuser/local/libra/common/prost-ext)"),
+            ("common/tools", "libra-tools 0.1.0 (path+file:///Users/fakeuser/local/libra/common/tools)"),
+            ("config", "libra-config 0.1.0 (path+file:///Users/fakeuser/local/libra/config)"),
+            ("config/config-builder", "config-builder 0.1.0 (path+file:///Users/fakeuser/local/libra/config/config-builder)"),
+            ("config/generate-keypair", "generate-keypair 0.1.0 (path+file:///Users/fakeuser/local/libra/config/generate-keypair)"),
+            ("consensus", "consensus 0.1.0 (path+file:///Users/fakeuser/local/libra/consensus)"),
+            ("consensus/consensus-types", "consensus-types 0.1.0 (path+file:///Users/fakeuser/local/libra/consensus/consensus-types)"),
+            ("consensus/safety-rules", "safety-rules 0.1.0 (path+file:///Users/fakeuser/local/libra/consensus/safety-rules)"),
+            ("crypto/crypto", "libra-crypto 0.1.0 (path+file:///Users/fakeuser/local/libra/crypto/crypto)"),
+            ("crypto/crypto-derive", "libra-crypto-derive 0.1.0 (path+file:///Users/fakeuser/local/libra/crypto/crypto-derive)"),
+            ("crypto/secret-service", "secret-service 0.1.0 (path+file:///Users/fakeuser/local/libra/crypto/secret-service)"),
+            ("executor", "executor 0.1.0 (path+file:///Users/fakeuser/local/libra/executor)"),
+            ("language/benchmarks", "language_benchmarks 0.1.0 (path+file:///Users/fakeuser/local/libra/language/benchmarks)"),
+            ("language/bytecode-verifier", "bytecode-verifier 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier)"),
+            ("language/bytecode-verifier/bytecode_verifier_tests", "bytecode_verifier_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier/bytecode_verifier_tests)"),
+            ("language/bytecode-verifier/invalid-mutations", "invalid-mutations 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier/invalid-mutations)"),
+            ("language/compiler", "compiler 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler)"),
+            ("language/compiler/bytecode-source-map", "bytecode-source-map 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/bytecode-source-map)"),
+            ("language/compiler/ir-to-bytecode", "ir-to-bytecode 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/ir-to-bytecode)"),
+            ("language/compiler/ir-to-bytecode/syntax", "ir-to-bytecode-syntax 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/ir-to-bytecode/syntax)"),
+            ("language/e2e-tests", "language-e2e-tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/e2e-tests)"),
+            ("language/functional_tests", "functional_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/functional_tests)"),
+            ("language/stackless-bytecode/bytecode-to-boogie", "bytecode-to-boogie 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/bytecode-to-boogie)"),
+            ("language/stackless-bytecode/generator", "stackless-bytecode-generator 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/generator)"),
+            ("language/stackless-bytecode/tree_heap", "tree_heap 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/tree_heap)"),
+            ("language/stdlib", "stdlib 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stdlib)"),
+            ("language/tools/cost-synthesis", "cost-synthesis 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/cost-synthesis)"),
+            ("language/tools/test-generation", "test-generation 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/test-generation)"),
+            ("language/transaction-builder", "transaction-builder 0.1.0 (path+file:///Users/fakeuser/local/libra/language/transaction-builder)"),
+            ("language/vm", "vm 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm)"),
+            ("language/vm/serializer_tests", "serializer_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/serializer_tests)"),
+            ("language/vm/vm-genesis", "vm-genesis 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/vm-genesis)"),
+            ("language/vm/vm-runtime", "vm-runtime 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/vm-runtime)"),
+            ("language/vm/vm-runtime/vm-cache-map", "vm-cache-map 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/vm-runtime/vm-cache-map)"),
+            ("language/vm/vm-runtime/vm-runtime-types", "vm-runtime-types 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/vm-runtime/vm-runtime-types)"),
+            ("libra-node", "libra-node 0.1.0 (path+file:///Users/fakeuser/local/libra/libra-node)"),
+            ("libra-swarm", "libra-swarm 0.1.0 (path+file:///Users/fakeuser/local/libra/libra-swarm)"),
+            ("mempool", "libra-mempool 0.1.0 (path+file:///Users/fakeuser/local/libra/mempool)"),
+            ("mempool/mempool-shared-proto", "libra-mempool-shared-proto 0.1.0 (path+file:///Users/fakeuser/local/libra/mempool/mempool-shared-proto)"),
+            ("network", "network 0.1.0 (path+file:///Users/fakeuser/local/libra/network)"),
+            ("network/memsocket", "memsocket 0.1.0 (path+file:///Users/fakeuser/local/libra/network/memsocket)"),
+            ("network/netcore", "netcore 0.1.0 (path+file:///Users/fakeuser/local/libra/network/netcore)"),
+            ("network/noise", "noise 0.1.0 (path+file:///Users/fakeuser/local/libra/network/noise)"),
+            ("network/socket-bench-server", "socket-bench-server 0.1.0 (path+file:///Users/fakeuser/local/libra/network/socket-bench-server)"),
+            ("state-synchronizer", "state-synchronizer 0.1.0 (path+file:///Users/fakeuser/local/libra/state-synchronizer)"),
+            ("storage/accumulator", "accumulator 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/accumulator)"),
+            ("storage/jellyfish-merkle", "jellyfish-merkle 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/jellyfish-merkle)"),
+            ("storage/libradb", "libradb 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/libradb)"),
+            ("storage/schemadb", "schemadb 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/schemadb)"),
+            ("storage/scratchpad", "scratchpad 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/scratchpad)"),
+            ("storage/state-view", "libra-state-view 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/state-view)"),
+            ("storage/storage-client", "storage-client 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/storage-client)"),
+            ("storage/storage-proto", "storage-proto 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/storage-proto)"),
+            ("storage/storage-service", "storage-service 0.1.0 (path+file:///Users/fakeuser/local/libra/storage/storage-service)"),
+            ("testsuite", "testsuite 0.1.0 (path+file:///Users/fakeuser/local/libra/testsuite)"),
+            ("testsuite/cluster-test", "cluster-test 0.1.0 (path+file:///Users/fakeuser/local/libra/testsuite/cluster-test)"),
+            ("testsuite/libra-fuzzer", "libra-fuzzer 0.1.0 (path+file:///Users/fakeuser/local/libra/testsuite/libra-fuzzer)"),
+            ("types", "libra-types 0.1.0 (path+file:///Users/fakeuser/local/libra/types)"),
+            ("vm-validator", "vm-validator 0.1.0 (path+file:///Users/fakeuser/local/libra/vm-validator)"),
+            ("x", "x 0.1.0 (path+file:///Users/fakeuser/local/libra/x)"),
+        ], HashMap::new())
     }
 }
 

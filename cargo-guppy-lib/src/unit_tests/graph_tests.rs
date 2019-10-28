@@ -28,3 +28,9 @@ fn metadata2() {
     let metadata2 = Fixture::metadata2();
     metadata2.verify();
 }
+
+#[test]
+fn metadata_libra() {
+    let metadata_libra = Fixture::metadata_libra();
+    metadata_libra.verify();
+}
