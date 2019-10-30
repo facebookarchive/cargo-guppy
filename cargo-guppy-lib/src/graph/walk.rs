@@ -1,7 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use petgraph::visit::{EdgeRef, IntoEdges, VisitMap, Visitable, Walker};
+use crate::graph::edge_triple;
+use petgraph::visit::{IntoEdges, VisitMap, Visitable, Walker};
 use std::collections::VecDeque;
 use std::iter;
 
@@ -67,8 +68,4 @@ where
     fn walk_next(&mut self, context: G) -> Option<Self::Item> {
         self.next(context)
     }
-}
-
-fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::EdgeId) {
-    (edge_ref.source(), edge_ref.target(), edge_ref.id())
 }

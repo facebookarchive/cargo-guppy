@@ -466,3 +466,7 @@ fn kind_str(kind: DependencyKind) -> &'static str {
         _ => "unknown",
     }
 }
+
+fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::EdgeId) {
+    (edge_ref.source(), edge_ref.target(), edge_ref.id())
+}
