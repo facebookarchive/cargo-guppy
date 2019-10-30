@@ -1,5 +1,5 @@
 use crate::errors::Error;
-use crate::graph::walk::EdgeBfs;
+use crate::graph::visit::walk::EdgeBfs;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
@@ -10,7 +10,7 @@ use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
 mod build;
-mod walk;
+mod visit;
 
 /// A graph of packages extracted from a metadata.
 #[derive(Clone, Debug)]
