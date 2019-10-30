@@ -16,17 +16,17 @@ where
     N: Copy + PartialEq,
     VM: VisitMap<N>,
 {
-    /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `starts`
+    /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `initials`
     /// in the queue of edges to visit.
-    pub(crate) fn new<G>(graph: G, starts: impl IntoIterator<Item = N>) -> Self
+    pub(crate) fn new<G>(graph: G, initials: impl IntoIterator<Item = N>) -> Self
     where
         G: Visitable<Map = VM> + IntoEdges<NodeId = N, EdgeId = E>,
     {
         let mut discovered = graph.visit_map();
         let mut queue = VecDeque::new();
-        queue.extend(starts.into_iter().flat_map(|start| {
-            discovered.visit(start);
-            graph.edges(start).map(edge_triple)
+        queue.extend(initials.into_iter().flat_map(|node_idx| {
+            discovered.visit(node_idx);
+            graph.edges(node_idx).map(edge_triple)
         }));
         Self { queue, discovered }
     }
