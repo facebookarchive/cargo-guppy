@@ -151,7 +151,7 @@ impl FixtureDetails {
     }
 
     /// Returns true if the deps for this package are available to test against.
-    pub(crate) fn has_deps<'a>(&self, id: &PackageId) -> bool {
+    pub(crate) fn has_deps(&self, id: &PackageId) -> bool {
         let details = &self.package_details[id];
         details.deps.is_some()
     }
