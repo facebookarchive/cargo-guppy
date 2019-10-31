@@ -287,26 +287,28 @@ impl FixtureDetails {
     pub(crate) fn metadata1() -> Self {
         let mut details = HashMap::new();
 
-        add(
-            &mut details,
+        PackageDetails::new(
             METADATA1_TESTCRATE,
             "testcrate",
             "0.1.0",
             vec![FAKE_AUTHOR],
             None,
             None,
-            Some(vec![("datatest", METADATA1_DATATEST)]),
-            Some(vec![]),
-        );
-        add(
-            &mut details,
+        )
+        .set_deps(vec![("datatest", METADATA1_DATATEST)])
+        .set_reverse_deps(vec![])
+        .insert_into(&mut details);
+
+        PackageDetails::new(
             METADATA1_DATATEST,
             "datatest",
             "0.4.2",
             vec!["Ivan Dubrov <ivan@commure.com>"],
             Some("Data-driven tests in Rust\n"),
             Some("MIT/Apache-2.0"),
-            Some(vec![
+        )
+        .set_deps(
+            vec![
                 ("ctor", "ctor 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)"),
                 ("datatest-derive", "datatest-derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)"),
                 ("regex", "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)"),
@@ -318,9 +320,10 @@ impl FixtureDetails {
                 // *replaced* version shows up here, not the regular one.
                 ("walkdir", "walkdir 2.2.9 (git+https://github.com/BurntSushi/walkdir?tag=2.2.9#7c7013259eb9db400b3e5c7bc60330ca08068826)"),
                 ("yaml-rust", "yaml-rust 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)")
-            ]),
-            Some(vec![("datatest", METADATA1_TESTCRATE)]),
-        );
+            ],
+        )
+        .set_reverse_deps(vec![("datatest", METADATA1_TESTCRATE)])
+        .insert_into(&mut details);
 
         Self::new(vec![("", METADATA1_TESTCRATE)], details)
     }
@@ -328,72 +331,74 @@ impl FixtureDetails {
     pub(crate) fn metadata2() -> Self {
         let mut details = HashMap::new();
 
-        add(
-            &mut details,
+        PackageDetails::new(
             METADATA2_TESTCRATE,
             "testworkspace-crate",
             "0.1.0",
             vec![FAKE_AUTHOR],
             None,
             None,
-            Some(vec![
-                (
-                    "datatest",
-                    "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
-                ),
-                // There are three instances of walkdir in the dependencies -- ensure they all
-                // link up correctly.
-                ("walkdir", METADATA2_WALKDIR),
-                (
-                    "walkdir-crates-io",
-                    "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
-                ),
-                (
-                    "walkdir-nuevo",
-                    "walkdir 0.1.0 (path+file:///Users/fakeuser/local/walkdir)",
-                ),
-            ]),
-            Some(vec![]),
-        );
-        add(
-            &mut details,
+        )
+        .set_deps(vec![
+            (
+                "datatest",
+                "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+            ),
+            // There are three instances of walkdir in the dependencies -- ensure they all
+            // link up correctly.
+            ("walkdir", METADATA2_WALKDIR),
+            (
+                "walkdir-crates-io",
+                "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+            ),
+            (
+                "walkdir-nuevo",
+                "walkdir 0.1.0 (path+file:///Users/fakeuser/local/walkdir)",
+            ),
+        ])
+        .set_reverse_deps(vec![])
+        .insert_into(&mut details);
+
+        PackageDetails::new(
             METADATA2_WALKDIR,
             "walkdir",
             "2.2.9",
             vec![FAKE_AUTHOR],
             None,
             None,
-            Some(vec![]),
-            Some(vec![("walkdir", METADATA2_TESTCRATE)]),
-        );
+        )
+        .set_deps(vec![])
+        .set_reverse_deps(vec![("walkdir", METADATA2_TESTCRATE)])
+        .insert_into(&mut details);
+
         // quote was replaced with [patch].
-        add(
-            &mut details,
+        PackageDetails::new(
             METADATA2_QUOTE,
             "quote",
             "1.0.2",
             vec!["David Tolnay <dtolnay@gmail.com>"],
             Some("Quasi-quoting macro quote!(...)"),
             Some("MIT OR Apache-2.0"),
-            Some(vec![(
-                "proc-macro2",
-                "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
-            )]),
-            Some(vec![
-                (
-                    "quote",
-                    "ctor 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
-                ),
-                (
-                    "quote",
-                    "datatest-derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
-                ),
-                (
-                    "quote",
-                    "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
-                ),
-            ]),
-        );
+        )
+        .set_deps(vec![(
+            "proc-macro2",
+            "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+        )])
+        .set_reverse_deps(vec![
+            (
+                "quote",
+                "ctor 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
+            ),
+            (
+                "quote",
+                "datatest-derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+            ),
+            (
+                "quote",
+                "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+            ),
+        ])
+        .insert_into(&mut details);
 
         Self::new(
             vec![
@@ -505,6 +510,42 @@ pub(crate) struct PackageDetails {
 }
 
 impl PackageDetails {
+    fn new(
+        id: &'static str,
+        name: &'static str,
+        version: &'static str,
+        authors: Vec<&'static str>,
+        description: Option<&'static str>,
+        license: Option<&'static str>,
+    ) -> Self {
+        Self {
+            id: package_id(id),
+            name,
+            version: Version::parse(version).expect("version should be valid"),
+            authors,
+            description,
+            license,
+            deps: None,
+            reverse_deps: None,
+        }
+    }
+
+    fn set_deps(mut self, mut deps: Vec<(&'static str, &'static str)>) -> Self {
+        deps.sort();
+        self.deps = Some(deps);
+        self
+    }
+
+    fn set_reverse_deps(mut self, mut reverse_deps: Vec<(&'static str, &'static str)>) -> Self {
+        reverse_deps.sort();
+        self.reverse_deps = Some(reverse_deps);
+        self
+    }
+
+    fn insert_into(self, map: &mut HashMap<PackageId, PackageDetails>) {
+        map.insert(self.id.clone(), self);
+    }
+
     fn assert_metadata(&self, metadata: &PackageMetadata, msg: &str) {
         assert_eq!(&self.id, metadata.id(), "{}: same package ID", msg);
         assert_eq!(self.name, metadata.name(), "{}: same name", msg);
@@ -527,41 +568,6 @@ impl PackageDetails {
         );
         assert_eq!(&self.license, &metadata.license(), "{}: same license", msg);
     }
-}
-
-fn add(
-    map: &mut HashMap<PackageId, PackageDetails>,
-    id: &'static str,
-    name: &'static str,
-    version: &'static str,
-    authors: Vec<&'static str>,
-    description: Option<&'static str>,
-    license: Option<&'static str>,
-    deps: Option<Vec<(&'static str, &'static str)>>,
-    reverse_deps: Option<Vec<(&'static str, &'static str)>>,
-) {
-    fn sort_opt<T: Ord>(v: Option<Vec<T>>) -> Option<Vec<T>> {
-        v.map(|mut val| {
-            val.sort();
-            val
-        })
-    }
-
-    let id = package_id(id);
-
-    map.insert(
-        id.clone(),
-        PackageDetails {
-            id,
-            name,
-            version: Version::parse(version).expect("version should be valid"),
-            authors,
-            description,
-            license,
-            deps: sort_opt(deps),
-            reverse_deps: sort_opt(reverse_deps),
-        },
-    );
 }
 
 /// Helper for creating `PackageId` instances in test code.
