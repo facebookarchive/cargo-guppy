@@ -10,7 +10,8 @@ use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
 mod build;
-mod visit;
+// `visit` is exposed to the rest of the crate for testing.
+pub(crate) mod visit;
 
 /// A graph of packages extracted from a metadata.
 #[derive(Clone, Debug)]
