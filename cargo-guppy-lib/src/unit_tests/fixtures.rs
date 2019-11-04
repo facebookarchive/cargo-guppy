@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyInfo, PackageGraph, PackageMetadata, Workspace};
+use crate::unit_tests::dep_helpers::assert_deps_internal;
 use cargo_metadata::PackageId;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
@@ -168,7 +169,7 @@ impl FixtureDetails {
         let details = &self.package_details[id];
         let expected_dep_ids = details.deps.as_ref().expect("deps should be present");
         let actual_deps: Vec<DependencyInfo> = deps.into_iter().collect();
-        self.assert_deps_internal(true, details, expected_dep_ids.as_slice(), actual_deps, msg);
+        assert_deps_internal(true, details, expected_dep_ids.as_slice(), actual_deps, msg);
     }
 
     /// Returns true if the reverse deps for this package are available to test against.
@@ -189,85 +190,13 @@ impl FixtureDetails {
             .as_ref()
             .expect("reverse_deps should be present");
         let actual_deps: Vec<DependencyInfo> = reverse_deps.into_iter().collect();
-        self.assert_deps_internal(
+        assert_deps_internal(
             false,
             details,
             expected_dep_ids.as_slice(),
             actual_deps,
             msg,
         );
-    }
-
-    fn assert_deps_internal<'a>(
-        &self,
-        forward: bool,
-        known_details: &PackageDetails,
-        expected_dep_ids: &[(&str, &str)],
-        actual_deps: Vec<DependencyInfo<'a>>,
-        msg: &str,
-    ) {
-        // Some of the messages are different based on whether we're testing forward deps or reverse
-        // ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
-        // reverse deps it's the other way round.
-
-        fn __from_metadata<'a>(dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
-            dep.from
-        }
-        fn __to_metadata<'a>(dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
-            dep.to
-        }
-        type DepToMetadata<'a> = fn(&DependencyInfo<'a>) -> &'a PackageMetadata;
-
-        let (direction_desc, known_desc, variable_desc, known_metadata, variable_metadata) =
-            if forward {
-                (
-                    "forward",
-                    "from",
-                    "to",
-                    __from_metadata as DepToMetadata<'a>,
-                    __to_metadata as DepToMetadata<'a>,
-                )
-            } else {
-                (
-                    "reverse",
-                    "to",
-                    "from",
-                    __to_metadata as DepToMetadata<'a>,
-                    __from_metadata as DepToMetadata<'a>,
-                )
-            };
-
-        // Compare (dep_name, resolved_name, id) triples.
-        let expected_dep_ids: Vec<_> = expected_dep_ids
-            .iter()
-            .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), *id))
-            .collect();
-        let mut actual_dep_ids: Vec<_> = actual_deps
-            .iter()
-            .map(|dep| {
-                (
-                    dep.edge.dep_name(),
-                    dep.edge.resolved_name().to_string(),
-                    variable_metadata(dep).id().repr.as_str(),
-                )
-            })
-            .collect();
-        actual_dep_ids.sort();
-        assert_eq!(
-            expected_dep_ids, actual_dep_ids,
-            "{}: expected {} dependencies",
-            msg, direction_desc,
-        );
-
-        // Check that the dependency metadata returned is consistent with what we expect.
-        let known_msg = format!(
-            "{}: {} dependency edge '{}'",
-            msg, direction_desc, known_desc
-        );
-        for actual_dep in &actual_deps {
-            known_details.assert_metadata(known_metadata(&actual_dep), &known_msg);
-            // XXX maybe compare version requirements?
-        }
     }
 
     // Specific fixtures follow.
@@ -534,7 +463,7 @@ impl PackageDetails {
         map.insert(self.id.clone(), self);
     }
 
-    fn assert_metadata(&self, metadata: &PackageMetadata, msg: &str) {
+    pub(crate) fn assert_metadata(&self, metadata: &PackageMetadata, msg: &str) {
         assert_eq!(&self.id, metadata.id(), "{}: same package ID", msg);
         assert_eq!(self.name, metadata.name(), "{}: same name", msg);
         assert_eq!(&self.version, metadata.version(), "{}: same version", msg);
