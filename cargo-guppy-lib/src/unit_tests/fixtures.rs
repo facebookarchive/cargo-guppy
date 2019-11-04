@@ -266,18 +266,6 @@ impl FixtureDetails {
         );
         for actual_dep in &actual_deps {
             known_details.assert_metadata(known_metadata(&actual_dep), &known_msg);
-            // The variable metadata might be missing -- only compare it if it's present.
-            let variable = variable_metadata(&actual_dep);
-            let variable_id = variable.id();
-            if let Some(variable_details) = self.package_details.get(variable_id) {
-                variable_details.assert_metadata(
-                    &variable,
-                    &format!(
-                        "{}: {} dependency edge '{}': {}",
-                        msg, direction_desc, variable_desc, variable_id
-                    ),
-                );
-            }
             // XXX maybe compare version requirements?
         }
     }
