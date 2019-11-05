@@ -64,7 +64,7 @@ impl<'a> DirectionDesc<'a> {
 pub(crate) fn assert_deps_internal<'a>(
     direction: DepDirection,
     known_details: &PackageDetails,
-    actual_deps: Vec<DependencyInfo<'a>>,
+    actual_deps: impl IntoIterator<Item = DependencyInfo<'a>>,
     msg: &str,
 ) {
     let desc = DirectionDesc::new(direction);
@@ -81,13 +81,14 @@ pub(crate) fn assert_deps_internal<'a>(
         .iter()
         .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), *id))
         .collect();
+    let actual_deps: Vec<_> = actual_deps.into_iter().collect();
     let mut actual_dep_ids: Vec<_> = actual_deps
         .iter()
         .map(|dep| {
             (
                 dep.edge.dep_name(),
                 dep.edge.resolved_name().to_string(),
-                desc.variable_metadata(dep).id().repr.as_str(),
+                desc.variable_metadata(&dep).id().repr.as_str(),
             )
         })
         .collect();
