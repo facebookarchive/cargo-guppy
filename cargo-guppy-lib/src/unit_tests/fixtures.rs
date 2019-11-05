@@ -212,8 +212,8 @@ impl FixtureDetails {
             None,
             None,
         )
-        .set_deps(vec![("datatest", METADATA1_DATATEST)])
-        .set_reverse_deps(vec![])
+        .with_deps(vec![("datatest", METADATA1_DATATEST)])
+        .with_reverse_deps(vec![])
         .insert_into(&mut details);
 
         PackageDetails::new(
@@ -224,7 +224,7 @@ impl FixtureDetails {
             Some("Data-driven tests in Rust\n"),
             Some("MIT/Apache-2.0"),
         )
-        .set_deps(
+        .with_deps(
             vec![
                 ("ctor", "ctor 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)"),
                 ("datatest-derive", "datatest-derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)"),
@@ -239,7 +239,7 @@ impl FixtureDetails {
                 ("yaml-rust", "yaml-rust 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)")
             ],
         )
-        .set_reverse_deps(vec![("datatest", METADATA1_TESTCRATE)])
+        .with_reverse_deps(vec![("datatest", METADATA1_TESTCRATE)])
         .insert_into(&mut details);
 
         Self::new(vec![("", METADATA1_TESTCRATE)], details)
@@ -256,7 +256,7 @@ impl FixtureDetails {
             None,
             None,
         )
-        .set_deps(vec![
+        .with_deps(vec![
             (
                 "datatest",
                 "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -273,7 +273,7 @@ impl FixtureDetails {
                 "walkdir 0.1.0 (path+file:///Users/fakeuser/local/walkdir)",
             ),
         ])
-        .set_reverse_deps(vec![])
+        .with_reverse_deps(vec![])
         .insert_into(&mut details);
 
         PackageDetails::new(
@@ -284,8 +284,8 @@ impl FixtureDetails {
             None,
             None,
         )
-        .set_deps(vec![])
-        .set_reverse_deps(vec![("walkdir", METADATA2_TESTCRATE)])
+        .with_deps(vec![])
+        .with_reverse_deps(vec![("walkdir", METADATA2_TESTCRATE)])
         .insert_into(&mut details);
 
         // quote was replaced with [patch].
@@ -297,11 +297,11 @@ impl FixtureDetails {
             Some("Quasi-quoting macro quote!(...)"),
             Some("MIT OR Apache-2.0"),
         )
-        .set_deps(vec![(
+        .with_deps(vec![(
             "proc-macro2",
             "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
         )])
-        .set_reverse_deps(vec![
+        .with_reverse_deps(vec![
             (
                 "quote",
                 "ctor 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -447,13 +447,13 @@ impl PackageDetails {
         }
     }
 
-    fn set_deps(mut self, mut deps: Vec<(&'static str, &'static str)>) -> Self {
+    fn with_deps(mut self, mut deps: Vec<(&'static str, &'static str)>) -> Self {
         deps.sort();
         self.deps = Some(deps);
         self
     }
 
-    fn set_reverse_deps(mut self, mut reverse_deps: Vec<(&'static str, &'static str)>) -> Self {
+    fn with_reverse_deps(mut self, mut reverse_deps: Vec<(&'static str, &'static str)>) -> Self {
         reverse_deps.sort();
         self.reverse_deps = Some(reverse_deps);
         self
