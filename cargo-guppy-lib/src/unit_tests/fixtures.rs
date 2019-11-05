@@ -1,5 +1,5 @@
 use crate::graph::{DependencyInfo, PackageGraph, PackageMetadata, Workspace};
-use crate::unit_tests::dep_helpers::assert_deps_internal;
+use crate::unit_tests::{dep_helpers::assert_deps_internal, DepDirection};
 use cargo_metadata::PackageId;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
@@ -166,7 +166,13 @@ impl FixtureDetails {
         let details = &self.package_details[id];
         let expected_dep_ids = details.deps.as_ref().expect("deps should be present");
         let actual_deps: Vec<DependencyInfo> = deps.into_iter().collect();
-        assert_deps_internal(true, details, expected_dep_ids.as_slice(), actual_deps, msg);
+        assert_deps_internal(
+            DepDirection::Forward,
+            details,
+            expected_dep_ids.as_slice(),
+            actual_deps,
+            msg,
+        );
     }
 
     /// Returns true if the reverse deps for this package are available to test against.
@@ -188,7 +194,7 @@ impl FixtureDetails {
             .expect("reverse_deps should be present");
         let actual_deps: Vec<DependencyInfo> = reverse_deps.into_iter().collect();
         assert_deps_internal(
-            false,
+            DepDirection::Reverse,
             details,
             expected_dep_ids.as_slice(),
             actual_deps,

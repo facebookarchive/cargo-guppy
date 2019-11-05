@@ -1,5 +1,5 @@
 use crate::graph::{DependencyInfo, PackageMetadata};
-use crate::unit_tests::fixtures::PackageDetails;
+use crate::unit_tests::{fixtures::PackageDetails, DepDirection};
 
 fn __from_metadata<'a>(dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
     dep.from
@@ -22,11 +22,10 @@ struct DirectionDesc<'a> {
 }
 
 impl<'a> DirectionDesc<'a> {
-    fn new(forward: bool) -> Self {
-        if forward {
-            Self::forward()
-        } else {
-            Self::reverse()
+    fn new(direction: DepDirection) -> Self {
+        match direction {
+            DepDirection::Forward => Self::forward(),
+            DepDirection::Reverse => Self::reverse(),
         }
     }
 
@@ -60,13 +59,13 @@ impl<'a> DirectionDesc<'a> {
 }
 
 pub(crate) fn assert_deps_internal<'a>(
-    forward: bool,
+    direction: DepDirection,
     known_details: &PackageDetails,
     expected_dep_ids: &[(&str, &str)],
     actual_deps: Vec<DependencyInfo<'a>>,
     msg: &str,
 ) {
-    let desc = DirectionDesc::new(forward);
+    let desc = DirectionDesc::new(direction);
 
     // Compare (dep_name, resolved_name, id) triples.
     let expected_dep_ids: Vec<_> = expected_dep_ids
