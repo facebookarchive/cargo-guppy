@@ -164,15 +164,8 @@ impl FixtureDetails {
         msg: &str,
     ) {
         let details = &self.package_details[id];
-        let expected_dep_ids = details.deps.as_ref().expect("deps should be present");
         let actual_deps: Vec<DependencyInfo> = deps.into_iter().collect();
-        assert_deps_internal(
-            DepDirection::Forward,
-            details,
-            expected_dep_ids.as_slice(),
-            actual_deps,
-            msg,
-        );
+        assert_deps_internal(DepDirection::Forward, details, actual_deps, msg);
     }
 
     /// Returns true if the reverse deps for this package are available to test against.
@@ -188,18 +181,8 @@ impl FixtureDetails {
         msg: &str,
     ) {
         let details = &self.package_details[id];
-        let expected_dep_ids = details
-            .reverse_deps
-            .as_ref()
-            .expect("reverse_deps should be present");
         let actual_deps: Vec<DependencyInfo> = reverse_deps.into_iter().collect();
-        assert_deps_internal(
-            DepDirection::Reverse,
-            details,
-            expected_dep_ids.as_slice(),
-            actual_deps,
-            msg,
-        );
+        assert_deps_internal(DepDirection::Reverse, details, actual_deps, msg);
     }
 
     // Specific fixtures follow.
@@ -464,6 +447,13 @@ impl PackageDetails {
 
     fn insert_into(self, map: &mut HashMap<PackageId, PackageDetails>) {
         map.insert(self.id.clone(), self);
+    }
+
+    pub(crate) fn deps(&self, direction: DepDirection) -> Option<&[(&'static str, &'static str)]> {
+        match direction {
+            DepDirection::Forward => self.deps.as_ref().map(|deps| deps.as_slice()),
+            DepDirection::Reverse => self.reverse_deps.as_ref().map(|deps| deps.as_slice()),
+        }
     }
 
     pub(crate) fn assert_metadata(&self, metadata: &PackageMetadata, msg: &str) {
