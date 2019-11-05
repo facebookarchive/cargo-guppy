@@ -1,17 +1,38 @@
 use crate::errors::Error;
-use crate::graph::visit::walk::EdgeBfs;
+use crate::graph::visit::{reversed::ReversedDirected, walk::EdgeBfs};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
+use either::Either;
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
-use petgraph::visit::{Reversed, Visitable, Walker};
+use petgraph::visit::{IntoEdges, IntoNeighbors, VisitMap, Visitable, Walker};
 use semver::{Version, VersionReq};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
 mod build;
 // `visit` is exposed to the rest of the crate for testing.
 pub(crate) mod visit;
+
+/// The direction in which to follow dependencies.
+///
+/// Used by the `_directed` methods.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DependencyDirection {
+    /// Dependencies from this package to other packages.
+    Forward,
+    /// Reverse dependencies from other packages to this one.
+    Reverse,
+}
+
+impl DependencyDirection {
+    fn to_direction(self) -> Direction {
+        match self {
+            DependencyDirection::Forward => Direction::Outgoing,
+            DependencyDirection::Reverse => Direction::Incoming,
+        }
+    }
+}
 
 /// A graph of packages extracted from a metadata.
 #[derive(Clone, Debug)]
@@ -121,12 +142,21 @@ impl PackageGraph {
         self.data.metadata(package_id)
     }
 
+    /// Returns the direct dependencies for the given package ID in the specified direction.
+    pub fn deps_directed<'g>(
+        &'g self,
+        package_id: &PackageId,
+        dep_direction: DependencyDirection,
+    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
+        self.deps_impl(package_id, dep_direction.to_direction())
+    }
+
     /// Returns the direct dependencies for the given package ID.
     pub fn deps<'g>(
         &'g self,
         package_id: &PackageId,
     ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
-        self.deps_directed(package_id, Outgoing)
+        self.deps_impl(package_id, Outgoing)
     }
 
     /// Returns the direct reverse dependencies for the given package ID.
@@ -134,10 +164,10 @@ impl PackageGraph {
         &'g self,
         package_id: &PackageId,
     ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
-        self.deps_directed(package_id, Incoming)
+        self.deps_impl(package_id, Incoming)
     }
 
-    fn deps_directed<'g>(
+    fn deps_impl<'g>(
         &'g self,
         package_id: &PackageId,
         dir: Direction,
@@ -177,6 +207,27 @@ impl PackageGraph {
         });
     }
 
+    /// Returns the package IDs for all transitive dependencies for the given package IDs, in the
+    /// specified direction.
+    ///
+    /// This will also include the original package IDs.
+    pub fn transitive_dep_ids_directed<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+        dep_direction: DependencyDirection,
+    ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
+        let node_idxs = self.node_idxs(package_ids)?;
+
+        match dep_direction {
+            DependencyDirection::Forward => Ok(Either::Left(
+                self.transitive_dep_ids_impl(node_idxs, &self.dep_graph),
+            )),
+            DependencyDirection::Reverse => Ok(Either::Right(
+                self.transitive_dep_ids_impl(node_idxs, ReversedDirected::new(&self.dep_graph)),
+            )),
+        }
+    }
+
     /// Returns the package IDs for all transitive dependencies for the given package IDs.
     ///
     /// This will also include the original package IDs.
@@ -184,16 +235,7 @@ impl PackageGraph {
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
-        let node_idxs = self.node_idxs(package_ids)?;
-
-        let bfs = Bfs {
-            stack: node_idxs,
-            discovered: self.dep_graph.visit_map(),
-        };
-
-        Ok(bfs
-            .iter(&self.dep_graph)
-            .map(move |node_idx| &self.dep_graph[node_idx]))
+        Ok(self.transitive_dep_ids_impl(self.node_idxs(package_ids)?, &self.dep_graph))
     }
 
     /// Returns the package IDs for all transitive reverse dependencies for the given IDs.
@@ -203,31 +245,90 @@ impl PackageGraph {
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
-        let node_idxs = self.node_idxs(package_ids)?;
+        Ok(self.transitive_dep_ids_impl(
+            self.node_idxs(package_ids)?,
+            ReversedDirected::new(&self.dep_graph),
+        ))
+    }
 
+    fn transitive_dep_ids_impl<'g, G>(
+        &'g self,
+        node_idxs: VecDeque<NodeIndex<u32>>,
+        graph: G,
+    ) -> impl Iterator<Item = &'g PackageId> + 'g
+    where
+        G: 'g + Visitable + IntoNeighbors<NodeId = NodeIndex<u32>>,
+        G::Map: VisitMap<NodeIndex<u32>>,
+    {
         let bfs = Bfs {
             stack: node_idxs,
-            discovered: self.dep_graph.visit_map(),
+            discovered: graph.visit_map(),
         };
 
-        Ok(bfs
-            .iter(Reversed(&self.dep_graph))
-            .map(move |node_idx| &self.dep_graph[node_idx]))
+        bfs.iter(graph)
+            .map(move |node_idx| &self.dep_graph[node_idx])
+    }
+
+    /// Returns all transitive dependency edges for the given package IDs in the specified
+    /// direction.
+    ///
+    /// If you are only interested in dependency IDs, `transitive_dep_ids_directed` is more
+    /// efficient.
+    pub fn transitive_deps_directed<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+        direction: DependencyDirection,
+    ) -> Result<impl Iterator<Item = DependencyInfo<'g>> + 'g, Error> {
+        let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
+        match direction {
+            DependencyDirection::Forward => Ok(Either::Left(
+                self.transitive_deps_impl(node_idxs, &self.dep_graph),
+            )),
+            DependencyDirection::Reverse => Ok(Either::Right(
+                self.transitive_deps_impl(node_idxs, ReversedDirected::new(&self.dep_graph)),
+            )),
+        }
     }
 
     /// Returns all transitive dependency edges for the given package IDs.
+    ///
+    /// If you are only interested in dependency IDs, `transitive_dep_ids` is more efficient.
     pub fn transitive_deps<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyInfo<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        let edge_bfs = EdgeBfs::new(&self.dep_graph, node_idxs);
+        Ok(self.transitive_deps_impl(node_idxs, &self.dep_graph))
+    }
 
-        Ok(edge_bfs
-            .iter(&self.dep_graph)
+    /// Returns all transitive reverse dependency edges for the given package IDs.
+    ///
+    /// If you are only interested in dependency IDs, `transitive_reverse_dep_ids` is more
+    /// efficient.
+    pub fn transitive_reverse_deps<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<impl Iterator<Item = DependencyInfo<'g>> + 'g, Error> {
+        let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
+        Ok(self.transitive_deps_impl(node_idxs, ReversedDirected::new(&self.dep_graph)))
+    }
+
+    fn transitive_deps_impl<'g, 'a, G>(
+        &'g self,
+        node_idxs: Vec<NodeIndex<u32>>,
+        graph: G,
+    ) -> impl Iterator<Item = DependencyInfo<'g>> + 'g
+    where
+        G: 'g + Visitable + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>,
+        G::Map: VisitMap<NodeIndex<u32>>,
+    {
+        let edge_bfs = EdgeBfs::new(graph, node_idxs);
+
+        edge_bfs
+            .iter(graph)
             .map(move |(source_idx, target_idx, edge_idx)| {
                 self.edge_to_dep(source_idx, target_idx, &self.dep_graph[edge_idx])
-            }))
+            })
     }
 
     // ---

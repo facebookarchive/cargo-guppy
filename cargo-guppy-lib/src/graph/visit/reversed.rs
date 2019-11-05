@@ -16,7 +16,6 @@ use petgraph::visit::{
 pub struct ReversedDirected<G>(G);
 
 impl<G> ReversedDirected<G> {
-    #[allow(dead_code)]
     pub fn new(graph: G) -> Self {
         ReversedDirected(graph)
     }

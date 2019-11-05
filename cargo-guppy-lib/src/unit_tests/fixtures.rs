@@ -1,5 +1,5 @@
-use crate::graph::{DependencyInfo, PackageGraph, PackageMetadata, Workspace};
-use crate::unit_tests::{dep_helpers::assert_deps_internal, DepDirection};
+use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, Workspace};
+use crate::unit_tests::dep_helpers::{assert_deps_internal, assert_transitive_deps_internal};
 use cargo_metadata::PackageId;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
@@ -19,6 +19,20 @@ pub(crate) static METADATA2_WALKDIR: &str =
 pub(crate) static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
 
 pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/metadata_libra.json");
+pub(crate) static METADATA_LIBRA_E2E_TESTS: &str =
+    "language-e2e-tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/e2e-tests)";
+pub(crate) static METADATA_LIBRA_COST_SYNTHESIS: &str =
+    "cost-synthesis 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/cost-synthesis)";
+pub(crate) static METADATA_LIBRA_FUNCTIONAL_TESTS: &str =
+    "functional_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/functional_tests)";
+pub(crate) static METADATA_LIBRA_TEST_GENERATION: &str =
+    "test-generation 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/test-generation)";
+pub(crate) static METADATA_LIBRA_LANGUAGE_BENCHMARKS: &str =
+    "language_benchmarks 0.1.0 (path+file:///Users/fakeuser/local/libra/language/benchmarks)";
+pub(crate) static METADATA_LIBRA_TREE_HEAP: &str =
+    "tree_heap 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/tree_heap)";
+pub(crate) static METADATA_LIBRA_LAZY_STATIC: &str =
+    "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
 
 pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
@@ -58,23 +72,21 @@ impl Fixture {
             let metadata = self.graph.metadata(id).expect(&msg);
             self.details.assert_metadata(id, &metadata, &msg);
 
+            // Check for direct dependency queries.
             if self.details.has_deps(id) {
-                self.details.assert_deps(
-                    id,
-                    self.graph
-                        .deps(id)
-                        .unwrap_or_else(|| panic!("{}: deps for package not found", msg)),
-                    &msg,
-                );
+                self.details.assert_deps(&self.graph, id, &msg);
             }
             if self.details.has_reverse_deps(id) {
-                self.details.assert_reverse_deps(
-                    id,
-                    self.graph
-                        .reverse_deps(id)
-                        .unwrap_or_else(|| panic!("{}: reverse deps for package not found", msg)),
-                    &msg,
-                );
+                self.details.assert_reverse_deps(&self.graph, id, &msg);
+            }
+
+            // Check for transitive dependency queries. Use both ID based and edge-based queries.
+            if self.details.has_transitive_deps(id) {
+                self.details.assert_transitive_deps(&self.graph, id, &msg);
+            }
+            if self.details.has_transitive_reverse_deps(id) {
+                self.details
+                    .assert_transitive_reverse_deps(&self.graph, id, &msg);
             }
         }
     }
@@ -151,20 +163,19 @@ impl FixtureDetails {
         details.assert_metadata(metadata, msg);
     }
 
+    // ---
+    // Direct dependencies
+    // ---
+
     /// Returns true if the deps for this package are available to test against.
     pub(crate) fn has_deps(&self, id: &PackageId) -> bool {
         let details = &self.package_details[id];
         details.deps.is_some()
     }
 
-    pub(crate) fn assert_deps<'a>(
-        &self,
-        id: &PackageId,
-        actual_deps: impl IntoIterator<Item = DependencyInfo<'a>>,
-        msg: &str,
-    ) {
+    pub(crate) fn assert_deps(&self, graph: &PackageGraph, id: &PackageId, msg: &str) {
         let details = &self.package_details[id];
-        assert_deps_internal(DepDirection::Forward, details, actual_deps, msg);
+        assert_deps_internal(&graph, DependencyDirection::Forward, details, msg);
     }
 
     /// Returns true if the reverse deps for this package are available to test against.
@@ -173,14 +184,56 @@ impl FixtureDetails {
         details.reverse_deps.is_some()
     }
 
-    pub(crate) fn assert_reverse_deps<'a>(
+    pub(crate) fn assert_reverse_deps(&self, graph: &PackageGraph, id: &PackageId, msg: &str) {
+        let details = &self.package_details[id];
+        assert_deps_internal(&graph, DependencyDirection::Reverse, details, msg);
+    }
+
+    // ---
+    // Transitive dependencies
+    // ---
+
+    /// Returns true if the transitive deps for this package are available to test against.
+    pub(crate) fn has_transitive_deps(&self, id: &PackageId) -> bool {
+        // TODO TODO TODO 2019-10-30:
+        // * Add checks that the return value is transitively closed, i.e. that queries on all the
+        //   dependencies return elements within the same set.
+        let details = &self.package_details[id];
+        details.transitive_deps.is_some()
+    }
+
+    pub(crate) fn assert_transitive_deps<'a>(
         &self,
+        graph: &PackageGraph,
         id: &PackageId,
-        actual_deps: impl IntoIterator<Item = DependencyInfo<'a>>,
         msg: &str,
     ) {
+        assert_transitive_deps_internal(
+            graph,
+            DependencyDirection::Forward,
+            &self.package_details[id],
+            msg,
+        )
+    }
+
+    /// Returns true if the transitive reverse deps for this package are available to test against.
+    pub(crate) fn has_transitive_reverse_deps(&self, id: &PackageId) -> bool {
         let details = &self.package_details[id];
-        assert_deps_internal(DepDirection::Reverse, details, actual_deps, msg);
+        details.transitive_reverse_deps.is_some()
+    }
+
+    pub(crate) fn assert_transitive_reverse_deps<'a>(
+        &self,
+        graph: &PackageGraph,
+        id: &PackageId,
+        msg: &str,
+    ) {
+        assert_transitive_deps_internal(
+            graph,
+            DependencyDirection::Reverse,
+            &self.package_details[id],
+            msg,
+        )
     }
 
     // Specific fixtures follow.
@@ -311,6 +364,42 @@ impl FixtureDetails {
     }
 
     pub(crate) fn metadata_libra() -> Self {
+        let mut details = HashMap::new();
+
+        PackageDetails::new(
+            METADATA_LIBRA_E2E_TESTS,
+            "language-e2e-tests",
+            "0.1.0",
+            vec!["Libra Association <opensource@libra.org>"],
+            Some("Libra language e2e tests"),
+            Some("Apache-2.0"),
+        )
+        .with_transitive_reverse_deps(vec![
+            METADATA_LIBRA_E2E_TESTS,
+            METADATA_LIBRA_COST_SYNTHESIS,
+            METADATA_LIBRA_FUNCTIONAL_TESTS,
+            METADATA_LIBRA_TEST_GENERATION,
+            METADATA_LIBRA_LANGUAGE_BENCHMARKS,
+            METADATA_LIBRA_TREE_HEAP,
+        ])
+        .insert_into(&mut details);
+
+        PackageDetails::new(
+            METADATA_LIBRA_LAZY_STATIC,
+            "lazy_static",
+            "1.4.0",
+            vec!["Marvin Löbel <loebel.marvin@gmail.com>"],
+            Some("A macro for declaring lazily evaluated statics in Rust."),
+            Some("MIT/Apache-2.0"),
+        )
+        .with_transitive_deps(vec![
+            METADATA_LIBRA_LAZY_STATIC,
+            "spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+            // lazy_static also has doc-comment as a dev-dependency, but that isn't part of the
+            // resolved graph so it won't appear here.
+        ])
+        .insert_into(&mut details);
+
         Self::new(vec![
             ("admission_control/admission-control-proto", "admission-control-proto 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-proto)"),
             ("admission_control/admission-control-service", "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)"),
@@ -344,7 +433,7 @@ impl FixtureDetails {
             ("crypto/crypto-derive", "libra-crypto-derive 0.1.0 (path+file:///Users/fakeuser/local/libra/crypto/crypto-derive)"),
             ("crypto/secret-service", "secret-service 0.1.0 (path+file:///Users/fakeuser/local/libra/crypto/secret-service)"),
             ("executor", "executor 0.1.0 (path+file:///Users/fakeuser/local/libra/executor)"),
-            ("language/benchmarks", "language_benchmarks 0.1.0 (path+file:///Users/fakeuser/local/libra/language/benchmarks)"),
+            ("language/benchmarks", METADATA_LIBRA_LANGUAGE_BENCHMARKS),
             ("language/bytecode-verifier", "bytecode-verifier 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier)"),
             ("language/bytecode-verifier/bytecode_verifier_tests", "bytecode_verifier_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier/bytecode_verifier_tests)"),
             ("language/bytecode-verifier/invalid-mutations", "invalid-mutations 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier/invalid-mutations)"),
@@ -352,14 +441,14 @@ impl FixtureDetails {
             ("language/compiler/bytecode-source-map", "bytecode-source-map 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/bytecode-source-map)"),
             ("language/compiler/ir-to-bytecode", "ir-to-bytecode 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/ir-to-bytecode)"),
             ("language/compiler/ir-to-bytecode/syntax", "ir-to-bytecode-syntax 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/ir-to-bytecode/syntax)"),
-            ("language/e2e-tests", "language-e2e-tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/e2e-tests)"),
-            ("language/functional_tests", "functional_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/functional_tests)"),
+            ("language/e2e-tests", METADATA_LIBRA_E2E_TESTS),
+            ("language/functional_tests", METADATA_LIBRA_FUNCTIONAL_TESTS),
             ("language/stackless-bytecode/bytecode-to-boogie", "bytecode-to-boogie 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/bytecode-to-boogie)"),
             ("language/stackless-bytecode/generator", "stackless-bytecode-generator 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/generator)"),
-            ("language/stackless-bytecode/tree_heap", "tree_heap 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/tree_heap)"),
+            ("language/stackless-bytecode/tree_heap", METADATA_LIBRA_TREE_HEAP),
             ("language/stdlib", "stdlib 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stdlib)"),
-            ("language/tools/cost-synthesis", "cost-synthesis 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/cost-synthesis)"),
-            ("language/tools/test-generation", "test-generation 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/test-generation)"),
+            ("language/tools/cost-synthesis", METADATA_LIBRA_COST_SYNTHESIS),
+            ("language/tools/test-generation", METADATA_LIBRA_TEST_GENERATION),
             ("language/transaction-builder", "transaction-builder 0.1.0 (path+file:///Users/fakeuser/local/libra/language/transaction-builder)"),
             ("language/vm", "vm 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm)"),
             ("language/vm/serializer_tests", "serializer_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/serializer_tests)"),
@@ -392,7 +481,7 @@ impl FixtureDetails {
             ("types", "libra-types 0.1.0 (path+file:///Users/fakeuser/local/libra/types)"),
             ("vm-validator", "vm-validator 0.1.0 (path+file:///Users/fakeuser/local/libra/vm-validator)"),
             ("x", "x 0.1.0 (path+file:///Users/fakeuser/local/libra/x)"),
-        ], HashMap::new())
+        ], details)
     }
 }
 
@@ -408,6 +497,8 @@ pub(crate) struct PackageDetails {
     // XXX add more details about dependency edges here?
     deps: Option<Vec<(&'static str, &'static str)>>,
     reverse_deps: Option<Vec<(&'static str, &'static str)>>,
+    transitive_deps: Option<Vec<PackageId>>,
+    transitive_reverse_deps: Option<Vec<PackageId>>,
 }
 
 impl PackageDetails {
@@ -428,6 +519,8 @@ impl PackageDetails {
             license,
             deps: None,
             reverse_deps: None,
+            transitive_deps: None,
+            transitive_reverse_deps: None,
         }
     }
 
@@ -443,14 +536,53 @@ impl PackageDetails {
         self
     }
 
+    fn with_transitive_deps(mut self, mut transitive_deps: Vec<&'static str>) -> Self {
+        transitive_deps.sort();
+        self.transitive_deps = Some(transitive_deps.into_iter().map(package_id).collect());
+        self
+    }
+
+    fn with_transitive_reverse_deps(
+        mut self,
+        mut transitive_reverse_deps: Vec<&'static str>,
+    ) -> Self {
+        transitive_reverse_deps.sort();
+        self.transitive_reverse_deps = Some(
+            transitive_reverse_deps
+                .into_iter()
+                .map(package_id)
+                .collect(),
+        );
+        self
+    }
+
     fn insert_into(self, map: &mut HashMap<PackageId, PackageDetails>) {
         map.insert(self.id.clone(), self);
     }
 
-    pub(crate) fn deps(&self, direction: DepDirection) -> Option<&[(&'static str, &'static str)]> {
+    pub(crate) fn id(&self) -> &PackageId {
+        &self.id
+    }
+
+    pub(crate) fn deps(
+        &self,
+        direction: DependencyDirection,
+    ) -> Option<&[(&'static str, &'static str)]> {
         match direction {
-            DepDirection::Forward => self.deps.as_ref().map(|deps| deps.as_slice()),
-            DepDirection::Reverse => self.reverse_deps.as_ref().map(|deps| deps.as_slice()),
+            DependencyDirection::Forward => self.deps.as_ref().map(|deps| deps.as_slice()),
+            DependencyDirection::Reverse => self.reverse_deps.as_ref().map(|deps| deps.as_slice()),
+        }
+    }
+
+    pub(crate) fn transitive_deps(&self, direction: DependencyDirection) -> Option<&[PackageId]> {
+        match direction {
+            DependencyDirection::Forward => {
+                self.transitive_deps.as_ref().map(|deps| deps.as_slice())
+            }
+            DependencyDirection::Reverse => self
+                .transitive_reverse_deps
+                .as_ref()
+                .map(|deps| deps.as_slice()),
         }
     }
 
