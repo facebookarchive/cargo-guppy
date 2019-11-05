@@ -64,14 +64,20 @@ impl<'a> DirectionDesc<'a> {
 pub(crate) fn assert_deps_internal<'a>(
     direction: DepDirection,
     known_details: &PackageDetails,
-    expected_dep_ids: &[(&str, &str)],
     actual_deps: Vec<DependencyInfo<'a>>,
     msg: &str,
 ) {
     let desc = DirectionDesc::new(direction);
 
     // Compare (dep_name, resolved_name, id) triples.
-    let expected_dep_ids: Vec<_> = expected_dep_ids
+    let expected_dep_ids: Vec<_> = known_details
+        .deps(direction)
+        .unwrap_or_else(|| {
+            panic!(
+                "{}: {} dependencies must be present",
+                msg, desc.direction_desc
+            )
+        })
         .iter()
         .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), *id))
         .collect();
