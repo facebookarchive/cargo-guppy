@@ -160,11 +160,10 @@ impl FixtureDetails {
     pub(crate) fn assert_deps<'a>(
         &self,
         id: &PackageId,
-        deps: impl IntoIterator<Item = DependencyInfo<'a>>,
+        actual_deps: impl IntoIterator<Item = DependencyInfo<'a>>,
         msg: &str,
     ) {
         let details = &self.package_details[id];
-        let actual_deps: Vec<DependencyInfo> = deps.into_iter().collect();
         assert_deps_internal(DepDirection::Forward, details, actual_deps, msg);
     }
 
@@ -177,11 +176,10 @@ impl FixtureDetails {
     pub(crate) fn assert_reverse_deps<'a>(
         &self,
         id: &PackageId,
-        reverse_deps: impl IntoIterator<Item = DependencyInfo<'a>>,
+        actual_deps: impl IntoIterator<Item = DependencyInfo<'a>>,
         msg: &str,
     ) {
         let details = &self.package_details[id];
-        let actual_deps: Vec<DependencyInfo> = reverse_deps.into_iter().collect();
         assert_deps_internal(DepDirection::Reverse, details, actual_deps, msg);
     }
 
