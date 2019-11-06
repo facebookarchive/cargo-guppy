@@ -145,6 +145,31 @@ impl PackageGraph {
         self.data.metadata(package_id)
     }
 
+    /// Keeps all edges that return true from the visit closure, and removes the others.
+    ///
+    /// The order edges are visited is not specified.
+    pub fn retain_edges<F>(&mut self, visit: F)
+        where
+            F: Fn(&PackageGraphData, DependencyInfo<'_>) -> bool,
+    {
+        let data = &self.data;
+        self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
+            // This could use self.edge_to_dep for part of it but that that isn't compatible with
+            // the borrow checker :(
+            let (source, target) = frozen_graph
+                .edge_endpoints(edge_idx)
+                .expect("edge_idx should be valid");
+            let from = &data.packages[&frozen_graph[source]];
+            let to = &data.packages[&frozen_graph[target]];
+            let edge = &frozen_graph[edge_idx];
+            visit(data, DependencyInfo { from, to, edge })
+        });
+    }
+
+    // ---
+    // Dependency traversals
+    // ---
+
     /// Returns the direct dependencies for the given package ID in the specified direction.
     pub fn deps_directed<'g>(
         &'g self,
@@ -187,27 +212,6 @@ impl PackageGraph {
         self.dep_graph
             .edges_directed(node_idx, dir)
             .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
-    }
-
-    /// Keeps all edges that return true from the visit closure, and removes the others.
-    ///
-    /// The order edges are visited is not specified.
-    pub fn retain_edges<F>(&mut self, visit: F)
-    where
-        F: Fn(&PackageGraphData, DependencyInfo<'_>) -> bool,
-    {
-        let data = &self.data;
-        self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
-            // This could use self.edge_to_dep for part of it but that that isn't compatible with
-            // the borrow checker :(
-            let (source, target) = frozen_graph
-                .edge_endpoints(edge_idx)
-                .expect("edge_idx should be valid");
-            let from = &data.packages[&frozen_graph[source]];
-            let to = &data.packages[&frozen_graph[target]];
-            let edge = &frozen_graph[edge_idx];
-            visit(data, DependencyInfo { from, to, edge })
-        });
     }
 
     /// Returns the package IDs for all transitive dependencies for the given package IDs, in the
