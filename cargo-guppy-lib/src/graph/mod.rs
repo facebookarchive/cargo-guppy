@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::errors::Error;
-use crate::graph::visit::{reversed::ReversedDirected, walk::EdgeBfs};
+use crate::graph::visit::{reversed::ReversedDirected, walk::EdgeDfs};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
 use either::Either;
 use lazy_static::lazy_static;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdges, IntoNeighbors, VisitMap, Visitable, Walker};
 use semver::{Version, VersionReq};
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap};
 use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
@@ -256,19 +256,19 @@ impl PackageGraph {
 
     fn transitive_dep_ids_impl<'g, G>(
         &'g self,
-        node_idxs: VecDeque<NodeIndex<u32>>,
+        node_idxs: Vec<NodeIndex<u32>>,
         graph: G,
     ) -> impl Iterator<Item = &'g PackageId> + 'g
     where
         G: 'g + Visitable + IntoNeighbors<NodeId = NodeIndex<u32>>,
         G::Map: VisitMap<NodeIndex<u32>>,
     {
-        let bfs = Bfs {
+        let dfs = Dfs {
             stack: node_idxs,
             discovered: graph.visit_map(),
         };
 
-        bfs.iter(graph)
+        dfs.iter(graph)
             .map(move |node_idx| &self.dep_graph[node_idx])
     }
 
@@ -325,9 +325,9 @@ impl PackageGraph {
         G: 'g + Visitable + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>,
         G::Map: VisitMap<NodeIndex<u32>>,
     {
-        let edge_bfs = EdgeBfs::new(graph, node_idxs);
+        let edge_dfs = EdgeDfs::new(graph, node_idxs);
 
-        edge_bfs
+        edge_dfs
             .iter(graph)
             .map(move |(source_idx, target_idx, edge_idx)| {
                 self.edge_to_dep(source_idx, target_idx, &self.dep_graph[edge_idx])

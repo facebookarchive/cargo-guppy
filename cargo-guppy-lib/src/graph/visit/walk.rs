@@ -3,18 +3,17 @@
 
 use crate::graph::edge_triple;
 use petgraph::visit::{IntoEdges, VisitMap, Visitable, Walker};
-use std::collections::VecDeque;
 use std::iter;
 
 #[derive(Clone, Debug)]
-pub(crate) struct EdgeBfs<E, N, VM> {
+pub(crate) struct EdgeDfs<E, N, VM> {
     /// The queue of (source, target, edge) to visit.
-    pub queue: VecDeque<(N, N, E)>,
+    pub stack: Vec<(N, N, E)>,
     /// The map of discovered nodes
     pub discovered: VM,
 }
 
-impl<E, N, VM> EdgeBfs<E, N, VM>
+impl<E, N, VM> EdgeDfs<E, N, VM>
 where
     E: Copy + PartialEq,
     N: Copy + PartialEq,
@@ -27,12 +26,14 @@ where
         G: Visitable<Map = VM> + IntoEdges<NodeId = N, EdgeId = E>,
     {
         let mut discovered = graph.visit_map();
-        let mut queue = VecDeque::new();
-        queue.extend(initials.into_iter().flat_map(|node_idx| {
-            discovered.visit(node_idx);
-            graph.edges(node_idx).map(edge_triple)
-        }));
-        Self { queue, discovered }
+        let stack = initials
+            .into_iter()
+            .flat_map(|node_idx| {
+                discovered.visit(node_idx);
+                graph.edges(node_idx).map(edge_triple)
+            })
+            .collect();
+        Self { stack, discovered }
     }
 
     /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `start`
@@ -50,16 +51,16 @@ where
     where
         G: IntoEdges<NodeId = N, EdgeId = E>,
     {
-        self.queue.pop_front().map(|(source, target, edge)| {
+        self.stack.pop().map(|(source, target, edge)| {
             if self.discovered.visit(target) {
-                self.queue.extend(graph.edges(target).map(edge_triple));
+                self.stack.extend(graph.edges(target).map(edge_triple));
             }
             (source, target, edge)
         })
     }
 }
 
-impl<G> Walker<G> for EdgeBfs<G::EdgeId, G::NodeId, G::Map>
+impl<G> Walker<G> for EdgeDfs<G::EdgeId, G::NodeId, G::Map>
 where
     G: IntoEdges + Visitable,
 {
