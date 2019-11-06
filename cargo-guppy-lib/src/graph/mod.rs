@@ -137,6 +137,33 @@ impl PackageGraph {
         Ok(())
     }
 
+    /// Returns the set of "root packages" in the specified direction.
+    ///
+    /// * If direction is Forward, return the set of packages that do not have any dependencies in
+    ///   this graph.
+    /// * If direction is Reverse, return the set of packages that do not have any dependents in
+    ///   this graph.
+    ///
+    /// Unclear how useful it is outside of tests, so not part of the documented API.
+    #[doc(hidden)]
+    pub fn root_ids_directed<'g>(
+        &'g self,
+        direction: DependencyDirection,
+    ) -> impl IntoIterator<Item = &'g PackageId> + 'g {
+        match direction {
+            DependencyDirection::Forward => Either::Left(
+                Self::roots::<_, Vec<_>>(&self.dep_graph)
+                    .into_iter()
+                    .map(move |node_idx| &self.dep_graph[node_idx]),
+            ),
+            DependencyDirection::Reverse => Either::Right(
+                Self::roots::<_, Vec<_>>(ReversedDirected::new(&self.dep_graph))
+                    .into_iter()
+                    .map(move |node_idx| &self.dep_graph[node_idx]),
+            ),
+        }
+    }
+
     /// Returns information about the workspace.
     pub fn workspace(&self) -> &Workspace {
         &self.data.workspace()
@@ -448,9 +475,77 @@ impl PackageGraph {
             .map(move |node_idx| &self.dep_graph[node_idx])
     }
 
+    /// Returns all dependency links in this graph in the specified direction.
+    ///
+    /// If you are only interested in package IDs, `topo_ids_directed` is more efficient.
+    pub fn all_links_directed<'g>(
+        &'g self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
+        match direction {
+            DependencyDirection::Forward => Either::Left(self.all_links()),
+            DependencyDirection::Reverse => Either::Right(self.all_reverse_links()),
+        }
+    }
+
+    /// Returns all dependency links in this graph in order.
+    ///
+    /// For any given package, at least one link where the package is on the `to` end is returned
+    /// before any links where the package is on the `from` end.
+    ///
+    /// If you are only interested in package IDs, `topo_ids` is more efficient.
+    pub fn all_links<'g>(&'g self) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
+        self.all_links_impl(&self.dep_graph, DependencyDirection::Forward)
+    }
+
+    /// Returns all dependency links in this graph in reverse order.
+    ///
+    /// For any given package, at least one link where the package is on the `from` end is returned
+    /// before any links where the package is on the `to` end.
+    ///
+    /// If you are only interested in package IDs, `reverse_topo_ids` is more efficient.
+    pub fn all_reverse_links<'g>(&'g self) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
+        self.all_links_impl(
+            ReversedDirected::new(&self.dep_graph),
+            DependencyDirection::Reverse,
+        )
+    }
+
+    fn all_links_impl<'g, G>(
+        &'g self,
+        graph: G,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g
+    where
+        G: 'g
+            + Visitable
+            + IntoNodeIdentifiers
+            + IntoNeighborsDirected
+            + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>,
+        G::Map: VisitMap<NodeIndex<u32>>,
+    {
+        // XXX requiring both the graph and the direction to be passed in is supremely ugly.
+        // Should be fixable with a custom trait.
+
+        // Perform a transitive dep traversal from the roots in the graph.
+        self.transitive_dep_links_impl(Self::roots(graph), graph, direction)
+    }
+
     // ---
     // Helper methods
     // ---
+
+    /// Returns the nodes of a graph that have no incoming edges to them.
+    fn roots<G, B>(graph: G) -> B
+    where
+        G: IntoNodeIdentifiers + IntoNeighborsDirected<NodeId = NodeIndex<u32>>,
+        B: iter::FromIterator<NodeIndex<u32>>,
+    {
+        graph
+            .node_identifiers()
+            .filter(move |&a| graph.neighbors_directed(a, Incoming).next().is_none())
+            .collect()
+    }
 
     /// Maps an edge source, target and weight to a dependency link.
     fn edge_to_link<'g>(
