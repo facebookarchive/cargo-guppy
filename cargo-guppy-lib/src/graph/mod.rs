@@ -72,6 +72,16 @@ impl PackageGraph {
             static ref MAJOR_WILDCARD: VersionReq = VersionReq::parse("*").unwrap();
         }
 
+        // Graph structure checks.
+        let node_count = self.dep_graph.node_count();
+        let package_count = self.data.packages.len();
+        if node_count != package_count {
+            return Err(Error::DepGraphInternalError(format!(
+                "number of nodes = {} different from packages = {}",
+                node_count, package_count,
+            )));
+        }
+
         for metadata in self.packages() {
             let package_id = metadata.id();
             for dep in self.dep_links_node_idx_directed(metadata.node_idx, Outgoing) {
@@ -132,13 +142,28 @@ impl PackageGraph {
     }
 
     /// Returns an iterator over all the package IDs in this graph.
-    pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
+    pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
         self.data.package_ids()
     }
 
     /// Returns an iterator over all the packages in this graph.
-    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> {
+    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> + ExactSizeIterator {
         self.data.packages()
+    }
+
+    /// Returns the number of packages in this graph.
+    pub fn package_count(&self) -> usize {
+        // This can be obtained in two different ways: self.dep_graph.node_count() or
+        // self.data.packages.len(). verify() checks that they return the same results.
+        //
+        // Use this way for symmetry with link_count below (which can only be obtained through the
+        // graph).
+        self.dep_graph.node_count()
+    }
+
+    /// Returns the number of links in this graph.
+    pub fn link_count(&self) -> usize {
+        self.dep_graph.edge_count()
     }
 
     /// Returns the metadata for the given package ID.
@@ -442,12 +467,12 @@ impl PackageGraphData {
     }
 
     /// Returns an iterator over all the package IDs in this graph.
-    pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> {
+    pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
         self.packages.keys()
     }
 
     /// Returns an iterator over all the packages in this graph.
-    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> {
+    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> + ExactSizeIterator {
         self.packages.values()
     }
 
