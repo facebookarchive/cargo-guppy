@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, Workspace};
-use crate::unit_tests::dep_helpers::{assert_deps_internal, assert_transitive_deps_internal};
+use crate::unit_tests::dep_helpers::{
+    assert_deps_internal, assert_topo_ids, assert_transitive_deps_internal,
+};
 use cargo_metadata::PackageId;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
@@ -69,6 +71,7 @@ impl Fixture {
             .expect("graph verification should succeed");
 
         self.details.assert_workspace(self.graph.workspace());
+        self.details.assert_topo(&self.graph);
 
         for id in self.details.known_ids() {
             let msg = format!("error while verifying package '{}'", id);
@@ -166,6 +169,11 @@ impl FixtureDetails {
             members,
             "workspace members should be correct"
         );
+    }
+
+    pub(crate) fn assert_topo(&self, graph: &PackageGraph) {
+        assert_topo_ids(graph, DependencyDirection::Forward, "topo sort");
+        assert_topo_ids(graph, DependencyDirection::Reverse, "reverse topo sort");
     }
 
     pub(crate) fn assert_metadata(&self, id: &PackageId, metadata: &PackageMetadata, msg: &str) {
