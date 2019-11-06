@@ -1,6 +1,6 @@
 use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, Workspace};
 use crate::unit_tests::dep_helpers::{
-    assert_deps_internal, assert_topo_ids, assert_transitive_deps_internal,
+    assert_all_links, assert_deps_internal, assert_topo_ids, assert_transitive_deps_internal,
 };
 use cargo_metadata::PackageId;
 use semver::Version;
@@ -171,6 +171,8 @@ impl FixtureDetails {
     pub(crate) fn assert_topo(&self, graph: &PackageGraph) {
         assert_topo_ids(graph, DependencyDirection::Forward, "topo sort");
         assert_topo_ids(graph, DependencyDirection::Reverse, "reverse topo sort");
+        assert_all_links(graph, DependencyDirection::Forward, "all links");
+        assert_all_links(graph, DependencyDirection::Reverse, "all links reversed");
     }
 
     pub(crate) fn assert_metadata(&self, id: &PackageId, metadata: &PackageMetadata, msg: &str) {
