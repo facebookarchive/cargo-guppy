@@ -229,6 +229,28 @@ pub(crate) fn assert_transitive_deps_internal(
     }
 }
 
+pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
+    let topo_ids: Vec<_> = graph.topo_ids_directed(direction).collect();
+    assert_eq!(
+        topo_ids.len(),
+        graph.package_count(),
+        "{}: topo sort should return all packages",
+        msg
+    );
+
+    // A package that comes later cannot depend on one that comes earlier.
+    let mut cache = graph.new_depends_cache();
+    for (idx, earlier_package) in topo_ids.iter().enumerate() {
+        // Note that this skips over idx + 1 entries to avoid earlier_package == later_package.
+        // Doing an exhaustive search would be O(n**2) in the number of packages, so just do a
+        // maximum of 20.
+        // TODO: use proptest to generate random queries on the corpus.
+        for later_package in topo_ids.iter().skip(idx + 1).take(20) {
+            assert_not_depends_on(later_package, earlier_package, &mut cache, direction, msg);
+        }
+    }
+}
+
 fn assert_depends_on(
     package_a: &PackageId,
     package_b: &PackageId,
@@ -251,6 +273,35 @@ fn assert_depends_on(
                 .depends_on(package_b, package_a)
                 .expect("package not found?"),
             "{}: package '{}' should be a dependency of '{}'",
+            msg,
+            &package_a.repr,
+            &package_b.repr,
+        ),
+    }
+}
+
+fn assert_not_depends_on(
+    package_a: &PackageId,
+    package_b: &PackageId,
+    cache: &mut DependsCache,
+    direction: DependencyDirection,
+    msg: &str,
+) {
+    match direction {
+        DependencyDirection::Forward => assert!(
+            !cache
+                .depends_on(package_a, package_b)
+                .expect("package not found?"),
+            "{}: package '{}' should not depend on '{}'",
+            msg,
+            &package_a.repr,
+            &package_b.repr,
+        ),
+        DependencyDirection::Reverse => assert!(
+            !cache
+                .depends_on(package_b, package_a)
+                .expect("package not found?"),
+            "{}: package '{}' should not be a dependency of '{}'",
             msg,
             &package_a.repr,
             &package_b.repr,
