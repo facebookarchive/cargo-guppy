@@ -195,9 +195,6 @@ impl FixtureDetails {
 
     /// Returns true if the transitive deps for this package are available to test against.
     pub(crate) fn has_transitive_deps(&self, id: &PackageId) -> bool {
-        // TODO TODO TODO 2019-10-30:
-        // * Add checks that the return value is transitively closed, i.e. that queries on all the
-        //   dependencies return elements within the same set.
         let details = &self.package_details[id];
         details.transitive_deps.is_some()
     }
