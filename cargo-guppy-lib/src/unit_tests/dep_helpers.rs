@@ -20,7 +20,6 @@ type DepToMetadata<'a> = fn(&DependencyLink<'a>) -> &'a PackageMetadata;
 /// Some of the messages are different based on whether we're testing forward deps or reverse
 /// ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
 /// reverse deps it's the other way round.
-#[allow(dead_code)]
 struct DirectionDesc<'a> {
     direction_desc: &'static str,
     known_desc: &'static str,
@@ -252,6 +251,20 @@ pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirecti
             assert_not_depends_on(later_package, earlier_package, &mut cache, direction, msg);
         }
     }
+}
+
+pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
+    let desc = DirectionDesc::new(direction);
+    let all_links: Vec<_> = graph.all_links_directed(direction).collect();
+    assert_eq!(
+        all_links.len(),
+        graph.link_count(),
+        "{}: all links should be returned",
+        msg
+    );
+
+    // all_links should be in the correct order.
+    assert_link_order(all_links, graph.root_ids_directed(direction), &desc, msg);
 }
 
 fn assert_depends_on(
