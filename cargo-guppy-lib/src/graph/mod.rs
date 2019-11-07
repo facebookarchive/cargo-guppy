@@ -288,16 +288,23 @@ impl PackageGraph {
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         match direction {
-            DependencyDirection::Forward => Ok(Either::Left(
-                self.transitive_deps_impl(node_idxs, &self.dep_graph),
-            )),
-            DependencyDirection::Reverse => Ok(Either::Right(
-                self.transitive_deps_impl(node_idxs, ReversedDirected::new(&self.dep_graph)),
-            )),
+            DependencyDirection::Forward => Ok(Either::Left(self.transitive_deps_impl(
+                node_idxs,
+                &self.dep_graph,
+                direction,
+            ))),
+            DependencyDirection::Reverse => Ok(Either::Right(self.transitive_deps_impl(
+                node_idxs,
+                ReversedDirected::new(&self.dep_graph),
+                direction,
+            ))),
         }
     }
 
     /// Returns all transitive dependency links for the given package IDs.
+    ///
+    /// For any given package, all links where the package is on the `to` end are returned before
+    /// any links where the package is on the `from` end.
     ///
     /// If you are only interested in dependency IDs, `transitive_dep_ids` is more efficient.
     pub fn transitive_deps<'g, 'a>(
@@ -305,10 +312,13 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_deps_impl(node_idxs, &self.dep_graph))
+        Ok(self.transitive_deps_impl(node_idxs, &self.dep_graph, DependencyDirection::Forward))
     }
 
     /// Returns all transitive reverse dependency links for the given package IDs.
+    ///
+    /// For any given package, all links where the package is on the `from` end are returned before
+    /// any links where the package is on the `to` end.
     ///
     /// If you are only interested in dependency IDs, `transitive_reverse_dep_ids` is more
     /// efficient.
@@ -317,13 +327,18 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_deps_impl(node_idxs, ReversedDirected::new(&self.dep_graph)))
+        Ok(self.transitive_deps_impl(
+            node_idxs,
+            ReversedDirected::new(&self.dep_graph),
+            DependencyDirection::Reverse,
+        ))
     }
 
     fn transitive_deps_impl<'g, G>(
         &'g self,
         node_idxs: Vec<NodeIndex<u32>>,
         graph: G,
+        direction: DependencyDirection,
     ) -> impl Iterator<Item = DependencyLink<'g>> + 'g
     where
         G: 'g + Visitable + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>,
@@ -334,6 +349,15 @@ impl PackageGraph {
         edge_dfs
             .iter(graph)
             .map(move |(source_idx, target_idx, edge_idx)| {
+                // Flip the source and target around if this is a reversed graph, since the 'from'
+                // and 'to' are always right way up. Note that this doesn't have to be done for
+                // deps_impl because we don't reverse the actual graph, just use incoming edges
+                // there.
+                // XXX having G and direction be separate but linked is unfortunate.
+                let (source_idx, target_idx) = match direction {
+                    DependencyDirection::Forward => (source_idx, target_idx),
+                    DependencyDirection::Reverse => (target_idx, source_idx),
+                };
                 self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
             })
     }
