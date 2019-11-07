@@ -146,8 +146,8 @@ impl PackageGraph {
     ///
     /// The order edges are visited is not specified.
     pub fn retain_edges<F>(&mut self, visit: F)
-        where
-            F: Fn(&PackageGraphData, DependencyInfo<'_>) -> bool,
+    where
+        F: Fn(&PackageGraphData, DependencyInfo<'_>) -> bool,
     {
         let data = &self.data;
         self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
@@ -317,7 +317,7 @@ impl PackageGraph {
         Ok(self.transitive_deps_impl(node_idxs, ReversedDirected::new(&self.dep_graph)))
     }
 
-    fn transitive_deps_impl<'g, 'a, G>(
+    fn transitive_deps_impl<'g, G>(
         &'g self,
         node_idxs: Vec<NodeIndex<u32>>,
         graph: G,
