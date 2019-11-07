@@ -1,18 +1,18 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{DependencyDirection, DependencyInfo, PackageGraph, PackageMetadata};
+use crate::graph::{DependencyDirection, DependencyLink, PackageGraph, PackageMetadata};
 use crate::unit_tests::fixtures::PackageDetails;
 use std::collections::BTreeSet;
 use std::iter;
 
-fn __from_metadata<'a>(dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
+fn __from_metadata<'a>(dep: &DependencyLink<'a>) -> &'a PackageMetadata {
     dep.from
 }
-fn __to_metadata<'a>(dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
+fn __to_metadata<'a>(dep: &DependencyLink<'a>) -> &'a PackageMetadata {
     dep.to
 }
-type DepToMetadata<'a> = fn(&DependencyInfo<'a>) -> &'a PackageMetadata;
+type DepToMetadata<'a> = fn(&DependencyLink<'a>) -> &'a PackageMetadata;
 
 /// Some of the messages are different based on whether we're testing forward deps or reverse
 /// ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
@@ -54,11 +54,11 @@ impl<'a> DirectionDesc<'a> {
         }
     }
 
-    fn known_metadata(&self, dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
+    fn known_metadata(&self, dep: &DependencyLink<'a>) -> &'a PackageMetadata {
         (self.known_metadata)(dep)
     }
 
-    fn variable_metadata(&self, dep: &DependencyInfo<'a>) -> &'a PackageMetadata {
+    fn variable_metadata(&self, dep: &DependencyLink<'a>) -> &'a PackageMetadata {
         (self.variable_metadata)(dep)
     }
 }
@@ -153,11 +153,11 @@ pub(crate) fn assert_transitive_deps_internal(
         })
         .collect();
     // Use a BTreeSet for unique identifiers. This is also used later for set operations.
-    let ids_from_dep_info_set: BTreeSet<_> = actual_deps
+    let ids_from_links_set: BTreeSet<_> = actual_deps
         .iter()
         .flat_map(|dep| vec![dep.from.id(), dep.to.id()])
         .collect();
-    let ids_from_dep_infos: Vec<_> = ids_from_dep_info_set.iter().copied().collect();
+    let ids_from_links: Vec<_> = ids_from_links_set.iter().copied().collect();
 
     assert_eq!(
         expected_dep_id_refs, actual_dep_ids,
@@ -165,7 +165,7 @@ pub(crate) fn assert_transitive_deps_internal(
         msg, desc.direction_desc
     );
     assert_eq!(
-        expected_dep_id_refs, ids_from_dep_infos,
+        expected_dep_id_refs, ids_from_links,
         "{}: expected {} transitive dependency infos",
         msg, desc.direction_desc
     );
@@ -182,9 +182,7 @@ pub(crate) fn assert_transitive_deps_internal(
             })
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
-        let difference: Vec<_> = dep_actual_dep_ids
-            .difference(&ids_from_dep_info_set)
-            .collect();
+        let difference: Vec<_> = dep_actual_dep_ids.difference(&ids_from_links_set).collect();
         assert!(
             difference.is_empty(),
             "{}: unexpected extra {} transitive dependency IDs for dep '{}': {:?}",
@@ -194,7 +192,7 @@ pub(crate) fn assert_transitive_deps_internal(
             difference
         );
 
-        let dep_ids_from_dep_infos: BTreeSet<_> = graph
+        let dep_ids_from_links: BTreeSet<_> = graph
             .transitive_deps_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
@@ -205,9 +203,7 @@ pub(crate) fn assert_transitive_deps_internal(
             .flat_map(|dep| vec![dep.from.id(), dep.to.id()])
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
-        let difference: Vec<_> = dep_ids_from_dep_infos
-            .difference(&ids_from_dep_info_set)
-            .collect();
+        let difference: Vec<_> = dep_ids_from_links.difference(&ids_from_links_set).collect();
         assert!(
             difference.is_empty(),
             "{}: unexpected extra {} transitive dependencies for dep '{}': {:?}",
