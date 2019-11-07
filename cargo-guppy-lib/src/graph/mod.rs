@@ -73,7 +73,7 @@ impl PackageGraph {
 
         for metadata in self.packages() {
             let package_id = metadata.id();
-            for dep in self.deps_node_idx_directed(metadata.node_idx, Outgoing) {
+            for dep in self.dep_links_node_idx_directed(metadata.node_idx, Outgoing) {
                 let to_id = dep.to.id();
                 let to_version = dep.to.version();
 
@@ -171,40 +171,40 @@ impl PackageGraph {
     // ---
 
     /// Returns the direct dependencies for the given package ID in the specified direction.
-    pub fn deps_directed<'g>(
+    pub fn dep_links_directed<'g>(
         &'g self,
         package_id: &PackageId,
         dep_direction: DependencyDirection,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
-        self.deps_impl(package_id, dep_direction.to_direction())
+        self.dep_links_impl(package_id, dep_direction.to_direction())
     }
 
     /// Returns the direct dependencies for the given package ID.
-    pub fn deps<'g>(
+    pub fn dep_links<'g>(
         &'g self,
         package_id: &PackageId,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
-        self.deps_impl(package_id, Outgoing)
+        self.dep_links_impl(package_id, Outgoing)
     }
 
     /// Returns the direct reverse dependencies for the given package ID.
-    pub fn reverse_deps<'g>(
+    pub fn reverse_dep_links<'g>(
         &'g self,
         package_id: &PackageId,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
-        self.deps_impl(package_id, Incoming)
+        self.dep_links_impl(package_id, Incoming)
     }
 
-    fn deps_impl<'g>(
+    fn dep_links_impl<'g>(
         &'g self,
         package_id: &PackageId,
         dir: Direction,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.metadata(package_id)
-            .map(|metadata| self.deps_node_idx_directed(metadata.node_idx, dir))
+            .map(|metadata| self.dep_links_node_idx_directed(metadata.node_idx, dir))
     }
 
-    fn deps_node_idx_directed<'g>(
+    fn dep_links_node_idx_directed<'g>(
         &'g self,
         node_idx: NodeIndex<u32>,
         dir: Direction,
@@ -281,19 +281,19 @@ impl PackageGraph {
     ///
     /// If you are only interested in dependency IDs, `transitive_dep_ids_directed` is more
     /// efficient.
-    pub fn transitive_deps_directed<'g, 'a>(
+    pub fn transitive_dep_links_directed<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
         direction: DependencyDirection,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         match direction {
-            DependencyDirection::Forward => Ok(Either::Left(self.transitive_deps_impl(
+            DependencyDirection::Forward => Ok(Either::Left(self.transitive_dep_links_impl(
                 node_idxs,
                 &self.dep_graph,
                 direction,
             ))),
-            DependencyDirection::Reverse => Ok(Either::Right(self.transitive_deps_impl(
+            DependencyDirection::Reverse => Ok(Either::Right(self.transitive_dep_links_impl(
                 node_idxs,
                 ReversedDirected::new(&self.dep_graph),
                 direction,
@@ -307,12 +307,18 @@ impl PackageGraph {
     /// any links where the package is on the `from` end.
     ///
     /// If you are only interested in dependency IDs, `transitive_dep_ids` is more efficient.
-    pub fn transitive_deps<'g, 'a>(
+    pub fn transitive_dep_links<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_deps_impl(node_idxs, &self.dep_graph, DependencyDirection::Forward))
+        Ok(
+            self.transitive_dep_links_impl(
+                node_idxs,
+                &self.dep_graph,
+                DependencyDirection::Forward,
+            ),
+        )
     }
 
     /// Returns all transitive reverse dependency links for the given package IDs.
@@ -322,19 +328,19 @@ impl PackageGraph {
     ///
     /// If you are only interested in dependency IDs, `transitive_reverse_dep_ids` is more
     /// efficient.
-    pub fn transitive_reverse_deps<'g, 'a>(
+    pub fn transitive_reverse_dep_links<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_deps_impl(
+        Ok(self.transitive_dep_links_impl(
             node_idxs,
             ReversedDirected::new(&self.dep_graph),
             DependencyDirection::Reverse,
         ))
     }
 
-    fn transitive_deps_impl<'g, G>(
+    fn transitive_dep_links_impl<'g, G>(
         &'g self,
         node_idxs: Vec<NodeIndex<u32>>,
         graph: G,

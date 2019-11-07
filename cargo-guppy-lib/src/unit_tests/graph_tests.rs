@@ -12,7 +12,7 @@ fn metadata1() {
 
     let graph = metadata1.graph();
     let mut root_deps: Vec<_> = graph
-        .deps(&PackageId {
+        .dep_links(&PackageId {
             repr: fixtures::METADATA1_TESTCRATE.into(),
         })
         .expect("root crate deps should exist")
