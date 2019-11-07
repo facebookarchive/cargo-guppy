@@ -82,7 +82,7 @@ pub(crate) fn assert_deps_internal(
         .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), *id))
         .collect();
     let actual_deps: Vec<_> = graph
-        .deps_directed(known_details.id(), direction)
+        .dep_links_directed(known_details.id(), direction)
         .unwrap_or_else(|| panic!("{}: deps for package not found", msg))
         .into_iter()
         .collect();
@@ -142,7 +142,7 @@ pub(crate) fn assert_transitive_deps_internal(
         .collect();
     actual_dep_ids.sort();
     let actual_deps: Vec<_> = graph
-        .transitive_deps_directed(iter::once(known_details.id()), direction)
+        .transitive_dep_links_directed(iter::once(known_details.id()), direction)
         .unwrap_or_else(|err| {
             panic!(
                 "{}: {} transitive dep query failed: {}",
@@ -194,7 +194,7 @@ pub(crate) fn assert_transitive_deps_internal(
         );
 
         let dep_ids_from_links: BTreeSet<_> = graph
-            .transitive_deps_directed(iter::once(dep_id), direction)
+            .transitive_dep_links_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep query failed for dependency '{}': {}",
