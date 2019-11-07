@@ -1,6 +1,7 @@
 use crate::graph::{DependencyDirection, DependencyLink, PackageGraph, PackageMetadata};
 use crate::unit_tests::fixtures::PackageDetails;
-use std::collections::BTreeSet;
+use cargo_metadata::PackageId;
+use std::collections::{BTreeSet, HashMap};
 use std::iter;
 
 fn __from_metadata<'a>(dep: &DependencyLink<'a>) -> &'a PackageMetadata {
@@ -167,6 +168,9 @@ pub(crate) fn assert_transitive_deps_internal(
         msg, desc.direction_desc
     );
 
+    // Transitive deps should be in topological order.
+    assert_topo_order(actual_deps.iter().cloned(), direction, msg);
+
     // Transitive deps should be transitively closed.
     for dep_id in expected_dep_id_refs {
         let dep_actual_dep_ids: BTreeSet<_> = graph
@@ -209,5 +213,84 @@ pub(crate) fn assert_transitive_deps_internal(
             dep_id.repr,
             difference
         );
+    }
+}
+
+/// Assert that the links provided are in topological order.
+///
+/// For any given package:
+/// * If direction is Forward, the package should never appear in the `to` of a link after it
+///   appears in the `from` of a link.
+/// * If direction is Reverse, the package should never appear in the `from` of a link after it
+///   appears in the `to` of a link.
+pub(crate) fn assert_topo_order<'g: 'a, 'a>(
+    links: impl IntoIterator<Item = DependencyLink<'g>>,
+    direction: DependencyDirection,
+    msg: &str,
+) {
+    // The package should never appear in known_metadata after it appears in variable_metadata.
+    let mut check_states = HashMap::new();
+    let desc = DirectionDesc::new(direction);
+    for link in links {
+        let known_id = desc.known_metadata(&link).id();
+        let variable_id = desc.variable_metadata(&link).id();
+        println!(
+            "link from: {} to: {}: known: {}, variable: {}",
+            link.from.id().repr,
+            link.to.id().repr,
+            known_id.repr,
+            variable_id.repr
+        );
+        check_states
+            .entry(known_id)
+            .or_insert_with(|| TopoCheckState::new(known_id))
+            .record_phase2(variable_id);
+        check_states
+            .entry(variable_id)
+            .or_insert_with(|| TopoCheckState::new(variable_id))
+            .record_phase1(known_id, &desc, msg);
+    }
+}
+
+/// This struct has two states: "phase 1", in which `package_id` has been seen on the
+/// variable end of links, and "phase 2", in which `package_id` has been seen on the known
+/// end of at least one link. Packages can move from phase 1 to phase 2 but not back.
+#[derive(Debug)]
+struct TopoCheckState<'a> {
+    package_id: &'a PackageId,
+    phase1_seen: Vec<&'a PackageId>,
+    phase2_seen: Vec<&'a PackageId>,
+}
+
+impl<'a> TopoCheckState<'a> {
+    fn new(package_id: &'a PackageId) -> Self {
+        Self {
+            package_id,
+            phase1_seen: vec![],
+            phase2_seen: vec![],
+        }
+    }
+
+    fn record_phase1(&mut self, known_id: &'a PackageId, desc: &DirectionDesc, msg: &str) {
+        match self.phase2_seen.is_empty() {
+            true => self.phase1_seen.push(known_id),
+            false => panic!(
+                "{}: for package P = '{}', unexpected link {known_desc} '{}' {variable_desc} P \
+                 after links {known_desc} P (previously seen: \
+                 links {variable_desc} P: {:?}, links {known_desc} P: {:?}",
+                msg,
+                self.package_id.repr,
+                known_id.repr,
+                self.phase1_seen,
+                self.phase2_seen,
+                known_desc = desc.known_desc,
+                variable_desc = desc.variable_desc,
+            ),
+        }
+    }
+
+    fn record_phase2(&mut self, variable_id: &'a PackageId) {
+        // phase2_seen not being empty indicates that this package has moved to phase2.
+        self.phase2_seen.push(variable_id);
     }
 }

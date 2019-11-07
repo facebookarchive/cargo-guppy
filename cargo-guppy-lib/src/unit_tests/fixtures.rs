@@ -82,11 +82,18 @@ impl Fixture {
 
             // Check for transitive dependency queries. Use both ID based and edge-based queries.
             if self.details.has_transitive_deps(id) {
-                self.details.assert_transitive_deps(&self.graph, id, &msg);
+                self.details.assert_transitive_deps(
+                    &self.graph,
+                    id,
+                    &format!("{} (transitive deps)", msg),
+                );
             }
             if self.details.has_transitive_reverse_deps(id) {
-                self.details
-                    .assert_transitive_reverse_deps(&self.graph, id, &msg);
+                self.details.assert_transitive_reverse_deps(
+                    &self.graph,
+                    id,
+                    &format!("{} (transitive reverse deps)", msg),
+                );
             }
         }
     }
