@@ -147,7 +147,7 @@ impl PackageGraph {
     /// The order edges are visited is not specified.
     pub fn retain_edges<F>(&mut self, visit: F)
     where
-        F: Fn(&PackageGraphData, DependencyInfo<'_>) -> bool,
+        F: Fn(&PackageGraphData, DependencyLink<'_>) -> bool,
     {
         let data = &self.data;
         self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
@@ -159,7 +159,7 @@ impl PackageGraph {
             let from = &data.packages[&frozen_graph[source]];
             let to = &data.packages[&frozen_graph[target]];
             let edge = &frozen_graph[edge_idx];
-            visit(data, DependencyInfo { from, to, edge })
+            visit(data, DependencyLink { from, to, edge })
         });
     }
 
@@ -172,7 +172,7 @@ impl PackageGraph {
         &'g self,
         package_id: &PackageId,
         dep_direction: DependencyDirection,
-    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.deps_impl(package_id, dep_direction.to_direction())
     }
 
@@ -180,7 +180,7 @@ impl PackageGraph {
     pub fn deps<'g>(
         &'g self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.deps_impl(package_id, Outgoing)
     }
 
@@ -188,7 +188,7 @@ impl PackageGraph {
     pub fn reverse_deps<'g>(
         &'g self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.deps_impl(package_id, Incoming)
     }
 
@@ -196,7 +196,7 @@ impl PackageGraph {
         &'g self,
         package_id: &PackageId,
         dir: Direction,
-    ) -> Option<impl Iterator<Item = DependencyInfo<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.metadata(package_id)
             .map(|metadata| self.deps_node_idx_directed(metadata.node_idx, dir))
     }
@@ -205,10 +205,10 @@ impl PackageGraph {
         &'g self,
         node_idx: NodeIndex<u32>,
         dir: Direction,
-    ) -> impl Iterator<Item = DependencyInfo<'g>> + 'g {
+    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
         self.dep_graph
             .edges_directed(node_idx, dir)
-            .map(move |edge| self.edge_to_dep(edge.source(), edge.target(), edge.weight()))
+            .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
     }
 
     /// Returns the package IDs for all transitive dependencies for the given package IDs, in the
@@ -273,7 +273,7 @@ impl PackageGraph {
             .map(move |node_idx| &self.dep_graph[node_idx])
     }
 
-    /// Returns all transitive dependency edges for the given package IDs in the specified
+    /// Returns all transitive dependency links for the given package IDs in the specified
     /// direction.
     ///
     /// If you are only interested in dependency IDs, `transitive_dep_ids_directed` is more
@@ -282,7 +282,7 @@ impl PackageGraph {
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
         direction: DependencyDirection,
-    ) -> Result<impl Iterator<Item = DependencyInfo<'g>> + 'g, Error> {
+    ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         match direction {
             DependencyDirection::Forward => Ok(Either::Left(
@@ -294,25 +294,25 @@ impl PackageGraph {
         }
     }
 
-    /// Returns all transitive dependency edges for the given package IDs.
+    /// Returns all transitive dependency links for the given package IDs.
     ///
     /// If you are only interested in dependency IDs, `transitive_dep_ids` is more efficient.
     pub fn transitive_deps<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<impl Iterator<Item = DependencyInfo<'g>> + 'g, Error> {
+    ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         Ok(self.transitive_deps_impl(node_idxs, &self.dep_graph))
     }
 
-    /// Returns all transitive reverse dependency edges for the given package IDs.
+    /// Returns all transitive reverse dependency links for the given package IDs.
     ///
     /// If you are only interested in dependency IDs, `transitive_reverse_dep_ids` is more
     /// efficient.
     pub fn transitive_reverse_deps<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<impl Iterator<Item = DependencyInfo<'g>> + 'g, Error> {
+    ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         Ok(self.transitive_deps_impl(node_idxs, ReversedDirected::new(&self.dep_graph)))
     }
@@ -321,7 +321,7 @@ impl PackageGraph {
         &'g self,
         node_idxs: Vec<NodeIndex<u32>>,
         graph: G,
-    ) -> impl Iterator<Item = DependencyInfo<'g>> + 'g
+    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g
     where
         G: 'g + Visitable + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>,
         G::Map: VisitMap<NodeIndex<u32>>,
@@ -331,7 +331,7 @@ impl PackageGraph {
         edge_dfs
             .iter(graph)
             .map(move |(source_idx, target_idx, edge_idx)| {
-                self.edge_to_dep(source_idx, target_idx, &self.dep_graph[edge_idx])
+                self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
             })
     }
 
@@ -339,13 +339,13 @@ impl PackageGraph {
     // Helper methods
     // ---
 
-    /// Maps an edge source, target and weight to a package dep.
-    fn edge_to_dep<'g>(
+    /// Maps an edge source, target and weight to a dependency link.
+    fn edge_to_link<'g>(
         &'g self,
         source: NodeIndex<u32>,
         target: NodeIndex<u32>,
         edge: &'g DependencyEdge,
-    ) -> DependencyInfo<'g> {
+    ) -> DependencyLink<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
         //
@@ -357,7 +357,7 @@ impl PackageGraph {
         let to = self
             .metadata(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
-        DependencyInfo { from, to, edge }
+        DependencyLink { from, to, edge }
     }
 
     /// Maps an iterator of package IDs to their internal graph node indexes.
@@ -432,7 +432,7 @@ impl Workspace {
 }
 
 #[derive(Clone, Debug)]
-pub struct DependencyInfo<'g> {
+pub struct DependencyLink<'g> {
     pub from: &'g PackageMetadata,
     pub to: &'g PackageMetadata,
     pub edge: &'g DependencyEdge,
