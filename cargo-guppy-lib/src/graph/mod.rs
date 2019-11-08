@@ -6,11 +6,12 @@ use crate::graph::visit::{reversed::ReversedDirected, walk::EdgeDfs};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
 use either::Either;
 use lazy_static::lazy_static;
+use petgraph::algo::{has_path_connecting, DfsSpace};
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdges, IntoNeighbors, VisitMap, Visitable, Walker};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap};
-use std::iter::FromIterator;
+use std::iter;
 use std::path::{Path, PathBuf};
 
 mod build;
@@ -164,6 +165,24 @@ impl PackageGraph {
             let edge = &frozen_graph[edge_idx];
             visit(data, DependencyLink { from, to, edge })
         });
+    }
+
+    /// Creates a new cache for `depends_on` queries.
+    ///
+    /// The cache is optional but can speed up some queries.
+    pub fn new_depends_cache(&self) -> DependsCache {
+        DependsCache::new(self)
+    }
+
+    /// Returns true if `package_a` depends (directly or indirectly) on `package_b`.
+    ///
+    /// In other words, this returns true if `package_b` is a (possibly transitive) dependency of
+    /// `package_a`.
+    ///
+    /// For repeated queries, consider using `new_depends_cache` to speed up queries.
+    pub fn depends_on(&self, package_a: &PackageId, package_b: &PackageId) -> Result<bool, Error> {
+        let mut depends_cache = self.new_depends_cache();
+        depends_cache.depends_on(package_a, package_b)
     }
 
     // ---
@@ -399,7 +418,7 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<B, Error>
     where
-        B: FromIterator<NodeIndex<u32>>,
+        B: iter::FromIterator<NodeIndex<u32>>,
     {
         package_ids
             .into_iter()
@@ -435,6 +454,49 @@ impl PackageGraphData {
     /// Returns the metadata for the given package ID.
     pub fn metadata(&self, package_id: &PackageId) -> Option<&PackageMetadata> {
         self.packages.get(package_id)
+    }
+}
+
+/// An optional cache used to speed up `depends_on` queries.
+///
+/// Created with `PackageGraph::new_cache()`.
+#[derive(Clone, Debug)]
+pub struct DependsCache<'g> {
+    package_graph: &'g PackageGraph,
+    dfs_space: DfsSpace<NodeIndex<u32>, <Graph<NodeIndex<u32>, EdgeIndex<u32>> as Visitable>::Map>,
+}
+
+impl<'g> DependsCache<'g> {
+    /// Creates a new cache for `depends_on` queries for this package graph.
+    ///
+    /// This holds a shared reference to the package graph. This is to ensure that the cache is
+    /// invalidated if the package graph is mutated.
+    pub fn new(package_graph: &'g PackageGraph) -> Self {
+        Self {
+            package_graph,
+            dfs_space: DfsSpace::new(&package_graph.dep_graph),
+        }
+    }
+
+    /// Returns true if `package_a` depends (directly or indirectly) on `package_b`.
+    ///
+    /// In other words, this returns true if `package_b` is a (possibly transitive) dependency of
+    /// `package_a`.
+    pub fn depends_on(
+        &mut self,
+        package_a: &PackageId,
+        package_b: &PackageId,
+    ) -> Result<bool, Error> {
+        // XXX rewrite this to avoid an allocation? meh
+        let node_idxs: Vec<_> = self
+            .package_graph
+            .node_idxs(iter::once(package_a).chain(iter::once(package_b)))?;
+        Ok(has_path_connecting(
+            &self.package_graph.dep_graph,
+            node_idxs[0],
+            node_idxs[1],
+            Some(&mut self.dfs_space),
+        ))
     }
 }
 
