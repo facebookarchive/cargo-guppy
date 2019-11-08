@@ -461,7 +461,7 @@ impl Workspace {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct DependencyLink<'g> {
     pub from: &'g PackageMetadata,
     pub to: &'g PackageMetadata,
