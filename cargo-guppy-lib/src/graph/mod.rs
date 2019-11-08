@@ -69,7 +69,8 @@ impl PackageGraph {
         Self::build(metadata)
     }
 
-    /// Verifies internal invariants on this graph.
+    /// Verifies internal invariants on this graph. Not part of the documented API.
+    #[doc(hidden)]
     pub fn verify(&self) -> Result<(), Error> {
         lazy_static! {
             static ref MAJOR_WILDCARD: VersionReq = VersionReq::parse("*").unwrap();
