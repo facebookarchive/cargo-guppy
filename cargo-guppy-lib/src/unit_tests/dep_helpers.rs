@@ -1,4 +1,6 @@
-use crate::graph::{DependencyDirection, DependencyLink, PackageGraph, PackageMetadata};
+use crate::graph::{
+    DependencyDirection, DependencyLink, DependsCache, PackageGraph, PackageMetadata,
+};
 use crate::unit_tests::fixtures::PackageDetails;
 use cargo_metadata::PackageId;
 use std::collections::{BTreeSet, HashMap};
@@ -103,6 +105,12 @@ pub(crate) fn assert_deps_internal(
         msg, desc.direction_desc,
     );
 
+    let mut cache = graph.new_depends_cache();
+    for (_, _, dep_id) in &actual_dep_ids {
+        // depends_on should agree with the dependencies returned.
+        assert_depends_on(known_details.id(), dep_id, &mut cache, direction, msg);
+    }
+
     // Check that the dependency metadata returned is consistent with what we expect.
     let known_msg = format!(
         "{}: {} dependency edge {} this package",
@@ -172,8 +180,12 @@ pub(crate) fn assert_transitive_deps_internal(
     // up at least once in 'to' before it ever shows up in 'from'.
     // XXX test this.
 
-    // Transitive deps should be transitively closed.
+    let mut cache = graph.new_depends_cache();
     for dep_id in expected_dep_id_refs {
+        // depends_on should agree with this.
+        assert_depends_on(known_details.id(), dep_id, &mut cache, direction, msg);
+
+        // Transitive deps should be transitively closed.
         let dep_actual_dep_ids: BTreeSet<_> = graph
             .transitive_dep_ids_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
@@ -214,6 +226,35 @@ pub(crate) fn assert_transitive_deps_internal(
             dep_id.repr,
             difference
         );
+    }
+}
+
+fn assert_depends_on(
+    package_a: &PackageId,
+    package_b: &PackageId,
+    cache: &mut DependsCache,
+    direction: DependencyDirection,
+    msg: &str,
+) {
+    match direction {
+        DependencyDirection::Forward => assert!(
+            cache
+                .depends_on(package_a, package_b)
+                .expect("package not found?"),
+            "{}: package '{}' should depend on '{}'",
+            msg,
+            &package_a.repr,
+            &package_b.repr,
+        ),
+        DependencyDirection::Reverse => assert!(
+            cache
+                .depends_on(package_b, package_a)
+                .expect("package not found?"),
+            "{}: package '{}' should be a dependency of '{}'",
+            msg,
+            &package_a.repr,
+            &package_b.repr,
+        ),
     }
 }
 
