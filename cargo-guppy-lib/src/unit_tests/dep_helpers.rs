@@ -169,7 +169,7 @@ pub(crate) fn assert_transitive_deps_internal(
     );
 
     // Transitive deps should be in topological order.
-    assert_topo_order(actual_deps.iter().cloned(), direction, msg);
+    assert_topo_order(actual_deps.iter().copied(), direction, msg);
 
     // Transitive deps should be transitively closed.
     for dep_id in expected_dep_id_refs {
