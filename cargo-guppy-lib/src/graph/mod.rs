@@ -300,8 +300,8 @@ impl PackageGraph {
 
     /// Returns all transitive dependency links for the given package IDs.
     ///
-    /// For any given package, all links where the package is on the `to` end are returned before
-    /// any links where the package is on the `from` end.
+    /// For any given package, at least one link where the package is on the `to` end is returned
+    /// before any links where the package is on the `from` end.
     ///
     /// If you are only interested in dependency IDs, `transitive_dep_ids` is more efficient.
     pub fn transitive_dep_links<'g, 'a>(
@@ -320,8 +320,8 @@ impl PackageGraph {
 
     /// Returns all transitive reverse dependency links for the given package IDs.
     ///
-    /// For any given package, all links where the package is on the `from` end are returned before
-    /// any links where the package is on the `to` end.
+    /// For any given package, at least one link where the package is on the `from` end is returned
+    /// before any links where the package is on the `to` end.
     ///
     /// If you are only interested in dependency IDs, `transitive_reverse_dep_ids` is more
     /// efficient.
