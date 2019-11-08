@@ -6,7 +6,7 @@ use crate::graph::{
 };
 use crate::unit_tests::fixtures::PackageDetails;
 use cargo_metadata::PackageId;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashSet};
 use std::iter;
 
 fn __from_metadata<'a>(dep: &DependencyLink<'a>) -> &'a PackageMetadata {
@@ -181,7 +181,7 @@ pub(crate) fn assert_transitive_deps_internal(
 
     // The order requirements are weaker than topological -- for forward queries, a dep should show
     // up at least once in 'to' before it ever shows up in 'from'.
-    // XXX test this.
+    assert_link_order(actual_deps, iter::once(known_details.id()), &desc, msg);
 
     let mut cache = graph.new_depends_cache();
     for dep_id in expected_dep_id_refs {
@@ -312,82 +312,34 @@ fn assert_not_depends_on(
     }
 }
 
-/// Assert that the links provided are in topological order.
+/// Assert that links are presented in the expected order.
 ///
-/// For any given package:
-/// * If direction is Forward, the package should never appear in the `to` of a link after it
-///   appears in the `from` of a link.
-/// * If direction is Reverse, the package should never appear in the `from` of a link after it
-///   appears in the `to` of a link.
-#[allow(dead_code)]
-pub(crate) fn assert_topo_order<'g: 'a, 'a>(
+/// For any given package not in the initial set:
+/// * If direction is Forward, the package should appear in the `to` of a link at least once
+///   before it appears in the `from` of a link.
+/// * If direction is Reverse, the package should appear in the `from` of a link at least once
+///   before it appears in the `to` of a link.
+fn assert_link_order<'g>(
     links: impl IntoIterator<Item = DependencyLink<'g>>,
-    direction: DependencyDirection,
+    initial: impl IntoIterator<Item = &'g PackageId>,
+    desc: &DirectionDesc<'g>,
     msg: &str,
 ) {
-    // The package should never appear in known_metadata after it appears in variable_metadata.
-    let mut check_states = HashMap::new();
-    let desc = DirectionDesc::new(direction);
+    // for forward, 'from' is known and 'to' is variable.
+    let mut variable_seen: HashSet<_> = initial.into_iter().collect();
+
     for link in links {
         let known_id = desc.known_metadata(&link).id();
         let variable_id = desc.variable_metadata(&link).id();
-        println!(
-            "link from: {} to: {}: known: {}, variable: {}",
-            link.from.id().repr,
-            link.to.id().repr,
-            known_id.repr,
-            variable_id.repr
+
+        variable_seen.insert(variable_id);
+        assert!(
+            variable_seen.contains(&known_id),
+            "{}: for package '{}': unexpected link {} package seen before any links {} package",
+            msg,
+            &known_id.repr,
+            desc.known_desc,
+            desc.variable_desc,
         );
-        check_states
-            .entry(known_id)
-            .or_insert_with(|| TopoCheckState::new(known_id))
-            .record_phase2(variable_id);
-        check_states
-            .entry(variable_id)
-            .or_insert_with(|| TopoCheckState::new(variable_id))
-            .record_phase1(known_id, &desc, msg);
-    }
-}
-
-/// This struct has two states: "phase 1", in which `package_id` has been seen on the
-/// variable end of links, and "phase 2", in which `package_id` has been seen on the known
-/// end of at least one link. Packages can move from phase 1 to phase 2 but not back.
-#[derive(Debug)]
-struct TopoCheckState<'a> {
-    package_id: &'a PackageId,
-    phase1_seen: Vec<&'a PackageId>,
-    phase2_seen: Vec<&'a PackageId>,
-}
-
-impl<'a> TopoCheckState<'a> {
-    fn new(package_id: &'a PackageId) -> Self {
-        Self {
-            package_id,
-            phase1_seen: vec![],
-            phase2_seen: vec![],
-        }
-    }
-
-    fn record_phase1(&mut self, known_id: &'a PackageId, desc: &DirectionDesc, msg: &str) {
-        match self.phase2_seen.is_empty() {
-            true => self.phase1_seen.push(known_id),
-            false => panic!(
-                "{}: for package P = '{}', unexpected link {known_desc} '{}' {variable_desc} P \
-                 after links {known_desc} P (previously seen: \
-                 links {variable_desc} P: {:?}, links {known_desc} P: {:?}",
-                msg,
-                self.package_id.repr,
-                known_id.repr,
-                self.phase1_seen,
-                self.phase2_seen,
-                known_desc = desc.known_desc,
-                variable_desc = desc.variable_desc,
-            ),
-        }
-    }
-
-    fn record_phase2(&mut self, variable_id: &'a PackageId) {
-        // phase2_seen not being empty indicates that this package has moved to phase2.
-        self.phase2_seen.push(variable_id);
     }
 }
