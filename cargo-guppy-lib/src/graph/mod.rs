@@ -3,7 +3,7 @@ use crate::graph::visit::{reversed::ReversedDirected, walk::EdgeDfs};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
 use either::Either;
 use lazy_static::lazy_static;
-use petgraph::algo::{has_path_connecting, DfsSpace};
+use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
 use petgraph::visit::{
     IntoEdges, IntoNeighbors, IntoNeighborsDirected, IntoNodeIdentifiers, Topo, VisitMap,
@@ -80,6 +80,15 @@ impl PackageGraph {
             return Err(Error::DepGraphInternalError(format!(
                 "number of nodes = {} different from packages = {}",
                 node_count, package_count,
+            )));
+        }
+        // petgraph has both is_cyclic_directed and toposort to detect cycles. is_cyclic_directed
+        // is recursive and toposort is iterative. Package graphs have unbounded depth so use the
+        // iterative implementation.
+        if let Err(cycle) = toposort(&self.dep_graph, None) {
+            return Err(Error::DepGraphInternalError(format!(
+                "unexpected cycle in dep graph: {:?}",
+                cycle
             )));
         }
 
