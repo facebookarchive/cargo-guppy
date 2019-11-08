@@ -171,8 +171,9 @@ pub(crate) fn assert_transitive_deps_internal(
         msg, desc.direction_desc
     );
 
-    // Transitive deps should be in topological order.
-    assert_topo_order(actual_deps.iter().copied(), direction, msg);
+    // The order requirements are weaker than topological -- for forward queries, a dep should show
+    // up at least once in 'to' before it ever shows up in 'from'.
+    // XXX test this.
 
     // Transitive deps should be transitively closed.
     for dep_id in expected_dep_id_refs {
@@ -226,6 +227,7 @@ pub(crate) fn assert_transitive_deps_internal(
 ///   appears in the `from` of a link.
 /// * If direction is Reverse, the package should never appear in the `from` of a link after it
 ///   appears in the `to` of a link.
+#[allow(dead_code)]
 pub(crate) fn assert_topo_order<'g: 'a, 'a>(
     links: impl IntoIterator<Item = DependencyLink<'g>>,
     direction: DependencyDirection,
