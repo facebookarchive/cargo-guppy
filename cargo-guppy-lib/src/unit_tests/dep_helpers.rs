@@ -82,7 +82,7 @@ pub(crate) fn assert_deps_internal(
             )
         })
         .iter()
-        .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), *id))
+        .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), id))
         .collect();
     let actual_deps: Vec<_> = graph
         .dep_links_directed(known_details.id(), direction)
@@ -95,7 +95,7 @@ pub(crate) fn assert_deps_internal(
             (
                 dep.edge.dep_name(),
                 dep.edge.resolved_name().to_string(),
-                desc.variable_metadata(&dep).id().repr.as_str(),
+                desc.variable_metadata(&dep).id(),
             )
         })
         .collect();

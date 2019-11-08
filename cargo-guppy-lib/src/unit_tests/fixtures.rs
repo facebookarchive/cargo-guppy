@@ -502,8 +502,8 @@ pub(crate) struct PackageDetails {
 
     // The vector items are (name, package id).
     // XXX add more details about dependency edges here?
-    deps: Option<Vec<(&'static str, &'static str)>>,
-    reverse_deps: Option<Vec<(&'static str, &'static str)>>,
+    deps: Option<Vec<(&'static str, PackageId)>>,
+    reverse_deps: Option<Vec<(&'static str, PackageId)>>,
     transitive_deps: Option<Vec<PackageId>>,
     transitive_reverse_deps: Option<Vec<PackageId>>,
 }
@@ -533,13 +533,22 @@ impl PackageDetails {
 
     fn with_deps(mut self, mut deps: Vec<(&'static str, &'static str)>) -> Self {
         deps.sort();
-        self.deps = Some(deps);
+        self.deps = Some(
+            deps.into_iter()
+                .map(|(name, id)| (name, package_id(id)))
+                .collect(),
+        );
         self
     }
 
     fn with_reverse_deps(mut self, mut reverse_deps: Vec<(&'static str, &'static str)>) -> Self {
         reverse_deps.sort();
-        self.reverse_deps = Some(reverse_deps);
+        self.reverse_deps = Some(
+            reverse_deps
+                .into_iter()
+                .map(|(name, id)| (name, package_id(id)))
+                .collect(),
+        );
         self
     }
 
@@ -574,7 +583,7 @@ impl PackageDetails {
     pub(crate) fn deps(
         &self,
         direction: DependencyDirection,
-    ) -> Option<&[(&'static str, &'static str)]> {
+    ) -> Option<&[(&'static str, PackageId)]> {
         match direction {
             DependencyDirection::Forward => self.deps.as_ref().map(|deps| deps.as_slice()),
             DependencyDirection::Reverse => self.reverse_deps.as_ref().map(|deps| deps.as_slice()),
