@@ -48,7 +48,7 @@
 // config isn't used at the moment so hide it from docs.
 #[doc(hidden)]
 pub mod config;
-mod errors;
+pub mod errors;
 pub mod graph;
 pub(crate) mod petgraph_support;
 #[cfg(test)]
