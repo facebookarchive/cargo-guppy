@@ -167,6 +167,11 @@ impl<'a> GraphBuildState<'a> {
             self.dep_graph.update_edge(node_idx, dep_idx, edge);
         }
 
+        // The default features for this crate are stored in the package.features map along with
+        // named features.
+        let mut features = package.features;
+        let default_features = features.remove("default").unwrap_or_default();
+
         Ok((
             package.id.clone(),
             PackageMetadata {
@@ -187,9 +192,11 @@ impl<'a> GraphBuildState<'a> {
                 metadata_table: package.metadata,
                 links: package.links,
                 publish: package.publish,
+                features,
 
                 node_idx,
                 workspace_path,
+                default_features,
                 resolved_deps,
                 resolved_features,
             },

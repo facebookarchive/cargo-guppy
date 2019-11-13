@@ -106,6 +106,22 @@ impl Fixture {
                     &format!("{} (transitive reverse deps)", msg),
                 );
             }
+
+            // Check for default/named features.
+            if self.details.has_default_features(id) {
+                self.details.assert_default_features(
+                    &self.graph,
+                    id,
+                    &format!("{} (default features)", msg),
+                );
+            }
+            if self.details.has_named_features(id) {
+                self.details.assert_named_features(
+                    &self.graph,
+                    id,
+                    &format!("{} (named features)", msg),
+                );
+            }
         }
     }
 
@@ -264,6 +280,36 @@ impl FixtureDetails {
         )
     }
 
+    pub(crate) fn has_default_features(&self, id: &PackageId) -> bool {
+        self.package_details[id].default_features.is_some()
+    }
+
+    pub(crate) fn assert_default_features(&self, graph: &PackageGraph, id: &PackageId, msg: &str) {
+        let mut actual: Vec<_> = graph
+            .metadata(id)
+            .expect("package id should be valid")
+            .default_features()
+            .collect();
+        actual.sort();
+        let expected = self.package_details[id].default_features.as_ref().unwrap();
+        assert_eq!(expected, &actual, "{}", msg);
+    }
+
+    pub(crate) fn has_named_features(&self, id: &PackageId) -> bool {
+        self.package_details[id].named_features.is_some()
+    }
+
+    pub(crate) fn assert_named_features(&self, graph: &PackageGraph, id: &PackageId, msg: &str) {
+        let mut actual: Vec<_> = graph
+            .metadata(id)
+            .expect("package id should be valid")
+            .named_features()
+            .collect();
+        actual.sort();
+        let expected = self.package_details[id].named_features.as_ref().unwrap();
+        assert_eq!(expected, &actual, "{}", msg);
+    }
+
     // Specific fixtures follow.
 
     pub(crate) fn metadata1() -> Self {
@@ -380,6 +426,8 @@ impl FixtureDetails {
                 "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
             ),
         ])
+        .with_default_features(vec!["proc-macro"])
+        .with_named_features(vec!["proc-macro"])
         .insert_into(&mut details);
 
         Self::new(
@@ -527,6 +575,8 @@ pub(crate) struct PackageDetails {
     reverse_deps: Option<Vec<(&'static str, PackageId)>>,
     transitive_deps: Option<Vec<PackageId>>,
     transitive_reverse_deps: Option<Vec<PackageId>>,
+    default_features: Option<Vec<&'static str>>,
+    named_features: Option<Vec<&'static str>>,
 }
 
 impl PackageDetails {
@@ -549,6 +599,8 @@ impl PackageDetails {
             reverse_deps: None,
             transitive_deps: None,
             transitive_reverse_deps: None,
+            default_features: None,
+            named_features: None,
         }
     }
 
@@ -590,6 +642,18 @@ impl PackageDetails {
                 .map(package_id)
                 .collect(),
         );
+        self
+    }
+
+    fn with_default_features(mut self, mut default_features: Vec<&'static str>) -> Self {
+        default_features.sort();
+        self.default_features = Some(default_features);
+        self
+    }
+
+    fn with_named_features(mut self, mut named_features: Vec<&'static str>) -> Self {
+        named_features.sort();
+        self.named_features = Some(named_features);
         self
     }
 

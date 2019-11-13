@@ -488,10 +488,12 @@ pub struct PackageMetadata {
     pub(super) metadata_table: JsonValue,
     pub(super) links: Option<String>,
     pub(super) publish: Option<Vec<String>>,
+    pub(super) features: HashMap<String, Vec<String>>,
 
     // Other information.
     pub(super) node_idx: NodeIndex<u32>,
     pub(super) workspace_path: Option<PathBuf>,
+    pub(super) default_features: Vec<String>,
     pub(super) resolved_deps: Vec<NodeDep>,
     pub(super) resolved_features: Vec<String>,
 }
@@ -626,6 +628,20 @@ impl PackageMetadata {
     /// not in the workspace.
     pub fn workspace_path(&self) -> Option<&Path> {
         self.workspace_path.as_ref().map(|path| path.as_path())
+    }
+
+    /// Returns the list of features enabled by default for this package.
+    pub fn default_features(&self) -> impl Iterator<Item = &str> + ExactSizeIterator {
+        self.default_features.iter().map(|s| s.as_str())
+    }
+
+    /// Returns the list of named features available for this package.
+    ///
+    /// A named feature is listed in the `[features]` section of `Cargo.toml`. For more, see
+    /// [the reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).
+    pub fn named_features(&self) -> impl Iterator<Item = &str> + ExactSizeIterator {
+        // TODO: expose dependencies via a graph structure.
+        self.features.keys().map(|s| s.as_str())
     }
 }
 
