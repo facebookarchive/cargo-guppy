@@ -1,6 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+//! Contains types that describe errors and warnings that `guppy` methods can return.
+
 use crate::PackageId;
 use cargo_metadata::Error as MetadataError;
 use serde_json;
@@ -61,6 +63,87 @@ impl error::Error for Error {
             PackageGraphConstructError(_) => None,
             UnknownPackageId(_) => None,
             PackageGraphInternalError(_) => None,
+        }
+    }
+}
+
+/// Describes warnings emitted during feature graph construction.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
+pub enum FeatureGraphWarning {
+    /// A feature that was requested is missing from a package.
+    MissingFeature {
+        /// The stage of building the feature graph where the warning occurred.
+        stage: FeatureBuildStage,
+        /// The package ID for which the feature was requested.
+        package_id: PackageId,
+        /// The name of the feature.
+        feature_name: String,
+    },
+}
+
+impl fmt::Display for FeatureGraphWarning {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use FeatureGraphWarning::*;
+        match self {
+            MissingFeature {
+                stage,
+                package_id,
+                feature_name,
+            } => write!(
+                f,
+                "{}: for package '{}', missing feature '{}'",
+                stage, package_id, feature_name
+            ),
+        }
+    }
+}
+
+/// Describes the stage of construction at which a feature graph warning occurred.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
+pub enum FeatureBuildStage {
+    /// The warning occurred while adding edges for the `[features]` section of `Cargo.toml`.
+    AddNamedFeatureEdges {
+        /// The package ID for which edges were being added.
+        package_id: PackageId,
+        /// The feature name from which edges were being added.
+        from_feature: String,
+    },
+    /// The warning occurred while adding dependency edges.
+    AddDependencyEdges {
+        /// The package ID for which edges were being added.
+        package_id: PackageId,
+        /// The name of the dependency.
+        dep_name: String,
+        /// Whether this edge marked an optional dependency.
+        optional: bool,
+    },
+}
+
+impl fmt::Display for FeatureBuildStage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use FeatureBuildStage::*;
+        match self {
+            AddNamedFeatureEdges {
+                package_id,
+                from_feature,
+            } => write!(
+                f,
+                "for package '{}', while adding named feature edges from '{}'",
+                package_id, from_feature
+            ),
+            AddDependencyEdges {
+                package_id,
+                dep_name,
+                optional,
+            } => write!(
+                f,
+                "for package '{}', while adding {} edges for dependency '{}'",
+                package_id,
+                if *optional { "optional" } else { "mandatory" },
+                dep_name,
+            ),
         }
     }
 }

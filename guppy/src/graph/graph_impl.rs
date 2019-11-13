@@ -1,17 +1,19 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{kind_str, DependencyDirection, PackageIx};
+use crate::graph::{kind_str, DependencyDirection, FeatureGraphImpl, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
 use fixedbitset::FixedBitSet;
 use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
 use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
+use std::mem;
 use std::path::{Path, PathBuf};
 
 /// A graph of packages and dependencies between them, parsed from metadata returned by `cargo
@@ -24,6 +26,8 @@ use std::path::{Path, PathBuf};
 pub struct PackageGraph {
     // Source of truth data.
     pub(super) dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
+    // Feature graph, computed on demand.
+    pub(super) feature_graph: OnceCell<FeatureGraphImpl>,
     // XXX Should this be in an Arc for quick cloning? Not clear how this would work with node
     // filters though.
     pub(super) data: PackageGraphData,
@@ -157,6 +161,9 @@ impl PackageGraph {
             }
         }
 
+        // Constructing the feature graph may cause panics to happen.
+        self.get_feature_graph();
+
         Ok(())
     }
 
@@ -214,6 +221,8 @@ impl PackageGraph {
             let edge = &frozen_graph[edge_idx];
             visit(data, DependencyLink { from, to, edge })
         });
+
+        self.invalidate_caches();
     }
 
     /// Creates a new cache for `depends_on` queries.
@@ -287,6 +296,11 @@ impl PackageGraph {
     // ---
     // Helper methods
     // ---
+
+    /// Invalidates internal caches. Meant to be called whenever the graph is mutated.
+    pub(super) fn invalidate_caches(&mut self) {
+        mem::replace(&mut self.feature_graph, OnceCell::new());
+    }
 
     /// Returns the inner dependency graph.
     ///

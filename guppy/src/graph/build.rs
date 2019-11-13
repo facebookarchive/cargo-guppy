@@ -7,6 +7,7 @@ use crate::graph::{
 };
 use crate::{Error, Metadata, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
+use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -42,6 +43,7 @@ impl PackageGraph {
 
         Ok(Self {
             dep_graph,
+            feature_graph: OnceCell::new(),
             data: PackageGraphData {
                 packages,
                 workspace,

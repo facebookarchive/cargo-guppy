@@ -1,12 +1,13 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::errors::FeatureBuildStage;
 use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, Workspace};
 use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
     assert_transitive_deps_internal,
 };
-use crate::PackageId;
+use crate::{errors::FeatureGraphWarning, PackageId};
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
@@ -43,6 +44,10 @@ pub(crate) static METADATA_LIBRA_TREE_HEAP: &str =
     "tree_heap 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/tree_heap)";
 pub(crate) static METADATA_LIBRA_LAZY_STATIC: &str =
     "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_LIBRA_BACKTRACE: &str =
+    "backtrace 0.3.37 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_LIBRA_CFG_IF: &str =
+    "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)";
 
 pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
@@ -116,6 +121,10 @@ impl Fixture {
                 );
             }
         }
+
+        // Tests for the feature graph.
+        self.details
+            .assert_feature_graph_warnings(&self.graph, "feature graph warnings");
     }
 
     // Specific fixtures follow.
@@ -152,6 +161,7 @@ impl Fixture {
 pub(crate) struct FixtureDetails {
     workspace_members: BTreeMap<PathBuf, PackageId>,
     package_details: HashMap<PackageId, PackageDetails>,
+    feature_graph_warnings: Vec<FeatureGraphWarning>,
 }
 
 impl FixtureDetails {
@@ -166,7 +176,17 @@ impl FixtureDetails {
         Self {
             workspace_members,
             package_details,
+            feature_graph_warnings: vec![],
         }
+    }
+
+    pub(crate) fn with_feature_graph_warnings(
+        mut self,
+        mut warnings: Vec<FeatureGraphWarning>,
+    ) -> Self {
+        warnings.sort();
+        self.feature_graph_warnings = warnings;
+        self
     }
 
     pub(crate) fn known_ids<'a>(&'a self) -> impl Iterator<Item = &'a PackageId> + 'a {
@@ -286,6 +306,12 @@ impl FixtureDetails {
         actual.sort();
         let expected = self.package_details[id].named_features.as_ref().unwrap();
         assert_eq!(expected, &actual, "{}", msg);
+    }
+
+    pub(crate) fn assert_feature_graph_warnings(&self, graph: &PackageGraph, msg: &str) {
+        let mut actual: Vec<_> = graph.feature_graph().build_warnings().to_vec();
+        actual.sort();
+        assert_eq!(&self.feature_graph_warnings, &actual, "{}", msg);
     }
 
     // Specific fixtures follow.
@@ -453,7 +479,8 @@ impl FixtureDetails {
         ])
         .insert_into(&mut details);
 
-        Self::new(vec![
+        #[rustfmt::skip]
+        let workspace_members = vec![
             ("admission_control/admission-control-proto", "admission-control-proto 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-proto)"),
             ("admission_control/admission-control-service", "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)"),
             ("benchmark", "benchmark 0.1.0 (path+file:///Users/fakeuser/local/libra/benchmark)"),
@@ -534,7 +561,19 @@ impl FixtureDetails {
             ("types", "libra-types 0.1.0 (path+file:///Users/fakeuser/local/libra/types)"),
             ("vm-validator", "vm-validator 0.1.0 (path+file:///Users/fakeuser/local/libra/vm-validator)"),
             ("x", "x 0.1.0 (path+file:///Users/fakeuser/local/libra/x)"),
-        ], details)
+        ];
+
+        Self::new(workspace_members, details).with_feature_graph_warnings(vec![
+            // See https://github.com/alexcrichton/cfg-if/issues/22 for more.
+            FeatureGraphWarning::MissingFeature {
+                stage: FeatureBuildStage::AddNamedFeatureEdges {
+                    package_id: package_id(METADATA_LIBRA_BACKTRACE),
+                    from_feature: "rustc-dep-of-std".to_string(),
+                },
+                package_id: package_id(METADATA_LIBRA_CFG_IF),
+                feature_name: "rustc-dep-of-std".to_string(),
+            },
+        ])
     }
 }
 
