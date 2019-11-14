@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::errors::Error;
-use crate::graph::visit::{reversed::ReversedDirected, walk::EdgeDfs};
+use crate::graph::visit::{
+    reversed::{ReverseFlip, ReversedDirected},
+    walk::EdgeDfs,
+};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
 use either::Either;
 use lazy_static::lazy_static;
@@ -370,18 +373,26 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
         direction: DependencyDirection,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
+        // This could be written as calls to transitive_dep_links instead of the internal _impl
+        // method, but as of Rust 1.39 that causes the lifetime analyzer to fail with:
+        //
+        // error[E0309]: the parameter type `impl IntoIterator<Item = &'a PackageId>` may not live long enough
+        // help: consider adding an explicit lifetime bound  `'g` to `impl IntoIterator<Item = &'a PackageId>`...
+        // |
+        // |         package_ids: impl IntoIterator<Item = &'a PackageId> + 'g,
+        // |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        //
+        // That bound shouldn't be necessary. Could it be an issue with rustc's lifetime analyzer?
+        // XXX follow up about this.
+
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
         match direction {
-            DependencyDirection::Forward => Ok(Either::Left(self.transitive_dep_links_impl(
-                node_idxs,
-                &self.dep_graph,
-                direction,
-            ))),
-            DependencyDirection::Reverse => Ok(Either::Right(self.transitive_dep_links_impl(
-                node_idxs,
-                ReversedDirected::new(&self.dep_graph),
-                direction,
-            ))),
+            DependencyDirection::Forward => Ok(Either::Left(
+                self.transitive_dep_links_impl(node_idxs, &self.dep_graph),
+            )),
+            DependencyDirection::Reverse => Ok(Either::Right(
+                self.transitive_dep_links_impl(node_idxs, ReversedDirected::new(&self.dep_graph)),
+            )),
         }
     }
 
@@ -396,13 +407,7 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(
-            self.transitive_dep_links_impl(
-                node_idxs,
-                &self.dep_graph,
-                DependencyDirection::Forward,
-            ),
-        )
+        Ok(self.transitive_dep_links_impl(node_idxs, &self.dep_graph))
     }
 
     /// Returns all transitive reverse dependency links for the given package IDs.
@@ -417,21 +422,19 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_dep_links_impl(
-            node_idxs,
-            ReversedDirected::new(&self.dep_graph),
-            DependencyDirection::Reverse,
-        ))
+        Ok(self.transitive_dep_links_impl(node_idxs, ReversedDirected::new(&self.dep_graph)))
     }
 
     fn transitive_dep_links_impl<'g, G>(
         &'g self,
         node_idxs: Vec<NodeIndex<u32>>,
         graph: G,
-        direction: DependencyDirection,
     ) -> impl Iterator<Item = DependencyLink<'g>> + 'g
     where
-        G: 'g + Visitable + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>,
+        G: 'g
+            + Visitable
+            + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>
+            + ReverseFlip<NodeId = NodeIndex<u32>>,
         G::Map: VisitMap<NodeIndex<u32>>,
     {
         let edge_dfs = EdgeDfs::new(graph, node_idxs);
@@ -443,11 +446,7 @@ impl PackageGraph {
                 // and 'to' are always right way up. Note that this doesn't have to be done for
                 // deps_impl because we don't reverse the actual graph, just use incoming edges
                 // there.
-                // XXX having G and direction be separate but linked is unfortunate.
-                let (source_idx, target_idx) = match direction {
-                    DependencyDirection::Forward => (source_idx, target_idx),
-                    DependencyDirection::Reverse => (target_idx, source_idx),
-                };
+                let (source_idx, target_idx) = graph.reverse_flip(source_idx, target_idx);
                 self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
             })
     }
@@ -507,7 +506,7 @@ impl PackageGraph {
     ///
     /// If you are only interested in package IDs, `topo_ids` is more efficient.
     pub fn all_links<'g>(&'g self) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
-        self.all_links_impl(&self.dep_graph, DependencyDirection::Forward)
+        self.all_links_impl(&self.dep_graph)
     }
 
     /// Returns all dependency links in this graph in reverse order.
@@ -517,30 +516,21 @@ impl PackageGraph {
     ///
     /// If you are only interested in package IDs, `reverse_topo_ids` is more efficient.
     pub fn all_reverse_links<'g>(&'g self) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
-        self.all_links_impl(
-            ReversedDirected::new(&self.dep_graph),
-            DependencyDirection::Reverse,
-        )
+        self.all_links_impl(ReversedDirected::new(&self.dep_graph))
     }
 
-    fn all_links_impl<'g, G>(
-        &'g self,
-        graph: G,
-        direction: DependencyDirection,
-    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g
+    fn all_links_impl<'g, G>(&'g self, graph: G) -> impl Iterator<Item = DependencyLink<'g>> + 'g
     where
         G: 'g
             + Visitable
             + IntoNodeIdentifiers
             + IntoNeighborsDirected
-            + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>,
+            + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>
+            + ReverseFlip<NodeId = NodeIndex<u32>>,
         G::Map: VisitMap<NodeIndex<u32>>,
     {
-        // XXX requiring both the graph and the direction to be passed in is supremely ugly.
-        // Should be fixable with a custom trait.
-
         // Perform a transitive dep traversal from the roots in the graph.
-        self.transitive_dep_links_impl(Self::roots(graph), graph, direction)
+        self.transitive_dep_links_impl(Self::roots(graph), graph)
     }
 
     // ---
