@@ -446,7 +446,7 @@ impl PackageGraph {
                 // and 'to' are always right way up. Note that this doesn't have to be done for
                 // deps_impl because we don't reverse the actual graph, just use incoming edges
                 // there.
-                let (source_idx, target_idx) = graph.reverse_flip(source_idx, target_idx);
+                let (source_idx, target_idx) = G::reverse_flip(source_idx, target_idx);
                 self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
             })
     }
