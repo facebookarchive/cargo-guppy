@@ -48,29 +48,30 @@ pub trait ReverseFlip {
     /// Node index type.
     type NodeId;
 
+    /// Whether this graph is reversed.
+    fn is_reversed() -> bool;
+
     /// Flip the source and target indexes if this is a reversed graph. Leave them the same if it
     /// isn't.
-    fn reverse_flip(
-        self,
-        source: Self::NodeId,
-        target: Self::NodeId,
-    ) -> (Self::NodeId, Self::NodeId);
+    fn reverse_flip(source: Self::NodeId, target: Self::NodeId) -> (Self::NodeId, Self::NodeId);
 }
+
+// TODO: implement ReverseFlip for all the other base graph types as well.
 
 impl<'a, NW, EW, Ty, Ix> ReverseFlip for &'a Graph<NW, EW, Ty, Ix> {
     type NodeId = NodeIndex<Ix>;
 
-    fn reverse_flip(
-        self,
-        source: Self::NodeId,
-        target: Self::NodeId,
-    ) -> (Self::NodeId, Self::NodeId) {
+    fn is_reversed() -> bool {
+        false
+    }
+
+    fn reverse_flip(source: Self::NodeId, target: Self::NodeId) -> (Self::NodeId, Self::NodeId) {
         // A graph itself is in the forward direction.
         (source, target)
     }
 }
 
-impl<'a, G, N> ReverseFlip for ReversedDirected<&'a G>
+impl<'a, G: 'a, N> ReverseFlip for ReversedDirected<&'a G>
 where
     N: Copy + PartialEq,
     G: GraphBase<NodeId = N>,
@@ -78,13 +79,13 @@ where
 {
     type NodeId = N;
 
-    fn reverse_flip(
-        self,
-        source: Self::NodeId,
-        target: Self::NodeId,
-    ) -> (Self::NodeId, Self::NodeId) {
+    fn is_reversed() -> bool {
+        !<&G>::is_reversed()
+    }
+
+    fn reverse_flip(source: Self::NodeId, target: Self::NodeId) -> (Self::NodeId, Self::NodeId) {
         // This allows nested reversed graphs to do the right thing.
-        let (target, source) = self.0.reverse_flip(source, target);
+        let (target, source) = <&G>::reverse_flip(source, target);
         (source, target)
     }
 }
