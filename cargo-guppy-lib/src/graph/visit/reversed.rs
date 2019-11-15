@@ -1,7 +1,7 @@
 use petgraph::prelude::*;
 use petgraph::visit::{
     Data, GraphBase, GraphRef, IntoEdgeReferences, IntoEdges, IntoEdgesDirected, IntoNeighbors,
-    IntoNeighborsDirected, IntoNodeIdentifiers, IntoNodeReferences, Visitable,
+    IntoNeighborsDirected, IntoNodeIdentifiers, IntoNodeReferences, NodeFiltered, Visitable,
 };
 
 /// `ReversedDirected` is a reversing adapter for directed graphs.
@@ -45,48 +45,46 @@ where
 /// Some operations that are generic over forward and reverse graphs may want the original
 /// direction. This trait provides that.
 pub trait ReverseFlip {
-    /// Node index type.
-    type NodeId;
-
     /// Whether this graph is reversed.
     fn is_reversed() -> bool;
 
     /// Flip the source and target indexes if this is a reversed graph. Leave them the same if it
     /// isn't.
-    fn reverse_flip(source: Self::NodeId, target: Self::NodeId) -> (Self::NodeId, Self::NodeId);
+    fn reverse_flip<N>(source: N, target: N) -> (N, N) {
+        if Self::is_reversed() {
+            (target, source)
+        } else {
+            (source, target)
+        }
+    }
 }
 
 // TODO: implement ReverseFlip for all the other base graph types as well.
 
 impl<'a, NW, EW, Ty, Ix> ReverseFlip for &'a Graph<NW, EW, Ty, Ix> {
-    type NodeId = NodeIndex<Ix>;
-
     fn is_reversed() -> bool {
         false
     }
+}
 
-    fn reverse_flip(source: Self::NodeId, target: Self::NodeId) -> (Self::NodeId, Self::NodeId) {
-        // A graph itself is in the forward direction.
-        (source, target)
+impl<'a, G: ReverseFlip> ReverseFlip for &'a G {
+    fn is_reversed() -> bool {
+        G::is_reversed()
     }
 }
 
-impl<'a, G: 'a, N> ReverseFlip for ReversedDirected<&'a G>
-where
-    N: Copy + PartialEq,
-    G: GraphBase<NodeId = N>,
-    &'a G: ReverseFlip<NodeId = N>,
-{
-    type NodeId = N;
-
+impl<G: ReverseFlip> ReverseFlip for ReversedDirected<G> {
     fn is_reversed() -> bool {
-        !<&G>::is_reversed()
+        !G::is_reversed()
     }
+}
 
-    fn reverse_flip(source: Self::NodeId, target: Self::NodeId) -> (Self::NodeId, Self::NodeId) {
-        // This allows nested reversed graphs to do the right thing.
-        let (target, source) = <&G>::reverse_flip(source, target);
-        (source, target)
+impl<G, F> ReverseFlip for NodeFiltered<G, F>
+where
+    G: ReverseFlip,
+{
+    fn is_reversed() -> bool {
+        G::is_reversed()
     }
 }
 
