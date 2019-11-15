@@ -431,7 +431,7 @@ impl PackageGraph {
         G: 'g
             + Visitable
             + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>
-            + ReverseFlip<NodeId = NodeIndex<u32>>,
+            + ReverseFlip,
         G::Map: VisitMap<NodeIndex<u32>>,
     {
         let edge_dfs = EdgeDfs::new(graph, node_idxs);
@@ -523,7 +523,7 @@ impl PackageGraph {
             + IntoNodeIdentifiers
             + IntoNeighborsDirected
             + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>
-            + ReverseFlip<NodeId = NodeIndex<u32>>,
+            + ReverseFlip,
         G::Map: VisitMap<NodeIndex<u32>>,
     {
         // Perform a transitive dep traversal from the roots in the graph.
