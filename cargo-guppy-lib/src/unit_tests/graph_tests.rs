@@ -35,10 +35,15 @@ fn metadata1() {
     13 [label="winapi"]
     14 [label="libc"]
     20 [label="winapi-i686-pc-windows-gnu"]
+    26 [label="region"]
     31 [label="bitflags"]
     11 -> 14 [label="libc"]
     13 -> 20 [label="winapi-i686-pc-windows-gnu"]
     13 -> 0 [label="winapi-x86_64-pc-windows-gnu"]
+    26 -> 31 [label="bitflags"]
+    26 -> 14 [label="libc"]
+    26 -> 11 [label="mach"]
+    26 -> 13 [label="winapi"]
 }
 "#;
     assert_eq!(
@@ -59,8 +64,10 @@ fn metadata1() {
     static EXPECTED_DOT_REVERSED: &str = r#"digraph {
     1 [label="datatest"]
     9 [label="serde_yaml"]
+    15 [label="dtoa"]
     18 [label="testcrate"]
     1 -> 9 [label="serde_yaml"]
+    9 -> 15 [label="dtoa"]
     18 -> 1 [label="datatest"]
 }
 "#;

@@ -7,7 +7,7 @@ use crate::graph::visit::reversed::{ReverseFlip, ReversedDirected};
 use crate::graph::{DependencyEdge, DependencyLink, PackageGraph, PackageMetadata};
 use cargo_metadata::PackageId;
 use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighbors, NodeFiltered, NodeRef, Visitable};
+use petgraph::visit::{IntoNeighbors, NodeFiltered, NodeRef, VisitMap, Visitable};
 use std::fmt;
 
 /// A visitor used for formatting `dot` graphs.
@@ -106,9 +106,13 @@ where
     G: Visitable + IntoNeighbors,
 {
     // To figure out what nodes are reachable, run a DFS starting from the roots.
-    let mut dfs = Dfs::from_parts(roots, graph.visit_map());
+    let mut visit_map = graph.visit_map();
+    roots.iter().for_each(|node_idx| {
+        visit_map.visit(*node_idx);
+    });
+    let mut dfs = Dfs::from_parts(roots, visit_map);
     while let Some(_) = dfs.next(graph) {}
 
-    // Once the DFS is done, the discovered map is what's allowed.
+    // Once the DFS is done, the discovered map is what's reachable.
     dfs.discovered
 }
