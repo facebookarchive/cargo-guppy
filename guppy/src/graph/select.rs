@@ -157,6 +157,25 @@ impl<'g> PackageSelect<'g> {
         }
     }
 
+    /// Returns the set of "root package" metadata in the specified direction.
+    ///
+    /// * If direction is Forward, return the set of metadatas that do not have any dependencies
+    ///   within the selected graph.
+    /// * If direction is Reverse, return the set of metadatas that do not have any dependents within
+    ///   the selected graph.
+    pub fn into_root_metadatas(
+        self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
+        let dep_graph = self.package_graph.dep_graph();
+        let (_, roots) = select_postfilter(dep_graph, self.params.clone(), direction);
+        roots.into_iter().map(move |node_idx| {
+            self.package_graph
+                .metadata(&dep_graph[node_idx])
+                .expect("invalid node index")
+        })
+    }
+
     /// Consumes this query and creates an iterator over `PackageMetadata` instances, returned in
     /// topological order.
     ///
