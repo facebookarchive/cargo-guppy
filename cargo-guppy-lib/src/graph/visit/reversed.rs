@@ -44,6 +44,8 @@ where
 ///
 /// Some operations that are generic over forward and reverse graphs may want the original
 /// direction. This trait provides that.
+///
+/// For convenience, this is implemented for both graphs and `EdgeRef` types.
 pub trait ReverseFlip {
     /// Whether this graph is reversed.
     fn is_reversed() -> bool;
@@ -67,12 +69,6 @@ impl<'a, NW, EW, Ty, Ix> ReverseFlip for &'a Graph<NW, EW, Ty, Ix> {
     }
 }
 
-impl<'a, G: ReverseFlip> ReverseFlip for &'a G {
-    fn is_reversed() -> bool {
-        G::is_reversed()
-    }
-}
-
 impl<G: ReverseFlip> ReverseFlip for ReversedDirected<G> {
     fn is_reversed() -> bool {
         !G::is_reversed()
@@ -85,6 +81,27 @@ where
 {
     fn is_reversed() -> bool {
         G::is_reversed()
+    }
+}
+
+impl<'a, E, Ix> ReverseFlip for graph::EdgeReference<'a, E, Ix> {
+    fn is_reversed() -> bool {
+        false
+    }
+}
+
+impl<ER> ReverseFlip for ReversedEdgeReference<ER>
+where
+    ER: ReverseFlip,
+{
+    fn is_reversed() -> bool {
+        !ER::is_reversed()
+    }
+}
+
+impl<'a, T: ReverseFlip> ReverseFlip for &'a T {
+    fn is_reversed() -> bool {
+        T::is_reversed()
     }
 }
 
