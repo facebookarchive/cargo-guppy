@@ -12,8 +12,7 @@ use lazy_static::lazy_static;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
 use petgraph::visit::{
-    IntoEdges, IntoNeighbors, IntoNeighborsDirected, IntoNodeIdentifiers, Topo, VisitMap,
-    Visitable, Walker,
+    IntoEdges, IntoNeighborsDirected, IntoNodeIdentifiers, VisitMap, Visitable, Walker,
 };
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap};
@@ -22,11 +21,13 @@ use std::path::{Path, PathBuf};
 
 mod build;
 mod print;
+mod query;
 // `visit` is exposed to the rest of the crate for testing.
 pub(crate) mod visit;
 
 // Public exports for dot graphs.
 pub use print::PackageDotVisitor;
+pub use query::{PackageIdIter, PackageSelect};
 pub use visit::dot::DotWrite;
 
 /// The direction in which to follow dependencies.
@@ -306,68 +307,6 @@ impl PackageGraph {
             .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
     }
 
-    /// Returns the package IDs for all transitive dependencies for the given package IDs, in the
-    /// specified direction.
-    ///
-    /// This will also include the original package IDs.
-    pub fn transitive_dep_ids_directed<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-        dep_direction: DependencyDirection,
-    ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
-        let node_idxs = self.node_idxs(package_ids)?;
-
-        match dep_direction {
-            DependencyDirection::Forward => Ok(Either::Left(
-                self.transitive_dep_ids_impl(node_idxs, &self.dep_graph),
-            )),
-            DependencyDirection::Reverse => Ok(Either::Right(
-                self.transitive_dep_ids_impl(node_idxs, ReversedDirected(&self.dep_graph)),
-            )),
-        }
-    }
-
-    /// Returns the package IDs for all transitive dependencies for the given package IDs.
-    ///
-    /// This will also include the original package IDs.
-    pub fn transitive_dep_ids<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
-        Ok(self.transitive_dep_ids_impl(self.node_idxs(package_ids)?, &self.dep_graph))
-    }
-
-    /// Returns the package IDs for all transitive reverse dependencies for the given IDs.
-    ///
-    /// This will also include the original package IDs.
-    pub fn transitive_reverse_dep_ids<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
-        Ok(self.transitive_dep_ids_impl(
-            self.node_idxs(package_ids)?,
-            ReversedDirected(&self.dep_graph),
-        ))
-    }
-
-    fn transitive_dep_ids_impl<'g, G>(
-        &'g self,
-        node_idxs: Vec<NodeIndex<u32>>,
-        graph: G,
-    ) -> impl Iterator<Item = &'g PackageId> + 'g
-    where
-        G: 'g + Visitable + IntoNeighbors<NodeId = NodeIndex<u32>>,
-        G::Map: VisitMap<NodeIndex<u32>>,
-    {
-        let dfs = Dfs {
-            stack: node_idxs,
-            discovered: graph.visit_map(),
-        };
-
-        dfs.iter(graph)
-            .map(move |node_idx| &self.dep_graph[node_idx])
-    }
-
     /// Returns all transitive dependency links for the given package IDs in the specified
     /// direction.
     ///
@@ -454,41 +393,6 @@ impl PackageGraph {
                 let (source_idx, target_idx) = G::reverse_flip(source_idx, target_idx);
                 self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
             })
-    }
-
-    /// Returns all package IDs in this graph in topological order, in the specified direction.
-    pub fn topo_ids_directed<'g>(
-        &'g self,
-        direction: DependencyDirection,
-    ) -> impl Iterator<Item = &'g PackageId> + 'g {
-        match direction {
-            DependencyDirection::Forward => Either::Left(self.topo_ids()),
-            DependencyDirection::Reverse => Either::Right(self.reverse_topo_ids()),
-        }
-    }
-
-    /// Returns all package IDs in this graph, in topological order. A package will always be
-    /// returned before any of its dependencies are returned.
-    pub fn topo_ids<'g>(&'g self) -> impl Iterator<Item = &'g PackageId> + 'g {
-        self.topo_ids_impl(&self.dep_graph)
-    }
-
-    /// Returns all package IDs in this graph in reverse topological order. For any given package,
-    /// all its dependencies will be returned before the package itself is returned.
-    ///
-    /// Package IDs are returned in an order in which they can be built.
-    pub fn reverse_topo_ids<'g>(&'g self) -> impl Iterator<Item = &'g PackageId> + 'g {
-        self.topo_ids_impl(ReversedDirected(&self.dep_graph))
-    }
-
-    fn topo_ids_impl<'g, G>(&'g self, graph: G) -> impl Iterator<Item = &'g PackageId> + 'g
-    where
-        G: 'g + Visitable + IntoNodeIdentifiers + IntoNeighborsDirected<NodeId = NodeIndex<u32>>,
-        G::Map: VisitMap<NodeIndex<u32>>,
-    {
-        let topo = Topo::new(graph);
-        topo.iter(graph)
-            .map(move |node_idx| &self.dep_graph[node_idx])
     }
 
     /// Returns all dependency links in this graph in the specified direction.
