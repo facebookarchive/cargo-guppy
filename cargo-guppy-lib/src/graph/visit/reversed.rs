@@ -1,10 +1,12 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use petgraph::graph;
 use petgraph::prelude::*;
 use petgraph::visit::{
-    Data, GraphBase, GraphRef, IntoEdgeReferences, IntoEdges, IntoEdgesDirected, IntoNeighbors,
-    IntoNeighborsDirected, IntoNodeIdentifiers, IntoNodeReferences, NodeFiltered, Visitable,
+    Data, GraphBase, GraphProp, GraphRef, IntoEdgeReferences, IntoEdges, IntoEdgesDirected,
+    IntoNeighbors, IntoNeighborsDirected, IntoNodeIdentifiers, IntoNodeReferences, NodeFiltered,
+    NodeIndexable, Visitable,
 };
 
 /// `ReversedDirected` is a reversing adapter for directed graphs.
@@ -29,7 +31,29 @@ impl<G: GraphBase> GraphBase for ReversedDirected<G> {
     type EdgeId = G::EdgeId;
 }
 
+impl<G: GraphProp> GraphProp for ReversedDirected<G> {
+    type EdgeType = G::EdgeType;
+
+    fn is_directed(&self) -> bool {
+        self.0.is_directed()
+    }
+}
+
 impl<G: GraphRef> GraphRef for ReversedDirected<G> {}
+
+impl<G: NodeIndexable> NodeIndexable for ReversedDirected<G> {
+    fn node_bound(self: &Self) -> usize {
+        self.0.node_bound()
+    }
+
+    fn to_index(self: &Self, a: Self::NodeId) -> usize {
+        self.0.to_index(a)
+    }
+
+    fn from_index(self: &Self, i: usize) -> Self::NodeId {
+        self.0.from_index(i)
+    }
+}
 
 impl<G: Data> Data for ReversedDirected<G>
 where
