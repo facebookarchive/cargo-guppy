@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use cargo_guppy::SelectOptions;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -26,6 +27,9 @@ enum Command {
     #[structopt(name = "dups")]
     /// Print the number of duplicate packages
     Duplicates,
+    #[structopt(name = "select")]
+    /// Select packages and their transitive dependencies
+    Select(SelectOptions),
 }
 
 // When invoked as a cargo subcommand, cargo passes too many arguments so we need to filter out
@@ -49,6 +53,7 @@ fn main() {
         Command::Diff { json, old, new } => cargo_guppy::cmd_diff(json, &old, &new),
         Command::Count => cargo_guppy::cmd_count(),
         Command::Duplicates => cargo_guppy::cmd_dups(),
+        Command::Select(ref options) => cargo_guppy::cmd_select(options),
     };
 
     match result {
