@@ -138,16 +138,24 @@ pub(crate) fn assert_transitive_deps_internal(
     // There's no impl of Eq<&PackageId> for PackageId :(
     let expected_dep_id_refs: Vec<_> = expected_dep_ids.iter().collect();
 
-    let mut actual_dep_ids: Vec<_> = graph
-        .transitive_dep_ids_directed(iter::once(known_details.id()), direction)
+    let package_ids = graph
+        .select_transitive_deps_directed(iter::once(known_details.id()), direction)
         .unwrap_or_else(|err| {
             panic!(
                 "{}: {} transitive dep id query failed: {}",
                 msg, desc.direction_desc, err
             )
         })
-        .collect();
+        .into_iter_ids(None);
+    assert_eq!(
+        package_ids.len(),
+        expected_dep_ids.len(),
+        "{}: transitive deps len",
+        msg
+    );
+    let mut actual_dep_ids: Vec<_> = package_ids.collect();
     actual_dep_ids.sort();
+
     let actual_deps: Vec<_> = graph
         .transitive_dep_links_directed(iter::once(known_details.id()), direction)
         .unwrap_or_else(|err| {
@@ -186,13 +194,14 @@ pub(crate) fn assert_transitive_deps_internal(
 
         // Transitive deps should be transitively closed.
         let dep_actual_dep_ids: BTreeSet<_> = graph
-            .transitive_dep_ids_directed(iter::once(dep_id), direction)
+            .select_transitive_deps_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep id query failed for dependency '{}': {}",
                     msg, desc.direction_desc, dep_id.repr, err
                 )
             })
+            .into_iter_ids(None)
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
         let difference: Vec<_> = dep_actual_dep_ids.difference(&ids_from_links_set).collect();
@@ -229,13 +238,14 @@ pub(crate) fn assert_transitive_deps_internal(
 }
 
 pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
-    let topo_ids: Vec<_> = graph.topo_ids_directed(direction).collect();
+    let topo_ids = graph.select_all().into_iter_ids(Some(direction));
     assert_eq!(
         topo_ids.len(),
         graph.package_count(),
-        "{}: topo sort should return all packages",
+        "{}: topo sort returns all packages",
         msg
     );
+    let topo_ids: Vec<_> = topo_ids.collect();
 
     // A package that comes later cannot depend on one that comes earlier.
     let mut cache = graph.new_depends_cache();
