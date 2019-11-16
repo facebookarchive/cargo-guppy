@@ -61,7 +61,7 @@ impl PackageGraph {
         // over the regular graph (so that arrows in the graph are in the right direction).
         let node_filtered = NodeFiltered(
             &self.dep_graph,
-            reachable_map(ReversedDirected::new(&self.dep_graph), node_idxs),
+            reachable_map(ReversedDirected(&self.dep_graph), node_idxs),
         );
         Ok(DotFmt::new(node_filtered, VisitorWrap::new(self, visitor)))
     }

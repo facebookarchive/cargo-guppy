@@ -18,13 +18,7 @@ use petgraph::visit::{
 /// For more details about the issue, see the
 /// [petgraph bugtracker](https://github.com/petgraph/petgraph/issues/292).
 #[derive(Copy, Clone, Debug)]
-pub struct ReversedDirected<G>(G);
-
-impl<G> ReversedDirected<G> {
-    pub fn new(graph: G) -> Self {
-        ReversedDirected(graph)
-    }
-}
+pub struct ReversedDirected<G>(pub G);
 
 impl<G: GraphBase> GraphBase for ReversedDirected<G> {
     type NodeId = G::NodeId;
