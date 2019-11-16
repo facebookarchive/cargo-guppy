@@ -43,17 +43,15 @@ fn metadata1() {
     26 -> 13 [label="winapi"]
 }
 "#;
+    let actual_dot = graph
+        .select_transitive_deps(iter::once(&fixtures::package_id(
+            fixtures::METADATA1_REGION,
+        )))
+        .unwrap()
+        .into_dot(NameVisitor);
     assert_eq!(
         EXPECTED_DOT,
-        format!(
-            "{}",
-            graph
-                .make_dot_reachable(
-                    iter::once(&fixtures::package_id(fixtures::METADATA1_REGION)),
-                    NameVisitor
-                )
-                .unwrap()
-        ),
+        format!("{}", actual_dot),
         "dot output matches"
     );
 
@@ -68,17 +66,14 @@ fn metadata1() {
     18 -> 1 [label="datatest"]
 }
 "#;
+    let actual_dot_reversed = graph
+        .select_transitive_reverse_deps(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
+        .unwrap()
+        .into_dot(NameVisitor);
+
     assert_eq!(
         EXPECTED_DOT_REVERSED,
-        format!(
-            "{}",
-            graph
-                .make_dot_reachable_reversed(
-                    iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)),
-                    NameVisitor
-                )
-                .unwrap()
-        ),
+        format!("{}", actual_dot_reversed),
         "reversed dot output matches"
     );
 }
@@ -93,14 +88,6 @@ fn metadata2() {
 fn metadata_libra() {
     let metadata_libra = Fixture::metadata_libra();
     metadata_libra.verify();
-
-    let graph = metadata_libra.graph();
-    println!(
-        "{}",
-        graph
-            .make_dot_reachable_reversed(graph.workspace().members().map(|(_, id)| id), NameVisitor)
-            .unwrap()
-    );
 }
 
 struct NameVisitor;
