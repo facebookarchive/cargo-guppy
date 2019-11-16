@@ -17,8 +17,9 @@ use petgraph::visit::{IntoNeighbors, NodeFiltered, Topo, VisitMap, Visitable};
 /// A `PackageSelect` is constructed through the `select_` methods on `PackageGraph`.
 #[derive(Clone, Debug)]
 pub struct PackageSelect<'g> {
-    package_graph: &'g PackageGraph,
-    params: PackageSelectParams,
+    // The fields are pub(super) for access within the graph module.
+    pub(super) package_graph: &'g PackageGraph,
+    pub(super) params: PackageSelectParams,
 }
 
 impl PackageGraph {
@@ -166,7 +167,7 @@ impl<'g> PackageSelect<'g> {
 
 /// Computes intermediate state for operations where the graph must be pre-filtered before any
 /// traversals happen.
-fn select_prefilter(
+pub(super) fn select_prefilter(
     graph: &Graph<PackageId, DependencyEdge>,
     params: PackageSelectParams,
 ) -> (FixedBitSet, usize) {
@@ -357,7 +358,7 @@ impl<'g> Iterator for DependencyLinkIter<'g> {
 }
 
 #[derive(Clone, Debug)]
-enum PackageSelectParams {
+pub(super) enum PackageSelectParams {
     All,
     TransitiveDeps(Vec<NodeIndex<u32>>),
     TransitiveReverseDeps(Vec<NodeIndex<u32>>),
