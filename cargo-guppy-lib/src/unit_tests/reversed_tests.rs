@@ -30,7 +30,7 @@ fn reversed_directed_edge_impls() {
     // ^     ^
     // |     |
     // C <-- D
-    let reversed = ReversedDirected::new(&graph);
+    let reversed = ReversedDirected(&graph);
 
     for source in vec![a, b, c, d] {
         for edge in reversed.edges(source) {

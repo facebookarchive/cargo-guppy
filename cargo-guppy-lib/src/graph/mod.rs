@@ -174,7 +174,7 @@ impl PackageGraph {
                     .map(move |node_idx| &self.dep_graph[node_idx]),
             ),
             DependencyDirection::Reverse => Either::Right(
-                Self::roots::<_, Vec<_>>(ReversedDirected::new(&self.dep_graph))
+                Self::roots::<_, Vec<_>>(ReversedDirected(&self.dep_graph))
                     .into_iter()
                     .map(move |node_idx| &self.dep_graph[node_idx]),
             ),
@@ -319,7 +319,7 @@ impl PackageGraph {
                 self.transitive_dep_ids_impl(node_idxs, &self.dep_graph),
             )),
             DependencyDirection::Reverse => Ok(Either::Right(
-                self.transitive_dep_ids_impl(node_idxs, ReversedDirected::new(&self.dep_graph)),
+                self.transitive_dep_ids_impl(node_idxs, ReversedDirected(&self.dep_graph)),
             )),
         }
     }
@@ -343,7 +343,7 @@ impl PackageGraph {
     ) -> Result<impl Iterator<Item = &'g PackageId> + 'g, Error> {
         Ok(self.transitive_dep_ids_impl(
             self.node_idxs(package_ids)?,
-            ReversedDirected::new(&self.dep_graph),
+            ReversedDirected(&self.dep_graph),
         ))
     }
 
@@ -393,7 +393,7 @@ impl PackageGraph {
                 self.transitive_dep_links_impl(node_idxs, &self.dep_graph),
             )),
             DependencyDirection::Reverse => Ok(Either::Right(
-                self.transitive_dep_links_impl(node_idxs, ReversedDirected::new(&self.dep_graph)),
+                self.transitive_dep_links_impl(node_idxs, ReversedDirected(&self.dep_graph)),
             )),
         }
     }
@@ -424,7 +424,7 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
         let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_dep_links_impl(node_idxs, ReversedDirected::new(&self.dep_graph)))
+        Ok(self.transitive_dep_links_impl(node_idxs, ReversedDirected(&self.dep_graph)))
     }
 
     fn transitive_dep_links_impl<'g, G>(
@@ -475,7 +475,7 @@ impl PackageGraph {
     ///
     /// Package IDs are returned in an order in which they can be built.
     pub fn reverse_topo_ids<'g>(&'g self) -> impl Iterator<Item = &'g PackageId> + 'g {
-        self.topo_ids_impl(ReversedDirected::new(&self.dep_graph))
+        self.topo_ids_impl(ReversedDirected(&self.dep_graph))
     }
 
     fn topo_ids_impl<'g, G>(&'g self, graph: G) -> impl Iterator<Item = &'g PackageId> + 'g
@@ -518,7 +518,7 @@ impl PackageGraph {
     ///
     /// If you are only interested in package IDs, `reverse_topo_ids` is more efficient.
     pub fn all_reverse_links<'g>(&'g self) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
-        self.all_links_impl(ReversedDirected::new(&self.dep_graph))
+        self.all_links_impl(ReversedDirected(&self.dep_graph))
     }
 
     fn all_links_impl<'g, G>(&'g self, graph: G) -> impl Iterator<Item = DependencyLink<'g>> + 'g
