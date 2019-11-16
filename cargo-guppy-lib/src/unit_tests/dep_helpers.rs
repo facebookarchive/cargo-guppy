@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    DependencyDirection, DependencyLink, DependsCache, PackageGraph, PackageMetadata,
+    DependencyDirection, DependencyEdge, DependencyLink, DependsCache, PackageGraph,
+    PackageMetadata,
 };
 use crate::unit_tests::fixtures::PackageDetails;
 use cargo_metadata::PackageId;
@@ -141,15 +142,15 @@ pub(crate) fn assert_transitive_deps_internal(
     // There's no impl of Eq<&PackageId> for PackageId :(
     let expected_dep_id_refs: Vec<_> = expected_dep_ids.iter().collect();
 
-    let package_ids = graph
+    let select = graph
         .select_transitive_deps_directed(iter::once(known_details.id()), direction)
         .unwrap_or_else(|err| {
             panic!(
-                "{}: {} transitive dep id query failed: {}",
+                "{}: {} transitive dep query failed: {}",
                 msg, desc.direction_desc, err
             )
-        })
-        .into_iter_ids(None);
+        });
+    let package_ids = select.clone().into_iter_ids(None);
     assert_eq!(
         package_ids.len(),
         expected_dep_ids.len(),
@@ -159,15 +160,9 @@ pub(crate) fn assert_transitive_deps_internal(
     let mut actual_dep_ids: Vec<_> = package_ids.collect();
     actual_dep_ids.sort();
 
-    let actual_deps: Vec<_> = graph
-        .transitive_dep_links_directed(iter::once(known_details.id()), direction)
-        .unwrap_or_else(|err| {
-            panic!(
-                "{}: {} transitive dep query failed: {}",
-                msg, desc.direction_desc, err
-            )
-        })
-        .collect();
+    let actual_deps: Vec<_> = select.clone().into_iter_links(None).collect();
+    let actual_ptrs = dep_link_ptrs(actual_deps.iter().copied());
+
     // Use a BTreeSet for unique identifiers. This is also used later for set operations.
     let ids_from_links_set: BTreeSet<_> = actual_deps
         .iter()
@@ -188,7 +183,32 @@ pub(crate) fn assert_transitive_deps_internal(
 
     // The order requirements are weaker than topological -- for forward queries, a dep should show
     // up at least once in 'to' before it ever shows up in 'from'.
-    assert_link_order(actual_deps, iter::once(known_details.id()), &desc, msg);
+    assert_link_order(
+        actual_deps,
+        select.clone().into_root_ids(direction),
+        &desc,
+        &format!("{}: actual link order", msg),
+    );
+
+    // Do a query in the opposite direction as well to test link order.
+    let opposite = direction.opposite();
+    let opposite_desc = DirectionDesc::new(opposite);
+    let opposite_deps: Vec<_> = select.clone().into_iter_links(Some(opposite)).collect();
+    let opposite_ptrs = dep_link_ptrs(opposite_deps.iter().copied());
+
+    // Checking for pointer equivalence is enough since they both use the same graph as a base.
+    assert_eq!(
+        actual_ptrs, opposite_ptrs,
+        "{}: actual and opposite links should return the same pointer triples",
+        msg,
+    );
+
+    assert_link_order(
+        opposite_deps,
+        select.into_root_ids(opposite),
+        &opposite_desc,
+        &format!("{}: opposite link order", msg),
+    );
 
     let mut cache = graph.new_depends_cache();
     for dep_id in expected_dep_id_refs {
@@ -218,13 +238,14 @@ pub(crate) fn assert_transitive_deps_internal(
         );
 
         let dep_ids_from_links: BTreeSet<_> = graph
-            .transitive_dep_links_directed(iter::once(dep_id), direction)
+            .select_transitive_deps_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep query failed for dependency '{}': {}",
                     msg, desc.direction_desc, dep_id.repr, err
                 )
             })
+            .into_iter_links(None)
             .flat_map(|dep| vec![dep.from.id(), dep.to.id()])
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
@@ -265,7 +286,10 @@ pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirecti
 
 pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
     let desc = DirectionDesc::new(direction);
-    let all_links: Vec<_> = graph.all_links_directed(direction).collect();
+    let all_links: Vec<_> = graph
+        .select_all()
+        .into_iter_links(Some(direction))
+        .collect();
     assert_eq!(
         all_links.len(),
         graph.link_count(),
@@ -274,7 +298,12 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     );
 
     // all_links should be in the correct order.
-    assert_link_order(all_links, graph.root_ids_directed(direction), &desc, msg);
+    assert_link_order(
+        all_links,
+        graph.select_all().into_root_ids(direction),
+        &desc,
+        msg,
+    );
 }
 
 fn assert_depends_on(
@@ -365,4 +394,25 @@ fn assert_link_order<'g>(
             desc.variable_desc,
         );
     }
+}
+
+fn dep_link_ptrs<'g>(
+    dep_links: impl IntoIterator<Item = DependencyLink<'g>>,
+) -> Vec<(
+    *const PackageMetadata,
+    *const PackageMetadata,
+    *const DependencyEdge,
+)> {
+    let mut triples: Vec<_> = dep_links
+        .into_iter()
+        .map(|link| {
+            (
+                link.from as *const _,
+                link.to as *const _,
+                link.edge as *const _,
+            )
+        })
+        .collect();
+    triples.sort();
+    triples
 }
