@@ -1,16 +1,9 @@
 use crate::errors::Error;
-use crate::graph::visit::{
-    reversed::{ReverseFlip, ReversedDirected},
-    walk::EdgeDfs,
-};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
-use either::Either;
 use lazy_static::lazy_static;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
-use petgraph::visit::{
-    IntoEdges, IntoNeighborsDirected, IntoNodeIdentifiers, VisitMap, Visitable, Walker,
-};
+use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers, Visitable};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap};
 use std::iter;
@@ -24,7 +17,7 @@ pub(crate) mod visit;
 
 // Public exports for dot graphs.
 pub use print::PackageDotVisitor;
-pub use query::{PackageIdIter, PackageSelect};
+pub use query::{DependencyLinkIter, PackageIdIter, PackageSelect};
 pub use visit::dot::DotWrite;
 
 /// The direction in which to follow dependencies.
@@ -39,6 +32,14 @@ pub enum DependencyDirection {
 }
 
 impl DependencyDirection {
+    /// Returns the opposite direction to this one.
+    pub fn opposite(&self) -> Self {
+        match self {
+            DependencyDirection::Forward => DependencyDirection::Reverse,
+            DependencyDirection::Reverse => DependencyDirection::Forward,
+        }
+    }
+
     fn to_direction(self) -> Direction {
         match self {
             DependencyDirection::Forward => Direction::Outgoing,
@@ -153,33 +154,6 @@ impl PackageGraph {
         }
 
         Ok(())
-    }
-
-    /// Returns the set of "root packages" in the specified direction.
-    ///
-    /// * If direction is Forward, return the set of packages that do not have any dependencies in
-    ///   this graph.
-    /// * If direction is Reverse, return the set of packages that do not have any dependents in
-    ///   this graph.
-    ///
-    /// Unclear how useful it is outside of tests, so not part of the documented API.
-    #[doc(hidden)]
-    pub fn root_ids_directed<'g>(
-        &'g self,
-        direction: DependencyDirection,
-    ) -> impl IntoIterator<Item = &'g PackageId> + 'g {
-        match direction {
-            DependencyDirection::Forward => Either::Left(
-                Self::roots::<_, Vec<_>>(&self.dep_graph)
-                    .into_iter()
-                    .map(move |node_idx| &self.dep_graph[node_idx]),
-            ),
-            DependencyDirection::Reverse => Either::Right(
-                Self::roots::<_, Vec<_>>(ReversedDirected(&self.dep_graph))
-                    .into_iter()
-                    .map(move |node_idx| &self.dep_graph[node_idx]),
-            ),
-        }
     }
 
     /// Returns information about the workspace.
@@ -304,140 +278,7 @@ impl PackageGraph {
             .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
     }
 
-    /// Returns all transitive dependency links for the given package IDs in the specified
-    /// direction.
-    ///
-    /// If you are only interested in dependency IDs, `transitive_dep_ids_directed` is more
-    /// efficient.
-    pub fn transitive_dep_links_directed<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-        direction: DependencyDirection,
-    ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
-        // This could be written as calls to transitive_dep_links instead of the internal _impl
-        // method, but as of Rust 1.39 that causes the lifetime analyzer to fail with:
-        //
-        // error[E0309]: the parameter type `impl IntoIterator<Item = &'a PackageId>` may not live long enough
-        // help: consider adding an explicit lifetime bound  `'g` to `impl IntoIterator<Item = &'a PackageId>`...
-        // |
-        // |         package_ids: impl IntoIterator<Item = &'a PackageId> + 'g,
-        // |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        //
-        // That bound shouldn't be necessary. Could it be an issue with rustc's lifetime analyzer?
-        // XXX follow up about this.
-
-        let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        match direction {
-            DependencyDirection::Forward => Ok(Either::Left(
-                self.transitive_dep_links_impl(node_idxs, &self.dep_graph),
-            )),
-            DependencyDirection::Reverse => Ok(Either::Right(
-                self.transitive_dep_links_impl(node_idxs, ReversedDirected(&self.dep_graph)),
-            )),
-        }
-    }
-
-    /// Returns all transitive dependency links for the given package IDs.
-    ///
-    /// For any given package, at least one link where the package is on the `to` end is returned
-    /// before any links where the package is on the `from` end.
-    ///
-    /// If you are only interested in dependency IDs, `transitive_dep_ids` is more efficient.
-    pub fn transitive_dep_links<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
-        let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_dep_links_impl(node_idxs, &self.dep_graph))
-    }
-
-    /// Returns all transitive reverse dependency links for the given package IDs.
-    ///
-    /// For any given package, at least one link where the package is on the `from` end is returned
-    /// before any links where the package is on the `to` end.
-    ///
-    /// If you are only interested in dependency IDs, `transitive_reverse_dep_ids` is more
-    /// efficient.
-    pub fn transitive_reverse_dep_links<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<impl Iterator<Item = DependencyLink<'g>> + 'g, Error> {
-        let node_idxs: Vec<_> = self.node_idxs(package_ids)?;
-        Ok(self.transitive_dep_links_impl(node_idxs, ReversedDirected(&self.dep_graph)))
-    }
-
-    fn transitive_dep_links_impl<'g, G>(
-        &'g self,
-        node_idxs: Vec<NodeIndex<u32>>,
-        graph: G,
-    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g
-    where
-        G: 'g
-            + Visitable
-            + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>
-            + ReverseFlip,
-        G::Map: VisitMap<NodeIndex<u32>>,
-    {
-        let edge_dfs = EdgeDfs::new(graph, node_idxs);
-
-        edge_dfs
-            .iter(graph)
-            .map(move |(source_idx, target_idx, edge_idx)| {
-                // Flip the source and target around if this is a reversed graph, since the 'from'
-                // and 'to' are always right way up. Note that this doesn't have to be done for
-                // deps_impl because we don't reverse the actual graph, just use incoming edges
-                // there.
-                let (source_idx, target_idx) = G::reverse_flip(source_idx, target_idx);
-                self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
-            })
-    }
-
-    /// Returns all dependency links in this graph in the specified direction.
-    ///
-    /// If you are only interested in package IDs, `topo_ids_directed` is more efficient.
-    pub fn all_links_directed<'g>(
-        &'g self,
-        direction: DependencyDirection,
-    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
-        match direction {
-            DependencyDirection::Forward => Either::Left(self.all_links()),
-            DependencyDirection::Reverse => Either::Right(self.all_reverse_links()),
-        }
-    }
-
-    /// Returns all dependency links in this graph in order.
-    ///
-    /// For any given package, at least one link where the package is on the `to` end is returned
-    /// before any links where the package is on the `from` end.
-    ///
-    /// If you are only interested in package IDs, `topo_ids` is more efficient.
-    pub fn all_links<'g>(&'g self) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
-        self.all_links_impl(&self.dep_graph)
-    }
-
-    /// Returns all dependency links in this graph in reverse order.
-    ///
-    /// For any given package, at least one link where the package is on the `from` end is returned
-    /// before any links where the package is on the `to` end.
-    ///
-    /// If you are only interested in package IDs, `reverse_topo_ids` is more efficient.
-    pub fn all_reverse_links<'g>(&'g self) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
-        self.all_links_impl(ReversedDirected(&self.dep_graph))
-    }
-
-    fn all_links_impl<'g, G>(&'g self, graph: G) -> impl Iterator<Item = DependencyLink<'g>> + 'g
-    where
-        G: 'g
-            + Visitable
-            + IntoNodeIdentifiers
-            + IntoNeighborsDirected
-            + IntoEdges<NodeId = NodeIndex<u32>, EdgeId = EdgeIndex<u32>>
-            + ReverseFlip,
-        G::Map: VisitMap<NodeIndex<u32>>,
-    {
-        // Perform a transitive dep traversal from the roots in the graph.
-        self.transitive_dep_links_impl(Self::roots(graph), graph)
-    }
+    // For more traversals, see query.rs.
 
     // ---
     // Helper methods
