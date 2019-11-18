@@ -22,6 +22,10 @@ pub struct PackageSelect<'g> {
     pub(super) params: PackageSelectParams,
 }
 
+/// ## Selectors
+///
+/// The methods in this section create *package selectors*, which are queries over subsets of this
+/// package graph. Use the methods here for queries based on transitive dependencies.
 impl PackageGraph {
     /// Creates a new selector that returns all members of this package graph.
     pub fn select_all<'g>(&'g self) -> PackageSelect<'g> {
@@ -84,7 +88,7 @@ impl<'g> PackageSelect<'g> {
         self,
         direction: DependencyDirection,
     ) -> impl IntoIterator<Item = &'g PackageId> + 'g {
-        let dep_graph = &self.package_graph.dep_graph;
+        let dep_graph = self.package_graph.dep_graph();
         let (_, roots) = select_postfilter(dep_graph, self.params, direction);
         roots.into_iter().map(move |node_idx| &dep_graph[node_idx])
     }
@@ -96,7 +100,7 @@ impl<'g> PackageSelect<'g> {
     /// * for `transitive_reverse_deps` queries, package IDs are returned in reverse order.
     pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> PackageIdIter<'g> {
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
-        let dep_graph = &self.package_graph.dep_graph;
+        let dep_graph = self.package_graph.dep_graph();
 
         // If the topo order guarantee weren't present, this could potentially be done in a lazier
         // fashion, where reachable nodes are discovered dynamically. However, there's value in
@@ -137,7 +141,7 @@ impl<'g> PackageSelect<'g> {
         use DependencyDirection::*;
 
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
-        let dep_graph = &self.package_graph.dep_graph;
+        let dep_graph = self.package_graph.dep_graph();
 
         let (reachable, roots) = select_postfilter(dep_graph, self.params, direction);
 
@@ -310,7 +314,7 @@ impl<'g> DependencyLinkIter<'g> {
         // with the way petgraph's traits work).
         match (&self.reachable, self.direction) {
             (Some(reachable), Forward) => self.edge_dfs.next(&NodeFiltered::from_fn(
-                &self.package_graph.dep_graph,
+                self.package_graph.dep_graph(),
                 |node_idx| reachable.is_visited(&node_idx),
             )),
             (Some(reachable), Reverse) => {
@@ -319,7 +323,7 @@ impl<'g> DependencyLinkIter<'g> {
                 // (LLVM should be able to optimize this.)
                 self.edge_dfs
                     .next(&NodeFiltered::from_fn(
-                        ReversedDirected(&self.package_graph.dep_graph),
+                        ReversedDirected(self.package_graph.dep_graph()),
                         |node_idx| reachable.is_visited(&node_idx),
                     ))
                     .map(|(source_idx, target_idx, edge_idx)| {
@@ -328,10 +332,10 @@ impl<'g> DependencyLinkIter<'g> {
                         (target_idx, source_idx, edge_idx)
                     })
             }
-            (None, Forward) => self.edge_dfs.next(&self.package_graph.dep_graph),
+            (None, Forward) => self.edge_dfs.next(self.package_graph.dep_graph()),
             (None, Reverse) => self
                 .edge_dfs
-                .next(ReversedDirected(&self.package_graph.dep_graph))
+                .next(ReversedDirected(self.package_graph.dep_graph()))
                 .map(|(source_idx, target_idx, edge_idx)| {
                     // Flip the source and target around if this is a reversed graph, since the
                     // 'from' and 'to' are always right way up.
@@ -351,7 +355,7 @@ impl<'g> Iterator for DependencyLinkIter<'g> {
             self.package_graph.edge_to_link(
                 source_idx,
                 target_idx,
-                &self.package_graph.dep_graph[edge_idx],
+                &self.package_graph.dep_graph()[edge_idx],
             )
         })
     }

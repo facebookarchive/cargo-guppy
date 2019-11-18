@@ -29,7 +29,7 @@ impl<'g> PackageSelect<'g> {
     {
         // dot graphs are always forward iterated, and prefiltering is necessary in order to
         // figure out which nodes should be included.
-        let dep_graph = &self.package_graph.dep_graph;
+        let dep_graph = self.package_graph.dep_graph();
         let (reachable, _) = select_prefilter(dep_graph, self.params);
         let node_filtered = NodeFiltered(dep_graph, reachable);
         DotFmt::new(node_filtered, VisitorWrap::new(self.package_graph, visitor))
