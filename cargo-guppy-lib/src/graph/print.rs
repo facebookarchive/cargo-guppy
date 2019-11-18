@@ -1,4 +1,4 @@
-use crate::graph::query::select_prefilter;
+use crate::graph::select::select_prefilter;
 use crate::graph::visit::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::graph::visit::reversed::ReverseFlip;
 use crate::graph::{DependencyEdge, DependencyLink, PackageGraph, PackageMetadata, PackageSelect};
