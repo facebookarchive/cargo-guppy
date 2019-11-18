@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::visit::dot::{DisplayVisitor, DotFmt, DotVisitor, DotWrite};
+use crate::petgraph_support::dot::{DisplayVisitor, DotFmt, DotVisitor, DotWrite};
 use petgraph::prelude::*;
 use petgraph::visit::{EdgeRef, NodeRef};
 use std::fmt::{self, Write};

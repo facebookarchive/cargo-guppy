@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::select::select_prefilter;
-use crate::graph::visit::dot::{DotFmt, DotVisitor, DotWrite};
-use crate::graph::visit::reversed::ReverseFlip;
 use crate::graph::{DependencyEdge, DependencyLink, PackageGraph, PackageMetadata, PackageSelect};
+use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
+use crate::petgraph_support::reversed::ReverseFlip;
 use cargo_metadata::PackageId;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef};
