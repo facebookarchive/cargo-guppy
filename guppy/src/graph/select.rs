@@ -1,7 +1,7 @@
 use crate::errors::*;
-use crate::graph::visit::reversed::ReversedDirected;
-use crate::graph::visit::walk::EdgeDfs;
 use crate::graph::{DependencyDirection, DependencyEdge, DependencyLink, PackageGraph};
+use crate::petgraph_support::reversed::ReversedDirected;
+use crate::petgraph_support::walk::EdgeDfs;
 use cargo_metadata::PackageId;
 use derivative::Derivative;
 use fixedbitset::FixedBitSet;

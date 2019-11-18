@@ -1,4 +1,4 @@
-use crate::graph::edge_triple;
+use crate::petgraph_support::edge_triple;
 use petgraph::visit::{IntoEdges, VisitMap, Visitable, Walker};
 use std::iter;
 

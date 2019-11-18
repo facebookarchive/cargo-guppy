@@ -12,13 +12,11 @@ use std::path::{Path, PathBuf};
 mod build;
 mod print;
 mod select;
-// `visit` is exposed to the rest of the crate for testing.
-pub(crate) mod visit;
 
 // Public exports for dot graphs.
+pub use crate::petgraph_support::dot::DotWrite;
 pub use print::PackageDotVisitor;
 pub use select::{DependencyLinkIter, PackageIdIter, PackageSelect};
-pub use visit::dot::DotWrite;
 
 /// The direction in which to follow dependencies.
 ///
@@ -568,8 +566,4 @@ fn kind_str(kind: DependencyKind) -> &'static str {
         DependencyKind::Development => "dev",
         _ => "unknown",
     }
-}
-
-fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::EdgeId) {
-    (edge_ref.source(), edge_ref.target(), edge_ref.id())
 }

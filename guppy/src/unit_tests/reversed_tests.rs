@@ -1,7 +1,7 @@
 //! These tests are for the additional functionality added to ReversedDirected. The base
 //! implementation is the same as `petgraph::visit::Reversed` so it is not tested.
 
-use crate::graph::visit::reversed::ReversedDirected;
+use crate::petgraph_support::reversed::ReversedDirected;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdges, IntoEdgesDirected};
 
