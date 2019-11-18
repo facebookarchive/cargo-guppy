@@ -14,13 +14,13 @@ use std::path::{Path, PathBuf};
 
 mod build;
 mod print;
-mod query;
+mod select;
 // `visit` is exposed to the rest of the crate for testing.
 pub(crate) mod visit;
 
 // Public exports for dot graphs.
 pub use print::PackageDotVisitor;
-pub use query::{DependencyLinkIter, PackageIdIter, PackageSelect};
+pub use select::{DependencyLinkIter, PackageIdIter, PackageSelect};
 pub use visit::dot::DotWrite;
 
 /// The direction in which to follow dependencies.
@@ -281,7 +281,7 @@ impl PackageGraph {
             .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
     }
 
-    // For more traversals, see query.rs.
+    // For more traversals, see select.rs.
 
     // ---
     // Helper methods
