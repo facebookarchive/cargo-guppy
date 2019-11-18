@@ -1,4 +1,4 @@
-use cargo_guppy_lib::{diff, lockfile::Lockfile, Error};
+use guppy::{diff, lockfile::Lockfile, Error};
 
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), Error> {
     let old = Lockfile::from_file(old)?;
