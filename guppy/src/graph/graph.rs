@@ -9,6 +9,7 @@ use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
 use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers, Visitable};
 use semver::{Version, VersionReq};
+use serde_json;
 use std::collections::{BTreeMap, HashMap};
 use std::iter;
 use std::path::{Path, PathBuf};
@@ -34,6 +35,12 @@ impl PackageGraph {
     /// Constructs a package graph from the given command.
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
         Self::new(command.exec().map_err(Error::CommandError)?)
+    }
+
+    /// Constructs a package graph from the given JSON output of `cargo metadata`.
+    pub fn from_json(json: impl AsRef<str>) -> Result<Self, Error> {
+        let metadata = serde_json::from_str(json.as_ref()).map_err(Error::MetadataParseError)?;
+        Self::new(metadata)
     }
 
     /// Constructs a package graph from the given metadata.
@@ -397,6 +404,12 @@ impl Workspace {
             .map(|(path, id)| (path.as_path(), id))
     }
 
+    /// Returns an iterator over package IDs for workspace members. The package IDs will be returned
+    /// in the same order as `members`, sorted by the path they're in.
+    pub fn member_ids(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
+        self.members_by_path.iter().map(|(_path, id)| id)
+    }
+
     /// Maps the given path to the corresponding workspace member.
     pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<&PackageId> {
         self.members_by_path.get(path.as_ref())
@@ -456,6 +469,10 @@ impl PackageMetadata {
 
     pub fn manifest_path(&self) -> &Path {
         &self.manifest_path
+    }
+
+    pub fn in_workspace(&self) -> bool {
+        self.in_workspace
     }
 }
 

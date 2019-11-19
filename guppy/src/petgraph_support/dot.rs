@@ -139,6 +139,18 @@ impl<'a, 'b> DotWrite<'a, 'b> {
     pub fn set_escape_backslashes(&mut self, escape_backslashes: bool) {
         self.escape_backslashes = escape_backslashes;
     }
+
+    /// Glue for usage of the `write!` macro.
+    ///
+    /// This method should generally not be invoked manually, but rather through `write!` or similar
+    /// macros (`println!`, `format!` etc).
+    ///
+    /// Defining this inherent method allows `write!` to work without callers needing to import the
+    /// `std::fmt::Write` trait.
+    pub fn write_fmt(&mut self, args: fmt::Arguments<'_>) -> fmt::Result {
+        // Forward to the fmt::Write impl.
+        Write::write_fmt(self, args)
+    }
 }
 
 impl<'a, 'b> Write for DotWrite<'a, 'b> {

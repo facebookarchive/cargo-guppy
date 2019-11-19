@@ -4,7 +4,7 @@
 use crate::petgraph_support::dot::{DisplayVisitor, DotFmt, DotVisitor, DotWrite};
 use petgraph::prelude::*;
 use petgraph::visit::{EdgeRef, NodeRef};
-use std::fmt::{self, Write};
+use std::fmt;
 
 #[test]
 fn dot_fmt() {

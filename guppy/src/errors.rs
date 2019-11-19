@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use cargo_metadata::{Error as MetadataError, PackageId as MetadataPackageId};
+use serde_json;
 use std::error;
 use std::fmt;
 use std::io;
@@ -15,6 +16,7 @@ pub enum Error {
     ConfigIoError(io::Error),
     ConfigParseError(toml::de::Error),
     CommandError(MetadataError),
+    MetadataParseError(serde_json::Error),
     DepGraphError(String),
     DepGraphUnknownPackageId(MetadataPackageId),
     DepGraphInternalError(String),
@@ -35,6 +37,11 @@ impl fmt::Display for Error {
             ConfigIoError(err) => write!(f, "Error while reading config file: {}", err),
             ConfigParseError(err) => write!(f, "Error while parsing config file: {}", err),
             CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
+            MetadataParseError(err) => write!(
+                f,
+                "Error while parsing 'cargo metadata' JSON output: {}",
+                err
+            ),
             DepGraphError(msg) => write!(f, "Error while computing dependency graph: {}", msg),
             DepGraphUnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
             DepGraphInternalError(msg) => write!(f, "Internal error in dependency graph: {}", msg),
@@ -50,6 +57,7 @@ impl error::Error for Error {
             LockfileParseError(err) => Some(err),
             ConfigIoError(err) => Some(err),
             ConfigParseError(err) => Some(err),
+            MetadataParseError(err) => Some(err),
             CommandError(_) => None,
             DepGraphError(_) => None,
             DepGraphUnknownPackageId(_) => None,

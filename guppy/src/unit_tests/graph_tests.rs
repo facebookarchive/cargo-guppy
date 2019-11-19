@@ -4,7 +4,7 @@
 use super::fixtures::{self, Fixture};
 use crate::graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageMetadata};
 use cargo_metadata::PackageId;
-use std::fmt::{self, Write};
+use std::fmt;
 use std::iter;
 
 // Test specific details extracted from metadata1.json.
