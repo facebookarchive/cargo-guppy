@@ -5,7 +5,7 @@
 //!
 //! `guppy` provides a Rust interface to run queries over Cargo dependency graphs. `guppy` parses
 //! the output of  [`cargo metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html),
-//! then presents a graph interface over it..
+//! then presents a graph interface over it.
 //!
 //! # Usage
 //!
