@@ -1,6 +1,6 @@
 # guppy
 
-[![Build Status](https://circleci.com/gh/calibra/cargo-guppy/tree/master.svg?style=shield)](https://circleci.com/gh/calibra/cargo-guppy/cargo-readme/tree/master)
+[![Build Status](https://circleci.com/gh/calibra/cargo-guppy/tree/master.svg?style=shield)](https://circleci.com/gh/calibra/cargo-guppy/tree/master)
 
 Track and query Cargo dependency graphs.
 

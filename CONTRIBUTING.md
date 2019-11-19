@@ -4,6 +4,11 @@ Development for `cargo-guppy` happens in the open on GitHub.
 
 ## Pull Requests
 
+**At the moment, we are not accepting pull requests. We're actively working on getting this set up.**
+
+<!--
+(This section does not apply at the moment. It will be uncommented once we start accepting PRs.)
+
 We actively welcome your pull requests. If you have a new feature in mind, please discuss the feature in an issue to
 ensure that your contributions will be accepted.
 
@@ -16,18 +21,17 @@ ensure that your contributions will be accepted.
 
 ## Contributor License Agreement ("CLA")
 
-In order to accept your pull request, we need you to submit a CLA. You only need to do this once to work on any of
+-In order to accept your pull request, we need you to submit a CLA. You only need to do this once to work on any of
 Calibra's or Facebook's open source projects.
 
 Complete your CLA here: <https://code.facebook.com/cla>
+
+-->
 
 ## Issues
 
 We use GitHub issues to track public bugs. Please ensure your description is clear and has sufficient instructions to be
 able to reproduce the issue.
-
-Facebook has a [bounty program](https://www.facebook.com/whitehat/) for the safe disclosure of security bugs. In those
-cases, please go through the process outlined on that page and do not file a public issue.
 
 ## License
 

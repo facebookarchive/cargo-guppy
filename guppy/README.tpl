@@ -1,6 +1,6 @@
 # {{crate}}
 
-{{badges}}
+[![Build Status](https://circleci.com/gh/calibra/cargo-guppy/tree/master.svg?style=shield)](https://circleci.com/gh/calibra/cargo-guppy/tree/master)
 
 {{readme}}
 
