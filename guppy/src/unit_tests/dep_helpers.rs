@@ -269,19 +269,27 @@ pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirecti
         "{}: topo sort returns all packages",
         msg
     );
-    let topo_ids: Vec<_> = topo_ids.collect();
 
     // A package that comes later cannot depend on one that comes earlier.
-    let mut cache = graph.new_depends_cache();
-    for (idx, earlier_package) in topo_ids.iter().enumerate() {
-        // Note that this skips over idx + 1 entries to avoid earlier_package == later_package.
-        // Doing an exhaustive search would be O(n**2) in the number of packages, so just do a
-        // maximum of 20.
-        // TODO: use proptest to generate random queries on the corpus.
-        for later_package in topo_ids.iter().skip(idx + 1).take(20) {
-            assert_not_depends_on(later_package, earlier_package, &mut cache, direction, msg);
-        }
-    }
+    assert_topo_order(graph, topo_ids, direction, msg);
+}
+
+pub(crate) fn assert_topo_metadatas(
+    graph: &PackageGraph,
+    direction: DependencyDirection,
+    msg: &str,
+) {
+    let topo_metadatas = graph.select_all().into_iter_metadatas(Some(direction));
+    assert_eq!(
+        topo_metadatas.len(),
+        graph.package_count(),
+        "{}: topo sort returns all packages",
+        msg
+    );
+    let topo_ids = topo_metadatas.map(|metadata| metadata.id());
+
+    // A package that comes later cannot depend on one that comes earlier.
+    assert_topo_order(graph, topo_ids, direction, msg);
 }
 
 pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
@@ -304,6 +312,25 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
         &desc,
         msg,
     );
+}
+
+fn assert_topo_order<'a>(
+    graph: &PackageGraph,
+    topo_ids: impl IntoIterator<Item = &'a PackageId>,
+    direction: DependencyDirection,
+    msg: &str,
+) {
+    let topo_ids: Vec<_> = topo_ids.into_iter().collect();
+    let mut cache = graph.new_depends_cache();
+    for (idx, earlier_package) in topo_ids.iter().enumerate() {
+        // Note that this skips over idx + 1 entries to avoid earlier_package == later_package.
+        // Doing an exhaustive search would be O(n**2) in the number of packages, so just do a
+        // maximum of 20.
+        // TODO: use proptest to generate random queries on the corpus.
+        for later_package in topo_ids.iter().skip(idx + 1).take(20) {
+            assert_not_depends_on(later_package, earlier_package, &mut cache, direction, msg);
+        }
+    }
 }
 
 fn assert_depends_on(
