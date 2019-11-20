@@ -25,3 +25,59 @@ jobs:
           command: |
             cargo build
             cargo test
+
+  # docs-build and docs-deploy are adapted from
+  # https://circleci.com/blog/deploying-documentation-to-github-pages-with-continuous-integration/.
+  docs-build:
+    docker:
+      - image: circleci/rust:stretch
+    steps:
+      - checkout
+      - run:
+          name: Version Information
+          command: rustc --version; cargo --version; rustup --version
+      - run:
+          name: Generate documentation
+          command: |
+            cargo doc
+      - persist_to_workspace:
+          root: target
+          paths: doc
+
+  docs-deploy:
+    docker:
+      - image: node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: target
+      - run:
+          name: Disable jekyll builds
+          command: touch docs/_build/html/.nojekyll
+      - run:
+          name: Install and configure gh-pages
+          command: |
+            npm install -g --silent gh-pages@2.0.1
+            git config user.email "ci-build@calibra.com"
+            git config user.name "ci-build"
+      - run:
+          name: Deploy to gh-pages branch
+          command: |
+            gh-pages --dotfiles --message "[skip ci] documentation update" --dist target/doc
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:8b:df:7a:ed:cd:f9:d7:ce:f6:da:d2:25:05:60:84"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+      - docs-build
+      - docs-deploy:
+          requires:
+            - build
+            - docs-build
+          filters:
+            branches:
+              only: master
