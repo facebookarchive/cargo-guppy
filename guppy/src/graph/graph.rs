@@ -10,7 +10,7 @@ use petgraph::prelude::*;
 use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers, Visitable};
 use semver::{Version, VersionReq};
 use serde_json;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
 use std::path::{Path, PathBuf};
 
@@ -74,8 +74,35 @@ impl PackageGraph {
             )));
         }
 
+        let workspace = self.workspace();
+        let workspace_ids: HashSet<_> = workspace.member_ids().collect();
+
         for metadata in self.packages() {
             let package_id = metadata.id();
+
+            match metadata.workspace_path() {
+                Some(workspace_path) => {
+                    // This package is in the workspace, so the workspace should have information
+                    // about it.
+                    let workspace_id = workspace.member_by_path(workspace_path);
+                    if workspace_id != Some(package_id) {
+                        return Err(Error::DepGraphInternalError(format!(
+                            "package {} has workspace path {:?} but query by path returned {:?}",
+                            package_id, workspace_path, workspace_id,
+                        )));
+                    }
+                }
+                None => {
+                    // This package is not in the workspace.
+                    if workspace_ids.contains(package_id) {
+                        return Err(Error::DepGraphInternalError(format!(
+                            "package {} has no workspace path but is in workspace",
+                            package_id,
+                        )));
+                    }
+                }
+            }
+
             for dep in self.dep_links_node_idx_directed(metadata.node_idx, Outgoing) {
                 let to_id = dep.to.id();
                 let to_version = dep.to.version();
@@ -437,7 +464,7 @@ pub struct PackageMetadata {
 
     // Other information.
     pub(super) node_idx: NodeIndex<u32>,
-    pub(super) in_workspace: bool,
+    pub(super) workspace_path: Option<PathBuf>,
     pub(super) resolved_deps: Vec<NodeDep>,
     pub(super) resolved_features: Vec<String>,
 }
@@ -472,7 +499,11 @@ impl PackageMetadata {
     }
 
     pub fn in_workspace(&self) -> bool {
-        self.in_workspace
+        self.workspace_path.is_some()
+    }
+
+    pub fn workspace_path(&self) -> Option<&Path> {
+        self.workspace_path.as_ref().map(|path| path.as_path())
     }
 }
 
