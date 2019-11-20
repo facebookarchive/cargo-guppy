@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::errors::*;
-use crate::graph::{DependencyDirection, DependencyEdge, DependencyLink, PackageGraph};
+use crate::graph::{
+    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
+};
 use crate::petgraph_support::reversed::ReversedDirected;
 use crate::petgraph_support::walk::EdgeDfs;
 use cargo_metadata::PackageId;
@@ -87,7 +89,7 @@ impl<'g> PackageSelect<'g> {
     pub fn into_root_ids(
         self,
         direction: DependencyDirection,
-    ) -> impl IntoIterator<Item = &'g PackageId> + 'g {
+    ) -> impl IntoIterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
         let dep_graph = self.package_graph.dep_graph();
         let (_, roots) = select_postfilter(dep_graph, self.params, direction);
         roots.into_iter().map(move |node_idx| &dep_graph[node_idx])
@@ -118,6 +120,24 @@ impl<'g> PackageSelect<'g> {
             topo,
             direction,
             remaining: count,
+        }
+    }
+
+    /// Consumes this query and creates an iterator over `PackageMetadata` instances, returned in
+    /// topological order.
+    ///
+    /// The default order of iteration is determined by the type of query:
+    /// * for `all` and `transitive_deps` queries, packages are returned in forward order.
+    /// * for `transitive_reverse_deps` queries, packages are returned in reverse order.
+    pub fn into_iter_metadatas(
+        self,
+        direction_opt: Option<DependencyDirection>,
+    ) -> IntoIterMetadatas<'g> {
+        let package_graph = self.package_graph;
+        let inner = self.into_iter_ids(direction_opt);
+        IntoIterMetadatas {
+            package_graph,
+            inner,
         }
     }
 
@@ -279,6 +299,45 @@ impl<'g> Iterator for IntoIterIds<'g> {
 impl<'g> ExactSizeIterator for IntoIterIds<'g> {
     fn len(&self) -> usize {
         self.remaining
+    }
+}
+
+/// An iterator over package metadata in topological order.
+///
+/// The items returned are of type `&'g PackageMetadata`. Returned by `PackageSelect::into_iter_metadatas`.
+#[derive(Clone, Debug)]
+pub struct IntoIterMetadatas<'g> {
+    package_graph: &'g PackageGraph,
+    inner: IntoIterIds<'g>,
+}
+
+impl<'g> IntoIterMetadatas<'g> {
+    /// Returns the direction the iteration is happening in.
+    pub fn direction(&self) -> DependencyDirection {
+        self.inner.direction
+    }
+}
+
+impl<'g> Iterator for IntoIterMetadatas<'g> {
+    type Item = &'g PackageMetadata;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next_id = self.inner.next()?;
+        Some(
+            self.package_graph.metadata(next_id).unwrap_or_else(|| {
+                panic!("known package ID '{}' not found in metadata map", next_id)
+            }),
+        )
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'g> ExactSizeIterator for IntoIterMetadatas<'g> {
+    fn len(&self) -> usize {
+        self.inner.len()
     }
 }
 
