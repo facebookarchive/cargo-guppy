@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `guppy` crate."><meta name="keywords" content="rust, rustlang, rust-lang, guppy"><title>guppy - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../guppy/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate guppy</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all guppy's items</p></a><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#enums">Enums</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'guppy', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/guppy/lib.rs.html#4-125' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>guppy</a></span></h1><div class='docblock'><p>Track and query Cargo dependency graphs.</p>
+<p><code>guppy</code> provides a Rust interface to run queries over Cargo dependency graphs. <code>guppy</code> parses
+the output of  <a href="https://doc.rust-lang.org/cargo/commands/cargo-metadata.html"><code>cargo metadata</code></a>,
+then presents a graph interface over it.</p>
+<h1 id="usage" class="section-header"><a href="#usage">Usage</a></h1>
+<p>Add the following to <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+guppy = &quot;0.1&quot;
+</code></pre>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>Print out all direct and transitive dependencies of a package:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">PackageGraph</span>;
+<span class="kw">use</span> <span class="ident">cargo_metadata</span>::<span class="ident">PackageId</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>;
+
+<span class="comment">// `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.</span>
+<span class="kw">let</span> <span class="ident">fixture</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../fixtures/metadata1.json&quot;</span>);
+<span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_json</span>(<span class="ident">fixture</span>).<span class="ident">unwrap</span>();
+
+<span class="comment">// `guppy` provides several ways to get hold of package IDs. Use a pre-defined one for this</span>
+<span class="comment">// example.</span>
+<span class="kw">let</span> <span class="ident">package_id</span> <span class="op">=</span> <span class="ident">PackageId</span> { <span class="ident">repr</span>: <span class="string">&quot;testcrate 0.1.0 (path+file:///fakepath/testcrate)&quot;</span>.<span class="ident">into</span>() };
+<span class="comment">// dep_links returns all direct dependencies of a package, and it returns `None` if the package</span>
+<span class="comment">// ID isn&#39;t recognized.</span>
+<span class="kw">for</span> <span class="ident">link</span> <span class="kw">in</span> <span class="ident">package_graph</span>.<span class="ident">dep_links</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>).<span class="ident">unwrap</span>() {
+    <span class="comment">// A dependency link contains `from`, `to` and `edge`. The edge has information about e.g.</span>
+    <span class="comment">// whether this is a build dependency.</span>
+    <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;direct dependency: {}&quot;</span>, <span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">id</span>());
+}
+
+<span class="comment">// Transitive dependencies are obtained through the `select_` APIs. They are always presented in</span>
+<span class="comment">// topological order.</span>
+<span class="kw">let</span> <span class="ident">select</span> <span class="op">=</span> <span class="ident">package_graph</span>.<span class="ident">select_transitive_deps</span>(<span class="ident">iter</span>::<span class="ident">once</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>)).<span class="ident">unwrap</span>();
+<span class="kw">for</span> <span class="ident">dep_id</span> <span class="kw">in</span> <span class="ident">select</span>.<span class="ident">into_iter_ids</span>(<span class="prelude-val">None</span>) {
+    <span class="comment">// The select API also has an `into_iter_links()` method which returns links instead of IDs.</span>
+    <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;transitive dependency: {}&quot;</span>, <span class="ident">dep_id</span>);
+}</pre></div>
+<p>Remove all links that are dev-only, except for links within workspace packages.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">PackageGraph</span>;
+
+<span class="comment">// `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.</span>
+<span class="kw">let</span> <span class="ident">fixture</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../fixtures/metadata_libra.json&quot;</span>);
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_json</span>(<span class="ident">fixture</span>).<span class="ident">unwrap</span>();
+
+<span class="comment">// `retain_edges` takes a closure that returns `true` if this edge should be kept in the graph.</span>
+<span class="ident">package_graph</span>.<span class="ident">retain_edges</span>(<span class="op">|</span><span class="ident">data</span>, <span class="ident">link</span><span class="op">|</span> {
+    <span class="comment">// &#39;data&#39; contains metadata for every package. It isn&#39;t used in this example but some</span>
+    <span class="comment">// complex filters may make use of it.</span>
+    <span class="kw">if</span> <span class="ident">link</span>.<span class="ident">from</span>.<span class="ident">in_workspace</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">in_workspace</span>() {
+        <span class="kw">return</span> <span class="bool-val">true</span>;
+    }
+    <span class="op">!</span><span class="ident">link</span>.<span class="ident">edge</span>.<span class="ident">dev_only</span>()
+});
+
+<span class="comment">// Iterate over all links and assert that there are no dev-only links.</span>
+<span class="kw">for</span> <span class="ident">link</span> <span class="kw">in</span> <span class="ident">package_graph</span>.<span class="ident">select_all</span>().<span class="ident">into_iter_links</span>(<span class="prelude-val">None</span>) {
+    <span class="kw">if</span> <span class="op">!</span><span class="ident">link</span>.<span class="ident">from</span>.<span class="ident">in_workspace</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">in_workspace</span>() {
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">link</span>.<span class="ident">edge</span>.<span class="ident">dev_only</span>());
+    }
+}</pre></div>
+<p>Print out a <code>dot</code> graph representing workspace packages, for formatting with
+<a href="https://www.graphviz.org/">graphviz</a>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::{<span class="ident">DependencyLink</span>, <span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
+
+<span class="comment">// `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.</span>
+<span class="kw">let</span> <span class="ident">fixture</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../fixtures/metadata_libra.json&quot;</span>);
+<span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_json</span>(<span class="ident">fixture</span>).<span class="ident">unwrap</span>();
+
+<span class="comment">// Non-workspace packages cannot depend on packages within the workspace, so the reverse</span>
+<span class="comment">// transitive deps of workspace packages are exactly the set of workspace packages.</span>
+<span class="kw">let</span> <span class="ident">select</span> <span class="op">=</span> <span class="ident">package_graph</span>
+    .<span class="ident">select_transitive_reverse_deps</span>(<span class="ident">package_graph</span>.<span class="ident">workspace</span>().<span class="ident">member_ids</span>())
+    .<span class="ident">unwrap</span>();
+
+<span class="comment">// Define a visitor, which specifies what strings to print out for the graph.</span>
+<span class="kw">struct</span> <span class="ident">PackageNameVisitor</span>;
+
+<span class="kw">impl</span> <span class="ident">PackageDotVisitor</span> <span class="kw">for</span> <span class="ident">PackageNameVisitor</span> {
+    <span class="kw">fn</span> <span class="ident">visit_package</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+        <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">package</span>.<span class="ident">name</span>())
+    }
+
+    <span class="kw">fn</span> <span class="ident">visit_link</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">link</span>: <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">f</span>: <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+        <span class="comment">// Don&#39;t print out anything for links. One could print out e.g. whether this is</span>
+        <span class="comment">// a dev-only link.</span>
+        <span class="prelude-val">Ok</span>(())
+    }
+}
+
+<span class="comment">// select.into_dot() implements `std::fmt::Display`, so it can be written out to a file, a</span>
+<span class="comment">// string, stdout, etc.</span>
+<span class="kw">let</span> <span class="ident">dot_graph</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">select</span>.<span class="ident">into_dot</span>(<span class="ident">PackageNameVisitor</span>));</pre></div>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="config/index.html" title='guppy::config mod'>config</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="mod" href="diff/index.html" title='guppy::diff mod'>diff</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="mod" href="graph/index.html" title='guppy::graph mod'>graph</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="mod" href="lockfile/index.html" title='guppy::lockfile mod'>lockfile</a></td><td class='docblock-short'></td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.Error.html" title='guppy::Error enum'>Error</a></td><td class='docblock-short'></td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g., <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g., <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g., <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "guppy";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

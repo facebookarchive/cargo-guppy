@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `proc_macro_error` crate."><meta name="keywords" content="rust, rustlang, rust-lang, proc_macro_error"><title>proc_macro_error - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../proc_macro_error/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate proc_macro_error</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all proc_macro_error's items</p></a><div class="block items"><ul><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'proc_macro_error', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/proc_macro_error/lib.rs.html#1-291' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>proc_macro_error</a></span></h1><div class='docblock'><h1 id="proc-macro-error" class="section-header"><a href="#proc-macro-error">proc-macro-error</a></h1>
+<p>This crate aims to provide an error reporting mechanism that is usable inside
+<code>proc-macros</code>, can highlight a specific span, and can be migrated from
+<code>panic!</code>-based errors with minimal efforts.</p>
+<p>Also, there's [ability to append a dummy token stream][dummy] to your errors.</p>
+<h2 id="usage" class="section-header"><a href="#usage">Usage</a></h2>
+<p>In your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">proc-macro-error = &quot;0.2&quot;
+</code></pre>
+<p>In <code>lib.rs</code>:</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered ignore">
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">proc_macro_error</span>;
+<span class="kw">use</span> <span class="ident">proc_macro_error</span>::{
+    <span class="ident">filter_macro_errors</span>,
+    <span class="ident">span_error</span>,
+    <span class="ident">call_site_error</span>,
+    <span class="ident">ResultExt</span>,
+    <span class="ident">OptionExt</span>
+};
+
+<span class="comment">// This is your main entry point</span>
+<span class="attribute">#[<span class="ident">proc_macro</span>]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">make_answer</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+    <span class="comment">// This macro **must** be placed at the top level.</span>
+    <span class="comment">// No need to touch the code inside though.</span>
+    <span class="macro">filter_macro_errors</span><span class="macro">!</span> {
+        <span class="comment">// `parse_macro_input!` and friends work just fine inside this macro</span>
+        <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="macro">parse_macro_input</span><span class="macro">!</span>(<span class="ident">input</span> <span class="kw">as</span> <span class="ident">MyParser</span>);
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="ident">some_logic</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>) {
+            <span class="comment">// we&#39;ve got a span to blame, let&#39;s use it</span>
+            <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">err</span>.<span class="ident">span_should_be_highlighted</span>();
+            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">err</span>.<span class="ident">message</span>();
+            <span class="comment">// This call jumps directly to the end of `filter_macro_errors!` invocation</span>
+            <span class="macro">span_error</span><span class="macro">!</span>(<span class="ident">span</span>, <span class="string">&quot;You made an error, go fix it: {}&quot;</span>, <span class="ident">msg</span>);
+        }
+
+        <span class="comment">// `Result` gets some handy shortcuts if your error type implements</span>
+        <span class="comment">// `Into&lt;``MacroError``&gt;`. `Option` has one unconditionally</span>
+        <span class="kw">use</span> <span class="ident">proc_macro_error</span>::<span class="ident">ResultExt</span>;
+        <span class="ident">more_logic</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>).<span class="ident">expect_or_exit</span>(<span class="string">&quot;What a careless user, behave!&quot;</span>);
+
+        <span class="kw">if</span> <span class="op">!</span><span class="macro">more_logic_for_logic_god</span><span class="macro">!</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>) {
+            <span class="comment">// We don&#39;t have an exact location this time,</span>
+            <span class="comment">// so just highlight the proc-macro invocation itself</span>
+            <span class="macro">call_site_error</span><span class="macro">!</span>(
+                <span class="string">&quot;Bad, bad user! Now go stand in the corner and think about what you did!&quot;</span>);
+        }
+
+        <span class="comment">// Now all the processing is done, return `proc_macro::TokenStream`</span>
+        <span class="macro">quote</span><span class="macro">!</span>(<span class="comment">/* stuff */</span>).<span class="ident">into</span>()
+    }
+
+    <span class="comment">// At this point we have a new shining `proc_macro::TokenStream`!</span>
+}</pre></div>
+<h2 id="motivation-and-getting-started" class="section-header"><a href="#motivation-and-getting-started">Motivation and Getting started</a></h2>
+<p>Error handling in proc-macros sucks. It's not much of a choice today:
+you either &quot;bubble up&quot; the error up to the top-level of your macro and convert it to
+a <a href="https://doc.rust-lang.org/std/macro.compile_error.html"><code>compile_error!</code></a> invocation or just use a good old panic. Both these ways suck:</p>
+<ul>
+<li>Former sucks because it's quite redundant to unroll a proper error handling
+just for critical errors that will crash the macro anyway so people mostly
+choose not to bother with it at all and use panic. Almost nobody does it,
+simple <code>.expect</code> is too tempting.</li>
+<li>Later sucks because there's no way to carry out span info via <code>panic!</code>. <code>rustc</code> will highlight
+the whole invocation itself but not some specific token inside it.
+Furthermore, panics aren't for error-reporting at all; panics are for bug-detecting
+(like unwrapping on <code>None</code> or out-of range indexing) or for early development stages
+when you need a prototype ASAP and error handling can wait. Mixing these usages only
+messes things up.</li>
+<li>There is <a href="https://doc.rust-lang.org/proc_macro/struct.Diagnostic.html"><code>proc_macro::Diagnostics</code></a>
+but it's experimental. (This crate will be deprecated once <code>Diagnostics</code> is stable.)</li>
+</ul>
+<p>That said, we need a solution, but this solution must meet these conditions:</p>
+<ul>
+<li>It must be better than <code>panic!</code>. The main point: it must offer a way to carry span information
+over to user.</li>
+<li>It must require as little effort as possible to migrate from <code>panic!</code>. Ideally, a new
+macro with the same semantics plus ability to carry out span info.</li>
+<li>It must be usable on stable.</li>
+</ul>
+<p>This crate aims to provide such a mechanism. All you have to do is enclose all
+the code inside your top-level <code>#[proc_macro]</code> function in [<code>filter_macro_errors!</code>]
+invocation and change panics to [<code>span_error!</code>]/[<code>call_site_error!</code>] where appropriate,
+see <a href="#usage">Usage</a></p>
+<h1 id="how-it-works" class="section-header"><a href="#how-it-works">How it works</a></h1>
+<p>Effectively, it emulates try-catch mechanism on the top of panics.</p>
+<p>Essentially, the [<code>filter_macro_errors!</code>] macro is (C++ like pseudo-code)</p>
+<pre><code class="language-C++">try {
+    /* your code */
+} catch (MacroError) {
+    /* conversion to compile_error! */
+} catch (MultiMacroErrors) {
+    /* conversion to multiple compile_error! invocations */
+}
+</code></pre>
+<p>[<code>span_error!</code>] and co are</p>
+<pre><code class="language-C++">throw MacroError::new(span, format!(msg...));
+</code></pre>
+<p>By calling [<code>span_error!</code>] you trigger panic that will be caught by [<code>filter_macro_errors!</code>]
+and converted to <a href="https://doc.rust-lang.org/std/macro.compile_error.html"><code>compile_error!</code></a> invocation.
+All the panics that weren't triggered by [<code>span_error!</code>] and co will be resumed as is.</p>
+<p>Panic catching is indeed <em>slow</em> but the macro is about to abort anyway so speed is not
+a concern here. Please note that <strong>this crate is not intended to be used in any other way
+than a proc-macro error reporting</strong>, use <code>Result</code> and <code>?</code> instead.</p>
+<p><a href="https://doc.rust-lang.org/proc_macro/struct.Diagnostic.html"><code>proc_macro::Diagnostics</code></a></p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Re-exports</a></h2>
+<table><tr><td><code>pub extern crate <a class="mod" href="https://doc.rust-lang.org/nightly/proc_macro/index.html" title="mod proc_macro">proc_macro</a>;</code></td></tr><tr><td><code>pub extern crate <a class="mod" href="../proc_macro2/index.html" title="mod proc_macro2">proc_macro2</a>;</code></td></tr><tr><td><code>pub use dummy::<a class="fn" href="../proc_macro_error/dummy/fn.set_dummy.html" title="fn proc_macro_error::dummy::set_dummy">set_dummy</a>;</code></td></tr><tr><td><code>pub use single::<a class="struct" href="../proc_macro_error/single/struct.MacroError.html" title="struct proc_macro_error::single::MacroError">MacroError</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="dummy/index.html" title='proc_macro_error::dummy mod'>dummy</a></td><td class='docblock-short'><p><code>compile_error!</code> does not interrupt compilation right away. This means
+<code>rustc</code> doesn't just show you the error and abort, it carries on the
+compilation process, looking for other errors to report.</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="single/index.html" title='proc_macro_error::single mod'>single</a></td><td class='docblock-short'><p>This module contains data types and functions to be used for single-error reporting.</p>
+</td></tr></table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table><tr class='module-item'><td><a class="macro" href="macro.call_site_error.html" title='proc_macro_error::call_site_error macro'>call_site_error</a></td><td class='docblock-short'><p>Shortcut for <code>span_error!(Span::call_site(), msg...)</code>. This macro
+is still preferable over plain panic, see <a href="#motivation-and-getting-started">Motivation</a></p>
+</td></tr><tr class='module-item'><td><a class="macro" href="macro.filter_macro_errors.html" title='proc_macro_error::filter_macro_errors macro'>filter_macro_errors</a></td><td class='docblock-short'><p>This macro is supposed to be used at the top level of your <code>proc-macro</code>,
+the function marked with a <code>#[proc_macro*]</code> attribute. It catches all the
+errors triggered by [<code>span_error!</code>], [<code>call_site_error!</code>], [<code>MacroError::trigger</code>]
+and [<code>MultiMacroErrors</code>].
+Once caught, it converts it to a [<code>proc_macro::TokenStream</code>]
+containing a <a href="https://doc.rust-lang.org/std/macro.compile_error.html"><code>compile_error!</code></a> invocation.</p>
+</td></tr><tr class='module-item'><td><a class="macro" href="macro.span_error.html" title='proc_macro_error::span_error macro'>span_error</a></td><td class='docblock-short'><p>Makes a [<code>MacroError</code>] instance from provided arguments (<code>panic!</code>-like)
+and triggers panic in hope it will be caught by [<code>filter_macro_errors!</code>].</p>
+</td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.MultiMacroErrors.html" title='proc_macro_error::MultiMacroErrors struct'>MultiMacroErrors</a></td><td class='docblock-short'><p>This type represents a container for multiple errors. Each error has it's own span
+location.</p>
+</td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table><tr class='module-item'><td><a class="trait" href="trait.OptionExt.html" title='proc_macro_error::OptionExt trait'>OptionExt</a></td><td class='docblock-short'><p>This traits expands [<code>Option&lt;T&gt;</code>][std::option::Option] with some handy shortcuts.</p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.ResultExt.html" title='proc_macro_error::ResultExt trait'>ResultExt</a></td><td class='docblock-short'><p>This traits expands <a href="std::result::Result"><code>Result&lt;T, Into&lt;MacroError&gt;&gt;</code></a> with some handy shortcuts.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g., <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g., <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g., <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "proc_macro_error";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

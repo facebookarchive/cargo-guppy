@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["set_dummy","Sets dummy token stream which will be appended to `compile_error!(msg);...` invocations, should a trigger happen. Returns an old dummy, if set."]]});
