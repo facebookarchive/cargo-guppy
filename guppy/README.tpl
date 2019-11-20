@@ -1,6 +1,6 @@
 # {{crate}}
 
-[![Build Status](https://circleci.com/gh/calibra/cargo-guppy/tree/master.svg?style=shield)](https://circleci.com/gh/calibra/cargo-guppy/tree/master)
+[![Build Status](https://circleci.com/gh/calibra/cargo-guppy/tree/master.svg?style=shield)](https://circleci.com/gh/calibra/cargo-guppy/tree/master) [![License](https://img.shields.io/badge/license-Apache-green.svg)](../LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](../LICENSE-MIT)
 
 {{readme}}
 

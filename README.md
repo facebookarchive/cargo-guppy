@@ -1,6 +1,6 @@
 # cargo-guppy: track and query dependency graphs
 
-[![License](https://img.shields.io/badge/license-Apache-green.svg)](LICENSE.md) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
+[![License](https://img.shields.io/badge/license-Apache-green.svg)](LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE-MIT)
 
 This repository contains the source code for:
 * [`guppy`](guppy): a library for performing queries on Cargo dependency graphs
