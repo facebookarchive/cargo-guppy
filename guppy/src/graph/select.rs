@@ -98,7 +98,7 @@ impl<'g> PackageSelect<'g> {
     /// The default order of iteration is determined by the type of query:
     /// * for `all` and `transitive_deps` queries, package IDs are returned in forward order.
     /// * for `transitive_reverse_deps` queries, package IDs are returned in reverse order.
-    pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> PackageIdIter<'g> {
+    pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> IntoIterIds<'g> {
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
         let dep_graph = self.package_graph.dep_graph();
 
@@ -113,7 +113,7 @@ impl<'g> PackageSelect<'g> {
             DependencyDirection::Forward => Topo::new(&filtered_graph),
             DependencyDirection::Reverse => Topo::new(ReversedDirected(&filtered_graph)),
         };
-        PackageIdIter {
+        IntoIterIds {
             graph: filtered_graph,
             topo,
             direction,
@@ -134,10 +134,7 @@ impl<'g> PackageSelect<'g> {
     /// The default order of iteration is determined by the type of query:
     /// * for `all` and `transitive_deps` queries, package IDs are returned in forward order.
     /// * for `transitive_reverse_deps` queries, package IDs are returned in reverse order.
-    pub fn into_iter_links(
-        self,
-        direction_opt: Option<DependencyDirection>,
-    ) -> DependencyLinkIter<'g> {
+    pub fn into_iter_links(self, direction_opt: Option<DependencyDirection>) -> IntoIterLinks<'g> {
         use DependencyDirection::*;
 
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
@@ -160,7 +157,7 @@ impl<'g> PackageSelect<'g> {
             (None, Reverse) => (None, EdgeDfs::new(ReversedDirected(dep_graph), roots)),
         };
 
-        DependencyLinkIter {
+        IntoIterLinks {
             package_graph: self.package_graph,
             reachable,
             edge_dfs,
@@ -243,7 +240,7 @@ fn select_postfilter(
 /// The items returned are of type `&'g PackageId`. Returned by `PackageSelect::into_iter_ids`.
 #[derive(Clone, Derivative)]
 #[derivative(Debug)]
-pub struct PackageIdIter<'g> {
+pub struct IntoIterIds<'g> {
     #[derivative(Debug = "ignore")]
     graph: NodeFiltered<&'g Graph<PackageId, DependencyEdge>, FixedBitSet>,
     // XXX Topo really should implement Debug in petgraph upstream.
@@ -253,14 +250,14 @@ pub struct PackageIdIter<'g> {
     remaining: usize,
 }
 
-impl<'g> PackageIdIter<'g> {
+impl<'g> IntoIterIds<'g> {
     /// Returns the direction the iteration is happening in.
     pub fn direction(&self) -> DependencyDirection {
         self.direction
     }
 }
 
-impl<'g> Iterator for PackageIdIter<'g> {
+impl<'g> Iterator for IntoIterIds<'g> {
     type Item = &'g PackageId;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -279,7 +276,7 @@ impl<'g> Iterator for PackageIdIter<'g> {
     }
 }
 
-impl<'g> ExactSizeIterator for PackageIdIter<'g> {
+impl<'g> ExactSizeIterator for IntoIterIds<'g> {
     fn len(&self) -> usize {
         self.remaining
     }
@@ -290,7 +287,7 @@ impl<'g> ExactSizeIterator for PackageIdIter<'g> {
 /// The items returned are of type `DependencyLink<'g>`. Returned by `PackageSelect::into_iter_ids`.
 #[derive(Clone, Derivative)]
 #[derivative(Debug)]
-pub struct DependencyLinkIter<'g> {
+pub struct IntoIterLinks<'g> {
     #[derivative(Debug = "ignore")]
     package_graph: &'g PackageGraph,
     reachable: Option<FixedBitSet>,
@@ -298,7 +295,7 @@ pub struct DependencyLinkIter<'g> {
     direction: DependencyDirection,
 }
 
-impl<'g> DependencyLinkIter<'g> {
+impl<'g> IntoIterLinks<'g> {
     /// Returns the direction the iteration is happening in.
     pub fn direction(&self) -> DependencyDirection {
         self.direction
@@ -345,7 +342,7 @@ impl<'g> DependencyLinkIter<'g> {
     }
 }
 
-impl<'g> Iterator for DependencyLinkIter<'g> {
+impl<'g> Iterator for IntoIterLinks<'g> {
     type Item = DependencyLink<'g>;
 
     fn next(&mut self) -> Option<Self::Item> {

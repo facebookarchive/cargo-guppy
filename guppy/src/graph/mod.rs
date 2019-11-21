@@ -13,7 +13,7 @@ mod select;
 pub use crate::petgraph_support::dot::DotWrite;
 pub use graph::*;
 pub use print::PackageDotVisitor;
-pub use select::{DependencyLinkIter, PackageIdIter, PackageSelect};
+pub use select::{IntoIterIds, IntoIterLinks, PackageSelect};
 
 /// The direction in which to follow dependencies.
 ///
