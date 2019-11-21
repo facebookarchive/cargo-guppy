@@ -9,11 +9,10 @@ mod graph;
 mod print;
 mod select;
 
-// Public exports for dot graphs.
 pub use crate::petgraph_support::dot::DotWrite;
 pub use graph::*;
-pub use print::PackageDotVisitor;
-pub use select::{IntoIterIds, IntoIterLinks, PackageSelect};
+pub use print::*;
+pub use select::*;
 
 /// The direction in which to follow dependencies.
 ///
