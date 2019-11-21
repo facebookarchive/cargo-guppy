@@ -1,3 +1,6 @@
+// Copyright (c) The cargo-guppy Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 //! Print out crates in a workspace in topological order.
 //!
 //! The into_iter_ids and into_iter_metadatas iterators return packages in topological order. Note
