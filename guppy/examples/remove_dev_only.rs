@@ -49,9 +49,7 @@ fn main() -> Result<(), Error> {
 
     // Iterate over all links and assert that there are no dev-only links.
     for link in package_graph.select_all().into_iter_links(None) {
-        if !link.from.in_workspace() || !link.to.in_workspace() {
-            assert!(!link.edge.dev_only());
-        }
+        assert!(!link.edge.dev_only());
     }
 
     // Count the number of packages after.
