@@ -1,3 +1,6 @@
+// Copyright (c) The cargo-guppy Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 //! Remove all dependency links that are dev-only.
 //!
 //! Dev-only dependencies are typically not included in release builds, so it's useful to be able

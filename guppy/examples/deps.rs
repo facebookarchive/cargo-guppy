@@ -1,3 +1,6 @@
+// Copyright (c) The cargo-guppy Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 //! Print out direct and transitive dependencies of a package.
 
 use cargo_metadata::PackageId;

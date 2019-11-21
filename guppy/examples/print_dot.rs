@@ -1,3 +1,6 @@
+// Copyright (c) The cargo-guppy Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
 //! Print out a dot representation of a subgraph, for formatting with graphviz.
 //!
 //! This example prints out a dot representation of the dependencies between all packages in a
