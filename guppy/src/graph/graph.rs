@@ -478,8 +478,17 @@ pub struct PackageMetadata {
     pub(super) authors: Vec<String>,
     pub(super) description: Option<String>,
     pub(super) license: Option<String>,
+    pub(super) license_file: Option<PathBuf>,
     pub(super) deps: Vec<Dependency>,
     pub(super) manifest_path: PathBuf,
+    pub(super) categories: Vec<String>,
+    pub(super) keywords: Vec<String>,
+    pub(super) readme: Option<PathBuf>,
+    pub(super) repository: Option<String>,
+    pub(super) edition: String,
+    pub(super) metadata_table: serde_json::Value,
+    pub(super) links: Option<String>,
+    pub(super) publish: Option<Vec<String>>,
 
     // Other information.
     pub(super) node_idx: NodeIndex<u32>,
@@ -522,7 +531,7 @@ impl PackageMetadata {
         self.description.as_ref().map(|x| x.as_str())
     }
 
-    /// Returns an SPDX 2.1 license expression for this package.
+    /// Returns an SPDX 2.1 license expression for this package, if specified.
     ///
     /// This is the same as the `license` field of `Cargo.toml`. Note that `guppy` does not perform
     /// any validation on this, though `crates.io` does if a crate is uploaded there.
@@ -530,11 +539,83 @@ impl PackageMetadata {
         self.license.as_ref().map(|x| x.as_str())
     }
 
+    /// Returns the path to a license file for this package, if specified.
+    ///
+    /// This is the same as the `license_file` field of `Cargo.toml`. It is typically only specified
+    /// for nonstandard licenses.
+    pub fn license_file(&self) -> Option<&Path> {
+        self.license_file.as_ref().map(|path| path.as_path())
+    }
+
     /// Returns the full path to the `Cargo.toml` for this package.
     ///
     /// This is specific to the system that `cargo metadata` was run on.
     pub fn manifest_path(&self) -> &Path {
         &self.manifest_path
+    }
+
+    /// Returns categories for this package.
+    ///
+    /// This is the same as the `categories` field of `Cargo.toml`. For packages on `crates.io`,
+    /// returned values are guaranteed to be
+    /// [valid category slugs](https://crates.io/category_slugs).
+    pub fn categories(&self) -> &[String] {
+        &self.categories
+    }
+
+    /// Returns keywords for this package.
+    ///
+    /// This is the same as the `keywords` field of `Cargo.toml`.
+    pub fn keywords(&self) -> &[String] {
+        &self.keywords
+    }
+
+    /// Returns a path to the README for this package, if specified.
+    ///
+    /// This is the same as the `readme` field of `Cargo.toml`. The path returned is relative to the
+    /// directory the `Cargo.toml` is in (i.e. relative to the parent of `self.manifest_path()`).
+    pub fn readme(&self) -> Option<&Path> {
+        self.readme.as_ref().map(|path| path.as_path())
+    }
+
+    /// Returns the source code repository for this package, if specified.
+    ///
+    /// This is the same as the `repository` field of `Cargo.toml`.
+    pub fn repository(&self) -> Option<&str> {
+        self.repository.as_ref().map(|x| x.as_str())
+    }
+
+    /// Returns the Rust edition this package is written against.
+    ///
+    /// This is the same as the `edition` field of `Cargo.toml`. It is `"2015"` by default.
+    pub fn edition(&self) -> &str {
+        &self.edition
+    }
+
+    /// Returns the freeform metadata table for this package.
+    ///
+    /// This is the same as the `package.metadata` section of `Cargo.toml`. This section is
+    /// typically used by tools which would like to store package configuration in `Cargo.toml`.
+    pub fn metadata_table(&self) -> &serde_json::Value {
+        &self.metadata_table
+    }
+
+    /// Returns the name of a native library this package links to, if specified.
+    ///
+    /// This is the same as the `links` field of `Cargo.toml`. See [The `links` Manifest
+    /// Key](https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key) in
+    /// the Cargo book for more details.
+    pub fn links(&self) -> Option<&str> {
+        self.links.as_ref().map(|x| x.as_str())
+    }
+
+    /// Returns the list of registries to which this package may be published.
+    ///
+    /// Returns `None` if publishing is unrestricted, and `Some(&[])` if publishing is forbidden.
+    ///
+    /// This is the same as the `publish` field of `Cargo.toml`.
+    pub fn publish(&self) -> Option<&[String]> {
+        self.publish.as_ref().map(|publish| publish.as_slice())
     }
 
     /// Returns true if this package is in the workspace.
