@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use guppy::{diff, lockfile::Lockfile, Error};
+use lockfile::{diff, lockfile::Lockfile, Error};
 
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), Error> {
     let old = Lockfile::from_file(old)?;

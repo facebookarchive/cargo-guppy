@@ -11,8 +11,6 @@ use Error::*;
 
 #[derive(Debug)]
 pub enum Error {
-    Io(io::Error),
-    LockfileParseError(toml::de::Error),
     ConfigIoError(io::Error),
     ConfigParseError(toml::de::Error),
     CommandError(MetadataError),
@@ -23,17 +21,9 @@ pub enum Error {
     PackageIdParseError(MetadataPackageId, String),
 }
 
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Io(err)
-    }
-}
-
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Io(err) => write!(f, "{}", err),
-            LockfileParseError(err) => write!(f, "Error while parsing lockfile: {}", err),
             ConfigIoError(err) => write!(f, "Error while reading config file: {}", err),
             ConfigParseError(err) => write!(f, "Error while parsing config file: {}", err),
             CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
@@ -53,8 +43,6 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Io(err) => Some(err),
-            LockfileParseError(err) => Some(err),
             ConfigIoError(err) => Some(err),
             ConfigParseError(err) => Some(err),
             MetadataParseError(err) => Some(err),
