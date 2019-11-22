@@ -580,6 +580,79 @@
 <span id="580">580</span>
 <span id="581">581</span>
 <span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -597,7 +670,12 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
 
-<span class="doccomment">/// A graph of packages extracted from a metadata.</span>
+<span class="doccomment">/// A graph of packages and dependencies between them, parsed from metadata returned by `cargo</span>
+<span class="doccomment">/// metadata`.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// For examples on how to use `PackageGraph`, see</span>
+<span class="doccomment">/// [the `examples` directory](https://github.com/calibra/cargo-guppy/tree/master/guppy/examples)</span>
+<span class="doccomment">/// in this crate.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageGraph</span> {
     <span class="comment">// Source of truth data.</span>
@@ -642,7 +720,7 @@
         <span class="kw">let</span> <span class="ident">node_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">node_count</span>();
         <span class="kw">let</span> <span class="ident">package_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">packages</span>.<span class="ident">len</span>();
         <span class="kw">if</span> <span class="ident">node_count</span> <span class="op">!</span><span class="op">=</span> <span class="ident">package_count</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">DepGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
                 <span class="string">&quot;number of nodes = {} different from packages = {}&quot;</span>,
                 <span class="ident">node_count</span>, <span class="ident">package_count</span>,
             )));
@@ -651,7 +729,7 @@
         <span class="comment">// is recursive and toposort is iterative. Package graphs have unbounded depth so use the</span>
         <span class="comment">// iterative implementation.</span>
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">cycle</span>) <span class="op">=</span> <span class="ident">toposort</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>, <span class="prelude-val">None</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">DepGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
                 <span class="string">&quot;unexpected cycle in dep graph: {:?}&quot;</span>,
                 <span class="ident">cycle</span>
             )));
@@ -669,7 +747,7 @@
                     <span class="comment">// about it.</span>
                     <span class="kw">let</span> <span class="ident">workspace_id</span> <span class="op">=</span> <span class="ident">workspace</span>.<span class="ident">member_by_path</span>(<span class="ident">workspace_path</span>);
                     <span class="kw">if</span> <span class="ident">workspace_id</span> <span class="op">!</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">package_id</span>) {
-                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">DepGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
+                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
                             <span class="string">&quot;package {} has workspace path {:?} but query by path returned {:?}&quot;</span>,
                             <span class="ident">package_id</span>, <span class="ident">workspace_path</span>, <span class="ident">workspace_id</span>,
                         )));
@@ -678,7 +756,7 @@
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="comment">// This package is not in the workspace.</span>
                     <span class="kw">if</span> <span class="ident">workspace_ids</span>.<span class="ident">contains</span>(<span class="ident">package_id</span>) {
-                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">DepGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
+                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
                             <span class="string">&quot;package {} has no workspace path but is in workspace&quot;</span>,
                             <span class="ident">package_id</span>,
                         )));
@@ -691,14 +769,14 @@
                 <span class="kw">let</span> <span class="ident">to_version</span> <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">to</span>.<span class="ident">version</span>();
 
                 <span class="kw">let</span> <span class="ident">version_check</span> <span class="op">=</span> <span class="op">|</span><span class="ident">dep_metadata</span>: <span class="kw-2">&amp;</span><span class="ident">DependencyMetadata</span>, <span class="ident">kind</span>: <span class="ident">DependencyKind</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">dep_metadata</span>.<span class="ident">req</span>();
+                    <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">dep_metadata</span>.<span class="ident">version_req</span>();
                     <span class="comment">// A requirement of &quot;*&quot; filters out pre-release versions with the semver crate,</span>
                     <span class="comment">// but cargo accepts them.</span>
                     <span class="comment">// See https://github.com/steveklabnik/semver/issues/98.</span>
                     <span class="kw">if</span> <span class="ident">req</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">MAJOR_WILDCARD</span> <span class="op">|</span><span class="op">|</span> <span class="ident">req</span>.<span class="ident">matches</span>(<span class="ident">to_version</span>) {
                         <span class="prelude-val">Ok</span>(())
                     } <span class="kw">else</span> {
-                        <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">DepGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
+                        <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
                             <span class="string">&quot;{} -&gt; {} ({}): version ({}) doesn&#39;t match requirement ({:?})&quot;</span>,
                             <span class="ident">package_id</span>,
                             <span class="ident">to_id</span>,
@@ -727,7 +805,7 @@
                 }
 
                 <span class="kw">if</span> <span class="op">!</span><span class="ident">edge_set</span> {
-                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">DepGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
                         <span class="string">&quot;{} -&gt; {}: no edge info found&quot;</span>,
                         <span class="ident">package_id</span>, <span class="ident">to_id</span>,
                     )));
@@ -918,7 +996,7 @@
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package_id</span><span class="op">|</span> {
                 <span class="self">self</span>.<span class="ident">node_idx</span>(<span class="ident">package_id</span>)
-                    .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error</span>::<span class="ident">DepGraphUnknownPackageId</span>(<span class="ident">package_id</span>.<span class="ident">clone</span>()))
+                    .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error</span>::<span class="ident">UnknownPackageId</span>(<span class="ident">package_id</span>.<span class="ident">clone</span>()))
             })
             .<span class="ident">collect</span>()
     }
@@ -994,6 +1072,11 @@
     }
 }
 
+<span class="doccomment">/// Information about a workspace, parsed from metadata returned by `cargo metadata`.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// For more about workspaces, see</span>
+<span class="doccomment">/// [Cargo Workspaces](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) in *The Rust</span>
+<span class="doccomment">/// Programming Language*.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Workspace</span> {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">root</span>: <span class="ident">PathBuf</span>,
@@ -1026,13 +1109,22 @@
     }
 }
 
+<span class="doccomment">/// Represents a dependency from one package to another.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// The package which depends on the `to` package.</span>
     <span class="kw">pub</span> <span class="ident">from</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span>,
+    <span class="doccomment">/// The package which is depended on by the `from` package.</span>
     <span class="kw">pub</span> <span class="ident">to</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span>,
+    <span class="doccomment">/// Information about the specifics of this dependency.</span>
     <span class="kw">pub</span> <span class="ident">edge</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">DependencyEdge</span>,
 }
 
+<span class="doccomment">/// Information about a specific package in a `PackageGraph`.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Most of the metadata is extracted from `Cargo.toml` files. See</span>
+<span class="doccomment">/// [the `Cargo.toml` reference](https://doc.rust-lang.org/cargo/reference/manifest.html) for more</span>
+<span class="doccomment">/// details.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageMetadata</span> {
     <span class="comment">// Fields extracted from the package.</span>
@@ -1053,43 +1145,73 @@
 }
 
 <span class="kw">impl</span> <span class="ident">PackageMetadata</span> {
+    <span class="doccomment">/// Returns the unique identifier for this package.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">PackageId</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>
     }
 
+    <span class="doccomment">/// Returns the name of this package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is the same as the `name` field of `Cargo.toml`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">str</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">name</span>
     }
 
+    <span class="doccomment">/// Returns the version of this package as resolved by Cargo.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is the same as the `version` field of `Cargo.toml`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Version</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">version</span>
     }
 
+    <span class="doccomment">/// Returns the authors of this package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is the same as the `authors` field of `Cargo.toml`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">authors</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">String</span>] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">authors</span>
     }
 
+    <span class="doccomment">/// Returns a short description for this package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is the same as the `description` field of `Cargo.toml`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">description</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">description</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_str</span>())
     }
 
+    <span class="doccomment">/// Returns an SPDX 2.1 license expression for this package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is the same as the `license` field of `Cargo.toml`. Note that `guppy` does not perform</span>
+    <span class="doccomment">/// any validation on this, though `crates.io` does if a crate is uploaded there.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">license</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">license</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_str</span>())
     }
 
+    <span class="doccomment">/// Returns the full path to the `Cargo.toml` for this package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is specific to the system that `cargo metadata` was run on.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">manifest_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Path</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">manifest_path</span>
     }
 
+    <span class="doccomment">/// Returns true if this package is in the workspace.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">workspace_path</span>.<span class="ident">is_some</span>()
     }
 
+    <span class="doccomment">/// Returns the relative path to this package in the workspace, or `None` if this package is</span>
+    <span class="doccomment">/// not in the workspace.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Path</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">workspace_path</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">path</span>.<span class="ident">as_path</span>())
     }
 }
 
+<span class="doccomment">/// Details about a specific dependency from a package to another package.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Usually found within the context of a [`DependencyLink`](struct.DependencyLink.html).</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This struct contains information about:</span>
+<span class="doccomment">/// * whether this dependency was renamed in the context of this crate.</span>
+<span class="doccomment">/// * if this is a normal, dev or build dependency.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyEdge</span> {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_name</span>: <span class="ident">String</span>,
@@ -1111,14 +1233,17 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">resolved_name</span>
     }
 
+    <span class="doccomment">/// Returns details about this dependency from the `[dependencies]` section, if they exist.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">normal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">DependencyMetadata</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">normal</span>.<span class="ident">as_ref</span>()
     }
 
+    <span class="doccomment">/// Returns details about this dependency from the `[build-dependencies]` section, if they exist.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">DependencyMetadata</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">build</span>.<span class="ident">as_ref</span>()
     }
 
+    <span class="doccomment">/// Returns details about this dependency from the `[dev-dependencies]` section, if they exist.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dev</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">DependencyMetadata</span><span class="op">&gt;</span> {
         <span class="comment">// XXX should dev dependencies fall back to normal if no dev-specific data was found?</span>
         <span class="self">self</span>.<span class="ident">dev</span>.<span class="ident">as_ref</span>()
@@ -1131,11 +1256,13 @@
     }
 }
 
+<span class="doccomment">/// Information about a specific kind of dependency (normal, build or dev) from a package to another</span>
+<span class="doccomment">/// package.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Usually found within the context of a [`DependencyEdge`](struct.DependencyEdge.html).</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyMetadata</span> {
-    <span class="comment">// Normal/dev/build can have different version requirements even if they resolve to the same</span>
-    <span class="comment">// version.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">req</span>: <span class="ident">VersionReq</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">version_req</span>: <span class="ident">VersionReq</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">optional</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">uses_default_features</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -1143,22 +1270,41 @@
 }
 
 <span class="kw">impl</span> <span class="ident">DependencyMetadata</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">req</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">VersionReq</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">req</span>
+    <span class="doccomment">/// Returns the semver requirements specified for this dependency.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// To get the resolved version, see the `to` field of the `DependencyLink` this was part of.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Notes</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// A dependency can be requested multiple times in the normal, build and dev fields, possibly</span>
+    <span class="doccomment">/// with different version requirements, even if they all end up resolving to the same version.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// See [Specifying Dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies)</span>
+    <span class="doccomment">/// in the Cargo reference for more details.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version_req</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">VersionReq</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">version_req</span>
     }
 
+    <span class="doccomment">/// Returns true if this is an optional dependency.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optional</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">optional</span>
     }
 
+    <span class="doccomment">/// Returns true if the default features of this dependency are enabled.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">uses_default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">uses_default_features</span>
     }
 
+    <span class="doccomment">/// Returns a list of the features enabled by this dependency.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">String</span>] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">features</span>
     }
 
+    <span class="doccomment">/// Returns the target string for this dependency, if specified. This is a string like</span>
+    <span class="doccomment">/// `cfg(target_arch = &quot;x86_64&quot;)`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// See [Platform specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)</span>
+    <span class="doccomment">/// in the Cargo reference for more details.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">target</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_str</span>())
     }

@@ -12,6 +12,7 @@ ALIASES["heck"] = {};
 ALIASES["itoa"] = {};
 ALIASES["lazy_static"] = {};
 ALIASES["libc"] = {};
+ALIASES["lockfile"] = {};
 ALIASES["ordermap"] = {};
 ALIASES["petgraph"] = {};
 ALIASES["proc_macro2"] = {};
