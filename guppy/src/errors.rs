@@ -1,7 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use cargo_metadata::{Error as MetadataError, PackageId as MetadataPackageId};
+use crate::PackageId;
+use cargo_metadata::Error as MetadataError;
 use serde_json;
 use std::error;
 use std::fmt;
@@ -24,7 +25,7 @@ pub enum Error {
     /// An error occurred while constructing a `PackageGraph` from parsed metadata.
     PackageGraphConstructError(String),
     /// A package ID was unknown to this `PackageGraph`.
-    UnknownPackageId(MetadataPackageId),
+    UnknownPackageId(PackageId),
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
 }

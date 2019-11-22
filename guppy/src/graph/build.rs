@@ -1,12 +1,12 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::errors::Error;
 use crate::graph::{
     kind_str, DependencyEdge, DependencyMetadata, PackageGraph, PackageGraphData, PackageMetadata,
     Workspace,
 };
-use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, PackageId, Resolve};
+use crate::{Error, Metadata, PackageId};
+use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
 use petgraph::prelude::*;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap, HashSet};

@@ -1,15 +1,14 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::errors::Error;
 use crate::graph::{kind_str, DependencyDirection};
-use cargo_metadata::{Dependency, DependencyKind, Metadata, MetadataCommand, NodeDep, PackageId};
+use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
+use cargo_metadata::{Dependency, DependencyKind, NodeDep};
 use lazy_static::lazy_static;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
 use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers, Visitable};
 use semver::{Version, VersionReq};
-use serde_json;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
 use std::path::{Path, PathBuf};
@@ -486,7 +485,7 @@ pub struct PackageMetadata {
     pub(super) readme: Option<PathBuf>,
     pub(super) repository: Option<String>,
     pub(super) edition: String,
-    pub(super) metadata_table: serde_json::Value,
+    pub(super) metadata_table: JsonValue,
     pub(super) links: Option<String>,
     pub(super) publish: Option<Vec<String>>,
 
@@ -596,7 +595,7 @@ impl PackageMetadata {
     ///
     /// This is the same as the `package.metadata` section of `Cargo.toml`. This section is
     /// typically used by tools which would like to store package configuration in `Cargo.toml`.
-    pub fn metadata_table(&self) -> &serde_json::Value {
+    pub fn metadata_table(&self) -> &JsonValue {
         &self.metadata_table
     }
 

@@ -23,7 +23,7 @@ Print out all direct dependencies of a package:
 
 ```rust
 use guppy::graph::PackageGraph;
-use cargo_metadata::PackageId;
+use guppy::PackageId;
 
 // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
 let fixture = include_str!("../fixtures/metadata1.json");

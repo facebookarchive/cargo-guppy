@@ -5,7 +5,7 @@ use crate::graph::select::select_prefilter;
 use crate::graph::{DependencyEdge, DependencyLink, PackageGraph, PackageMetadata, PackageSelect};
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::ReverseFlip;
-use cargo_metadata::PackageId;
+use crate::PackageId;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef};
 use std::fmt;

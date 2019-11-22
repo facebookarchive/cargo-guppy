@@ -6,7 +6,7 @@ use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
     assert_transitive_deps_internal,
 };
-use cargo_metadata::PackageId;
+use crate::PackageId;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
