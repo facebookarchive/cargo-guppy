@@ -22,7 +22,7 @@
 //!
 //! ```
 //! use guppy::graph::PackageGraph;
-//! use cargo_metadata::PackageId;
+//! use guppy::PackageId;
 //!
 //! // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
 //! let fixture = include_str!("../fixtures/metadata1.json");
@@ -55,3 +55,10 @@ pub(crate) mod petgraph_support;
 mod unit_tests;
 
 pub use errors::Error;
+
+// Public re-exports for upstream crates used in APIs. The no_inline ensures that they show up as
+// re-exports in documentation.
+#[doc(no_inline)]
+pub use cargo_metadata::{Metadata, MetadataCommand, PackageId};
+#[doc(no_inline)]
+pub use serde_json::Value as JsonValue;

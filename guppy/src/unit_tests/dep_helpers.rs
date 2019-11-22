@@ -6,7 +6,7 @@ use crate::graph::{
     PackageMetadata,
 };
 use crate::unit_tests::fixtures::PackageDetails;
-use cargo_metadata::PackageId;
+use crate::PackageId;
 use std::collections::{BTreeSet, HashSet};
 use std::iter;
 

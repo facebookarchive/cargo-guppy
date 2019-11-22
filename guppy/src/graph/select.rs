@@ -1,13 +1,12 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::errors::*;
 use crate::graph::{
     DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
 };
 use crate::petgraph_support::reversed::ReversedDirected;
 use crate::petgraph_support::walk::EdgeDfs;
-use cargo_metadata::PackageId;
+use crate::{Error, PackageId};
 use derivative::Derivative;
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;

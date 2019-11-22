@@ -3,9 +3,8 @@
 
 //! Print out direct and transitive dependencies of a package.
 
-use cargo_metadata::PackageId;
 use guppy::graph::PackageGraph;
-use guppy::Error;
+use guppy::{Error, PackageId};
 use std::iter;
 
 fn main() -> Result<(), Error> {

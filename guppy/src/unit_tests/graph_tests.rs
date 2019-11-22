@@ -3,7 +3,7 @@
 
 use super::fixtures::{self, Fixture};
 use crate::graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageMetadata};
-use cargo_metadata::PackageId;
+use crate::PackageId;
 use std::fmt;
 use std::iter;
 
