@@ -43,6 +43,10 @@
 //! For more examples, see
 //! [the `examples` directory](https://github.com/calibra/cargo-guppy/tree/master/guppy/examples).
 
+#![warn(missing_docs)]
+
+// config isn't used at the moment so hide it from docs.
+#[doc(hidden)]
 pub mod config;
 mod errors;
 pub mod graph;

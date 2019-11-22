@@ -16,7 +16,7 @@ impl PackageGraph {
     /// Constructs a new `PackageGraph` instances from the given metadata.
     pub(crate) fn build(metadata: Metadata) -> Result<Self, Error> {
         let resolve = metadata.resolve.ok_or_else(|| {
-            Error::DepGraphError(
+            Error::PackageGraphConstructError(
                 "no 'resolve' entries found: ensure you don't have no_deps set".into(),
             )
         })?;
@@ -65,10 +65,13 @@ impl Workspace {
             .map(|id| {
                 // Strip off the workspace path from the manifest path.
                 let package_metadata = packages.get(&id).ok_or_else(|| {
-                    Error::DepGraphError(format!("workspace member '{}' not found", id))
+                    Error::PackageGraphConstructError(format!(
+                        "workspace member '{}' not found",
+                        id
+                    ))
                 })?;
                 let workspace_path = package_metadata.workspace_path().ok_or_else(|| {
-                    Error::DepGraphError(format!(
+                    Error::PackageGraphConstructError(format!(
                         "workspace member '{}' at path {:?} not in workspace",
                         id,
                         package_metadata.manifest_path(),
@@ -140,7 +143,7 @@ impl<'a> GraphBuildState<'a> {
 
         let (resolved_deps, resolved_features) =
             self.resolve_data.remove(&package.id).ok_or_else(|| {
-                Error::DepGraphError(format!(
+                Error::PackageGraphConstructError(format!(
                     "no resolved dependency data found for package '{}'",
                     package.id
                 ))
@@ -186,7 +189,7 @@ impl<'a> GraphBuildState<'a> {
 
     fn package_data(&self, id: &PackageId) -> Result<(NodeIndex<u32>, &str, &Version), Error> {
         let (node_idx, name, version) = self.package_data.get(&id).ok_or_else(|| {
-            Error::DepGraphError(format!("no package data found for package '{}'", id))
+            Error::PackageGraphConstructError(format!("no package data found for package '{}'", id))
         })?;
         Ok((*node_idx, name, version))
     }
@@ -198,13 +201,13 @@ impl<'a> GraphBuildState<'a> {
         let workspace_path = manifest_path
             .strip_prefix(self.workspace_root)
             .map_err(|_| {
-                Error::DepGraphError(format!(
+                Error::PackageGraphConstructError(format!(
                     "workspace member '{}' at path {:?} not in workspace (root: {:?})",
                     id, manifest_path, self.workspace_root
                 ))
             })?;
         let workspace_path = workspace_path.parent().ok_or_else(|| {
-            Error::DepGraphError(format!(
+            Error::PackageGraphConstructError(format!(
                 "workspace member '{}' has invalid manifest path {:?}",
                 id, manifest_path
             ))
@@ -318,7 +321,7 @@ impl<'a> DependencyResolver<'a> {
 
         // Lookup the package ID in the package data.
         let (_, package_name, _) = self.package_data.get(package_id).ok_or_else(|| {
-            Error::DepGraphError(format!(
+            Error::PackageGraphConstructError(format!(
                 "{}: no package data found for dependency '{}'",
                 self.from_id, package_id
             ))
@@ -329,7 +332,7 @@ impl<'a> DependencyResolver<'a> {
             .original_map
             .get(package_name.as_str())
             .ok_or_else(|| {
-                Error::DepGraphError(format!(
+                Error::PackageGraphConstructError(format!(
                     "{}: no dependency information found for '{}', package ID '{}'",
                     self.from_id, package_name, package_id
                 ))
@@ -360,7 +363,7 @@ impl DependencyEdge {
                 }
             };
             let metadata = DependencyMetadata {
-                req: dep.req.clone(),
+                version_req: dep.req.clone(),
                 optional: dep.optional,
                 uses_default_features: dep.uses_default_features,
                 features: dep.features.clone(),
@@ -394,7 +397,7 @@ impl DependencyEdge {
                         false
                     }
                     (None, None) => {
-                        return Err(Error::DepGraphError(format!(
+                        return Err(Error::PackageGraphConstructError(format!(
                             "{}: duplicate dependencies found for '{}' (kind: {})",
                             from_id,
                             name,
