@@ -1,6 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+//! Entry point for analyzing Cargo dependency graphs.
+//!
+//! The main entry point for analyzing graphs is [`PackageGraph`](struct.PackageGraph.html). See its
+//! documentation for more details.
+
 use cargo_metadata::DependencyKind;
 use petgraph::prelude::*;
 

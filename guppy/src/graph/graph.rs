@@ -14,7 +14,12 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
 use std::path::{Path, PathBuf};
 
-/// A graph of packages extracted from a metadata.
+/// A graph of packages and dependencies between them, parsed from metadata returned by `cargo
+/// metadata`.
+///
+/// For examples on how to use `PackageGraph`, see
+/// [the `examples` directory](https://github.com/calibra/cargo-guppy/tree/master/guppy/examples)
+/// in this crate.
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
@@ -59,7 +64,7 @@ impl PackageGraph {
         let node_count = self.dep_graph.node_count();
         let package_count = self.data.packages.len();
         if node_count != package_count {
-            return Err(Error::DepGraphInternalError(format!(
+            return Err(Error::PackageGraphInternalError(format!(
                 "number of nodes = {} different from packages = {}",
                 node_count, package_count,
             )));
@@ -68,7 +73,7 @@ impl PackageGraph {
         // is recursive and toposort is iterative. Package graphs have unbounded depth so use the
         // iterative implementation.
         if let Err(cycle) = toposort(&self.dep_graph, None) {
-            return Err(Error::DepGraphInternalError(format!(
+            return Err(Error::PackageGraphInternalError(format!(
                 "unexpected cycle in dep graph: {:?}",
                 cycle
             )));
@@ -86,7 +91,7 @@ impl PackageGraph {
                     // about it.
                     let workspace_id = workspace.member_by_path(workspace_path);
                     if workspace_id != Some(package_id) {
-                        return Err(Error::DepGraphInternalError(format!(
+                        return Err(Error::PackageGraphInternalError(format!(
                             "package {} has workspace path {:?} but query by path returned {:?}",
                             package_id, workspace_path, workspace_id,
                         )));
@@ -95,7 +100,7 @@ impl PackageGraph {
                 None => {
                     // This package is not in the workspace.
                     if workspace_ids.contains(package_id) {
-                        return Err(Error::DepGraphInternalError(format!(
+                        return Err(Error::PackageGraphInternalError(format!(
                             "package {} has no workspace path but is in workspace",
                             package_id,
                         )));
@@ -108,14 +113,14 @@ impl PackageGraph {
                 let to_version = dep.to.version();
 
                 let version_check = |dep_metadata: &DependencyMetadata, kind: DependencyKind| {
-                    let req = dep_metadata.req();
+                    let req = dep_metadata.version_req();
                     // A requirement of "*" filters out pre-release versions with the semver crate,
                     // but cargo accepts them.
                     // See https://github.com/steveklabnik/semver/issues/98.
                     if req == &*MAJOR_WILDCARD || req.matches(to_version) {
                         Ok(())
                     } else {
-                        Err(Error::DepGraphInternalError(format!(
+                        Err(Error::PackageGraphInternalError(format!(
                             "{} -> {} ({}): version ({}) doesn't match requirement ({:?})",
                             package_id,
                             to_id,
@@ -144,7 +149,7 @@ impl PackageGraph {
                 }
 
                 if !edge_set {
-                    return Err(Error::DepGraphInternalError(format!(
+                    return Err(Error::PackageGraphInternalError(format!(
                         "{} -> {}: no edge info found",
                         package_id, to_id,
                     )));
@@ -335,7 +340,7 @@ impl PackageGraph {
             .into_iter()
             .map(|package_id| {
                 self.node_idx(package_id)
-                    .ok_or_else(|| Error::DepGraphUnknownPackageId(package_id.clone()))
+                    .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))
             })
             .collect()
     }
@@ -411,6 +416,11 @@ impl<'g> DependsCache<'g> {
     }
 }
 
+/// Information about a workspace, parsed from metadata returned by `cargo metadata`.
+///
+/// For more about workspaces, see
+/// [Cargo Workspaces](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) in *The Rust
+/// Programming Language*.
 #[derive(Clone, Debug)]
 pub struct Workspace {
     pub(super) root: PathBuf,
@@ -443,13 +453,22 @@ impl Workspace {
     }
 }
 
+/// Represents a dependency from one package to another.
 #[derive(Copy, Clone, Debug)]
 pub struct DependencyLink<'g> {
+    /// The package which depends on the `to` package.
     pub from: &'g PackageMetadata,
+    /// The package which is depended on by the `from` package.
     pub to: &'g PackageMetadata,
+    /// Information about the specifics of this dependency.
     pub edge: &'g DependencyEdge,
 }
 
+/// Information about a specific package in a `PackageGraph`.
+///
+/// Most of the metadata is extracted from `Cargo.toml` files. See
+/// [the `Cargo.toml` reference](https://doc.rust-lang.org/cargo/reference/manifest.html) for more
+/// details.
 #[derive(Clone, Debug)]
 pub struct PackageMetadata {
     // Fields extracted from the package.
@@ -470,43 +489,73 @@ pub struct PackageMetadata {
 }
 
 impl PackageMetadata {
+    /// Returns the unique identifier for this package.
     pub fn id(&self) -> &PackageId {
         &self.id
     }
 
+    /// Returns the name of this package.
+    ///
+    /// This is the same as the `name` field of `Cargo.toml`.
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    /// Returns the version of this package as resolved by Cargo.
+    ///
+    /// This is the same as the `version` field of `Cargo.toml`.
     pub fn version(&self) -> &Version {
         &self.version
     }
 
+    /// Returns the authors of this package.
+    ///
+    /// This is the same as the `authors` field of `Cargo.toml`.
     pub fn authors(&self) -> &[String] {
         &self.authors
     }
 
+    /// Returns a short description for this package.
+    ///
+    /// This is the same as the `description` field of `Cargo.toml`.
     pub fn description(&self) -> Option<&str> {
         self.description.as_ref().map(|x| x.as_str())
     }
 
+    /// Returns an SPDX 2.1 license expression for this package.
+    ///
+    /// This is the same as the `license` field of `Cargo.toml`. Note that `guppy` does not perform
+    /// any validation on this, though `crates.io` does if a crate is uploaded there.
     pub fn license(&self) -> Option<&str> {
         self.license.as_ref().map(|x| x.as_str())
     }
 
+    /// Returns the full path to the `Cargo.toml` for this package.
+    ///
+    /// This is specific to the system that `cargo metadata` was run on.
     pub fn manifest_path(&self) -> &Path {
         &self.manifest_path
     }
 
+    /// Returns true if this package is in the workspace.
     pub fn in_workspace(&self) -> bool {
         self.workspace_path.is_some()
     }
 
+    /// Returns the relative path to this package in the workspace, or `None` if this package is
+    /// not in the workspace.
     pub fn workspace_path(&self) -> Option<&Path> {
         self.workspace_path.as_ref().map(|path| path.as_path())
     }
 }
 
+/// Details about a specific dependency from a package to another package.
+///
+/// Usually found within the context of a [`DependencyLink`](struct.DependencyLink.html).
+///
+/// This struct contains information about:
+/// * whether this dependency was renamed in the context of this crate.
+/// * if this is a normal, dev or build dependency.
 #[derive(Clone, Debug)]
 pub struct DependencyEdge {
     pub(super) dep_name: String,
@@ -528,14 +577,17 @@ impl DependencyEdge {
         &self.resolved_name
     }
 
+    /// Returns details about this dependency from the `[dependencies]` section, if they exist.
     pub fn normal(&self) -> Option<&DependencyMetadata> {
         self.normal.as_ref()
     }
 
+    /// Returns details about this dependency from the `[build-dependencies]` section, if they exist.
     pub fn build(&self) -> Option<&DependencyMetadata> {
         self.build.as_ref()
     }
 
+    /// Returns details about this dependency from the `[dev-dependencies]` section, if they exist.
     pub fn dev(&self) -> Option<&DependencyMetadata> {
         // XXX should dev dependencies fall back to normal if no dev-specific data was found?
         self.dev.as_ref()
@@ -548,11 +600,13 @@ impl DependencyEdge {
     }
 }
 
+/// Information about a specific kind of dependency (normal, build or dev) from a package to another
+/// package.
+///
+/// Usually found within the context of a [`DependencyEdge`](struct.DependencyEdge.html).
 #[derive(Clone, Debug)]
 pub struct DependencyMetadata {
-    // Normal/dev/build can have different version requirements even if they resolve to the same
-    // version.
-    pub(super) req: VersionReq,
+    pub(super) version_req: VersionReq,
     pub(super) optional: bool,
     pub(super) uses_default_features: bool,
     pub(super) features: Vec<String>,
@@ -560,22 +614,41 @@ pub struct DependencyMetadata {
 }
 
 impl DependencyMetadata {
-    pub fn req(&self) -> &VersionReq {
-        &self.req
+    /// Returns the semver requirements specified for this dependency.
+    ///
+    /// To get the resolved version, see the `to` field of the `DependencyLink` this was part of.
+    ///
+    /// ## Notes
+    ///
+    /// A dependency can be requested multiple times in the normal, build and dev fields, possibly
+    /// with different version requirements, even if they all end up resolving to the same version.
+    ///
+    /// See [Specifying Dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies)
+    /// in the Cargo reference for more details.
+    pub fn version_req(&self) -> &VersionReq {
+        &self.version_req
     }
 
+    /// Returns true if this is an optional dependency.
     pub fn optional(&self) -> bool {
         self.optional
     }
 
+    /// Returns true if the default features of this dependency are enabled.
     pub fn uses_default_features(&self) -> bool {
         self.uses_default_features
     }
 
+    /// Returns a list of the features enabled by this dependency.
     pub fn features(&self) -> &[String] {
         &self.features
     }
 
+    /// Returns the target string for this dependency, if specified. This is a string like
+    /// `cfg(target_arch = "x86_64")`.
+    ///
+    /// See [Platform specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
+    /// in the Cargo reference for more details.
     pub fn target(&self) -> Option<&str> {
         self.target.as_ref().map(|x| x.as_str())
     }

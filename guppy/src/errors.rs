@@ -9,16 +9,24 @@ use std::io;
 
 use Error::*;
 
+/// Error type describing the sorts of errors `guppy` can return.
 #[derive(Debug)]
 pub enum Error {
+    // The config API isn't public yet, so hide errors within it.
+    #[doc(hidden)]
     ConfigIoError(io::Error),
+    #[doc(hidden)]
     ConfigParseError(toml::de::Error),
+    /// An error occurred while executing `cargo metadata`.
     CommandError(MetadataError),
+    /// An error occurred while parsing cargo metadata JSON.
     MetadataParseError(serde_json::Error),
-    DepGraphError(String),
-    DepGraphUnknownPackageId(MetadataPackageId),
-    DepGraphInternalError(String),
-    PackageIdParseError(MetadataPackageId, String),
+    /// An error occurred while constructing a `PackageGraph` from parsed metadata.
+    PackageGraphConstructError(String),
+    /// A package ID was unknown to this `PackageGraph`.
+    UnknownPackageId(MetadataPackageId),
+    /// An internal error occurred within this `PackageGraph`.
+    PackageGraphInternalError(String),
 }
 
 impl fmt::Display for Error {
@@ -32,10 +40,11 @@ impl fmt::Display for Error {
                 "Error while parsing 'cargo metadata' JSON output: {}",
                 err
             ),
-            DepGraphError(msg) => write!(f, "Error while computing dependency graph: {}", msg),
-            DepGraphUnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
-            DepGraphInternalError(msg) => write!(f, "Internal error in dependency graph: {}", msg),
-            PackageIdParseError(id, msg) => write!(f, "Error parsing package ID '{}': {}", id, msg),
+            PackageGraphConstructError(msg) => {
+                write!(f, "Error while computing package graph: {}", msg)
+            }
+            UnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
+            PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
         }
     }
 }
@@ -47,10 +56,9 @@ impl error::Error for Error {
             ConfigParseError(err) => Some(err),
             MetadataParseError(err) => Some(err),
             CommandError(_) => None,
-            DepGraphError(_) => None,
-            DepGraphUnknownPackageId(_) => None,
-            DepGraphInternalError(_) => None,
-            PackageIdParseError(_, _) => None,
+            PackageGraphConstructError(_) => None,
+            UnknownPackageId(_) => None,
+            PackageGraphInternalError(_) => None,
         }
     }
 }
