@@ -44,10 +44,8 @@
 //! [the `examples` directory](https://github.com/calibra/cargo-guppy/tree/master/guppy/examples).
 
 pub mod config;
-pub mod diff;
 mod errors;
 pub mod graph;
-pub mod lockfile;
 pub(crate) mod petgraph_support;
 #[cfg(test)]
 mod unit_tests;
