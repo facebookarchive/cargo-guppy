@@ -88,7 +88,7 @@ impl<'g> PackageSelect<'g> {
     pub fn into_root_ids(
         self,
         direction: DependencyDirection,
-    ) -> impl IntoIterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
+    ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
         let dep_graph = self.package_graph.dep_graph();
         let (_, roots) = select_postfilter(dep_graph, self.params, direction);
         roots.into_iter().map(move |node_idx| &dep_graph[node_idx])
