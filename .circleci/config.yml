@@ -22,9 +22,29 @@ jobs:
             cargo fmt -- --check
       - run:
           name: Build and Test
+          # Build all targets to ensure examples are built as well.
           command: |
-            cargo build
+            cargo build --all-targets
             cargo test
+
+  build-all-features:
+    docker:
+      - image: circleci/rust:stretch
+    steps:
+      - checkout
+      - run:
+          name: Version Information
+          command: rustc --version; cargo --version; rustup --version
+      - run:
+          name: Setup Env
+          command: |
+            echo 'export RUSTFLAGS="-D warnings"' >> $BASH_ENV
+      - run:
+          name: Build and Test
+          # Build all targets to ensure examples are built as well.
+          command: |
+            cargo build --all-targets --all-features
+            cargo test --all-features
 
   # docs-build and docs-deploy are adapted from
   # https://circleci.com/blog/deploying-documentation-to-github-pages-with-continuous-integration/.
@@ -73,10 +93,12 @@ workflows:
   build:
     jobs:
       - build
+      - build-all-features
       - docs-build
       - docs-deploy:
           requires:
             - build
+            - build-all-features
             - docs-build
           filters:
             branches:
