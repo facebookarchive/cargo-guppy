@@ -26,7 +26,7 @@ fn main() -> Result<(), Error> {
         .clone();
 
     let before_count = package_graph
-        .select_transitive_deps(iter::once(&libra_node_id))?
+        .select_forward(iter::once(&libra_node_id))?
         .into_iter_ids(None)
         .count();
     println!("number of packages before: {}", before_count);
@@ -54,7 +54,7 @@ fn main() -> Result<(), Error> {
 
     // Count the number of packages after.
     let after_count = package_graph
-        .select_transitive_deps(iter::once(&libra_node_id))?
+        .select_forward(iter::once(&libra_node_id))?
         .into_iter_ids(None)
         .count();
     println!("number of packages after: {}", after_count);

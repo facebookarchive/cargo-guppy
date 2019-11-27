@@ -27,7 +27,7 @@ fn main() -> Result<(), Error> {
 
     // Transitive dependencies are obtained through the `select_` APIs. They are always presented in
     // topological order.
-    let select = package_graph.select_transitive_deps(iter::once(&package_id))?;
+    let select = package_graph.select_forward(iter::once(&package_id))?;
     for dep_id in select.into_iter_ids(None) {
         // The select API also has an `into_iter_links()` method which returns links instead of IDs.
         println!("transitive: {}", dep_id);

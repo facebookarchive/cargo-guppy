@@ -40,41 +40,76 @@ impl PackageGraph {
     /// specified direction.
     ///
     /// Returns an error if any package IDs are unknown.
-    pub fn select_transitive_deps_directed<'g, 'a>(
+    pub fn select_directed<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
         dep_direction: DependencyDirection,
     ) -> Result<PackageSelect<'g>, Error> {
         match dep_direction {
-            DependencyDirection::Forward => self.select_transitive_deps(package_ids),
-            DependencyDirection::Reverse => self.select_transitive_reverse_deps(package_ids),
+            DependencyDirection::Forward => self.select_forward(package_ids),
+            DependencyDirection::Reverse => self.select_reverse(package_ids),
         }
+    }
+
+    /// Creates a new selector that returns transitive dependencies of the given packages in the
+    /// specified direction.
+    ///
+    /// Returns an error if any package IDs are unknown.
+    #[deprecated(since = "0.1.3", note = "renamed to `select_directed`")]
+    pub fn select_transitive_deps_directed<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+        dep_direction: DependencyDirection,
+    ) -> Result<PackageSelect<'g>, Error> {
+        self.select_directed(package_ids, dep_direction)
     }
 
     /// Creates a new selector that returns transitive dependencies of the given packages.
     ///
     /// Returns an error if any package IDs are unknown.
-    pub fn select_transitive_deps<'g, 'a>(
+    pub fn select_forward<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<PackageSelect<'g>, Error> {
         Ok(PackageSelect {
             package_graph: self,
-            params: PackageSelectParams::TransitiveDeps(self.node_idxs(package_ids)?),
+            params: PackageSelectParams::SelectForward(self.node_idxs(package_ids)?),
         })
+    }
+
+    /// Creates a new selector that returns transitive dependencies of the given packages.
+    ///
+    /// Returns an error if any package IDs are unknown.
+    #[deprecated(since = "0.1.3", note = "renamed to `select_forward`")]
+    pub fn select_transitive_deps<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<PackageSelect<'g>, Error> {
+        self.select_forward(package_ids)
     }
 
     /// Creates a new selector that returns transitive reverse dependencies of the given packages.
     ///
     /// Returns an error if any package IDs are unknown.
-    pub fn select_transitive_reverse_deps<'g, 'a>(
+    pub fn select_reverse<'g, 'a>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<PackageSelect<'g>, Error> {
         Ok(PackageSelect {
             package_graph: self,
-            params: PackageSelectParams::TransitiveReverseDeps(self.node_idxs(package_ids)?),
+            params: PackageSelectParams::SelectReverse(self.node_idxs(package_ids)?),
         })
+    }
+
+    /// Creates a new selector that returns reverse transitive dependencies of the given packages.
+    ///
+    /// Returns an error if any package IDs are unknown.
+    #[deprecated(since = "0.1.3", note = "renamed to `select_reverse`")]
+    pub fn select_transitive_reverse_deps<'g, 'a>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<PackageSelect<'g>, Error> {
+        self.select_forward(package_ids)
     }
 }
 
@@ -97,8 +132,8 @@ impl<'g> PackageSelect<'g> {
     /// Consumes this query and creates an iterator over package IDs, returned in topological order.
     ///
     /// The default order of iteration is determined by the type of query:
-    /// * for `all` and `transitive_deps` queries, package IDs are returned in forward order.
-    /// * for `transitive_reverse_deps` queries, package IDs are returned in reverse order.
+    /// * for `all` and `forward` queries, package IDs are returned in forward order.
+    /// * for `reverse` queries, package IDs are returned in reverse order.
     pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> IntoIterIds<'g> {
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
         let dep_graph = self.package_graph.dep_graph();
@@ -126,8 +161,8 @@ impl<'g> PackageSelect<'g> {
     /// topological order.
     ///
     /// The default order of iteration is determined by the type of query:
-    /// * for `all` and `transitive_deps` queries, packages are returned in forward order.
-    /// * for `transitive_reverse_deps` queries, packages are returned in reverse order.
+    /// * for `all` and `forward` queries, package IDs are returned in forward order.
+    /// * for `reverse` queries, package IDs are returned in reverse order.
     pub fn into_iter_metadatas(
         self,
         direction_opt: Option<DependencyDirection>,
@@ -151,8 +186,8 @@ impl<'g> PackageSelect<'g> {
     /// end.
     ///
     /// The default order of iteration is determined by the type of query:
-    /// * for `all` and `transitive_deps` queries, package IDs are returned in forward order.
-    /// * for `transitive_reverse_deps` queries, package IDs are returned in reverse order.
+    /// * for `all` and `forward` queries, package IDs are returned in forward order.
+    /// * for `reverse` queries, package IDs are returned in reverse order.
     pub fn into_iter_links(self, direction_opt: Option<DependencyDirection>) -> IntoIterLinks<'g> {
         use DependencyDirection::*;
 
@@ -195,8 +230,8 @@ pub(super) fn select_prefilter(
 
     match params {
         All => all_visit_map(graph),
-        TransitiveDeps(roots) => reachable_map(graph, roots),
-        TransitiveReverseDeps(roots) => reachable_map(ReversedDirected(graph), roots),
+        SelectForward(roots) => reachable_map(graph, roots),
+        SelectReverse(roots) => reachable_map(ReversedDirected(graph), roots),
     }
 }
 
@@ -222,11 +257,11 @@ fn select_postfilter(
             let roots: Vec<_> = PackageGraph::roots(reversed_graph);
             (None, roots)
         }
-        (TransitiveDeps(roots), Forward) => {
+        (SelectForward(roots), Forward) => {
             // No need for a reachable map.
             (None, roots)
         }
-        (TransitiveDeps(roots), Reverse) => {
+        (SelectForward(roots), Reverse) => {
             // Forward traversal + reverse order = need to compute reachable map.
             let (reachable, _) = reachable_map(graph, roots);
             let filtered_reversed_graph = NodeFiltered(ReversedDirected(graph), reachable);
@@ -236,7 +271,7 @@ fn select_postfilter(
 
             (Some(filtered_reversed_graph.1), roots)
         }
-        (TransitiveReverseDeps(roots), Forward) => {
+        (SelectReverse(roots), Forward) => {
             // Reverse traversal + forward order = need to compute reachable map.
             let reversed_graph = ReversedDirected(graph);
             let (reachable, _) = reachable_map(reversed_graph, roots);
@@ -247,7 +282,7 @@ fn select_postfilter(
 
             (Some(filtered_graph.1), roots)
         }
-        (TransitiveReverseDeps(roots), Reverse) => {
+        (SelectReverse(roots), Reverse) => {
             // No need for a reachable map.
             (None, roots)
         }
@@ -419,17 +454,17 @@ impl<'g> Iterator for IntoIterLinks<'g> {
 #[derive(Clone, Debug)]
 pub(super) enum PackageSelectParams {
     All,
-    TransitiveDeps(Vec<NodeIndex<u32>>),
-    TransitiveReverseDeps(Vec<NodeIndex<u32>>),
+    SelectForward(Vec<NodeIndex<u32>>),
+    SelectReverse(Vec<NodeIndex<u32>>),
 }
 
 impl PackageSelectParams {
     fn default_direction(&self) -> DependencyDirection {
         match self {
-            PackageSelectParams::All | PackageSelectParams::TransitiveDeps(_) => {
+            PackageSelectParams::All | PackageSelectParams::SelectForward(_) => {
                 DependencyDirection::Forward
             }
-            PackageSelectParams::TransitiveReverseDeps(_) => DependencyDirection::Reverse,
+            PackageSelectParams::SelectReverse(_) => DependencyDirection::Reverse,
         }
     }
 }

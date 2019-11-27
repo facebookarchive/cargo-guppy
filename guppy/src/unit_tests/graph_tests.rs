@@ -47,7 +47,7 @@ fn metadata1() {
 }
 "#;
     let actual_dot = graph
-        .select_transitive_deps(iter::once(&fixtures::package_id(
+        .select_forward(iter::once(&fixtures::package_id(
             fixtures::METADATA1_REGION,
         )))
         .unwrap()
@@ -70,7 +70,7 @@ fn metadata1() {
 }
 "#;
     let actual_dot_reversed = graph
-        .select_transitive_reverse_deps(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
+        .select_reverse(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
         .unwrap()
         .into_dot(NameVisitor);
 
