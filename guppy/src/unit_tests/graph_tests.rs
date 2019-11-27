@@ -93,6 +93,11 @@ fn metadata_libra() {
     metadata_libra.verify();
 }
 
+// Define proptests for each metadata.
+proptest_suite!(metadata1);
+proptest_suite!(metadata2);
+proptest_suite!(metadata_libra);
+
 struct NameVisitor;
 
 impl PackageDotVisitor for NameVisitor {

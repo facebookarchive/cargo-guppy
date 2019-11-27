@@ -12,6 +12,8 @@ use petgraph::prelude::*;
 mod build;
 mod graph;
 mod print;
+#[cfg(feature = "proptest09")]
+mod proptest09;
 mod select;
 
 pub use crate::petgraph_support::dot::DotWrite;

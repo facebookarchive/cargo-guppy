@@ -21,7 +21,8 @@ type DepToMetadata<'a> = fn(&DependencyLink<'a>) -> &'a PackageMetadata;
 /// Some of the messages are different based on whether we're testing forward deps or reverse
 /// ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
 /// reverse deps it's the other way round.
-struct DirectionDesc<'a> {
+#[derive(Clone, Copy)]
+pub(crate) struct DirectionDesc<'a> {
     direction_desc: &'static str,
     known_desc: &'static str,
     variable_desc: &'static str,
@@ -63,6 +64,12 @@ impl<'a> DirectionDesc<'a> {
 
     fn variable_metadata(&self, dep: &DependencyLink<'a>) -> &'a PackageMetadata {
         (self.variable_metadata)(dep)
+    }
+}
+
+impl<'a> From<DependencyDirection> for DirectionDesc<'a> {
+    fn from(direction: DependencyDirection) -> Self {
+        Self::new(direction)
     }
 }
 
@@ -186,7 +193,7 @@ pub(crate) fn assert_transitive_deps_internal(
     assert_link_order(
         actual_deps,
         select.clone().into_root_ids(direction),
-        &desc,
+        desc,
         &format!("{}: actual link order", msg),
     );
 
@@ -206,7 +213,7 @@ pub(crate) fn assert_transitive_deps_internal(
     assert_link_order(
         opposite_deps,
         select.into_root_ids(opposite),
-        &opposite_desc,
+        opposite_desc,
         &format!("{}: opposite link order", msg),
     );
 
@@ -309,7 +316,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     assert_link_order(
         all_links,
         graph.select_all().into_root_ids(direction),
-        &desc,
+        desc,
         msg,
     );
 }
@@ -333,7 +340,37 @@ fn assert_topo_order<'a>(
     }
 }
 
-fn assert_depends_on(
+#[allow(dead_code)]
+pub(crate) fn assert_depends_on_any(
+    source_ids: &[&PackageId],
+    query_id: &PackageId,
+    cache: &mut DependsCache,
+    direction: DependencyDirection,
+    msg: &str,
+) {
+    let any_depends_on = source_ids.iter().any(|source_id| match direction {
+        DependencyDirection::Forward => cache.depends_on(source_id, query_id).unwrap(),
+        DependencyDirection::Reverse => cache.depends_on(query_id, source_id).unwrap(),
+    });
+    match direction {
+        DependencyDirection::Forward => {
+            assert!(
+                any_depends_on,
+                "{}: package '{}' should be a dependency of any of '{:?}'",
+                msg, query_id, source_ids
+            );
+        }
+        DependencyDirection::Reverse => {
+            assert!(
+                any_depends_on,
+                "{}: package '{}' should depend on any of '{:?}'",
+                msg, query_id, source_ids
+            );
+        }
+    }
+}
+
+pub(crate) fn assert_depends_on(
     package_a: &PackageId,
     package_b: &PackageId,
     cache: &mut DependsCache,
@@ -362,7 +399,7 @@ fn assert_depends_on(
     }
 }
 
-fn assert_not_depends_on(
+pub(crate) fn assert_not_depends_on(
     package_a: &PackageId,
     package_b: &PackageId,
     cache: &mut DependsCache,
@@ -398,12 +435,14 @@ fn assert_not_depends_on(
 ///   before it appears in the `from` of a link.
 /// * If direction is Reverse, the package should appear in the `from` of a link at least once
 ///   before it appears in the `to` of a link.
-fn assert_link_order<'g>(
+pub(crate) fn assert_link_order<'g>(
     links: impl IntoIterator<Item = DependencyLink<'g>>,
     initial: impl IntoIterator<Item = &'g PackageId>,
-    desc: &DirectionDesc<'g>,
+    desc: impl Into<DirectionDesc<'g>>,
     msg: &str,
 ) {
+    let desc = desc.into();
+
     // for forward, 'from' is known and 'to' is variable.
     let mut variable_seen: HashSet<_> = initial.into_iter().collect();
 
