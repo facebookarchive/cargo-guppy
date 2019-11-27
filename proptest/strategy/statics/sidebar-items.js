@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Filter","Static version of `strategy::Filter`."],["Map","Static version of `strategy::Map`."]],"trait":[["FilterFn","Essentially `Fn (&T) -> bool`."],["MapFn","Essentially `Fn (T) -> Output`."]]});
