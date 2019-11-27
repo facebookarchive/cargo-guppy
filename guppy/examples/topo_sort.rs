@@ -16,8 +16,7 @@ fn main() -> Result<(), Error> {
 
     // Non-workspace packages cannot depend on packages within the workspace, so the reverse
     // transitive deps of workspace packages are exactly the set of workspace packages.
-    let select =
-        package_graph.select_transitive_reverse_deps(package_graph.workspace().member_ids())?;
+    let select = package_graph.select_reverse(package_graph.workspace().member_ids())?;
 
     // Here we pass in `Forward` -- by default, select_transitive_reverse_deps will cause packages
     // to be returned in reverse topo order.

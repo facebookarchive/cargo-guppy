@@ -143,7 +143,7 @@ pub(crate) fn assert_transitive_deps_internal(
     let expected_dep_id_refs: Vec<_> = expected_dep_ids.iter().collect();
 
     let select = graph
-        .select_transitive_deps_directed(iter::once(known_details.id()), direction)
+        .select_directed(iter::once(known_details.id()), direction)
         .unwrap_or_else(|err| {
             panic!(
                 "{}: {} transitive dep query failed: {}",
@@ -217,7 +217,7 @@ pub(crate) fn assert_transitive_deps_internal(
 
         // Transitive deps should be transitively closed.
         let dep_actual_dep_ids: BTreeSet<_> = graph
-            .select_transitive_deps_directed(iter::once(dep_id), direction)
+            .select_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep id query failed for dependency '{}': {}",
@@ -238,7 +238,7 @@ pub(crate) fn assert_transitive_deps_internal(
         );
 
         let dep_ids_from_links: BTreeSet<_> = graph
-            .select_transitive_deps_directed(iter::once(dep_id), direction)
+            .select_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep query failed for dependency '{}': {}",
