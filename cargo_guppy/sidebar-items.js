@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["cmd_count",""],["cmd_diff",""],["cmd_dups",""]]});
+initSidebarItems({"enum":[["Kind",""]],"fn":[["cmd_count",""],["cmd_diff",""],["cmd_dups",""],["cmd_select",""]],"struct":[["SelectOptions",""]]});
