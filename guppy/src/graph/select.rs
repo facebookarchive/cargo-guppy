@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
+    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata,
 };
 use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
@@ -242,7 +242,7 @@ impl<'g> PackageSelect<'g> {
 /// Computes intermediate state for operations where the graph must be pre-filtered before any
 /// traversals happen.
 pub(super) fn select_prefilter(
-    graph: &Graph<PackageId, DependencyEdge>,
+    graph: &Graph<PackageId, DependencyEdge, Directed, PackageIx>,
     params: PackageSelectParams,
 ) -> (FixedBitSet, usize) {
     use PackageSelectParams::*;
@@ -257,10 +257,10 @@ pub(super) fn select_prefilter(
 /// Computes intermediate state for operations where the graph can be filtered dynamically if
 /// possible.
 fn select_postfilter(
-    graph: &Graph<PackageId, DependencyEdge>,
+    graph: &Graph<PackageId, DependencyEdge, Directed, PackageIx>,
     params: PackageSelectParams,
     direction: DependencyDirection,
-) -> (Option<FixedBitSet>, Vec<NodeIndex<u32>>) {
+) -> (Option<FixedBitSet>, Vec<NodeIndex<PackageIx>>) {
     use DependencyDirection::*;
     use PackageSelectParams::*;
 
@@ -315,10 +315,10 @@ fn select_postfilter(
 #[derivative(Debug)]
 pub struct IntoIterIds<'g> {
     #[derivative(Debug = "ignore")]
-    graph: NodeFiltered<&'g Graph<PackageId, DependencyEdge>, FixedBitSet>,
+    graph: NodeFiltered<&'g Graph<PackageId, DependencyEdge, Directed, PackageIx>, FixedBitSet>,
     // XXX Topo really should implement Debug in petgraph upstream.
     #[derivative(Debug = "ignore")]
-    topo: Topo<NodeIndex<u32>, FixedBitSet>,
+    topo: Topo<NodeIndex<PackageIx>, FixedBitSet>,
     direction: DependencyDirection,
     remaining: usize,
 }
@@ -403,7 +403,7 @@ pub struct IntoIterLinks<'g> {
     #[derivative(Debug = "ignore")]
     package_graph: &'g PackageGraph,
     reachable: Option<FixedBitSet>,
-    edge_dfs: EdgeDfs<EdgeIndex<u32>, NodeIndex<u32>, FixedBitSet>,
+    edge_dfs: EdgeDfs<EdgeIndex<PackageIx>, NodeIndex<PackageIx>, FixedBitSet>,
     direction: DependencyDirection,
 }
 
@@ -413,7 +413,13 @@ impl<'g> IntoIterLinks<'g> {
         self.direction
     }
 
-    fn next_triple(&mut self) -> Option<(NodeIndex<u32>, NodeIndex<u32>, EdgeIndex<u32>)> {
+    fn next_triple(
+        &mut self,
+    ) -> Option<(
+        NodeIndex<PackageIx>,
+        NodeIndex<PackageIx>,
+        EdgeIndex<PackageIx>,
+    )> {
         use DependencyDirection::*;
 
         // This code dynamically switches over all the possible ways to iterate over dependencies.
@@ -473,8 +479,8 @@ impl<'g> Iterator for IntoIterLinks<'g> {
 #[derive(Clone, Debug)]
 pub(super) enum PackageSelectParams {
     All,
-    SelectForward(Vec<NodeIndex<u32>>),
-    SelectReverse(Vec<NodeIndex<u32>>),
+    SelectForward(Vec<NodeIndex<PackageIx>>),
+    SelectReverse(Vec<NodeIndex<PackageIx>>),
 }
 
 impl PackageSelectParams {

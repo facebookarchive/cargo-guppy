@@ -8,6 +8,7 @@
 
 use cargo_metadata::DependencyKind;
 use petgraph::prelude::*;
+use std::fmt;
 
 mod build;
 mod graph;
@@ -18,6 +19,7 @@ mod select;
 
 pub use crate::petgraph_support::dot::DotWrite;
 pub use graph::*;
+use petgraph::graph::IndexType;
 pub use print::*;
 pub use select::*;
 
@@ -46,6 +48,34 @@ impl DependencyDirection {
             DependencyDirection::Forward => Direction::Outgoing,
             DependencyDirection::Reverse => Direction::Incoming,
         }
+    }
+}
+
+/// Index for PackageGraph. Used for newtype wrapping.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct PackageIx(u32);
+
+impl fmt::Display for PackageIx {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+// From the docs for `IndexType`:
+//
+// > Marked `unsafe` because: the trait must faithfully preseve and convert index values.
+unsafe impl IndexType for PackageIx {
+    #[inline(always)]
+    fn new(x: usize) -> Self {
+        PackageIx(x as u32)
+    }
+    #[inline(always)]
+    fn index(&self) -> usize {
+        self.0 as usize
+    }
+    #[inline(always)]
+    fn max() -> Self {
+        PackageIx(::std::u32::MAX)
     }
 }
 

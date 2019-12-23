@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::select::select_prefilter;
-use crate::graph::{DependencyEdge, DependencyLink, PackageGraph, PackageMetadata, PackageSelect};
+use crate::graph::{
+    DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata, PackageSelect,
+};
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::ReverseFlip;
 use crate::PackageId;
@@ -50,8 +52,8 @@ impl<'g, V> VisitorWrap<'g, V> {
 impl<'g, V, NR, ER> DotVisitor<NR, ER> for VisitorWrap<'g, V>
 where
     V: PackageDotVisitor,
-    NR: NodeRef<NodeId = NodeIndex<u32>, Weight = PackageId>,
-    ER: EdgeRef<NodeId = NodeIndex<u32>, Weight = DependencyEdge> + ReverseFlip,
+    NR: NodeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageId>,
+    ER: EdgeRef<NodeId = NodeIndex<PackageIx>, Weight = DependencyEdge> + ReverseFlip,
 {
     fn visit_node(&self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result {
         let metadata = self

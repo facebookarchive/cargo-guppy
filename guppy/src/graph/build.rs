@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    kind_str, DependencyEdge, DependencyMetadata, PackageGraph, PackageGraphData, PackageMetadata,
-    Workspace,
+    kind_str, DependencyEdge, DependencyMetadata, PackageGraph, PackageGraphData, PackageIx,
+    PackageMetadata, Workspace,
 };
 use crate::{Error, Metadata, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
@@ -90,24 +90,26 @@ impl Workspace {
 
 /// Helper struct for building up dependency graph.
 struct GraphBuildState<'a> {
-    dep_graph: Graph<PackageId, DependencyEdge>,
+    dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
     // The values of package_data are (node_idx, name, version).
-    package_data: HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
+    package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
     workspace_root: &'a Path,
     workspace_members: &'a HashSet<PackageId>,
 }
 
 impl<'a> GraphBuildState<'a> {
-    fn new<'b>(
-        packages: impl IntoIterator<Item = &'b Package>,
+    fn new(
+        packages: &[Package],
         resolve: Resolve,
         workspace_root: &'a Path,
         workspace_members: &'a HashSet<PackageId>,
     ) -> Self {
-        let mut dep_graph = Graph::new();
+        // No idea how many edges there are going to be, so use packages.len() as a reasonable lower
+        // bound.
+        let mut dep_graph = Graph::with_capacity(packages.len(), packages.len());
         let package_data: HashMap<_, _> = packages
-            .into_iter()
+            .iter()
             .map(|package| {
                 let node_idx = dep_graph.add_node(package.id.clone());
                 (
@@ -203,7 +205,10 @@ impl<'a> GraphBuildState<'a> {
         ))
     }
 
-    fn package_data(&self, id: &PackageId) -> Result<(NodeIndex<u32>, &str, &Version), Error> {
+    fn package_data(
+        &self,
+        id: &PackageId,
+    ) -> Result<(NodeIndex<PackageIx>, &str, &Version), Error> {
         let (node_idx, name, version) = self.package_data.get(&id).ok_or_else(|| {
             Error::PackageGraphConstructError(format!("no package data found for package '{}'", id))
         })?;
@@ -231,7 +236,7 @@ impl<'a> GraphBuildState<'a> {
         Ok(workspace_path.to_path_buf())
     }
 
-    fn finish(self) -> Graph<PackageId, DependencyEdge> {
+    fn finish(self) -> Graph<PackageId, DependencyEdge, Directed, PackageIx> {
         self.dep_graph
     }
 }
@@ -240,7 +245,7 @@ struct DependencyResolver<'a> {
     from_id: &'a PackageId,
 
     /// The package data, inherited from the graph build state.
-    package_data: &'a HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
+    package_data: &'a HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
 
     /// This is a mapping of renamed dependencies to their rename sources and dependency info --
     /// this always takes top priority.
@@ -260,7 +265,7 @@ impl<'a> DependencyResolver<'a> {
     /// Constructs a new resolver using the provided package data and dependencies.
     fn new(
         from_id: &'a PackageId,
-        package_data: &'a HashMap<PackageId, (NodeIndex<u32>, String, Version)>,
+        package_data: &'a HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
         package_deps: impl IntoIterator<Item = &'a Dependency>,
     ) -> Self {
         let mut renamed_map = HashMap::new();

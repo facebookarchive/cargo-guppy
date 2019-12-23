@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{kind_str, DependencyDirection};
+use crate::graph::{kind_str, DependencyDirection, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep};
 use lazy_static::lazy_static;
@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
-    pub(super) dep_graph: Graph<PackageId, DependencyEdge>,
+    pub(super) dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
     // XXX Should this be in an Arc for quick cloning? Not clear how this would work with node
     // filters though.
     pub(super) data: PackageGraphData,
@@ -273,7 +273,7 @@ impl PackageGraph {
 
     fn dep_links_node_idx_directed<'g>(
         &'g self,
-        node_idx: NodeIndex<u32>,
+        node_idx: NodeIndex<PackageIx>,
         dir: Direction,
     ) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
         self.dep_graph
@@ -290,15 +290,15 @@ impl PackageGraph {
     /// Returns the inner dependency graph.
     ///
     /// Should this be exposed publicly? Not sure.
-    pub(super) fn dep_graph(&self) -> &Graph<PackageId, DependencyEdge> {
+    pub(super) fn dep_graph(&self) -> &Graph<PackageId, DependencyEdge, Directed, PackageIx> {
         &self.dep_graph
     }
 
     /// Returns the nodes of a graph that have no incoming edges to them.
     pub(super) fn roots<G, B>(graph: G) -> B
     where
-        G: IntoNodeIdentifiers + IntoNeighborsDirected<NodeId = NodeIndex<u32>>,
-        B: iter::FromIterator<NodeIndex<u32>>,
+        G: IntoNodeIdentifiers + IntoNeighborsDirected<NodeId = NodeIndex<PackageIx>>,
+        B: iter::FromIterator<NodeIndex<PackageIx>>,
     {
         graph
             .node_identifiers()
@@ -309,8 +309,8 @@ impl PackageGraph {
     /// Maps an edge source, target and weight to a dependency link.
     pub(super) fn edge_to_link<'g>(
         &'g self,
-        source: NodeIndex<u32>,
-        target: NodeIndex<u32>,
+        source: NodeIndex<PackageIx>,
+        target: NodeIndex<PackageIx>,
         edge: &'g DependencyEdge,
     ) -> DependencyLink<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
@@ -333,7 +333,7 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<B, Error>
     where
-        B: iter::FromIterator<NodeIndex<u32>>,
+        B: iter::FromIterator<NodeIndex<PackageIx>>,
     {
         package_ids
             .into_iter()
@@ -345,7 +345,7 @@ impl PackageGraph {
     }
 
     /// Maps a package ID to its internal graph node index.
-    pub(super) fn node_idx(&self, package_id: &PackageId) -> Option<NodeIndex<u32>> {
+    pub(super) fn node_idx(&self, package_id: &PackageId) -> Option<NodeIndex<PackageIx>> {
         self.metadata(package_id).map(|metadata| metadata.node_idx)
     }
 }
@@ -378,7 +378,10 @@ impl PackageGraphData {
 #[derive(Clone, Debug)]
 pub struct DependsCache<'g> {
     package_graph: &'g PackageGraph,
-    dfs_space: DfsSpace<NodeIndex<u32>, <Graph<NodeIndex<u32>, EdgeIndex<u32>> as Visitable>::Map>,
+    dfs_space: DfsSpace<
+        NodeIndex<PackageIx>,
+        <Graph<NodeIndex<PackageIx>, EdgeIndex<PackageIx>> as Visitable>::Map,
+    >,
 }
 
 impl<'g> DependsCache<'g> {
@@ -491,7 +494,7 @@ pub struct PackageMetadata {
     pub(super) features: HashMap<String, Vec<String>>,
 
     // Other information.
-    pub(super) node_idx: NodeIndex<u32>,
+    pub(super) node_idx: NodeIndex<PackageIx>,
     pub(super) workspace_path: Option<PathBuf>,
     pub(super) default_features: Vec<String>,
     pub(super) resolved_deps: Vec<NodeDep>,
