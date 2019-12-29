@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/petgraph-0.4.13/src/csr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>csr.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../petgraph/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/petgraph-0.5.0/src/csr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>csr.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../petgraph/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -938,29 +938,69 @@
 <span id="938">938</span>
 <span id="939">939</span>
 <span id="940">940</span>
+<span id="941">941</span>
+<span id="942">942</span>
+<span id="943">943</span>
+<span id="944">944</span>
+<span id="945">945</span>
+<span id="946">946</span>
+<span id="947">947</span>
+<span id="948">948</span>
+<span id="949">949</span>
+<span id="950">950</span>
+<span id="951">951</span>
+<span id="952">952</span>
+<span id="953">953</span>
+<span id="954">954</span>
+<span id="955">955</span>
+<span id="956">956</span>
+<span id="957">957</span>
+<span id="958">958</span>
+<span id="959">959</span>
+<span id="960">960</span>
+<span id="961">961</span>
+<span id="962">962</span>
+<span id="963">963</span>
+<span id="964">964</span>
+<span id="965">965</span>
+<span id="966">966</span>
+<span id="967">967</span>
+<span id="968">968</span>
+<span id="969">969</span>
+<span id="970">970</span>
+<span id="971">971</span>
+<span id="972">972</span>
+<span id="973">973</span>
+<span id="974">974</span>
+<span id="975">975</span>
+<span id="976">976</span>
+<span id="977">977</span>
+<span id="978">978</span>
+<span id="979">979</span>
+<span id="980">980</span>
+<span id="981">981</span>
+<span id="982">982</span>
+<span id="983">983</span>
+<span id="984">984</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Compressed Sparse Row (CSR) is a sparse adjacency matrix graph.</span>
 
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>::<span class="ident">max</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::{<span class="ident">Range</span>, <span class="ident">Index</span>, <span class="ident">IndexMut</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::{<span class="ident">Enumerate</span>, <span class="ident">Zip</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::{<span class="ident">Index</span>, <span class="ident">IndexMut</span>, <span class="ident">Range</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">slice</span>::<span class="ident">Windows</span>;
 
-<span class="kw">use</span> <span class="ident">visit</span>::{<span class="ident">EdgeRef</span>, <span class="ident">GraphBase</span>, <span class="ident">IntoNeighbors</span>, <span class="ident">NodeIndexable</span>, <span class="ident">IntoEdges</span>};
-<span class="kw">use</span> <span class="ident">visit</span>::{<span class="ident">NodeCompactIndexable</span>, <span class="ident">IntoNodeIdentifiers</span>, <span class="ident">Visitable</span>};
-<span class="kw">use</span> <span class="ident">visit</span>::{<span class="ident">Data</span>, <span class="ident">IntoEdgeReferences</span>, <span class="ident">NodeCount</span>, <span class="ident">GraphProp</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::{<span class="ident">Data</span>, <span class="ident">GraphProp</span>, <span class="ident">IntoEdgeReferences</span>, <span class="ident">NodeCount</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::{<span class="ident">EdgeRef</span>, <span class="ident">GraphBase</span>, <span class="ident">IntoEdges</span>, <span class="ident">IntoNeighbors</span>, <span class="ident">NodeIndexable</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::{<span class="ident">IntoNodeIdentifiers</span>, <span class="ident">NodeCompactIndexable</span>, <span class="ident">Visitable</span>};
 
-<span class="kw">use</span> <span class="ident">util</span>::<span class="ident">zip</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">zip</span>;
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">no_inline</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">graph</span>::{<span class="ident">IndexType</span>, <span class="ident">DefaultIx</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DefaultIx</span>, <span class="ident">IndexType</span>};
 
-<span class="kw">use</span> {
-    <span class="ident">EdgeType</span>,
-    <span class="ident">Directed</span>,
-    <span class="ident">IntoWeightedEdge</span>,
-};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Directed</span>, <span class="ident">EdgeType</span>, <span class="ident">IntoWeightedEdge</span>};
 
 <span class="doccomment">/// Csr node index type, a plain integer.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span> <span class="op">=</span> <span class="ident">DefaultIx</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Ix</span>;
@@ -984,6 +1024,7 @@
 <span class="doccomment">/// Self loops are allowed, no parallel edges.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Fast iteration of the outgoing edges of a vertex.</span>
+<span class="doccomment">///</span>
 <span class="doccomment">/// [`CSR`]: https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_row_(CSR,_CRS_or_Yale_format)</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span> <span class="op">=</span> (), <span class="ident">E</span> <span class="op">=</span> (), <span class="ident">Ty</span> <span class="op">=</span> <span class="ident">Directed</span>, <span class="ident">Ix</span> <span class="op">=</span> <span class="ident">DefaultIx</span><span class="op">&gt;</span> {
@@ -1000,8 +1041,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span>::<span class="ident">new</span>()
@@ -1022,8 +1064,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="doccomment">/// Create an empty `Csr`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
@@ -1047,18 +1090,16 @@
     <span class="doccomment">/// use petgraph::csr::Csr;</span>
     <span class="doccomment">/// use petgraph::prelude::*;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// # fn main() {</span>
-    <span class="doccomment">///</span>
     <span class="doccomment">/// let graph = Csr::&lt;u8,()&gt;::with_nodes(5);</span>
     <span class="doccomment">/// assert_eq!(graph.node_count(),5);</span>
     <span class="doccomment">/// assert_eq!(graph.edge_count(),0);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// assert_eq!(graph[0],0);</span>
     <span class="doccomment">/// assert_eq!(graph[4],0);</span>
-    <span class="doccomment">/// # }</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_nodes</span>(<span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
-        <span class="kw">where</span> <span class="ident">N</span>: <span class="ident">Default</span>,
+    <span class="kw">where</span>
+        <span class="ident">N</span>: <span class="ident">Default</span>,
     {
         <span class="ident">Csr</span> {
             <span class="ident">column</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
@@ -1078,9 +1119,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Directed</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
-
     <span class="doccomment">/// Create a new `Csr` from a sorted sequence of edges</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Edges **must** be sorted and unique, where the sort order is the default</span>
@@ -1092,24 +1133,25 @@
     <span class="doccomment">/// use petgraph::csr::Csr;</span>
     <span class="doccomment">/// use petgraph::prelude::*;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// # fn main() {</span>
-    <span class="doccomment">///</span>
     <span class="doccomment">/// let graph = Csr::&lt;(),()&gt;::from_sorted_edges(&amp;[</span>
     <span class="doccomment">///                     (0, 1), (0, 2),</span>
     <span class="doccomment">///                     (1, 0), (1, 2), (1, 3),</span>
     <span class="doccomment">///                     (2, 0),</span>
     <span class="doccomment">///                     (3, 1),</span>
     <span class="doccomment">/// ]);</span>
-    <span class="doccomment">/// # }</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_sorted_edges</span><span class="op">&lt;</span><span class="ident">Edge</span><span class="op">&gt;</span>(<span class="ident">edges</span>: <span class="kw-2">&amp;</span>[<span class="ident">Edge</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">EdgesNotSorted</span><span class="op">&gt;</span>
-        <span class="kw">where</span> <span class="ident">Edge</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">IntoWeightedEdge</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">NodeId</span><span class="op">=</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-              <span class="ident">N</span>: <span class="ident">Default</span>,
+    <span class="kw">where</span>
+        <span class="ident">Edge</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">IntoWeightedEdge</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">N</span>: <span class="ident">Default</span>,
     {
-        <span class="kw">let</span> <span class="ident">max_node_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">edges</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">edge</span><span class="op">|</span>
-            <span class="kw">match</span> <span class="ident">edge</span>.<span class="ident">clone</span>().<span class="ident">into_weighted_edge</span>() {
-                (<span class="ident">x</span>, <span class="ident">y</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">max</span>(<span class="ident">x</span>.<span class="ident">index</span>(), <span class="ident">y</span>.<span class="ident">index</span>())
-            }).<span class="ident">max</span>() {
+        <span class="kw">let</span> <span class="ident">max_node_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">edges</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">edge</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">edge</span>.<span class="ident">clone</span>().<span class="ident">into_weighted_edge</span>() {
+                (<span class="ident">x</span>, <span class="ident">y</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">max</span>(<span class="ident">x</span>.<span class="ident">index</span>(), <span class="ident">y</span>.<span class="ident">index</span>()),
+            })
+            .<span class="ident">max</span>()
+        {
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="self">Self</span>::<span class="ident">with_nodes</span>(<span class="number">0</span>)),
             <span class="prelude-val">Some</span>(<span class="ident">x</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">x</span>,
         };
@@ -1175,10 +1217,10 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
-
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">node_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">row</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>
     }
@@ -1210,7 +1252,7 @@
     <span class="doccomment">/// Adds a new node with the given weight, returning the corresponding node index.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_node</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">weight</span>: <span class="ident">N</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">i</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">row</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>;
-        <span class="self">self</span>.<span class="ident">row</span>.<span class="ident">insert</span>(<span class="ident">i</span>, <span class="number">0</span>);
+        <span class="self">self</span>.<span class="ident">row</span>.<span class="ident">insert</span>(<span class="ident">i</span>, <span class="self">self</span>.<span class="ident">column</span>.<span class="ident">len</span>());
         <span class="self">self</span>.<span class="ident">node_weights</span>.<span class="ident">insert</span>(<span class="ident">i</span>, <span class="ident">weight</span>);
         <span class="ident">Ix</span>::<span class="ident">new</span>(<span class="ident">i</span>)
     }
@@ -1222,7 +1264,8 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// **Panics** if `a` or `b` are out of bounds.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_edge</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">a</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>, <span class="ident">b</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>, <span class="ident">weight</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>
-        <span class="kw">where</span> <span class="ident">E</span>: <span class="ident">Clone</span>,
+    <span class="kw">where</span>
+        <span class="ident">E</span>: <span class="ident">Clone</span>,
     {
         <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_edge_</span>(<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">weight</span>.<span class="ident">clone</span>());
         <span class="kw">if</span> <span class="ident">ret</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_directed</span>() {
@@ -1282,7 +1325,11 @@
 
     <span class="kw">fn</span> <span class="ident">neighbors_range</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">row</span>[<span class="ident">a</span>.<span class="ident">index</span>()];
-        <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">row</span>.<span class="ident">get</span>(<span class="ident">a</span>.<span class="ident">index</span>() <span class="op">+</span> <span class="number">1</span>).<span class="ident">cloned</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">column</span>.<span class="ident">len</span>());
+        <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">row</span>
+            .<span class="ident">get</span>(<span class="ident">a</span>.<span class="ident">index</span>() <span class="op">+</span> <span class="number">1</span>)
+            .<span class="ident">cloned</span>()
+            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">column</span>.<span class="ident">len</span>());
         <span class="ident">index</span>..<span class="ident">end</span>
     }
 
@@ -1354,35 +1401,48 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span>: <span class="ident">Copy</span><span class="op">&gt;</span> <span class="ident">Copy</span> <span class="kw">for</span> <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> { }
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span>: <span class="ident">Copy</span><span class="op">&gt;</span> <span class="ident">Copy</span> <span class="kw">for</span> <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> {}
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ty</span>, <span class="ident">E</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
 {
     <span class="doccomment">/// Access the edge’s weight.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// **NOTE** that this method offers a longer lifetime</span>
     <span class="doccomment">/// than the trait (unfortunately they don&#39;t match yet).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">weight</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">E</span> { <span class="self">self</span>.<span class="ident">weight</span> }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">weight</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">E</span> {
+        <span class="self">self</span>.<span class="ident">weight</span>
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">EdgeRef</span> <span class="kw">for</span> <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>;
     <span class="kw">type</span> <span class="ident">EdgeId</span> <span class="op">=</span> <span class="ident">EdgeIndex</span>;
     <span class="kw">type</span> <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">E</span>;
 
-    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">NodeId</span> { <span class="self">self</span>.<span class="ident">source</span> }
-    <span class="kw">fn</span> <span class="ident">target</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">NodeId</span> { <span class="self">self</span>.<span class="ident">target</span> }
-    <span class="kw">fn</span> <span class="ident">weight</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">E</span> { <span class="self">self</span>.<span class="ident">weight</span> }
-    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">EdgeId</span> { <span class="self">self</span>.<span class="ident">index</span> }
+    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">NodeId</span> {
+        <span class="self">self</span>.<span class="ident">source</span>
+    }
+    <span class="kw">fn</span> <span class="ident">target</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">NodeId</span> {
+        <span class="self">self</span>.<span class="ident">target</span>
+    }
+    <span class="kw">fn</span> <span class="ident">weight</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">E</span> {
+        <span class="self">self</span>.<span class="ident">weight</span>
+    }
+    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">EdgeId</span> {
+        <span class="self">self</span>.<span class="ident">index</span>
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Edges</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>;
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
@@ -1390,7 +1450,7 @@
             <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">index</span>;
             <span class="self">self</span>.<span class="ident">index</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
             <span class="ident">EdgeReference</span> {
-                <span class="ident">index</span>: <span class="ident">index</span>,
+                <span class="ident">index</span>,
                 <span class="ident">source</span>: <span class="self">self</span>.<span class="ident">source</span>,
                 <span class="ident">target</span>: <span class="ident">j</span>,
                 <span class="ident">weight</span>: <span class="ident">w</span>,
@@ -1401,16 +1461,18 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Data</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">NodeWeight</span> <span class="op">=</span> <span class="ident">N</span>;
     <span class="kw">type</span> <span class="ident">EdgeWeight</span> <span class="op">=</span> <span class="ident">E</span>;
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">IntoEdgeReferences</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">EdgeRef</span> <span class="op">=</span> <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>;
     <span class="kw">type</span> <span class="ident">EdgeReferences</span> <span class="op">=</span> <span class="ident">EdgeReferences</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>;
@@ -1438,8 +1500,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">EdgeReferences</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>;
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
@@ -1448,12 +1511,12 @@
                 <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">index</span>;
                 <span class="self">self</span>.<span class="ident">index</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
                 <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">EdgeReference</span> {
-                    <span class="ident">index</span>: <span class="ident">index</span>,
+                    <span class="ident">index</span>,
                     <span class="ident">source</span>: <span class="self">self</span>.<span class="ident">source_index</span>,
                     <span class="ident">target</span>: <span class="ident">j</span>,
                     <span class="ident">weight</span>: <span class="ident">w</span>,
                     <span class="ident">ty</span>: <span class="ident">PhantomData</span>,
-                })
+                });
             }
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">i</span>, <span class="ident">w</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">edge_ranges</span>.<span class="ident">next</span>() {
                 <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">w</span>[<span class="number">0</span>];
@@ -1468,8 +1531,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">IntoEdges</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Edges</span> <span class="op">=</span> <span class="ident">Edges</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>;
     <span class="kw">fn</span> <span class="ident">edges</span>(<span class="self">self</span>, <span class="ident">a</span>: <span class="self">Self</span>::<span class="ident">NodeId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">Edges</span> {
@@ -1478,8 +1542,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">GraphBase</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>;
     <span class="kw">type</span> <span class="ident">EdgeId</span> <span class="op">=</span> <span class="ident">EdgeIndex</span>; <span class="comment">// index into edges vector</span>
@@ -1488,8 +1553,9 @@
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Visitable</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Map</span> <span class="op">=</span> <span class="ident">FixedBitSet</span>;
     <span class="kw">fn</span> <span class="ident">visit_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FixedBitSet</span> {
@@ -1509,7 +1575,8 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Neighbors</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>;
 
@@ -1523,8 +1590,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">IntoNeighbors</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Neighbors</span> <span class="op">=</span> <span class="ident">Neighbors</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Ix</span><span class="op">&gt;</span>;
 
@@ -1543,23 +1611,32 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">NodeIndexable</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
-    <span class="kw">fn</span> <span class="ident">node_bound</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> { <span class="self">self</span>.<span class="ident">node_count</span>() }
-    <span class="kw">fn</span> <span class="ident">to_index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="self">Self</span>::<span class="ident">NodeId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> { <span class="ident">a</span>.<span class="ident">index</span>() }
-    <span class="kw">fn</span> <span class="ident">from_index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ix</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">NodeId</span> { <span class="ident">Ix</span>::<span class="ident">new</span>(<span class="ident">ix</span>) }
+    <span class="kw">fn</span> <span class="ident">node_bound</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+        <span class="self">self</span>.<span class="ident">node_count</span>()
+    }
+    <span class="kw">fn</span> <span class="ident">to_index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">a</span>: <span class="self">Self</span>::<span class="ident">NodeId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+        <span class="ident">a</span>.<span class="ident">index</span>()
+    }
+    <span class="kw">fn</span> <span class="ident">from_index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ix</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">NodeId</span> {
+        <span class="ident">Ix</span>::<span class="ident">new</span>(<span class="ident">ix</span>)
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">NodeCompactIndexable</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Index</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">N</span>;
 
@@ -1569,8 +1646,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">IndexMut</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">fn</span> <span class="ident">index_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">N</span> {
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">node_weights</span>[<span class="ident">ix</span>.<span class="ident">index</span>()]
@@ -1583,7 +1661,8 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">NodeIdentifiers</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>;
 
@@ -1597,8 +1676,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">IntoNodeIdentifiers</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">NodeIdentifiers</span> <span class="op">=</span> <span class="ident">NodeIdentifiers</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>;
     <span class="kw">fn</span> <span class="ident">node_identifiers</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">NodeIdentifiers</span> {
@@ -1610,8 +1690,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">NodeCount</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">fn</span> <span class="ident">node_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
         (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">node_count</span>()
@@ -1619,8 +1700,9 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">GraphProp</span> <span class="kw">for</span> <span class="ident">Csr</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
-          <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
+<span class="kw">where</span>
+    <span class="ident">Ty</span>: <span class="ident">EdgeType</span>,
+    <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">type</span> <span class="ident">EdgeType</span> <span class="op">=</span> <span class="ident">Ty</span>;
 }
@@ -1642,11 +1724,11 @@ Row   : [0, 2, 5]   &lt;- value index of row start
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">Csr</span>;
-    <span class="kw">use</span> <span class="ident">Undirected</span>;
-    <span class="kw">use</span> <span class="ident">visit</span>::<span class="ident">Dfs</span>;
-    <span class="kw">use</span> <span class="ident">visit</span>::<span class="ident">VisitMap</span>;
-    <span class="kw">use</span> <span class="ident">algo</span>::<span class="ident">tarjan_scc</span>;
-    <span class="kw">use</span> <span class="ident">algo</span>::<span class="ident">bellman_ford</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">algo</span>::<span class="ident">bellman_ford</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">algo</span>::<span class="ident">tarjan_scc</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::<span class="ident">Dfs</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::<span class="ident">VisitMap</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Undirected</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">csr1</span>() {
@@ -1673,11 +1755,11 @@ Row   : [0, 2, 5]   &lt;- value index of row start
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">csr_undirected</span>() {
-    <span class="comment">/*
-        [ 1 . 1
-          . . 1
-          1 1 1 ]
-     */</span>
+        <span class="comment">/*
+           [ 1 . 1
+             . . 1
+             1 1 1 ]
+        */</span>
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">m</span>: <span class="ident">Csr</span><span class="op">&lt;</span>(), (), <span class="ident">Undirected</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">with_nodes</span>(<span class="number">3</span>);
         <span class="ident">m</span>.<span class="ident">add_edge</span>(<span class="number">0</span>, <span class="number">0</span>, ());
@@ -1695,11 +1777,7 @@ Row   : [0, 2, 5]   &lt;- value index of row start
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">csr_from_error_1</span>() {
         <span class="comment">// not sorted in source</span>
-        <span class="kw">let</span> <span class="ident">m</span>: <span class="ident">Csr</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">from_sorted_edges</span>(<span class="kw-2">&amp;</span>[
-            (<span class="number">0</span>, <span class="number">1</span>),
-            (<span class="number">1</span>, <span class="number">0</span>),
-            (<span class="number">0</span>, <span class="number">2</span>),
-        ]).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">m</span>: <span class="ident">Csr</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">from_sorted_edges</span>(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">0</span>, <span class="number">2</span>)]).<span class="ident">unwrap</span>();
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">m</span>);
     }
 
@@ -1707,25 +1785,14 @@ Row   : [0, 2, 5]   &lt;- value index of row start
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">csr_from_error_2</span>() {
         <span class="comment">// not sorted in target</span>
-        <span class="kw">let</span> <span class="ident">m</span>: <span class="ident">Csr</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">from_sorted_edges</span>(<span class="kw-2">&amp;</span>[
-            (<span class="number">0</span>, <span class="number">1</span>),
-            (<span class="number">1</span>, <span class="number">0</span>),
-            (<span class="number">1</span>, <span class="number">2</span>),
-            (<span class="number">1</span>, <span class="number">1</span>),
-        ]).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">m</span>: <span class="ident">Csr</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">from_sorted_edges</span>(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">1</span>, <span class="number">2</span>), (<span class="number">1</span>, <span class="number">1</span>)]).<span class="ident">unwrap</span>();
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">m</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">csr_from</span>() {
-        <span class="kw">let</span> <span class="ident">m</span>: <span class="ident">Csr</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">from_sorted_edges</span>(<span class="kw-2">&amp;</span>[
-            (<span class="number">0</span>, <span class="number">1</span>),
-            (<span class="number">0</span>, <span class="number">2</span>),
-            (<span class="number">1</span>, <span class="number">0</span>),
-            (<span class="number">1</span>, <span class="number">1</span>),
-            (<span class="number">2</span>, <span class="number">2</span>),
-            (<span class="number">2</span>, <span class="number">4</span>),
-        ]).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">m</span>: <span class="ident">Csr</span> <span class="op">=</span>
+            <span class="ident">Csr</span>::<span class="ident">from_sorted_edges</span>(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">0</span>, <span class="number">2</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">1</span>, <span class="number">1</span>), (<span class="number">2</span>, <span class="number">2</span>), (<span class="number">2</span>, <span class="number">4</span>)]).<span class="ident">unwrap</span>();
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">m</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">neighbors_slice</span>(<span class="number">0</span>), <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">neighbors_slice</span>(<span class="number">1</span>), <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>]);
@@ -1743,15 +1810,14 @@ Row   : [0, 2, 5]   &lt;- value index of row start
             (<span class="number">1</span>, <span class="number">1</span>),
             (<span class="number">1</span>, <span class="number">3</span>),
             (<span class="number">2</span>, <span class="number">2</span>),
-
             <span class="comment">// disconnected subgraph</span>
             (<span class="number">4</span>, <span class="number">4</span>),
             (<span class="number">4</span>, <span class="number">5</span>),
-        ]).<span class="ident">unwrap</span>();
+        ])
+        .<span class="ident">unwrap</span>();
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">m</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">Dfs</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>, <span class="number">0</span>);
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>) {
-        }
+        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>) {}
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">m</span>.<span class="ident">node_count</span>() <span class="op">-</span> <span class="number">2</span> {
             <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">dfs</span>.<span class="ident">discovered</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">i</span>), <span class="string">&quot;visited {}&quot;</span>, <span class="ident">i</span>)
         }
@@ -1763,8 +1829,7 @@ Row   : [0, 2, 5]   &lt;- value index of row start
 
         <span class="ident">dfs</span>.<span class="ident">reset</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>);
         <span class="ident">dfs</span>.<span class="ident">move_to</span>(<span class="number">0</span>);
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>) {
-        }
+        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>) {}
 
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">m</span>.<span class="ident">node_count</span>() {
             <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">dfs</span>.<span class="ident">discovered</span>[<span class="ident">i</span>], <span class="string">&quot;visited {}&quot;</span>, <span class="ident">i</span>)
@@ -1784,7 +1849,8 @@ Row   : [0, 2, 5]   &lt;- value index of row start
             (<span class="number">4</span>, <span class="number">4</span>),
             (<span class="number">4</span>, <span class="number">5</span>),
             (<span class="number">5</span>, <span class="number">2</span>),
-        ]).<span class="ident">unwrap</span>();
+        ])
+        .<span class="ident">unwrap</span>();
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">m</span>);
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">tarjan_scc</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>));
     }
@@ -1799,12 +1865,12 @@ Row   : [0, 2, 5]   &lt;- value index of row start
             (<span class="number">1</span>, <span class="number">2</span>, <span class="number">1.</span>),
             (<span class="number">1</span>, <span class="number">3</span>, <span class="number">1.</span>),
             (<span class="number">2</span>, <span class="number">3</span>, <span class="number">3.</span>),
-
             (<span class="number">4</span>, <span class="number">5</span>, <span class="number">1.</span>),
             (<span class="number">5</span>, <span class="number">7</span>, <span class="number">2.</span>),
             (<span class="number">6</span>, <span class="number">7</span>, <span class="number">1.</span>),
             (<span class="number">7</span>, <span class="number">8</span>, <span class="number">3.</span>),
-        ]).<span class="ident">unwrap</span>();
+        ])
+        .<span class="ident">unwrap</span>();
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">m</span>);
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">bellman_ford</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>, <span class="number">0</span>).<span class="ident">unwrap</span>();
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">result</span>);
@@ -1823,15 +1889,16 @@ Row   : [0, 2, 5]   &lt;- value index of row start
             (<span class="number">1</span>, <span class="number">2</span>, <span class="number">1.</span>),
             (<span class="number">1</span>, <span class="number">3</span>, <span class="number">1.</span>),
             (<span class="number">2</span>, <span class="number">3</span>, <span class="number">3.</span>),
-        ]).<span class="ident">unwrap</span>();
+        ])
+        .<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">bellman_ford</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>, <span class="number">0</span>);
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">result</span>.<span class="ident">is_err</span>());
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_edge_references</span>() {
-        <span class="kw">use</span> <span class="ident">visit</span>::<span class="ident">EdgeRef</span>;
-        <span class="kw">use</span> <span class="ident">visit</span>::<span class="ident">IntoEdgeReferences</span>;
+        <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::<span class="ident">EdgeRef</span>;
+        <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::<span class="ident">IntoEdgeReferences</span>;
         <span class="kw">let</span> <span class="ident">m</span>: <span class="ident">Csr</span><span class="op">&lt;</span>(), <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">from_sorted_edges</span>(<span class="kw-2">&amp;</span>[
             (<span class="number">0</span>, <span class="number">1</span>, <span class="number">0.5</span>),
             (<span class="number">0</span>, <span class="number">2</span>, <span class="number">2.</span>),
@@ -1840,12 +1907,12 @@ Row   : [0, 2, 5]   &lt;- value index of row start
             (<span class="number">1</span>, <span class="number">2</span>, <span class="number">1.</span>),
             (<span class="number">1</span>, <span class="number">3</span>, <span class="number">1.</span>),
             (<span class="number">2</span>, <span class="number">3</span>, <span class="number">3.</span>),
-
             (<span class="number">4</span>, <span class="number">5</span>, <span class="number">1.</span>),
             (<span class="number">5</span>, <span class="number">7</span>, <span class="number">2.</span>),
             (<span class="number">6</span>, <span class="number">7</span>, <span class="number">1.</span>),
             (<span class="number">7</span>, <span class="number">8</span>, <span class="number">3.</span>),
-        ]).<span class="ident">unwrap</span>();
+        ])
+        .<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">copy</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
         <span class="kw">for</span> <span class="ident">e</span> <span class="kw">in</span> <span class="ident">m</span>.<span class="ident">edge_references</span>() {
             <span class="ident">copy</span>.<span class="ident">push</span>((<span class="ident">e</span>.<span class="ident">source</span>(), <span class="ident">e</span>.<span class="ident">target</span>(), <span class="kw-2">*</span><span class="ident">e</span>.<span class="ident">weight</span>()));
@@ -1878,6 +1945,27 @@ Row   : [0, 2, 5]   &lt;- value index of row start
 
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">edge_count</span>(), <span class="number">3</span>);
     }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_add_node_with_existing_edges</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">g</span>: <span class="ident">Csr</span> <span class="op">=</span> <span class="ident">Csr</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">add_node</span>(());
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">add_node</span>(());
+
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">add_edge</span>(<span class="ident">a</span>, <span class="ident">b</span>, ()));
+
+        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">add_node</span>(());
+
+        <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">g</span>);
+
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">node_count</span>(), <span class="number">3</span>);
+
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">neighbors_slice</span>(<span class="ident">a</span>), <span class="kw-2">&amp;</span>[<span class="ident">b</span>]);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">neighbors_slice</span>(<span class="ident">b</span>), <span class="kw-2">&amp;</span>[]);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">neighbors_slice</span>(<span class="ident">c</span>), <span class="kw-2">&amp;</span>[]);
+
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">g</span>.<span class="ident">edge_count</span>(), <span class="number">1</span>);
+    }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g., <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g., <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g., <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../";window.currentCrate = "petgraph";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "petgraph";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

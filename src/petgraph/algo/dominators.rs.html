@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/petgraph-0.4.13/src/algo/dominators.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dominators.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../petgraph/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/petgraph-0.5.0/src/algo/dominators.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dominators.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../petgraph/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -265,6 +265,23 @@
 <span id="265">265</span>
 <span id="266">266</span>
 <span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Compute dominators of a control-flow graph.</span>
 <span class="doccomment">//!</span>
@@ -280,22 +297,25 @@
 <span class="doccomment">//! strictly dominates **B** and there does not exist any node **C** where **A**</span>
 <span class="doccomment">//! dominates **C** and **C** dominates **B**.</span>
 
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>::<span class="ident">Ordering</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>::<span class="ident">Hash</span>;
 
-<span class="kw">use</span> <span class="ident">visit</span>::{<span class="ident">DfsPostOrder</span>, <span class="ident">GraphBase</span>, <span class="ident">IntoNeighbors</span>, <span class="ident">Visitable</span>, <span class="ident">Walker</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::{<span class="ident">DfsPostOrder</span>, <span class="ident">GraphBase</span>, <span class="ident">IntoNeighbors</span>, <span class="ident">Visitable</span>, <span class="ident">Walker</span>};
 
 <span class="doccomment">/// The dominance relation for some graph and root.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Dominators</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>
+<span class="kw">where</span>
+    <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
 {
     <span class="ident">root</span>: <span class="ident">N</span>,
     <span class="ident">dominators</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">N</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> <span class="ident">Dominators</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>
+<span class="kw">where</span>
+    <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
 {
     <span class="doccomment">/// Get the root node used to construct these dominance relations.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">root</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">N</span> {
@@ -314,7 +334,7 @@
         }
     }
 
-    <span class="doccomment">/// Iterate over the given node&#39;s that strict dominators.</span>
+    <span class="doccomment">/// Iterate over the given node&#39;s strict dominators.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If the given node is not reachable from the root, then `None` is</span>
     <span class="doccomment">/// returned.</span>
@@ -348,14 +368,16 @@
 
 <span class="doccomment">/// Iterator for a node&#39;s dominators.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DominatorsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">N</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>
+<span class="kw">where</span>
+    <span class="ident">N</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
 {
     <span class="ident">dominators</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Dominators</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>,
     <span class="ident">node</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">DominatorsIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">N</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>
+<span class="kw">where</span>
+    <span class="ident">N</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
 {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">N</span>;
 
@@ -376,14 +398,15 @@
 <span class="doccomment">/// Algorithm&quot;][0] discovered by Cooper et al.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This algorithm is **O(|V|²)**, and therefore has slower theoretical running time</span>
-<span class="doccomment">/// than the Lenguaer-Tarjan algorithm (which is **O(|E| log |V|)**. However,</span>
+<span class="doccomment">/// than the Lengauer-Tarjan algorithm (which is **O(|E| log |V|)**. However,</span>
 <span class="doccomment">/// Cooper et al found it to be faster in practice on control flow graphs of up</span>
 <span class="doccomment">/// to ~30,000 vertices.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// [0]: http://www.cs.rice.edu/~keith/EMBED/dom.pdf</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">simple_fast</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">graph</span>: <span class="ident">G</span>, <span class="ident">root</span>: <span class="ident">G</span>::<span class="ident">NodeId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Dominators</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">G</span>: <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">Visitable</span>,
-          <span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">GraphBase</span><span class="op">&gt;</span>::<span class="ident">NodeId</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>
+<span class="kw">where</span>
+    <span class="ident">G</span>: <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">Visitable</span>,
+    <span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">GraphBase</span><span class="op">&gt;</span>::<span class="ident">NodeId</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
 {
     <span class="kw">let</span> (<span class="ident">post_order</span>, <span class="ident">predecessor_sets</span>) <span class="op">=</span> <span class="ident">simple_fast_post_order</span>(<span class="ident">graph</span>, <span class="ident">root</span>);
     <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> <span class="ident">post_order</span>.<span class="ident">len</span>();
@@ -396,7 +419,8 @@
     <span class="comment">// convert our data structures to play along first.</span>
 
     <span class="comment">// Maps a node to its index into `post_order`.</span>
-    <span class="kw">let</span> <span class="ident">node_to_post_order_idx</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">post_order</span>.<span class="ident">iter</span>()
+    <span class="kw">let</span> <span class="ident">node_to_post_order_idx</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">post_order</span>
+        .<span class="ident">iter</span>()
         .<span class="ident">enumerate</span>()
         .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">idx</span>, <span class="kw-2">&amp;</span><span class="ident">node</span>)<span class="op">|</span> (<span class="ident">node</span>, <span class="ident">idx</span>))
         .<span class="ident">collect</span>();
@@ -423,12 +447,14 @@
             <span class="comment">// node.</span>
 
             <span class="kw">let</span> <span class="ident">new_idom_idx</span> <span class="op">=</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">predecessors</span> <span class="op">=</span>
-                    <span class="ident">idx_to_predecessor_vec</span>[<span class="ident">idx</span>].<span class="ident">iter</span>().<span class="ident">filter</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="kw-2">&amp;</span><span class="ident">p</span><span class="op">|</span> <span class="ident">dominators</span>[<span class="ident">p</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">UNDEFINED</span>);
-                <span class="kw">let</span> <span class="ident">new_idom_idx</span> <span class="op">=</span> <span class="ident">predecessors</span>.<span class="ident">next</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;Because the root is initialized to dominate itself, and is the \
-                             first node in every path, there must exist a predecessor to this \
-                             node that also has a dominator&quot;</span>);
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">predecessors</span> <span class="op">=</span> <span class="ident">idx_to_predecessor_vec</span>[<span class="ident">idx</span>]
+                    .<span class="ident">iter</span>()
+                    .<span class="ident">filter</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="kw-2">&amp;</span><span class="ident">p</span><span class="op">|</span> <span class="ident">dominators</span>[<span class="ident">p</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">UNDEFINED</span>);
+                <span class="kw">let</span> <span class="ident">new_idom_idx</span> <span class="op">=</span> <span class="ident">predecessors</span>.<span class="ident">next</span>().<span class="ident">expect</span>(
+                    <span class="string">&quot;Because the root is initialized to dominate itself, and is the \
+                     first node in every path, there must exist a predecessor to this \
+                     node that also has a dominator&quot;</span>,
+                );
                 <span class="ident">predecessors</span>.<span class="ident">fold</span>(<span class="kw-2">*</span><span class="ident">new_idom_idx</span>, <span class="op">|</span><span class="ident">new_idom_idx</span>, <span class="kw-2">&amp;</span><span class="ident">predecessor_idx</span><span class="op">|</span> {
                     <span class="ident">intersect</span>(<span class="kw-2">&amp;</span><span class="ident">dominators</span>, <span class="ident">new_idom_idx</span>, <span class="ident">predecessor_idx</span>)
                 })
@@ -448,8 +474,9 @@
     <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">dominators</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">dom</span><span class="op">|</span> <span class="ident">dom</span> <span class="op">=</span><span class="op">=</span> <span class="ident">UNDEFINED</span>));
 
     <span class="ident">Dominators</span> {
-        <span class="ident">root</span>: <span class="ident">root</span>,
-        <span class="ident">dominators</span>: <span class="ident">dominators</span>.<span class="ident">into_iter</span>()
+        <span class="ident">root</span>,
+        <span class="ident">dominators</span>: <span class="ident">dominators</span>
+            .<span class="ident">into_iter</span>()
             .<span class="ident">enumerate</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">idx</span>, <span class="ident">dom_idx</span>)<span class="op">|</span> (<span class="ident">post_order</span>[<span class="ident">idx</span>], <span class="ident">post_order</span>[<span class="ident">dom_idx</span>]))
             .<span class="ident">collect</span>(),
@@ -457,27 +484,31 @@
 }
 
 <span class="kw">fn</span> <span class="ident">intersect</span>(<span class="ident">dominators</span>: <span class="kw-2">&amp;</span>[<span class="ident">usize</span>], <span class="kw-2">mut</span> <span class="ident">finger1</span>: <span class="ident">usize</span>, <span class="kw-2">mut</span> <span class="ident">finger2</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
-    <span class="kw">while</span> <span class="ident">finger1</span> <span class="op">!</span><span class="op">=</span> <span class="ident">finger2</span> {
-        <span class="kw">if</span> <span class="ident">finger1</span> <span class="op">&lt;</span> <span class="ident">finger2</span> {
-            <span class="ident">finger1</span> <span class="op">=</span> <span class="ident">dominators</span>[<span class="ident">finger1</span>];
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">finger2</span> <span class="op">&lt;</span> <span class="ident">finger1</span> {
-            <span class="ident">finger2</span> <span class="op">=</span> <span class="ident">dominators</span>[<span class="ident">finger2</span>];
+    <span class="kw">loop</span> {
+        <span class="kw">match</span> <span class="ident">finger1</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">finger2</span>) {
+            <span class="ident">Ordering</span>::<span class="ident">Less</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">finger1</span> <span class="op">=</span> <span class="ident">dominators</span>[<span class="ident">finger1</span>],
+            <span class="ident">Ordering</span>::<span class="ident">Greater</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">finger2</span> <span class="op">=</span> <span class="ident">dominators</span>[<span class="ident">finger2</span>],
+            <span class="ident">Ordering</span>::<span class="ident">Equal</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">finger1</span>,
         }
     }
-    <span class="ident">finger1</span>
 }
 
-<span class="kw">fn</span> <span class="ident">predecessor_sets_to_idx_vecs</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>(<span class="ident">post_order</span>: <span class="kw-2">&amp;</span>[<span class="ident">N</span>],
-                                   <span class="ident">node_to_post_order_idx</span>: <span class="kw-2">&amp;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">usize</span><span class="op">&gt;</span>,
-                                   <span class="kw-2">mut</span> <span class="ident">predecessor_sets</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span>)
-                                   <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span> <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>
+<span class="kw">fn</span> <span class="ident">predecessor_sets_to_idx_vecs</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>(
+    <span class="ident">post_order</span>: <span class="kw-2">&amp;</span>[<span class="ident">N</span>],
+    <span class="ident">node_to_post_order_idx</span>: <span class="kw-2">&amp;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">usize</span><span class="op">&gt;</span>,
+    <span class="kw-2">mut</span> <span class="ident">predecessor_sets</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
 {
-    <span class="ident">post_order</span>.<span class="ident">iter</span>()
+    <span class="ident">post_order</span>
+        .<span class="ident">iter</span>()
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">node</span><span class="op">|</span> {
-            <span class="ident">predecessor_sets</span>.<span class="ident">remove</span>(<span class="ident">node</span>)
+            <span class="ident">predecessor_sets</span>
+                .<span class="ident">remove</span>(<span class="ident">node</span>)
                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">predecessors</span><span class="op">|</span> {
-                    <span class="ident">predecessors</span>.<span class="ident">into_iter</span>()
+                    <span class="ident">predecessors</span>
+                        .<span class="ident">into_iter</span>()
                         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">node_to_post_order_idx</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">p</span>).<span class="ident">unwrap</span>())
                         .<span class="ident">collect</span>()
                 })
@@ -486,11 +517,13 @@
         .<span class="ident">collect</span>()
 }
 
-<span class="kw">fn</span> <span class="ident">simple_fast_post_order</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">graph</span>: <span class="ident">G</span>,
-                             <span class="ident">root</span>: <span class="ident">G</span>::<span class="ident">NodeId</span>)
-                             <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>)
-    <span class="kw">where</span> <span class="ident">G</span>: <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">Visitable</span>,
-          <span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">GraphBase</span><span class="op">&gt;</span>::<span class="ident">NodeId</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>
+<span class="kw">fn</span> <span class="ident">simple_fast_post_order</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(
+    <span class="ident">graph</span>: <span class="ident">G</span>,
+    <span class="ident">root</span>: <span class="ident">G</span>::<span class="ident">NodeId</span>,
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>)
+<span class="kw">where</span>
+    <span class="ident">G</span>: <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">Visitable</span>,
+    <span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">GraphBase</span><span class="op">&gt;</span>::<span class="ident">NodeId</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
 {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">post_order</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[];
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">predecessor_sets</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
@@ -499,7 +532,8 @@
         <span class="ident">post_order</span>.<span class="ident">push</span>(<span class="ident">node</span>);
 
         <span class="kw">for</span> <span class="ident">successor</span> <span class="kw">in</span> <span class="ident">graph</span>.<span class="ident">neighbors</span>(<span class="ident">node</span>) {
-            <span class="ident">predecessor_sets</span>.<span class="ident">entry</span>(<span class="ident">successor</span>)
+            <span class="ident">predecessor_sets</span>
+                .<span class="ident">entry</span>(<span class="ident">successor</span>)
                 .<span class="ident">or_insert_with</span>(<span class="ident">HashSet</span>::<span class="ident">new</span>)
                 .<span class="ident">insert</span>(<span class="ident">node</span>);
         }
@@ -516,10 +550,7 @@
     <span class="kw">fn</span> <span class="ident">test_iter_dominators</span>() {
         <span class="kw">let</span> <span class="ident">doms</span>: <span class="ident">Dominators</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Dominators</span> {
             <span class="ident">root</span>: <span class="number">0</span>,
-            <span class="ident">dominators</span>: [(<span class="number">2</span>, <span class="number">1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">0</span>, <span class="number">0</span>)]
-                .<span class="ident">iter</span>()
-                .<span class="ident">cloned</span>()
-                .<span class="ident">collect</span>(),
+            <span class="ident">dominators</span>: [(<span class="number">2</span>, <span class="number">1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">0</span>, <span class="number">0</span>)].<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>(),
         };
 
         <span class="kw">let</span> <span class="ident">all_doms</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">doms</span>.<span class="ident">dominators</span>(<span class="number">2</span>).<span class="ident">unwrap</span>().<span class="ident">collect</span>();
@@ -530,8 +561,11 @@
         <span class="kw">let</span> <span class="ident">strict_doms</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">doms</span>.<span class="ident">strict_dominators</span>(<span class="number">2</span>).<span class="ident">unwrap</span>().<span class="ident">collect</span>();
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="number">1</span>, <span class="number">0</span>], <span class="ident">strict_doms</span>);
 
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">None</span>::<span class="op">&lt;</span>()<span class="op">&gt;</span>, <span class="ident">doms</span>.<span class="ident">strict_dominators</span>(<span class="number">99</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="macro">unreachable</span><span class="macro">!</span>()));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="prelude-val">None</span>::<span class="op">&lt;</span>()<span class="op">&gt;</span>,
+            <span class="ident">doms</span>.<span class="ident">strict_dominators</span>(<span class="number">99</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="macro">unreachable</span><span class="macro">!</span>())
+        );
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g., <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g., <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g., <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../../";window.currentCrate = "petgraph";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "petgraph";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
