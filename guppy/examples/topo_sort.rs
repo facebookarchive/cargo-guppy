@@ -18,7 +18,7 @@ fn main() -> Result<(), Error> {
     // transitive deps of workspace packages are exactly the set of workspace packages.
     let select = package_graph.select_reverse(package_graph.workspace().member_ids())?;
 
-    // Here we pass in `Forward` -- by default, select_transitive_reverse_deps will cause packages
+    // Here we pass in `Forward` -- by default, select_reverse will cause packages
     // to be returned in reverse topo order.
     for package in select.into_iter_metadatas(Some(DependencyDirection::Forward)) {
         // All selected packages are in the workspace.
