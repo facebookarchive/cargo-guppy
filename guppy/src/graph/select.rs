@@ -4,14 +4,13 @@
 use crate::graph::{
     DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
 };
-use crate::petgraph_support::reversed::ReversedDirected;
 use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
 use derivative::Derivative;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighbors, NodeFiltered, Topo, VisitMap, Visitable};
+use petgraph::visit::{IntoNeighbors, NodeFiltered, Reversed, Topo, VisitMap, Visitable};
 
 /// A selector over a package graph.
 ///
@@ -148,7 +147,7 @@ impl<'g> PackageSelect<'g> {
 
         let topo = match direction {
             DependencyDirection::Forward => Topo::new(&filtered_graph),
-            DependencyDirection::Reverse => Topo::new(ReversedDirected(&filtered_graph)),
+            DependencyDirection::Reverse => Topo::new(Reversed(&filtered_graph)),
         };
         IntoIterIds {
             graph: filtered_graph,
@@ -223,12 +222,12 @@ impl<'g> PackageSelect<'g> {
                 (Some(filtered_graph.1), edge_dfs)
             }
             (Some(reachable), Reverse) => {
-                let filtered_reversed_graph = NodeFiltered(ReversedDirected(dep_graph), reachable);
+                let filtered_reversed_graph = NodeFiltered(Reversed(dep_graph), reachable);
                 let edge_dfs = EdgeDfs::new(&filtered_reversed_graph, roots);
                 (Some(filtered_reversed_graph.1), edge_dfs)
             }
             (None, Forward) => (None, EdgeDfs::new(dep_graph, roots)),
-            (None, Reverse) => (None, EdgeDfs::new(ReversedDirected(dep_graph), roots)),
+            (None, Reverse) => (None, EdgeDfs::new(Reversed(dep_graph), roots)),
         };
 
         IntoIterLinks {
@@ -251,7 +250,7 @@ pub(super) fn select_prefilter(
     match params {
         All => all_visit_map(graph),
         SelectForward(roots) => reachable_map(graph, roots),
-        SelectReverse(roots) => reachable_map(ReversedDirected(graph), roots),
+        SelectReverse(roots) => reachable_map(Reversed(graph), roots),
     }
 }
 
@@ -273,7 +272,7 @@ fn select_postfilter(
         }
         (All, Reverse) => {
             // No need for a reachable map, and use all roots.
-            let reversed_graph = ReversedDirected(graph);
+            let reversed_graph = Reversed(graph);
             let roots: Vec<_> = PackageGraph::roots(reversed_graph);
             (None, roots)
         }
@@ -284,7 +283,7 @@ fn select_postfilter(
         (SelectForward(roots), Reverse) => {
             // Forward traversal + reverse order = need to compute reachable map.
             let (reachable, _) = reachable_map(graph, roots);
-            let filtered_reversed_graph = NodeFiltered(ReversedDirected(graph), reachable);
+            let filtered_reversed_graph = NodeFiltered(Reversed(graph), reachable);
             // The filtered + reversed graph will have its own roots since the iteration order
             // is reversed from the specified roots.
             let roots: Vec<_> = PackageGraph::roots(&filtered_reversed_graph);
@@ -293,7 +292,7 @@ fn select_postfilter(
         }
         (SelectReverse(roots), Forward) => {
             // Reverse traversal + forward order = need to compute reachable map.
-            let reversed_graph = ReversedDirected(graph);
+            let reversed_graph = Reversed(graph);
             let (reachable, _) = reachable_map(reversed_graph, roots);
             let filtered_graph = NodeFiltered(graph, reachable);
             // The filtered graph will have its own roots since the iteration order is reversed
@@ -337,7 +336,7 @@ impl<'g> Iterator for IntoIterIds<'g> {
     fn next(&mut self) -> Option<Self::Item> {
         let next_idx = match self.direction {
             DependencyDirection::Forward => self.topo.next(&self.graph),
-            DependencyDirection::Reverse => self.topo.next(ReversedDirected(&self.graph)),
+            DependencyDirection::Reverse => self.topo.next(Reversed(&self.graph)),
         };
         next_idx.map(|node_idx| {
             self.remaining -= 1;
@@ -433,7 +432,7 @@ impl<'g> IntoIterLinks<'g> {
                 // (LLVM should be able to optimize this.)
                 self.edge_dfs
                     .next(&NodeFiltered::from_fn(
-                        ReversedDirected(self.package_graph.dep_graph()),
+                        Reversed(self.package_graph.dep_graph()),
                         |node_idx| reachable.is_visited(&node_idx),
                     ))
                     .map(|(source_idx, target_idx, edge_idx)| {
@@ -445,7 +444,7 @@ impl<'g> IntoIterLinks<'g> {
             (None, Forward) => self.edge_dfs.next(self.package_graph.dep_graph()),
             (None, Reverse) => self
                 .edge_dfs
-                .next(ReversedDirected(self.package_graph.dep_graph()))
+                .next(Reversed(self.package_graph.dep_graph()))
                 .map(|(source_idx, target_idx, edge_idx)| {
                     // Flip the source and target around if this is a reversed graph, since the
                     // 'from' and 'to' are always right way up.
