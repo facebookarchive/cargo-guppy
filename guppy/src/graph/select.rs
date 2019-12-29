@@ -9,6 +9,7 @@ use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
 use derivative::Derivative;
 use fixedbitset::FixedBitSet;
+use petgraph::graph::IndexType;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoNeighbors, NodeFiltered, Topo, VisitMap, Visitable};
 
@@ -488,9 +489,10 @@ impl PackageSelectParams {
     }
 }
 
-fn all_visit_map<G>(graph: G) -> (FixedBitSet, usize)
+fn all_visit_map<G, Ix>(graph: G) -> (FixedBitSet, usize)
 where
-    G: Visitable<NodeId = NodeIndex<u32>, Map = FixedBitSet>,
+    G: Visitable<NodeId = NodeIndex<Ix>, Map = FixedBitSet>,
+    Ix: IndexType,
 {
     let mut visit_map = graph.visit_map();
     // Mark all nodes visited.
@@ -499,9 +501,10 @@ where
     (visit_map, count)
 }
 
-fn reachable_map<G>(graph: G, roots: Vec<G::NodeId>) -> (FixedBitSet, usize)
+fn reachable_map<G, Ix>(graph: G, roots: Vec<G::NodeId>) -> (FixedBitSet, usize)
 where
-    G: Visitable<NodeId = NodeIndex<u32>, Map = FixedBitSet> + IntoNeighbors,
+    G: Visitable<NodeId = NodeIndex<Ix>, Map = FixedBitSet> + IntoNeighbors,
+    Ix: IndexType,
 {
     // To figure out what nodes are reachable, run a DFS starting from the roots.
     let mut dfs = Dfs::from_parts(roots, graph.visit_map());
