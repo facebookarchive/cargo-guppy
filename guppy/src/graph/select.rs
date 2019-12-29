@@ -504,11 +504,7 @@ where
     G: Visitable<NodeId = NodeIndex<u32>, Map = FixedBitSet> + IntoNeighbors,
 {
     // To figure out what nodes are reachable, run a DFS starting from the roots.
-    let mut visit_map = graph.visit_map();
-    roots.iter().for_each(|node_idx| {
-        visit_map.visit(*node_idx);
-    });
-    let mut dfs = Dfs::from_parts(roots, visit_map);
+    let mut dfs = Dfs::from_parts(roots, graph.visit_map());
     while let Some(_) = dfs.next(graph) {}
 
     // Once the DFS is done, the discovered map is what's reachable.
