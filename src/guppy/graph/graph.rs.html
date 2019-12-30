@@ -733,11 +733,30 @@
 <span id="733">733</span>
 <span id="734">734</span>
 <span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">kind_str</span>, <span class="ident">DependencyDirection</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">kind_str</span>, <span class="ident">DependencyDirection</span>, <span class="ident">PackageIx</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">JsonValue</span>, <span class="ident">Metadata</span>, <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">Dependency</span>, <span class="ident">DependencyKind</span>, <span class="ident">NodeDep</span>};
 <span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="ident">lazy_static</span>;
@@ -758,7 +777,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageGraph</span> {
     <span class="comment">// Source of truth data.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="comment">// XXX Should this be in an Arc for quick cloning? Not clear how this would work with node</span>
     <span class="comment">// filters though.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">data</span>: <span class="ident">PackageGraphData</span>,
@@ -1009,7 +1028,7 @@
 
     <span class="kw">fn</span> <span class="ident">dep_links_node_idx_directed</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
-        <span class="ident">node_idx</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+        <span class="ident">node_idx</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">dir</span>: <span class="ident">Direction</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
@@ -1026,15 +1045,15 @@
     <span class="doccomment">/// Returns the inner dependency graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Should this be exposed publicly? Not sure.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">dep_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">dep_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>
     }
 
     <span class="doccomment">/// Returns the nodes of a graph that have no incoming edges to them.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">roots</span><span class="op">&lt;</span><span class="ident">G</span>, <span class="ident">B</span><span class="op">&gt;</span>(<span class="ident">graph</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">B</span>
     <span class="kw">where</span>
-        <span class="ident">G</span>: <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoNeighborsDirected</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">B</span>: <span class="ident">iter</span>::<span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">G</span>: <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoNeighborsDirected</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">B</span>: <span class="ident">iter</span>::<span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
         <span class="ident">graph</span>
             .<span class="ident">node_identifiers</span>()
@@ -1045,8 +1064,8 @@
     <span class="doccomment">/// Maps an edge source, target and weight to a dependency link.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">edge_to_link</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
-        <span class="ident">source</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-        <span class="ident">target</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+        <span class="ident">source</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+        <span class="ident">target</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">edge</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">DependencyEdge</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="comment">// Note: It would be really lovely if this could just take in any EdgeRef with the right</span>
@@ -1069,7 +1088,7 @@
         <span class="ident">package_ids</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">B</span>: <span class="ident">iter</span>::<span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">B</span>: <span class="ident">iter</span>::<span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
         <span class="ident">package_ids</span>
             .<span class="ident">into_iter</span>()
@@ -1081,7 +1100,7 @@
     }
 
     <span class="doccomment">/// Maps a package ID to its internal graph node index.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">node_idx</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">node_idx</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">metadata</span><span class="op">|</span> <span class="ident">metadata</span>.<span class="ident">node_idx</span>)
     }
 }
@@ -1114,7 +1133,10 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependsCache</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
-    <span class="ident">dfs_space</span>: <span class="ident">DfsSpace</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="op">&lt;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">as</span> <span class="ident">Visitable</span><span class="op">&gt;</span>::<span class="ident">Map</span><span class="op">&gt;</span>,
+    <span class="ident">dfs_space</span>: <span class="ident">DfsSpace</span><span class="op">&lt;</span>
+        <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+        <span class="op">&lt;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">as</span> <span class="ident">Visitable</span><span class="op">&gt;</span>::<span class="ident">Map</span>,
+    <span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">DependsCache</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
@@ -1224,10 +1246,12 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">metadata_table</span>: <span class="ident">JsonValue</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">links</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">publish</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">features</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
     <span class="comment">// Other information.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">node_idx</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">node_idx</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">workspace_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">default_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">resolved_deps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeDep</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">resolved_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
@@ -1362,6 +1386,20 @@
     <span class="doccomment">/// not in the workspace.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Path</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">workspace_path</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">path</span>.<span class="ident">as_path</span>())
+    }
+
+    <span class="doccomment">/// Returns the list of features enabled by default for this package.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+        <span class="self">self</span>.<span class="ident">default_features</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">as_str</span>())
+    }
+
+    <span class="doccomment">/// Returns the list of named features available for this package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// A named feature is listed in the `[features]` section of `Cargo.toml`. For more, see</span>
+    <span class="doccomment">/// [the reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">named_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+        <span class="comment">// TODO: expose dependencies via a graph structure.</span>
+        <span class="self">self</span>.<span class="ident">features</span>.<span class="ident">keys</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">as_str</span>())
     }
 }
 

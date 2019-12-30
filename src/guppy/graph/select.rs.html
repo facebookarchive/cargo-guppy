@@ -514,12 +514,18 @@
 <span id="514">514</span>
 <span id="515">515</span>
 <span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
-    <span class="ident">DependencyDirection</span>, <span class="ident">DependencyEdge</span>, <span class="ident">DependencyLink</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>,
+    <span class="ident">DependencyDirection</span>, <span class="ident">DependencyEdge</span>, <span class="ident">DependencyLink</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageMetadata</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">walk</span>::<span class="ident">EdgeDfs</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
@@ -759,7 +765,7 @@
 <span class="doccomment">/// Computes intermediate state for operations where the graph must be pre-filtered before any</span>
 <span class="doccomment">/// traversals happen.</span>
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">select_prefilter</span>(
-    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span><span class="op">&gt;</span>,
+    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="ident">params</span>: <span class="ident">PackageSelectParams</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">FixedBitSet</span>, <span class="ident">usize</span>) {
     <span class="kw">use</span> <span class="ident">PackageSelectParams</span>::<span class="kw-2">*</span>;
@@ -774,10 +780,10 @@
 <span class="doccomment">/// Computes intermediate state for operations where the graph can be filtered dynamically if</span>
 <span class="doccomment">/// possible.</span>
 <span class="kw">fn</span> <span class="ident">select_postfilter</span>(
-    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span><span class="op">&gt;</span>,
+    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="ident">params</span>: <span class="ident">PackageSelectParams</span>,
     <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
-) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
     <span class="kw">use</span> <span class="ident">DependencyDirection</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">PackageSelectParams</span>::<span class="kw-2">*</span>;
 
@@ -832,10 +838,10 @@
 <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IntoIterIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span> <span class="op">=</span> <span class="string">&quot;ignore&quot;</span>)]</span>
-    <span class="ident">graph</span>: <span class="ident">NodeFiltered</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
+    <span class="ident">graph</span>: <span class="ident">NodeFiltered</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
     <span class="comment">// XXX Topo really should implement Debug in petgraph upstream.</span>
     <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span> <span class="op">=</span> <span class="string">&quot;ignore&quot;</span>)]</span>
-    <span class="ident">topo</span>: <span class="ident">Topo</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
+    <span class="ident">topo</span>: <span class="ident">Topo</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
     <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     <span class="ident">remaining</span>: <span class="ident">usize</span>,
 }
@@ -920,7 +926,7 @@
     <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span> <span class="op">=</span> <span class="string">&quot;ignore&quot;</span>)]</span>
     <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
     <span class="ident">reachable</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
-    <span class="ident">edge_dfs</span>: <span class="ident">EdgeDfs</span><span class="op">&lt;</span><span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
+    <span class="ident">edge_dfs</span>: <span class="ident">EdgeDfs</span><span class="op">&lt;</span><span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
     <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
 }
 
@@ -930,7 +936,13 @@
         <span class="self">self</span>.<span class="ident">direction</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">next_triple</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next_triple</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(
+        <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+        <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+        <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    )<span class="op">&gt;</span> {
         <span class="kw">use</span> <span class="ident">DependencyDirection</span>::<span class="kw-2">*</span>;
 
         <span class="comment">// This code dynamically switches over all the possible ways to iterate over dependencies.</span>
@@ -990,8 +1002,8 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">enum</span> <span class="ident">PackageSelectParams</span> {
     <span class="ident">All</span>,
-    <span class="ident">SelectForward</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span>),
-    <span class="ident">SelectReverse</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="ident">SelectForward</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="ident">SelectReverse</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>),
 }
 
 <span class="kw">impl</span> <span class="ident">PackageSelectParams</span> {

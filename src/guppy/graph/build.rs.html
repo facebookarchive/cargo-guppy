@@ -430,13 +430,25 @@
 <span id="430">430</span>
 <span id="431">431</span>
 <span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
-    <span class="ident">kind_str</span>, <span class="ident">DependencyEdge</span>, <span class="ident">DependencyMetadata</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageGraphData</span>, <span class="ident">PackageMetadata</span>,
-    <span class="ident">Workspace</span>,
+    <span class="ident">kind_str</span>, <span class="ident">DependencyEdge</span>, <span class="ident">DependencyMetadata</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageGraphData</span>, <span class="ident">PackageIx</span>,
+    <span class="ident">PackageMetadata</span>, <span class="ident">Workspace</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">Metadata</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">Dependency</span>, <span class="ident">DependencyKind</span>, <span class="ident">NodeDep</span>, <span class="ident">Package</span>, <span class="ident">Resolve</span>};
@@ -523,24 +535,26 @@
 
 <span class="doccomment">/// Helper struct for building up dependency graph.</span>
 <span class="kw">struct</span> <span class="ident">GraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span><span class="op">&gt;</span>,
+    <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="comment">// The values of package_data are (node_idx, name, version).</span>
-    <span class="ident">package_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Version</span>)<span class="op">&gt;</span>,
+    <span class="ident">package_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Version</span>)<span class="op">&gt;</span>,
     <span class="ident">resolve_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeDep</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
     <span class="ident">workspace_root</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>,
     <span class="ident">workspace_members</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">GraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(
-        <span class="ident">packages</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">Package</span><span class="op">&gt;</span>,
+    <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">packages</span>: <span class="kw-2">&amp;</span>[<span class="ident">Package</span>],
         <span class="ident">resolve</span>: <span class="ident">Resolve</span>,
         <span class="ident">workspace_root</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>,
         <span class="ident">workspace_members</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="ident">Graph</span>::<span class="ident">new</span>();
+        <span class="comment">// No idea how many edges there are going to be, so use packages.len() as a reasonable lower</span>
+        <span class="comment">// bound.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="ident">Graph</span>::<span class="ident">with_capacity</span>(<span class="ident">packages</span>.<span class="ident">len</span>(), <span class="ident">packages</span>.<span class="ident">len</span>());
         <span class="kw">let</span> <span class="ident">package_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">packages</span>
-            .<span class="ident">into_iter</span>()
+            .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">node_idx</span> <span class="op">=</span> <span class="ident">dep_graph</span>.<span class="ident">add_node</span>(<span class="ident">package</span>.<span class="ident">id</span>.<span class="ident">clone</span>());
                 (
@@ -600,6 +614,11 @@
             <span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">update_edge</span>(<span class="ident">node_idx</span>, <span class="ident">dep_idx</span>, <span class="ident">edge</span>);
         }
 
+        <span class="comment">// The default features for this crate are stored in the package.features map along with</span>
+        <span class="comment">// named features.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">features</span> <span class="op">=</span> <span class="ident">package</span>.<span class="ident">features</span>;
+        <span class="kw">let</span> <span class="ident">default_features</span> <span class="op">=</span> <span class="ident">features</span>.<span class="ident">remove</span>(<span class="string">&quot;default&quot;</span>).<span class="ident">unwrap_or_default</span>();
+
         <span class="prelude-val">Ok</span>((
             <span class="ident">package</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
             <span class="ident">PackageMetadata</span> {
@@ -620,16 +639,21 @@
                 <span class="ident">metadata_table</span>: <span class="ident">package</span>.<span class="ident">metadata</span>,
                 <span class="ident">links</span>: <span class="ident">package</span>.<span class="ident">links</span>,
                 <span class="ident">publish</span>: <span class="ident">package</span>.<span class="ident">publish</span>,
+                <span class="ident">features</span>,
 
                 <span class="ident">node_idx</span>,
                 <span class="ident">workspace_path</span>,
+                <span class="ident">default_features</span>,
                 <span class="ident">resolved_deps</span>,
                 <span class="ident">resolved_features</span>,
             },
         ))
     }
 
-    <span class="kw">fn</span> <span class="ident">package_data</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">Version</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">package_data</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">Version</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> (<span class="ident">node_idx</span>, <span class="ident">name</span>, <span class="ident">version</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_data</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
             <span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;no package data found for package &#39;{}&#39;&quot;</span>, <span class="ident">id</span>))
         })<span class="question-mark">?</span>;
@@ -657,7 +681,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">workspace_path</span>.<span class="ident">to_path_buf</span>())
     }
 
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
     }
 }
@@ -666,7 +690,7 @@
     <span class="ident">from_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">PackageId</span>,
 
     <span class="doccomment">/// The package data, inherited from the graph build state.</span>
-    <span class="ident">package_data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Version</span>)<span class="op">&gt;</span>,
+    <span class="ident">package_data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Version</span>)<span class="op">&gt;</span>,
 
     <span class="doccomment">/// This is a mapping of renamed dependencies to their rename sources and dependency info --</span>
     <span class="doccomment">/// this always takes top priority.</span>
@@ -686,7 +710,7 @@
     <span class="doccomment">/// Constructs a new resolver using the provided package data and dependencies.</span>
     <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">from_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">PackageId</span>,
-        <span class="ident">package_data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Version</span>)<span class="op">&gt;</span>,
+        <span class="ident">package_data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Version</span>)<span class="op">&gt;</span>,
         <span class="ident">package_deps</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Dependency</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">renamed_map</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
