@@ -16,3 +16,4 @@ mod dep_helpers;
 mod dot_tests;
 mod fixtures;
 mod graph_tests;
+mod invalid_tests;

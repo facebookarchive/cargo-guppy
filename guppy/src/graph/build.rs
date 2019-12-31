@@ -374,6 +374,14 @@ impl DependencyEdge {
         let mut build: Option<DependencyMetadata> = None;
         let mut dev: Option<DependencyMetadata> = None;
         for &dep in deps {
+            // Dev dependencies cannot be optional.
+            if dep.kind == DependencyKind::Development && dep.optional {
+                return Err(Error::PackageGraphConstructError(format!(
+                    "for package '{}': dev-dependency '{}' marked optional",
+                    from_id, name,
+                )));
+            }
+
             let to_set = match dep.kind {
                 DependencyKind::Normal => &mut normal,
                 DependencyKind::Build => &mut build,
