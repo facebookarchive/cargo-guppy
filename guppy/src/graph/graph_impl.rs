@@ -690,6 +690,17 @@ impl DependencyEdge {
         self.dev.as_ref()
     }
 
+    /// Returns details about this dependency from the section specified by the given dependency
+    /// kind.
+    pub fn metadata_for_kind(&self, kind: DependencyKind) -> Option<&DependencyMetadata> {
+        match kind {
+            DependencyKind::Normal => self.normal(),
+            DependencyKind::Development => self.dev(),
+            DependencyKind::Build => self.build(),
+            _ => panic!("dependency metadata requested for unknown kind: {:?}", kind),
+        }
+    }
+
     /// Return true if this edge is dev-only, i.e. code from this edge will not be included in
     /// normal builds.
     pub fn dev_only(&self) -> bool {
