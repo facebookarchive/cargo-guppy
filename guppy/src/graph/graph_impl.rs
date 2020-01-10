@@ -3,7 +3,7 @@
 
 use crate::graph::{kind_str, DependencyDirection, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
-use cargo_metadata::{Dependency, DependencyKind, NodeDep};
+use cargo_metadata::{DependencyKind, NodeDep};
 use fixedbitset::FixedBitSet;
 use lazy_static::lazy_static;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
@@ -479,7 +479,6 @@ pub struct PackageMetadata {
     pub(super) description: Option<String>,
     pub(super) license: Option<String>,
     pub(super) license_file: Option<PathBuf>,
-    pub(super) deps: Vec<Dependency>,
     pub(super) manifest_path: PathBuf,
     pub(super) categories: Vec<String>,
     pub(super) keywords: Vec<String>,
@@ -495,6 +494,7 @@ pub struct PackageMetadata {
     pub(super) node_idx: NodeIndex<PackageIx>,
     pub(super) workspace_path: Option<PathBuf>,
     pub(super) default_features: Vec<String>,
+    pub(super) optional_deps: HashSet<Box<str>>,
     pub(super) resolved_deps: Vec<NodeDep>,
     pub(super) resolved_features: Vec<String>,
 }

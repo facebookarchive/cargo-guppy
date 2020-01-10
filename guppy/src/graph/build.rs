@@ -174,6 +174,32 @@ impl<'a> GraphBuildState<'a> {
         let mut features = package.features;
         let default_features = features.remove("default").unwrap_or_default();
 
+        // Optional dependencies could in principle be computed by looking at the edges out of this
+        // package, but unresolved dependencies aren't part of the graph so we're going to miss them
+        // (and many optional dependencies will be unresolved).
+        //
+        // XXX: This might be something to revisit if we start modeling unresolved dependencies in
+        // the graph.
+        //
+        // A dependency might be listed multiple times (e.g. as a build dependency and as a normal
+        // one). Some of them might be optional, some might not be. List a dependency here if *any*
+        // of those specifications are optional, since that's how Cargo features work. But also
+        // dedup them.
+        let optional_deps: HashSet<_> = package
+            .dependencies
+            .into_iter()
+            .filter_map(|dep| {
+                if dep.optional {
+                    match dep.rename {
+                        Some(rename) => Some(rename.into_boxed_str()),
+                        None => Some(dep.name.into_boxed_str()),
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect();
+
         Ok((
             package.id.clone(),
             PackageMetadata {
@@ -184,7 +210,6 @@ impl<'a> GraphBuildState<'a> {
                 description: package.description,
                 license: package.license,
                 license_file: package.license_file,
-                deps: package.dependencies,
                 manifest_path: package.manifest_path,
                 categories: package.categories,
                 keywords: package.keywords,
@@ -199,6 +224,7 @@ impl<'a> GraphBuildState<'a> {
                 node_idx,
                 workspace_path,
                 default_features,
+                optional_deps,
                 resolved_deps,
                 resolved_features,
             },
