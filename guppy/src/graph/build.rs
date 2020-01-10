@@ -207,17 +207,17 @@ impl<'a> GraphBuildState<'a> {
                 name: package.name,
                 version: package.version,
                 authors: package.authors,
-                description: package.description,
-                license: package.license,
-                license_file: package.license_file,
-                manifest_path: package.manifest_path,
+                description: package.description.map(|s| s.into()),
+                license: package.license.map(|s| s.into()),
+                license_file: package.license_file.map(|s| s.into()),
+                manifest_path: package.manifest_path.into(),
                 categories: package.categories,
                 keywords: package.keywords,
-                readme: package.readme,
-                repository: package.repository,
-                edition: package.edition,
+                readme: package.readme.map(|s| s.into()),
+                repository: package.repository.map(|s| s.into()),
+                edition: package.edition.into(),
                 metadata_table: package.metadata,
-                links: package.links,
+                links: package.links.map(|s| s.into()),
                 publish: package.publish,
                 features,
 
@@ -243,7 +243,7 @@ impl<'a> GraphBuildState<'a> {
 
     /// Computes the workspace path for this package. Errors if this package is not in the
     /// workspace.
-    fn workspace_path(&self, id: &PackageId, manifest_path: &Path) -> Result<PathBuf, Error> {
+    fn workspace_path(&self, id: &PackageId, manifest_path: &Path) -> Result<Box<Path>, Error> {
         // Strip off the workspace path from the manifest path.
         let workspace_path = manifest_path
             .strip_prefix(self.workspace_root)
@@ -259,7 +259,7 @@ impl<'a> GraphBuildState<'a> {
                 id, manifest_path
             ))
         })?;
-        Ok(workspace_path.to_path_buf())
+        Ok(workspace_path.to_path_buf().into_boxed_path())
     }
 
     fn finish(self) -> Graph<PackageId, DependencyEdge, Directed, PackageIx> {

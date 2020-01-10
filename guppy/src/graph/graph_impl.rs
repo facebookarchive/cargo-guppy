@@ -471,28 +471,30 @@ pub struct DependencyLink<'g> {
 /// details.
 #[derive(Clone, Debug)]
 pub struct PackageMetadata {
+    // Implementation note: we use Box<str> and Box<Path> to save on memory use when possible.
+
     // Fields extracted from the package.
     pub(super) id: PackageId,
     pub(super) name: String,
     pub(super) version: Version,
     pub(super) authors: Vec<String>,
-    pub(super) description: Option<String>,
-    pub(super) license: Option<String>,
-    pub(super) license_file: Option<PathBuf>,
-    pub(super) manifest_path: PathBuf,
+    pub(super) description: Option<Box<str>>,
+    pub(super) license: Option<Box<str>>,
+    pub(super) license_file: Option<Box<Path>>,
+    pub(super) manifest_path: Box<Path>,
     pub(super) categories: Vec<String>,
     pub(super) keywords: Vec<String>,
-    pub(super) readme: Option<PathBuf>,
-    pub(super) repository: Option<String>,
-    pub(super) edition: String,
+    pub(super) readme: Option<Box<Path>>,
+    pub(super) repository: Option<Box<str>>,
+    pub(super) edition: Box<str>,
     pub(super) metadata_table: JsonValue,
-    pub(super) links: Option<String>,
+    pub(super) links: Option<Box<str>>,
     pub(super) publish: Option<Vec<String>>,
     pub(super) features: HashMap<String, Vec<String>>,
 
     // Other information.
     pub(super) node_idx: NodeIndex<PackageIx>,
-    pub(super) workspace_path: Option<PathBuf>,
+    pub(super) workspace_path: Option<Box<Path>>,
     pub(super) default_features: Vec<String>,
     pub(super) optional_deps: HashSet<Box<str>>,
     pub(super) resolved_deps: Vec<NodeDep>,
@@ -530,7 +532,7 @@ impl PackageMetadata {
     ///
     /// This is the same as the `description` field of `Cargo.toml`.
     pub fn description(&self) -> Option<&str> {
-        self.description.as_ref().map(|x| x.as_str())
+        self.description.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns an SPDX 2.1 license expression for this package, if specified.
@@ -538,7 +540,7 @@ impl PackageMetadata {
     /// This is the same as the `license` field of `Cargo.toml`. Note that `guppy` does not perform
     /// any validation on this, though `crates.io` does if a crate is uploaded there.
     pub fn license(&self) -> Option<&str> {
-        self.license.as_ref().map(|x| x.as_str())
+        self.license.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns the path to a license file for this package, if specified.
@@ -546,7 +548,7 @@ impl PackageMetadata {
     /// This is the same as the `license_file` field of `Cargo.toml`. It is typically only specified
     /// for nonstandard licenses.
     pub fn license_file(&self) -> Option<&Path> {
-        self.license_file.as_ref().map(|path| path.as_path())
+        self.license_file.as_ref().map(|path| path.as_ref())
     }
 
     /// Returns the full path to the `Cargo.toml` for this package.
@@ -577,14 +579,14 @@ impl PackageMetadata {
     /// This is the same as the `readme` field of `Cargo.toml`. The path returned is relative to the
     /// directory the `Cargo.toml` is in (i.e. relative to the parent of `self.manifest_path()`).
     pub fn readme(&self) -> Option<&Path> {
-        self.readme.as_ref().map(|path| path.as_path())
+        self.readme.as_ref().map(|path| path.as_ref())
     }
 
     /// Returns the source code repository for this package, if specified.
     ///
     /// This is the same as the `repository` field of `Cargo.toml`.
     pub fn repository(&self) -> Option<&str> {
-        self.repository.as_ref().map(|x| x.as_str())
+        self.repository.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns the Rust edition this package is written against.
@@ -608,7 +610,7 @@ impl PackageMetadata {
     /// Key](https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key) in
     /// the Cargo book for more details.
     pub fn links(&self) -> Option<&str> {
-        self.links.as_ref().map(|x| x.as_str())
+        self.links.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns the list of registries to which this package may be published.
@@ -628,12 +630,12 @@ impl PackageMetadata {
     /// Returns the relative path to this package in the workspace, or `None` if this package is
     /// not in the workspace.
     pub fn workspace_path(&self) -> Option<&Path> {
-        self.workspace_path.as_ref().map(|path| path.as_path())
+        self.workspace_path.as_ref().map(|path| path.as_ref())
     }
 
     /// Returns the list of features enabled by default for this package.
     pub fn default_features(&self) -> impl Iterator<Item = &str> + ExactSizeIterator {
-        self.default_features.iter().map(|s| s.as_str())
+        self.default_features.iter().map(|s| s.as_ref())
     }
 
     /// Returns the list of named features available for this package.
@@ -642,7 +644,7 @@ impl PackageMetadata {
     /// [the reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).
     pub fn named_features(&self) -> impl Iterator<Item = &str> + ExactSizeIterator {
         // TODO: expose dependencies via a graph structure.
-        self.features.keys().map(|s| s.as_str())
+        self.features.keys().map(|s| s.as_ref())
     }
 }
 
