@@ -169,10 +169,7 @@ impl<'a> GraphBuildState<'a> {
             self.dep_graph.update_edge(node_idx, dep_idx, edge);
         }
 
-        // The default features for this crate are stored in the package.features map along with
-        // named features.
-        let mut features = package.features;
-        let default_features = features.remove("default").unwrap_or_default();
+        let has_default_feature = package.features.contains_key("default");
 
         // Optional dependencies could in principle be computed by looking at the edges out of this
         // package, but unresolved dependencies aren't part of the graph so we're going to miss them
@@ -219,12 +216,12 @@ impl<'a> GraphBuildState<'a> {
                 metadata_table: package.metadata,
                 links: package.links.map(|s| s.into()),
                 publish: package.publish,
-                features,
+                features: package.features,
 
                 node_idx,
                 workspace_path,
-                default_features,
                 optional_deps,
+                has_default_feature,
                 resolved_deps,
                 resolved_features,
             },
