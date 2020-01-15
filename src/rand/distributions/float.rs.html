@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.7.2/src/distributions/float.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>float.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../rand/index.html'><div class='logo-container'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.7.3/src/distributions/float.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>float.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../rand/index.html'><div class='logo-container'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -296,6 +296,15 @@
 <span id="296">296</span>
 <span id="297">297</span>
 <span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2018 Developers of the Rand project.</span>
 <span class="comment">//</span>
@@ -307,18 +316,17 @@
 
 <span class="doccomment">//! Basic floating-point number distributions</span>
 
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Rng</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">distributions</span>::{<span class="ident">Distribution</span>, <span class="ident">Standard</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">distributions</span>::<span class="ident">utils</span>::<span class="ident">FloatSIMDUtils</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">packed_simd</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">distributions</span>::{<span class="ident">Distribution</span>, <span class="ident">Standard</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Rng</span>;
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span> <span class="kw">use</span> <span class="ident">packed_simd</span>::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// A distribution to sample floating point numbers uniformly in the half-open</span>
 <span class="doccomment">/// interval `(0, 1]`, i.e. including 1 but not 0.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// All values that can be generated are of the form `n * ε/2`. For `f32`</span>
-<span class="doccomment">/// the 23 most significant random bits of a `u32` are used and for `f64` the</span>
+<span class="doccomment">/// the 24 most significant random bits of a `u32` are used and for `f64` the</span>
 <span class="doccomment">/// 53 most significant bits of a `u64` are used. The conversion uses the</span>
 <span class="doccomment">/// multiplicative method.</span>
 <span class="doccomment">///</span>
@@ -345,7 +353,7 @@
 <span class="doccomment">/// interval `(0, 1)`, i.e. not including either endpoint.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// All values that can be generated are of the form `n * ε + ε/2`. For `f32`</span>
-<span class="doccomment">/// the 22 most significant random bits of an `u32` are used, for `f64` 52 from</span>
+<span class="doccomment">/// the 23 most significant random bits of an `u32` are used, for `f64` 52 from</span>
 <span class="doccomment">/// an `u64`. The conversion uses a transmute-based method.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See also: [`Standard`] which samples from `[0, 1)`, [`OpenClosed01`]</span>
@@ -448,20 +456,20 @@
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f32</span>, <span class="ident">u32</span>, <span class="ident">f32</span>, <span class="ident">u32</span>, <span class="number">23</span>, <span class="number">127</span> }
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f64</span>, <span class="ident">u64</span>, <span class="ident">f64</span>, <span class="ident">u64</span>, <span class="number">52</span>, <span class="number">1023</span> }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f32x2</span>, <span class="ident">u32x2</span>, <span class="ident">f32</span>, <span class="ident">u32</span>, <span class="number">23</span>, <span class="number">127</span> }
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f32x4</span>, <span class="ident">u32x4</span>, <span class="ident">f32</span>, <span class="ident">u32</span>, <span class="number">23</span>, <span class="number">127</span> }
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f32x8</span>, <span class="ident">u32x8</span>, <span class="ident">f32</span>, <span class="ident">u32</span>, <span class="number">23</span>, <span class="number">127</span> }
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f32x16</span>, <span class="ident">u32x16</span>, <span class="ident">f32</span>, <span class="ident">u32</span>, <span class="number">23</span>, <span class="number">127</span> }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f64x2</span>, <span class="ident">u64x2</span>, <span class="ident">f64</span>, <span class="ident">u64</span>, <span class="number">52</span>, <span class="number">1023</span> }
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f64x4</span>, <span class="ident">u64x4</span>, <span class="ident">f64</span>, <span class="ident">u64</span>, <span class="number">52</span>, <span class="number">1023</span> }
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
 <span class="macro">float_impls</span><span class="macro">!</span> { <span class="ident">f64x8</span>, <span class="ident">u64x8</span>, <span class="ident">f64</span>, <span class="ident">u64</span>, <span class="number">52</span>, <span class="number">1023</span> }
 
 
@@ -487,8 +495,7 @@
 
                 <span class="comment">// OpenClosed01</span>
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">zeros</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0</span>);
-                <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">zeros</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">OpenClosed01</span>),
-                           <span class="number">0.0</span> <span class="op">+</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span> <span class="op">/</span> <span class="number">2.0</span>);
+                <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">zeros</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">OpenClosed01</span>), <span class="number">0.0</span> <span class="op">+</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span> <span class="op">/</span> <span class="number">2.0</span>);
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">one</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">8</span> <span class="op">|</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="number">8</span> <span class="op">+</span> <span class="number">32</span>), <span class="number">0</span>);
                 <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">one</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">OpenClosed01</span>), <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span>);
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">max</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="op">!</span><span class="number">0</span>, <span class="number">0</span>);
@@ -502,16 +509,16 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">max</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="op">!</span><span class="number">0</span>, <span class="number">0</span>);
                 <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">max</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">Open01</span>), <span class="number">1.0</span> <span class="op">-</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span> <span class="op">/</span> <span class="number">2.0</span>);
             }
-        }
+        };
     }
     <span class="macro">test_f32</span><span class="macro">!</span> { <span class="ident">f32_edge_cases</span>, <span class="ident">f32</span>, <span class="number">0.0</span>, <span class="ident">EPSILON32</span> }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
     <span class="macro">test_f32</span><span class="macro">!</span> { <span class="ident">f32x2_edge_cases</span>, <span class="ident">f32x2</span>, <span class="ident">f32x2</span>::<span class="ident">splat</span>(<span class="number">0.0</span>), <span class="ident">f32x2</span>::<span class="ident">splat</span>(<span class="ident">EPSILON32</span>) }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
     <span class="macro">test_f32</span><span class="macro">!</span> { <span class="ident">f32x4_edge_cases</span>, <span class="ident">f32x4</span>, <span class="ident">f32x4</span>::<span class="ident">splat</span>(<span class="number">0.0</span>), <span class="ident">f32x4</span>::<span class="ident">splat</span>(<span class="ident">EPSILON32</span>) }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
     <span class="macro">test_f32</span><span class="macro">!</span> { <span class="ident">f32x8_edge_cases</span>, <span class="ident">f32x8</span>, <span class="ident">f32x8</span>::<span class="ident">splat</span>(<span class="number">0.0</span>), <span class="ident">f32x8</span>::<span class="ident">splat</span>(<span class="ident">EPSILON32</span>) }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
     <span class="macro">test_f32</span><span class="macro">!</span> { <span class="ident">f32x16_edge_cases</span>, <span class="ident">f32x16</span>, <span class="ident">f32x16</span>::<span class="ident">splat</span>(<span class="number">0.0</span>), <span class="ident">f32x16</span>::<span class="ident">splat</span>(<span class="ident">EPSILON32</span>) }
 
     <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">test_f64</span> {
@@ -528,8 +535,7 @@
 
                 <span class="comment">// OpenClosed01</span>
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">zeros</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0</span>);
-                <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">zeros</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">OpenClosed01</span>),
-                           <span class="number">0.0</span> <span class="op">+</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span> <span class="op">/</span> <span class="number">2.0</span>);
+                <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">zeros</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">OpenClosed01</span>), <span class="number">0.0</span> <span class="op">+</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span> <span class="op">/</span> <span class="number">2.0</span>);
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">one</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">11</span>, <span class="number">0</span>);
                 <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">one</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">OpenClosed01</span>), <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span>);
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">max</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="op">!</span><span class="number">0</span>, <span class="number">0</span>);
@@ -543,20 +549,20 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">max</span> <span class="op">=</span> <span class="ident">StepRng</span>::<span class="ident">new</span>(<span class="op">!</span><span class="number">0</span>, <span class="number">0</span>);
                 <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">max</span>.<span class="ident">sample</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>, <span class="kw">_</span><span class="op">&gt;</span>(<span class="ident">Open01</span>), <span class="number">1.0</span> <span class="op">-</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">EPSILON</span> <span class="op">/</span> <span class="number">2.0</span>);
             }
-        }
+        };
     }
     <span class="macro">test_f64</span><span class="macro">!</span> { <span class="ident">f64_edge_cases</span>, <span class="ident">f64</span>, <span class="number">0.0</span>, <span class="ident">EPSILON64</span> }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
     <span class="macro">test_f64</span><span class="macro">!</span> { <span class="ident">f64x2_edge_cases</span>, <span class="ident">f64x2</span>, <span class="ident">f64x2</span>::<span class="ident">splat</span>(<span class="number">0.0</span>), <span class="ident">f64x2</span>::<span class="ident">splat</span>(<span class="ident">EPSILON64</span>) }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
     <span class="macro">test_f64</span><span class="macro">!</span> { <span class="ident">f64x4_edge_cases</span>, <span class="ident">f64x4</span>, <span class="ident">f64x4</span>::<span class="ident">splat</span>(<span class="number">0.0</span>), <span class="ident">f64x4</span>::<span class="ident">splat</span>(<span class="ident">EPSILON64</span>) }
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
     <span class="macro">test_f64</span><span class="macro">!</span> { <span class="ident">f64x8_edge_cases</span>, <span class="ident">f64x8</span>, <span class="ident">f64x8</span>::<span class="ident">splat</span>(<span class="number">0.0</span>), <span class="ident">f64x8</span>::<span class="ident">splat</span>(<span class="ident">EPSILON64</span>) }
-    
+
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">value_stability</span>() {
         <span class="kw">fn</span> <span class="ident">test_samples</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">core</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="op">+</span> <span class="ident">PartialEq</span>, <span class="ident">D</span>: <span class="ident">Distribution</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-            <span class="ident">distr</span>: <span class="kw-2">&amp;</span><span class="ident">D</span>, <span class="ident">zero</span>: <span class="ident">T</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]
+            <span class="ident">distr</span>: <span class="kw-2">&amp;</span><span class="ident">D</span>, <span class="ident">zero</span>: <span class="ident">T</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>],
         ) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">test</span>::<span class="ident">rng</span>(<span class="number">0x6f44f5646c2a7334</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> [<span class="ident">zero</span>; <span class="number">3</span>];
@@ -565,33 +571,45 @@
             }
             <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>, <span class="ident">expected</span>);
         }
-        
+
         <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Standard</span>, <span class="number">0f32</span>, <span class="kw-2">&amp;</span>[<span class="number">0.0035963655</span>, <span class="number">0.7346052</span>, <span class="number">0.09778172</span>]);
-        <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Standard</span>, <span class="number">0f64</span>, <span class="kw-2">&amp;</span>[<span class="number">0.7346051961657583</span>,
-                <span class="number">0.20298547462974248</span>, <span class="number">0.8166436635290655</span>]);
-        
+        <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Standard</span>, <span class="number">0f64</span>, <span class="kw-2">&amp;</span>[
+            <span class="number">0.7346051961657583</span>,
+            <span class="number">0.20298547462974248</span>,
+            <span class="number">0.8166436635290655</span>,
+        ]);
+
         <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">OpenClosed01</span>, <span class="number">0f32</span>, <span class="kw-2">&amp;</span>[<span class="number">0.003596425</span>, <span class="number">0.73460525</span>, <span class="number">0.09778178</span>]);
-        <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">OpenClosed01</span>, <span class="number">0f64</span>, <span class="kw-2">&amp;</span>[<span class="number">0.7346051961657584</span>,
-                <span class="number">0.2029854746297426</span>, <span class="number">0.8166436635290656</span>]);
-        
+        <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">OpenClosed01</span>, <span class="number">0f64</span>, <span class="kw-2">&amp;</span>[
+            <span class="number">0.7346051961657584</span>,
+            <span class="number">0.2029854746297426</span>,
+            <span class="number">0.8166436635290656</span>,
+        ]);
+
         <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Open01</span>, <span class="number">0f32</span>, <span class="kw-2">&amp;</span>[<span class="number">0.0035963655</span>, <span class="number">0.73460525</span>, <span class="number">0.09778172</span>]);
-        <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Open01</span>, <span class="number">0f64</span>, <span class="kw-2">&amp;</span>[<span class="number">0.7346051961657584</span>,
-                <span class="number">0.20298547462974248</span>, <span class="number">0.8166436635290656</span>]);
-        
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span> {
+        <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Open01</span>, <span class="number">0f64</span>, <span class="kw-2">&amp;</span>[
+            <span class="number">0.7346051961657584</span>,
+            <span class="number">0.20298547462974248</span>,
+            <span class="number">0.8166436635290656</span>,
+        ]);
+
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_support&quot;</span>)]</span>
+        {
             <span class="comment">// We only test a sub-set of types here. Values are identical to</span>
             <span class="comment">// non-SIMD types; we assume this pattern continues across all</span>
             <span class="comment">// SIMD types.</span>
-            
+
             <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Standard</span>, <span class="ident">f32x2</span>::<span class="ident">new</span>(<span class="number">0.0</span>, <span class="number">0.0</span>), <span class="kw-2">&amp;</span>[
-                    <span class="ident">f32x2</span>::<span class="ident">new</span>(<span class="number">0.0035963655</span>, <span class="number">0.7346052</span>),
-                    <span class="ident">f32x2</span>::<span class="ident">new</span>(<span class="number">0.09778172</span>, <span class="number">0.20298547</span>),
-                    <span class="ident">f32x2</span>::<span class="ident">new</span>(<span class="number">0.34296435</span>, <span class="number">0.81664366</span>)]);
-            
+                <span class="ident">f32x2</span>::<span class="ident">new</span>(<span class="number">0.0035963655</span>, <span class="number">0.7346052</span>),
+                <span class="ident">f32x2</span>::<span class="ident">new</span>(<span class="number">0.09778172</span>, <span class="number">0.20298547</span>),
+                <span class="ident">f32x2</span>::<span class="ident">new</span>(<span class="number">0.34296435</span>, <span class="number">0.81664366</span>),
+            ]);
+
             <span class="ident">test_samples</span>(<span class="kw-2">&amp;</span><span class="ident">Standard</span>, <span class="ident">f64x2</span>::<span class="ident">new</span>(<span class="number">0.0</span>, <span class="number">0.0</span>), <span class="kw-2">&amp;</span>[
-                    <span class="ident">f64x2</span>::<span class="ident">new</span>(<span class="number">0.7346051961657583</span>, <span class="number">0.20298547462974248</span>),
-                    <span class="ident">f64x2</span>::<span class="ident">new</span>(<span class="number">0.8166436635290655</span>, <span class="number">0.7423708925400552</span>),
-                    <span class="ident">f64x2</span>::<span class="ident">new</span>(<span class="number">0.16387782224016323</span>, <span class="number">0.9087068770169618</span>)]);
+                <span class="ident">f64x2</span>::<span class="ident">new</span>(<span class="number">0.7346051961657583</span>, <span class="number">0.20298547462974248</span>),
+                <span class="ident">f64x2</span>::<span class="ident">new</span>(<span class="number">0.8166436635290655</span>, <span class="number">0.7423708925400552</span>),
+                <span class="ident">f64x2</span>::<span class="ident">new</span>(<span class="number">0.16387782224016323</span>, <span class="number">0.9087068770169618</span>),
+            ]);
         }
     }
 }
