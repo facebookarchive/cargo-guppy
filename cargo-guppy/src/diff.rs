@@ -1,37 +1,40 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::lockfile::{Lockfile, PackageId};
-use serde::Serialize;
+use guppy::{graph::PackageMetadata, PackageId};
+use serde::{ser::SerializeStruct, Serialize, Serializer};
 use std::collections::HashMap;
+use std::ops::Deref;
 
 #[derive(Debug, Default)]
 pub struct DiffOptions;
 
 impl DiffOptions {
-    pub fn diff(&self, old_lockfile: &Lockfile, new_lockfile: &Lockfile) -> Diff {
-        let mut new: HashMap<_, _> = new_lockfile
-            .packages()
-            .map(|p| (p.package_id(), p))
-            .collect();
+    pub fn diff<'a>(
+        &self,
+        old_packages: &'a [PackageMetadata],
+        new_packages: &'a [PackageMetadata],
+    ) -> Diff<'a> {
+        let mut new: HashMap<&PackageId, Package> =
+            new_packages.iter().map(|p| (p.id(), Package(p))).collect();
 
-        let mut removed = old_lockfile
-            .packages()
+        let mut removed = old_packages
+            .iter()
             .filter_map(|package| {
-                let pkg_id = package.package_id();
-                if new.remove(&pkg_id).is_none() {
-                    Some(pkg_id)
+                if new.remove(package.id()).is_none() {
+                    Some(Package(package))
                 } else {
                     None
                 }
             })
-            .map(|removed_pkg_id| {
-                let remaining_packages = new_lockfile
-                    .packages()
+            .map(|removed_package| {
+                let remaining_packages = new_packages
+                    .iter()
                     .filter_map(|package| {
-                        let pkg_id = package.package_id();
-                        if (pkg_id != removed_pkg_id) && (pkg_id.name() == removed_pkg_id.name()) {
-                            Some(pkg_id)
+                        if (package.id() != removed_package.id())
+                            && (package.name() == removed_package.name())
+                        {
+                            Some(Package(package))
                         } else {
                             None
                         }
@@ -39,22 +42,26 @@ impl DiffOptions {
                     .collect::<Vec<_>>();
 
                 if remaining_packages.is_empty() {
-                    (removed_pkg_id.clone(), None)
+                    (removed_package.id().clone(), (removed_package, None))
                 } else {
-                    (removed_pkg_id.clone(), Some(remaining_packages))
+                    (
+                        removed_package.id().clone(),
+                        (removed_package, Some(remaining_packages)),
+                    )
                 }
             })
             .collect::<HashMap<_, _>>();
 
         let mut added = new
             .into_iter()
-            .map(|(added_pkg_id, _pkg)| {
-                let existing_packages = new_lockfile
-                    .packages()
+            .map(|(added_package_id, added_package)| {
+                let existing_packages = new_packages
+                    .iter()
                     .filter_map(|package| {
-                        let pkg_id = package.package_id();
-                        if (pkg_id != added_pkg_id) && (package.name() == added_pkg_id.name()) {
-                            Some(pkg_id)
+                        if (package.id() != added_package_id)
+                            && (package.name() == added_package.name())
+                        {
+                            Some(Package(package))
                         } else {
                             None
                         }
@@ -62,37 +69,44 @@ impl DiffOptions {
                     .collect::<Vec<_>>();
 
                 if existing_packages.is_empty() {
-                    (added_pkg_id.clone(), None)
+                    (added_package_id, (added_package, None))
                 } else {
-                    (added_pkg_id.clone(), Some(existing_packages))
+                    (added_package_id, (added_package, Some(existing_packages)))
                 }
             })
             .collect::<HashMap<_, _>>();
 
         let mut updated = removed
             .iter()
-            .filter_map(|(removed_pkg_id, _)| {
-                if let Some((updated, _)) = added
-                    .iter()
-                    .find(|added_pkg| removed_pkg_id.name() == added_pkg.0.name())
+            .filter_map(|(_, (removed_package, _remaining_packages))| {
+                if let Some((_updated_package_id, (updated_package, _))) =
+                    added
+                        .iter()
+                        .find(|(_added_package_id, (added_package, _))| {
+                            removed_package.name() == added_package.name()
+                        })
                 {
-                    Some((removed_pkg_id.clone(), updated.clone()))
+                    Some((removed_package.clone(), updated_package.clone()))
                 } else {
                     None
                 }
             })
             .collect::<Vec<_>>();
-        updated.sort_by(|a, b| a.0.name().cmp(b.0.name()));
+        updated.sort_by(|a, b| a.1.name().cmp(b.1.name()));
 
         // Remove entries from Added and Removed
-        for (removed_pkg_id, added_pkg_id) in &updated {
-            removed.remove(removed_pkg_id);
-            added.remove(added_pkg_id);
+        for (removed_pkg, added_pkg) in &updated {
+            removed.remove(removed_pkg.id());
+            added.remove(added_pkg.id());
         }
 
-        let mut removed = removed.into_iter().collect::<Vec<_>>();
+        let updated = updated
+            .iter()
+            .cloned()
+            .collect::<Vec<(Package<'_>, Package<'_>)>>();
+        let mut removed = removed.into_iter().map(|x| x.1).collect::<Vec<_>>();
         removed.sort_by(|(a, _), (b, _)| a.name().cmp(b.name()));
-        let mut added = added.into_iter().collect::<Vec<_>>();
+        let mut added = added.into_iter().map(|x| x.1).collect::<Vec<_>>();
         added.sort_by(|(a, _), (b, _)| a.name().cmp(b.name()));
 
         Diff {
@@ -103,18 +117,42 @@ impl DiffOptions {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct Diff {
-    updated: Vec<(PackageId, PackageId)>,
-    removed: Vec<(PackageId, Option<Vec<PackageId>>)>,
-    added: Vec<(PackageId, Option<Vec<PackageId>>)>,
+#[derive(Clone, Debug)]
+struct Package<'a>(pub &'a PackageMetadata);
+
+impl<'a> Deref for Package<'a> {
+    type Target = PackageMetadata;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
 }
 
-impl ::std::fmt::Display for Diff {
+impl<'a> Serialize for Package<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Package", 3)?;
+        state.serialize_field("id", self.0.id())?;
+        state.serialize_field("name", self.0.name())?;
+        state.serialize_field("version", self.0.version())?;
+        state.end()
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct Diff<'a> {
+    updated: Vec<(Package<'a>, Package<'a>)>,
+    removed: Vec<(Package<'a>, Option<Vec<Package<'a>>>)>,
+    added: Vec<(Package<'a>, Option<Vec<Package<'a>>>)>,
+}
+
+impl<'a> ::std::fmt::Display for Diff<'a> {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         fn write_dups(
             f: &mut ::std::fmt::Formatter<'_>,
-            dups: &Option<Vec<PackageId>>,
+            dups: &Option<Vec<Package>>,
         ) -> ::std::fmt::Result {
             if let Some(dups) = dups {
                 write!(f, " ({}", dups[0].version())?;
