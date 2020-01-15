@@ -10,7 +10,7 @@ use guppy::{
     },
     MetadataCommand,
 };
-use lockfile::{diff, lockfile::Lockfile};
+use lockfile::{lockfile::Lockfile};
 use std::collections::HashSet;
 use std::fmt;
 use std::fs;
@@ -18,11 +18,19 @@ use std::io::Write;
 use structopt::StructOpt;
 use target_spec;
 
-pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
-    let old = Lockfile::from_file(old)?;
-    let new = Lockfile::from_file(new)?;
+mod diff;
 
-    let diff = diff::DiffOptions::default().diff(&old, &new);
+pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
+    let old_json = fs::read_to_string(old)?;
+    let new_json = fs::read_to_string(new)?;
+
+    let old_graph = PackageGraph::from_json(&old_json)?;
+    let new_graph = PackageGraph::from_json(&new_json)?;
+
+    let old_packages: Vec<_> = old_graph.packages().cloned().collect();
+    let new_packages: Vec<_> = new_graph.packages().cloned().collect();
+
+    let diff = diff::DiffOptions::default().diff(&old_packages, &new_packages);
 
     if json {
         println!("{}", serde_json::to_string_pretty(&diff).unwrap());
