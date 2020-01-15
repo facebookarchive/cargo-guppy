@@ -10,8 +10,8 @@ use guppy::{
     },
     MetadataCommand,
 };
-use lockfile::{lockfile::Lockfile};
-use std::collections::HashSet;
+use itertools;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fs;
 use std::io::Write;
@@ -42,17 +42,35 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
 }
 
 pub fn cmd_count() -> Result<(), anyhow::Error> {
-    let lockfile = Lockfile::from_file("Cargo.lock")?;
+    let mut command = MetadataCommand::new();
+    let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    println!("Third-party Packages: {}", lockfile.third_party_packages());
+    println!("Third-party Packages: {}", pkg_graph.package_count());
 
     Ok(())
 }
 
 pub fn cmd_dups() -> Result<(), anyhow::Error> {
-    let lockfile = Lockfile::from_file("Cargo.lock")?;
+    let mut command = MetadataCommand::new();
+    let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    lockfile.duplicate_packages();
+    let mut dupe_map = HashMap::new();
+    for package in pkg_graph.packages() {
+        dupe_map
+            .entry(package.name())
+            .or_insert(vec![])
+            .push(package);
+    }
+
+    for (name, dupes) in dupe_map {
+        if dupes.len() <= 1 {
+            continue;
+        }
+
+        let output = itertools::join(dupes.iter().map(|p| p.version()), ", ");
+
+        println!("{} ({})", name, output);
+    }
 
     Ok(())
 }
