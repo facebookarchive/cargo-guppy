@@ -100,10 +100,6 @@ impl DiffOptions {
             added.remove(added_pkg.id());
         }
 
-        let updated = updated
-            .iter()
-            .cloned()
-            .collect::<Vec<(Package<'_>, Package<'_>)>>();
         let mut removed = removed.into_iter().map(|x| x.1).collect::<Vec<_>>();
         removed.sort_by(|(a, _), (b, _)| a.name().cmp(b.name()));
         let mut added = added.into_iter().map(|x| x.1).collect::<Vec<_>>();

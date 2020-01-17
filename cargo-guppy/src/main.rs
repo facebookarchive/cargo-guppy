@@ -37,10 +37,8 @@ enum Command {
 fn args() -> impl Iterator<Item = String> {
     let mut args: Vec<String> = ::std::env::args().collect();
 
-    if args.len() >= 2 {
-        if args[0].ends_with(&format!("cargo-{}", args[1])) {
-            args.remove(1);
-        }
+    if args.len() >= 2 && args[0].ends_with(&format!("cargo-{}", args[1])) {
+        args.remove(1);
     }
 
     args.into_iter()
