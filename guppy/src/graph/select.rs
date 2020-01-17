@@ -29,7 +29,7 @@ pub struct PackageSelect<'g> {
 /// package graph. Use the methods here for queries based on transitive dependencies.
 impl PackageGraph {
     /// Creates a new selector that returns all members of this package graph.
-    pub fn select_all<'g>(&'g self) -> PackageSelect<'g> {
+    pub fn select_all(&self) -> PackageSelect {
         PackageSelect {
             package_graph: self,
             params: PackageSelectParams::All,

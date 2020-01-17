@@ -4,10 +4,11 @@
 use crate::graph::{kind_str, DependencyDirection, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep};
+use fixedbitset::FixedBitSet;
 use lazy_static::lazy_static;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers, Visitable};
+use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
@@ -378,10 +379,7 @@ impl PackageGraphData {
 #[derive(Clone, Debug)]
 pub struct DependsCache<'g> {
     package_graph: &'g PackageGraph,
-    dfs_space: DfsSpace<
-        NodeIndex<PackageIx>,
-        <Graph<NodeIndex<PackageIx>, EdgeIndex<PackageIx>> as Visitable>::Map,
-    >,
+    dfs_space: DfsSpace<NodeIndex<PackageIx>, FixedBitSet>,
 }
 
 impl<'g> DependsCache<'g> {
