@@ -61,4 +61,6 @@ pub use errors::Error;
 #[doc(no_inline)]
 pub use cargo_metadata::{Metadata, MetadataCommand, PackageId};
 #[doc(no_inline)]
+pub use semver::Version;
+#[doc(no_inline)]
 pub use serde_json::Value as JsonValue;
