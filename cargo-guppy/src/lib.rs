@@ -27,8 +27,8 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
     let old_graph = PackageGraph::from_json(&old_json)?;
     let new_graph = PackageGraph::from_json(&new_json)?;
 
-    let old_packages: Vec<_> = old_graph.packages().cloned().collect();
-    let new_packages: Vec<_> = new_graph.packages().cloned().collect();
+    let old_packages: Vec<_> = old_graph.packages().collect();
+    let new_packages: Vec<_> = new_graph.packages().collect();
 
     let diff = diff::DiffOptions::default().diff(&old_packages, &new_packages);
 
