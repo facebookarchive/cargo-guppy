@@ -12,8 +12,8 @@ pub struct DiffOptions;
 impl DiffOptions {
     pub fn diff<'a>(
         &self,
-        old_packages: &'a [PackageMetadata],
-        new_packages: &'a [PackageMetadata],
+        old_packages: &[&'a PackageMetadata],
+        new_packages: &[&'a PackageMetadata],
     ) -> Diff<'a> {
         let mut new: HashMap<&PackageId, Package> =
             new_packages.iter().map(|p| (p.id(), Package(p))).collect();
