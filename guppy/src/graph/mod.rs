@@ -11,14 +11,14 @@ use petgraph::prelude::*;
 use std::fmt;
 
 mod build;
-mod graph;
+mod graph_impl;
 mod print;
 #[cfg(feature = "proptest09")]
 mod proptest09;
 mod select;
 
 pub use crate::petgraph_support::dot::DotWrite;
-pub use graph::*;
+pub use graph_impl::*;
 use petgraph::graph::IndexType;
 pub use print::*;
 pub use select::*;
@@ -36,7 +36,7 @@ pub enum DependencyDirection {
 
 impl DependencyDirection {
     /// Returns the opposite direction to this one.
-    pub fn opposite(&self) -> Self {
+    pub fn opposite(self) -> Self {
         match self {
             DependencyDirection::Forward => DependencyDirection::Reverse,
             DependencyDirection::Reverse => DependencyDirection::Forward,
