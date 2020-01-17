@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  lint:
     docker:
       - image: circleci/rust:stretch
     steps:
@@ -10,16 +10,34 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - run:
           name: Install Rust Components
-          command: |
-            rustup component add rustfmt
+          command: rustup component add rustfmt clippy
+      - run:
+          name: Component Version Information
+          command: cargo fmt -- --version; cargo clippy -- --version
       - run:
           name: Setup Env
           command: |
             echo 'export RUSTFLAGS="-D warnings"' >> $BASH_ENV
       - run:
-          name: Linting
+          name: Lint (rustfmt)
           command: |
             cargo fmt -- --check
+      - run:
+          name: Lint (clippy)
+          command: |
+            cargo clippy
+  build:
+    docker:
+      - image: circleci/rust:stretch
+    steps:
+      - checkout
+      - run:
+          name: Version Information
+          command: rustc --version; cargo --version; rustup --version
+      - run:
+          name: Setup Env
+          command: |
+            echo 'export RUSTFLAGS="-D warnings"' >> $BASH_ENV
       - run:
           name: Build and Test
           # Build all targets to ensure examples are built as well.
@@ -92,11 +110,13 @@ workflows:
   version: 2
   build:
     jobs:
+      - lint
       - build
       - build-all-features
       - docs-build
       - docs-deploy:
           requires:
+            - lint
             - build
             - build-all-features
             - docs-build
