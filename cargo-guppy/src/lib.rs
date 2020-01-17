@@ -8,13 +8,15 @@ use guppy::{
         DependencyDirection, DependencyLink, DotWrite, PackageDotVisitor, PackageGraph,
         PackageMetadata,
     },
-    MetadataCommand,
+    MetadataCommand, PackageId,
 };
 use itertools;
+use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fs;
 use std::io::Write;
+use std::iter;
 use structopt::StructOpt;
 use target_spec;
 
@@ -172,36 +174,7 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
         }
     }
 
-    pkg_graph.retain_edges(|_, DependencyLink { from, to, edge }| {
-        // filter by the kind of dependency (--kind)
-        let include_kind = match options.filter_opts.kind {
-            Kind::All | Kind::ThirdParty => true,
-            Kind::Workspace => from.in_workspace() && to.in_workspace(),
-        };
-
-        // filter out irrelevant dependencies for a specific target (--target)
-        let include_target = if let Some(ref target) = options.filter_opts.target {
-            edge.normal()
-                .and_then(|meta| meta.target())
-                .and_then(|edge_target| {
-                    let res = target_spec::eval(edge_target, target).unwrap_or(true);
-                    Some(res)
-                })
-                .unwrap_or(true)
-        } else {
-            true
-        };
-
-        // filter normal, dev, and build dependencies (--include-build, --include-dev)
-        let include_type = edge.normal().is_some()
-            || options.filter_opts.include_dev && edge.dev().is_some()
-            || options.filter_opts.include_build && edge.build().is_some();
-
-        // filter out provided edge targets (--omit-edges-into)
-        let include_edge = !omitted_package_ids.contains(to.id());
-
-        include_kind && include_target && include_type && include_edge
-    });
+    narrow_graph(&mut pkg_graph, &options.filter_opts);
 
     for package in pkg_graph.select_forward(&package_ids)?.into_iter_ids(None) {
         let in_workspace = pkg_graph.metadata(package).unwrap().in_workspace();
@@ -224,4 +197,142 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
     }
 
     Ok(())
+}
+
+#[derive(Debug, StructOpt)]
+pub struct SubtreeSizeOptions {
+    #[structopt(flatten)]
+    filter_opts: FilterOptions,
+
+    #[structopt(rename_all = "screaming_snake_case")]
+    /// The root packages to start the selection from
+    root: Option<String>,
+}
+
+pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Error> {
+    let mut command = MetadataCommand::new();
+    let mut pkg_graph = PackageGraph::from_command(&mut command)?;
+
+    // narrow the graph
+    narrow_graph(&mut pkg_graph, &options.filter_opts);
+
+    let mut dep_cache = pkg_graph.new_depends_cache();
+
+    let root_id = options
+        .root
+        .as_ref()
+        .and_then(|root_name| {
+            pkg_graph
+                .packages()
+                .find(|metadata| root_name == metadata.name())
+        })
+        .map(|metadata| metadata.id());
+    let selection = if options.root.is_some() {
+        pkg_graph.select_forward(iter::once(root_id.unwrap()))?
+    } else {
+        pkg_graph.select_all()
+    };
+
+    let mut unique_deps: HashMap<&PackageId, HashSet<&PackageId>> = HashMap::new();
+    for package_id in selection.into_iter_ids(None) {
+        let subtree_package_set: HashSet<&PackageId> = pkg_graph
+            .select_forward(iter::once(package_id))?
+            .into_iter_ids(None)
+            .collect();
+        let mut nonunique_deps_set: HashSet<&PackageId> = HashSet::new();
+        for dep_package_id in pkg_graph
+            .select_forward(iter::once(package_id))?
+            .into_iter_ids(None)
+        {
+            // don't count ourself
+            if dep_package_id == package_id {
+                continue;
+            }
+
+            let mut unique = true;
+            for reverse_dep_link in pkg_graph.reverse_dep_links(dep_package_id).unwrap() {
+                // skip build and dev dependencies
+                if reverse_dep_link.edge.dev_only() {
+                    continue;
+                }
+
+                if !subtree_package_set.contains(reverse_dep_link.from.id())
+                    || nonunique_deps_set.contains(reverse_dep_link.from.id())
+                {
+                    // if the from is from outside the subtree rooted at root_id, we ignore it
+                    if let Some(root_id) = root_id {
+                        if !dep_cache.depends_on(root_id, reverse_dep_link.from.id())? {
+                            continue;
+                        }
+                    }
+
+                    unique = false;
+                    nonunique_deps_set.insert(dep_package_id);
+                    break;
+                }
+            }
+
+            let unique_list = unique_deps.entry(package_id).or_insert_with(HashSet::new);
+            if unique {
+                unique_list.insert(dep_package_id);
+            }
+        }
+    }
+
+    let mut sorted_unique_deps = unique_deps.into_iter().collect::<Vec<_>>();
+    sorted_unique_deps.sort_by_key(|a| cmp::Reverse(a.1.len()));
+
+    for (package_id, deps) in sorted_unique_deps.iter() {
+        if !deps.is_empty() {
+            println!("{} {}", deps.len(), package_id);
+        }
+        for dep in deps {
+            println!("    {}", dep);
+        }
+    }
+
+    Ok(())
+}
+
+/// Narrow a package graph by removing specific edges.
+fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
+    let omitted_set: HashSet<String> = options.omit_edges_into.iter().cloned().collect();
+
+    let mut omitted_package_ids = HashSet::new();
+    for metadata in pkg_graph.packages() {
+        if omitted_set.contains(metadata.name()) {
+            omitted_package_ids.insert(metadata.id().clone());
+        }
+    }
+
+    pkg_graph.retain_edges(|_, DependencyLink { from, to, edge }| {
+        // filter by the kind of dependency (--kind)
+        let include_kind = match options.kind {
+            Kind::All | Kind::ThirdParty => true,
+            Kind::Workspace => from.in_workspace() && to.in_workspace(),
+        };
+
+        // filter out irrelevant dependencies for a specific target (--target)
+        let include_target = if let Some(ref target) = options.target {
+            edge.normal()
+                .and_then(|meta| meta.target())
+                .and_then(|edge_target| {
+                    let res = target_spec::eval(edge_target, target).unwrap_or(true);
+                    Some(res)
+                })
+                .unwrap_or(true)
+        } else {
+            true
+        };
+
+        // filter normal, dev, and build dependencies (--include-build, --include-dev)
+        let include_type = edge.normal().is_some()
+            || options.include_dev && edge.dev().is_some()
+            || options.include_build && edge.build().is_some();
+
+        // filter out provided edge targets (--omit-edges-into)
+        let include_edge = !omitted_package_ids.contains(to.id());
+
+        include_kind && include_target && include_type && include_edge
+    });
 }

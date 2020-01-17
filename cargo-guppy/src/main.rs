@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use cargo_guppy::SelectOptions;
+use cargo_guppy::{SelectOptions, SubtreeSizeOptions};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -30,6 +30,9 @@ enum Command {
     #[structopt(name = "select")]
     /// Select packages and their transitive dependencies
     Select(SelectOptions),
+    #[structopt(name = "subtree-size")]
+    /// Print a list of dependencies along with their unique subtree size
+    SubtreeSize(SubtreeSizeOptions),
 }
 
 // When invoked as a cargo subcommand, cargo passes too many arguments so we need to filter out
@@ -52,6 +55,7 @@ fn main() {
         Command::Count => cargo_guppy::cmd_count(),
         Command::Duplicates => cargo_guppy::cmd_dups(),
         Command::Select(ref options) => cargo_guppy::cmd_select(options),
+        Command::SubtreeSize(ref options) => cargo_guppy::cmd_subtree_size(options),
     };
 
     match result {
