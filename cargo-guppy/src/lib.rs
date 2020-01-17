@@ -54,12 +54,9 @@ pub fn cmd_dups() -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    let mut dupe_map = HashMap::new();
+    let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
     for package in pkg_graph.packages() {
-        dupe_map
-            .entry(package.name())
-            .or_insert(vec![])
-            .push(package);
+        dupe_map.entry(package.name()).or_default().push(package);
     }
 
     for (name, dupes) in dupe_map {
@@ -149,7 +146,7 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
     // does not handle multiple version of the same package as the current use
     // cases are passing workspace members as the root set, which won't be
     // duplicated.
-    let root_set: HashSet<String> = if options.roots.len() > 0 {
+    let root_set: HashSet<String> = if options.roots.is_empty() {
         options.roots.iter().cloned().collect()
     } else {
         pkg_graph
