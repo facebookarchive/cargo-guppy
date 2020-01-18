@@ -12,6 +12,7 @@ use Error::*;
 
 /// Error type describing the sorts of errors `guppy` can return.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     // The config API isn't public yet, so hide errors within it.
     #[doc(hidden)]
