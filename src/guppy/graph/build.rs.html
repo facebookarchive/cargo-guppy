@@ -442,6 +442,39 @@
 <span id="442">442</span>
 <span id="443">443</span>
 <span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -452,6 +485,7 @@
 };
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">Metadata</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">Dependency</span>, <span class="ident">DependencyKind</span>, <span class="ident">NodeDep</span>, <span class="ident">Package</span>, <span class="ident">Resolve</span>};
+<span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">semver</span>::<span class="ident">Version</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
@@ -487,6 +521,7 @@
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">dep_graph</span>,
+            <span class="ident">feature_graph</span>: <span class="ident">OnceCell</span>::<span class="ident">new</span>(),
             <span class="ident">data</span>: <span class="ident">PackageGraphData</span> {
                 <span class="ident">packages</span>,
                 <span class="ident">workspace</span>,
@@ -614,10 +649,33 @@
             <span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">update_edge</span>(<span class="ident">node_idx</span>, <span class="ident">dep_idx</span>, <span class="ident">edge</span>);
         }
 
-        <span class="comment">// The default features for this crate are stored in the package.features map along with</span>
-        <span class="comment">// named features.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">features</span> <span class="op">=</span> <span class="ident">package</span>.<span class="ident">features</span>;
-        <span class="kw">let</span> <span class="ident">default_features</span> <span class="op">=</span> <span class="ident">features</span>.<span class="ident">remove</span>(<span class="string">&quot;default&quot;</span>).<span class="ident">unwrap_or_default</span>();
+        <span class="kw">let</span> <span class="ident">has_default_feature</span> <span class="op">=</span> <span class="ident">package</span>.<span class="ident">features</span>.<span class="ident">contains_key</span>(<span class="string">&quot;default&quot;</span>);
+
+        <span class="comment">// Optional dependencies could in principle be computed by looking at the edges out of this</span>
+        <span class="comment">// package, but unresolved dependencies aren&#39;t part of the graph so we&#39;re going to miss them</span>
+        <span class="comment">// (and many optional dependencies will be unresolved).</span>
+        <span class="comment">//</span>
+        <span class="comment">// XXX: This might be something to revisit if we start modeling unresolved dependencies in</span>
+        <span class="comment">// the graph.</span>
+        <span class="comment">//</span>
+        <span class="comment">// A dependency might be listed multiple times (e.g. as a build dependency and as a normal</span>
+        <span class="comment">// one). Some of them might be optional, some might not be. List a dependency here if *any*</span>
+        <span class="comment">// of those specifications are optional, since that&#39;s how Cargo features work. But also</span>
+        <span class="comment">// dedup them.</span>
+        <span class="kw">let</span> <span class="ident">optional_deps</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">package</span>
+            .<span class="ident">dependencies</span>
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> {
+                <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">optional</span> {
+                    <span class="kw">match</span> <span class="ident">dep</span>.<span class="ident">rename</span> {
+                        <span class="prelude-val">Some</span>(<span class="ident">rename</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">rename</span>.<span class="ident">into_boxed_str</span>()),
+                        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">dep</span>.<span class="ident">name</span>.<span class="ident">into_boxed_str</span>()),
+                    }
+                } <span class="kw">else</span> {
+                    <span class="prelude-val">None</span>
+                }
+            })
+            .<span class="ident">collect</span>();
 
         <span class="prelude-val">Ok</span>((
             <span class="ident">package</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
@@ -626,24 +684,24 @@
                 <span class="ident">name</span>: <span class="ident">package</span>.<span class="ident">name</span>,
                 <span class="ident">version</span>: <span class="ident">package</span>.<span class="ident">version</span>,
                 <span class="ident">authors</span>: <span class="ident">package</span>.<span class="ident">authors</span>,
-                <span class="ident">description</span>: <span class="ident">package</span>.<span class="ident">description</span>,
-                <span class="ident">license</span>: <span class="ident">package</span>.<span class="ident">license</span>,
-                <span class="ident">license_file</span>: <span class="ident">package</span>.<span class="ident">license_file</span>,
-                <span class="ident">deps</span>: <span class="ident">package</span>.<span class="ident">dependencies</span>,
-                <span class="ident">manifest_path</span>: <span class="ident">package</span>.<span class="ident">manifest_path</span>,
+                <span class="ident">description</span>: <span class="ident">package</span>.<span class="ident">description</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="ident">license</span>: <span class="ident">package</span>.<span class="ident">license</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="ident">license_file</span>: <span class="ident">package</span>.<span class="ident">license_file</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="ident">manifest_path</span>: <span class="ident">package</span>.<span class="ident">manifest_path</span>.<span class="ident">into</span>(),
                 <span class="ident">categories</span>: <span class="ident">package</span>.<span class="ident">categories</span>,
                 <span class="ident">keywords</span>: <span class="ident">package</span>.<span class="ident">keywords</span>,
-                <span class="ident">readme</span>: <span class="ident">package</span>.<span class="ident">readme</span>,
-                <span class="ident">repository</span>: <span class="ident">package</span>.<span class="ident">repository</span>,
-                <span class="ident">edition</span>: <span class="ident">package</span>.<span class="ident">edition</span>,
+                <span class="ident">readme</span>: <span class="ident">package</span>.<span class="ident">readme</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="ident">repository</span>: <span class="ident">package</span>.<span class="ident">repository</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="ident">edition</span>: <span class="ident">package</span>.<span class="ident">edition</span>.<span class="ident">into</span>(),
                 <span class="ident">metadata_table</span>: <span class="ident">package</span>.<span class="ident">metadata</span>,
-                <span class="ident">links</span>: <span class="ident">package</span>.<span class="ident">links</span>,
+                <span class="ident">links</span>: <span class="ident">package</span>.<span class="ident">links</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
                 <span class="ident">publish</span>: <span class="ident">package</span>.<span class="ident">publish</span>,
-                <span class="ident">features</span>,
+                <span class="ident">features</span>: <span class="ident">package</span>.<span class="ident">features</span>,
 
                 <span class="ident">node_idx</span>,
                 <span class="ident">workspace_path</span>,
-                <span class="ident">default_features</span>,
+                <span class="ident">optional_deps</span>,
+                <span class="ident">has_default_feature</span>,
                 <span class="ident">resolved_deps</span>,
                 <span class="ident">resolved_features</span>,
             },
@@ -662,7 +720,7 @@
 
     <span class="doccomment">/// Computes the workspace path for this package. Errors if this package is not in the</span>
     <span class="doccomment">/// workspace.</span>
-    <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>, <span class="ident">manifest_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PathBuf</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>, <span class="ident">manifest_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// Strip off the workspace path from the manifest path.</span>
         <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">manifest_path</span>
             .<span class="ident">strip_prefix</span>(<span class="self">self</span>.<span class="ident">workspace_root</span>)
@@ -678,7 +736,7 @@
                 <span class="ident">id</span>, <span class="ident">manifest_path</span>
             ))
         })<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">workspace_path</span>.<span class="ident">to_path_buf</span>())
+        <span class="prelude-val">Ok</span>(<span class="ident">workspace_path</span>.<span class="ident">to_path_buf</span>().<span class="ident">into_boxed_path</span>())
     }
 
     <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
@@ -819,6 +877,14 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">build</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DependencyMetadata</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dev</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DependencyMetadata</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">dep</span> <span class="kw">in</span> <span class="ident">deps</span> {
+            <span class="comment">// Dev dependencies cannot be optional.</span>
+            <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">kind</span> <span class="op">=</span><span class="op">=</span> <span class="ident">DependencyKind</span>::<span class="ident">Development</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">dep</span>.<span class="ident">optional</span> {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
+                    <span class="string">&quot;for package &#39;{}&#39;: dev-dependency &#39;{}&#39; marked optional&quot;</span>,
+                    <span class="ident">from_id</span>, <span class="ident">name</span>,
+                )));
+            }
+
             <span class="kw">let</span> <span class="ident">to_set</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">dep</span>.<span class="ident">kind</span> {
                 <span class="ident">DependencyKind</span>::<span class="ident">Normal</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">normal</span>,
                 <span class="ident">DependencyKind</span>::<span class="ident">Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">build</span>,

@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Error type describing the sorts of errors `guppy` can return."]],"mod":[["graph","Entry point for analyzing Cargo dependency graphs."]]});
+initSidebarItems({"mod":[["errors","Contains types that describe errors and warnings that `guppy` methods can return."],["graph","Entry point for analyzing Cargo dependency graphs."]]});

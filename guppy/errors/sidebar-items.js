@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Error","Error type describing the sorts of errors `guppy` can return."],["FeatureBuildStage","Describes the stage of construction at which a feature graph warning occurred."],["FeatureGraphWarning","Describes warnings emitted during feature graph construction."]]});
