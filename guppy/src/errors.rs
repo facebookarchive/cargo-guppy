@@ -116,8 +116,6 @@ pub enum FeatureBuildStage {
         package_id: PackageId,
         /// The name of the dependency.
         dep_name: String,
-        /// Whether this edge marked an optional dependency.
-        optional: bool,
     },
 }
 
@@ -136,13 +134,10 @@ impl fmt::Display for FeatureBuildStage {
             AddDependencyEdges {
                 package_id,
                 dep_name,
-                optional,
             } => write!(
                 f,
-                "for package '{}', while adding {} edges for dependency '{}'",
-                package_id,
-                if *optional { "optional" } else { "mandatory" },
-                dep_name,
+                "for package '{}', while adding edges for dependency '{}'",
+                package_id, dep_name,
             ),
         }
     }

@@ -5,6 +5,7 @@ use crate::graph::{kind_str, DependencyDirection, FeatureGraphImpl, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
 use fixedbitset::FixedBitSet;
+use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
@@ -491,13 +492,14 @@ pub struct PackageMetadata {
     pub(super) metadata_table: JsonValue,
     pub(super) links: Option<Box<str>>,
     pub(super) publish: Option<Vec<String>>,
-    pub(super) features: HashMap<String, Vec<String>>,
+    // Some(...) means named feature with listed dependencies.
+    // None means an optional dependency.
+    pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
 
     // Other information.
     pub(super) node_idx: NodeIndex<PackageIx>,
     pub(super) workspace_path: Option<Box<Path>>,
     pub(super) has_default_feature: bool,
-    pub(super) optional_deps: HashSet<Box<str>>,
     pub(super) resolved_deps: Vec<NodeDep>,
     pub(super) resolved_features: Vec<String>,
 }
@@ -648,8 +650,40 @@ impl PackageMetadata {
     ///
     /// A named feature is listed in the `[features]` section of `Cargo.toml`. For more, see
     /// [the reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).
-    pub fn named_features(&self) -> impl Iterator<Item = &str> + ExactSizeIterator {
-        self.features.keys().map(|s| s.as_ref())
+    pub fn named_features(&self) -> impl Iterator<Item = &str> {
+        self.named_features_full()
+            .map(|(_, named_feature, _)| named_feature)
+    }
+
+    pub(super) fn get_feature_idx(&self, feature: &str) -> Option<usize> {
+        self.features.get_full(feature).map(|(n, _, _)| n)
+    }
+
+    pub(super) fn named_features_full(&self) -> impl Iterator<Item = (usize, &str, &[String])> {
+        self.features
+            .iter()
+            // IndexMap is documented to use indexes 0..n without holes, so this enumerate()
+            // is correct.
+            .enumerate()
+            .filter_map(|(n, (feature, deps))| {
+                deps.as_ref()
+                    .map(|deps| (n, feature.as_ref(), deps.as_slice()))
+            })
+    }
+
+    pub(super) fn optional_deps_full(&self) -> impl Iterator<Item = (usize, &str)> {
+        self.features
+            .iter()
+            // IndexMap is documented to use indexes 0..n without holes, so this enumerate()
+            // is correct.
+            .enumerate()
+            .filter_map(|(n, (feature, deps))| {
+                if deps.is_none() {
+                    Some((n, feature.as_ref()))
+                } else {
+                    None
+                }
+            })
     }
 }
 
