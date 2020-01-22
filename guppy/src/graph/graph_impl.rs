@@ -9,7 +9,6 @@ use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
@@ -307,18 +306,6 @@ impl PackageGraph {
     /// Should this be exposed publicly? Not sure.
     pub(super) fn dep_graph(&self) -> &Graph<PackageId, DependencyEdge, Directed, PackageIx> {
         &self.dep_graph
-    }
-
-    /// Returns the nodes of a graph that have no incoming edges to them.
-    pub(super) fn roots<G, B>(graph: G) -> B
-    where
-        G: IntoNodeIdentifiers + IntoNeighborsDirected<NodeId = NodeIndex<PackageIx>>,
-        B: iter::FromIterator<NodeIndex<PackageIx>>,
-    {
-        graph
-            .node_identifiers()
-            .filter(move |&a| graph.neighbors_directed(a, Incoming).next().is_none())
-            .collect()
     }
 
     /// Maps an edge source, target and weight to a dependency link.

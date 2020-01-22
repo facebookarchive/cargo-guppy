@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata,
+    DependencyDirection, DependencyEdge, DependencyLink, GraphSpec, PackageGraph, PackageIx,
+    PackageMetadata,
 };
+use crate::petgraph_support::externals;
 use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
 use derivative::Derivative;
@@ -20,7 +22,7 @@ use petgraph::visit::{IntoNeighbors, NodeFiltered, Reversed, Topo, VisitMap, Vis
 pub struct PackageSelect<'g> {
     // The fields are pub(super) for access within the graph module.
     pub(super) package_graph: &'g PackageGraph,
-    pub(super) params: PackageSelectParams,
+    pub(super) params: SelectParams<PackageGraph>,
 }
 
 /// ## Selectors
@@ -32,7 +34,7 @@ impl PackageGraph {
     pub fn select_all(&self) -> PackageSelect {
         PackageSelect {
             package_graph: self,
-            params: PackageSelectParams::All,
+            params: SelectParams::All,
         }
     }
 
@@ -73,7 +75,7 @@ impl PackageGraph {
     ) -> Result<PackageSelect<'g>, Error> {
         Ok(PackageSelect {
             package_graph: self,
-            params: PackageSelectParams::SelectForward(self.node_idxs(package_ids)?),
+            params: SelectParams::SelectForward(self.node_idxs(package_ids)?),
         })
     }
 
@@ -97,7 +99,7 @@ impl PackageGraph {
     ) -> Result<PackageSelect<'g>, Error> {
         Ok(PackageSelect {
             package_graph: self,
-            params: PackageSelectParams::SelectReverse(self.node_idxs(package_ids)?),
+            params: SelectParams::SelectReverse(self.node_idxs(package_ids)?),
         })
     }
 
@@ -241,11 +243,11 @@ impl<'g> PackageSelect<'g> {
 
 /// Computes intermediate state for operations where the graph must be pre-filtered before any
 /// traversals happen.
-pub(super) fn select_prefilter(
-    graph: &Graph<PackageId, DependencyEdge, Directed, PackageIx>,
-    params: PackageSelectParams,
+pub(super) fn select_prefilter<G: GraphSpec>(
+    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
+    params: SelectParams<G>,
 ) -> (FixedBitSet, usize) {
-    use PackageSelectParams::*;
+    use SelectParams::*;
 
     match params {
         All => all_visit_map(graph),
@@ -256,24 +258,24 @@ pub(super) fn select_prefilter(
 
 /// Computes intermediate state for operations where the graph can be filtered dynamically if
 /// possible.
-fn select_postfilter(
-    graph: &Graph<PackageId, DependencyEdge, Directed, PackageIx>,
-    params: PackageSelectParams,
+fn select_postfilter<G: GraphSpec>(
+    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
+    params: SelectParams<G>,
     direction: DependencyDirection,
-) -> (Option<FixedBitSet>, Vec<NodeIndex<PackageIx>>) {
+) -> (Option<FixedBitSet>, Vec<NodeIndex<G::Ix>>) {
     use DependencyDirection::*;
-    use PackageSelectParams::*;
+    use SelectParams::*;
 
     match (params, direction) {
         (All, Forward) => {
             // No need for a reachable map, and use all roots.
-            let roots: Vec<_> = PackageGraph::roots(graph);
+            let roots: Vec<_> = externals(graph);
             (None, roots)
         }
         (All, Reverse) => {
             // No need for a reachable map, and use all roots.
             let reversed_graph = Reversed(graph);
-            let roots: Vec<_> = PackageGraph::roots(reversed_graph);
+            let roots: Vec<_> = externals(reversed_graph);
             (None, roots)
         }
         (SelectForward(roots), Forward) => {
@@ -286,7 +288,7 @@ fn select_postfilter(
             let filtered_reversed_graph = NodeFiltered(Reversed(graph), reachable);
             // The filtered + reversed graph will have its own roots since the iteration order
             // is reversed from the specified roots.
-            let roots: Vec<_> = PackageGraph::roots(&filtered_reversed_graph);
+            let roots: Vec<_> = externals(&filtered_reversed_graph);
 
             (Some(filtered_reversed_graph.1), roots)
         }
@@ -297,7 +299,7 @@ fn select_postfilter(
             let filtered_graph = NodeFiltered(graph, reachable);
             // The filtered graph will have its own roots since the iteration order is reversed
             // from the specified roots.
-            let roots: Vec<_> = PackageGraph::roots(&filtered_graph);
+            let roots: Vec<_> = externals(&filtered_graph);
 
             (Some(filtered_graph.1), roots)
         }
@@ -477,19 +479,17 @@ impl<'g> Iterator for IntoIterLinks<'g> {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum PackageSelectParams {
+pub(super) enum SelectParams<G: GraphSpec> {
     All,
-    SelectForward(Vec<NodeIndex<PackageIx>>),
-    SelectReverse(Vec<NodeIndex<PackageIx>>),
+    SelectForward(Vec<NodeIndex<G::Ix>>),
+    SelectReverse(Vec<NodeIndex<G::Ix>>),
 }
 
-impl PackageSelectParams {
+impl<G: GraphSpec> SelectParams<G> {
     fn default_direction(&self) -> DependencyDirection {
         match self {
-            PackageSelectParams::All | PackageSelectParams::SelectForward(_) => {
-                DependencyDirection::Forward
-            }
-            PackageSelectParams::SelectReverse(_) => DependencyDirection::Reverse,
+            SelectParams::All | SelectParams::SelectForward(_) => DependencyDirection::Forward,
+            SelectParams::SelectReverse(_) => DependencyDirection::Reverse,
         }
     }
 }

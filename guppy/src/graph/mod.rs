@@ -6,7 +6,7 @@
 //! The main entry point for analyzing graphs is [`PackageGraph`](struct.PackageGraph.html). See its
 //! documentation for more details.
 
-use cargo_metadata::DependencyKind;
+use cargo_metadata::{DependencyKind, PackageId};
 use petgraph::prelude::*;
 use std::fmt;
 
@@ -91,6 +91,25 @@ macro_rules! graph_ix {
 
 graph_ix!(PackageIx);
 graph_ix!(FeatureIx);
+
+/// Used to group together associated types with a particular graph.
+trait GraphSpec {
+    type Node;
+    type Edge;
+    type Ix: IndexType;
+}
+
+impl GraphSpec for PackageGraph {
+    type Node = PackageId;
+    type Edge = DependencyEdge;
+    type Ix = PackageIx;
+}
+
+impl<'g> GraphSpec for FeatureGraph<'g> {
+    type Node = FeatureNode;
+    type Edge = FeatureEdge;
+    type Ix = FeatureIx;
+}
 
 fn kind_str(kind: DependencyKind) -> &'static str {
     match kind {
