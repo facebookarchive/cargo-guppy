@@ -6,9 +6,7 @@ use crate::graph::{
     DependencyDirection, DependencyLink, FeatureIx, PackageGraph, PackageIx, PackageMetadata,
 };
 use petgraph::prelude::*;
-use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher};
 use std::iter;
 
 // Some general notes about feature graphs:
@@ -104,18 +102,18 @@ impl FeatureGraphImpl {
 }
 
 /// A combination of a package ID and a feature name, forming a node in a `FeatureGraph`.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(super) struct FeatureNode {
     node_idx: NodeIndex<PackageIx>,
-    feature: Option<Box<str>>,
+    feature_idx: Option<usize>,
 }
 
 impl FeatureNode {
     /// Returns a new feature node.
-    fn new(node_idx: NodeIndex<PackageIx>, feature: impl Into<Box<str>>) -> Self {
+    fn new(node_idx: NodeIndex<PackageIx>, feature_idx: usize) -> Self {
         Self {
             node_idx,
-            feature: Some(feature.into()),
+            feature_idx: Some(feature_idx),
         }
     }
 
@@ -123,51 +121,27 @@ impl FeatureNode {
     fn base(node_idx: NodeIndex<PackageIx>) -> Self {
         Self {
             node_idx,
-            feature: None,
+            feature_idx: None,
         }
     }
 
-    fn named_features<'g>(
-        package: &'g PackageMetadata,
-    ) -> impl Iterator<Item = Self> + ExactSizeIterator + 'g {
-        let node_idx = package.node_idx;
-        package.named_features().map(move |feature| Self {
-            node_idx,
-            feature: Some(feature.into()),
-        })
-    }
-}
-
-// Borrowed form of a FeatureNode.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-struct FeatureNodeRef<'a> {
-    node_idx: NodeIndex<PackageIx>,
-    feature: Option<&'a str>,
-}
-
-impl<'a> FeatureNodeRef<'a> {
-    fn new(node_idx: NodeIndex<PackageIx>, feature: &'a str) -> Self {
-        Self {
-            node_idx,
-            feature: Some(feature),
-        }
-    }
-
-    fn base(node_idx: NodeIndex<PackageIx>) -> Self {
-        Self {
-            node_idx,
-            feature: None,
-        }
-    }
-
-    fn base_and_all_features(
+    fn base_and_all_features<'a>(
         node_idx: NodeIndex<PackageIx>,
-        features: impl IntoIterator<Item = &'a str> + 'a,
-    ) -> impl Iterator<Item = FeatureNodeRef<'a>> + 'a {
-        iter::once(Self::base(node_idx)).chain(features.into_iter().map(move |feature| Self {
+        feature_idxs: impl IntoIterator<Item = usize> + 'a,
+    ) -> impl Iterator<Item = FeatureNode> + 'a {
+        iter::once(Self::base(node_idx)).chain(
+            feature_idxs
+                .into_iter()
+                .map(move |feature_idx| Self::new(node_idx, feature_idx)),
+        )
+    }
+
+    fn named_features<'g>(package: &'g PackageMetadata) -> impl Iterator<Item = Self> + 'g {
+        let node_idx = package.node_idx;
+        package.named_features_full().map(move |(n, _, _)| Self {
             node_idx,
-            feature: Some(feature),
-        }))
+            feature_idx: Some(n),
+        })
     }
 }
 
@@ -247,9 +221,9 @@ impl<'g> FeatureGraphBuildState<'g> {
                 .update_edge(feature_idx, base_idx, FeatureEdge::FeatureToBase);
         });
 
-        package.optional_deps.iter().for_each(|dep_name| {
+        package.optional_deps_full().for_each(|(n, _)| {
             let dep_idx = self.add_node(
-                FeatureNode::new(package.node_idx, dep_name.clone()),
+                FeatureNode::new(package.node_idx, n),
                 FeatureType::OptionalDep,
             );
             self.graph
@@ -258,27 +232,55 @@ impl<'g> FeatureGraphBuildState<'g> {
     }
 
     fn add_named_feature_edges(&mut self, metadata: &PackageMetadata) {
-        let dep_name_to_idx: HashMap<_, _> = self
+        let dep_name_to_metadata: HashMap<_, _> = self
             .package_graph
             .dep_links(metadata.id())
             .expect("valid metadata")
-            .map(|link| (link.edge.dep_name(), link.to.node_idx))
+            .map(|link| (link.edge.dep_name(), link.to))
             .collect();
 
         metadata
-            .features
-            .iter()
-            .for_each(|(named_feature, feature_deps)| {
-                let from_node = FeatureNodeRef::new(metadata.node_idx, named_feature);
+            .named_features_full()
+            .for_each(|(n, named_feature, feature_deps)| {
+                let from_node = FeatureNode::new(metadata.node_idx, n);
                 let to_nodes: Vec<_> = feature_deps
                     .iter()
                     .filter_map(|feature_dep| {
                         let (dep_name, to_feature_name) = Self::split_feature_dep(feature_dep);
                         match dep_name {
                             Some(dep_name) => {
-                                match dep_name_to_idx.get(dep_name) {
-                                    Some(dep_idx) => {
-                                        Some(FeatureNodeRef::new(*dep_idx, to_feature_name))
+                                match dep_name_to_metadata.get(dep_name) {
+                                    Some(to_metadata) => {
+                                        match to_metadata.get_feature_idx(to_feature_name) {
+                                            Some(to_feature_idx) => Some(FeatureNode::new(
+                                                to_metadata.node_idx,
+                                                to_feature_idx,
+                                            )),
+                                            None => {
+                                                // It is possible to specify a feature that doesn't
+                                                // actually exist, and cargo will accept that if the
+                                                // feature isn't resolved. One example is the cfg-if
+                                                // crate, where version 0.1.9 has the
+                                                // `rustc-dep-of-std` feature commented out, and
+                                                // several crates try to enable that feature:
+                                                // https://github.com/alexcrichton/cfg-if/issues/22
+                                                //
+                                                // Since these aren't fatal errors, it seems like
+                                                // the best we can do is to store such issues as
+                                                // warnings.
+                                                self.warnings
+                                                    .push(FeatureGraphWarning::MissingFeature {
+                                                    stage:
+                                                        FeatureBuildStage::AddNamedFeatureEdges {
+                                                            package_id: metadata.id().clone(),
+                                                            from_feature: named_feature.to_string(),
+                                                        },
+                                                    package_id: to_metadata.id().clone(),
+                                                    feature_name: to_feature_name.to_string(),
+                                                });
+                                                None
+                                            }
+                                        }
                                     }
                                     None => {
                                         // This is an unresolved feature -- it won't be included as
@@ -289,18 +291,32 @@ impl<'g> FeatureGraphBuildState<'g> {
                                     }
                                 }
                             }
-                            None => Some(FeatureNodeRef::new(metadata.node_idx, to_feature_name)),
+                            None => {
+                                match metadata.get_feature_idx(to_feature_name) {
+                                    Some(to_feature_idx) => {
+                                        Some(FeatureNode::new(metadata.node_idx, to_feature_idx))
+                                    }
+                                    None => {
+                                        // See blurb above, though maybe this should be tightened a
+                                        // bit (errors and not warning?)
+                                        self.warnings.push(FeatureGraphWarning::MissingFeature {
+                                            stage: FeatureBuildStage::AddNamedFeatureEdges {
+                                                package_id: metadata.id().clone(),
+                                                from_feature: named_feature.to_string(),
+                                            },
+                                            package_id: metadata.id().clone(),
+                                            feature_name: to_feature_name.to_string(),
+                                        });
+                                        None
+                                    }
+                                }
+                            }
                         }
                     })
                     .collect();
                 // Don't create a map to the base 'from' node since it is already created in
                 // add_nodes.
-                self.add_edges(from_node, to_nodes, FeatureEdge::FeatureDependency, || {
-                    FeatureBuildStage::AddNamedFeatureEdges {
-                        package_id: metadata.id().clone(),
-                        from_feature: named_feature.clone(),
-                    }
-                });
+                self.add_edges(from_node, to_nodes, FeatureEdge::FeatureDependency);
             })
     }
 
@@ -356,19 +372,40 @@ impl<'g> FeatureGraphBuildState<'g> {
                     None
                 });
 
-        let unified_features: HashSet<&str> = unified_metadata
-            .flat_map(|metadata| {
+        let mut unified_features = HashSet::new();
+        for metadata in unified_metadata {
+            let default_idx = match (
+                metadata.uses_default_features(),
+                to.get_feature_idx("default"),
+            ) {
+                (true, Some(default_idx)) => Some(default_idx),
                 // Packages without an explicit feature named "default" get pointed to the base.
-                let default = if metadata.uses_default_features() && to.has_default_feature() {
-                    Some("default")
-                } else {
-                    None
-                };
-                default
+                _ => None,
+            };
+
+            let feature_idxs =
+                default_idx
                     .into_iter()
-                    .chain(metadata.features().iter().map(|s| s.as_str()))
-            })
-            .collect();
+                    .chain(metadata.features().iter().filter_map(|to_feature| {
+                        match to.get_feature_idx(to_feature) {
+                            Some(feature_idx) => Some(feature_idx),
+                            None => {
+                                // The destination feature is missing -- this is accepted by cargo
+                                // in some circumstances, so use a warning rather than an error.
+                                self.warnings.push(FeatureGraphWarning::MissingFeature {
+                                    stage: FeatureBuildStage::AddDependencyEdges {
+                                        package_id: from.id().clone(),
+                                        dep_name: edge.dep_name().to_string(),
+                                    },
+                                    package_id: to.id().clone(),
+                                    feature_name: to_feature.clone(),
+                                });
+                                None
+                            }
+                        }
+                    }));
+            unified_features.extend(feature_idxs);
+        }
 
         // What feature unification does not impact, though, is whether the dependency is
         // actually included in the build or not. Again, consider:
@@ -422,33 +459,26 @@ impl<'g> FeatureGraphBuildState<'g> {
 
         if add_optional {
             // If add_optional is true, the dep name would have been added as an optional dependency
-            // node.
-            let from_node = FeatureNodeRef::new(from.node_idx, edge.dep_name());
-            let to_nodes = FeatureNodeRef::base_and_all_features(
-                to.node_idx,
-                unified_features.iter().copied(),
+            // node to the package metadata.
+            let from_node = FeatureNode::new(
+                from.node_idx,
+                from.get_feature_idx(edge.dep_name()).unwrap_or_else(|| {
+                    panic!(
+                        "while adding feature edges, for package '{}', optional dep '{}' missing",
+                        from.id(),
+                        edge.dep_name(),
+                    );
+                }),
             );
-            self.add_edges(from_node, to_nodes, optional_edge, || {
-                FeatureBuildStage::AddDependencyEdges {
-                    package_id: from.id().clone(),
-                    dep_name: edge.dep_name().to_string(),
-                    optional: true,
-                }
-            });
+            let to_nodes =
+                FeatureNode::base_and_all_features(to.node_idx, unified_features.iter().copied());
+            self.add_edges(from_node, to_nodes, optional_edge);
         }
         if add_mandatory {
-            let from_node = FeatureNodeRef::base(from.node_idx);
-            let to_nodes = FeatureNodeRef::base_and_all_features(
-                to.node_idx,
-                unified_features.iter().copied(),
-            );
-            self.add_edges(from_node, to_nodes, mandatory_edge, || {
-                FeatureBuildStage::AddDependencyEdges {
-                    package_id: from.id().clone(),
-                    dep_name: edge.dep_name().to_string(),
-                    optional: false,
-                }
-            });
+            let from_node = FeatureNode::base(from.node_idx);
+            let to_nodes =
+                FeatureNode::base_and_all_features(to.node_idx, unified_features.iter().copied());
+            self.add_edges(from_node, to_nodes, mandatory_edge);
         }
     }
 
@@ -468,12 +498,11 @@ impl<'g> FeatureGraphBuildState<'g> {
         feature_idx
     }
 
-    fn add_edges<'a>(
+    fn add_edges(
         &mut self,
-        from_node: FeatureNodeRef<'a>,
-        to_nodes: impl IntoIterator<Item = FeatureNodeRef<'a>>,
+        from_node: FeatureNode,
+        to_nodes: impl IntoIterator<Item = FeatureNode>,
         edge: FeatureEdge,
-        stage_fn: impl Fn() -> FeatureBuildStage,
     ) {
         // The from node should always be present because it is a known node.
         let from_node_idx = self.lookup_node(&from_node).unwrap_or_else(|| {
@@ -483,35 +512,15 @@ impl<'g> FeatureGraphBuildState<'g> {
             );
         });
         to_nodes.into_iter().for_each(|to_node| {
-            match self.lookup_node(&to_node) {
-                Some(to_node_idx) => {
-                    self.graph
-                        .update_edge(from_node_idx, to_node_idx, edge.clone());
-                }
-                None => {
-                    // It is possible to specify a feature that doesn't actually exist, and cargo
-                    // will accept that if the feature isn't resolved. One example is the cfg-if
-                    // crate, where version 0.1.9 has the `rustc-dep-of-std` feature commented out,
-                    // and several crates try to enable that feature:
-                    // https://github.com/alexcrichton/cfg-if/issues/22
-                    //
-                    // Since these aren't fatal errors, it seems like the best we can do is to store
-                    // such issues as warnings.
-                    let feature_name = to_node
-                        .feature
-                        .expect("base feature should always be found")
-                        .to_string();
-                    self.warnings.push(FeatureGraphWarning::MissingFeature {
-                        stage: stage_fn(),
-                        package_id: self.package_graph.dep_graph[to_node.node_idx].clone(),
-                        feature_name,
-                    });
-                }
-            }
+            let to_node_idx = self.lookup_node(&to_node).unwrap_or_else(|| {
+                panic!("while adding feature edges, missing 'to': {:?}", to_node)
+            });
+            self.graph
+                .update_edge(from_node_idx, to_node_idx, edge.clone());
         })
     }
 
-    fn lookup_node(&self, node: &dyn FeatureKey) -> Option<NodeIndex<FeatureIx>> {
+    fn lookup_node(&self, node: &FeatureNode) -> Option<NodeIndex<FeatureIx>> {
         self.map.get(node).map(|metadata| metadata.feature_idx)
     }
 
@@ -521,49 +530,5 @@ impl<'g> FeatureGraphBuildState<'g> {
             map: self.map,
             warnings: self.warnings,
         }
-    }
-}
-
-// This trait is a fancy way to avoid memory allocations during key lookups. The code is adapted
-// from http://idubrov.name/rust/2018/06/01/tricking-the-hashmap.html.
-trait FeatureKey {
-    fn key(&self) -> FeatureNodeRef;
-}
-
-impl FeatureKey for FeatureNode {
-    fn key(&self) -> FeatureNodeRef {
-        FeatureNodeRef {
-            node_idx: self.node_idx,
-            feature: self.feature.as_ref().map(|name| name.as_ref()),
-        }
-    }
-}
-
-impl<'a> FeatureKey for FeatureNodeRef<'a> {
-    fn key(&self) -> FeatureNodeRef {
-        FeatureNodeRef {
-            node_idx: self.node_idx,
-            feature: self.feature.as_ref().copied(),
-        }
-    }
-}
-
-impl<'a> Borrow<dyn FeatureKey + 'a> for FeatureNode {
-    fn borrow(&self) -> &(dyn FeatureKey + 'a) {
-        self
-    }
-}
-
-impl<'a> Eq for (dyn FeatureKey + 'a) {}
-
-impl<'a> PartialEq for (dyn FeatureKey + 'a) {
-    fn eq(&self, other: &dyn FeatureKey) -> bool {
-        self.key() == other.key()
-    }
-}
-
-impl<'a> Hash for (dyn FeatureKey + 'a) {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.key().hash(state)
     }
 }

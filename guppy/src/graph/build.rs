@@ -184,7 +184,7 @@ impl<'a> GraphBuildState<'a> {
         // one). Some of them might be optional, some might not be. List a dependency here if *any*
         // of those specifications are optional, since that's how Cargo features work. But also
         // dedup them.
-        let optional_deps: HashSet<_> = package
+        let optional_deps = package
             .dependencies
             .into_iter()
             .filter_map(|dep| {
@@ -197,6 +197,14 @@ impl<'a> GraphBuildState<'a> {
                     None
                 }
             })
+            .map(|feature| (feature, None));
+
+        // The feature map contains both optional deps and named features.
+        let features = package
+            .features
+            .into_iter()
+            .map(|(feature, deps)| (feature.into_boxed_str(), Some(deps)))
+            .chain(optional_deps)
             .collect();
 
         Ok((
@@ -218,11 +226,10 @@ impl<'a> GraphBuildState<'a> {
                 metadata_table: package.metadata,
                 links: package.links.map(|s| s.into()),
                 publish: package.publish,
-                features: package.features,
+                features,
 
                 node_idx,
                 workspace_path,
-                optional_deps,
                 has_default_feature,
                 resolved_deps,
                 resolved_features,
