@@ -643,13 +643,12 @@ impl PackageMetadata {
         self.has_default_feature
     }
 
-    /// Returns the list of named features available for this package. This will include the default
-    /// features if
+    /// Returns the list of named features available for this package. This will include a feature
+    /// named "default" if it is defined.
     ///
     /// A named feature is listed in the `[features]` section of `Cargo.toml`. For more, see
     /// [the reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).
     pub fn named_features(&self) -> impl Iterator<Item = &str> + ExactSizeIterator {
-        // TODO: expose dependencies via a graph structure.
         self.features.keys().map(|s| s.as_ref())
     }
 }
