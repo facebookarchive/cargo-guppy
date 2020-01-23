@@ -112,7 +112,7 @@ impl PackageGraph {
                 }
             }
 
-            for dep in self.dep_links_node_idx_directed(metadata.node_idx, Outgoing) {
+            for dep in self.dep_links_ixs_directed(metadata.package_ix, Outgoing) {
                 let to_id = dep.to.id();
                 let to_version = dep.to.version();
 
@@ -278,16 +278,16 @@ impl PackageGraph {
         dir: Direction,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.metadata(package_id)
-            .map(|metadata| self.dep_links_node_idx_directed(metadata.node_idx, dir))
+            .map(|metadata| self.dep_links_ixs_directed(metadata.package_ix, dir))
     }
 
-    fn dep_links_node_idx_directed<'g>(
+    fn dep_links_ixs_directed<'g>(
         &'g self,
-        node_idx: NodeIndex<PackageIx>,
+        package_ix: NodeIndex<PackageIx>,
         dir: Direction,
     ) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
         self.dep_graph
-            .edges_directed(node_idx, dir)
+            .edges_directed(package_ix, dir)
             .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
     }
 
@@ -331,7 +331,7 @@ impl PackageGraph {
     }
 
     /// Maps an iterator of package IDs to their internal graph node indexes.
-    pub(super) fn node_idxs<'g, 'a, B>(
+    pub(super) fn package_ixs<'g, 'a, B>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<B, Error>
@@ -341,15 +341,16 @@ impl PackageGraph {
         package_ids
             .into_iter()
             .map(|package_id| {
-                self.node_idx(package_id)
+                self.package_ix(package_id)
                     .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))
             })
             .collect()
     }
 
     /// Maps a package ID to its internal graph node index.
-    pub(super) fn node_idx(&self, package_id: &PackageId) -> Option<NodeIndex<PackageIx>> {
-        self.metadata(package_id).map(|metadata| metadata.node_idx)
+    pub(super) fn package_ix(&self, package_id: &PackageId) -> Option<NodeIndex<PackageIx>> {
+        self.metadata(package_id)
+            .map(|metadata| metadata.package_ix)
     }
 }
 
@@ -406,13 +407,13 @@ impl<'g> DependsCache<'g> {
         package_b: &PackageId,
     ) -> Result<bool, Error> {
         // XXX rewrite this to avoid an allocation? meh
-        let node_idxs: Vec<_> = self
+        let package_ixs: Vec<_> = self
             .package_graph
-            .node_idxs(iter::once(package_a).chain(iter::once(package_b)))?;
+            .package_ixs(iter::once(package_a).chain(iter::once(package_b)))?;
         Ok(has_path_connecting(
             self.package_graph.dep_graph(),
-            node_idxs[0],
-            node_idxs[1],
+            package_ixs[0],
+            package_ixs[1],
             Some(&mut self.dfs_space),
         ))
     }
@@ -497,7 +498,7 @@ pub struct PackageMetadata {
     pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
 
     // Other information.
-    pub(super) node_idx: NodeIndex<PackageIx>,
+    pub(super) package_ix: NodeIndex<PackageIx>,
     pub(super) workspace_path: Option<Box<Path>>,
     pub(super) has_default_feature: bool,
     pub(super) resolved_deps: Vec<NodeDep>,

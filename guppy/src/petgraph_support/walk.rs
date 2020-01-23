@@ -28,9 +28,9 @@ where
         let mut discovered = graph.visit_map();
         let stack = initials
             .into_iter()
-            .flat_map(|node_idx| {
-                discovered.visit(node_idx);
-                graph.edges(node_idx).map(edge_triple)
+            .flat_map(|node_ix| {
+                discovered.visit(node_ix);
+                graph.edges(node_ix).map(edge_triple)
             })
             .collect();
         Self { stack, discovered }
