@@ -93,7 +93,7 @@ impl Workspace {
 /// Helper struct for building up dependency graph.
 struct GraphBuildState<'a> {
     dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
-    // The values of package_data are (node_idx, name, version).
+    // The values of package_data are (package_ix, name, version).
     package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
     workspace_root: &'a Path,
@@ -113,10 +113,10 @@ impl<'a> GraphBuildState<'a> {
         let package_data: HashMap<_, _> = packages
             .iter()
             .map(|package| {
-                let node_idx = dep_graph.add_node(package.id.clone());
+                let package_ix = dep_graph.add_node(package.id.clone());
                 (
                     package.id.clone(),
-                    (node_idx, package.name.clone(), package.version.clone()),
+                    (package_ix, package.name.clone(), package.version.clone()),
                 )
             })
             .collect();
@@ -137,7 +137,7 @@ impl<'a> GraphBuildState<'a> {
     }
 
     fn process_package(&mut self, package: Package) -> Result<(PackageId, PackageMetadata), Error> {
-        let (node_idx, _, _) = self.package_data(&package.id)?;
+        let (package_ix, _, _) = self.package_data(&package.id)?;
 
         let workspace_path = if self.workspace_members.contains(&package.id) {
             Some(self.workspace_path(&package.id, &package.manifest_path)?)
@@ -168,7 +168,7 @@ impl<'a> GraphBuildState<'a> {
             // Use update_edge instead of add_edge to prevent multiple edges from being added
             // between these two nodes.
             // XXX maybe check for an existing edge?
-            self.dep_graph.update_edge(node_idx, dep_idx, edge);
+            self.dep_graph.update_edge(package_ix, dep_idx, edge);
         }
 
         let has_default_feature = package.features.contains_key("default");
@@ -228,7 +228,7 @@ impl<'a> GraphBuildState<'a> {
                 publish: package.publish,
                 features,
 
-                node_idx,
+                package_ix,
                 workspace_path,
                 has_default_feature,
                 resolved_deps,
@@ -241,10 +241,10 @@ impl<'a> GraphBuildState<'a> {
         &self,
         id: &PackageId,
     ) -> Result<(NodeIndex<PackageIx>, &str, &Version), Error> {
-        let (node_idx, name, version) = self.package_data.get(&id).ok_or_else(|| {
+        let (package_ix, name, version) = self.package_data.get(&id).ok_or_else(|| {
             Error::PackageGraphConstructError(format!("no package data found for package '{}'", id))
         })?;
-        Ok((*node_idx, name, version))
+        Ok((*package_ix, name, version))
     }
 
     /// Computes the workspace path for this package. Errors if this package is not in the

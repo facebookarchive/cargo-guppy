@@ -75,7 +75,7 @@ impl PackageGraph {
     ) -> Result<PackageSelect<'g>, Error> {
         Ok(PackageSelect {
             package_graph: self,
-            params: SelectParams::SelectForward(self.node_idxs(package_ids)?),
+            params: SelectParams::SelectForward(self.package_ixs(package_ids)?),
         })
     }
 
@@ -99,7 +99,7 @@ impl PackageGraph {
     ) -> Result<PackageSelect<'g>, Error> {
         Ok(PackageSelect {
             package_graph: self,
-            params: SelectParams::SelectReverse(self.node_idxs(package_ids)?),
+            params: SelectParams::SelectReverse(self.package_ixs(package_ids)?),
         })
     }
 
@@ -128,7 +128,9 @@ impl<'g> PackageSelect<'g> {
     ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
         let dep_graph = self.package_graph.dep_graph();
         let (_, roots) = select_postfilter(dep_graph, self.params, direction);
-        roots.into_iter().map(move |node_idx| &dep_graph[node_idx])
+        roots
+            .into_iter()
+            .map(move |package_ix| &dep_graph[package_ix])
     }
 
     /// Consumes this query and creates an iterator over package IDs, returned in topological order.
@@ -171,9 +173,9 @@ impl<'g> PackageSelect<'g> {
     ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
         let dep_graph = self.package_graph.dep_graph();
         let (_, roots) = select_postfilter(dep_graph, self.params.clone(), direction);
-        roots.into_iter().map(move |node_idx| {
+        roots.into_iter().map(move |package_ix| {
             self.package_graph
-                .metadata(&dep_graph[node_idx])
+                .metadata(&dep_graph[package_ix])
                 .expect("invalid node index")
         })
     }
@@ -340,9 +342,9 @@ impl<'g> Iterator for IntoIterIds<'g> {
             DependencyDirection::Forward => self.topo.next(&self.graph),
             DependencyDirection::Reverse => self.topo.next(Reversed(&self.graph)),
         };
-        next_idx.map(|node_idx| {
+        next_idx.map(|ix| {
             self.remaining -= 1;
-            &self.graph.0[node_idx]
+            &self.graph.0[ix]
         })
     }
 
@@ -432,7 +434,7 @@ impl<'g> IntoIterLinks<'g> {
         match (&self.reachable, self.direction) {
             (Some(reachable), Forward) => self.edge_dfs.next(&NodeFiltered::from_fn(
                 self.package_graph.dep_graph(),
-                |node_idx| reachable.is_visited(&node_idx),
+                |ix| reachable.is_visited(&ix),
             )),
             (Some(reachable), Reverse) => {
                 // As of petgraph 0.4.13, FilterNode is not implemented for &FixedBitSet, only for
@@ -441,7 +443,7 @@ impl<'g> IntoIterLinks<'g> {
                 self.edge_dfs
                     .next(&NodeFiltered::from_fn(
                         Reversed(self.package_graph.dep_graph()),
-                        |node_idx| reachable.is_visited(&node_idx),
+                        |ix| reachable.is_visited(&ix),
                     ))
                     .map(|(source_idx, target_idx, edge_idx)| {
                         // Flip the source and target around if this is a reversed graph, since the

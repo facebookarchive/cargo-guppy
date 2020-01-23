@@ -24,8 +24,8 @@ impl PackageGraph {
     pub fn prop09_id_strategy<'g>(&'g self) -> impl Strategy<Value = &'g PackageId> + 'g {
         let dep_graph = &self.dep_graph;
         any::<prop::sample::Index>().prop_map(move |index| {
-            let node_idx = NodeIndex::new(index.index(dep_graph.node_count()));
-            &self.dep_graph[node_idx]
+            let package_ix = NodeIndex::new(index.index(dep_graph.node_count()));
+            &self.dep_graph[package_ix]
         })
     }
 

@@ -104,42 +104,42 @@ impl FeatureGraphImpl {
 /// A combination of a package ID and a feature name, forming a node in a `FeatureGraph`.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(super) struct FeatureNode {
-    node_idx: NodeIndex<PackageIx>,
+    package_ix: NodeIndex<PackageIx>,
     feature_idx: Option<usize>,
 }
 
 impl FeatureNode {
     /// Returns a new feature node.
-    fn new(node_idx: NodeIndex<PackageIx>, feature_idx: usize) -> Self {
+    fn new(package_ix: NodeIndex<PackageIx>, feature_idx: usize) -> Self {
         Self {
-            node_idx,
+            package_ix,
             feature_idx: Some(feature_idx),
         }
     }
 
     /// Returns a new feature node representing the base package with no features enabled.
-    fn base(node_idx: NodeIndex<PackageIx>) -> Self {
+    fn base(package_ix: NodeIndex<PackageIx>) -> Self {
         Self {
-            node_idx,
+            package_ix,
             feature_idx: None,
         }
     }
 
     fn base_and_all_features<'a>(
-        node_idx: NodeIndex<PackageIx>,
+        package_ix: NodeIndex<PackageIx>,
         feature_idxs: impl IntoIterator<Item = usize> + 'a,
     ) -> impl Iterator<Item = FeatureNode> + 'a {
-        iter::once(Self::base(node_idx)).chain(
+        iter::once(Self::base(package_ix)).chain(
             feature_idxs
                 .into_iter()
-                .map(move |feature_idx| Self::new(node_idx, feature_idx)),
+                .map(move |feature_idx| Self::new(package_ix, feature_idx)),
         )
     }
 
     fn named_features<'g>(package: &'g PackageMetadata) -> impl Iterator<Item = Self> + 'g {
-        let node_idx = package.node_idx;
+        let package_ix = package.package_ix;
         package.named_features_full().map(move |(n, _, _)| Self {
-            node_idx,
+            package_ix,
             feature_idx: Some(n),
         })
     }
@@ -173,7 +173,7 @@ pub(super) enum FeatureEdge {
 /// Metadata for a particular feature node.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub(super) struct FeatureMetadata {
-    feature_idx: NodeIndex<FeatureIx>,
+    feature_ix: NodeIndex<FeatureIx>,
     feature_type: FeatureType,
 }
 
@@ -213,17 +213,17 @@ impl<'g> FeatureGraphBuildState<'g> {
     /// Add nodes for every feature in this package + the base package, and add edges from every
     /// feature to the base package.
     fn add_nodes(&mut self, package: &'g PackageMetadata) {
-        let base_node = FeatureNode::base(package.node_idx);
+        let base_node = FeatureNode::base(package.package_ix);
         let base_idx = self.add_node(base_node, FeatureType::BasePackage);
         FeatureNode::named_features(package).for_each(|feature_node| {
-            let feature_idx = self.add_node(feature_node, FeatureType::NamedFeature);
+            let feature_ix = self.add_node(feature_node, FeatureType::NamedFeature);
             self.graph
-                .update_edge(feature_idx, base_idx, FeatureEdge::FeatureToBase);
+                .update_edge(feature_ix, base_idx, FeatureEdge::FeatureToBase);
         });
 
         package.optional_deps_full().for_each(|(n, _)| {
             let dep_idx = self.add_node(
-                FeatureNode::new(package.node_idx, n),
+                FeatureNode::new(package.package_ix, n),
                 FeatureType::OptionalDep,
             );
             self.graph
@@ -242,7 +242,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         metadata
             .named_features_full()
             .for_each(|(n, named_feature, feature_deps)| {
-                let from_node = FeatureNode::new(metadata.node_idx, n);
+                let from_node = FeatureNode::new(metadata.package_ix, n);
                 let to_nodes: Vec<_> = feature_deps
                     .iter()
                     .filter_map(|feature_dep| {
@@ -253,7 +253,7 @@ impl<'g> FeatureGraphBuildState<'g> {
                                     Some(to_metadata) => {
                                         match to_metadata.get_feature_idx(to_feature_name) {
                                             Some(to_feature_idx) => Some(FeatureNode::new(
-                                                to_metadata.node_idx,
+                                                to_metadata.package_ix,
                                                 to_feature_idx,
                                             )),
                                             None => {
@@ -294,7 +294,7 @@ impl<'g> FeatureGraphBuildState<'g> {
                             None => {
                                 match metadata.get_feature_idx(to_feature_name) {
                                     Some(to_feature_idx) => {
-                                        Some(FeatureNode::new(metadata.node_idx, to_feature_idx))
+                                        Some(FeatureNode::new(metadata.package_ix, to_feature_idx))
                                     }
                                     None => {
                                         // See blurb above, though maybe this should be tightened a
@@ -461,7 +461,7 @@ impl<'g> FeatureGraphBuildState<'g> {
             // If add_optional is true, the dep name would have been added as an optional dependency
             // node to the package metadata.
             let from_node = FeatureNode::new(
-                from.node_idx,
+                from.package_ix,
                 from.get_feature_idx(edge.dep_name()).unwrap_or_else(|| {
                     panic!(
                         "while adding feature edges, for package '{}', optional dep '{}' missing",
@@ -471,13 +471,13 @@ impl<'g> FeatureGraphBuildState<'g> {
                 }),
             );
             let to_nodes =
-                FeatureNode::base_and_all_features(to.node_idx, unified_features.iter().copied());
+                FeatureNode::base_and_all_features(to.package_ix, unified_features.iter().copied());
             self.add_edges(from_node, to_nodes, optional_edge);
         }
         if add_mandatory {
-            let from_node = FeatureNode::base(from.node_idx);
+            let from_node = FeatureNode::base(from.package_ix);
             let to_nodes =
-                FeatureNode::base_and_all_features(to.node_idx, unified_features.iter().copied());
+                FeatureNode::base_and_all_features(to.package_ix, unified_features.iter().copied());
             self.add_edges(from_node, to_nodes, mandatory_edge);
         }
     }
@@ -487,15 +487,15 @@ impl<'g> FeatureGraphBuildState<'g> {
         feature_id: FeatureNode,
         feature_type: FeatureType,
     ) -> NodeIndex<FeatureIx> {
-        let feature_idx = self.graph.add_node(feature_id.clone());
+        let feature_ix = self.graph.add_node(feature_id.clone());
         self.map.insert(
             feature_id,
             FeatureMetadata {
-                feature_idx,
+                feature_ix,
                 feature_type,
             },
         );
-        feature_idx
+        feature_ix
     }
 
     fn add_edges(
@@ -505,23 +505,22 @@ impl<'g> FeatureGraphBuildState<'g> {
         edge: FeatureEdge,
     ) {
         // The from node should always be present because it is a known node.
-        let from_node_idx = self.lookup_node(&from_node).unwrap_or_else(|| {
+        let from_ix = self.lookup_node(&from_node).unwrap_or_else(|| {
             panic!(
                 "while adding feature edges, missing 'from': {:?}",
                 from_node
             );
         });
         to_nodes.into_iter().for_each(|to_node| {
-            let to_node_idx = self.lookup_node(&to_node).unwrap_or_else(|| {
+            let to_ix = self.lookup_node(&to_node).unwrap_or_else(|| {
                 panic!("while adding feature edges, missing 'to': {:?}", to_node)
             });
-            self.graph
-                .update_edge(from_node_idx, to_node_idx, edge.clone());
+            self.graph.update_edge(from_ix, to_ix, edge.clone());
         })
     }
 
     fn lookup_node(&self, node: &FeatureNode) -> Option<NodeIndex<FeatureIx>> {
-        self.map.get(node).map(|metadata| metadata.feature_idx)
+        self.map.get(node).map(|metadata| metadata.feature_ix)
     }
 
     fn build(self) -> FeatureGraphImpl {
