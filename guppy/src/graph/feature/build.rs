@@ -1,209 +1,24 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Graph analysis for individual features within a package.
-//!
-//! `FeatureGraph` can be used to do a more precise analysis than is possible at the package level.
-//! For example, an optional feature not included a default build can potentially pull in a large
-//! number of extra dependencies. This module allows for those subgraphs to be filtered out.
-
 use crate::errors::{FeatureBuildStage, FeatureGraphWarning};
-use crate::graph::{
-    DependencyDirection, DependencyLink, FeatureIx, PackageGraph, PackageIx, PackageMetadata,
+use crate::graph::feature::{
+    FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
+use crate::graph::{DependencyLink, FeatureIx, PackageGraph, PackageMetadata};
 use petgraph::prelude::*;
 use std::collections::{HashMap, HashSet};
-use std::iter;
-
-// Some general notes about feature graphs:
-//
-// The set of features for a package is the named features (in the [features] section), plus any
-// optional dependencies.
-//
-// An optional dependency can be either normal or build -- not dev. Note that a dependency can be
-// marked optional in one section and mandatory in another. In this context, a dependency is a
-// feature if it is marked as optional in any context.
-//
-// Features are *unified*. See the documentation in add_dependency_edges for more.
-//
-// There are a few ways features can be enabled. The most common is within a dependency spec. A
-// feature can also be specified via the command-line. Finally, named features can specify what
-// features a package depends on:
-//
-// ```toml
-// [features]
-// foo = ["a/bar", "optional-dep", "baz"]
-// baz = []
-// ```
-//
-// Feature names are unique. A named feature and an optional dep cannot have the same names.
-
-impl PackageGraph {
-    /// Returns a derived graph representing every feature of every package.
-    ///
-    /// The feature graph is constructed the first time this method is called. The graph is cached
-    /// so that repeated calls to this method are cheap.
-    pub fn feature_graph(&self) -> FeatureGraph {
-        let inner = self.get_feature_graph();
-        FeatureGraph { inner }
-    }
-
-    pub(super) fn get_feature_graph(&self) -> &FeatureGraphImpl {
-        self.feature_graph
-            .get_or_init(|| FeatureGraphImpl::new(self))
-    }
-}
-
-/// A derived graph representing every feature of every package.
-///
-/// Constructed through `PackageGraph::feature_graph`.
-pub struct FeatureGraph<'g> {
-    inner: &'g FeatureGraphImpl,
-}
-
-impl<'g> FeatureGraph<'g> {
-    /// Returns any non-fatal warnings encountered while constructing the feature graph.
-    pub fn build_warnings(&self) -> &[FeatureGraphWarning] {
-        &self.inner.warnings
-    }
-
-    // TODO: more methods
-}
-
-/// A graph representing every possible feature of every package, and the connections between them.
-#[derive(Clone, Debug)]
-pub(super) struct FeatureGraphImpl {
-    graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
-    map: HashMap<FeatureNode, FeatureMetadata>,
-    warnings: Vec<FeatureGraphWarning>,
-}
-
-impl FeatureGraphImpl {
-    /// Creates a new `FeatureGraph` from this `PackageGraph`.
-    pub(super) fn new(package_graph: &PackageGraph) -> Self {
-        let mut build_state = FeatureGraphBuildState::new(package_graph);
-
-        // The iteration order is bottom-up to allow linking up for "a/foo" style feature specs.
-        for metadata in package_graph
-            .select_all()
-            .into_iter_metadatas(Some(DependencyDirection::Reverse))
-        {
-            build_state.add_nodes(metadata);
-            // into_iter_metadatas is in topological order, so all the dependencies of this package
-            // would have been added already. So named feature edges can safely be added.
-            build_state.add_named_feature_edges(metadata);
-        }
-
-        // The iteration order doesn't matter here, but use bottom-up for symmetry with the previous
-        // loop.
-        for link in package_graph
-            .select_all()
-            .into_iter_links(Some(DependencyDirection::Reverse))
-        {
-            build_state.add_dependency_edges(link);
-        }
-
-        build_state.build()
-    }
-}
-
-/// A combination of a package ID and a feature name, forming a node in a `FeatureGraph`.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub(super) struct FeatureNode {
-    package_ix: NodeIndex<PackageIx>,
-    feature_idx: Option<usize>,
-}
-
-impl FeatureNode {
-    /// Returns a new feature node.
-    fn new(package_ix: NodeIndex<PackageIx>, feature_idx: usize) -> Self {
-        Self {
-            package_ix,
-            feature_idx: Some(feature_idx),
-        }
-    }
-
-    /// Returns a new feature node representing the base package with no features enabled.
-    fn base(package_ix: NodeIndex<PackageIx>) -> Self {
-        Self {
-            package_ix,
-            feature_idx: None,
-        }
-    }
-
-    fn base_and_all_features<'a>(
-        package_ix: NodeIndex<PackageIx>,
-        feature_idxs: impl IntoIterator<Item = usize> + 'a,
-    ) -> impl Iterator<Item = FeatureNode> + 'a {
-        iter::once(Self::base(package_ix)).chain(
-            feature_idxs
-                .into_iter()
-                .map(move |feature_idx| Self::new(package_ix, feature_idx)),
-        )
-    }
-
-    fn named_features<'g>(package: &'g PackageMetadata) -> impl Iterator<Item = Self> + 'g {
-        let package_ix = package.package_ix;
-        package.named_features_full().map(move |(n, _, _)| Self {
-            package_ix,
-            feature_idx: Some(n),
-        })
-    }
-}
-
-/// Information about why a feature depends on another feature.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub(super) enum FeatureEdge {
-    /// This edge is from a feature to its base package.
-    FeatureToBase,
-    /// This edge is present because a feature is enabled in a dependency, e.g. through:
-    ///
-    /// ```toml
-    /// [dependencies]
-    /// foo = { version = "1", features = ["a", "b"] }
-    /// ```
-    Dependency {
-        normal: bool,
-        build: bool,
-        dev: bool,
-    },
-    /// This edge is from a feature depending on other features:
-    ///
-    /// ```toml
-    /// [features]
-    /// "a" = ["b", "foo/c"]
-    /// ```
-    FeatureDependency,
-}
-
-/// Metadata for a particular feature node.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub(super) struct FeatureMetadata {
-    feature_ix: NodeIndex<FeatureIx>,
-    feature_type: FeatureType,
-}
-
-/// The type of a particular feature.
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub(super) enum FeatureType {
-    /// This is a named feature in the `[features]` section.
-    NamedFeature,
-    /// This is an optional dependency.
-    OptionalDep,
-    /// This is the "base" package with no features enabled.
-    BasePackage,
-}
 
 #[derive(Debug)]
-struct FeatureGraphBuildState<'g> {
+pub(super) struct FeatureGraphBuildState<'g> {
     package_graph: &'g PackageGraph,
     graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
-    map: HashMap<FeatureNode, FeatureMetadata>,
+    map: HashMap<FeatureNode, FeatureMetadataImpl>,
     warnings: Vec<FeatureGraphWarning>,
 }
 
 impl<'g> FeatureGraphBuildState<'g> {
-    fn new(package_graph: &'g PackageGraph) -> Self {
+    pub(super) fn new(package_graph: &'g PackageGraph) -> Self {
         Self {
             package_graph,
             // Each package corresponds to at least one feature ID.
@@ -218,7 +33,7 @@ impl<'g> FeatureGraphBuildState<'g> {
 
     /// Add nodes for every feature in this package + the base package, and add edges from every
     /// feature to the base package.
-    fn add_nodes(&mut self, package: &'g PackageMetadata) {
+    pub(super) fn add_nodes(&mut self, package: &'g PackageMetadata) {
         let base_node = FeatureNode::base(package.package_ix);
         let base_idx = self.add_node(base_node, FeatureType::BasePackage);
         FeatureNode::named_features(package).for_each(|feature_node| {
@@ -237,7 +52,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         });
     }
 
-    fn add_named_feature_edges(&mut self, metadata: &PackageMetadata) {
+    pub(super) fn add_named_feature_edges(&mut self, metadata: &PackageMetadata) {
         let dep_name_to_metadata: HashMap<_, _> = self
             .package_graph
             .dep_links(metadata.id())
@@ -340,7 +155,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         (dep_name, to_feature_name)
     }
 
-    fn add_dependency_edges(&mut self, link: DependencyLink<'_>) {
+    pub(super) fn add_dependency_edges(&mut self, link: DependencyLink<'_>) {
         let DependencyLink { from, to, edge } = link;
 
         // Sometimes the same package is depended on separately in different sections like so:
@@ -496,7 +311,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         let feature_ix = self.graph.add_node(feature_id.clone());
         self.map.insert(
             feature_id,
-            FeatureMetadata {
+            FeatureMetadataImpl {
                 feature_ix,
                 feature_type,
             },
@@ -529,7 +344,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         self.map.get(node).map(|metadata| metadata.feature_ix)
     }
 
-    fn build(self) -> FeatureGraphImpl {
+    pub(super) fn build(self) -> FeatureGraphImpl {
         FeatureGraphImpl {
             graph: self.graph,
             map: self.map,

@@ -56,8 +56,39 @@ macro_rules! proptest_suite {
                     ids in vec(graph.prop09_id_strategy(), 1..16),
                     select_direction in any::<DependencyDirection>(),
                     query_direction in any::<DependencyDirection>(),
+                    query_indexes in vec((any::<Index>(), any::<Index>()), 0..128),
                 )| {
-                    roots(graph, &ids, select_direction, query_direction, "select_roots")?;
+                    roots(
+                        graph,
+                        &ids,
+                        select_direction,
+                        query_direction,
+                        query_indexes,
+                        "select_roots",
+                    )?;
+                });
+            }
+
+            #[test]
+            fn proptest_feature_select_roots() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(
+                    ids in vec(feature_graph.prop09_id_strategy(), 1..16),
+                    select_direction in any::<DependencyDirection>(),
+                    query_direction in any::<DependencyDirection>(),
+                    query_indexes in vec((any::<Index>(), any::<Index>()), 0..128),
+                )| {
+                    roots(
+                        feature_graph,
+                        &ids,
+                        select_direction,
+                        query_direction,
+                        query_indexes,
+                        "feature_select_roots",
+                    )?;
                 });
             }
         }
@@ -116,6 +147,7 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
     ids: &[G::Id],
     select_direction: DependencyDirection,
     query_direction: DependencyDirection,
+    query_indexes: Vec<(Index, Index)>,
     msg: &str,
 ) -> prop::test_runner::TestCaseResult {
     let root_ids = graph.root_ids(ids, select_direction, query_direction);
@@ -129,12 +161,18 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
 
     // TODO: check root metadata once available for feature graphs
 
-    for id1 in &root_ids {
-        for id2 in &root_ids {
-            if id1 != id2 {
-                graph.assert_not_depends_on(*id1, *id2, select_direction, msg);
-            }
+    assert!(
+        !root_ids.is_empty(),
+        "ids is non-empty so root ids can't be empty either"
+    );
+    for (index1, index2) in query_indexes {
+        let id1 = index1.get(&root_ids);
+        let id2 = index2.get(&root_ids);
+        if id1 != id2 {
+            graph.assert_not_depends_on(*id1, *id2, select_direction, msg);
         }
     }
     Ok(())
 }
+
+// TODO: Test FeatureFilter implementations.

@@ -296,7 +296,7 @@ pub(super) fn select_prefilter<G: GraphSpec>(
 ///
 /// Note that the second return value is the initial starting points of a graph traversal, which
 /// might be a superset of the actual roots.
-fn select_postfilter<G: GraphSpec>(
+pub(super) fn select_postfilter<G: GraphSpec>(
     graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
     params: SelectParams<G>,
     direction: DependencyDirection,

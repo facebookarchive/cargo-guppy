@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use super::fixtures::{self, Fixture};
-use crate::graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageMetadata};
+use crate::graph::feature::{all_filter, none_filter, FeatureId};
+use crate::graph::{
+    DependencyDirection, DependencyLink, DotWrite, PackageDotVisitor, PackageMetadata,
+};
 use crate::PackageId;
 use std::fmt;
 use std::iter;
@@ -79,12 +82,30 @@ fn metadata1() {
         format!("{}", actual_dot_reversed),
         "reversed dot output matches"
     );
+
+    let feature_graph = graph.feature_graph();
+    let root_ids: Vec<_> = feature_graph
+        .select_workspace(all_filter())
+        .into_root_ids(DependencyDirection::Forward)
+        .collect();
+    let testcrate_id = fixtures::package_id(fixtures::METADATA1_TESTCRATE);
+    let expected = vec![FeatureId::new(&testcrate_id, "datatest")];
+    assert_eq!(root_ids, expected, "feature graph root IDs match");
 }
 
 #[test]
 fn metadata2() {
     let metadata2 = Fixture::metadata2();
     metadata2.verify();
+
+    let feature_graph = metadata2.graph().feature_graph();
+    let root_ids: Vec<_> = feature_graph
+        .select_workspace(none_filter())
+        .into_root_ids(DependencyDirection::Forward)
+        .collect();
+    let testcrate_id = fixtures::package_id(fixtures::METADATA2_TESTCRATE);
+    let expected = vec![FeatureId::base(&testcrate_id)];
+    assert_eq!(root_ids, expected, "feature graph root IDs match");
 }
 
 #[test]

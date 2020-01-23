@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::FeatureGraphImpl;
+use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
 use crate::graph::{kind_str, DependencyDirection, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
@@ -163,7 +163,7 @@ impl PackageGraph {
         }
 
         // Constructing the feature graph may cause panics to happen.
-        self.get_feature_graph();
+        self.feature_graph();
 
         Ok(())
     }
@@ -651,6 +651,15 @@ impl PackageMetadata {
         self.has_default_feature
     }
 
+    /// Returns the `FeatureId` corresponding to the default feature.
+    pub fn default_feature_id(&self) -> FeatureId {
+        if self.has_default_feature {
+            FeatureId::new(self.id(), "default")
+        } else {
+            FeatureId::base(self.id())
+        }
+    }
+
     /// Returns the list of named features available for this package. This will include a feature
     /// named "default" if it is defined.
     ///
@@ -661,8 +670,19 @@ impl PackageMetadata {
             .map(|(_, named_feature, _)| named_feature)
     }
 
+    // ---
+    // Helper methods
+    // --
+
     pub(super) fn get_feature_idx(&self, feature: &str) -> Option<usize> {
         self.features.get_full(feature).map(|(n, _, _)| n)
+    }
+
+    pub(super) fn all_feature_nodes<'g>(&'g self) -> impl Iterator<Item = FeatureNode> + 'g {
+        iter::once(FeatureNode::base(self.package_ix)).chain(
+            (0..self.features.len())
+                .map(move |feature_idx| FeatureNode::new(self.package_ix, feature_idx)),
+        )
     }
 
     pub(super) fn named_features_full(&self) -> impl Iterator<Item = (usize, &str, &[String])> {

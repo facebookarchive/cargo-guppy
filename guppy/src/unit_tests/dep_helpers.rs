@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::graph::feature::{FeatureGraph, FeatureId};
 use crate::graph::{
     DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
 };
@@ -466,6 +467,36 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
         select.into_iter_ids(Some(query_direction)).collect()
+    }
+
+    fn root_ids(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Id> {
+        let select = self
+            .select_directed(initials.iter().copied(), select_direction)
+            .unwrap();
+        select.into_root_ids(query_direction).collect()
+    }
+}
+
+impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
+    type Id = FeatureId<'g>;
+    const NAME: &'static str = "feature";
+
+    fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
+        FeatureGraph::depends_on(self, a_id, b_id)
+    }
+
+    fn iter_ids(
+        &self,
+        _initials: &[Self::Id],
+        _select_direction: DependencyDirection,
+        _query_direction: DependencyDirection,
+    ) -> Vec<Self::Id> {
+        unimplemented!("TODO: implement once FeatureGraph::into_iter_ids is implemented");
     }
 
     fn root_ids(
