@@ -29,6 +29,8 @@ pub enum Error {
     PackageGraphConstructError(String),
     /// A package ID was unknown to this `PackageGraph`.
     UnknownPackageId(PackageId),
+    /// A feature ID was unknown to this `FeatureGraph`.
+    UnknownFeatureId(PackageId, Option<String>),
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
 }
@@ -48,6 +50,10 @@ impl fmt::Display for Error {
                 write!(f, "Error while computing package graph: {}", msg)
             }
             UnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
+            UnknownFeatureId(package_id, feature) => match feature {
+                Some(feature) => write!(f, "Unknown feature ID: '{}' '{}'", package_id, feature),
+                None => write!(f, "Unknown feature ID: '{}' (base)", package_id),
+            },
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
         }
     }
@@ -62,6 +68,7 @@ impl error::Error for Error {
             CommandError(_) => None,
             PackageGraphConstructError(_) => None,
             UnknownPackageId(_) => None,
+            UnknownFeatureId(_, _) => None,
             PackageGraphInternalError(_) => None,
         }
     }
