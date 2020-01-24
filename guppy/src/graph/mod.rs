@@ -11,7 +11,7 @@ use petgraph::prelude::*;
 use std::fmt;
 
 mod build;
-mod feature;
+pub mod feature;
 mod graph_impl;
 mod print;
 #[cfg(feature = "proptest09")]
@@ -19,7 +19,6 @@ mod proptest09;
 mod select;
 
 pub use crate::petgraph_support::dot::DotWrite;
-pub use feature::*;
 pub use graph_impl::*;
 use petgraph::graph::IndexType;
 pub use print::*;
@@ -105,9 +104,9 @@ impl GraphSpec for PackageGraph {
     type Ix = PackageIx;
 }
 
-impl<'g> GraphSpec for FeatureGraph<'g> {
-    type Node = FeatureNode;
-    type Edge = FeatureEdge;
+impl<'g> GraphSpec for feature::FeatureGraph<'g> {
+    type Node = feature::FeatureNode;
+    type Edge = feature::FeatureEdge;
     type Ix = FeatureIx;
 }
 

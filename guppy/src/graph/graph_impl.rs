@@ -1,7 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{kind_str, DependencyDirection, FeatureGraphImpl, PackageIx};
+use crate::graph::feature::FeatureGraphImpl;
+use crate::graph::{kind_str, DependencyDirection, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
 use fixedbitset::FixedBitSet;
