@@ -642,7 +642,7 @@ impl PackageMetadata {
         self.workspace_path.is_some()
     }
 
-    /// Returns the build targets for the package
+    /// Returns the build targets for the package.
     pub fn targets(&self) -> impl Iterator<Item = &Target> + ExactSizeIterator {
         self.targets.iter()
     }
