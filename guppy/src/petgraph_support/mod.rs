@@ -9,7 +9,6 @@
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers};
-use std::iter;
 
 pub mod dot;
 pub mod reversed;
@@ -20,14 +19,12 @@ pub fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::Ed
 }
 
 /// Returns the nodes of a graph that have no incoming edges to them.
-pub fn externals<G, Ix, B>(graph: G) -> B
+pub fn externals<G, Ix>(graph: G) -> impl Iterator<Item = NodeIndex<Ix>>
 where
     G: IntoNodeIdentifiers + IntoNeighborsDirected<NodeId = NodeIndex<Ix>>,
     Ix: IndexType,
-    B: iter::FromIterator<NodeIndex<Ix>>,
 {
     graph
         .node_identifiers()
         .filter(move |&a| graph.neighbors_directed(a, Incoming).next().is_none())
-        .collect()
 }

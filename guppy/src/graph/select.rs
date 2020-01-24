@@ -271,13 +271,13 @@ fn select_postfilter<G: GraphSpec>(
     match (params, direction) {
         (All, Forward) => {
             // No need for a reachable map, and use all roots.
-            let roots: Vec<_> = externals(graph);
+            let roots: Vec<_> = externals(graph).collect();
             (None, roots)
         }
         (All, Reverse) => {
             // No need for a reachable map, and use all roots.
             let reversed_graph = Reversed(graph);
-            let roots: Vec<_> = externals(reversed_graph);
+            let roots: Vec<_> = externals(reversed_graph).collect();
             (None, roots)
         }
         (SelectForward(roots), Forward) => {
@@ -290,7 +290,7 @@ fn select_postfilter<G: GraphSpec>(
             let filtered_reversed_graph = NodeFiltered(Reversed(graph), reachable);
             // The filtered + reversed graph will have its own roots since the iteration order
             // is reversed from the specified roots.
-            let roots: Vec<_> = externals(&filtered_reversed_graph);
+            let roots: Vec<_> = externals(&filtered_reversed_graph).collect();
 
             (Some(filtered_reversed_graph.1), roots)
         }
@@ -301,7 +301,7 @@ fn select_postfilter<G: GraphSpec>(
             let filtered_graph = NodeFiltered(graph, reachable);
             // The filtered graph will have its own roots since the iteration order is reversed
             // from the specified roots.
-            let roots: Vec<_> = externals(&filtered_graph);
+            let roots: Vec<_> = externals(&filtered_graph).collect();
 
             (Some(filtered_graph.1), roots)
         }
