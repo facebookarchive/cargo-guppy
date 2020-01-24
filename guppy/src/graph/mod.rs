@@ -11,6 +11,8 @@ use petgraph::prelude::*;
 use std::fmt;
 
 mod build;
+// Temporarily hidden -- will be enabled once more feature stuff is added.
+#[doc(hidden)]
 pub mod feature;
 mod graph_impl;
 mod print;
