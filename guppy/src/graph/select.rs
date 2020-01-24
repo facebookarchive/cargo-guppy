@@ -137,8 +137,7 @@ impl<'g> PackageSelect<'g> {
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
         let dep_graph = self.package_graph.dep_graph();
-        let (_, roots) = select_postfilter(dep_graph, self.params, direction);
-        roots
+        compute_roots(dep_graph, self.params, direction)
             .into_iter()
             .map(move |package_ix| &dep_graph[package_ix])
     }
@@ -181,13 +180,15 @@ impl<'g> PackageSelect<'g> {
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
-        let dep_graph = self.package_graph.dep_graph();
-        let (_, roots) = select_postfilter(dep_graph, self.params.clone(), direction);
-        roots.into_iter().map(move |package_ix| {
-            self.package_graph
-                .metadata(&dep_graph[package_ix])
-                .expect("invalid node index")
-        })
+        let package_graph = self.package_graph;
+        let dep_graph = package_graph.dep_graph();
+        compute_roots(dep_graph, self.params, direction)
+            .into_iter()
+            .map(move |package_ix| {
+                package_graph
+                    .metadata(&dep_graph[package_ix])
+                    .expect("invalid node index")
+            })
     }
 
     /// Consumes this query and creates an iterator over `PackageMetadata` instances, returned in
@@ -227,21 +228,21 @@ impl<'g> PackageSelect<'g> {
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
         let dep_graph = self.package_graph.dep_graph();
 
-        let (reachable, roots) = select_postfilter(dep_graph, self.params, direction);
+        let (reachable, initials) = select_postfilter(dep_graph, self.params, direction);
 
         let (reachable, edge_dfs) = match (reachable, direction) {
             (Some(reachable), Forward) => {
                 let filtered_graph = NodeFiltered(dep_graph, reachable);
-                let edge_dfs = EdgeDfs::new(&filtered_graph, roots);
+                let edge_dfs = EdgeDfs::new(&filtered_graph, initials);
                 (Some(filtered_graph.1), edge_dfs)
             }
             (Some(reachable), Reverse) => {
                 let filtered_reversed_graph = NodeFiltered(Reversed(dep_graph), reachable);
-                let edge_dfs = EdgeDfs::new(&filtered_reversed_graph, roots);
+                let edge_dfs = EdgeDfs::new(&filtered_reversed_graph, initials);
                 (Some(filtered_reversed_graph.1), edge_dfs)
             }
-            (None, Forward) => (None, EdgeDfs::new(dep_graph, roots)),
-            (None, Reverse) => (None, EdgeDfs::new(Reversed(dep_graph), roots)),
+            (None, Forward) => (None, EdgeDfs::new(dep_graph, initials)),
+            (None, Reverse) => (None, EdgeDfs::new(Reversed(dep_graph), initials)),
         };
 
         IntoIterLinks {
@@ -249,6 +250,23 @@ impl<'g> PackageSelect<'g> {
             reachable,
             edge_dfs,
             direction,
+        }
+    }
+}
+
+/// Computes the roots for this graph and parameters.
+pub(super) fn compute_roots<G: GraphSpec>(
+    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
+    params: SelectParams<G>,
+    direction: DependencyDirection,
+) -> Vec<NodeIndex<G::Ix>> {
+    // XXX It would be nice if compute_roots returned an iterator, but there are some thorny
+    // ownership issues that need to be resolved for that to happen.
+    let (reachable_map, _) = select_prefilter(graph, params);
+    match direction {
+        DependencyDirection::Forward => externals(&NodeFiltered(graph, reachable_map)).collect(),
+        DependencyDirection::Reverse => {
+            externals(&NodeFiltered(Reversed(graph), reachable_map)).collect()
         }
     }
 }
@@ -263,13 +281,16 @@ pub(super) fn select_prefilter<G: GraphSpec>(
 
     match params {
         All => all_visit_map(graph),
-        SelectForward(roots) => reachable_map(graph, roots),
-        SelectReverse(roots) => reachable_map(Reversed(graph), roots),
+        SelectForward(initials) => reachable_map(graph, initials),
+        SelectReverse(initials) => reachable_map(Reversed(graph), initials),
     }
 }
 
 /// Computes intermediate state for operations where the graph can be filtered dynamically if
 /// possible.
+///
+/// Note that the second return value is the initial starting points of a graph traversal, which
+/// might be a superset of the actual roots.
 fn select_postfilter<G: GraphSpec>(
     graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
     params: SelectParams<G>,
@@ -290,13 +311,13 @@ fn select_postfilter<G: GraphSpec>(
             let roots: Vec<_> = externals(reversed_graph).collect();
             (None, roots)
         }
-        (SelectForward(roots), Forward) => {
+        (SelectForward(initials), Forward) => {
             // No need for a reachable map.
-            (None, roots)
+            (None, initials)
         }
-        (SelectForward(roots), Reverse) => {
+        (SelectForward(initials), Reverse) => {
             // Forward traversal + reverse order = need to compute reachable map.
-            let (reachable, _) = reachable_map(graph, roots);
+            let (reachable, _) = reachable_map(graph, initials);
             let filtered_reversed_graph = NodeFiltered(Reversed(graph), reachable);
             // The filtered + reversed graph will have its own roots since the iteration order
             // is reversed from the specified roots.
@@ -304,10 +325,10 @@ fn select_postfilter<G: GraphSpec>(
 
             (Some(filtered_reversed_graph.1), roots)
         }
-        (SelectReverse(roots), Forward) => {
+        (SelectReverse(initials), Forward) => {
             // Reverse traversal + forward order = need to compute reachable map.
             let reversed_graph = Reversed(graph);
-            let (reachable, _) = reachable_map(reversed_graph, roots);
+            let (reachable, _) = reachable_map(reversed_graph, initials);
             let filtered_graph = NodeFiltered(graph, reachable);
             // The filtered graph will have its own roots since the iteration order is reversed
             // from the specified roots.
@@ -315,9 +336,9 @@ fn select_postfilter<G: GraphSpec>(
 
             (Some(filtered_graph.1), roots)
         }
-        (SelectReverse(roots), Reverse) => {
+        (SelectReverse(initials), Reverse) => {
             // No need for a reachable map.
-            (None, roots)
+            (None, initials)
         }
     }
 }
