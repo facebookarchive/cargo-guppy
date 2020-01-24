@@ -230,7 +230,7 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     let selection = if options.root.is_some() {
         pkg_graph.select_forward(iter::once(root_id.unwrap()))?
     } else {
-        pkg_graph.select_all()
+        pkg_graph.select_workspace()
     };
 
     let mut unique_deps: HashMap<&PackageId, HashSet<&PackageId>> = HashMap::new();
