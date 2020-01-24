@@ -3,7 +3,7 @@
 
 use crate::graph::{kind_str, DependencyDirection, FeatureGraphImpl, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
-use cargo_metadata::{DependencyKind, NodeDep};
+use cargo_metadata::{DependencyKind, NodeDep, Target};
 use fixedbitset::FixedBitSet;
 use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
@@ -496,6 +496,7 @@ pub struct PackageMetadata {
     pub(super) license: Option<Box<str>>,
     pub(super) license_file: Option<Box<Path>>,
     pub(super) manifest_path: Box<Path>,
+    pub(super) targets: Vec<Target>,
     pub(super) categories: Vec<String>,
     pub(super) keywords: Vec<String>,
     pub(super) readme: Option<Box<Path>>,
@@ -639,6 +640,11 @@ impl PackageMetadata {
     /// Returns true if this package is in the workspace.
     pub fn in_workspace(&self) -> bool {
         self.workspace_path.is_some()
+    }
+
+    /// Returns the build targets for the package
+    pub fn targets(&self) -> impl Iterator<Item = &Target> + ExactSizeIterator {
+        self.targets.iter()
     }
 
     /// Returns the relative path to this package in the workspace, or `None` if this package is

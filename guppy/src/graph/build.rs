@@ -210,6 +210,7 @@ impl<'a> GraphBuildState<'a> {
                 license: package.license.map(|s| s.into()),
                 license_file: package.license_file.map(|s| s.into()),
                 manifest_path: package.manifest_path.into(),
+                targets: package.targets,
                 categories: package.categories,
                 keywords: package.keywords,
                 readme: package.readme.map(|s| s.into()),
