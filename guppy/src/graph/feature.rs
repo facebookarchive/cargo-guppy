@@ -43,7 +43,6 @@ impl PackageGraph {
     ///
     /// The feature graph is constructed the first time this method is called. The graph is cached
     /// so that repeated calls to this method are cheap.
-    #[doc(hidden)]
     pub fn feature_graph(&self) -> FeatureGraph {
         let inner = self.get_feature_graph();
         FeatureGraph { inner }
