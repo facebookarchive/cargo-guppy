@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/serde_json-1.0.44/src/map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>map.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../serde_json/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/serde_json-1.0.45/src/map.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>map.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../serde_json/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -818,6 +818,12 @@
 <span id="818">818</span>
 <span id="819">819</span>
 <span id="820">820</span>
+<span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! A map of String to serde_json::Value.</span>
 <span class="doccomment">//!</span>
@@ -827,16 +833,11 @@
 <span class="doccomment">//! [`BTreeMap`]: https://doc.rust-lang.org/std/collections/struct.BTreeMap.html</span>
 <span class="doccomment">//! [`IndexMap`]: https://docs.rs/indexmap/*/indexmap/map/struct.IndexMap.html</span>
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">lib</span>::<span class="ident">borrow</span>::<span class="ident">Borrow</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">lib</span>::<span class="ident">iter</span>::<span class="ident">FromIterator</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">lib</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">value</span>::<span class="ident">Value</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">de</span>, <span class="ident">ser</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">borrow</span>::<span class="ident">Borrow</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::{<span class="self">self</span>, <span class="ident">Debug</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>::<span class="ident">Hash</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::<span class="ident">FromIterator</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>;
-<span class="kw">use</span> <span class="ident">value</span>::<span class="ident">Value</span>;
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;preserve_order&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">btree_map</span>, <span class="ident">BTreeMap</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;preserve_order&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">indexmap</span>::{<span class="self">self</span>, <span class="ident">IndexMap</span>};
@@ -953,16 +954,27 @@
         <span class="kw">return</span> <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">remove</span>(<span class="ident">key</span>);
     }
 
+    <span class="doccomment">/// Moves all elements from other into Self, leaving other empty.</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>) {
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;preserve_order&quot;</span>)]</span>
+        <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="ident">std</span>::<span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">other</span>.<span class="ident">map</span>, <span class="ident">MapImpl</span>::<span class="ident">default</span>()).<span class="ident">into_iter</span>() {
+            <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">insert</span>(<span class="ident">k</span>, <span class="ident">v</span>);
+        }
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;preserve_order&quot;</span>))]</span>
+        <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">append</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">other</span>.<span class="ident">map</span>);
+    }
+
     <span class="doccomment">/// Gets the given key&#39;s corresponding entry in the map for in-place</span>
     <span class="doccomment">/// manipulation.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">entry</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Entry</span>
     <span class="kw">where</span>
         <span class="ident">S</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     {
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;preserve_order&quot;</span>))]</span>
+        <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">lib</span>::<span class="ident">btree_map</span>::<span class="ident">Entry</span> <span class="kw">as</span> <span class="ident">EntryImpl</span>;
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;preserve_order&quot;</span>)]</span>
         <span class="kw">use</span> <span class="ident">indexmap</span>::<span class="ident">map</span>::<span class="ident">Entry</span> <span class="kw">as</span> <span class="ident">EntryImpl</span>;
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;preserve_order&quot;</span>))]</span>
-        <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">btree_map</span>::<span class="ident">Entry</span> <span class="kw">as</span> <span class="ident">EntryImpl</span>;
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">entry</span>(<span class="ident">key</span>.<span class="ident">into</span>()) {
             <span class="ident">EntryImpl</span>::<span class="ident">Vacant</span>(<span class="ident">vacant</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Entry</span>::<span class="ident">Vacant</span>(<span class="ident">VacantEntry</span> { <span class="ident">vacant</span>: <span class="ident">vacant</span> }),
@@ -1060,7 +1072,7 @@
 <span class="doccomment">/// Access an element of this map. Panics if the given key is not present in the</span>
 <span class="doccomment">/// map.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// ```edition2018</span>
+<span class="doccomment">/// ```</span>
 <span class="doccomment">/// # use serde_json::Value;</span>
 <span class="doccomment">/// #</span>
 <span class="doccomment">/// # let val = &amp;Value::String(&quot;&quot;.to_owned());</span>
@@ -1088,7 +1100,7 @@
 <span class="doccomment">/// Mutably access an element of this map. Panics if the given key is not</span>
 <span class="doccomment">/// present in the map.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// ```edition2018</span>
+<span class="doccomment">/// ```</span>
 <span class="doccomment">/// # use serde_json::json;</span>
 <span class="doccomment">/// #</span>
 <span class="doccomment">/// # let mut map = serde_json::Map::new();</span>
@@ -1120,10 +1132,10 @@
         <span class="ident">S</span>: <span class="ident">ser</span>::<span class="ident">Serializer</span>,
     {
         <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">ser</span>::<span class="ident">SerializeMap</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">serializer</span>.<span class="ident">serialize_map</span>(<span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">serializer</span>.<span class="ident">serialize_map</span>(<span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">len</span>())));
         <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="self">self</span> {
-            <span class="macro">try</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">serialize_key</span>(<span class="ident">k</span>));
-            <span class="macro">try</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">serialize_value</span>(<span class="ident">v</span>));
+            <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">serialize_key</span>(<span class="ident">k</span>));
+            <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">map</span>.<span class="ident">serialize_value</span>(<span class="ident">v</span>));
         }
         <span class="ident">map</span>.<span class="ident">end</span>()
     }
@@ -1159,7 +1171,7 @@
             {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="ident">Map</span>::<span class="ident">new</span>();
 
-                <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">key</span>, <span class="ident">value</span>)) <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">visitor</span>.<span class="ident">next_entry</span>()) {
+                <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">key</span>, <span class="ident">value</span>)) <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">visitor</span>.<span class="ident">next_entry</span>()) {
                     <span class="ident">values</span>.<span class="ident">insert</span>(<span class="ident">key</span>, <span class="ident">value</span>);
                 }
 
@@ -1264,7 +1276,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// let mut map = serde_json::Map::new();</span>
     <span class="doccomment">/// assert_eq!(map.entry(&quot;serde&quot;).key(), &amp;&quot;serde&quot;);</span>
     <span class="doccomment">/// ```</span>
@@ -1280,7 +1292,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// let mut map = serde_json::Map::new();</span>
@@ -1301,7 +1313,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// let mut map = serde_json::Map::new();</span>
@@ -1326,7 +1338,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// let mut map = serde_json::Map::new();</span>
@@ -1348,7 +1360,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>
@@ -1373,7 +1385,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>
@@ -1397,7 +1409,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>
@@ -1421,7 +1433,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>
@@ -1447,7 +1459,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>
@@ -1474,7 +1486,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>
@@ -1499,7 +1511,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// ```edition2018</span>
+    <span class="doccomment">/// ```</span>
     <span class="doccomment">/// # use serde_json::json;</span>
     <span class="doccomment">/// #</span>
     <span class="doccomment">/// use serde_json::map::Entry;</span>

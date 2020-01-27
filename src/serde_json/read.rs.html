@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/serde_json-1.0.44/src/read.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>read.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../serde_json/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/serde_json-1.0.45/src/read.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>read.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../serde_json/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -857,19 +857,30 @@
 <span id="857">857</span>
 <span id="858">858</span>
 <span id="859">859</span>
+<span id="860">860</span>
+<span id="861">861</span>
+<span id="862">862</span>
+<span id="863">863</span>
+<span id="864">864</span>
+<span id="865">865</span>
+<span id="866">866</span>
+<span id="867">867</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::<span class="ident">Deref</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">char</span>, <span class="ident">cmp</span>, <span class="ident">io</span>, <span class="ident">str</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">error</span>::{<span class="ident">Error</span>, <span class="ident">ErrorCode</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">lib</span>::<span class="ident">ops</span>::<span class="ident">Deref</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">lib</span>::<span class="kw-2">*</span>;
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">io</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">iter</span>::<span class="ident">LineColIterator</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;raw_value&quot;</span>)]</span>
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">raw</span>::<span class="ident">BorrowedRawDeserializer</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;raw_value&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">raw</span>::<span class="ident">OwnedRawDeserializer</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;raw_value&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">de</span>::<span class="ident">Visitor</span>;
-
-<span class="kw">use</span> <span class="ident">iter</span>::<span class="ident">LineColIterator</span>;
-
-<span class="kw">use</span> <span class="ident">error</span>::{<span class="ident">Error</span>, <span class="ident">ErrorCode</span>, <span class="prelude-ty">Result</span>};
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;raw_value&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">raw</span>::{<span class="ident">BorrowedRawDeserializer</span>, <span class="ident">OwnedRawDeserializer</span>};
 
 <span class="doccomment">/// Trait used by the deserializer for iterating over input. This is manually</span>
 <span class="doccomment">/// &quot;specialized&quot; for iterating over &amp;[u8]. Once feature(specialization) is</span>
@@ -978,6 +989,7 @@
 }
 
 <span class="doccomment">/// JSON input source that reads from a std::io input stream.</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IoRead</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">R</span>: <span class="ident">io</span>::<span class="ident">Read</span>,
@@ -1017,6 +1029,7 @@
 
 <span class="comment">//////////////////////////////////////////////////////////////////////////////</span>
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="ident">IoRead</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">R</span>: <span class="ident">io</span>::<span class="ident">Read</span>,
@@ -1041,8 +1054,10 @@
     }
 }
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="ident">private</span>::<span class="ident">Sealed</span> <span class="kw">for</span> <span class="ident">IoRead</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">R</span>: <span class="ident">io</span>::<span class="ident">Read</span> {}
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="ident">IoRead</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">R</span>: <span class="ident">io</span>::<span class="ident">Read</span>,
@@ -1058,7 +1073,7 @@
         <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;s</span> <span class="self">Self</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;s</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
     {
         <span class="kw">loop</span> {
-            <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="self">self</span>));
+            <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="self">self</span>));
             <span class="kw">if</span> <span class="op">!</span><span class="ident">ESCAPE</span>[<span class="ident">ch</span> <span class="kw">as</span> <span class="ident">usize</span>] {
                 <span class="ident">scratch</span>.<span class="ident">push</span>(<span class="ident">ch</span>);
                 <span class="kw">continue</span>;
@@ -1068,7 +1083,7 @@
                     <span class="kw">return</span> <span class="ident">result</span>(<span class="self">self</span>, <span class="ident">scratch</span>);
                 }
                 <span class="string">b&#39;\\&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="macro">try</span><span class="macro">!</span>(<span class="ident">parse_escape</span>(<span class="self">self</span>, <span class="ident">scratch</span>));
+                    <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">parse_escape</span>(<span class="self">self</span>, <span class="ident">scratch</span>));
                 }
                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">if</span> <span class="ident">validate</span> {
@@ -1081,6 +1096,7 @@
     }
 }
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">R</span><span class="op">&gt;</span> <span class="ident">Read</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IoRead</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">R</span>: <span class="ident">io</span>::<span class="ident">Read</span>,
@@ -1178,7 +1194,7 @@
 
     <span class="kw">fn</span> <span class="ident">ignore_str</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">loop</span> {
-            <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="self">self</span>));
+            <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="self">self</span>));
             <span class="kw">if</span> <span class="op">!</span><span class="ident">ESCAPE</span>[<span class="ident">ch</span> <span class="kw">as</span> <span class="ident">usize</span>] {
                 <span class="kw">continue</span>;
             }
@@ -1187,7 +1203,7 @@
                     <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
                 }
                 <span class="string">b&#39;\\&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="macro">try</span><span class="macro">!</span>(<span class="ident">ignore_escape</span>(<span class="self">self</span>));
+                    <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">ignore_escape</span>(<span class="self">self</span>));
                 }
                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">return</span> <span class="ident">error</span>(<span class="self">self</span>, <span class="ident">ErrorCode</span>::<span class="ident">ControlCharacterWhileParsingString</span>);
@@ -1199,7 +1215,7 @@
     <span class="kw">fn</span> <span class="ident">decode_hex_escape</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">4</span> {
-            <span class="kw">match</span> <span class="ident">decode_hex_val</span>(<span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="self">self</span>))) {
+            <span class="kw">match</span> <span class="ident">decode_hex_val</span>(<span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="self">self</span>))) {
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">error</span>(<span class="self">self</span>, <span class="ident">ErrorCode</span>::<span class="ident">InvalidEscape</span>),
                 <span class="prelude-val">Some</span>(<span class="ident">val</span>) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="ident">n</span> <span class="op">=</span> (<span class="ident">n</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>) <span class="op">+</span> <span class="ident">val</span>;
@@ -1305,7 +1321,7 @@
                 <span class="string">b&#39;\\&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="ident">scratch</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">slice</span>[<span class="ident">start</span>..<span class="self">self</span>.<span class="ident">index</span>]);
                     <span class="self">self</span>.<span class="ident">index</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                    <span class="macro">try</span><span class="macro">!</span>(<span class="ident">parse_escape</span>(<span class="self">self</span>, <span class="ident">scratch</span>));
+                    <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">parse_escape</span>(<span class="self">self</span>, <span class="ident">scratch</span>));
                     <span class="ident">start</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">index</span>;
                 }
                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
@@ -1391,7 +1407,7 @@
                 }
                 <span class="string">b&#39;\\&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="self">self</span>.<span class="ident">index</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                    <span class="macro">try</span><span class="macro">!</span>(<span class="ident">ignore_escape</span>(<span class="self">self</span>));
+                    <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">ignore_escape</span>(<span class="self">self</span>));
                 }
                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">return</span> <span class="ident">error</span>(<span class="self">self</span>, <span class="ident">ErrorCode</span>::<span class="ident">ControlCharacterWhileParsingString</span>);
@@ -1534,7 +1550,7 @@
 <span class="comment">// Lookup table of bytes that must be escaped. A value of true at index i means</span>
 <span class="comment">// that byte i requires an escape sequence in the input.</span>
 <span class="kw">static</span> <span class="ident">ESCAPE</span>: [<span class="ident">bool</span>; <span class="number">256</span>] <span class="op">=</span> {
-    <span class="kw">const</span> <span class="ident">CT</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">true</span>; <span class="comment">// control character \x00...\x1F</span>
+    <span class="kw">const</span> <span class="ident">CT</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">true</span>; <span class="comment">// control character \x00..=\x1F</span>
     <span class="kw">const</span> <span class="ident">QU</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">true</span>; <span class="comment">// quote \x22</span>
     <span class="kw">const</span> <span class="ident">BS</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">true</span>; <span class="comment">// backslash \x5C</span>
     <span class="kw">const</span> <span class="ident">__</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">false</span>; <span class="comment">// allow unescaped</span>
@@ -1560,7 +1576,7 @@
 };
 
 <span class="kw">fn</span> <span class="ident">next_or_eof</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">R</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Read</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">read</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">next</span>()) {
+    <span class="kw">match</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">next</span>()) {
         <span class="prelude-val">Some</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">b</span>),
         <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">EofWhileParsingString</span>),
     }
@@ -1578,7 +1594,7 @@
 <span class="doccomment">/// Parses a JSON escape sequence and appends it into the scratch space. Assumes</span>
 <span class="doccomment">/// the previous byte read was a backslash.</span>
 <span class="kw">fn</span> <span class="ident">parse_escape</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">R</span>: <span class="ident">Read</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">read</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>, <span class="ident">scratch</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>));
+    <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>));
 
     <span class="kw">match</span> <span class="ident">ch</span> {
         <span class="string">b&#39;&quot;&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">scratch</span>.<span class="ident">push</span>(<span class="string">b&#39;&quot;&#39;</span>),
@@ -1590,22 +1606,22 @@
         <span class="string">b&#39;r&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">scratch</span>.<span class="ident">push</span>(<span class="string">b&#39;\r&#39;</span>),
         <span class="string">b&#39;t&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">scratch</span>.<span class="ident">push</span>(<span class="string">b&#39;\t&#39;</span>),
         <span class="string">b&#39;u&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="kw">match</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>()) {
-                <span class="number">0xDC00</span>...<span class="number">0xDFFF</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="kw">match</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>()) {
+                <span class="number">0xDC00</span>..<span class="op">=</span><span class="number">0xDFFF</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">LoneLeadingSurrogateInHexEscape</span>);
                 }
 
                 <span class="comment">// Non-BMP characters are encoded as a sequence of</span>
                 <span class="comment">// two hex escapes, representing UTF-16 surrogates.</span>
-                <span class="ident">n1</span> @ <span class="number">0xD800</span>...<span class="number">0xDBFF</span> <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;\\&#39;</span> {
+                <span class="ident">n1</span> @ <span class="number">0xD800</span>..<span class="op">=</span><span class="number">0xDBFF</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">if</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;\\&#39;</span> {
                         <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">UnexpectedEndOfHexEscape</span>);
                     }
-                    <span class="kw">if</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;u&#39;</span> {
+                    <span class="kw">if</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;u&#39;</span> {
                         <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">UnexpectedEndOfHexEscape</span>);
                     }
 
-                    <span class="kw">let</span> <span class="ident">n2</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>());
+                    <span class="kw">let</span> <span class="ident">n2</span> <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>());
 
                     <span class="kw">if</span> <span class="ident">n2</span> <span class="op">&lt;</span> <span class="number">0xDC00</span> <span class="op">|</span><span class="op">|</span> <span class="ident">n2</span> <span class="op">&gt;</span> <span class="number">0xDFFF</span> {
                         <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">LoneLeadingSurrogateInHexEscape</span>);
@@ -1642,27 +1658,27 @@
 <span class="doccomment">/// Parses a JSON escape sequence and discards the value. Assumes the previous</span>
 <span class="doccomment">/// byte read was a backslash.</span>
 <span class="kw">fn</span> <span class="ident">ignore_escape</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">R</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Read</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">read</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>));
+    <span class="kw">let</span> <span class="ident">ch</span> <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>));
 
     <span class="kw">match</span> <span class="ident">ch</span> {
         <span class="string">b&#39;&quot;&#39;</span> <span class="op">|</span> <span class="string">b&#39;\\&#39;</span> <span class="op">|</span> <span class="string">b&#39;/&#39;</span> <span class="op">|</span> <span class="string">b&#39;b&#39;</span> <span class="op">|</span> <span class="string">b&#39;f&#39;</span> <span class="op">|</span> <span class="string">b&#39;n&#39;</span> <span class="op">|</span> <span class="string">b&#39;r&#39;</span> <span class="op">|</span> <span class="string">b&#39;t&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {}
         <span class="string">b&#39;u&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="kw">match</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>()) {
-                <span class="number">0xDC00</span>...<span class="number">0xDFFF</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="kw">match</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>()) {
+                <span class="number">0xDC00</span>..<span class="op">=</span><span class="number">0xDFFF</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">LoneLeadingSurrogateInHexEscape</span>);
                 }
 
                 <span class="comment">// Non-BMP characters are encoded as a sequence of</span>
                 <span class="comment">// two hex escapes, representing UTF-16 surrogates.</span>
-                <span class="ident">n1</span> @ <span class="number">0xD800</span>...<span class="number">0xDBFF</span> <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;\\&#39;</span> {
+                <span class="ident">n1</span> @ <span class="number">0xD800</span>..<span class="op">=</span><span class="number">0xDBFF</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">if</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;\\&#39;</span> {
                         <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">UnexpectedEndOfHexEscape</span>);
                     }
-                    <span class="kw">if</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;u&#39;</span> {
+                    <span class="kw">if</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">next_or_eof</span>(<span class="ident">read</span>)) <span class="op">!</span><span class="op">=</span> <span class="string">b&#39;u&#39;</span> {
                         <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">UnexpectedEndOfHexEscape</span>);
                     }
 
-                    <span class="kw">let</span> <span class="ident">n2</span> <span class="op">=</span> <span class="macro">try</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>());
+                    <span class="kw">let</span> <span class="ident">n2</span> <span class="op">=</span> <span class="macro">tri</span><span class="macro">!</span>(<span class="ident">read</span>.<span class="ident">decode_hex_escape</span>());
 
                     <span class="kw">if</span> <span class="ident">n2</span> <span class="op">&lt;</span> <span class="number">0xDC00</span> <span class="op">|</span><span class="op">|</span> <span class="ident">n2</span> <span class="op">&gt;</span> <span class="number">0xDFFF</span> {
                         <span class="kw">return</span> <span class="ident">error</span>(<span class="ident">read</span>, <span class="ident">ErrorCode</span>::<span class="ident">LoneLeadingSurrogateInHexEscape</span>);
