@@ -30,22 +30,27 @@ pub struct PackageSelect<'g> {
 /// The methods in this section create *package selectors*, which are queries over subsets of this
 /// package graph. Use the methods here for queries based on transitive dependencies.
 impl PackageGraph {
+    /// Creates a new forward selector over the entire workspace.
+    ///
+    /// `select_workspace` will select all workspace packages and their transitive dependencies.
+    pub fn select_workspace(&self) -> PackageSelect {
+        self.select_forward(self.workspace().member_ids())
+            .expect("workspace packages should all be known")
+    }
+
     /// Creates a new selector that returns all members of this package graph.
     ///
     /// This is normally the same as `select_workspace`, but can differ in some cases:
     /// * if packages have been replaced with `[patch]` or `[replace]`
     /// * if some edges have been removed from this graph with `retain_edges`.
+    ///
+    /// In most situations, `select_workspace` is preferred. Use `select_all` if you know you need
+    /// parts of the graph that aren't accessible from the workspace.
     pub fn select_all(&self) -> PackageSelect {
         PackageSelect {
             package_graph: self,
             params: SelectParams::All,
         }
-    }
-
-    /// Creates a new forward selector over the entire workspace.
-    pub fn select_workspace(&self) -> PackageSelect {
-        self.select_forward(self.workspace().member_ids())
-            .expect("workspace packages should all be known")
     }
 
     /// Creates a new selector that returns transitive dependencies of the given packages in the
