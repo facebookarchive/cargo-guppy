@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyDirection, PackageGraph};
-use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert};
+use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata};
 use crate::PackageId;
 use proptest::prelude::*;
 use proptest::sample::Index;
@@ -151,7 +151,7 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
     msg: &str,
 ) -> prop::test_runner::TestCaseResult {
     let root_ids = graph.root_ids(ids, select_direction, query_direction);
-    let root_id_set: HashSet<_> = root_ids.iter().collect();
+    let root_id_set: HashSet<_> = root_ids.iter().copied().collect();
     assert_eq!(
         root_ids.len(),
         root_id_set.len(),
@@ -159,7 +159,22 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
         msg
     );
 
-    // TODO: check root metadata once available for feature graphs
+    let root_metadatas = graph.root_metadatas(ids, select_direction, query_direction);
+    assert_eq!(
+        root_ids.len(),
+        root_metadatas.len(),
+        "{}: root IDs and metadatas should have the same count",
+        msg
+    );
+    let root_id_set_2: HashSet<_> = root_metadatas
+        .iter()
+        .map(|metadata| metadata.id())
+        .collect();
+    assert_eq!(
+        root_id_set, root_id_set_2,
+        "{}: root IDs and metadatas should return the same results",
+        msg
+    );
 
     assert!(
         !root_ids.is_empty(),

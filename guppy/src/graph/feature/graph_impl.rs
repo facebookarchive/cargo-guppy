@@ -128,6 +128,18 @@ impl<'g> FeatureGraph<'g> {
         self.inner.map.get(&feature_node)
     }
 
+    pub(super) fn metadata_for_node(
+        &self,
+        feature_node: &FeatureNode,
+    ) -> Option<FeatureMetadata<'g>> {
+        let metadata_impl = self.inner.map.get(feature_node)?;
+        let feature_id = FeatureId::from_node(self.package_graph, feature_node);
+        Some(FeatureMetadata {
+            feature_id,
+            inner: metadata_impl,
+        })
+    }
+
     pub(super) fn dep_graph(&self) -> &'g Graph<FeatureNode, FeatureEdge, Directed, FeatureIx> {
         &self.inner.graph
     }

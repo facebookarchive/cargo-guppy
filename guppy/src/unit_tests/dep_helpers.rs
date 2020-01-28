@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId};
+use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
 use crate::graph::{
     DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
 };
@@ -341,23 +341,33 @@ fn assert_topo_order<'a>(
 
 pub(super) trait GraphAssert<'g> {
     type Id: Copy + Eq + Hash + fmt::Debug;
+    type Metadata: GraphMetadata<'g, Id = Self::Id>;
     const NAME: &'static str;
 
     // TODO: Add support for checks around links once they're defined for feature graphs.
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
+
     fn iter_ids(
         &self,
         initials: &[Self::Id],
         select_direction: DependencyDirection,
         query_direction: DependencyDirection,
     ) -> Vec<Self::Id>;
+
     fn root_ids(
         &self,
         initials: &[Self::Id],
         select_direction: DependencyDirection,
         query_direction: DependencyDirection,
     ) -> Vec<Self::Id>;
+
+    fn root_metadatas(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Metadata>;
 
     fn assert_depends_on_any(
         &self,
@@ -449,8 +459,14 @@ pub(super) trait GraphAssert<'g> {
     }
 }
 
+pub(super) trait GraphMetadata<'g> {
+    type Id: Copy + Eq + Hash + fmt::Debug;
+    fn id(&self) -> Self::Id;
+}
+
 impl<'g> GraphAssert<'g> for &'g PackageGraph {
     type Id = &'g PackageId;
+    type Metadata = &'g PackageMetadata;
     const NAME: &'static str = "package";
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
@@ -480,10 +496,30 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
             .unwrap();
         select.into_root_ids(query_direction).collect()
     }
+
+    fn root_metadatas(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Metadata> {
+        let select = self
+            .select_directed(initials.iter().copied(), select_direction)
+            .unwrap();
+        select.into_root_metadatas(query_direction).collect()
+    }
+}
+
+impl<'g> GraphMetadata<'g> for &'g PackageMetadata {
+    type Id = &'g PackageId;
+    fn id(&self) -> Self::Id {
+        PackageMetadata::id(self)
+    }
 }
 
 impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
     type Id = FeatureId<'g>;
+    type Metadata = FeatureMetadata<'g>;
     const NAME: &'static str = "feature";
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
@@ -509,6 +545,25 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
         select.into_root_ids(query_direction).collect()
+    }
+
+    fn root_metadatas(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Metadata> {
+        let select = self
+            .select_directed(initials.iter().copied(), select_direction)
+            .unwrap();
+        select.into_root_metadatas(query_direction).collect()
+    }
+}
+
+impl<'g> GraphMetadata<'g> for FeatureMetadata<'g> {
+    type Id = FeatureId<'g>;
+    fn id(&self) -> Self::Id {
+        self.feature_id()
     }
 }
 
