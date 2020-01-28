@@ -258,11 +258,32 @@
 <span id="258">258</span>
 <span id="259">259</span>
 <span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">compute_roots</span>, <span class="ident">DependencyDirection</span>, <span class="ident">PackageSelect</span>, <span class="ident">SelectParams</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span>;
@@ -502,7 +523,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureSelect</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Returns the set of &quot;root feature IDs&quot; in the specified direction.</span>
+    <span class="doccomment">/// Returns the set of &quot;root feature&quot; IDs in the specified direction.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// * If direction is Forward, return the set of feature IDs that do not have any dependencies</span>
     <span class="doccomment">///   within the selected graph.</span>
@@ -517,6 +538,27 @@
         <span class="ident">compute_roots</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>, <span class="ident">direction</span>)
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> <span class="ident">FeatureId</span>::<span class="ident">from_node</span>(<span class="ident">package_graph</span>, <span class="kw-2">&amp;</span><span class="ident">dep_graph</span>[<span class="ident">feature_ix</span>]))
+    }
+
+    <span class="doccomment">/// Return the set of &quot;root feature&quot; metadatas in the specified direction.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * If direction is Forward, return the set of metadatas that do not have any dependencies</span>
+    <span class="doccomment">///   within the selected graph.</span>
+    <span class="doccomment">/// * If direction is Reverse, return the set of metadatas that do not have any dependents</span>
+    <span class="doccomment">///   within the selected graph.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_root_metadatas</span>(
+        <span class="self">self</span>,
+        <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">FeatureMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+        <span class="kw">let</span> <span class="ident">feature_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
+        <span class="ident">compute_roots</span>(<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>(), <span class="self">self</span>.<span class="ident">params</span>, <span class="ident">direction</span>)
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
+                <span class="kw">let</span> <span class="ident">feature_node</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>()[<span class="ident">feature_ix</span>];
+                <span class="ident">feature_graph</span>
+                    .<span class="ident">metadata_for_node</span>(<span class="ident">feature_node</span>)
+                    .<span class="ident">expect</span>(<span class="string">&quot;feature node should be known&quot;</span>)
+            })
     }
 }
 </pre></div>
