@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    DependencyDirection, DependencyEdge, DependencyLink, DependsCache, PackageGraph,
-    PackageMetadata,
+    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
 };
 use crate::unit_tests::fixtures::PackageDetails;
-use crate::PackageId;
+use crate::{Error, PackageId};
 use std::collections::{BTreeSet, HashSet};
+use std::fmt;
+use std::hash::Hash;
 use std::iter;
 
 fn __from_metadata<'a>(dep: &DependencyLink<'a>) -> &'a PackageMetadata {
@@ -115,10 +116,9 @@ pub(crate) fn assert_deps_internal(
         msg, desc.direction_desc,
     );
 
-    let mut cache = graph.new_depends_cache();
     for (_, _, dep_id) in &actual_dep_ids {
         // depends_on should agree with the dependencies returned.
-        assert_depends_on(known_details.id(), dep_id, &mut cache, direction, msg);
+        graph.assert_depends_on(known_details.id(), dep_id, direction, msg);
     }
 
     // Check that the dependency metadata returned is consistent with what we expect.
@@ -217,10 +217,9 @@ pub(crate) fn assert_transitive_deps_internal(
         &format!("{}: opposite link order", msg),
     );
 
-    let mut cache = graph.new_depends_cache();
     for dep_id in expected_dep_id_refs {
         // depends_on should agree with this.
-        assert_depends_on(known_details.id(), dep_id, &mut cache, direction, msg);
+        graph.assert_depends_on(known_details.id(), dep_id, direction, msg);
 
         // Transitive deps should be transitively closed.
         let dep_actual_dep_ids: BTreeSet<_> = graph
@@ -328,103 +327,157 @@ fn assert_topo_order<'a>(
     msg: &str,
 ) {
     let topo_ids: Vec<_> = topo_ids.into_iter().collect();
-    let mut cache = graph.new_depends_cache();
     for (idx, earlier_package) in topo_ids.iter().enumerate() {
         // Note that this skips over idx + 1 entries to avoid earlier_package == later_package.
         // Doing an exhaustive search would be O(n**2) in the number of packages, so just do a
         // maximum of 20.
         // TODO: use proptest to generate random queries on the corpus.
         for later_package in topo_ids.iter().skip(idx + 1).take(20) {
-            assert_not_depends_on(later_package, earlier_package, &mut cache, direction, msg);
+            graph.assert_not_depends_on(later_package, earlier_package, direction, msg);
         }
     }
 }
 
-#[allow(dead_code)]
-pub(crate) fn assert_depends_on_any(
-    source_ids: &[&PackageId],
-    query_id: &PackageId,
-    cache: &mut DependsCache,
-    direction: DependencyDirection,
-    msg: &str,
-) {
-    let any_depends_on = source_ids.iter().any(|source_id| match direction {
-        DependencyDirection::Forward => cache.depends_on(source_id, query_id).unwrap(),
-        DependencyDirection::Reverse => cache.depends_on(query_id, source_id).unwrap(),
-    });
-    match direction {
-        DependencyDirection::Forward => {
-            assert!(
-                any_depends_on,
-                "{}: package '{}' should be a dependency of any of '{:?}'",
-                msg, query_id, source_ids
-            );
+pub(super) trait GraphAssert<'g> {
+    type Id: Copy + Eq + Hash + fmt::Debug;
+    const NAME: &'static str;
+
+    // TODO: Add support for checks around links once they're defined for feature graphs.
+
+    fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
+    fn iter_ids(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Id>;
+    fn root_ids(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Id>;
+
+    fn assert_depends_on_any(
+        &self,
+        source_ids: &[Self::Id],
+        query_id: Self::Id,
+        direction: DependencyDirection,
+        msg: &str,
+    ) {
+        let any_depends_on = source_ids.iter().any(|source_id| match direction {
+            DependencyDirection::Forward => self.depends_on(*source_id, query_id).unwrap(),
+            DependencyDirection::Reverse => self.depends_on(query_id, *source_id).unwrap(),
+        });
+        match direction {
+            DependencyDirection::Forward => {
+                assert!(
+                    any_depends_on,
+                    "{}: {} '{:?}' should be a dependency of any of '{:?}'",
+                    msg,
+                    Self::NAME,
+                    query_id,
+                    source_ids
+                );
+            }
+            DependencyDirection::Reverse => {
+                assert!(
+                    any_depends_on,
+                    "{}: {} '{:?}' should depend on any of '{:?}'",
+                    msg,
+                    Self::NAME,
+                    query_id,
+                    source_ids
+                );
+            }
         }
-        DependencyDirection::Reverse => {
-            assert!(
-                any_depends_on,
-                "{}: package '{}' should depend on any of '{:?}'",
-                msg, query_id, source_ids
-            );
+    }
+
+    fn assert_depends_on(
+        &self,
+        a_id: Self::Id,
+        b_id: Self::Id,
+        direction: DependencyDirection,
+        msg: &str,
+    ) {
+        match direction {
+            DependencyDirection::Forward => assert!(
+                self.depends_on(a_id, b_id).unwrap(),
+                "{}: {} '{:?}' should depend on '{:?}'",
+                msg,
+                Self::NAME,
+                a_id,
+                b_id,
+            ),
+            DependencyDirection::Reverse => assert!(
+                self.depends_on(b_id, a_id).unwrap(),
+                "{}: {} '{:?}' should be a dependency of '{:?}'",
+                msg,
+                Self::NAME,
+                a_id,
+                b_id,
+            ),
+        }
+    }
+
+    fn assert_not_depends_on(
+        &self,
+        a_id: Self::Id,
+        b_id: Self::Id,
+        direction: DependencyDirection,
+        msg: &str,
+    ) {
+        match direction {
+            DependencyDirection::Forward => assert!(
+                !self.depends_on(a_id, b_id).unwrap(),
+                "{}: {} '{:?}' should not depend on '{:?}'",
+                msg,
+                Self::NAME,
+                a_id,
+                b_id,
+            ),
+            DependencyDirection::Reverse => assert!(
+                !self.depends_on(b_id, a_id).unwrap(),
+                "{}: {} '{:?}' should not be a dependency of '{:?}'",
+                msg,
+                Self::NAME,
+                a_id,
+                b_id,
+            ),
         }
     }
 }
 
-pub(crate) fn assert_depends_on(
-    package_a: &PackageId,
-    package_b: &PackageId,
-    cache: &mut DependsCache,
-    direction: DependencyDirection,
-    msg: &str,
-) {
-    match direction {
-        DependencyDirection::Forward => assert!(
-            cache
-                .depends_on(package_a, package_b)
-                .expect("package not found?"),
-            "{}: package '{}' should depend on '{}'",
-            msg,
-            &package_a.repr,
-            &package_b.repr,
-        ),
-        DependencyDirection::Reverse => assert!(
-            cache
-                .depends_on(package_b, package_a)
-                .expect("package not found?"),
-            "{}: package '{}' should be a dependency of '{}'",
-            msg,
-            &package_a.repr,
-            &package_b.repr,
-        ),
-    }
-}
+impl<'g> GraphAssert<'g> for &'g PackageGraph {
+    type Id = &'g PackageId;
+    const NAME: &'static str = "package";
 
-pub(crate) fn assert_not_depends_on(
-    package_a: &PackageId,
-    package_b: &PackageId,
-    cache: &mut DependsCache,
-    direction: DependencyDirection,
-    msg: &str,
-) {
-    match direction {
-        DependencyDirection::Forward => assert!(
-            !cache
-                .depends_on(package_a, package_b)
-                .expect("package not found?"),
-            "{}: package '{}' should not depend on '{}'",
-            msg,
-            &package_a.repr,
-            &package_b.repr,
-        ),
-        DependencyDirection::Reverse => assert!(
-            !cache
-                .depends_on(package_b, package_a)
-                .expect("package not found?"),
-            "{}: package '{}' should not be a dependency of '{}'",
-            msg,
-            &package_a.repr,
-            &package_b.repr,
-        ),
+    fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
+        PackageGraph::depends_on(self, a_id, b_id)
+    }
+
+    fn iter_ids(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Id> {
+        let select = self
+            .select_directed(initials.iter().copied(), select_direction)
+            .unwrap();
+        select.into_iter_ids(Some(query_direction)).collect()
+    }
+
+    fn root_ids(
+        &self,
+        initials: &[Self::Id],
+        select_direction: DependencyDirection,
+        query_direction: DependencyDirection,
+    ) -> Vec<Self::Id> {
+        let select = self
+            .select_directed(initials.iter().copied(), select_direction)
+            .unwrap();
+        select.into_root_ids(query_direction).collect()
     }
 }
 

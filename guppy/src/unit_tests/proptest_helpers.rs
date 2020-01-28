@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyDirection, PackageGraph};
-use crate::unit_tests::dep_helpers::{
-    assert_depends_on_any, assert_link_order, assert_not_depends_on,
-};
+use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert};
 use crate::PackageId;
 use proptest::prelude::*;
 use proptest::sample::Index;
@@ -68,32 +66,25 @@ macro_rules! proptest_suite {
 
 /// Test that all results of an into_iter_ids query depend on at least one of the ids in the query
 /// set.
-pub(crate) fn depends_on(
-    graph: &PackageGraph,
-    ids: &[&PackageId],
+pub(super) fn depends_on<'g, G: GraphAssert<'g>>(
+    graph: G,
+    ids: &[G::Id],
     select_direction: DependencyDirection,
     query_direction: DependencyDirection,
     query_indexes: Vec<Index>,
     msg: &str,
 ) {
     let msg = format!("{}: reachable means depends on", msg);
-
-    let select = graph
-        .select_directed(ids.iter().copied(), select_direction)
-        .unwrap();
-
-    let reachable_ids: Vec<_> = select.into_iter_ids(Some(query_direction)).collect();
-
-    let mut cache = graph.new_depends_cache();
+    let reachable_ids = graph.iter_ids(ids, select_direction, query_direction);
 
     for index in query_indexes {
         let query_id = index.get(&reachable_ids);
-        assert_depends_on_any(ids, query_id, &mut cache, select_direction, &msg);
+        graph.assert_depends_on_any(ids, *query_id, select_direction, &msg);
     }
 }
 
 /// Test that all results of an into_iter_links query follow link order.
-pub(crate) fn link_order(
+pub(super) fn link_order(
     graph: &PackageGraph,
     ids: &[&PackageId],
     select_direction: DependencyDirection,
@@ -120,30 +111,14 @@ pub(crate) fn link_order(
 }
 
 /// Test that the results of an `into_root_ids` query don't depend on any other root.
-pub(crate) fn roots(
-    graph: &PackageGraph,
-    ids: &[&PackageId],
+pub(super) fn roots<'g, G: GraphAssert<'g>>(
+    graph: G,
+    ids: &[G::Id],
     select_direction: DependencyDirection,
     query_direction: DependencyDirection,
     msg: &str,
 ) -> prop::test_runner::TestCaseResult {
-    let select = graph
-        .select_directed(ids.iter().copied(), select_direction)
-        .unwrap();
-    let root_ids: Vec<_> = select.clone().into_root_ids(query_direction).collect();
-    let root_metadatas: Vec<_> = select
-        .clone()
-        .into_root_metadatas(query_direction)
-        .collect();
-
-    // Check that root_ids and root_metadatas return the same number of elements.
-    assert_eq!(
-        root_ids.len(),
-        root_metadatas.len(),
-        "{}: root ids and root metadatas should have the same number of results",
-        msg
-    );
-
+    let root_ids = graph.root_ids(ids, select_direction, query_direction);
     let root_id_set: HashSet<_> = root_ids.iter().collect();
     assert_eq!(
         root_ids.len(),
@@ -152,11 +127,12 @@ pub(crate) fn roots(
         msg
     );
 
-    let mut cache = graph.new_depends_cache();
+    // TODO: check root metadata once available for feature graphs
+
     for id1 in &root_ids {
         for id2 in &root_ids {
             if id1 != id2 {
-                assert_not_depends_on(id1, id2, &mut cache, select_direction, msg);
+                graph.assert_not_depends_on(*id1, *id2, select_direction, msg);
             }
         }
     }
