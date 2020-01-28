@@ -407,14 +407,18 @@ impl<'g> DependsCache<'g> {
         package_a: &PackageId,
         package_b: &PackageId,
     ) -> Result<bool, Error> {
-        // XXX rewrite this to avoid an allocation? meh
-        let package_ixs: Vec<_> = self
+        let a_ix = self
             .package_graph
-            .package_ixs(iter::once(package_a).chain(iter::once(package_b)))?;
+            .package_ix(package_a)
+            .ok_or_else(|| Error::UnknownPackageId(package_a.clone()))?;
+        let b_ix = self
+            .package_graph
+            .package_ix(package_b)
+            .ok_or_else(|| Error::UnknownPackageId(package_b.clone()))?;
         Ok(has_path_connecting(
             self.package_graph.dep_graph(),
-            package_ixs[0],
-            package_ixs[1],
+            a_ix,
+            b_ix,
             Some(&mut self.dfs_space),
         ))
     }
