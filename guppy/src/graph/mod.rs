@@ -28,6 +28,7 @@ pub use select::*;
 ///
 /// Used by the `_directed` methods.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "proptest09", derive(proptest_derive::Arbitrary))]
 pub enum DependencyDirection {
     /// Dependencies from this package to other packages.
     Forward,

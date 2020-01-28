@@ -1,10 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{DependencyDirection, DependencyLink, PackageGraph};
+use crate::graph::{DependencyLink, PackageGraph};
 use crate::PackageId;
 use petgraph::prelude::*;
-use proptest09::prelude::*;
+use proptest::prelude::*;
 
 /// ## Helpers for property testing
 ///
@@ -49,18 +49,5 @@ impl PackageGraph {
                 .expect("all edge indexes 0..link_count should be valid");
             self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
         })
-    }
-}
-
-impl Arbitrary for DependencyDirection {
-    type Parameters = ();
-    type Strategy = BoxedStrategy<Self>;
-
-    fn arbitrary_with(_params: Self::Parameters) -> Self::Strategy {
-        prop_oneof![
-            Just(DependencyDirection::Forward),
-            Just(DependencyDirection::Reverse)
-        ]
-        .boxed()
     }
 }

@@ -6,8 +6,8 @@ use crate::unit_tests::dep_helpers::{
     assert_depends_on_any, assert_link_order, assert_not_depends_on,
 };
 use crate::PackageId;
-use proptest09::prelude::*;
-use proptest09::sample::Index;
+use proptest::prelude::*;
+use proptest::sample::Index;
 use std::collections::HashSet;
 
 macro_rules! proptest_suite {
@@ -16,9 +16,9 @@ macro_rules! proptest_suite {
             use crate::graph::DependencyDirection;
             use crate::unit_tests::fixtures::Fixture;
             use crate::unit_tests::proptest_helpers::*;
-            use proptest09::collection::vec;
-            use proptest09::prelude::*;
-            use proptest09::sample::Index;
+            use proptest::collection::vec;
+            use proptest::prelude::*;
+            use proptest::sample::Index;
 
             #[test]
             fn proptest_select_depends_on() {
