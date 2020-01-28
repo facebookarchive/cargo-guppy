@@ -7,8 +7,7 @@ use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
-use lazy_static::lazy_static;
-use once_cell::sync::OnceCell;
+use once_cell::sync::{Lazy, OnceCell};
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
@@ -61,9 +60,7 @@ impl PackageGraph {
     /// Verifies internal invariants on this graph. Not part of the documented API.
     #[doc(hidden)]
     pub fn verify(&self) -> Result<(), Error> {
-        lazy_static! {
-            static ref MAJOR_WILDCARD: VersionReq = VersionReq::parse("*").unwrap();
-        }
+        static MAJOR_WILDCARD: Lazy<VersionReq> = Lazy::new(|| VersionReq::parse("*").unwrap());
 
         // Graph structure checks.
         let node_count = self.dep_graph.node_count();
