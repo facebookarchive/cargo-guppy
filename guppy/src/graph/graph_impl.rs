@@ -379,7 +379,7 @@ impl PackageGraphData {
 
 /// An optional cache used to speed up `depends_on` queries.
 ///
-/// Created with `PackageGraph::new_cache()`.
+/// Created with `PackageGraph::new_depends_cache()`.
 #[derive(Clone, Debug)]
 pub struct DependsCache<'g> {
     package_graph: &'g PackageGraph,
