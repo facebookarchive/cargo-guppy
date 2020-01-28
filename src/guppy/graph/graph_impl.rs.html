@@ -808,11 +808,31 @@
 <span id="808">808</span>
 <span id="809">809</span>
 <span id="810">810</span>
+<span id="811">811</span>
+<span id="812">812</span>
+<span id="813">813</span>
+<span id="814">814</span>
+<span id="815">815</span>
+<span id="816">816</span>
+<span id="817">817</span>
+<span id="818">818</span>
+<span id="819">819</span>
+<span id="820">820</span>
+<span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::<span class="ident">FeatureGraphImpl</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureGraphImpl</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureNode</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">kind_str</span>, <span class="ident">DependencyDirection</span>, <span class="ident">PackageIx</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">JsonValue</span>, <span class="ident">Metadata</span>, <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">DependencyKind</span>, <span class="ident">NodeDep</span>};
@@ -974,7 +994,7 @@
         }
 
         <span class="comment">// Constructing the feature graph may cause panics to happen.</span>
-        <span class="self">self</span>.<span class="ident">get_feature_graph</span>();
+        <span class="self">self</span>.<span class="ident">feature_graph</span>();
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1190,7 +1210,7 @@
 
 <span class="doccomment">/// An optional cache used to speed up `depends_on` queries.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Created with `PackageGraph::new_cache()`.</span>
+<span class="doccomment">/// Created with `PackageGraph::new_depends_cache()`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependsCache</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
@@ -1462,6 +1482,15 @@
         <span class="self">self</span>.<span class="ident">has_default_feature</span>
     }
 
+    <span class="doccomment">/// Returns the `FeatureId` corresponding to the default feature.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_feature_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureId</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">has_default_feature</span> {
+            <span class="ident">FeatureId</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;default&quot;</span>)
+        } <span class="kw">else</span> {
+            <span class="ident">FeatureId</span>::<span class="ident">base</span>(<span class="self">self</span>.<span class="ident">id</span>())
+        }
+    }
+
     <span class="doccomment">/// Returns the list of named features available for this package. This will include a feature</span>
     <span class="doccomment">/// named &quot;default&quot; if it is defined.</span>
     <span class="doccomment">///</span>
@@ -1472,8 +1501,19 @@
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">named_feature</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">named_feature</span>)
     }
 
+    <span class="comment">// ---</span>
+    <span class="comment">// Helper methods</span>
+    <span class="comment">// --</span>
+
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">get_feature_idx</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">features</span>.<span class="ident">get_full</span>(<span class="ident">feature</span>).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">n</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">n</span>)
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">all_feature_nodes</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">FeatureNode</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+        <span class="ident">iter</span>::<span class="ident">once</span>(<span class="ident">FeatureNode</span>::<span class="ident">base</span>(<span class="self">self</span>.<span class="ident">package_ix</span>)).<span class="ident">chain</span>(
+            (<span class="number">0</span>..<span class="self">self</span>.<span class="ident">features</span>.<span class="ident">len</span>())
+                .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">feature_idx</span><span class="op">|</span> <span class="ident">FeatureNode</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">package_ix</span>, <span class="ident">feature_idx</span>)),
+        )
     }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">named_features_full</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span>[<span class="ident">String</span>])<span class="op">&gt;</span> {
