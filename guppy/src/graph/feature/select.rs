@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId};
+use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
 use crate::graph::{compute_roots, DependencyDirection, PackageSelect, SelectParams};
 use crate::Error;
 use std::collections::HashSet;
@@ -241,7 +241,7 @@ impl<'g> FeatureGraph<'g> {
 }
 
 impl<'g> FeatureSelect<'g> {
-    /// Returns the set of "root feature IDs" in the specified direction.
+    /// Returns the set of "root feature" IDs in the specified direction.
     ///
     /// * If direction is Forward, return the set of feature IDs that do not have any dependencies
     ///   within the selected graph.
@@ -256,5 +256,26 @@ impl<'g> FeatureSelect<'g> {
         compute_roots(dep_graph, self.params, direction)
             .into_iter()
             .map(move |feature_ix| FeatureId::from_node(package_graph, &dep_graph[feature_ix]))
+    }
+
+    /// Return the set of "root feature" metadatas in the specified direction.
+    ///
+    /// * If direction is Forward, return the set of metadatas that do not have any dependencies
+    ///   within the selected graph.
+    /// * If direction is Reverse, return the set of metadatas that do not have any dependents
+    ///   within the selected graph.
+    pub fn into_root_metadatas(
+        self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = FeatureMetadata<'g>> + 'g {
+        let feature_graph = self.graph;
+        compute_roots(feature_graph.dep_graph(), self.params, direction)
+            .into_iter()
+            .map(move |feature_ix| {
+                let feature_node = &feature_graph.dep_graph()[feature_ix];
+                feature_graph
+                    .metadata_for_node(feature_node)
+                    .expect("feature node should be known")
+            })
     }
 }
