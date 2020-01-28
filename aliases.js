@@ -18,6 +18,7 @@ ALIASES["fixedbitset"] = {};
 ALIASES["fnv"] = {};
 ALIASES["getrandom"] = {};
 ALIASES["guppy"] = {};
+ALIASES["guppy_benchmarks"] = {};
 ALIASES["heck"] = {};
 ALIASES["indexmap"] = {};
 ALIASES["itertools"] = {};

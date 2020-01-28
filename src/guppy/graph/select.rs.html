@@ -553,6 +553,11 @@
 <span id="553">553</span>
 <span id="554">554</span>
 <span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -586,22 +591,27 @@
 <span class="doccomment">/// The methods in this section create *package selectors*, which are queries over subsets of this</span>
 <span class="doccomment">/// package graph. Use the methods here for queries based on transitive dependencies.</span>
 <span class="kw">impl</span> <span class="ident">PackageGraph</span> {
+    <span class="doccomment">/// Creates a new forward selector over the entire workspace.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `select_workspace` will select all workspace packages and their transitive dependencies.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">select_workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSelect</span> {
+        <span class="self">self</span>.<span class="ident">select_forward</span>(<span class="self">self</span>.<span class="ident">workspace</span>().<span class="ident">member_ids</span>())
+            .<span class="ident">expect</span>(<span class="string">&quot;workspace packages should all be known&quot;</span>)
+    }
+
     <span class="doccomment">/// Creates a new selector that returns all members of this package graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is normally the same as `select_workspace`, but can differ in some cases:</span>
     <span class="doccomment">/// * if packages have been replaced with `[patch]` or `[replace]`</span>
     <span class="doccomment">/// * if some edges have been removed from this graph with `retain_edges`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// In most situations, `select_workspace` is preferred. Use `select_all` if you know you need</span>
+    <span class="doccomment">/// parts of the graph that aren&#39;t accessible from the workspace.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">select_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSelect</span> {
         <span class="ident">PackageSelect</span> {
             <span class="ident">package_graph</span>: <span class="self">self</span>,
             <span class="ident">params</span>: <span class="ident">SelectParams</span>::<span class="ident">All</span>,
         }
-    }
-
-    <span class="doccomment">/// Creates a new forward selector over the entire workspace.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">select_workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSelect</span> {
-        <span class="self">self</span>.<span class="ident">select_forward</span>(<span class="self">self</span>.<span class="ident">workspace</span>().<span class="ident">member_ids</span>())
-            .<span class="ident">expect</span>(<span class="string">&quot;workspace packages should all be known&quot;</span>)
     }
 
     <span class="doccomment">/// Creates a new selector that returns transitive dependencies of the given packages in the</span>
