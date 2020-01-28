@@ -38,6 +38,7 @@ ALIASES["proc_macro2"] = {};
 ALIASES["proc_macro_error"] = {};
 ALIASES["proc_macro_error_attr"] = {};
 ALIASES["proptest"] = {};
+ALIASES["proptest_derive"] = {};
 ALIASES["quick_error"] = {};
 ALIASES["quote"] = {};
 ALIASES["rand"] = {};

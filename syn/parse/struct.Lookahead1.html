@@ -5,41 +5,41 @@ alternatives that get peeked. If you are producing your own error message,
 go ahead and use <code>ParseStream::peek</code> instead.</p>
 <p>Use <a href="crate::parse::ParseBuffer::lookahead1"><code>ParseStream::lookahead1</code></a> to construct this object.</p>
 <h1 id="example" class="section-header"><a href="#example">Example</a></h1>
-<div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="kw">use</span> <span class="ident">syn</span>::{<span class="ident">ConstParam</span>, <span class="ident">Ident</span>, <span class="ident">Lifetime</span>, <span class="ident">LifetimeDef</span>, <span class="prelude-ty">Result</span>, <span class="ident">Token</span>, <span class="ident">TypeParam</span>};
-<span class="kw">use</span> <span class="ident">syn</span>::<span class="ident">parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>};
+<pre><code class="language-edition2018">use syn::{ConstParam, Ident, Lifetime, LifetimeDef, Result, Token, TypeParam};
+use syn::parse::{Parse, ParseStream};
 
-<span class="comment">// A generic parameter, a single one of the comma-separated elements inside</span>
-<span class="comment">// angle brackets in:</span>
-<span class="comment">//</span>
-<span class="comment">//     fn f&lt;T: Clone, &#39;a, &#39;b: &#39;a, const N: usize&gt;() { ... }</span>
-<span class="comment">//</span>
-<span class="comment">// On invalid input, lookahead gives us a reasonable error message.</span>
-<span class="comment">//</span>
-<span class="comment">//     error: expected one of: identifier, lifetime, `const`</span>
-<span class="comment">//       |</span>
-<span class="comment">//     5 |     fn f&lt;!Sized&gt;() {}</span>
-<span class="comment">//       |          ^</span>
-<span class="kw">enum</span> <span class="ident">GenericParam</span> {
-    <span class="ident">Type</span>(<span class="ident">TypeParam</span>),
-    <span class="ident">Lifetime</span>(<span class="ident">LifetimeDef</span>),
-    <span class="ident">Const</span>(<span class="ident">ConstParam</span>),
+// A generic parameter, a single one of the comma-separated elements inside
+// angle brackets in:
+//
+//     fn f&lt;T: Clone, 'a, 'b: 'a, const N: usize&gt;() { ... }
+//
+// On invalid input, lookahead gives us a reasonable error message.
+//
+//     error: expected one of: identifier, lifetime, `const`
+//       |
+//     5 |     fn f&lt;!Sized&gt;() {}
+//       |          ^
+enum GenericParam {
+    Type(TypeParam),
+    Lifetime(LifetimeDef),
+    Const(ConstParam),
 }
 
-<span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">GenericParam</span> {
-    <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">lookahead</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">lookahead1</span>();
-        <span class="kw">if</span> <span class="ident">lookahead</span>.<span class="ident">peek</span>(<span class="ident">Ident</span>) {
-            <span class="ident">input</span>.<span class="ident">parse</span>().<span class="ident">map</span>(<span class="ident">GenericParam</span>::<span class="ident">Type</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">lookahead</span>.<span class="ident">peek</span>(<span class="ident">Lifetime</span>) {
-            <span class="ident">input</span>.<span class="ident">parse</span>().<span class="ident">map</span>(<span class="ident">GenericParam</span>::<span class="ident">Lifetime</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">lookahead</span>.<span class="ident">peek</span>(<span class="macro">Token</span><span class="macro">!</span>[<span class="kw">const</span>]) {
-            <span class="ident">input</span>.<span class="ident">parse</span>().<span class="ident">map</span>(<span class="ident">GenericParam</span>::<span class="ident">Const</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">lookahead</span>.<span class="ident">error</span>())
+impl Parse for GenericParam {
+    fn parse(input: ParseStream) -&gt; Result&lt;Self&gt; {
+        let lookahead = input.lookahead1();
+        if lookahead.peek(Ident) {
+            input.parse().map(GenericParam::Type)
+        } else if lookahead.peek(Lifetime) {
+            input.parse().map(GenericParam::Lifetime)
+        } else if lookahead.peek(Token![const]) {
+            input.parse().map(GenericParam::Const)
+        } else {
+            Err(lookahead.error())
         }
     }
-}</pre></div>
+}
+</code></pre>
 </div><h2 id='methods' class='small-section-header'>Methods<a href='#methods' class='anchor'></a></h2><h3 id='impl' class='impl'><code class='in-band'>impl&lt;'a&gt; <a class="struct" href="../../syn/parse/struct.Lookahead1.html" title="struct syn::parse::Lookahead1">Lookahead1</a>&lt;'a&gt;</code><a href='#impl' class='anchor'></a><a class='srclink' href='../../src/syn/lookahead.rs.html#87-136' title='goto source code'>[src]</a></h3><div class='impl-items'><h4 id='method.peek' class="method"><code id='peek.v'>pub fn <a href='#method.peek' class='fnname'>peek</a>&lt;T:&nbsp;<a class="trait" href="../../syn/parse/trait.Peek.html" title="trait syn::parse::Peek">Peek</a>&gt;(&amp;self, token: T) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code><a class='srclink' href='../../src/syn/lookahead.rs.html#102-105' title='goto source code'>[src]</a></h4><div class='docblock'><p>Looks at the next token in the parse stream to determine whether it
 matches the requested type of token.</p>
 <h1 id="syntax" class="section-header"><a href="#syntax">Syntax</a></h1>

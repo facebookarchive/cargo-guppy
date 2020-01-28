@@ -5,8 +5,8 @@
 </div><div class='docblock'><p>Define a type that supports parsing and printing a multi-character symbol
 as if it were a punctuation token.</p>
 <h1 id="usage" class="section-header"><a href="#usage">Usage</a></h1>
-<div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="ident">syn</span>::<span class="macro">custom_punctuation</span><span class="macro">!</span>(<span class="ident">LeftRightArrow</span>, <span class="op">&lt;</span><span class="op">=</span><span class="op">&gt;</span>);</pre></div>
+<pre><code class="language-edition2018">syn::custom_punctuation!(LeftRightArrow, &lt;=&gt;);
+</code></pre>
 <p>The generated syntax tree node supports the following operations just like
 any built-in punctuation token.</p>
 <ul>
@@ -30,48 +30,48 @@ any built-in punctuation token.</p>
 </li>
 </ul>
 <h1 id="example" class="section-header"><a href="#example">Example</a></h1>
-<div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="kw">use</span> <span class="ident">proc_macro2</span>::{<span class="ident">TokenStream</span>, <span class="ident">TokenTree</span>};
-<span class="kw">use</span> <span class="ident">syn</span>::<span class="ident">parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>, <span class="ident">Peek</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">syn</span>::<span class="ident">punctuated</span>::<span class="ident">Punctuated</span>;
-<span class="kw">use</span> <span class="ident">syn</span>::<span class="ident">Expr</span>;
+<pre><code class="language-edition2018">use proc_macro2::{TokenStream, TokenTree};
+use syn::parse::{Parse, ParseStream, Peek, Result};
+use syn::punctuated::Punctuated;
+use syn::Expr;
 
-<span class="ident">syn</span>::<span class="macro">custom_punctuation</span><span class="macro">!</span>(<span class="ident">PathSeparator</span>, <span class="op">&lt;</span><span class="op">/</span><span class="op">&gt;</span>);
+syn::custom_punctuation!(PathSeparator, &lt;/&gt;);
 
-<span class="comment">// expr &lt;/&gt; expr &lt;/&gt; expr ...</span>
-<span class="kw">struct</span> <span class="ident">PathSegments</span> {
-    <span class="ident">segments</span>: <span class="ident">Punctuated</span><span class="op">&lt;</span><span class="ident">Expr</span>, <span class="ident">PathSeparator</span><span class="op">&gt;</span>,
+// expr &lt;/&gt; expr &lt;/&gt; expr ...
+struct PathSegments {
+    segments: Punctuated&lt;Expr, PathSeparator&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">PathSegments</span> {
-    <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">segments</span> <span class="op">=</span> <span class="ident">Punctuated</span>::<span class="ident">new</span>();
+impl Parse for PathSegments {
+    fn parse(input: ParseStream) -&gt; Result&lt;Self&gt; {
+        let mut segments = Punctuated::new();
 
-        <span class="kw">let</span> <span class="ident">first</span> <span class="op">=</span> <span class="ident">parse_until</span>(<span class="ident">input</span>, <span class="ident">PathSeparator</span>)<span class="question-mark">?</span>;
-        <span class="ident">segments</span>.<span class="ident">push_value</span>(<span class="ident">syn</span>::<span class="ident">parse2</span>(<span class="ident">first</span>)<span class="question-mark">?</span>);
+        let first = parse_until(input, PathSeparator)?;
+        segments.push_value(syn::parse2(first)?);
 
-        <span class="kw">while</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="ident">PathSeparator</span>) {
-            <span class="ident">segments</span>.<span class="ident">push_punct</span>(<span class="ident">input</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>);
+        while input.peek(PathSeparator) {
+            segments.push_punct(input.parse()?);
 
-            <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="ident">parse_until</span>(<span class="ident">input</span>, <span class="ident">PathSeparator</span>)<span class="question-mark">?</span>;
-            <span class="ident">segments</span>.<span class="ident">push_value</span>(<span class="ident">syn</span>::<span class="ident">parse2</span>(<span class="ident">next</span>)<span class="question-mark">?</span>);
+            let next = parse_until(input, PathSeparator)?;
+            segments.push_value(syn::parse2(next)?);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">PathSegments</span> { <span class="ident">segments</span> })
+        Ok(PathSegments { segments })
     }
 }
 
-<span class="kw">fn</span> <span class="ident">parse_until</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">Peek</span><span class="op">&gt;</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>, <span class="ident">end</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TokenStream</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tokens</span> <span class="op">=</span> <span class="ident">TokenStream</span>::<span class="ident">new</span>();
-    <span class="kw">while</span> <span class="op">!</span><span class="ident">input</span>.<span class="ident">is_empty</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">input</span>.<span class="ident">peek</span>(<span class="ident">end</span>) {
-        <span class="kw">let</span> <span class="ident">next</span>: <span class="ident">TokenTree</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>;
-        <span class="ident">tokens</span>.<span class="ident">extend</span>(<span class="prelude-val">Some</span>(<span class="ident">next</span>));
+fn parse_until&lt;E: Peek&gt;(input: ParseStream, end: E) -&gt; Result&lt;TokenStream&gt; {
+    let mut tokens = TokenStream::new();
+    while !input.is_empty() &amp;&amp; !input.peek(end) {
+        let next: TokenTree = input.parse()?;
+        tokens.extend(Some(next));
     }
-    <span class="prelude-val">Ok</span>(<span class="ident">tokens</span>)
+    Ok(tokens)
 }
 
-<span class="kw">fn</span> <span class="ident">main</span>() {
-    <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="string">r#&quot; a::b &lt;/&gt; c::d::e &quot;#</span>;
-    <span class="kw">let</span> <span class="kw">_</span>: <span class="ident">PathSegments</span> <span class="op">=</span> <span class="ident">syn</span>::<span class="ident">parse_str</span>(<span class="ident">input</span>).<span class="ident">unwrap</span>();
-}</pre></div>
+fn main() {
+    let input = r#&quot; a::b &lt;/&gt; c::d::e &quot;#;
+    let _: PathSegments = syn::parse_str(input).unwrap();
+}
+</code></pre>
 </div></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "syn";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
