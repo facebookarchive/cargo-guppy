@@ -260,7 +260,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         let normal = edge.normal().map(|metadata| metadata.optional());
         let build = edge.build().map(|metadata| metadata.optional());
         // None = no edge, () = mandatory (dev dependencies cannot be optional)
-        let dev = edge.build().map(|_| ());
+        let dev = edge.dev().map(|_| ());
 
         // These variables track whether the edges should actually be added to the graph -- an edge
         // where everything's set to false won't be.
