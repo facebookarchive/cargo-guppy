@@ -171,7 +171,8 @@ impl<'a> GraphBuildState<'a> {
             self.dep_graph.update_edge(node_idx, dep_idx, edge);
         }
 
-        let has_default_feature = package.features.contains_key("default");
+        let default_features = package.features.get("default").map(|s| s.clone());
+
 
         // Optional dependencies could in principle be computed by looking at the edges out of this
         // package, but unresolved dependencies aren't part of the graph so we're going to miss them
@@ -224,7 +225,7 @@ impl<'a> GraphBuildState<'a> {
                 node_idx,
                 workspace_path,
                 optional_deps,
-                has_default_feature,
+                default_features,
                 resolved_deps,
                 resolved_features,
             },

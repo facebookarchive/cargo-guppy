@@ -359,7 +359,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         let unified_features: HashSet<&str> = unified_metadata
             .flat_map(|metadata| {
                 // Packages without an explicit feature named "default" get pointed to the base.
-                let default = if metadata.uses_default_features() && to.has_default_feature() {
+                let default = if metadata.uses_default_features() && to.default_features().is_some() {
                     Some("default")
                 } else {
                     None

@@ -510,7 +510,7 @@ pub struct PackageMetadata {
     // Other information.
     pub(super) node_idx: NodeIndex<PackageIx>,
     pub(super) workspace_path: Option<Box<Path>>,
-    pub(super) has_default_feature: bool,
+    pub(super) default_features: Option<Vec<String>>,
     pub(super) optional_deps: HashSet<Box<str>>,
     pub(super) resolved_deps: Vec<NodeDep>,
     pub(super) resolved_features: Vec<String>,
@@ -653,13 +653,13 @@ impl PackageMetadata {
         self.workspace_path.as_ref().map(|path| path.as_ref())
     }
 
-    /// Returns true if this package has a named feature named `default`.
+    /// Returns the `default` features if present in the package.
     ///
     /// For more about default features, see [The `[features]`
     /// section](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section) in
     /// the Cargo reference.
-    pub fn has_default_feature(&self) -> bool {
-        self.has_default_feature
+    pub fn default_features(&self) -> Option<&[String]>{
+        self.default_features.as_ref().map(|features| features.as_slice())
     }
 
     /// Returns the list of named features available for this package. This will include the default
