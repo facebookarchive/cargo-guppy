@@ -21,9 +21,6 @@ enum Command {
         old: String,
         new: String,
     },
-    #[structopt(name = "count")]
-    /// Count the number of third-party deps (non-path)
-    Count,
     #[structopt(name = "dups")]
     /// Print the number of duplicate packages
     Duplicates,
@@ -52,7 +49,6 @@ fn main() {
 
     let result = match args.cmd {
         Command::Diff { json, old, new } => cargo_guppy::cmd_diff(json, &old, &new),
-        Command::Count => cargo_guppy::cmd_count(),
         Command::Duplicates => cargo_guppy::cmd_dups(),
         Command::Select(ref options) => cargo_guppy::cmd_select(options),
         Command::SubtreeSize(ref options) => cargo_guppy::cmd_subtree_size(options),
