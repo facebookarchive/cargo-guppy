@@ -288,9 +288,7 @@ struct DependencyResolver<'a> {
 
     /// This is a mapping of dependencies using their original names. For these names, dashes are
     /// not replaced with underscores.
-    ///
-    /// TODO: Change value type to Vec<&'a Dependency> once get_key_value is stable.
-    original_map: HashMap<&'a str, (&'a str, Vec<&'a Dependency>)>,
+    original_map: HashMap<&'a str, Vec<&'a Dependency>>,
 }
 
 impl<'a> DependencyResolver<'a> {
@@ -324,9 +322,9 @@ impl<'a> DependencyResolver<'a> {
                     deps.push(dep);
                 }
                 Some(_) | None => {
-                    let (_, deps) = original_map
+                    let deps = original_map
                         .entry(dep.name.as_str())
-                        .or_insert_with(|| (dep.name.as_str(), vec![]));
+                        .or_insert_with(|| vec![]);
                     deps.push(dep);
                 }
             }
@@ -383,7 +381,7 @@ impl<'a> DependencyResolver<'a> {
         // Lookup the name in the original map.
         let (name, deps) = self
             .original_map
-            .get(package_name.as_str())
+            .get_key_value(package_name.as_str())
             .ok_or_else(|| {
                 Error::PackageGraphConstructError(format!(
                     "{}: no dependency information found for '{}', package ID '{}'",
