@@ -4,10 +4,7 @@
 use anyhow;
 use clap::arg_enum;
 use guppy::{
-    graph::{
-        DependencyDirection, DependencyLink, DotWrite, PackageDotVisitor, PackageGraph,
-        PackageMetadata,
-    },
+    graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageGraph, PackageMetadata},
     MetadataCommand, PackageId,
 };
 use itertools;
@@ -144,13 +141,13 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
     // does not handle multiple version of the same package as the current use
     // cases are passing workspace members as the root set, which won't be
     // duplicated.
-    let root_set: HashSet<String> = if options.roots.is_empty() {
+    let root_set: HashSet<String> = if !options.roots.is_empty() {
         options.roots.iter().cloned().collect()
     } else {
         pkg_graph
-            .select_reverse(pkg_graph.workspace().member_ids())?
-            .into_root_metadatas(DependencyDirection::Forward)
-            .map(|meta| meta.name().to_string())
+            .workspace()
+            .member_ids()
+            .map(|pkg_id| pkg_graph.metadata(pkg_id).unwrap().name().to_string())
             .collect()
     };
 
