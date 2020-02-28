@@ -43,12 +43,17 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub fn cmd_dups() -> Result<(), anyhow::Error> {
+pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
-    let pkg_graph = PackageGraph::from_command(&mut command)?;
+    let mut pkg_graph = PackageGraph::from_command(&mut command)?;
+
+    // narrow the graph
+    narrow_graph(&mut pkg_graph, &filter_opts);
+
+    let selection = pkg_graph.select_workspace();
 
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
-    for package in pkg_graph.packages() {
+    for package in selection.into_iter_metadatas(None) {
         dupe_map.entry(package.name()).or_default().push(package);
     }
 
@@ -101,7 +106,7 @@ pub struct SelectOptions {
 }
 
 #[derive(Debug, StructOpt)]
-struct FilterOptions {
+pub struct FilterOptions {
     #[structopt(long, short, possible_values = &Kind::variants(), case_insensitive = true, default_value = "all")]
     /// Kind of crates to select
     kind: Kind,
