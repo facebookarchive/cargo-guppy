@@ -43,15 +43,6 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub fn cmd_count() -> Result<(), anyhow::Error> {
-    let mut command = MetadataCommand::new();
-    let pkg_graph = PackageGraph::from_command(&mut command)?;
-
-    println!("Third-party Packages: {}", pkg_graph.package_count());
-
-    Ok(())
-}
-
 pub fn cmd_dups() -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
