@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/lexical-core-0.4.6/src/util/config.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>config.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../lexical_core/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/lexical-core-0.6.2/src/util/config.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>config.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../lexical_core/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -704,8 +704,12 @@
 <span id="704">704</span>
 <span id="705">705</span>
 <span id="706">706</span>
+<span id="707">707</span>
+<span id="708">708</span>
+<span id="709">709</span>
+<span id="710">710</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="doccomment">//! Config settings for lexical.</span>
+<span class="doccomment">//! Config settings for lexical-core.</span>
 
 <span class="kw">use</span> <span class="ident">lib</span>::<span class="ident">slice</span>;
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">algorithm</span>::<span class="ident">copy_to_dst</span>;
@@ -713,13 +717,61 @@
 
 <span class="comment">// HELPERS</span>
 
+<span class="doccomment">/// Determine if the character is a control character for integers or floats.</span>
+<span class="doccomment">/// Control characters include digits, `.`, `+`, and `-`.</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unknown_lints</span>, <span class="ident">ellipsis_inclusive_range_patterns</span>)]</span>
+<span class="kw">fn</span> <span class="ident">is_control_character</span>(<span class="ident">ch</span>: <span class="ident">u8</span>, <span class="ident">is_default</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">if</span> <span class="ident">is_default</span> {
+        <span class="comment">// Default character handles radixes &lt; 15 (where &#39;e&#39;/&#39;E&#39; is a</span>
+        <span class="comment">// a valid exponent character).</span>
+        <span class="kw">match</span> <span class="ident">ch</span> <span class="kw">as</span> <span class="ident">char</span> {
+            <span class="string">&#39;0&#39;</span> ... <span class="string">&#39;9&#39;</span>     <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="string">&#39;a&#39;</span> ... <span class="string">&#39;d&#39;</span>     <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="string">&#39;A&#39;</span> ... <span class="string">&#39;D&#39;</span>     <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="string">&#39;.&#39;</span> <span class="op">|</span> <span class="string">&#39;+&#39;</span> <span class="op">|</span> <span class="string">&#39;-&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="kw">_</span>               <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+        }
+    } <span class="kw">else</span> {
+        <span class="comment">// Backup character handles radixes &gt;= 15 (where no digit is</span>
+        <span class="comment">// a valid exponent character).</span>
+        <span class="kw">match</span> <span class="ident">ch</span> <span class="kw">as</span> <span class="ident">char</span> {
+            <span class="string">&#39;0&#39;</span> ... <span class="string">&#39;9&#39;</span>     <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="string">&#39;a&#39;</span> ... <span class="string">&#39;z&#39;</span>     <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="string">&#39;A&#39;</span> ... <span class="string">&#39;Z&#39;</span>     <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="string">&#39;.&#39;</span> <span class="op">|</span> <span class="string">&#39;+&#39;</span> <span class="op">|</span> <span class="string">&#39;-&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="kw">_</span>               <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+        }
+    }
+}
+
+<span class="comment">// Check if byte array starts with case-insensitive N.</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">fn</span> <span class="ident">starts_with_n</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">match</span> <span class="ident">bytes</span>.<span class="ident">get</span>(<span class="number">0</span>) {
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&#39;N&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&#39;n&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+        <span class="kw">_</span>           <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+    }
+}
+
+<span class="comment">// Check if byte array starts with case-insensitive I.</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">fn</span> <span class="ident">starts_with_i</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">match</span> <span class="ident">bytes</span>.<span class="ident">get</span>(<span class="number">0</span>) {
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&#39;I&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="string">b&#39;i&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+        <span class="kw">_</span>           <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+    }
+}
+
 <span class="doccomment">/// Fixed-size string for float configurations.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// These values are guaranteed less than or equal to the maximum</span>
 <span class="doccomment">/// number of bytes after a sign byte has been written.</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">FloatConfigString</span> {
     <span class="doccomment">/// Storage data for the config string.</span>
-    <span class="ident">data</span>: [<span class="ident">u8</span>; <span class="ident">MAX_F32_SIZE</span> <span class="op">-</span> <span class="number">1</span>],
+    <span class="ident">data</span>: [<span class="ident">u8</span>; <span class="ident">F32_FORMATTED_SIZE</span> <span class="op">-</span> <span class="number">1</span>],
     <span class="doccomment">/// Actual length of the data.</span>
     <span class="ident">length</span>: <span class="ident">usize</span>,
 }
@@ -742,6 +794,17 @@
 }
 
 <span class="comment">// GLOBALS</span>
+
+<span class="doccomment">/// Default character for scientific notation, used when the `radix &lt; 15`.</span>
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">EXPONENT_DEFAULT_CHAR</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="string">b&#39;e&#39;</span>;
+
+<span class="doccomment">/// Backup character for scientific notation, used when the `radix &gt;= 15`.</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>)]</span>
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">EXPONENT_BACKUP_CHAR</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="string">b&#39;^&#39;</span>;
+
+<span class="doccomment">/// The rounding scheme for float conversions.</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rounding&quot;</span>)]</span>
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">FLOAT_ROUNDING</span>: <span class="ident">RoundingKind</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>;
 
 <span class="macro">cfg_if</span><span class="macro">!</span> {
 <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;radix&quot;</span>)]</span> {
@@ -788,63 +851,108 @@
     };
 }}   <span class="comment">// cfg_if</span>
 
-<span class="doccomment">/// Default character for scientific notation, used when the radix &lt; 15.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// To change the expected, default character for an exponent,</span>
-<span class="doccomment">/// change this value during before using lexical.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Do not modify this value in threaded-code, as it is not thread-safe.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">EXPONENT_DEFAULT_CHAR</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="string">b&#39;e&#39;</span>;
-
-<span class="doccomment">/// Backup character for scientific notation, used when the radix &gt;= 15.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// For numerical strings of radix &gt;= 15, &#39;e&#39; or &#39;E&#39; is a valid digit,</span>
-<span class="doccomment">/// and therefore may no longer be used as a marker for the exponent.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// To change the expected, default character for an exponent,</span>
-<span class="doccomment">/// change this value during before using lexical.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Do not modify this value in threaded-code, as it is not thread-safe.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">EXPONENT_BACKUP_CHAR</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="string">b&#39;^&#39;</span>;
-
 <span class="comment">// GETTERS/SETTERS</span>
 
-<span class="comment">// We need both C-FFI compatible getters and setters, and non-FFI ones,</span>
-<span class="comment">// since we don&#39;t want to publicly expose the FloatConfigString type.</span>
-
-<span class="doccomment">/// Helper to get a pointer and size from a FloatConfigString.</span>
+<span class="doccomment">/// Get default character for the exponent symbol.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Default character for scientific notation, used when the `radix &lt; 15`.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">get_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">usize</span>, <span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">FloatConfigString</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_exponent_default_char</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span>
 {
-    <span class="kw">if</span> <span class="ident">ptr</span>.<span class="ident">is_null</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">size</span>.<span class="ident">is_null</span>() {
-        <span class="op">-</span><span class="number">1</span>
-    } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">slc</span> <span class="op">=</span> <span class="ident">string</span>.<span class="ident">as_bytes</span>();
-        <span class="kw-2">*</span><span class="ident">ptr</span> <span class="op">=</span> <span class="ident">slc</span>.<span class="ident">as_ptr</span>();
-        <span class="kw-2">*</span><span class="ident">size</span> <span class="op">=</span> <span class="ident">slc</span>.<span class="ident">len</span>();
-        <span class="number">0</span>
+    <span class="kw">unsafe</span> {
+        <span class="ident">EXPONENT_DEFAULT_CHAR</span>
     }
 }
 
-<span class="doccomment">/// Helper to set a FloatConfigString from a pointer and size.</span>
+<span class="doccomment">/// Set the default character for the exponent symbol.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Default character for scientific notation, used when the `radix &lt; 15`.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// To change the expected, default character for an exponent,</span>
+<span class="doccomment">/// change this value before using lexical.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// * `ch`      - Character for exponent symbol.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Safety</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Do not call this function in threaded-code, as it is not thread-safe.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Panics</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Panics if the character is in the character set `[A-Da-d.+\-]`.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">set_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="ident">usize</span>, <span class="ident">string</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="kw-2">mut</span> <span class="ident">FloatConfigString</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_exponent_default_char</span>(<span class="ident">ch</span>: <span class="ident">u8</span>)
 {
-    <span class="kw">if</span> <span class="ident">ptr</span>.<span class="ident">is_null</span>() {
-        <span class="op">-</span><span class="number">1</span>
-    } <span class="kw">else</span> {
-        <span class="ident">string</span>.<span class="ident">load_bytes</span>(<span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(<span class="ident">ptr</span>, <span class="ident">size</span>));
-        <span class="number">0</span>
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">is_control_character</span>(<span class="ident">ch</span>, <span class="bool-val">true</span>));
+    <span class="ident">EXPONENT_DEFAULT_CHAR</span> <span class="op">=</span> <span class="ident">ch</span>
+}
+
+<span class="doccomment">/// Get backup character for the exponent symbol.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// For numerical strings of `radix &gt;= 15`, &#39;e&#39; or &#39;E&#39; is a valid digit,</span>
+<span class="doccomment">/// and therefore may no longer be used as a marker for the exponent.</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_exponent_backup_char</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span>
+{
+    <span class="kw">unsafe</span> {
+        <span class="ident">EXPONENT_BACKUP_CHAR</span>
     }
+}
+
+<span class="doccomment">/// Set the backup character for the exponent symbol.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// For numerical strings of `radix &gt;= 15`, &#39;e&#39; or &#39;E&#39; is a valid digit,</span>
+<span class="doccomment">/// and therefore may no longer be used as a marker for the exponent.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// To change the expected, backup character for an exponent,</span>
+<span class="doccomment">/// change this value before using lexical.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// * `ch`      - Character for exponent symbol.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Safety</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Do not call this function in threaded-code, as it is not thread-safe.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Panics</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Panics if the character is in the character set `[A-Za-z.+\-]`.</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_exponent_backup_char</span>(<span class="ident">ch</span>: <span class="ident">u8</span>)
+{
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">is_control_character</span>(<span class="ident">ch</span>, <span class="bool-val">false</span>));
+    <span class="ident">EXPONENT_BACKUP_CHAR</span> <span class="op">=</span> <span class="ident">ch</span>
+}
+
+<span class="doccomment">/// Get the default rounding scheme for float conversions.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This defines the global rounding-scheme for float parsing operations.</span>
+<span class="doccomment">/// By default, this is set to `RoundingKind::NearestTieEven`. IEEE754</span>
+<span class="doccomment">/// recommends this as the default for all for decimal and binary</span>
+<span class="doccomment">/// operations.</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rounding&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_float_rounding</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RoundingKind</span> {
+    <span class="kw">unsafe</span> {
+        <span class="ident">FLOAT_ROUNDING</span>
+    }
+}
+
+<span class="doccomment">/// Set the default rounding scheme for float conversions.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This defines the global rounding-scheme for float parsing operations.</span>
+<span class="doccomment">/// By default, this is set to `RoundingKind::NearestTieEven`. IEEE754</span>
+<span class="doccomment">/// recommends this as the default for all for decimal and binary</span>
+<span class="doccomment">/// operations.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Safety</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Do not modify this value in threaded-code, as it is not thread-safe.</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rounding&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_float_rounding</span>(<span class="ident">rounding</span>: <span class="ident">RoundingKind</span>) {
+    <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">rounding</span>
 }
 
 <span class="doccomment">/// Get string representation of Not a Number as a byte slice.</span>
@@ -854,26 +962,6 @@
     <span class="kw">unsafe</span> {
         <span class="ident">NAN_STRING</span>.<span class="ident">as_bytes</span>()
     }
-}
-
-<span class="doccomment">/// Get string representation of Not a Number as a pointer and size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns 0 on success, -1 on error. This string is **not**</span>
-<span class="doccomment">/// null-terminated.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * `ptr`     - Out-parameter for a pointer to the string.</span>
-<span class="doccomment">/// * `size`    - Out-parameter for the size of the string.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Only use this in C-FFI code, otherwise, you use [`get_nan_string`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`get_nan_string`]: fn.get_nan_string.html</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">get_nan_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">usize</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
-{
-    <span class="ident">get_string_ffi</span>(<span class="ident">ptr</span>, <span class="ident">size</span>, <span class="kw-2">&amp;</span><span class="ident">NAN_STRING</span>)
 }
 
 <span class="doccomment">/// Set representation of Not a Number from a byte slice.</span>
@@ -886,35 +974,15 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Panics</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Panics if `bytes.len() &gt;= MAX_F32_SIZE`.</span>
+<span class="doccomment">/// Panics if:</span>
+<span class="doccomment">/// - `bytes.len() &gt;= f32::FORMATTED_SIZE`</span>
+<span class="doccomment">/// - `bytes` is empty</span>
+<span class="doccomment">/// - `bytes` does not start with an `&#39;N&#39;` or `&#39;n&#39;`.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_nan_string</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>])
 {
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">starts_with_n</span>(<span class="ident">bytes</span>));
     <span class="ident">NAN_STRING</span>.<span class="ident">load_bytes</span>(<span class="ident">bytes</span>);
-}
-
-<span class="doccomment">/// Set representation of Not a Number from a pointer and size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns 0 on success, -1 on error.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * `ptr`     - Pointer to the first character in the contiguous string.</span>
-<span class="doccomment">/// * `size`    - Size of the string, without the null-terminator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Only use this in C-FFI code, otherwise, you use [`set_nan_string`].</span>
-<span class="doccomment">/// Do not call this function in threaded-code, as it is not thread-safe.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`set_nan_string`]: fn.set_nan_string.html</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Panics</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Panics if `bytes.len() &gt;= MAX_F32_SIZE`.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">set_nan_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="ident">usize</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
-{
-    <span class="ident">set_string_ffi</span>(<span class="ident">ptr</span>, <span class="ident">size</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">NAN_STRING</span>)
 }
 
 <span class="doccomment">/// Get the short representation of an Infinity literal as a byte slice.</span>
@@ -924,26 +992,6 @@
     <span class="kw">unsafe</span> {
         <span class="ident">INF_STRING</span>.<span class="ident">as_bytes</span>()
     }
-}
-
-<span class="doccomment">/// Get the short representation of an Infinity literal as a pointer and size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns 0 on success, -1 on error. This string is **not**</span>
-<span class="doccomment">/// null-terminated.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * `ptr`     - Out-parameter for a pointer to the string.</span>
-<span class="doccomment">/// * `size`    - Out-parameter for the size of the string.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Only use this in C-FFI code, otherwise, you use [`get_inf_string`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`get_inf_string`]: fn.get_inf_string.html</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">get_inf_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">usize</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
-{
-    <span class="ident">get_string_ffi</span>(<span class="ident">ptr</span>, <span class="ident">size</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">INF_STRING</span>)
 }
 
 <span class="doccomment">/// Set the short representation of Infinity from a byte slice.</span>
@@ -956,35 +1004,16 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Panics</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Panics if `bytes.len() &gt;= MAX_F32_SIZE`.</span>
+<span class="doccomment">/// Panics if:</span>
+<span class="doccomment">/// - `bytes.len() &gt;= f32::FORMATTED_SIZE`</span>
+<span class="doccomment">/// - `bytes.len() &gt;= get_infinity_string().len()`</span>
+<span class="doccomment">/// - `bytes` is empty</span>
+<span class="doccomment">/// - `bytes` does not start with an `&#39;I&#39;` or `&#39;i&#39;`.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_inf_string</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>])
 {
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">starts_with_i</span>(<span class="ident">bytes</span>) <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">INFINITY_STRING</span>.<span class="ident">length</span>);
     <span class="ident">INF_STRING</span>.<span class="ident">load_bytes</span>(<span class="ident">bytes</span>);
-}
-
-<span class="doccomment">/// Set the short representation of Infinity from a pointer and size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns 0 on success, -1 on error.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * `ptr`     - Pointer to the first character in the contiguous string.</span>
-<span class="doccomment">/// * `size`    - Size of the string, without the null-terminator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Only use this in C-FFI code, otherwise, you use [`set_inf_string`].</span>
-<span class="doccomment">/// Do not call this function in threaded-code, as it is not thread-safe.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`set_inf_string`]: fn.set_inf_string.html</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Panics</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Panics if `bytes.len() &gt;= MAX_F32_SIZE`.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">set_inf_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="ident">usize</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
-{
-    <span class="ident">set_string_ffi</span>(<span class="ident">ptr</span>, <span class="ident">size</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">INF_STRING</span>)
 }
 
 <span class="doccomment">/// Get the long representation of an Infinity literal as a byte slice.</span>
@@ -994,26 +1023,6 @@
     <span class="kw">unsafe</span> {
         <span class="ident">INFINITY_STRING</span>.<span class="ident">as_bytes</span>()
     }
-}
-
-<span class="doccomment">/// Get the long representation of an Infinity literal as a pointer and size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns 0 on success, -1 on error. This string is **not**</span>
-<span class="doccomment">/// null-terminated.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * `ptr`     - Out-parameter for a pointer to the string.</span>
-<span class="doccomment">/// * `size`    - Out-parameter for the size of the string.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Only use this in C-FFI code, otherwise, you use [`get_infinity_string`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`get_infinity_string`]: fn.get_infinity_string.html</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">get_infinity_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">usize</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
-{
-    <span class="ident">get_string_ffi</span>(<span class="ident">ptr</span>, <span class="ident">size</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">INFINITY_STRING</span>)
 }
 
 <span class="doccomment">/// Set the long representation of Infinity from a byte slice.</span>
@@ -1026,38 +1035,34 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Panics</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Panics if `bytes.len() &gt;= MAX_F32_SIZE`.</span>
+<span class="doccomment">/// Panics if:</span>
+<span class="doccomment">/// - `bytes.len() &gt;= f32::FORMATTED_SIZE`</span>
+<span class="doccomment">/// - `bytes.len() &lt; get_inf_string().len()`</span>
+<span class="doccomment">/// - `bytes` is empty</span>
+<span class="doccomment">/// - `bytes` does not start with an `&#39;I&#39;` or `&#39;i&#39;`.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_infinity_string</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>])
 {
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">starts_with_i</span>(<span class="ident">bytes</span>) <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="ident">INF_STRING</span>.<span class="ident">length</span>);
     <span class="ident">INFINITY_STRING</span>.<span class="ident">load_bytes</span>(<span class="ident">bytes</span>);
 }
 
-<span class="doccomment">/// Set the long representation of Infinity from a pointer and size.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Returns 0 on success, -1 on error.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * `ptr`     - Pointer to the first character in the contiguous string.</span>
-<span class="doccomment">/// * `size`    - Size of the string, without the null-terminator.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Only use this in C-FFI code, otherwise, you use [`set_infinity_string`].</span>
-<span class="doccomment">/// Do not call this function in threaded-code, as it is not thread-safe.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`set_infinity_string`]: fn.set_infinity_string.html</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Panics</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Panics if `bytes.len() &gt;= MAX_F32_SIZE`.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="kw">fn</span> <span class="ident">set_infinity_string_ffi</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span>: <span class="ident">usize</span>)
-    <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>
-{
-    <span class="ident">set_string_ffi</span>(<span class="ident">ptr</span>, <span class="ident">size</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">INFINITY_STRING</span>)
-}
-
 <span class="comment">// CONSTANTS</span>
+
+<span class="comment">// The f64 buffer is actually a size of 60, but use 64 since it&#39;s a</span>
+<span class="comment">// power of 2.</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I8_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I16_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">6</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I32_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">11</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I64_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U8_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">3</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U16_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U32_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U64_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">F32_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">F64_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_i128</span>)]</span> <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I128_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">40</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_i128</span>)]</span> <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U128_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">39</span>;
 
 <span class="comment">// Simple, fast optimization.</span>
 <span class="comment">// Since we&#39;re declaring a variable on the stack, and our power-of-two</span>
@@ -1065,185 +1070,56 @@
 <span class="macro">cfg_if</span><span class="macro">!</span> {
 <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;radix&quot;</span>)]</span> {
     <span class="comment">// Use 256, actually, since we seem to have memory issues with f64.</span>
-    <span class="comment">// Clearly not sufficient memory allocated for non-base10 values.</span>
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i8` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I8_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i16` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I16_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i32` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I32_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i64` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I64_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i128` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I128_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u8` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U8_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u16` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U16_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u32` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U32_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u64` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U64_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u128` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U128_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `f32` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_F32_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `f64` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_F64_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
+    <span class="comment">// Clearly not sufficient memory allocated for non-decimal values.</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I8_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I16_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I32_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I64_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U8_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">16</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U16_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U32_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U64_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">F32_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">F64_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_i128</span>)]</span> <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I128_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_i128</span>)]</span> <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U128_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
 } <span class="kw">else</span> {
     <span class="comment">// The f64 buffer is actually a size of 60, but use 64 since it&#39;s a</span>
     <span class="comment">// power of 2.</span>
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i8` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I8_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i16` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I16_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">6</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i32` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I32_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">11</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i64` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I64_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `i128` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_I128_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">40</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u8` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U8_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">3</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u16` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U16_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u32` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U32_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u64` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U64_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `u128` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_U128_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">39</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `f32` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_F32_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `f64` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_F64_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I8_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I8_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I16_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I16_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I32_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I32_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I64_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I64_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U8_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U8_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U16_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U16_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U32_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U32_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U64_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U64_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">F32_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">F32_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">F64_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">F64_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_i128</span>)]</span> <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">I128_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I128_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_i128</span>)]</span> <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">U128_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U128_FORMATTED_SIZE_DECIMAL</span>;
 }} <span class="comment">// cfg_if</span>
 
 <span class="macro">cfg_if</span><span class="macro">!</span> {
 <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;16&quot;</span>)]</span> {
-    <span class="doccomment">/// The minimum buffer size required to serialize any `isize` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_ISIZE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I16_SIZE</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `usize` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_USIZE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U16_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">ISIZE_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I16_FORMATTED_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">ISIZE_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I16_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">USIZE_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U16_FORMATTED_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">USIZE_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U16_FORMATTED_SIZE_DECIMAL</span>;
 } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span> {
-    <span class="doccomment">/// The minimum buffer size required to serialize any `isize` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_ISIZE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I32_SIZE</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `usize` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_USIZE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U32_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">ISIZE_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I32_FORMATTED_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">ISIZE_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I32_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">USIZE_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U32_FORMATTED_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">USIZE_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U32_FORMATTED_SIZE_DECIMAL</span>;
 } <span class="kw">else</span> <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span> {
-    <span class="doccomment">/// The minimum buffer size required to serialize any `isize` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_ISIZE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I64_SIZE</span>;
-
-    <span class="doccomment">/// The minimum buffer size required to serialize any `usize` value.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_USIZE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U64_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">ISIZE_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I64_FORMATTED_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">ISIZE_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">I64_FORMATTED_SIZE_DECIMAL</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">USIZE_FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U64_FORMATTED_SIZE</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">USIZE_FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">U64_FORMATTED_SIZE_DECIMAL</span>;
 }}  <span class="comment">// cfg_if</span>
 
-<span class="doccomment">/// The maximum number of bytes that any number-to-string function may write.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BUFFER_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_F64_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `i8` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_I8_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I8_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `i16` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_I16_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I16_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `i32` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_I32_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I32_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `i64` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_I64_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I64_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `i128` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_I128_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_I128_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `isize` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_ISIZE_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_ISIZE_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `u8` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_U8_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U8_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `u16` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_U16_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U16_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `u32` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_U32_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U32_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `u64` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_U64_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U64_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `u128` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_U128_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_U128_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `usize` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_USIZE_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_USIZE_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `f32` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_F32_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_F32_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the minimum buffer required to serialize any `f64` value.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">MAX_F64_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_F64_SIZE</span>;
-
-<span class="doccomment">/// Symbol-generating constant for the maximum number of bytes that any number-to-string function may write.</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">BUFFER_SIZE_FFI</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">BUFFER_SIZE</span>;
-
-<span class="doccomment">/// The rounding scheme for float conversions.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This defines the global rounding-scheme for float parsing operations.</span>
-<span class="doccomment">/// By default, this is set to `RoundingKind::NearestTieEven`. IEEE754</span>
-<span class="doccomment">/// recommends this as the default for all for decimal and binary</span>
-<span class="doccomment">/// operations.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Safety</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Do not modify this value in threaded-code, as it is not thread-safe.</span>
-<span class="doccomment">/// See the documentation for [`RoundingKind`] for the permissible</span>
-<span class="doccomment">/// values of `FLOAT_ROUNDING` in FFI-code.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`RoundingKind`]: enum.RoundingKind.html</span>
-<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rounding&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">FLOAT_ROUNDING</span>: <span class="ident">RoundingKind</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>;
+<span class="doccomment">/// Maximum number of bytes required to serialize any number to string.</span>
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BUFFER_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">F64_FORMATTED_SIZE</span>;
 
 <span class="comment">// FUNCTIONS</span>
 
@@ -1251,13 +1127,15 @@
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_variables</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">exponent_notation_char</span>(<span class="ident">radix</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> {
-    <span class="kw">unsafe</span> {
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>))]</span> {
-            <span class="ident">EXPONENT_DEFAULT_CHAR</span>
-        }
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>))]</span> {
+        <span class="ident">get_exponent_default_char</span>()
+    }
 
-        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>)]</span> {
-            <span class="kw">if</span> <span class="ident">radix</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">15</span> { <span class="ident">EXPONENT_BACKUP_CHAR</span> } <span class="kw">else</span> { <span class="ident">EXPONENT_DEFAULT_CHAR</span> }
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>)]</span> {
+        <span class="kw">if</span> <span class="ident">radix</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">15</span> {
+            <span class="ident">get_exponent_backup_char</span>()
+        } <span class="kw">else</span> {
+            <span class="ident">get_exponent_default_char</span>()
         }
     }
 }
@@ -1267,8 +1145,6 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">atof</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">ftoa</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">util</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">util</span>::<span class="ident">test</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
@@ -1276,14 +1152,14 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span><span class="string">&quot;radix&quot;</span>)]</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">exponent_notation_char_test</span>() {
-        <span class="kw">unsafe</span> {
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">2</span>), <span class="ident">EXPONENT_DEFAULT_CHAR</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">8</span>), <span class="ident">EXPONENT_DEFAULT_CHAR</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">10</span>), <span class="ident">EXPONENT_DEFAULT_CHAR</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">15</span>), <span class="ident">EXPONENT_BACKUP_CHAR</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">16</span>), <span class="ident">EXPONENT_BACKUP_CHAR</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">32</span>), <span class="ident">EXPONENT_BACKUP_CHAR</span>);
-        }
+        <span class="kw">let</span> <span class="ident">default</span> <span class="op">=</span> <span class="ident">get_exponent_default_char</span>();
+        <span class="kw">let</span> <span class="ident">backup</span> <span class="op">=</span> <span class="ident">get_exponent_backup_char</span>();
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">2</span>), <span class="ident">default</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">8</span>), <span class="ident">default</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">10</span>), <span class="ident">default</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">15</span>), <span class="ident">backup</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">16</span>), <span class="ident">backup</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">exponent_notation_char</span>(<span class="number">32</span>), <span class="ident">backup</span>);
     }
 
     <span class="comment">// Only enable when no other threads touch NAN_STRING or INFINITY_STRING.</span>
@@ -1293,25 +1169,25 @@
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">new_buffer</span>();
             <span class="comment">// Test serializing and deserializing special strings.</span>
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;NaN&quot;</span>).<span class="ident">value</span>.<span class="ident">is_nan</span>());
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;nan&quot;</span>).<span class="ident">value</span>.<span class="ident">is_nan</span>());
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;NAN&quot;</span>).<span class="ident">value</span>.<span class="ident">is_nan</span>());
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;inf&quot;</span>).<span class="ident">value</span>.<span class="ident">is_infinite</span>());
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;INF&quot;</span>).<span class="ident">value</span>.<span class="ident">is_infinite</span>());
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;Infinity&quot;</span>).<span class="ident">value</span>.<span class="ident">is_infinite</span>());
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64toa_slice</span>(<span class="ident">f64</span>::<span class="ident">NAN</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;NaN&quot;</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64toa_slice</span>(<span class="ident">f64</span>::<span class="ident">INFINITY</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;inf&quot;</span>);
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;NaN&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">is_nan</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;nan&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">is_nan</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;NAN&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">is_nan</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;inf&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">is_infinite</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;INF&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">is_infinite</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;Infinity&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">is_infinite</span>());
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">NAN</span>.<span class="ident">to_lexical</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;NaN&quot;</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">INFINITY</span>.<span class="ident">to_lexical</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;inf&quot;</span>);
 
-            <span class="ident">NAN_STRING</span>.<span class="ident">load_bytes</span>(<span class="string">b&quot;nan&quot;</span>);
-            <span class="ident">INF_STRING</span>.<span class="ident">load_bytes</span>(<span class="string">b&quot;Infinity&quot;</span>);
+            <span class="ident">set_nan_string</span>(<span class="string">b&quot;nan&quot;</span>);
+            <span class="ident">set_inf_string</span>(<span class="string">b&quot;Infinity&quot;</span>);
 
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;inf&quot;</span>).<span class="ident">error</span>.<span class="ident">code</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ErrorCode</span>::<span class="ident">InvalidDigit</span>);
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">try_atof32_slice</span>(<span class="string">b&quot;Infinity&quot;</span>).<span class="ident">value</span>.<span class="ident">is_infinite</span>());
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64toa_slice</span>(<span class="ident">f64</span>::<span class="ident">NAN</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;nan&quot;</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64toa_slice</span>(<span class="ident">f64</span>::<span class="ident">INFINITY</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;Infinity&quot;</span>);
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;inf&quot;</span>).<span class="ident">err</span>().<span class="ident">unwrap</span>().<span class="ident">code</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ErrorCode</span>::<span class="ident">InvalidDigit</span>);
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">f32</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;Infinity&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">is_infinite</span>());
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">NAN</span>.<span class="ident">to_lexical</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;nan&quot;</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">INFINITY</span>.<span class="ident">to_lexical</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>), <span class="string">b&quot;Infinity&quot;</span>);
 
-            <span class="ident">NAN_STRING</span>.<span class="ident">load_bytes</span>(<span class="string">b&quot;NaN&quot;</span>);
-            <span class="ident">INF_STRING</span>.<span class="ident">load_bytes</span>(<span class="string">b&quot;inf&quot;</span>);
+            <span class="ident">set_nan_string</span>(<span class="string">b&quot;NaN&quot;</span>);
+            <span class="ident">set_inf_string</span>(<span class="string">b&quot;inf&quot;</span>);
         }
     }
 
@@ -1324,42 +1200,42 @@
         <span class="comment">// rounding schemes from this.</span>
         <span class="kw">unsafe</span> {
             <span class="comment">// Nearest, tie-even</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740996.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740996.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740996.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740996.0</span>);
 
             <span class="comment">// Nearest, tie-away-zero</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieAwayZero</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740996.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740996.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">NearestTieAwayZero</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740996.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740996.0</span>);
 
             <span class="comment">// Toward positive infinity</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">TowardPositiveInfinity</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740996.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">TowardPositiveInfinity</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740996.0</span>);
 
             <span class="comment">// Toward negative infinity</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">TowardNegativeInfinity</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740996.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">TowardNegativeInfinity</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740996.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
 
             <span class="comment">// Toward zero</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">TowardZero</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_slice</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">TowardZero</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;-9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740993&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical</span>(<span class="string">b&quot;9007199254740995&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
 
             <span class="comment">// Reset to default</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>;
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>);
         }
     }
 
@@ -1372,42 +1248,174 @@
         <span class="comment">// rounding schemes from this.</span>
         <span class="kw">unsafe</span> {
             <span class="comment">// Nearest, tie-even</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740996.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740996.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740996.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740996.0</span>);
 
             <span class="comment">// Nearest, tie-away-zero</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieAwayZero</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740996.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740996.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">NearestTieAwayZero</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740996.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740996.0</span>);
 
             <span class="comment">// Toward positive infinity</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">TowardPositiveInfinity</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740996.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">TowardPositiveInfinity</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740996.0</span>);
 
             <span class="comment">// Toward negative infinity</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">TowardNegativeInfinity</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740996.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">TowardNegativeInfinity</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740996.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
 
             <span class="comment">// Toward zero</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">TowardZero</span>;
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="op">-</span><span class="number">9007199254740994.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740992.0</span>);
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">try_atof64_radix_slice</span>(<span class="number">2</span>, <span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>).<span class="ident">value</span>, <span class="number">9007199254740994.0</span>);
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">TowardZero</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;-100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="op">-</span><span class="number">9007199254740994.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000001&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740992.0</span>);
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">f64</span>::<span class="ident">from_lexical_radix</span>(<span class="string">b&quot;100000000000000000000000000000000000000000000000000011&quot;</span>, <span class="number">2</span>).<span class="ident">unwrap</span>(), <span class="number">9007199254740994.0</span>);
 
             <span class="comment">// Reset to default</span>
-            <span class="ident">FLOAT_ROUNDING</span> <span class="op">=</span> <span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>;
+            <span class="ident">set_float_rounding</span>(<span class="ident">RoundingKind</span>::<span class="ident">NearestTieEven</span>);
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_default_char_digit_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_default_char</span>(<span class="string">b&#39;0&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_default_char_period_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_default_char</span>(<span class="string">b&#39;.&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_default_char_add_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_default_char</span>(<span class="string">b&#39;+&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_default_char_sub_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_default_char</span>(<span class="string">b&#39;-&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;radix&quot;</span>))]</span>
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_backup_char_digit_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_backup_char</span>(<span class="string">b&#39;0&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;radix&quot;</span>))]</span>
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_backup_char_period_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_backup_char</span>(<span class="string">b&#39;.&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;radix&quot;</span>))]</span>
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_backup_char_add_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_backup_char</span>(<span class="string">b&#39;+&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;radix&quot;</span>))]</span>
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_exponent_backup_char_sub_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_exponent_backup_char</span>(<span class="string">b&#39;-&#39;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_nan_string_empty_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_nan_string</span>(<span class="string">b&quot;&quot;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_nan_string_invalid_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_nan_string</span>(<span class="string">b&quot;i&quot;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_inf_string_empty_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_inf_string</span>(<span class="string">b&quot;&quot;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_inf_string_invalid_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_inf_string</span>(<span class="string">b&quot;n&quot;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_inf_string_long_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_inf_string</span>(<span class="string">b&quot;infinityinfinf&quot;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_infinity_string_empty_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_infinity_string</span>(<span class="string">b&quot;&quot;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_infinity_string_invalid_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_infinity_string</span>(<span class="string">b&quot;n&quot;</span>)
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">should_panic</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">set_infinity_string_short_test</span>() {
+        <span class="kw">unsafe</span> {
+            <span class="ident">set_infinity_string</span>(<span class="string">b&quot;i&quot;</span>)
         }
     }
 }
