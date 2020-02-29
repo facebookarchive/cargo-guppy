@@ -109,6 +109,12 @@ fn metadata2() {
 }
 
 #[test]
+fn metadata_dups() {
+    let metadata_dups = Fixture::metadata_dups();
+    metadata_dups.verify();
+}
+
+#[test]
 fn metadata_libra() {
     let metadata_libra = Fixture::metadata_libra();
     metadata_libra.verify();
@@ -117,6 +123,7 @@ fn metadata_libra() {
 // Define proptests for each metadata.
 proptest_suite!(metadata1);
 proptest_suite!(metadata2);
+proptest_suite!(metadata_dups);
 proptest_suite!(metadata_libra);
 
 struct NameVisitor;

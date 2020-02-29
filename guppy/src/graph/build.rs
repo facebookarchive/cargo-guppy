@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    kind_str, DependencyEdge, DependencyMetadata, PackageGraph, PackageGraphData, PackageIx,
-    PackageMetadata, Workspace,
+    cargo_version_matches, kind_str, DependencyEdge, DependencyMetadata, PackageGraph,
+    PackageGraphData, PackageIx, PackageMetadata, Workspace,
 };
 use crate::{Error, Metadata, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
@@ -273,33 +273,33 @@ impl<'a> GraphBuildState<'a> {
     }
 }
 
-struct DependencyResolver<'a> {
-    from_id: &'a PackageId,
+struct DependencyResolver<'g> {
+    from_id: &'g PackageId,
 
     /// The package data, inherited from the graph build state.
-    package_data: &'a HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
+    package_data: &'g HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
 
     /// This is a mapping of renamed dependencies to their rename sources and dependency info --
     /// this always takes top priority.
     ///
     /// This is an owned string because hyphens can be replaced with underscores in the resolved\
     /// name. In principle this could be a Cow<'a, str>, but str::replace returns a String.
-    renamed_map: HashMap<Box<str>, (&'a str, Vec<&'a Dependency>)>,
+    renamed_map: HashMap<Box<str>, (&'g str, DependencyReqs<'g>)>,
 
     /// This is a mapping of dependencies using their original names. For these names, dashes are
     /// not replaced with underscores.
-    original_map: HashMap<&'a str, Vec<&'a Dependency>>,
+    original_map: HashMap<&'g str, DependencyReqs<'g>>,
 }
 
-impl<'a> DependencyResolver<'a> {
+impl<'g> DependencyResolver<'g> {
     /// Constructs a new resolver using the provided package data and dependencies.
     fn new(
-        from_id: &'a PackageId,
-        package_data: &'a HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
-        package_deps: impl IntoIterator<Item = &'a Dependency>,
+        from_id: &'g PackageId,
+        package_data: &'g HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
+        package_deps: impl IntoIterator<Item = &'g Dependency>,
     ) -> Self {
         let mut renamed_map = HashMap::new();
-        let mut original_map = HashMap::new();
+        let mut original_map: HashMap<_, DependencyReqs<'g>> = HashMap::new();
 
         for dep in package_deps {
             match &dep.rename {
@@ -318,13 +318,11 @@ impl<'a> DependencyResolver<'a> {
                     let resolved_name = rename.replace("-", "_");
                     let (_, deps) = renamed_map
                         .entry(resolved_name.into())
-                        .or_insert_with(|| (rename.as_str(), vec![]));
+                        .or_insert_with(|| (rename.as_str(), DependencyReqs::default()));
                     deps.push(dep);
                 }
                 Some(_) | None => {
-                    let deps = original_map
-                        .entry(dep.name.as_str())
-                        .or_insert_with(|| vec![]);
+                    let deps = original_map.entry(dep.name.as_str()).or_default();
                     deps.push(dep);
                 }
             }
@@ -340,11 +338,11 @@ impl<'a> DependencyResolver<'a> {
 
     /// Resolves this dependency by finding the `Dependency` corresponding to this resolved name
     /// and package ID.
-    fn resolve(
-        &self,
+    fn resolve<'a>(
+        &'a self,
         resolved_name: &str,
         package_id: &PackageId,
-    ) -> Result<(&'a str, &[&'a Dependency]), Error> {
+    ) -> Result<(&'g str, impl Iterator<Item = &'g Dependency> + 'a), Error> {
         // This method needs to reconcile three separate sources of data:
         // 1. The metadata for each package, which is basically a parsed version of the Cargo.toml
         //    for that package.
@@ -365,21 +363,34 @@ impl<'a> DependencyResolver<'a> {
         //
         // TODO: Add detection for cases like this.
 
-        // Lookup the name in the renamed map. If a hit is found here we're done.
-        if let Some((name, deps)) = self.renamed_map.get(resolved_name) {
-            return Ok((*name, deps));
-        }
-
         // Lookup the package ID in the package data.
-        let (_, package_name, _) = self.package_data.get(package_id).ok_or_else(|| {
+        let (_, package_name, version) = self.package_data.get(package_id).ok_or_else(|| {
             Error::PackageGraphConstructError(format!(
                 "{}: no package data found for dependency '{}'",
                 self.from_id, package_id
             ))
         })?;
 
+        // ---
+        // Both the following checks verify against the version as well to allow situations like
+        // this to work:
+        //
+        // [dependencies]
+        // lazy_static = "1"
+        //
+        // [dev-dependencies]
+        // lazy_static = "0.2"
+        //
+        // This needs to be done against the renamed map as well.
+        // ---
+
+        // Lookup the name in the renamed map. If a hit is found here we're done.
+        if let Some((name, deps)) = self.renamed_map.get(resolved_name) {
+            return Ok((*name, deps.matches_for(version)));
+        }
+
         // Lookup the name in the original map.
-        let (name, deps) = self
+        let (name, dep_reqs) = self
             .original_map
             .get_key_value(package_name.as_str())
             .ok_or_else(|| {
@@ -388,22 +399,48 @@ impl<'a> DependencyResolver<'a> {
                     self.from_id, package_name, package_id
                 ))
             })?;
+        let deps = dep_reqs.matches_for(version);
         Ok((*name, deps))
     }
 }
 
+/// Maintains a list of dependency requirements to match up to for a given package name.
+#[derive(Clone, Debug, Default)]
+struct DependencyReqs<'g> {
+    reqs: Vec<&'g Dependency>,
+}
+
+impl<'g> DependencyReqs<'g> {
+    fn push(&mut self, dependency: &'g Dependency) {
+        self.reqs.push(dependency);
+    }
+
+    fn matches_for<'a>(
+        &'a self,
+        version: &'a Version,
+    ) -> impl Iterator<Item = &'g Dependency> + 'a {
+        self.reqs.iter().filter_map(move |dep| {
+            if cargo_version_matches(&dep.req, version) {
+                Some(*dep)
+            } else {
+                None
+            }
+        })
+    }
+}
+
 impl DependencyEdge {
-    fn new(
+    fn new<'a>(
         from_id: &PackageId,
         name: &str,
         resolved_name: &str,
-        deps: &[&Dependency],
+        deps: impl IntoIterator<Item = &'a Dependency>,
     ) -> Result<Self, Error> {
         // deps should have at most 1 normal dependency, 1 build dep and 1 dev dep.
         let mut normal: Option<DependencyMetadata> = None;
         let mut build: Option<DependencyMetadata> = None;
         let mut dev: Option<DependencyMetadata> = None;
-        for &dep in deps {
+        for dep in deps {
             // Dev dependencies cannot be optional.
             if dep.kind == DependencyKind::Development && dep.optional {
                 return Err(Error::PackageGraphConstructError(format!(

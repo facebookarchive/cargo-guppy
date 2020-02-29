@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
-use crate::graph::{kind_str, DependencyDirection, PackageIx};
+use crate::graph::{cargo_version_matches, kind_str, DependencyDirection, PackageIx};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
-use once_cell::sync::{Lazy, OnceCell};
+use once_cell::sync::OnceCell;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
@@ -60,8 +60,6 @@ impl PackageGraph {
     /// Verifies internal invariants on this graph. Not part of the documented API.
     #[doc(hidden)]
     pub fn verify(&self) -> Result<(), Error> {
-        static MAJOR_WILDCARD: Lazy<VersionReq> = Lazy::new(|| VersionReq::parse("*").unwrap());
-
         // Graph structure checks.
         let node_count = self.dep_graph.node_count();
         let package_count = self.data.packages.len();
@@ -119,7 +117,7 @@ impl PackageGraph {
                     // A requirement of "*" filters out pre-release versions with the semver crate,
                     // but cargo accepts them.
                     // See https://github.com/steveklabnik/semver/issues/98.
-                    if req == &*MAJOR_WILDCARD || req.matches(to_version) {
+                    if cargo_version_matches(req, to_version) {
                         Ok(())
                     } else {
                         Err(Error::PackageGraphInternalError(format!(
