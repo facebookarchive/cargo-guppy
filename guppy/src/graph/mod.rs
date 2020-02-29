@@ -20,9 +20,11 @@ mod select;
 
 pub use crate::petgraph_support::dot::DotWrite;
 pub use graph_impl::*;
+use once_cell::sync::Lazy;
 use petgraph::graph::IndexType;
 pub use print::*;
 pub use select::*;
+use semver::{Version, VersionReq};
 
 /// The direction in which to follow dependencies.
 ///
@@ -118,4 +120,13 @@ fn kind_str(kind: DependencyKind) -> &'static str {
         DependencyKind::Development => "dev",
         _ => "unknown",
     }
+}
+
+// A requirement of "*" filters out pre-release versions with the semver crate,
+// but cargo accepts them.
+// See https://github.com/steveklabnik/semver/issues/98.
+fn cargo_version_matches(req: &VersionReq, version: &Version) -> bool {
+    static MAJOR_WILDCARD: Lazy<VersionReq> = Lazy::new(|| VersionReq::parse("*").unwrap());
+
+    req == &*MAJOR_WILDCARD || req.matches(version)
 }

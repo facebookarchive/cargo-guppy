@@ -29,6 +29,18 @@ pub(crate) static METADATA2_WALKDIR: &str =
     "walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)";
 pub(crate) static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
 
+pub(crate) static METADATA_DUPS: &str = include_str!("../../fixtures/metadata_dups.json");
+pub(crate) static METADATA_DUPS_TESTCRATE: &str =
+    "testcrate-dups 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-dups)";
+pub(crate) static METADATA_DUPS_LAZY_STATIC_1: &str =
+    "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_DUPS_LAZY_STATIC_02: &str =
+    "lazy_static 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_DUPS_BYTES_03: &str =
+    "bytes 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_DUPS_BYTES_05: &str =
+    "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)";
+
 pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/metadata_libra.json");
 pub(crate) static METADATA_LIBRA_E2E_TESTS: &str =
     "language-e2e-tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/e2e-tests)";
@@ -140,6 +152,13 @@ impl Fixture {
         Self {
             graph: Self::parse_graph(METADATA2),
             details: FixtureDetails::metadata2(),
+        }
+    }
+
+    pub(crate) fn metadata_dups() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA_DUPS),
+            details: FixtureDetails::metadata_dups(),
         }
     }
 
@@ -440,6 +459,28 @@ impl FixtureDetails {
             ],
             details,
         )
+    }
+
+    pub(crate) fn metadata_dups() -> Self {
+        let mut details = HashMap::new();
+
+        PackageDetails::new(
+            METADATA_DUPS_TESTCRATE,
+            "testcrate-dups",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![
+            ("lazy_static", METADATA_DUPS_LAZY_STATIC_1),
+            ("lazy_static", METADATA_DUPS_LAZY_STATIC_02),
+            ("bytes-package", METADATA_DUPS_BYTES_03),
+            ("bytes-package", METADATA_DUPS_BYTES_05),
+        ])
+        .insert_into(&mut details);
+
+        Self::new(vec![("", METADATA_DUPS_TESTCRATE)], details)
     }
 
     pub(crate) fn metadata_libra() -> Self {
