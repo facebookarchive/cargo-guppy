@@ -13,7 +13,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 
 // Metadata along with interesting crate names.
-pub(crate) static METADATA1: &str = include_str!("../../fixtures/metadata1.json");
+pub(crate) static METADATA1: &str = include_str!("../../fixtures/small/metadata1.json");
 pub(crate) static METADATA1_TESTCRATE: &str = "testcrate 0.1.0 (path+file:///fakepath/testcrate)";
 pub(crate) static METADATA1_DATATEST: &str =
     "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)";
@@ -22,14 +22,14 @@ pub(crate) static METADATA1_REGION: &str =
 pub(crate) static METADATA1_DTOA: &str =
     "dtoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub(crate) static METADATA2: &str = include_str!("../../fixtures/metadata2.json");
+pub(crate) static METADATA2: &str = include_str!("../../fixtures/small/metadata2.json");
 pub(crate) static METADATA2_TESTCRATE: &str =
     "testworkspace-crate 0.1.0 (path+file:///Users/fakeuser/local/testworkspace/testcrate)";
 pub(crate) static METADATA2_WALKDIR: &str =
     "walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)";
 pub(crate) static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
 
-pub(crate) static METADATA_DUPS: &str = include_str!("../../fixtures/metadata_dups.json");
+pub(crate) static METADATA_DUPS: &str = include_str!("../../fixtures/small/metadata_dups.json");
 pub(crate) static METADATA_DUPS_TESTCRATE: &str =
     "testcrate-dups 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-dups)";
 pub(crate) static METADATA_DUPS_LAZY_STATIC_1: &str =
@@ -41,7 +41,7 @@ pub(crate) static METADATA_DUPS_BYTES_03: &str =
 pub(crate) static METADATA_DUPS_BYTES_05: &str =
     "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/metadata_libra.json");
+pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/large/metadata_libra.json");
 pub(crate) static METADATA_LIBRA_E2E_TESTS: &str =
     "language-e2e-tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/e2e-tests)";
 pub(crate) static METADATA_LIBRA_COST_SYNTHESIS: &str =
