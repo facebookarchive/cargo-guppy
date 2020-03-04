@@ -88,6 +88,7 @@ arg_enum! {
     pub enum Kind {
         All,
         Workspace,
+        DirectThirdParty,
         ThirdParty,
     }
 }
@@ -186,12 +187,16 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
     narrow_graph(&mut pkg_graph, &options.filter_opts);
 
     let mut selected_packages = HashSet::new();
+    let mut direct_dependencies = HashSet::new();
     for link in pkg_graph
         .select_forward(&package_ids)?
         .into_iter_links(None)
     {
         selected_packages.insert(link.from.id());
         selected_packages.insert(link.to.id());
+        if link.from.in_workspace() && !link.to.in_workspace() {
+            direct_dependencies.insert(link.to.id());
+        }
     }
 
     for package_id in selected_packages {
@@ -199,6 +204,7 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
         let show_package = match options.filter_opts.kind {
             Kind::All => true,
             Kind::Workspace => in_workspace,
+            Kind::DirectThirdParty => direct_dependencies.contains(package_id),
             Kind::ThirdParty => !in_workspace,
         };
         if show_package {
@@ -325,8 +331,11 @@ fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
 
     pkg_graph.retain_edges(|_, DependencyLink { from, to, edge }| {
         // filter by the kind of dependency (--kind)
+        // NOTE: We always retain all workspace deps in the graph, otherwise
+        // we'll get a disconnected graph.
         let include_kind = match options.kind {
             Kind::All | Kind::ThirdParty => true,
+            Kind::DirectThirdParty => from.in_workspace(),
             Kind::Workspace => from.in_workspace() && to.in_workspace(),
         };
 
