@@ -8,10 +8,12 @@
 //! number of extra dependencies. This module allows for those subgraphs to be filtered out.
 
 mod build;
+mod cycles;
 mod graph_impl;
 #[cfg(feature = "proptest09")]
 mod proptest09;
 mod select;
 
+pub use cycles::*;
 pub use graph_impl::*;
 pub use select::*;

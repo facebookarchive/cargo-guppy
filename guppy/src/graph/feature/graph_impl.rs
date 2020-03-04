@@ -3,10 +3,12 @@
 
 use crate::errors::FeatureGraphWarning;
 use crate::graph::feature::build::FeatureGraphBuildState;
-use crate::graph::feature::FeatureFilter;
+use crate::graph::feature::{Cycles, FeatureFilter};
 use crate::graph::{DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageMetadata};
+use crate::petgraph_support::scc::Sccs;
 use crate::Error;
 use cargo_metadata::PackageId;
+use once_cell::sync::OnceCell;
 use petgraph::algo::has_path_connecting;
 use petgraph::prelude::*;
 use std::collections::HashMap;
@@ -132,9 +134,21 @@ impl<'g> FeatureGraph<'g> {
         Ok(self.feature_ix_depends_on(a_ix, b_ix))
     }
 
+    /// Returns information about dependency cycles.
+    ///
+    /// For more information, see the documentation for `Cycles`.
+    pub fn cycles(&self) -> Cycles<'g> {
+        Cycles::new(*self)
+    }
+
     // ---
     // Helper methods
     // ---
+
+    /// Returns the strongly connected components for this feature graph.
+    pub(super) fn sccs(&self) -> &'g Sccs<FeatureIx> {
+        self.inner.sccs.get_or_init(|| Sccs::new(&self.inner.graph))
+    }
 
     fn metadata_impl(&self, feature_id: FeatureId<'g>) -> Option<&'g FeatureMetadataImpl> {
         let feature_node = FeatureNode::from_id(self, feature_id)?;
@@ -339,6 +353,8 @@ pub(in crate::graph) struct FeatureGraphImpl {
     pub(super) graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
     pub(super) map: HashMap<FeatureNode, FeatureMetadataImpl>,
     pub(super) warnings: Vec<FeatureGraphWarning>,
+    // The strongly connected components of the feature graph. Computed on demand.
+    pub(super) sccs: OnceCell<Sccs<FeatureIx>>,
 }
 
 impl FeatureGraphImpl {

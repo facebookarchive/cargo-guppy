@@ -127,10 +127,30 @@ mod small {
     }
 
     proptest_suite!(metadata_dups);
+
+    #[test]
+    fn metadata_cycle1() {
+        let metadata_cycle1 = Fixture::metadata_cycle1();
+        metadata_cycle1.verify();
+    }
+
+    proptest_suite!(metadata_cycle1);
+
+    #[test]
+    fn metadata_cycle2() {
+        let metadata_cycle2 = Fixture::metadata_cycle2();
+        metadata_cycle2.verify();
+    }
+
+    proptest_suite!(metadata_cycle2);
 }
 
 mod large {
     use super::*;
+    use crate::unit_tests::dep_helpers::GraphAssert;
+    use crate::unit_tests::fixtures::{
+        package_id, METADATA_LIBRA_ADMISSION_CONTROL_SERVICE, METADATA_LIBRA_EXECUTOR_UTILS,
+    };
 
     #[test]
     fn metadata_libra() {
@@ -139,6 +159,36 @@ mod large {
     }
 
     proptest_suite!(metadata_libra);
+
+    #[test]
+    fn metadata_libra_f0091a4() {
+        let metadata = Fixture::metadata_libra_f0091a4();
+        metadata.verify();
+    }
+
+    proptest_suite!(metadata_libra_f0091a4);
+
+    #[test]
+    fn metadata_libra_9ffd93b() {
+        let metadata = Fixture::metadata_libra_9ffd93b();
+        metadata.verify();
+
+        let graph = metadata.graph();
+        graph.assert_depends_on(
+            &package_id(METADATA_LIBRA_ADMISSION_CONTROL_SERVICE),
+            &package_id(METADATA_LIBRA_EXECUTOR_UTILS),
+            DependencyDirection::Forward,
+            "admission-control-service should depend on executor-utils",
+        );
+        graph.assert_not_depends_on(
+            &package_id(METADATA_LIBRA_EXECUTOR_UTILS),
+            &package_id(METADATA_LIBRA_ADMISSION_CONTROL_SERVICE),
+            DependencyDirection::Forward,
+            "executor-utils should not depend on admission-control-service",
+        );
+    }
+
+    proptest_suite!(metadata_libra_9ffd93b);
 }
 
 struct NameVisitor;

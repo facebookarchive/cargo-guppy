@@ -42,15 +42,55 @@ pub(crate) static METADATA_DUPS_BYTES_03: &str =
 pub(crate) static METADATA_DUPS_BYTES_05: &str =
     "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)";
 
+pub(crate) static METADATA_CYCLE1: &str = include_str!("../../fixtures/small/metadata_cycle1.json");
+pub(crate) static METADATA_CYCLE1_BASE: &str =
+    "testcycles-base 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-base)";
+pub(crate) static METADATA_CYCLE1_HELPER: &str =
+    "testcycles-helper 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-helper)";
+
+pub(crate) static METADATA_CYCLE2: &str = include_str!("../../fixtures/small/metadata_cycle2.json");
+pub(crate) static METADATA_CYCLE2_UPPER_A: &str =
+    "upper-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/upper-a)";
+pub(crate) static METADATA_CYCLE2_UPPER_B: &str =
+    "upper-b 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/upper-b)";
+pub(crate) static METADATA_CYCLE2_LOWER_A: &str =
+    "lower-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-a)";
+pub(crate) static METADATA_CYCLE2_LOWER_B: &str =
+    "lower-b 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-b)";
+
 pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/large/metadata_libra.json");
+pub(crate) static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
+    "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)";
+pub(crate) static METADATA_LIBRA_COMPILER: &str =
+    "compiler 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler)";
 pub(crate) static METADATA_LIBRA_E2E_TESTS: &str =
     "language-e2e-tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/e2e-tests)";
+pub(crate) static METADATA_LIBRA_EXECUTOR: &str =
+    "executor 0.1.0 (path+file:///Users/fakeuser/local/libra/execution/executor)";
+pub(crate) static METADATA_LIBRA_EXECUTOR_UTILS: &str =
+    "executor-utils 0.1.0 (path+file:///Users/fakeuser/local/libra/execution/executor-utils)";
 pub(crate) static METADATA_LIBRA_COST_SYNTHESIS: &str =
     "cost-synthesis 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/cost-synthesis)";
 pub(crate) static METADATA_LIBRA_FUNCTIONAL_TESTS: &str =
     "functional_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/functional_tests)";
+pub(crate) static METADATA_LIBRA_FUNCTIONAL_HYPHEN_TESTS: &str =
+    "functional-tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/functional-tests)";
+pub(crate) static METADATA_LIBRA_LIBRA_VM: &str =
+    "libra-vm 0.1.0 (path+file:///Users/fakeuser/local/libra/language/libra-vm)";
+pub(crate) static METADATA_LIBRA_MOVE_LANG: &str =
+    "move-lang 0.0.1 (path+file:///Users/fakeuser/local/libra/language/move-lang)";
+pub(crate) static METADATA_LIBRA_MOVE_LANG_STDLIB: &str =
+    "move-lang-stdlib 0.1.0 (path+file:///Users/fakeuser/local/libra/language/move-lang/stdlib)";
+pub(crate) static METADATA_LIBRA_MOVE_VM_RUNTIME: &str =
+    "move-vm-runtime 0.1.0 (path+file:///Users/fakeuser/local/libra/language/move-vm/runtime)";
+pub(crate) static METADATA_LIBRA_STDLIB: &str =
+    "stdlib 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stdlib)";
 pub(crate) static METADATA_LIBRA_TEST_GENERATION: &str =
     "test-generation 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/test-generation)";
+pub(crate) static METADATA_LIBRA_TRANSACTION_BUILDER: &str =
+    "transaction-builder 0.1.0 (path+file:///Users/fakeuser/local/libra/language/transaction-builder)";
+pub(crate) static METADATA_LIBRA_VM_GENESIS: &str =
+    "vm-genesis 0.1.0 (path+file:///Users/fakeuser/local/libra/language/tools/vm-genesis)";
 pub(crate) static METADATA_LIBRA_LANGUAGE_BENCHMARKS: &str =
     "language_benchmarks 0.1.0 (path+file:///Users/fakeuser/local/libra/language/benchmarks)";
 pub(crate) static METADATA_LIBRA_TREE_HEAP: &str =
@@ -61,6 +101,12 @@ pub(crate) static METADATA_LIBRA_BACKTRACE: &str =
     "backtrace 0.3.37 (registry+https://github.com/rust-lang/crates.io-index)";
 pub(crate) static METADATA_LIBRA_CFG_IF: &str =
     "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)";
+
+pub(crate) static METADATA_LIBRA_F0091A4: &str =
+    include_str!("../../fixtures/large/metadata_libra_f0091a4.json");
+
+pub(crate) static METADATA_LIBRA_9FFD93B: &str =
+    include_str!("../../fixtures/large/metadata_libra_9ffd93b.json");
 
 pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
@@ -92,6 +138,8 @@ impl Fixture {
         self.graph
             .verify()
             .expect("graph verification should succeed");
+
+        self.details.assert_cycles(&self.graph, "cycles");
 
         self.details.assert_workspace(self.graph.workspace());
         self.details.assert_topo(&self.graph);
@@ -163,10 +211,38 @@ impl Fixture {
         }
     }
 
+    pub(crate) fn metadata_cycle1() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA_CYCLE1),
+            details: FixtureDetails::metadata_cycle1(),
+        }
+    }
+
+    pub(crate) fn metadata_cycle2() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA_CYCLE2),
+            details: FixtureDetails::metadata_cycle2(),
+        }
+    }
+
     pub(crate) fn metadata_libra() -> Self {
         Self {
             graph: Self::parse_graph(METADATA_LIBRA),
             details: FixtureDetails::metadata_libra(),
+        }
+    }
+
+    pub(crate) fn metadata_libra_f0091a4() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA_LIBRA_F0091A4),
+            details: FixtureDetails::metadata_libra_f0091a4(),
+        }
+    }
+
+    pub(crate) fn metadata_libra_9ffd93b() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA_LIBRA_9FFD93B),
+            details: FixtureDetails::metadata_libra_9ffd93b(),
         }
     }
 
@@ -182,6 +258,7 @@ pub(crate) struct FixtureDetails {
     workspace_members: Option<BTreeMap<PathBuf, PackageId>>,
     package_details: HashMap<PackageId, PackageDetails>,
     feature_graph_warnings: Vec<FeatureGraphWarning>,
+    cycles: Vec<Vec<PackageId>>,
 }
 
 impl FixtureDetails {
@@ -190,6 +267,7 @@ impl FixtureDetails {
             workspace_members: None,
             package_details,
             feature_graph_warnings: vec![],
+            cycles: vec![],
         }
     }
 
@@ -212,6 +290,20 @@ impl FixtureDetails {
     ) -> Self {
         warnings.sort();
         self.feature_graph_warnings = warnings;
+        self
+    }
+
+    pub(crate) fn with_cycles(mut self, cycles: Vec<Vec<&'static str>>) -> Self {
+        let mut cycles: Vec<_> = cycles
+            .into_iter()
+            .map(|cycle| {
+                let mut cycle: Vec<_> = cycle.into_iter().map(package_id).collect();
+                cycle.sort();
+                cycle
+            })
+            .collect();
+        cycles.sort();
+        self.cycles = cycles;
         self
     }
 
@@ -334,6 +426,22 @@ impl FixtureDetails {
         actual.sort();
         let expected = self.package_details[id].named_features.as_ref().unwrap();
         assert_eq!(expected, &actual, "{}", msg);
+    }
+
+    pub(crate) fn assert_cycles(&self, graph: &PackageGraph, msg: &str) {
+        let mut actual: Vec<_> = graph
+            .cycles()
+            .all_cycles()
+            .map(|cycle| {
+                // no implementation of Eq<&PackageId> for PackageId :(
+                let mut cycle: Vec<_> = cycle.into_iter().cloned().collect();
+                cycle.sort();
+                cycle
+            })
+            .collect();
+        actual.sort();
+
+        assert_eq!(&self.cycles, &actual, "{}", msg);
     }
 
     pub(crate) fn assert_feature_graph_warnings(&self, graph: &PackageGraph, msg: &str) {
@@ -489,6 +597,146 @@ impl FixtureDetails {
         Self::new(details).with_workspace_members(vec![("", METADATA_DUPS_TESTCRATE)])
     }
 
+    pub(crate) fn metadata_cycle1() -> Self {
+        let mut details = HashMap::new();
+
+        PackageDetails::new(
+            METADATA_CYCLE1_BASE,
+            "testcycles-base",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![("testcycles-helper", METADATA_CYCLE1_HELPER)])
+        .with_transitive_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
+        .with_transitive_reverse_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
+        .insert_into(&mut details);
+
+        PackageDetails::new(
+            METADATA_CYCLE1_HELPER,
+            "testcycles-helper",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![("testcycles-base", METADATA_CYCLE1_BASE)])
+        .with_transitive_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
+        .with_transitive_reverse_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
+        .insert_into(&mut details);
+
+        Self::new(details)
+            .with_workspace_members(vec![("", METADATA_CYCLE1_BASE)])
+            .with_cycles(vec![vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER]])
+    }
+
+    pub(crate) fn metadata_cycle2() -> Self {
+        // upper-a <-> upper-b
+        //                |
+        //                v
+        //             lower-a <-> lower-b
+        let mut details = HashMap::new();
+
+        // upper-a
+        PackageDetails::new(
+            METADATA_CYCLE2_UPPER_A,
+            "upper-a",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![("upper-b", METADATA_CYCLE2_UPPER_B)])
+        .with_reverse_deps(vec![("upper-a", METADATA_CYCLE2_UPPER_B)])
+        .with_transitive_deps(vec![
+            METADATA_CYCLE2_UPPER_A,
+            METADATA_CYCLE2_UPPER_B,
+            METADATA_CYCLE2_LOWER_A,
+            METADATA_CYCLE2_LOWER_B,
+        ])
+        .with_transitive_reverse_deps(vec![METADATA_CYCLE2_UPPER_A, METADATA_CYCLE2_UPPER_B])
+        .insert_into(&mut details);
+
+        // upper-b
+        PackageDetails::new(
+            METADATA_CYCLE2_UPPER_B,
+            "upper-b",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![
+            ("upper-a", METADATA_CYCLE2_UPPER_A),
+            ("lower-a", METADATA_CYCLE2_LOWER_A),
+        ])
+        .with_reverse_deps(vec![("upper-b", METADATA_CYCLE2_UPPER_A)])
+        .with_transitive_deps(vec![
+            METADATA_CYCLE2_UPPER_A,
+            METADATA_CYCLE2_UPPER_B,
+            METADATA_CYCLE2_LOWER_A,
+            METADATA_CYCLE2_LOWER_B,
+        ])
+        .with_transitive_reverse_deps(vec![METADATA_CYCLE2_UPPER_A, METADATA_CYCLE2_UPPER_B])
+        .insert_into(&mut details);
+
+        // lower-a
+        PackageDetails::new(
+            METADATA_CYCLE2_LOWER_A,
+            "lower-a",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![("lower-b", METADATA_CYCLE2_LOWER_B)])
+        .with_reverse_deps(vec![
+            ("lower-a", METADATA_CYCLE2_UPPER_B),
+            ("lower-a", METADATA_CYCLE2_LOWER_B),
+        ])
+        .with_transitive_deps(vec![METADATA_CYCLE2_LOWER_A, METADATA_CYCLE2_LOWER_B])
+        .with_transitive_reverse_deps(vec![
+            METADATA_CYCLE2_UPPER_A,
+            METADATA_CYCLE2_UPPER_B,
+            METADATA_CYCLE2_LOWER_A,
+            METADATA_CYCLE2_LOWER_B,
+        ])
+        .insert_into(&mut details);
+
+        // lower-b
+        PackageDetails::new(
+            METADATA_CYCLE2_LOWER_B,
+            "lower-b",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![("lower-a", METADATA_CYCLE2_LOWER_A)])
+        .with_reverse_deps(vec![("lower-b", METADATA_CYCLE2_LOWER_A)])
+        .with_transitive_deps(vec![METADATA_CYCLE2_LOWER_A, METADATA_CYCLE2_LOWER_B])
+        .with_transitive_reverse_deps(vec![
+            METADATA_CYCLE2_UPPER_A,
+            METADATA_CYCLE2_UPPER_B,
+            METADATA_CYCLE2_LOWER_A,
+            METADATA_CYCLE2_LOWER_B,
+        ])
+        .insert_into(&mut details);
+
+        Self::new(details)
+            .with_workspace_members(vec![
+                ("upper-a", METADATA_CYCLE2_UPPER_A),
+                ("upper-b", METADATA_CYCLE2_UPPER_B),
+                ("lower-a", METADATA_CYCLE2_LOWER_A),
+                ("lower-b", METADATA_CYCLE2_LOWER_B),
+            ])
+            .with_cycles(vec![
+                vec![METADATA_CYCLE2_UPPER_A, METADATA_CYCLE2_UPPER_B],
+                vec![METADATA_CYCLE2_LOWER_A, METADATA_CYCLE2_LOWER_B],
+            ])
+    }
+
     pub(crate) fn metadata_libra() -> Self {
         let mut details = HashMap::new();
 
@@ -529,7 +777,7 @@ impl FixtureDetails {
         #[rustfmt::skip]
         let workspace_members = vec![
             ("admission_control/admission-control-proto", "admission-control-proto 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-proto)"),
-            ("admission_control/admission-control-service", "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)"),
+            ("admission_control/admission-control-service", METADATA_LIBRA_ADMISSION_CONTROL_SERVICE),
             ("benchmark", "benchmark 0.1.0 (path+file:///Users/fakeuser/local/libra/benchmark)"),
             ("client", "client 0.1.0 (path+file:///Users/fakeuser/local/libra/client)"),
             ("client/libra_wallet", "libra-wallet 0.1.0 (path+file:///Users/fakeuser/local/libra/client/libra_wallet)"),
@@ -564,7 +812,7 @@ impl FixtureDetails {
             ("language/bytecode-verifier", "bytecode-verifier 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier)"),
             ("language/bytecode-verifier/bytecode_verifier_tests", "bytecode_verifier_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier/bytecode_verifier_tests)"),
             ("language/bytecode-verifier/invalid-mutations", "invalid-mutations 0.1.0 (path+file:///Users/fakeuser/local/libra/language/bytecode-verifier/invalid-mutations)"),
-            ("language/compiler", "compiler 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler)"),
+            ("language/compiler", METADATA_LIBRA_COMPILER),
             ("language/compiler/bytecode-source-map", "bytecode-source-map 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/bytecode-source-map)"),
             ("language/compiler/ir-to-bytecode", "ir-to-bytecode 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/ir-to-bytecode)"),
             ("language/compiler/ir-to-bytecode/syntax", "ir-to-bytecode-syntax 0.1.0 (path+file:///Users/fakeuser/local/libra/language/compiler/ir-to-bytecode/syntax)"),
@@ -573,10 +821,10 @@ impl FixtureDetails {
             ("language/stackless-bytecode/bytecode-to-boogie", "bytecode-to-boogie 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/bytecode-to-boogie)"),
             ("language/stackless-bytecode/generator", "stackless-bytecode-generator 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stackless-bytecode/generator)"),
             ("language/stackless-bytecode/tree_heap", METADATA_LIBRA_TREE_HEAP),
-            ("language/stdlib", "stdlib 0.1.0 (path+file:///Users/fakeuser/local/libra/language/stdlib)"),
+            ("language/stdlib", METADATA_LIBRA_STDLIB),
             ("language/tools/cost-synthesis", METADATA_LIBRA_COST_SYNTHESIS),
             ("language/tools/test-generation", METADATA_LIBRA_TEST_GENERATION),
-            ("language/transaction-builder", "transaction-builder 0.1.0 (path+file:///Users/fakeuser/local/libra/language/transaction-builder)"),
+            ("language/transaction-builder", METADATA_LIBRA_TRANSACTION_BUILDER),
             ("language/vm", "vm 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm)"),
             ("language/vm/serializer_tests", "serializer_tests 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/serializer_tests)"),
             ("language/vm/vm-genesis", "vm-genesis 0.1.0 (path+file:///Users/fakeuser/local/libra/language/vm/vm-genesis)"),
@@ -623,6 +871,37 @@ impl FixtureDetails {
                     feature_name: "rustc-dep-of-std".to_string(),
                 },
             ])
+    }
+
+    pub(crate) fn metadata_libra_f0091a4() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details).with_cycles(vec![vec![
+            METADATA_LIBRA_FUNCTIONAL_HYPHEN_TESTS,
+            METADATA_LIBRA_E2E_TESTS,
+            METADATA_LIBRA_MOVE_LANG,
+            METADATA_LIBRA_MOVE_LANG_STDLIB,
+            METADATA_LIBRA_VM_GENESIS,
+        ]])
+    }
+
+    pub(crate) fn metadata_libra_9ffd93b() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details).with_cycles(vec![
+            vec![
+                METADATA_LIBRA_COMPILER,
+                METADATA_LIBRA_FUNCTIONAL_HYPHEN_TESTS,
+                METADATA_LIBRA_E2E_TESTS,
+                METADATA_LIBRA_LIBRA_VM,
+                METADATA_LIBRA_MOVE_LANG,
+                METADATA_LIBRA_MOVE_VM_RUNTIME,
+                METADATA_LIBRA_STDLIB,
+                METADATA_LIBRA_TRANSACTION_BUILDER,
+                METADATA_LIBRA_VM_GENESIS,
+            ],
+            vec![METADATA_LIBRA_EXECUTOR, METADATA_LIBRA_EXECUTOR_UTILS],
+        ])
     }
 }
 

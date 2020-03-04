@@ -11,6 +11,7 @@ use petgraph::prelude::*;
 use std::fmt;
 
 mod build;
+mod cycles;
 #[doc(hidden)]
 pub mod feature;
 mod graph_impl;
@@ -20,6 +21,7 @@ mod proptest09;
 mod select;
 
 pub use crate::petgraph_support::dot::DotWrite;
+pub use cycles::*;
 pub use graph_impl::*;
 use once_cell::sync::Lazy;
 use petgraph::graph::IndexType;

@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
-use crate::graph::{cargo_version_matches, kind_str, DependencyDirection, PackageIx};
+use crate::graph::{cargo_version_matches, kind_str, Cycles, DependencyDirection, PackageIx};
+use crate::petgraph_support::scc::Sccs;
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
-use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
+use petgraph::algo::{has_path_connecting, DfsSpace};
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -26,6 +27,8 @@ use std::path::{Path, PathBuf};
 pub struct PackageGraph {
     // Source of truth data.
     pub(super) dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
+    // The strongly connected components of the graph, computed on demand.
+    pub(super) sccs: OnceCell<Sccs<PackageIx>>,
     // Feature graph, computed on demand.
     pub(super) feature_graph: OnceCell<FeatureGraphImpl>,
     // XXX Should this be in an Arc for quick cloning? Not clear how this would work with node
@@ -69,15 +72,9 @@ impl PackageGraph {
                 node_count, package_count,
             )));
         }
-        // petgraph has both is_cyclic_directed and toposort to detect cycles. is_cyclic_directed
-        // is recursive and toposort is iterative. Package graphs have unbounded depth so use the
-        // iterative implementation.
-        if let Err(cycle) = toposort(&self.dep_graph, None) {
-            return Err(Error::PackageGraphInternalError(format!(
-                "unexpected cycle in dep graph: {:?}",
-                cycle
-            )));
-        }
+
+        // TODO: The dependency graph can have cyclic dev-dependencies. Add a check to ensure that
+        // the graph without any dev-only dependencies is acyclic.
 
         let workspace = self.workspace();
         let workspace_ids: HashSet<_> = workspace.member_ids().collect();
@@ -239,6 +236,13 @@ impl PackageGraph {
         depends_cache.depends_on(package_a, package_b)
     }
 
+    /// Returns information about dependency cycles in this graph.
+    ///
+    /// For more information, see the documentation for `Cycles`.
+    pub fn cycles(&self) -> Cycles {
+        Cycles::new(self)
+    }
+
     // ---
     // Dependency traversals
     // ---
@@ -293,8 +297,14 @@ impl PackageGraph {
     // Helper methods
     // ---
 
+    /// Constructs a map of strongly connected components for this graph.
+    pub(super) fn sccs(&self) -> &Sccs<PackageIx> {
+        self.sccs.get_or_init(|| Sccs::new(&self.dep_graph))
+    }
+
     /// Invalidates internal caches. Meant to be called whenever the graph is mutated.
     pub(super) fn invalidate_caches(&mut self) {
+        mem::replace(&mut self.sccs, OnceCell::new());
         mem::replace(&mut self.feature_graph, OnceCell::new());
     }
 
