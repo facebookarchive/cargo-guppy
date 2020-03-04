@@ -5,14 +5,14 @@ use crate::graph::{
     DependencyDirection, DependencyEdge, DependencyLink, GraphSpec, PackageGraph, PackageIx,
     PackageMetadata,
 };
-use crate::petgraph_support::externals;
+use crate::petgraph_support::scc::{NodeIter, Sccs};
 use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
 use derivative::Derivative;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighbors, NodeFiltered, Reversed, Topo, VisitMap, Visitable};
+use petgraph::visit::{IntoNeighbors, NodeFiltered, Reversed, VisitMap, Visitable};
 
 /// A selector over a package graph.
 ///
@@ -137,12 +137,19 @@ impl<'g> PackageSelect<'g> {
     ///   within the selected graph.
     /// * If direction is Reverse, return the set of packages that do not have any dependents within
     ///   the selected graph.
+    ///
+    /// ## Cycles
+    ///
+    /// If a root consists of a dependency cycle, all the packages in it will be returned in
+    /// arbitrary order.
     pub fn into_root_ids(
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
         let dep_graph = self.package_graph.dep_graph();
-        compute_roots(dep_graph, self.params, direction)
+        let prefilter = SelectPrefilter::new(dep_graph, self.params);
+        prefilter
+            .roots(self.package_graph.sccs(), direction)
             .into_iter()
             .map(move |package_ix| &dep_graph[package_ix])
     }
@@ -152,26 +159,47 @@ impl<'g> PackageSelect<'g> {
     /// The default order of iteration is determined by the type of query:
     /// * for `all` and `forward` queries, package IDs are returned in forward order.
     /// * for `reverse` queries, package IDs are returned in reverse order.
+    ///
+    /// ## Cycles
+    ///
+    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
+    /// topological order will be maintained.
     pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> IntoIterIds<'g> {
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
         let dep_graph = self.package_graph.dep_graph();
+        let sccs = self.package_graph.sccs();
 
         // If the topo order guarantee weren't present, this could potentially be done in a lazier
         // fashion, where reachable nodes are discovered dynamically. However, there's value in
         // topological ordering so pay the cost of computing the reachable map upfront. As a bonus,
         // this approach also allows the iterator to implement ExactSizeIterator.
-        let (reachable, count) = select_prefilter(dep_graph, self.params);
-        let filtered_graph = NodeFiltered(dep_graph, reachable);
+        let prefilter = SelectPrefilter::new(dep_graph, self.params);
 
-        let topo = match direction {
-            DependencyDirection::Forward => Topo::new(&filtered_graph),
-            DependencyDirection::Reverse => Topo::new(Reversed(&filtered_graph)),
-        };
+        // ---
+        // IMPORTANT
+        // ---
+        //
+        // This uses the same list of sccs that's computed for the entire graph. This is *currently*
+        // fine because with our current filters, if one element of an SCC is present all others
+        // will be present as well.
+        //
+        // However:
+        // * If we allow for custom visitors that can control the reachable map, it is possible that
+        //   SCCs in the main graph aren't in the subgraph. That might make the returned order
+        //   incorrect.
+        // * This requires iterating over every node in the graph even if the set of returned nodes
+        //   is very small. There's a tradeoff here between allocating memory to store a custom list
+        //   of SCCs and just using the one available. More benchmarking is required to figure out
+        //   the best approach.
+        //
+        // Note that the SCCs can be computed in reachable_map by adapting parts of kosaraju_scc.
+        let node_iter = sccs.node_iter(direction.into());
+
         IntoIterIds {
-            graph: filtered_graph,
-            topo,
-            direction,
-            remaining: count,
+            graph: dep_graph,
+            node_iter,
+            reachable: prefilter.reachable,
+            remaining: prefilter.count,
         }
     }
 
@@ -181,13 +209,20 @@ impl<'g> PackageSelect<'g> {
     ///   within the selected graph.
     /// * If direction is Reverse, return the set of metadatas that do not have any dependents within
     ///   the selected graph.
+    ///
+    /// ## Cycles
+    ///
+    /// If a root consists of a dependency cycle, all the packages in it will be returned in
+    /// arbitrary order.
     pub fn into_root_metadatas(
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
         let package_graph = self.package_graph;
         let dep_graph = package_graph.dep_graph();
-        compute_roots(dep_graph, self.params, direction)
+        let prefilter = SelectPrefilter::new(dep_graph, self.params);
+        prefilter
+            .roots(package_graph.sccs(), direction)
             .into_iter()
             .map(move |package_ix| {
                 package_graph
@@ -202,6 +237,11 @@ impl<'g> PackageSelect<'g> {
     /// The default order of iteration is determined by the type of query:
     /// * for `all` and `forward` queries, package IDs are returned in forward order.
     /// * for `reverse` queries, package IDs are returned in reverse order.
+    ///
+    /// ## Cycles
+    ///
+    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
+    /// topological order will be maintained.
     pub fn into_iter_metadatas(
         self,
         direction_opt: Option<DependencyDirection>,
@@ -233,7 +273,8 @@ impl<'g> PackageSelect<'g> {
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
         let dep_graph = self.package_graph.dep_graph();
 
-        let (reachable, initials) = select_postfilter(dep_graph, self.params, direction);
+        let (reachable, initials) =
+            select_postfilter(dep_graph, self.params, self.package_graph.sccs(), direction);
 
         let (reachable, edge_dfs) = match (reachable, direction) {
             (Some(reachable), Forward) => {
@@ -259,35 +300,60 @@ impl<'g> PackageSelect<'g> {
     }
 }
 
-/// Computes the roots for this graph and parameters.
-pub(super) fn compute_roots<G: GraphSpec>(
-    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
-    params: SelectParams<G>,
-    direction: DependencyDirection,
-) -> Vec<NodeIndex<G::Ix>> {
-    // XXX It would be nice if compute_roots returned an iterator, but there are some thorny
-    // ownership issues that need to be resolved for that to happen.
-    let (reachable_map, _) = select_prefilter(graph, params);
-    match direction {
-        DependencyDirection::Forward => externals(&NodeFiltered(graph, reachable_map)).collect(),
-        DependencyDirection::Reverse => {
-            externals(&NodeFiltered(Reversed(graph), reachable_map)).collect()
-        }
-    }
-}
-
 /// Computes intermediate state for operations where the graph must be pre-filtered before any
 /// traversals happen.
-pub(super) fn select_prefilter<G: GraphSpec>(
-    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
-    params: SelectParams<G>,
-) -> (FixedBitSet, usize) {
-    use SelectParams::*;
+#[derive(Debug)]
+pub(super) struct SelectPrefilter<'g, G: GraphSpec> {
+    graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
+    pub(super) reachable: FixedBitSet,
+    pub(super) count: usize,
+}
 
-    match params {
-        All => all_visit_map(graph),
-        SelectForward(initials) => reachable_map(graph, initials),
-        SelectReverse(initials) => reachable_map(Reversed(graph), initials),
+impl<'g, G: GraphSpec> SelectPrefilter<'g, G> {
+    pub(super) fn new(
+        graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
+        params: SelectParams<G>,
+    ) -> Self {
+        use SelectParams::*;
+
+        let (reachable, count) = match params {
+            All => all_visit_map(graph),
+            SelectForward(initials) => reachable_map(graph, initials),
+            SelectReverse(initials) => reachable_map(Reversed(graph), initials),
+        };
+        Self {
+            graph,
+            reachable,
+            count,
+        }
+    }
+
+    pub(super) fn roots(
+        &self,
+        sccs: &Sccs<G::Ix>,
+        direction: DependencyDirection,
+    ) -> Vec<NodeIndex<G::Ix>>
+    where
+        G::Node: ::std::fmt::Debug,
+    {
+        // If any element of an SCC is in the reachable map, so would every other element. This
+        // means that any SCC map computed on the full graph will work on a prefiltered graph. (This
+        // will change if we decide to implement edge visiting/filtering.)
+        //
+        // TODO: petgraph 0.5.1 will allow the closure to be replaced with &self.reachable. Switch
+        // to it when it's out.
+        match direction {
+            DependencyDirection::Forward => sccs
+                .externals(&NodeFiltered::from_fn(self.graph, |x| {
+                    self.reachable.is_visited(&x)
+                }))
+                .collect(),
+            DependencyDirection::Reverse => sccs
+                .externals(&NodeFiltered::from_fn(Reversed(self.graph), |x| {
+                    self.reachable.is_visited(&x)
+                }))
+                .collect(),
+        }
     }
 }
 
@@ -299,21 +365,25 @@ pub(super) fn select_prefilter<G: GraphSpec>(
 pub(super) fn select_postfilter<G: GraphSpec>(
     graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
     params: SelectParams<G>,
+    sccs: &Sccs<G::Ix>,
     direction: DependencyDirection,
 ) -> (Option<FixedBitSet>, Vec<NodeIndex<G::Ix>>) {
     use DependencyDirection::*;
     use SelectParams::*;
 
+    // If any element of an SCC is in the reachable map, so would every other element. This means
+    // that any SCC map computed on the full graph will work on a prefiltered graph. (This will
+    // change if we decide to implement edge visiting/filtering.)
     match (params, direction) {
         (All, Forward) => {
             // No need for a reachable map, and use all roots.
-            let roots: Vec<_> = externals(graph).collect();
+            let roots: Vec<_> = sccs.externals(graph).collect();
             (None, roots)
         }
         (All, Reverse) => {
             // No need for a reachable map, and use all roots.
             let reversed_graph = Reversed(graph);
-            let roots: Vec<_> = externals(reversed_graph).collect();
+            let roots: Vec<_> = sccs.externals(reversed_graph).collect();
             (None, roots)
         }
         (SelectForward(initials), Forward) => {
@@ -326,7 +396,7 @@ pub(super) fn select_postfilter<G: GraphSpec>(
             let filtered_reversed_graph = NodeFiltered(Reversed(graph), reachable);
             // The filtered + reversed graph will have its own roots since the iteration order
             // is reversed from the specified roots.
-            let roots: Vec<_> = externals(&filtered_reversed_graph).collect();
+            let roots: Vec<_> = sccs.externals(&filtered_reversed_graph).collect();
 
             (Some(filtered_reversed_graph.1), roots)
         }
@@ -337,7 +407,7 @@ pub(super) fn select_postfilter<G: GraphSpec>(
             let filtered_graph = NodeFiltered(graph, reachable);
             // The filtered graph will have its own roots since the iteration order is reversed
             // from the specified roots.
-            let roots: Vec<_> = externals(&filtered_graph).collect();
+            let roots: Vec<_> = sccs.externals(&filtered_graph).collect();
 
             (Some(filtered_graph.1), roots)
         }
@@ -355,18 +425,16 @@ pub(super) fn select_postfilter<G: GraphSpec>(
 #[derivative(Debug)]
 pub struct IntoIterIds<'g> {
     #[derivative(Debug = "ignore")]
-    graph: NodeFiltered<&'g Graph<PackageId, DependencyEdge, Directed, PackageIx>, FixedBitSet>,
-    // XXX Topo really should implement Debug in petgraph upstream.
-    #[derivative(Debug = "ignore")]
-    topo: Topo<NodeIndex<PackageIx>, FixedBitSet>,
-    direction: DependencyDirection,
+    graph: &'g Graph<PackageId, DependencyEdge, Directed, PackageIx>,
+    node_iter: NodeIter<'g, PackageIx>,
+    reachable: FixedBitSet,
     remaining: usize,
 }
 
 impl<'g> IntoIterIds<'g> {
     /// Returns the direction the iteration is happening in.
     pub fn direction(&self) -> DependencyDirection {
-        self.direction
+        self.node_iter.direction().into()
     }
 }
 
@@ -374,14 +442,14 @@ impl<'g> Iterator for IntoIterIds<'g> {
     type Item = &'g PackageId;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let next_idx = match self.direction {
-            DependencyDirection::Forward => self.topo.next(&self.graph),
-            DependencyDirection::Reverse => self.topo.next(Reversed(&self.graph)),
-        };
-        next_idx.map(|ix| {
+        while let Some(ix) = self.node_iter.next() {
+            if !self.reachable.is_visited(&ix) {
+                continue;
+            }
             self.remaining -= 1;
-            &self.graph.0[ix]
-        })
+            return Some(&self.graph[ix]);
+        }
+        None
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -407,7 +475,7 @@ pub struct IntoIterMetadatas<'g> {
 impl<'g> IntoIterMetadatas<'g> {
     /// Returns the direction the iteration is happening in.
     pub fn direction(&self) -> DependencyDirection {
-        self.inner.direction
+        self.inner.direction()
     }
 }
 
@@ -550,10 +618,16 @@ where
     Ix: IndexType,
 {
     // To figure out what nodes are reachable, run a DFS starting from the roots.
-    let mut dfs = Dfs::from_parts(roots, graph.visit_map());
+    // This is DfsPostOrder since that handles cycles while a regular DFS doesn't.
+    let mut dfs = DfsPostOrder::empty(graph);
+    dfs.stack = roots;
     while let Some(_) = dfs.next(graph) {}
 
-    // Once the DFS is done, the discovered map is what's reachable.
+    // Once the DFS is done, the discovered map (or the finished map) is what's reachable.
+    debug_assert_eq!(
+        dfs.discovered, dfs.finished,
+        "discovered and finished maps match at the end"
+    );
     let reachable = dfs.discovered;
     let count = reachable.count_ones(..);
     (reachable, count)

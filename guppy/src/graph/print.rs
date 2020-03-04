@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::select::select_prefilter;
+use crate::graph::select::SelectPrefilter;
 use crate::graph::{
     DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata, PackageSelect,
 };
@@ -32,8 +32,8 @@ impl<'g> PackageSelect<'g> {
         // dot graphs are always forward iterated, and prefiltering is necessary in order to
         // figure out which nodes should be included.
         let dep_graph = self.package_graph.dep_graph();
-        let (reachable, _) = select_prefilter(dep_graph, self.params);
-        let node_filtered = NodeFiltered(dep_graph, reachable);
+        let prefilter = SelectPrefilter::new(dep_graph, self.params);
+        let node_filtered = NodeFiltered(dep_graph, prefilter.reachable);
         DotFmt::new(node_filtered, VisitorWrap::new(self.package_graph, visitor))
     }
 }

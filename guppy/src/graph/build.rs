@@ -43,6 +43,7 @@ impl PackageGraph {
 
         Ok(Self {
             dep_graph,
+            sccs: OnceCell::new(),
             feature_graph: OnceCell::new(),
             data: PackageGraphData {
                 packages,

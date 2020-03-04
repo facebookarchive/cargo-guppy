@@ -160,12 +160,6 @@ pub(crate) fn assert_transitive_deps_internal(
             )
         });
     let package_ids = select.clone().into_iter_ids(None);
-    assert_eq!(
-        package_ids.len(),
-        expected_dep_ids.len(),
-        "{}: transitive deps len",
-        msg
-    );
     let mut actual_dep_ids: Vec<_> = package_ids.collect();
     actual_dep_ids.sort();
 
@@ -331,6 +325,8 @@ pub(super) trait GraphAssert<'g> {
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
 
+    fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
+
     fn iter_ids(
         &self,
         initials: &[Self::Id],
@@ -439,6 +435,11 @@ pub(super) trait GraphAssert<'g> {
         direction: DependencyDirection,
         msg: &str,
     ) {
+        if self.is_cyclic(a_id, b_id).unwrap() {
+            // This is a dependency cycle -- ignore it in not-depends-on checks.
+            return;
+        }
+
         match direction {
             DependencyDirection::Forward => assert!(
                 !self.depends_on(a_id, b_id).unwrap(),
@@ -472,6 +473,11 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
         PackageGraph::depends_on(self, a_id, b_id)
+    }
+
+    fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
+        let cycles = self.cycles();
+        cycles.is_cyclic(a_id, b_id)
     }
 
     fn iter_ids(
@@ -533,6 +539,11 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
         FeatureGraph::depends_on(self, a_id, b_id)
+    }
+
+    fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
+        let cycles = self.cycles();
+        cycles.is_cyclic(a_id, b_id)
     }
 
     fn iter_ids(

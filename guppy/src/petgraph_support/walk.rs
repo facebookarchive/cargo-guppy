@@ -19,7 +19,7 @@ where
     N: Copy + PartialEq,
     VM: VisitMap<N>,
 {
-    /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `initials`
+    /// Creates a new EdgeDfs, using the graph's visitor map, and puts all edges out of `initials`
     /// in the queue of edges to visit.
     pub(crate) fn new<G>(graph: G, initials: impl IntoIterator<Item = N>) -> Self
     where
@@ -36,7 +36,7 @@ where
         Self { stack, discovered }
     }
 
-    /// Creates a new EdgeBfs, using the graph's visitor map, and puts all edges out of `start`
+    /// Creates a new EdgeDfs, using the graph's visitor map, and puts all edges out of `start`
     /// in the queue of edges to visit.
     #[allow(dead_code)]
     pub(crate) fn new_single<G>(graph: G, start: N) -> Self
@@ -46,7 +46,7 @@ where
         Self::new(graph, iter::once(start))
     }
 
-    /// Return the next edge in the bfs, or `None` if no more edges remain.
+    /// Returns the next edge in the dfs, or `None` if no more edges remain.
     pub fn next<G>(&mut self, graph: G) -> Option<(N, N, E)>
     where
         G: IntoEdges<NodeId = N, EdgeId = E>,

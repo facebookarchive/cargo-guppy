@@ -6,6 +6,7 @@ use crate::graph::feature::{
     FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{DependencyLink, FeatureIx, PackageGraph, PackageMetadata};
+use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use std::collections::{HashMap, HashSet};
 
@@ -349,6 +350,7 @@ impl<'g> FeatureGraphBuildState<'g> {
             graph: self.graph,
             map: self.map,
             warnings: self.warnings,
+            sccs: OnceCell::new(),
         }
     }
 }
