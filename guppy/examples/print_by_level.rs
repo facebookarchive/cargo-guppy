@@ -13,7 +13,7 @@ use std::io::{stdout, Write};
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-    let fixture = include_str!("../fixtures/metadata_libra.json");
+    let fixture = include_str!("../fixtures/large/metadata_libra.json");
     let package_graph = PackageGraph::from_json(fixture)?;
 
     // Pick an interesting package to compute dependencies of.

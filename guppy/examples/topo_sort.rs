@@ -11,7 +11,7 @@ use guppy::Error;
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-    let fixture = include_str!("../fixtures/metadata_libra.json");
+    let fixture = include_str!("../fixtures/large/metadata_libra.json");
     let package_graph = PackageGraph::from_json(fixture)?;
 
     // Non-workspace packages cannot depend on packages within the workspace, so the reverse
