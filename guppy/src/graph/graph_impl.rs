@@ -2,14 +2,20 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
-use crate::graph::{cargo_version_matches, kind_str, DependencyDirection, PackageIx};
+use crate::graph::{
+    cargo_version_matches, kind_str, DependencyDirection, ExpandedNode, IxPair, PackageIx,
+};
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
 use cargo_metadata::{DependencyKind, NodeDep};
+use either::Either;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
 use petgraph::algo::{has_path_connecting, toposort, DfsSpace};
+use petgraph::data::DataMap;
+use petgraph::graph::IndexType;
 use petgraph::prelude::*;
+use petgraph::visit::{VisitMap, Visitable};
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
@@ -25,7 +31,7 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
-    pub(super) dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
+    pub(super) dep_graph: Graph<ExpandedNode<PackageGraph>, PackageEdge, Directed, PackageIx>,
     // Feature graph, computed on demand.
     pub(super) feature_graph: OnceCell<FeatureGraphImpl>,
     // XXX Should this be in an Arc for quick cloning? Not clear how this would work with node
@@ -108,7 +114,7 @@ impl PackageGraph {
                 }
             }
 
-            for dep in self.dep_links_ixs_directed(metadata.package_ix, Outgoing) {
+            for dep in self.dep_links_ixs_directed(metadata.ix_pair, Outgoing) {
                 let to_id = dep.to.id();
                 let to_version = dep.to.version();
 
@@ -206,16 +212,40 @@ impl PackageGraph {
         F: Fn(&PackageGraphData, DependencyLink<'_>) -> bool,
     {
         let data = &self.data;
-        self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
+        let mut retain_dedup = EdgeDedup::new(&self.dep_graph);
+        let mut delete_dedup = EdgeDedup::new(&self.dep_graph);
+
+        self.dep_graph.retain_edges(|frozen_graph, edge_ix| {
             // This could use self.edge_to_dep for part of it but that that isn't compatible with
             // the borrow checker :(
-            let (source, target) = frozen_graph
-                .edge_endpoints(edge_idx)
-                .expect("edge_idx should be valid");
-            let from = &data.packages[&frozen_graph[source]];
-            let to = &data.packages[&frozen_graph[target]];
-            let edge = &frozen_graph[edge_idx];
-            visit(data, DependencyLink { from, to, edge })
+            if retain_dedup.is_visited(edge_ix) {
+                true
+            } else if delete_dedup.is_visited(edge_ix) {
+                false
+            } else {
+                let (source, target) = frozen_graph
+                    .edge_endpoints(edge_ix)
+                    .expect("edge_idx should be valid");
+                let from = &data.packages[frozen_graph[source].as_inner()];
+                let to = &data.packages[frozen_graph[target].as_inner()];
+                let edge = &frozen_graph[edge_ix];
+                match DependencyEdge::new(frozen_graph, edge) {
+                    Some(edge) => {
+                        let ret = visit(data, DependencyLink { from, to, edge });
+                        if ret {
+                            retain_dedup.visit(&frozen_graph, edge_ix);
+                        } else {
+                            delete_dedup.visit(&frozen_graph, edge_ix);
+                        }
+                        ret
+                    }
+                    None => {
+                        // This is a TestToCore edge -- always retain these.
+                        retain_dedup.visit(&frozen_graph, edge_ix);
+                        true
+                    }
+                }
+            }
         });
 
         self.invalidate_caches();
@@ -250,6 +280,7 @@ impl PackageGraph {
         dep_direction: DependencyDirection,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.dep_links_impl(package_id, dep_direction.to_direction())
+            .map(|links| links.into_iter())
     }
 
     /// Returns the direct dependencies for the given package ID.
@@ -258,6 +289,7 @@ impl PackageGraph {
         package_id: &PackageId,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.dep_links_impl(package_id, Outgoing)
+            .map(|links| links.into_iter())
     }
 
     /// Returns the direct reverse dependencies for the given package ID.
@@ -266,25 +298,50 @@ impl PackageGraph {
         package_id: &PackageId,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
         self.dep_links_impl(package_id, Incoming)
+            .map(|links| links.into_iter())
     }
 
-    fn dep_links_impl<'g>(
-        &'g self,
+    fn dep_links_impl(
+        &self,
         package_id: &PackageId,
         dir: Direction,
-    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
+    ) -> Option<Vec<DependencyLink>> {
         self.metadata(package_id)
-            .map(|metadata| self.dep_links_ixs_directed(metadata.package_ix, dir))
+            .map(|metadata| self.dep_links_ixs_directed(metadata.ix_pair, dir))
     }
 
-    fn dep_links_ixs_directed<'g>(
-        &'g self,
-        package_ix: NodeIndex<PackageIx>,
+    fn dep_links_ixs_directed(
+        &self,
+        ix_pair: IxPair<PackageIx>,
         dir: Direction,
-    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
-        self.dep_graph
-            .edges_directed(package_ix, dir)
-            .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
+    ) -> Vec<DependencyLink> {
+        let core_edges = self.dep_graph.edges_directed(ix_pair.core_ix, dir);
+        let dev_edges = self.dep_graph.edges_directed(ix_pair.test_ix, dir);
+
+        // Anything that's returned in core_edges should not be returned as a dev-only edge.
+        let mut seen = self.dep_graph.visit_map();
+
+        let mut core_links: Vec<_> = core_edges
+            .map(|edge| {
+                seen.visit(edge.target());
+                self.edge_to_link(edge.source(), edge.target(), edge.weight())
+                    .expect("core edges should not be TestToCore")
+            })
+            .collect();
+
+        let dev_links = dev_edges.filter_map(|edge| {
+            if !seen.is_visited(&edge.target()) {
+                // This can be None because of TestToCore edges, in which case it can be
+                // ignored.
+                self.edge_to_link(edge.source(), edge.target(), edge.weight())
+            } else {
+                // This was already included in core_links above.
+                None
+            }
+        });
+        core_links.extend(dev_links);
+
+        core_links
     }
 
     // For more traversals, see select.rs.
@@ -301,33 +358,38 @@ impl PackageGraph {
     /// Returns the inner dependency graph.
     ///
     /// Should this be exposed publicly? Not sure.
-    pub(super) fn dep_graph(&self) -> &Graph<PackageId, DependencyEdge, Directed, PackageIx> {
+    pub(super) fn dep_graph(
+        &self,
+    ) -> &Graph<ExpandedNode<PackageGraph>, PackageEdge, Directed, PackageIx> {
         &self.dep_graph
     }
 
     /// Maps an edge source, target and weight to a dependency link.
+    ///
+    /// Returns `None` if this is a TestToCore link.
     pub(super) fn edge_to_link<'g>(
         &'g self,
         source: NodeIndex<PackageIx>,
         target: NodeIndex<PackageIx>,
-        edge: &'g DependencyEdge,
-    ) -> DependencyLink<'g> {
+        edge: &'g PackageEdge,
+    ) -> Option<DependencyLink<'g>> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
         //
         // https://docs.rs/petgraph/0.4.13/petgraph/graph/struct.EdgeReference.html#method.weight
         // is defined separately for the same reason.
         let from = self
-            .metadata(&self.dep_graph[source])
+            .metadata(&self.dep_graph[source].as_inner())
             .expect("'from' should have associated metadata");
         let to = self
-            .metadata(&self.dep_graph[target])
+            .metadata(&self.dep_graph[target].as_inner())
             .expect("'to' should have associated metadata");
-        DependencyLink { from, to, edge }
+        let edge = DependencyEdge::new(&self.dep_graph, edge);
+        edge.map(|edge| DependencyLink { from, to, edge })
     }
 
-    /// Maps an iterator of package IDs to their internal graph node indexes.
-    pub(super) fn package_ixs<'g, 'a, B>(
+    /// Maps an iterator of package IDs to their internal core indexes.
+    pub(super) fn core_ixs<'g, 'a, B>(
         &'g self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<B, Error>
@@ -337,16 +399,34 @@ impl PackageGraph {
         package_ids
             .into_iter()
             .map(|package_id| {
-                self.package_ix(package_id)
+                self.ix_pair(package_id)
+                    .map(|ix_pair| ix_pair.core_ix)
+                    .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))
+            })
+            .collect()
+    }
+
+    /// Maps an iterator of package IDs to their internal test indexes.
+    pub(super) fn test_ixs<'g, 'a, B>(
+        &'g self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<B, Error>
+    where
+        B: iter::FromIterator<NodeIndex<PackageIx>>,
+    {
+        package_ids
+            .into_iter()
+            .map(|package_id| {
+                self.ix_pair(package_id)
+                    .map(|ix_pair| ix_pair.test_ix)
                     .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))
             })
             .collect()
     }
 
     /// Maps a package ID to its internal graph node index.
-    pub(super) fn package_ix(&self, package_id: &PackageId) -> Option<NodeIndex<PackageIx>> {
-        self.metadata(package_id)
-            .map(|metadata| metadata.package_ix)
+    pub(super) fn ix_pair(&self, package_id: &PackageId) -> Option<IxPair<PackageIx>> {
+        self.metadata(package_id).map(|metadata| metadata.ix_pair)
     }
 }
 
@@ -404,16 +484,22 @@ impl<'g> DependsCache<'g> {
     ) -> Result<bool, Error> {
         let a_ix = self
             .package_graph
-            .package_ix(package_a)
-            .ok_or_else(|| Error::UnknownPackageId(package_a.clone()))?;
-        let b_ix = self
+            .ix_pair(package_a)
+            .ok_or_else(|| Error::UnknownPackageId(package_a.clone()))?
+            .core_ix;
+        let b_ix_pair = self
             .package_graph
-            .package_ix(package_b)
+            .ix_pair(package_b)
             .ok_or_else(|| Error::UnknownPackageId(package_b.clone()))?;
         Ok(has_path_connecting(
             self.package_graph.dep_graph(),
             a_ix,
-            b_ix,
+            b_ix_pair.core_ix,
+            Some(&mut self.dfs_space),
+        ) || has_path_connecting(
+            self.package_graph.dep_graph(),
+            a_ix,
+            b_ix_pair.test_ix,
             Some(&mut self.dfs_space),
         ))
     }
@@ -464,7 +550,7 @@ pub struct DependencyLink<'g> {
     /// The package which is depended on by the `from` package.
     pub to: &'g PackageMetadata,
     /// Information about the specifics of this dependency.
-    pub edge: &'g DependencyEdge,
+    pub edge: DependencyEdge<'g>,
 }
 
 /// Information about a specific package in a `PackageGraph`.
@@ -498,7 +584,7 @@ pub struct PackageMetadata {
     pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
 
     // Other information.
-    pub(super) package_ix: NodeIndex<PackageIx>,
+    pub(super) ix_pair: IxPair<PackageIx>,
     pub(super) workspace_path: Option<Box<Path>>,
     pub(super) has_default_feature: bool,
     pub(super) resolved_deps: Vec<NodeDep>,
@@ -674,9 +760,9 @@ impl PackageMetadata {
     }
 
     pub(super) fn all_feature_nodes<'g>(&'g self) -> impl Iterator<Item = FeatureNode> + 'g {
-        iter::once(FeatureNode::base(self.package_ix)).chain(
+        iter::once(FeatureNode::base(self.ix_pair.core_ix)).chain(
             (0..self.features.len())
-                .map(move |feature_idx| FeatureNode::new(self.package_ix, feature_idx)),
+                .map(move |feature_idx| FeatureNode::new(self.ix_pair.core_ix, feature_idx)),
         )
     }
 
@@ -708,6 +794,43 @@ impl PackageMetadata {
     }
 }
 
+/// The underlying edges in the graph.
+#[derive(Clone, Debug)]
+pub(super) enum PackageEdge {
+    /// This edge is from the test index of a package to its core index.
+    TestToCore,
+    /// This edge is a non-dev dependency from a package to another package.
+    NormalBuild {
+        normal: Option<DependencyMetadata>,
+        build: Option<DependencyMetadata>,
+        dev_ix_or_name: Either<EdgeIndex<PackageIx>, DepName>,
+    },
+    /// This edge is a dev dependency from a package to another package.
+    Dev {
+        // If both a non-dev and a dev edge are present, store the names here to keep the overall
+        // size of the enum down.
+        name: DepName,
+        dev: DependencyMetadata,
+        normal_build_ix: Option<EdgeIndex<PackageIx>>,
+    },
+}
+
+/// The specified and resolved names of a dependency.
+#[derive(Clone, Debug)]
+pub(super) struct DepName {
+    pub(super) dep_name: String,
+    pub(super) resolved_name: String,
+}
+
+impl DepName {
+    pub(super) fn new(dep_name: impl Into<String>, resolved_name: impl Into<String>) -> Self {
+        Self {
+            dep_name: dep_name.into(),
+            resolved_name: resolved_name.into(),
+        }
+    }
+}
+
 /// Details about a specific dependency from a package to another package.
 ///
 /// Usually found within the context of a [`DependencyLink`](struct.DependencyLink.html).
@@ -715,46 +838,123 @@ impl PackageMetadata {
 /// This struct contains information about:
 /// * whether this dependency was renamed in the context of this crate.
 /// * if this is a normal, dev or build dependency.
-#[derive(Clone, Debug)]
-pub struct DependencyEdge {
-    pub(super) dep_name: String,
-    pub(super) resolved_name: String,
-    pub(super) normal: Option<DependencyMetadata>,
-    pub(super) build: Option<DependencyMetadata>,
-    pub(super) dev: Option<DependencyMetadata>,
+#[derive(Copy, Clone, Debug)]
+pub struct DependencyEdge<'g> {
+    pub(super) dep_name: &'g str,
+    pub(super) resolved_name: &'g str,
+    pub(super) normal: Option<&'g DependencyMetadata>,
+    pub(super) build: Option<&'g DependencyMetadata>,
+    pub(super) dev: Option<&'g DependencyMetadata>,
 }
 
-impl DependencyEdge {
+impl<'g> DependencyEdge<'g> {
+    /// Creates a new `DependencyEdge` from the provided `PackageEdge` instance.
+    pub(super) fn new<G>(graph: G, package_edge: &'g PackageEdge) -> Option<Self>
+    where
+        G: DataMap<EdgeId = EdgeIndex<PackageIx>, EdgeWeight = PackageEdge> + 'g,
+    {
+        match package_edge {
+            PackageEdge::TestToCore => None,
+            PackageEdge::NormalBuild {
+                normal,
+                build,
+                dev_ix_or_name,
+            } => {
+                let (dep_name, resolved_name, dev) = match dev_ix_or_name {
+                    Either::Left(dev_ix) => {
+                        let dev_edge = graph.edge_weight(*dev_ix).expect("valid dev_ix");
+                        match dev_edge {
+                            PackageEdge::Dev {
+                                name:
+                                    DepName {
+                                        dep_name,
+                                        resolved_name,
+                                    },
+                                dev,
+                                ..
+                            } => (dep_name.as_str(), resolved_name.as_str(), Some(dev)),
+                            PackageEdge::NormalBuild { .. } | PackageEdge::TestToCore => {
+                                panic!("edge {:?} is not a dev edge", dev_edge)
+                            }
+                        }
+                    }
+                    Either::Right(DepName {
+                        dep_name,
+                        resolved_name,
+                    }) => (dep_name.as_str(), resolved_name.as_str(), None),
+                };
+                Some(Self {
+                    dep_name,
+                    resolved_name,
+                    normal: normal.as_ref(),
+                    build: build.as_ref(),
+                    dev,
+                })
+            }
+            PackageEdge::Dev {
+                name:
+                    DepName {
+                        dep_name,
+                        resolved_name,
+                    },
+                dev,
+                normal_build_ix,
+            } => {
+                let (normal, build) = match normal_build_ix {
+                    Some(ix) => {
+                        let edge = graph.edge_weight(*ix).expect("valid normal_build_ix");
+                        match edge {
+                            PackageEdge::NormalBuild { normal, build, .. } => {
+                                (normal.as_ref(), build.as_ref())
+                            }
+                            PackageEdge::Dev { .. } | PackageEdge::TestToCore => {
+                                panic!("edge {:?} is not a normal/build edge", edge)
+                            }
+                        }
+                    }
+                    None => (None, None),
+                };
+                Some(Self {
+                    dep_name: dep_name.as_str(),
+                    resolved_name: resolved_name.as_str(),
+                    normal,
+                    build,
+                    dev: Some(dev),
+                })
+            }
+        }
+    }
+
     /// Returns the name for this dependency edge. This can be affected by a crate rename.
-    pub fn dep_name(&self) -> &str {
+    pub fn dep_name(&self) -> &'g str {
         &self.dep_name
     }
 
     /// Returns the resolved name for this dependency edge. This may involve renaming the crate and
     /// replacing - with _.
-    pub fn resolved_name(&self) -> &str {
+    pub fn resolved_name(&self) -> &'g str {
         &self.resolved_name
     }
 
     /// Returns details about this dependency from the `[dependencies]` section, if they exist.
-    pub fn normal(&self) -> Option<&DependencyMetadata> {
-        self.normal.as_ref()
+    pub fn normal(&self) -> Option<&'g DependencyMetadata> {
+        self.normal
     }
 
     /// Returns details about this dependency from the `[build-dependencies]` section, if they exist.
-    pub fn build(&self) -> Option<&DependencyMetadata> {
-        self.build.as_ref()
+    pub fn build(&self) -> Option<&'g DependencyMetadata> {
+        self.build
     }
 
     /// Returns details about this dependency from the `[dev-dependencies]` section, if they exist.
-    pub fn dev(&self) -> Option<&DependencyMetadata> {
+    pub fn dev(&self) -> Option<&'g DependencyMetadata> {
         // XXX should dev dependencies fall back to normal if no dev-specific data was found?
-        self.dev.as_ref()
+        self.dev
     }
 
     /// Returns details about this dependency from the section specified by the given dependency
     /// kind.
-    pub fn metadata_for_kind(&self, kind: DependencyKind) -> Option<&DependencyMetadata> {
+    pub fn metadata_for_kind(&self, kind: DependencyKind) -> Option<&'g DependencyMetadata> {
         match kind {
             DependencyKind::Normal => self.normal(),
             DependencyKind::Development => self.dev(),
@@ -821,5 +1021,96 @@ impl DependencyMetadata {
     /// in the Cargo reference for more details.
     pub fn target(&self) -> Option<&str> {
         self.target.as_ref().map(|x| x.as_str())
+    }
+}
+
+/// De-duplicator for iterating over packages.
+///
+/// guppy's internal graph model has two nodes per package (core and test), while the external
+/// API collapses it down to one. This struct ensures that we only return one node per package.
+pub(super) struct NodeDedup {
+    visited: FixedBitSet,
+}
+
+impl NodeDedup {
+    pub(super) fn new<G, N>(graph: G) -> Self
+    where
+        G: Visitable<Map = FixedBitSet, NodeId = NodeIndex<N>>,
+        N: IndexType,
+    {
+        Self {
+            visited: graph.visit_map(),
+        }
+    }
+
+    /// Marks this node as visited, as well as its counterpart node if available.
+    ///
+    /// Returns `true` if this is the first time this node has been visited.
+    pub(super) fn visit<G>(&mut self, graph: G, node_ix: NodeIndex<PackageIx>) -> bool
+    where
+        G: DataMap<NodeId = NodeIndex<PackageIx>, NodeWeight = ExpandedNode<PackageGraph>>,
+    {
+        self.visited.visit(
+            graph
+                .node_weight(node_ix)
+                .expect("valid node ix")
+                .counterpart_ix(),
+        );
+        self.visited.visit(node_ix)
+    }
+
+    /// Returns `true` if this node or its counterpart have been visited.
+    pub(super) fn is_visited(&self, node_ix: NodeIndex<PackageIx>) -> bool {
+        self.visited.is_visited(&node_ix)
+    }
+}
+
+/// De-duplicator for iterating over dependency links.
+///
+/// guppy's internal graph model has up to two edges per link (dev and non-dev), while the external
+/// API collapses it down to one. This struct ensures that we only return one link per edge.
+pub(super) struct EdgeDedup {
+    visited: FixedBitSet,
+}
+
+impl EdgeDedup {
+    pub(super) fn new(
+        dep_graph: &Graph<ExpandedNode<PackageGraph>, PackageEdge, Directed, PackageIx>,
+    ) -> Self {
+        Self {
+            visited: FixedBitSet::with_capacity(dep_graph.edge_count()),
+        }
+    }
+
+    /// Marks this edge as visited, as well as its counterpart edge if applicable.
+    ///
+    /// Returns `true` if this is the first time this edge has been visited.
+    pub(super) fn visit<G>(&mut self, graph: G, edge_ix: EdgeIndex<PackageIx>) -> bool
+    where
+        G: DataMap<EdgeId = EdgeIndex<PackageIx>, EdgeWeight = PackageEdge>,
+    {
+        let package_edge = graph.edge_weight(edge_ix).expect("valid edge ix");
+        match package_edge {
+            PackageEdge::TestToCore => self.visited.visit(edge_ix),
+            PackageEdge::NormalBuild { dev_ix_or_name, .. } => {
+                if let Either::Left(dev_ix) = dev_ix_or_name {
+                    self.visited.visit(*dev_ix);
+                }
+                self.visited.visit(edge_ix)
+            }
+            PackageEdge::Dev {
+                normal_build_ix, ..
+            } => {
+                if let Some(normal_build_ix) = normal_build_ix {
+                    self.visited.visit(*normal_build_ix);
+                }
+                self.visited.visit(edge_ix)
+            }
+        }
+    }
+
+    /// Returns `true` if this edge or its counterpart have been visited.
+    pub(super) fn is_visited(&self, edge_ix: EdgeIndex<PackageIx>) -> bool {
+        self.visited.is_visited(&edge_ix)
     }
 }

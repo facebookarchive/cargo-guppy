@@ -162,7 +162,7 @@ impl<'g> FeatureGraph<'g> {
             let package_id = &self.package_graph.dep_graph[package_ix];
             let metadata = self
                 .package_graph
-                .metadata(package_id)
+                .metadata(package_id.as_inner())
                 .expect("package ID should have valid metadata");
             metadata
                 .all_feature_nodes()
@@ -243,7 +243,7 @@ impl<'g> FeatureId<'g> {
     }
 
     pub(super) fn from_node(package_graph: &'g PackageGraph, node: &FeatureNode) -> Self {
-        let package_id = &package_graph.dep_graph[node.package_ix];
+        let package_id = &package_graph.dep_graph[node.package_ix].as_inner();
         let metadata = package_graph
             .metadata(package_id)
             .expect("package ID should have valid metadata");
@@ -385,10 +385,10 @@ impl FeatureNode {
         let metadata = feature_graph.package_graph.metadata(id.package_id())?;
         match id.feature() {
             Some(feature_name) => Some(FeatureNode::new(
-                metadata.package_ix,
+                metadata.ix_pair.core_ix,
                 metadata.get_feature_idx(feature_name)?,
             )),
-            None => Some(FeatureNode::base(metadata.package_ix)),
+            None => Some(FeatureNode::base(metadata.ix_pair.core_ix)),
         }
     }
 
@@ -406,7 +406,7 @@ impl FeatureNode {
     pub(super) fn named_features<'g>(
         package: &'g PackageMetadata,
     ) -> impl Iterator<Item = Self> + 'g {
-        let package_ix = package.package_ix;
+        let package_ix = package.ix_pair.core_ix;
         package.named_features_full().map(move |(n, _, _)| Self {
             package_ix,
             feature_idx: Some(n),

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    cargo_version_matches, kind_str, DependencyEdge, DependencyMetadata, PackageGraph,
-    PackageGraphData, PackageIx, PackageMetadata, Workspace,
+    cargo_version_matches, kind_str, DepName, DependencyEdge, DependencyMetadata, ExpandedNode,
+    IxPair, PackageEdge, PackageGraph, PackageGraphData, PackageIx, PackageMetadata, Workspace,
 };
 use crate::{Error, Metadata, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
+use either::Either;
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
@@ -91,32 +92,46 @@ impl Workspace {
 }
 
 /// Helper struct for building up dependency graph.
-struct GraphBuildState<'a> {
-    dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
-    // The values of package_data are (package_ix, name, version).
-    package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
+struct GraphBuildState<'g> {
+    dep_graph: Graph<ExpandedNode<PackageGraph>, PackageEdge, Directed, PackageIx>,
+    // The values of package_data are (ix pair, name, version).
+    package_data: HashMap<PackageId, (IxPair<PackageIx>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
-    workspace_root: &'a Path,
-    workspace_members: &'a HashSet<PackageId>,
+    workspace_root: &'g Path,
+    workspace_members: &'g HashSet<PackageId>,
 }
 
-impl<'a> GraphBuildState<'a> {
+impl<'g> GraphBuildState<'g> {
     fn new(
         packages: &[Package],
         resolve: Resolve,
-        workspace_root: &'a Path,
-        workspace_members: &'a HashSet<PackageId>,
+        workspace_root: &'g Path,
+        workspace_members: &'g HashSet<PackageId>,
     ) -> Self {
-        // No idea how many edges there are going to be, so use packages.len() as a reasonable lower
-        // bound.
-        let mut dep_graph = Graph::with_capacity(packages.len(), packages.len());
+        // No idea how many edges there are going to be, so use 2 * packages.len() as a reasonable
+        // lower bound.
+        let mut dep_graph = Graph::with_capacity(2 * packages.len(), 2 * packages.len());
         let package_data: HashMap<_, _> = packages
             .iter()
             .map(|package| {
-                let package_ix = dep_graph.add_node(package.id.clone());
+                // Graph allocates its nodes contiguously, so setting test_ix up like this is valid.
+                let next_test_ix = NodeIndex::new(dep_graph.node_count() + 1);
+                let core_ix = dep_graph.add_node(ExpandedNode::Core {
+                    node: package.id.clone(),
+                    test_ix: next_test_ix,
+                });
+                let test_ix = dep_graph.add_node(ExpandedNode::Test {
+                    node: package.id.clone(),
+                    core_ix,
+                });
+                debug_assert_eq!(next_test_ix, test_ix, "expected test ix should match");
+
+                dep_graph.update_edge(test_ix, core_ix, PackageEdge::TestToCore);
+
+                let ix_pair = IxPair { core_ix, test_ix };
                 (
                     package.id.clone(),
-                    (package_ix, package.name.clone(), package.version.clone()),
+                    (ix_pair, package.name.clone(), package.version.clone()),
                 )
             })
             .collect();
@@ -137,7 +152,7 @@ impl<'a> GraphBuildState<'a> {
     }
 
     fn process_package(&mut self, package: Package) -> Result<(PackageId, PackageMetadata), Error> {
-        let (package_ix, _, _) = self.package_data(&package.id)?;
+        let (ix_pair, _, _) = self.package_data(&package.id)?;
 
         let workspace_path = if self.workspace_members.contains(&package.id) {
             Some(self.workspace_path(&package.id, &package.manifest_path)?)
@@ -163,12 +178,8 @@ impl<'a> GraphBuildState<'a> {
         } in &resolved_deps
         {
             let (name, deps) = dep_resolver.resolve(resolved_name, pkg)?;
-            let (dep_idx, _, _) = self.package_data(pkg)?;
-            let edge = DependencyEdge::new(&package.id, name, resolved_name, deps)?;
-            // Use update_edge instead of add_edge to prevent multiple edges from being added
-            // between these two nodes.
-            // XXX maybe check for an existing edge?
-            self.dep_graph.update_edge(package_ix, dep_idx, edge);
+            let (to_ix, _, _) = self.package_data(pkg)?;
+            self.add_package_edges(&package.id, ix_pair, to_ix, name, resolved_name, deps)?;
         }
 
         let has_default_feature = package.features.contains_key("default");
@@ -228,7 +239,7 @@ impl<'a> GraphBuildState<'a> {
                 publish: package.publish,
                 features,
 
-                package_ix,
+                ix_pair,
                 workspace_path,
                 has_default_feature,
                 resolved_deps,
@@ -237,14 +248,142 @@ impl<'a> GraphBuildState<'a> {
         ))
     }
 
-    fn package_data(
-        &self,
-        id: &PackageId,
-    ) -> Result<(NodeIndex<PackageIx>, &str, &Version), Error> {
-        let (package_ix, name, version) = self.package_data.get(&id).ok_or_else(|| {
+    fn add_package_edges<'a>(
+        &mut self,
+        from_id: &PackageId,
+        from_ix: IxPair<PackageIx>,
+        to_ix: IxPair<PackageIx>,
+        name: &str,
+        resolved_name: &str,
+        deps: impl IntoIterator<Item = &'a Dependency>,
+    ) -> Result<(), Error> {
+        // deps should have at most 1 normal dependency, 1 build dep and 1 dev dep.
+        let mut normal: Option<DependencyMetadata> = None;
+        let mut build: Option<DependencyMetadata> = None;
+        let mut dev: Option<DependencyMetadata> = None;
+        for dep in deps {
+            // Dev dependencies cannot be optional.
+            if dep.kind == DependencyKind::Development && dep.optional {
+                return Err(Error::PackageGraphConstructError(format!(
+                    "for package '{}': dev-dependency '{}' marked optional",
+                    from_id, name,
+                )));
+            }
+
+            let to_set = match dep.kind {
+                DependencyKind::Normal => &mut normal,
+                DependencyKind::Build => &mut build,
+                DependencyKind::Development => &mut dev,
+                _ => {
+                    // unknown dependency kind -- can't do much with this!
+                    continue;
+                }
+            };
+            let metadata = DependencyMetadata {
+                version_req: dep.req.clone(),
+                optional: dep.optional,
+                uses_default_features: dep.uses_default_features,
+                features: dep.features.clone(),
+                target: dep.target.as_ref().map(|t| format!("{}", t)),
+            };
+
+            // It is typically an error for the same dependency to be listed multiple times for
+            // the same kind, but there are some situations in which it's possible. The main one
+            // is if there's a custom 'target' field -- one real world example is at
+            // https://github.com/alexcrichton/flate2-rs/blob/5751ad9/Cargo.toml#L29-L33:
+            //
+            // [dependencies]
+            // miniz_oxide = { version = "0.3.2", optional = true}
+            //
+            // [target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
+            // miniz_oxide = "0.3.2"
+            //
+            // For now, prefer target = null (the more general target) in such cases, and error out
+            // if both sides are null.
+            //
+            // TODO: Handle this better, probably through some sort of target resolution.
+            let write_to_set = match to_set {
+                Some(old) => match (old.target(), metadata.target()) {
+                    (Some(_), None) => true,
+                    (None, Some(_)) => false,
+                    (Some(_), Some(_)) => {
+                        // Both targets are set. We don't yet know if they are mutually exclusive,
+                        // so take the first one.
+                        // XXX This is wrong and needs to be fixed along with target resolution
+                        // in general.
+                        false
+                    }
+                    (None, None) => {
+                        return Err(Error::PackageGraphConstructError(format!(
+                            "{}: duplicate dependencies found for '{}' (kind: {})",
+                            from_id,
+                            name,
+                            kind_str(dep.kind)
+                        )))
+                    }
+                },
+                None => true,
+            };
+            if write_to_set {
+                to_set.replace(metadata);
+            }
+        }
+
+        let dev_ix = dev.map(|dev| {
+            let name = DepName::new(name, resolved_name);
+            let edge = PackageEdge::Dev {
+                name,
+                dev,
+                // This will be filled out below if necessary,
+                normal_build_ix: None,
+            };
+            // Use update_edge instead of add_edge to prevent multiple edges from being added
+            // between these two nodes.
+            // XXX maybe check for an existing edge?
+            self.dep_graph
+                .update_edge(from_ix.test_ix, to_ix.core_ix, edge)
+        });
+
+        if normal.is_some() || build.is_some() {
+            let dev_ix_or_name = match dev_ix {
+                Some(dev_ix) => Either::Left(dev_ix),
+                None => Either::Right(DepName::new(name, resolved_name)),
+            };
+            let edge = PackageEdge::NormalBuild {
+                normal,
+                build,
+                dev_ix_or_name,
+            };
+            // Use update_edge instead of add_edge to prevent multiple edges from being added
+            // between these two nodes.
+            // XXX maybe check for an existing edge?
+            let non_dev_ix = self
+                .dep_graph
+                .update_edge(from_ix.core_ix, to_ix.core_ix, edge);
+
+            // Add a reference to the non-dev ix in the dev edge for future convenience.
+            if let Some(dev_ix) = dev_ix {
+                match &mut self.dep_graph[dev_ix] {
+                    PackageEdge::Dev {
+                        normal_build_ix, ..
+                    } => {
+                        normal_build_ix.replace(non_dev_ix);
+                    }
+                    PackageEdge::NormalBuild { .. } | PackageEdge::TestToCore => {
+                        panic!("dev_ix should be for dev edges only")
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn package_data(&self, id: &PackageId) -> Result<(IxPair<PackageIx>, &str, &Version), Error> {
+        let (ix_pair, name, version) = self.package_data.get(&id).ok_or_else(|| {
             Error::PackageGraphConstructError(format!("no package data found for package '{}'", id))
         })?;
-        Ok((*package_ix, name, version))
+        Ok((*ix_pair, name, version))
     }
 
     /// Computes the workspace path for this package. Errors if this package is not in the
@@ -268,7 +407,7 @@ impl<'a> GraphBuildState<'a> {
         Ok(workspace_path.to_path_buf().into_boxed_path())
     }
 
-    fn finish(self) -> Graph<PackageId, DependencyEdge, Directed, PackageIx> {
+    fn finish(self) -> Graph<ExpandedNode<PackageGraph>, PackageEdge, Directed, PackageIx> {
         self.dep_graph
     }
 }
@@ -277,7 +416,7 @@ struct DependencyResolver<'g> {
     from_id: &'g PackageId,
 
     /// The package data, inherited from the graph build state.
-    package_data: &'g HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
+    package_data: &'g HashMap<PackageId, (IxPair<PackageIx>, String, Version)>,
 
     /// This is a mapping of renamed dependencies to their rename sources and dependency info --
     /// this always takes top priority.
@@ -295,7 +434,7 @@ impl<'g> DependencyResolver<'g> {
     /// Constructs a new resolver using the provided package data and dependencies.
     fn new(
         from_id: &'g PackageId,
-        package_data: &'g HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
+        package_data: &'g HashMap<PackageId, (IxPair<PackageIx>, String, Version)>,
         package_deps: impl IntoIterator<Item = &'g Dependency>,
     ) -> Self {
         let mut renamed_map = HashMap::new();
@@ -425,95 +564,6 @@ impl<'g> DependencyReqs<'g> {
             } else {
                 None
             }
-        })
-    }
-}
-
-impl DependencyEdge {
-    fn new<'a>(
-        from_id: &PackageId,
-        name: &str,
-        resolved_name: &str,
-        deps: impl IntoIterator<Item = &'a Dependency>,
-    ) -> Result<Self, Error> {
-        // deps should have at most 1 normal dependency, 1 build dep and 1 dev dep.
-        let mut normal: Option<DependencyMetadata> = None;
-        let mut build: Option<DependencyMetadata> = None;
-        let mut dev: Option<DependencyMetadata> = None;
-        for dep in deps {
-            // Dev dependencies cannot be optional.
-            if dep.kind == DependencyKind::Development && dep.optional {
-                return Err(Error::PackageGraphConstructError(format!(
-                    "for package '{}': dev-dependency '{}' marked optional",
-                    from_id, name,
-                )));
-            }
-
-            let to_set = match dep.kind {
-                DependencyKind::Normal => &mut normal,
-                DependencyKind::Build => &mut build,
-                DependencyKind::Development => &mut dev,
-                _ => {
-                    // unknown dependency kind -- can't do much with this!
-                    continue;
-                }
-            };
-            let metadata = DependencyMetadata {
-                version_req: dep.req.clone(),
-                optional: dep.optional,
-                uses_default_features: dep.uses_default_features,
-                features: dep.features.clone(),
-                target: dep.target.as_ref().map(|t| format!("{}", t)),
-            };
-
-            // It is typically an error for the same dependency to be listed multiple times for
-            // the same kind, but there are some situations in which it's possible. The main one
-            // is if there's a custom 'target' field -- one real world example is at
-            // https://github.com/alexcrichton/flate2-rs/blob/5751ad9/Cargo.toml#L29-L33:
-            //
-            // [dependencies]
-            // miniz_oxide = { version = "0.3.2", optional = true}
-            //
-            // [target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
-            // miniz_oxide = "0.3.2"
-            //
-            // For now, prefer target = null (the more general target) in such cases, and error out
-            // if both sides are null.
-            //
-            // TODO: Handle this better, probably through some sort of target resolution.
-            let write_to_set = match to_set {
-                Some(old) => match (old.target(), metadata.target()) {
-                    (Some(_), None) => true,
-                    (None, Some(_)) => false,
-                    (Some(_), Some(_)) => {
-                        // Both targets are set. We don't yet know if they are mutually exclusive,
-                        // so take the first one.
-                        // XXX This is wrong and needs to be fixed along with target resolution
-                        // in general.
-                        false
-                    }
-                    (None, None) => {
-                        return Err(Error::PackageGraphConstructError(format!(
-                            "{}: duplicate dependencies found for '{}' (kind: {})",
-                            from_id,
-                            name,
-                            kind_str(dep.kind)
-                        )))
-                    }
-                },
-                None => true,
-            };
-            if write_to_set {
-                to_set.replace(metadata);
-            }
-        }
-
-        Ok(DependencyEdge {
-            dep_name: name.into(),
-            resolved_name: resolved_name.into(),
-            normal,
-            build,
-            dev,
         })
     }
 }

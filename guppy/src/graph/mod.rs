@@ -25,6 +25,7 @@ use petgraph::graph::IndexType;
 pub use print::*;
 pub use select::*;
 use semver::{Version, VersionReq};
+use std::hash::Hash;
 
 /// The direction in which to follow dependencies.
 ///
@@ -96,14 +97,14 @@ graph_ix!(FeatureIx);
 
 /// Used to group together associated types with a particular graph.
 trait GraphSpec {
-    type Node;
-    type Edge;
-    type Ix: IndexType;
+    type Node: Clone + fmt::Debug;
+    type Edge: Clone + fmt::Debug;
+    type Ix: IndexType + Copy;
 }
 
 impl GraphSpec for PackageGraph {
     type Node = PackageId;
-    type Edge = DependencyEdge;
+    type Edge = PackageEdge;
     type Ix = PackageIx;
 }
 
@@ -111,6 +112,42 @@ impl<'g> GraphSpec for feature::FeatureGraph<'g> {
     type Node = feature::FeatureNode;
     type Edge = feature::FeatureEdge;
     type Ix = FeatureIx;
+}
+
+/// An enum representing either a core node or a test node. This is used to make the graph acyclic.
+#[derive(Clone, Debug)]
+enum ExpandedNode<G: GraphSpec> {
+    Core {
+        node: G::Node,
+        test_ix: NodeIndex<G::Ix>,
+    },
+    Test {
+        node: G::Node,
+        core_ix: NodeIndex<G::Ix>,
+    },
+}
+
+impl<G: GraphSpec> ExpandedNode<G> {
+    fn as_inner(&self) -> &G::Node {
+        match self {
+            ExpandedNode::Core { node, .. } => node,
+            ExpandedNode::Test { node, .. } => node,
+        }
+    }
+
+    fn counterpart_ix(&self) -> NodeIndex<G::Ix> {
+        match self {
+            ExpandedNode::Core { test_ix, .. } => *test_ix,
+            ExpandedNode::Test { core_ix, .. } => *core_ix,
+        }
+    }
+}
+
+/// A pair of core and test indexes.
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct IxPair<Ix> {
+    core_ix: NodeIndex<Ix>,
+    test_ix: NodeIndex<Ix>,
 }
 
 fn kind_str(kind: DependencyKind) -> &'static str {

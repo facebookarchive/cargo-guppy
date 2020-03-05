@@ -9,13 +9,17 @@ static INDENT: &str = "    ";
 
 /// A visitor interface for formatting graph labels.
 pub trait DotVisitor<NR, ER> {
+    // XXX This is so ugly. Clean this up later.
+    fn should_visit_node(&self, node: NR) -> bool;
+    fn should_visit_edge(&self, edge: ER) -> bool;
+
     /// Visits this node. The implementation may output a label for this node to the given
     /// `DotWrite`.
-    fn visit_node(&self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_node(&mut self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result;
 
     /// Visits this edge. The implementation may output a label for this edge to the given
     /// `DotWrite`.
-    fn visit_edge(&self, edge: ER, f: DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_edge(&mut self, edge: ER, f: DotWrite<'_, '_>) -> fmt::Result;
 
     // TODO: allow more customizations? more labels, colors etc to be set?
 }
@@ -34,11 +38,19 @@ where
     NR::Weight: fmt::Display,
     ER::Weight: fmt::Display,
 {
-    fn visit_node(&self, node: NR, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn should_visit_node(&self, _node: NR) -> bool {
+        true
+    }
+
+    fn should_visit_edge(&self, _edge: ER) -> bool {
+        true
+    }
+
+    fn visit_node(&mut self, node: NR, mut f: DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", node.weight())
     }
 
-    fn visit_edge(&self, edge: ER, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_edge(&mut self, edge: ER, mut f: DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", edge.weight())
     }
 }
@@ -47,60 +59,74 @@ impl<'a, NR, ER, T> DotVisitor<NR, ER> for &'a T
 where
     T: DotVisitor<NR, ER>,
 {
-    fn visit_node(&self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result {
+    fn should_visit_node(&self, _node: NR) -> bool {
+        true
+    }
+
+    fn should_visit_edge(&self, _edge: ER) -> bool {
+        true
+    }
+
+    fn visit_node(&mut self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result {
         (*self).visit_node(node, f)
     }
 
-    fn visit_edge(&self, edge: ER, f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_edge(&mut self, edge: ER, f: DotWrite<'_, '_>) -> fmt::Result {
         (*self).visit_edge(edge, f)
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct DotFmt<G, V> {
+pub struct DotFmt<G, F> {
     graph: G,
-    visitor: V,
+    visitor_fn: F,
 }
 
-impl<G, V> DotFmt<G, V>
+impl<G, F, V> DotFmt<G, F>
 where
     for<'a> &'a G: IntoEdgeReferences + IntoNodeReferences + GraphProp + NodeIndexable,
+    F: Fn() -> V,
     for<'a> V:
         DotVisitor<<&'a G as IntoNodeReferences>::NodeRef, <&'a G as IntoEdgeReferences>::EdgeRef>,
 {
     /// Creates a new formatter for this graph.
     #[allow(dead_code)]
-    pub fn new(graph: G, visitor: V) -> Self {
-        Self { graph, visitor }
+    pub fn new(graph: G, visitor_fn: F) -> Self {
+        Self { graph, visitor_fn }
     }
 
     /// Outputs a graphviz-compatible representation of this graph to the given formatter.
     pub fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut visitor = (self.visitor_fn)();
         writeln!(f, "{} {{", graph_type(&self.graph))?;
 
         for node in self.graph.node_references() {
-            write!(
-                f,
-                "{}{} [label=\"",
-                INDENT,
-                (&self.graph).to_index(node.id())
-            )?;
-            self.visitor.visit_node(node, DotWrite::new(f))?;
-            writeln!(f, "\"]")?;
+            if visitor.should_visit_node(node) {
+                write!(
+                    f,
+                    "{}{} [label=\"",
+                    INDENT,
+                    (&self.graph).to_index(node.id())
+                )?;
+                visitor.visit_node(node, DotWrite::new(f))?;
+                writeln!(f, "\"]")?;
+            }
         }
 
         let edge_str = edge_str(&self.graph);
         for edge in self.graph.edge_references() {
-            write!(
-                f,
-                "{}{} {} {} [label=\"",
-                INDENT,
-                (&self.graph).to_index(edge.source()),
-                edge_str,
-                (&self.graph).to_index(edge.target())
-            )?;
-            self.visitor.visit_edge(edge, DotWrite::new(f))?;
-            writeln!(f, "\"]")?;
+            if visitor.should_visit_edge(edge) {
+                write!(
+                    f,
+                    "{}{} {} {} [label=\"",
+                    INDENT,
+                    (&self.graph).to_index(edge.source()),
+                    edge_str,
+                    (&self.graph).to_index(edge.target())
+                )?;
+                visitor.visit_edge(edge, DotWrite::new(f))?;
+                writeln!(f, "\"]")?;
+            }
         }
 
         writeln!(f, "}}")

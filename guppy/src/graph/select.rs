@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    DependencyDirection, DependencyEdge, DependencyLink, GraphSpec, PackageGraph, PackageIx,
-    PackageMetadata,
+    DependencyDirection, DependencyEdge, DependencyLink, ExpandedNode, GraphSpec, PackageEdge,
+    PackageGraph, PackageIx, PackageMetadata,
 };
 use crate::petgraph_support::externals;
 use crate::petgraph_support::walk::EdgeDfs;
@@ -261,7 +261,7 @@ impl<'g> PackageSelect<'g> {
 
 /// Computes the roots for this graph and parameters.
 pub(super) fn compute_roots<G: GraphSpec>(
-    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
+    graph: &Graph<ExpandedNode<G>, G::Edge, Directed, G::Ix>,
     params: SelectParams<G>,
     direction: DependencyDirection,
 ) -> Vec<NodeIndex<G::Ix>> {
@@ -279,7 +279,7 @@ pub(super) fn compute_roots<G: GraphSpec>(
 /// Computes intermediate state for operations where the graph must be pre-filtered before any
 /// traversals happen.
 pub(super) fn select_prefilter<G: GraphSpec>(
-    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
+    graph: &Graph<ExpandedNode<G>, G::Edge, Directed, G::Ix>,
     params: SelectParams<G>,
 ) -> (FixedBitSet, usize) {
     use SelectParams::*;
@@ -297,7 +297,7 @@ pub(super) fn select_prefilter<G: GraphSpec>(
 /// Note that the second return value is the initial starting points of a graph traversal, which
 /// might be a superset of the actual roots.
 pub(super) fn select_postfilter<G: GraphSpec>(
-    graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
+    graph: &Graph<ExpandedNode<G>, G::Edge, Directed, G::Ix>,
     params: SelectParams<G>,
     direction: DependencyDirection,
 ) -> (Option<FixedBitSet>, Vec<NodeIndex<G::Ix>>) {
@@ -355,7 +355,7 @@ pub(super) fn select_postfilter<G: GraphSpec>(
 #[derivative(Debug)]
 pub struct IntoIterIds<'g> {
     #[derivative(Debug = "ignore")]
-    graph: NodeFiltered<&'g Graph<PackageId, DependencyEdge, Directed, PackageIx>, FixedBitSet>,
+    graph: NodeFiltered<&'g Graph<PackageId, PackageEdge, Directed, PackageIx>, FixedBitSet>,
     // XXX Topo really should implement Debug in petgraph upstream.
     #[derivative(Debug = "ignore")]
     topo: Topo<NodeIndex<PackageIx>, FixedBitSet>,
