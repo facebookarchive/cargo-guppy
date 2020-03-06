@@ -336,6 +336,33 @@
 <span id="336">336</span>
 <span id="337">337</span>
 <span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -343,10 +370,7 @@
 <span class="kw">use</span> <span class="ident">anyhow</span>;
 <span class="kw">use</span> <span class="ident">clap</span>::<span class="ident">arg_enum</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::{
-    <span class="ident">graph</span>::{
-        <span class="ident">DependencyDirection</span>, <span class="ident">DependencyLink</span>, <span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>,
-        <span class="ident">PackageMetadata</span>,
-    },
+    <span class="ident">graph</span>::{<span class="ident">DependencyLink</span>, <span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>},
     <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>,
 };
 <span class="kw">use</span> <span class="ident">itertools</span>;
@@ -360,6 +384,10 @@
 <span class="kw">use</span> <span class="ident">target_spec</span>;
 
 <span class="kw">mod</span> <span class="ident">diff</span>;
+
+<span class="comment">// NOTE: There is currently a bug in guppy where it doesn&#39;t handle cycles</span>
+<span class="comment">// well. We currently make use of into_iter_links() and stuffing the from/to</span>
+<span class="comment">// packages in a HashSet to work around this.</span>
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_diff</span>(<span class="ident">json</span>: <span class="ident">bool</span>, <span class="ident">old</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">new</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">old_json</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">read_to_string</span>(<span class="ident">old</span>)<span class="question-mark">?</span>;
@@ -382,22 +410,25 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_count</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_dups</span>(<span class="ident">filter_opts</span>: <span class="kw-2">&amp;</span><span class="ident">FilterOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">MetadataCommand</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
 
-    <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;Third-party Packages: {}&quot;</span>, <span class="ident">pkg_graph</span>.<span class="ident">package_count</span>());
+    <span class="comment">// narrow the graph</span>
+    <span class="ident">narrow_graph</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">pkg_graph</span>, <span class="kw-2">&amp;</span><span class="ident">filter_opts</span>);
 
-    <span class="prelude-val">Ok</span>(())
-}
+    <span class="kw">let</span> <span class="ident">selection</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">select_workspace</span>();
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_dups</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">MetadataCommand</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
-
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dupe_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
-    <span class="kw">for</span> <span class="ident">package</span> <span class="kw">in</span> <span class="ident">pkg_graph</span>.<span class="ident">packages</span>() {
-        <span class="ident">dupe_map</span>.<span class="ident">entry</span>(<span class="ident">package</span>.<span class="ident">name</span>()).<span class="ident">or_default</span>().<span class="ident">push</span>(<span class="ident">package</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dupe_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+    <span class="kw">for</span> <span class="ident">link</span> <span class="kw">in</span> <span class="ident">selection</span>.<span class="ident">into_iter_links</span>(<span class="prelude-val">None</span>) {
+        <span class="ident">dupe_map</span>
+            .<span class="ident">entry</span>(<span class="ident">link</span>.<span class="ident">from</span>.<span class="ident">name</span>())
+            .<span class="ident">or_default</span>()
+            .<span class="ident">insert</span>(<span class="ident">link</span>.<span class="ident">from</span>.<span class="ident">id</span>());
+        <span class="ident">dupe_map</span>
+            .<span class="ident">entry</span>(<span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">name</span>())
+            .<span class="ident">or_default</span>()
+            .<span class="ident">insert</span>(<span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">id</span>());
     }
 
     <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">dupes</span>) <span class="kw">in</span> <span class="ident">dupe_map</span> {
@@ -405,7 +436,12 @@
             <span class="kw">continue</span>;
         }
 
-        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">itertools</span>::<span class="ident">join</span>(<span class="ident">dupes</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">version</span>()), <span class="string">&quot;, &quot;</span>);
+        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">itertools</span>::<span class="ident">join</span>(
+            <span class="ident">dupes</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">p</span>).<span class="ident">unwrap</span>().<span class="ident">version</span>()),
+            <span class="string">&quot;, &quot;</span>,
+        );
 
         <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{} ({})&quot;</span>, <span class="ident">name</span>, <span class="ident">output</span>);
     }
@@ -418,6 +454,7 @@
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Kind</span> {
         <span class="ident">All</span>,
         <span class="ident">Workspace</span>,
+        <span class="ident">DirectThirdParty</span>,
         <span class="ident">ThirdParty</span>,
     }
 }
@@ -449,7 +486,7 @@
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>
-<span class="kw">struct</span> <span class="ident">FilterOptions</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FilterOptions</span> {
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span>, <span class="ident">possible_values</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">Kind</span>::<span class="ident">variants</span>(), <span class="ident">case_insensitive</span> <span class="op">=</span> <span class="bool-val">true</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;all&quot;</span>)]</span>
     <span class="doccomment">/// Kind of crates to select</span>
     <span class="ident">kind</span>: <span class="ident">Kind</span>,
@@ -487,13 +524,13 @@
     <span class="comment">// does not handle multiple version of the same package as the current use</span>
     <span class="comment">// cases are passing workspace members as the root set, which won&#39;t be</span>
     <span class="comment">// duplicated.</span>
-    <span class="kw">let</span> <span class="ident">root_set</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">roots</span>.<span class="ident">is_empty</span>() {
+    <span class="kw">let</span> <span class="ident">root_set</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">options</span>.<span class="ident">roots</span>.<span class="ident">is_empty</span>() {
         <span class="ident">options</span>.<span class="ident">roots</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>()
     } <span class="kw">else</span> {
         <span class="ident">pkg_graph</span>
-            .<span class="ident">select_reverse</span>(<span class="ident">pkg_graph</span>.<span class="ident">workspace</span>().<span class="ident">member_ids</span>())<span class="question-mark">?</span>
-            .<span class="ident">into_root_metadatas</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>)
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">meta</span><span class="op">|</span> <span class="ident">meta</span>.<span class="ident">name</span>().<span class="ident">to_string</span>())
+            .<span class="ident">workspace</span>()
+            .<span class="ident">member_ids</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">pkg_id</span><span class="op">|</span> <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">pkg_id</span>).<span class="ident">unwrap</span>().<span class="ident">name</span>().<span class="ident">to_string</span>())
             .<span class="ident">collect</span>()
     };
 
@@ -515,15 +552,29 @@
 
     <span class="ident">narrow_graph</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">pkg_graph</span>, <span class="kw-2">&amp;</span><span class="ident">options</span>.<span class="ident">filter_opts</span>);
 
-    <span class="kw">for</span> <span class="ident">package</span> <span class="kw">in</span> <span class="ident">pkg_graph</span>.<span class="ident">select_forward</span>(<span class="kw-2">&amp;</span><span class="ident">package_ids</span>)<span class="question-mark">?</span>.<span class="ident">into_iter_ids</span>(<span class="prelude-val">None</span>) {
-        <span class="kw">let</span> <span class="ident">in_workspace</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">package</span>).<span class="ident">unwrap</span>().<span class="ident">in_workspace</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">selected_packages</span> <span class="op">=</span> <span class="ident">HashSet</span>::<span class="ident">new</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">direct_dependencies</span> <span class="op">=</span> <span class="ident">HashSet</span>::<span class="ident">new</span>();
+    <span class="kw">for</span> <span class="ident">link</span> <span class="kw">in</span> <span class="ident">pkg_graph</span>
+        .<span class="ident">select_forward</span>(<span class="kw-2">&amp;</span><span class="ident">package_ids</span>)<span class="question-mark">?</span>
+        .<span class="ident">into_iter_links</span>(<span class="prelude-val">None</span>)
+    {
+        <span class="ident">selected_packages</span>.<span class="ident">insert</span>(<span class="ident">link</span>.<span class="ident">from</span>.<span class="ident">id</span>());
+        <span class="ident">selected_packages</span>.<span class="ident">insert</span>(<span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">id</span>());
+        <span class="kw">if</span> <span class="ident">link</span>.<span class="ident">from</span>.<span class="ident">in_workspace</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">in_workspace</span>() {
+            <span class="ident">direct_dependencies</span>.<span class="ident">insert</span>(<span class="ident">link</span>.<span class="ident">to</span>.<span class="ident">id</span>());
+        }
+    }
+
+    <span class="kw">for</span> <span class="ident">package_id</span> <span class="kw">in</span> <span class="ident">selected_packages</span> {
+        <span class="kw">let</span> <span class="ident">in_workspace</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>).<span class="ident">unwrap</span>().<span class="ident">in_workspace</span>();
         <span class="kw">let</span> <span class="ident">show_package</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">options</span>.<span class="ident">filter_opts</span>.<span class="ident">kind</span> {
             <span class="ident">Kind</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
             <span class="ident">Kind</span>::<span class="ident">Workspace</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">in_workspace</span>,
+            <span class="ident">Kind</span>::<span class="ident">DirectThirdParty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">direct_dependencies</span>.<span class="ident">contains</span>(<span class="ident">package_id</span>),
             <span class="ident">Kind</span>::<span class="ident">ThirdParty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="op">!</span><span class="ident">in_workspace</span>,
         };
         <span class="kw">if</span> <span class="ident">show_package</span> {
-            <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">package</span>).<span class="ident">unwrap</span>().<span class="ident">id</span>());
+            <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>).<span class="ident">unwrap</span>().<span class="ident">id</span>());
         }
     }
 
@@ -646,8 +697,11 @@
 
     <span class="ident">pkg_graph</span>.<span class="ident">retain_edges</span>(<span class="op">|</span><span class="kw">_</span>, <span class="ident">DependencyLink</span> { <span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">edge</span> }<span class="op">|</span> {
         <span class="comment">// filter by the kind of dependency (--kind)</span>
+        <span class="comment">// NOTE: We always retain all workspace deps in the graph, otherwise</span>
+        <span class="comment">// we&#39;ll get a disconnected graph.</span>
         <span class="kw">let</span> <span class="ident">include_kind</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">options</span>.<span class="ident">kind</span> {
             <span class="ident">Kind</span>::<span class="ident">All</span> <span class="op">|</span> <span class="ident">Kind</span>::<span class="ident">ThirdParty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="ident">Kind</span>::<span class="ident">DirectThirdParty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">from</span>.<span class="ident">in_workspace</span>(),
             <span class="ident">Kind</span>::<span class="ident">Workspace</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">from</span>.<span class="ident">in_workspace</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">to</span>.<span class="ident">in_workspace</span>(),
         };
 

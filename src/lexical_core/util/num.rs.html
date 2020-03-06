@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/lexical-core-0.6.2/src/util/num.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>num.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../lexical_core/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/lexical-core-0.6.7/src/util/num.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>num.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../lexical_core/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1345,6 +1345,9 @@
 <span id="1345">1345</span>
 <span id="1346">1346</span>
 <span id="1347">1347</span>
+<span id="1348">1348</span>
+<span id="1349">1349</span>
+<span id="1350">1350</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Utilities for Rust numbers.</span>
 
@@ -1382,35 +1385,38 @@
     <span class="kw">const</span> <span class="ident">FORMATTED_SIZE</span>: <span class="ident">usize</span>;
     <span class="doccomment">/// Maximum number of bytes required to serialize a number to a decimal string.</span>
     <span class="kw">const</span> <span class="ident">FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span>;
+    <span class="doccomment">/// If the type can hold a signed (negative) value.</span>
+    <span class="kw">const</span> <span class="ident">IS_SIGNED</span>: <span class="ident">bool</span>;
 }
 
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">number_impl</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">tt</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">radix_size</span>:<span class="ident">ident</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">decimal_size</span>:<span class="ident">ident</span> ; )<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> ($(
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">tt</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">radix_size</span>:<span class="ident">ident</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">decimal_size</span>:<span class="ident">ident</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">is_signed</span>:<span class="ident">expr</span> ; )<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> ($(
         <span class="kw">impl</span> <span class="ident">Number</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
             <span class="kw">const</span> <span class="ident">FORMATTED_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">radix_size</span>;
             <span class="kw">const</span> <span class="ident">FORMATTED_SIZE_DECIMAL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">decimal_size</span>;
+            <span class="kw">const</span> <span class="ident">IS_SIGNED</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">is_signed</span>;
         }
     )<span class="kw-2">*</span>)
 }
 
 <span class="macro">number_impl</span><span class="macro">!</span> {
-    <span class="ident">u8</span> <span class="ident">U8_FORMATTED_SIZE</span> <span class="ident">U8_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">u16</span> <span class="ident">U16_FORMATTED_SIZE</span> <span class="ident">U16_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">u32</span> <span class="ident">U32_FORMATTED_SIZE</span> <span class="ident">U32_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">u64</span> <span class="ident">U64_FORMATTED_SIZE</span> <span class="ident">U64_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">usize</span> <span class="ident">USIZE_FORMATTED_SIZE</span> <span class="ident">USIZE_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">i8</span> <span class="ident">I8_FORMATTED_SIZE</span> <span class="ident">I8_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">i16</span> <span class="ident">I16_FORMATTED_SIZE</span> <span class="ident">I16_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">i32</span> <span class="ident">I32_FORMATTED_SIZE</span> <span class="ident">I32_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">i64</span> <span class="ident">I64_FORMATTED_SIZE</span> <span class="ident">I64_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">isize</span> <span class="ident">ISIZE_FORMATTED_SIZE</span> <span class="ident">ISIZE_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">f32</span> <span class="ident">F32_FORMATTED_SIZE</span> <span class="ident">F32_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">f64</span> <span class="ident">F64_FORMATTED_SIZE</span> <span class="ident">F64_FORMATTED_SIZE_DECIMAL</span> ;
+    <span class="ident">u8</span> <span class="ident">U8_FORMATTED_SIZE</span> <span class="ident">U8_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">false</span> ;
+    <span class="ident">u16</span> <span class="ident">U16_FORMATTED_SIZE</span> <span class="ident">U16_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">false</span> ;
+    <span class="ident">u32</span> <span class="ident">U32_FORMATTED_SIZE</span> <span class="ident">U32_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">false</span> ;
+    <span class="ident">u64</span> <span class="ident">U64_FORMATTED_SIZE</span> <span class="ident">U64_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">false</span> ;
+    <span class="ident">usize</span> <span class="ident">USIZE_FORMATTED_SIZE</span> <span class="ident">USIZE_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">false</span> ;
+    <span class="ident">i8</span> <span class="ident">I8_FORMATTED_SIZE</span> <span class="ident">I8_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
+    <span class="ident">i16</span> <span class="ident">I16_FORMATTED_SIZE</span> <span class="ident">I16_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
+    <span class="ident">i32</span> <span class="ident">I32_FORMATTED_SIZE</span> <span class="ident">I32_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
+    <span class="ident">i64</span> <span class="ident">I64_FORMATTED_SIZE</span> <span class="ident">I64_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
+    <span class="ident">isize</span> <span class="ident">ISIZE_FORMATTED_SIZE</span> <span class="ident">ISIZE_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
+    <span class="ident">f32</span> <span class="ident">F32_FORMATTED_SIZE</span> <span class="ident">F32_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
+    <span class="ident">f64</span> <span class="ident">F64_FORMATTED_SIZE</span> <span class="ident">F64_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
 }
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_i128</span>)]</span>
 <span class="macro">number_impl</span><span class="macro">!</span> {
-    <span class="ident">u128</span> <span class="ident">U128_FORMATTED_SIZE</span> <span class="ident">U128_FORMATTED_SIZE_DECIMAL</span> ;
-    <span class="ident">i128</span> <span class="ident">I128_FORMATTED_SIZE</span> <span class="ident">I128_FORMATTED_SIZE_DECIMAL</span> ;
+    <span class="ident">u128</span> <span class="ident">U128_FORMATTED_SIZE</span> <span class="ident">U128_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">false</span> ;
+    <span class="ident">i128</span> <span class="ident">I128_FORMATTED_SIZE</span> <span class="ident">I128_FORMATTED_SIZE_DECIMAL</span> <span class="bool-val">true</span> ;
 }
 
 <span class="comment">// INTEGER</span>

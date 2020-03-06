@@ -52,7 +52,6 @@ ALIASES["rand_pcg"] = {};
 ALIASES["rand_xorshift"] = {};
 ALIASES["regex_syntax"] = {};
 ALIASES["remove_dir_all"] = {};
-ALIASES["rustversion"] = {};
 ALIASES["rusty_fork"] = {};
 ALIASES["ryu"] = {};
 ALIASES["semver"] = {};

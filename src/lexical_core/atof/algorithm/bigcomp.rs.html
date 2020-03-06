@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/lexical-core-0.6.2/src/atof/algorithm/bigcomp.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bigcomp.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../lexical_core/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/lexical-core-0.6.7/src/atof/algorithm/bigcomp.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bigcomp.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../lexical_core/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -368,6 +368,27 @@
 <span id="368">368</span>
 <span id="369">369</span>
 <span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! An implementation of bigcomp for Rust.</span>
 <span class="doccomment">//!</span>
@@ -383,8 +404,7 @@
 <span class="kw">use</span> <span class="ident">util</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">alias</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">bignum</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">state</span>::<span class="ident">FloatState</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">exponent</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">format</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">math</span>::<span class="kw-2">*</span>;
 
 <span class="comment">// ROUNDING</span>
@@ -559,36 +579,54 @@
     (<span class="ident">num</span>, <span class="ident">den</span>)
 }
 
+<span class="comment">// Compare digits in BigFloat with a given iterator.</span>
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">compare_digits</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">iter</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">radix</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">num</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">den</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">while</span> <span class="op">!</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">num</span>.<span class="ident">data</span>.<span class="ident">is_empty</span>() {
+            <span class="kw">let</span> <span class="ident">actual</span> <span class="op">=</span> <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">iter</span>.<span class="ident">next</span>() {
+                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">v</span>,
+                <span class="prelude-val">None</span>    <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>,
+            };
+            <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">digit_to_char</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">num</span>.<span class="ident">quorem</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">den</span>));
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">num</span>.<span class="ident">imul_small</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">radix</span>);
+            <span class="kw">if</span> <span class="ident">actual</span> <span class="op">&lt;</span> <span class="ident">expected</span> {
+                <span class="kw">return</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>;
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">actual</span> <span class="op">&gt;</span> <span class="ident">expected</span> {
+                <span class="kw">return</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>;
+            }
+        }
+    };
+}
+
 <span class="doccomment">/// Compare digits between the generated values the ratio and the actual view.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// * `digits`      - Actual digits from the mantissa.</span>
+<span class="doccomment">/// * `integer`     - Digits from the integer component of the mantissa.</span>
+<span class="doccomment">/// * `fraction`    - Digits from the fraction component of the mantissa.</span>
 <span class="doccomment">/// * `radix`       - Radix for the number parsing.</span>
 <span class="doccomment">/// * `num`         - Numerator for the fraction.</span>
 <span class="doccomment">/// * `denm`        - Denominator for the fraction.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">compare_digits</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Iter</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">digits</span>: <span class="ident">Iter</span>, <span class="ident">radix</span>: <span class="ident">u32</span>, <span class="kw-2">mut</span> <span class="ident">num</span>: <span class="ident">Bigfloat</span>, <span class="ident">den</span>: <span class="ident">Bigfloat</span>)
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">compare_digits</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Iter1</span>, <span class="ident">Iter2</span><span class="op">&gt;</span>(
+    <span class="ident">integer</span>: <span class="ident">Iter1</span>,
+    <span class="ident">fraction</span>: <span class="ident">Iter2</span>,
+    <span class="ident">radix</span>: <span class="ident">u32</span>,
+    <span class="kw-2">mut</span> <span class="ident">num</span>: <span class="ident">Bigfloat</span>,
+    <span class="ident">den</span>: <span class="ident">Bigfloat</span>
+)
     <span class="op">-</span><span class="op">&gt;</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>
-    <span class="kw">where</span> <span class="ident">Iter</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span><span class="op">=</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">u8</span><span class="op">&gt;</span>
+    <span class="kw">where</span> <span class="ident">Iter1</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span><span class="op">=</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">u8</span><span class="op">&gt;</span>,
+          <span class="ident">Iter2</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span><span class="op">=</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">u8</span><span class="op">&gt;</span>
 {
     <span class="comment">// Iterate until we get a difference in the generated digits.</span>
     <span class="comment">// If we run out,return Equal.</span>
     <span class="kw">let</span> <span class="ident">radix</span> <span class="op">=</span> <span class="ident">as_limb</span>(<span class="ident">radix</span>);
-    <span class="kw">while</span> <span class="op">!</span><span class="ident">num</span>.<span class="ident">data</span>.<span class="ident">is_empty</span>() {
-        <span class="kw">let</span> <span class="ident">actual</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">digits</span>.<span class="ident">next</span>() {
-            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">v</span>,
-            <span class="prelude-val">None</span>    <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>,
-        };
-        <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">digit_to_char</span>(<span class="ident">num</span>.<span class="ident">quorem</span>(<span class="kw-2">&amp;</span><span class="ident">den</span>));
-        <span class="ident">num</span>.<span class="ident">imul_small</span>(<span class="ident">radix</span>);
-        <span class="kw">if</span> <span class="ident">actual</span> <span class="op">&lt;</span> <span class="ident">expected</span> {
-            <span class="kw">return</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>;
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">actual</span> <span class="op">&gt;</span> <span class="ident">expected</span> {
-            <span class="kw">return</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>;
-        }
-    }
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">iter</span> <span class="op">=</span> <span class="ident">integer</span>.<span class="ident">chain</span>(<span class="ident">fraction</span>);
+    <span class="macro">compare_digits</span><span class="macro">!</span>(<span class="ident">iter</span>, <span class="ident">radix</span>, <span class="ident">num</span>, <span class="ident">den</span>);
 
     <span class="comment">// We cannot have any trailing zeros, so if there any remaining digits,</span>
-    <span class="comment">// we&#39;re &gt;= to the value.</span>
-    <span class="kw">match</span> <span class="ident">digits</span>.<span class="ident">next</span>().<span class="ident">is_none</span>() {
+    <span class="comment">// we&#39;re &gt;= to the value. We&#39;ve already exhausted num.data here,</span>
+    <span class="comment">// so need to check if integer and fraction don&#39;t have data.</span>
+    <span class="kw">let</span> <span class="ident">is_none</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">next</span>().<span class="ident">is_none</span>();
+    <span class="kw">match</span> <span class="ident">is_none</span> {
         <span class="bool-val">true</span>  <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Equal</span>,
         <span class="bool-val">false</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>,
     }
@@ -597,19 +635,22 @@
 <span class="doccomment">/// Generate the correct representation from a halfway representation.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The digits iterator must not have any trailing zeros (true for</span>
-<span class="doccomment">/// `FloatState`).</span>
+<span class="doccomment">/// `SlowDataInterface`).</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * `digits`          - Actual digits from the mantissa.</span>
 <span class="doccomment">/// * `radix`           - Radix for the number parsing.</span>
 <span class="doccomment">/// * `sci_exponent`    - Exponent of basen string in scientific notation.</span>
 <span class="doccomment">/// * `f`               - Sub-halfway (`b`) float.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">atof</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">state</span>: <span class="ident">FloatState</span>, <span class="ident">radix</span>: <span class="ident">u32</span>, <span class="ident">f</span>: <span class="ident">F</span>, <span class="ident">kind</span>: <span class="ident">RoundingKind</span>)
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">atof</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">F</span>, <span class="ident">Data</span><span class="op">&gt;</span>(<span class="ident">data</span>: <span class="ident">Data</span>, <span class="ident">radix</span>: <span class="ident">u32</span>, <span class="ident">f</span>: <span class="ident">F</span>, <span class="ident">kind</span>: <span class="ident">RoundingKind</span>)
     <span class="op">-</span><span class="op">&gt;</span> <span class="ident">F</span>
-    <span class="kw">where</span> <span class="ident">F</span>: <span class="ident">FloatType</span>
+    <span class="kw">where</span> <span class="ident">F</span>: <span class="ident">FloatType</span>,
+          <span class="ident">Data</span>: <span class="ident">SlowDataInterface</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>
 {
     <span class="comment">// This works when we&#39;re doing, like, round-even.</span>
-    <span class="kw">let</span> (<span class="ident">num</span>, <span class="ident">den</span>) <span class="op">=</span> <span class="ident">make_ratio</span>(<span class="ident">radix</span>, <span class="ident">state</span>.<span class="ident">scientific_exponent</span>(), <span class="ident">f</span>, <span class="ident">kind</span>);
-    <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">compare_digits</span>(<span class="ident">state</span>.<span class="ident">mantissa_iter</span>(), <span class="ident">radix</span>, <span class="ident">num</span>, <span class="ident">den</span>);
+    <span class="kw">let</span> (<span class="ident">num</span>, <span class="ident">den</span>) <span class="op">=</span> <span class="ident">make_ratio</span>(<span class="ident">radix</span>, <span class="ident">data</span>.<span class="ident">scientific_exponent</span>(), <span class="ident">f</span>, <span class="ident">kind</span>);
+    <span class="kw">let</span> <span class="ident">integer_iter</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">integer_iter</span>();
+    <span class="kw">let</span> <span class="ident">fraction_iter</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">significant_fraction_iter</span>();
+    <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">compare_digits</span>(<span class="ident">integer_iter</span>, <span class="ident">fraction_iter</span>, <span class="ident">radix</span>, <span class="ident">num</span>, <span class="ident">den</span>);
     <span class="ident">round_to_native</span>(<span class="ident">f</span>, <span class="ident">order</span>, <span class="ident">kind</span>)
 }
 
@@ -696,15 +737,16 @@
 
         <span class="comment">// Below halfway</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;24703282292062327208828439643411068618252990130716238221279284125033775363510437593264991818081799618989828234772285886546332835517796989819938739800539093906315035659515570226392290858392449105184435931802849936536152500319370457678249219365623669863658480757001585769269903706311928279558551332927834338409351978015531246597263579574622766465272827220056374006485499977096599470454020828166226237857393450736339007967761930577506740176324673600968951340535537458516661134223766678604162159680461914467291840300530057530849048765391711386591646239524912623653881879636239373280423891018672348497668235089863388587925628302755995657524455507255189313690836254779186948667994968324049705821028513185451396213837722826145437693412532098591327667236328124999&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>);
+        <span class="kw">let</span> <span class="ident">empty</span> <span class="op">=</span> <span class="string">b&quot;&quot;</span>;
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>);
 
         <span class="comment">// Exactly halfway.</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;24703282292062327208828439643411068618252990130716238221279284125033775363510437593264991818081799618989828234772285886546332835517796989819938739800539093906315035659515570226392290858392449105184435931802849936536152500319370457678249219365623669863658480757001585769269903706311928279558551332927834338409351978015531246597263579574622766465272827220056374006485499977096599470454020828166226237857393450736339007967761930577506740176324673600968951340535537458516661134223766678604162159680461914467291840300530057530849048765391711386591646239524912623653881879636239373280423891018672348497668235089863388587925628302755995657524455507255189313690836254779186948667994968324049705821028513185451396213837722826145437693412532098591327667236328125&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Equal</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Equal</span>);
 
         <span class="comment">// Above halfway.</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;24703282292062327208828439643411068618252990130716238221279284125033775363510437593264991818081799618989828234772285886546332835517796989819938739800539093906315035659515570226392290858392449105184435931802849936536152500319370457678249219365623669863658480757001585769269903706311928279558551332927834338409351978015531246597263579574622766465272827220056374006485499977096599470454020828166226237857393450736339007967761930577506740176324673600968951340535537458516661134223766678604162159680461914467291840300530057530849048765391711386591646239524912623653881879636239373280423891018672348497668235089863388587925628302755995657524455507255189313690836254779186948667994968324049705821028513185451396213837722826145437693412532098591327667236328125001&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>);
 
         <span class="comment">// 2*2^-1074</span>
         <span class="kw">let</span> <span class="ident">num</span> <span class="op">=</span> <span class="ident">Bigfloat</span> { <span class="ident">data</span>: <span class="ident">deduce_from_u32</span>(<span class="kw-2">&amp;</span>[<span class="number">881143808</span>, <span class="number">3756463792</span>, <span class="number">3052387668</span>, <span class="number">2025262779</span>, <span class="number">4122738518</span>, <span class="number">4205473780</span>, <span class="number">3372997488</span>, <span class="number">2847021710</span>, <span class="number">543572976</span>, <span class="number">3796837043</span>, <span class="number">183778774</span>, <span class="number">1312709233</span>, <span class="number">336040663</span>, <span class="number">1404661296</span>, <span class="number">1512949137</span>, <span class="number">2191986506</span>, <span class="number">3802549547</span>, <span class="number">27177609</span>, <span class="number">4040053641</span>, <span class="number">2071581115</span>, <span class="number">3891346062</span>, <span class="number">2290277640</span>, <span class="number">64301663</span>, <span class="number">994685527</span>]), <span class="ident">exp</span>: <span class="number">312</span> };
@@ -712,15 +754,15 @@
 
         <span class="comment">// Below halfway</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;74109846876186981626485318930233205854758970392148714663837852375101326090531312779794975454245398856969484704316857659638998506553390969459816219401617281718945106978546710679176872575177347315553307795408549809608457500958111373034747658096871009590975442271004757307809711118935784838675653998783503015228055934046593739791790738723868299395818481660169122019456499931289798411362062484498678713572180352209017023903285791732520220528974020802906854021606612375549983402671300035812486479041385743401875520901590172592547146296175134159774938718574737870961645638908718119841271673056017045493004705269590165763776884908267986972573366521765567941072508764337560846003984904972149117463085539556354188641513168478436313080237596295773983001708984374999&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>);
 
         <span class="comment">// Exactly halfway.</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;74109846876186981626485318930233205854758970392148714663837852375101326090531312779794975454245398856969484704316857659638998506553390969459816219401617281718945106978546710679176872575177347315553307795408549809608457500958111373034747658096871009590975442271004757307809711118935784838675653998783503015228055934046593739791790738723868299395818481660169122019456499931289798411362062484498678713572180352209017023903285791732520220528974020802906854021606612375549983402671300035812486479041385743401875520901590172592547146296175134159774938718574737870961645638908718119841271673056017045493004705269590165763776884908267986972573366521765567941072508764337560846003984904972149117463085539556354188641513168478436313080237596295773983001708984375&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Equal</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Equal</span>);
 
         <span class="comment">// Above halfway.</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;74109846876186981626485318930233205854758970392148714663837852375101326090531312779794975454245398856969484704316857659638998506553390969459816219401617281718945106978546710679176872575177347315553307795408549809608457500958111373034747658096871009590975442271004757307809711118935784838675653998783503015228055934046593739791790738723868299395818481660169122019456499931289798411362062484498678713572180352209017023903285791732520220528974020802906854021606612375549983402671300035812486479041385743401875520901590172592547146296175134159774938718574737870961645638908718119841271673056017045493004705269590165763776884908267986972573366521765567941072508764337560846003984904972149117463085539556354188641513168478436313080237596295773983001708984375001&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>);
 
         <span class="comment">// 4503599627370496*2^971</span>
         <span class="kw">let</span> <span class="ident">num</span> <span class="op">=</span> <span class="ident">Bigfloat</span> { <span class="ident">data</span>: <span class="ident">deduce_from_u32</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1024</span>, <span class="number">2147483648</span>]), <span class="ident">exp</span>: <span class="number">288</span> };
@@ -728,15 +770,15 @@
 
         <span class="comment">// Below halfway</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;89884656743115805365666807213050294962762414131308158973971342756154045415486693752413698006024096935349884403114202125541629105369684531108613657287705365884742938136589844238179474556051429647415148697857438797685859063890851407391008830874765563025951597582513936655578157348020066364210154316532161708031999&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Less</span>);
 
         <span class="comment">// Exactly halfway.</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;89884656743115805365666807213050294962762414131308158973971342756154045415486693752413698006024096935349884403114202125541629105369684531108613657287705365884742938136589844238179474556051429647415148697857438797685859063890851407391008830874765563025951597582513936655578157348020066364210154316532161708032&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Equal</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Equal</span>);
 
         <span class="comment">// Above halfway.</span>
         <span class="kw">let</span> <span class="ident">digits</span> <span class="op">=</span> <span class="string">b&quot;89884656743115805365666807213050294962762414131308158973971342756154045415486693752413698006024096935349884403114202125541629105369684531108613657287705365884742938136589844238179474556051429648741514697857438797685859063890851407391008830874765563025951597582513936655578157348020066364210154316532161708032001&quot;</span>;
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">compare_digits</span>(<span class="ident">digits</span>.<span class="ident">iter</span>(), <span class="ident">empty</span>.<span class="ident">iter</span>(), <span class="number">10</span>, <span class="ident">num</span>.<span class="ident">clone</span>(), <span class="ident">den</span>.<span class="ident">clone</span>()), <span class="ident">cmp</span>::<span class="ident">Ordering</span>::<span class="ident">Greater</span>);
     }
 }
 </pre></div>
