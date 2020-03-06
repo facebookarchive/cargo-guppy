@@ -11,6 +11,7 @@ use petgraph::prelude::*;
 use std::fmt;
 
 mod build;
+#[doc(hidden)]
 pub mod feature;
 mod graph_impl;
 mod print;
