@@ -4,6 +4,7 @@
 use crate::graph::{DependencyDirection, PackageGraph};
 use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata};
 use crate::PackageId;
+use pretty_assertions::assert_eq;
 use proptest::prelude::*;
 use proptest::sample::Index;
 use std::collections::HashSet;

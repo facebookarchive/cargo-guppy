@@ -8,6 +8,7 @@ use crate::unit_tests::dep_helpers::{
     assert_transitive_deps_internal,
 };
 use crate::{errors::FeatureGraphWarning, PackageId};
+use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;

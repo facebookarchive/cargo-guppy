@@ -12,6 +12,7 @@ use std::iter;
 
 mod small {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
     #[test]

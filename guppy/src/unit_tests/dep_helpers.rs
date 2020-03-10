@@ -7,6 +7,7 @@ use crate::graph::{
 };
 use crate::unit_tests::fixtures::PackageDetails;
 use crate::{Error, PackageId};
+use pretty_assertions::assert_eq;
 use std::collections::{BTreeSet, HashSet};
 use std::fmt;
 use std::hash::Hash;
