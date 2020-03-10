@@ -75,6 +75,18 @@ impl<'g> FeatureGraph<'g> {
         self.package_graph
     }
 
+    /// Returns the total number of (package ID, feature) combinations in this graph.
+    ///
+    /// Includes the "base" feature for each package.
+    pub fn feature_count(&self) -> usize {
+        self.dep_graph().node_count()
+    }
+
+    /// Returns the number of links in this graph.
+    pub fn link_count(&self) -> usize {
+        self.dep_graph().edge_count()
+    }
+
     /// Returns metadata for the given feature ID, or `None` if the feature wasn't found.
     pub fn metadata(&self, feature_id: impl Into<FeatureId<'g>>) -> Option<FeatureMetadata<'g>> {
         let feature_id = feature_id.into();

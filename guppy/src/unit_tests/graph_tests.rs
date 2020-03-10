@@ -87,6 +87,8 @@ mod small {
         );
 
         let feature_graph = graph.feature_graph();
+        assert_eq!(feature_graph.feature_count(), 492, "feature count");
+        assert_eq!(feature_graph.link_count(), 609, "link count");
         let root_ids: Vec<_> = feature_graph
             .select_workspace(all_filter())
             .into_root_ids(DependencyDirection::Forward)
@@ -104,6 +106,8 @@ mod small {
         metadata2.verify();
 
         let feature_graph = metadata2.graph().feature_graph();
+        assert_eq!(feature_graph.feature_count(), 472, "feature count");
+        assert_eq!(feature_graph.link_count(), 570, "link count");
         let root_ids: Vec<_> = feature_graph
             .select_workspace(none_filter())
             .into_root_ids(DependencyDirection::Forward)
