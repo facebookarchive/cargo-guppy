@@ -483,7 +483,15 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
         let select = self
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
-        select.into_iter_ids(Some(query_direction)).collect()
+        let into_iter_ids = select.into_iter_ids(Some(query_direction));
+        let expected_len = into_iter_ids.len();
+        let ids: Vec<_> = into_iter_ids.collect();
+        assert_eq!(
+            expected_len,
+            ids.len(),
+            "ExactSizeIterator for IntoIterIds: correct length"
+        );
+        ids
     }
 
     fn root_ids(
