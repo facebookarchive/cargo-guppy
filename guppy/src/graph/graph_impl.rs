@@ -249,7 +249,7 @@ impl PackageGraph {
         package_id: &PackageId,
         dep_direction: DependencyDirection,
     ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
-        self.dep_links_impl(package_id, dep_direction.to_direction())
+        self.dep_links_impl(package_id, dep_direction.into())
     }
 
     /// Returns the direct dependencies for the given package ID.
