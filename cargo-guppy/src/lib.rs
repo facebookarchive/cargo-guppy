@@ -19,10 +19,6 @@ use target_spec;
 
 mod diff;
 
-// NOTE: There is currently a bug in guppy where it doesn't handle cycles
-// well. We currently make use of into_iter_links() and stuffing the from/to
-// packages in a HashSet to work around this.
-
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
     let old_json = fs::read_to_string(old)?;
     let new_json = fs::read_to_string(new)?;
@@ -53,16 +49,9 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
 
     let selection = pkg_graph.select_workspace();
 
-    let mut dupe_map: HashMap<_, HashSet<_>> = HashMap::new();
-    for link in selection.into_iter_links(None) {
-        dupe_map
-            .entry(link.from.name())
-            .or_default()
-            .insert(link.from.id());
-        dupe_map
-            .entry(link.to.name())
-            .or_default()
-            .insert(link.to.id());
+    let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
+    for package in selection.into_iter_metadatas(None) {
+        dupe_map.entry(package.name()).or_default().push(package);
     }
 
     for (name, dupes) in dupe_map {
@@ -73,7 +62,7 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
         let output = itertools::join(
             dupes
                 .iter()
-                .map(|p| pkg_graph.metadata(p).unwrap().version()),
+                .map(|p| p.version()),
             ", ",
         );
 
@@ -186,25 +175,20 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
 
     narrow_graph(&mut pkg_graph, &options.filter_opts);
 
-    let mut selected_packages = HashSet::new();
-    let mut direct_dependencies = HashSet::new();
-    for link in pkg_graph
+    for package_id in pkg_graph
         .select_forward(&package_ids)?
-        .into_iter_links(None)
+        .into_iter_ids(None)
     {
-        selected_packages.insert(link.from.id());
-        selected_packages.insert(link.to.id());
-        if link.from.in_workspace() && !link.to.in_workspace() {
-            direct_dependencies.insert(link.to.id());
-        }
-    }
-
-    for package_id in selected_packages {
-        let in_workspace = pkg_graph.metadata(package_id).unwrap().in_workspace();
+        let package = pkg_graph.metadata(package_id).unwrap();
+        let in_workspace = package.in_workspace();
+        let direct_dep = pkg_graph
+            .reverse_dep_links(package_id)
+            .unwrap()
+            .any(|l| l.from.in_workspace());
         let show_package = match options.filter_opts.kind {
             Kind::All => true,
             Kind::Workspace => in_workspace,
-            Kind::DirectThirdParty => direct_dependencies.contains(package_id),
+            Kind::DirectThirdParty => direct_dep,
             Kind::ThirdParty => !in_workspace,
         };
         if show_package {
