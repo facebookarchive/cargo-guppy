@@ -47,9 +47,20 @@ impl DependencyDirection {
             DependencyDirection::Reverse => DependencyDirection::Forward,
         }
     }
+}
 
-    fn to_direction(self) -> Direction {
-        match self {
+impl From<Direction> for DependencyDirection {
+    fn from(direction: Direction) -> Self {
+        match direction {
+            Direction::Outgoing => DependencyDirection::Forward,
+            Direction::Incoming => DependencyDirection::Reverse,
+        }
+    }
+}
+
+impl From<DependencyDirection> for Direction {
+    fn from(direction: DependencyDirection) -> Self {
+        match direction {
             DependencyDirection::Forward => Direction::Outgoing,
             DependencyDirection::Reverse => Direction::Incoming,
         }
