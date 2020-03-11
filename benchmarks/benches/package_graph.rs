@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use guppy::graph::PackageGraph;
+use guppy::graph::{DependencyDirection, PackageGraph};
 use guppy::PackageId;
 use guppy_benchmarks::ValueGenerator;
 use proptest::collection::vec;
@@ -36,11 +36,31 @@ pub fn benchmarks(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+
+    c.bench_function("into_iter_ids", |b| {
+        b.iter_batched_ref(
+            || gen.generate(ids_directions_strategy(&package_graph)),
+            |ids_directions| {
+                ids_directions.iter().for_each(
+                    |(package_ids, select_direction, query_direction)| {
+                        let select = package_graph
+                            .select_directed(package_ids.iter().copied(), *select_direction)
+                            .unwrap();
+                        let _: Vec<_> = select.into_iter_ids(Some(*query_direction)).collect();
+                    },
+                )
+            },
+            BatchSize::SmallInput,
+        )
+    });
 }
 
 fn make_package_graph() -> PackageGraph {
     // Use this package graph as a large and representative one.
-    PackageGraph::from_json(include_str!("../../guppy/fixtures/large/metadata_libra.json")).unwrap()
+    PackageGraph::from_json(include_str!(
+        "../../guppy/fixtures/large/metadata_libra.json"
+    ))
+    .unwrap()
 }
 
 /// Generate pairs of IDs for benchmarks.
@@ -50,6 +70,21 @@ fn id_pairs_strategy<'g>(
     vec(
         (graph.prop09_id_strategy(), graph.prop09_id_strategy()),
         256,
+    )
+}
+
+/// Generate IDs and directions for benchmarks.
+fn ids_directions_strategy<'g>(
+    graph: &'g PackageGraph,
+) -> impl Strategy<Value = Vec<(Vec<&'g PackageId>, DependencyDirection, DependencyDirection)>> + 'g
+{
+    vec(
+        (
+            vec(graph.prop09_id_strategy(), 32),
+            any::<DependencyDirection>(),
+            any::<DependencyDirection>(),
+        ),
+        16,
     )
 }
 
