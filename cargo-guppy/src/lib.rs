@@ -59,12 +59,7 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
             continue;
         }
 
-        let output = itertools::join(
-            dupes
-                .iter()
-                .map(|p| p.version()),
-            ", ",
-        );
+        let output = itertools::join(dupes.iter().map(|p| p.version()), ", ");
 
         println!("{} ({})", name, output);
     }
@@ -175,10 +170,7 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
 
     narrow_graph(&mut pkg_graph, &options.filter_opts);
 
-    for package_id in pkg_graph
-        .select_forward(&package_ids)?
-        .into_iter_ids(None)
-    {
+    for package_id in pkg_graph.select_forward(&package_ids)?.into_iter_ids(None) {
         let package = pkg_graph.metadata(package_id).unwrap();
         let in_workspace = package.in_workspace();
         let direct_dep = pkg_graph
