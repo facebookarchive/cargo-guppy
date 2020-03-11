@@ -823,18 +823,29 @@
 <span id="823">823</span>
 <span id="824">824</span>
 <span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
+<span id="831">831</span>
+<span id="832">832</span>
+<span id="833">833</span>
+<span id="834">834</span>
+<span id="835">835</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureGraphImpl</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureNode</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">cargo_version_matches</span>, <span class="ident">kind_str</span>, <span class="ident">DependencyDirection</span>, <span class="ident">PackageIx</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">cargo_version_matches</span>, <span class="ident">kind_str</span>, <span class="ident">Cycles</span>, <span class="ident">DependencyDirection</span>, <span class="ident">PackageIx</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">scc</span>::<span class="ident">Sccs</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">JsonValue</span>, <span class="ident">Metadata</span>, <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">DependencyKind</span>, <span class="ident">NodeDep</span>};
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">indexmap</span>::<span class="ident">IndexMap</span>;
 <span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">algo</span>::{<span class="ident">has_path_connecting</span>, <span class="ident">toposort</span>, <span class="ident">DfsSpace</span>};
+<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">algo</span>::{<span class="ident">has_path_connecting</span>, <span class="ident">DfsSpace</span>};
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">semver</span>::{<span class="ident">Version</span>, <span class="ident">VersionReq</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
@@ -852,6 +863,8 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageGraph</span> {
     <span class="comment">// Source of truth data.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    <span class="comment">// The strongly connected components of the graph, computed on demand.</span>
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">sccs</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="comment">// Feature graph, computed on demand.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">feature_graph</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span><span class="ident">FeatureGraphImpl</span><span class="op">&gt;</span>,
     <span class="comment">// XXX Should this be in an Arc for quick cloning? Not clear how this would work with node</span>
@@ -895,15 +908,9 @@
                 <span class="ident">node_count</span>, <span class="ident">package_count</span>,
             )));
         }
-        <span class="comment">// petgraph has both is_cyclic_directed and toposort to detect cycles. is_cyclic_directed</span>
-        <span class="comment">// is recursive and toposort is iterative. Package graphs have unbounded depth so use the</span>
-        <span class="comment">// iterative implementation.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">cycle</span>) <span class="op">=</span> <span class="ident">toposort</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>, <span class="prelude-val">None</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphInternalError</span>(<span class="macro">format</span><span class="macro">!</span>(
-                <span class="string">&quot;unexpected cycle in dep graph: {:?}&quot;</span>,
-                <span class="ident">cycle</span>
-            )));
-        }
+
+        <span class="comment">// TODO: The dependency graph can have cyclic dev-dependencies. Add a check to ensure that</span>
+        <span class="comment">// the graph without any dev-only dependencies is acyclic.</span>
 
         <span class="kw">let</span> <span class="ident">workspace</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">workspace</span>();
         <span class="kw">let</span> <span class="ident">workspace_ids</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">workspace</span>.<span class="ident">member_ids</span>().<span class="ident">collect</span>();
@@ -1065,6 +1072,13 @@
         <span class="ident">depends_cache</span>.<span class="ident">depends_on</span>(<span class="ident">package_a</span>, <span class="ident">package_b</span>)
     }
 
+    <span class="doccomment">/// Returns information about dependency cycles in this graph.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// For more information, see the documentation for `Cycles`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cycles</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Cycles</span> {
+        <span class="ident">Cycles</span>::<span class="ident">new</span>(<span class="self">self</span>)
+    }
+
     <span class="comment">// ---</span>
     <span class="comment">// Dependency traversals</span>
     <span class="comment">// ---</span>
@@ -1075,7 +1089,7 @@
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">dep_direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">dep_links_impl</span>(<span class="ident">package_id</span>, <span class="ident">dep_direction</span>.<span class="ident">to_direction</span>())
+        <span class="self">self</span>.<span class="ident">dep_links_impl</span>(<span class="ident">package_id</span>, <span class="ident">dep_direction</span>.<span class="ident">into</span>())
     }
 
     <span class="doccomment">/// Returns the direct dependencies for the given package ID.</span>
@@ -1119,8 +1133,14 @@
     <span class="comment">// Helper methods</span>
     <span class="comment">// ---</span>
 
+    <span class="doccomment">/// Constructs a map of strongly connected components for this graph.</span>
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">sccs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">sccs</span>.<span class="ident">get_or_init</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Sccs</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>))
+    }
+
     <span class="doccomment">/// Invalidates internal caches. Meant to be called whenever the graph is mutated.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">invalidate_caches</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">sccs</span>, <span class="ident">OnceCell</span>::<span class="ident">new</span>());
         <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">feature_graph</span>, <span class="ident">OnceCell</span>::<span class="ident">new</span>());
     }
 

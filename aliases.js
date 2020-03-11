@@ -7,7 +7,6 @@ ALIASES["bit_set"] = {};
 ALIASES["bit_vec"] = {};
 ALIASES["bitflags"] = {};
 ALIASES["byteorder"] = {};
-ALIASES["c2_chacha"] = {};
 ALIASES["cargo_guppy"] = {};
 ALIASES["cargo_metadata"] = {};
 ALIASES["cfg_if"] = {};

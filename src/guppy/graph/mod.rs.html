@@ -131,6 +131,19 @@
 <span id="131">131</span>
 <span id="132">132</span>
 <span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -145,6 +158,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 
 <span class="kw">mod</span> <span class="ident">build</span>;
+<span class="kw">mod</span> <span class="ident">cycles</span>;
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">feature</span>;
 <span class="kw">mod</span> <span class="ident">graph_impl</span>;
@@ -154,6 +168,7 @@
 <span class="kw">mod</span> <span class="ident">select</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">dot</span>::<span class="ident">DotWrite</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">cycles</span>::<span class="kw-2">*</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">graph_impl</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">Lazy</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graph</span>::<span class="ident">IndexType</span>;
@@ -181,9 +196,20 @@
             <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>,
         }
     }
+}
 
-    <span class="kw">fn</span> <span class="ident">to_direction</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Direction</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Direction</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">DependencyDirection</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">direction</span>: <span class="ident">Direction</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">match</span> <span class="ident">direction</span> {
+            <span class="ident">Direction</span>::<span class="ident">Outgoing</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>,
+            <span class="ident">Direction</span>::<span class="ident">Incoming</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span>,
+        }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">DependencyDirection</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Direction</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">match</span> <span class="ident">direction</span> {
             <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Direction</span>::<span class="ident">Outgoing</span>,
             <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Direction</span>::<span class="ident">Incoming</span>,
         }

@@ -558,6 +558,80 @@
 <span id="558">558</span>
 <span id="559">559</span>
 <span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -566,14 +640,14 @@
     <span class="ident">DependencyDirection</span>, <span class="ident">DependencyEdge</span>, <span class="ident">DependencyLink</span>, <span class="ident">GraphSpec</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>,
     <span class="ident">PackageMetadata</span>,
 };
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">externals</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">scc</span>::{<span class="ident">NodeIter</span>, <span class="ident">Sccs</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">walk</span>::<span class="ident">EdgeDfs</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">derivative</span>::<span class="ident">Derivative</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graph</span>::<span class="ident">IndexType</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">IntoNeighbors</span>, <span class="ident">NodeFiltered</span>, <span class="ident">Reversed</span>, <span class="ident">Topo</span>, <span class="ident">VisitMap</span>, <span class="ident">Visitable</span>};
+<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">IntoNeighbors</span>, <span class="ident">NodeFiltered</span>, <span class="ident">Reversed</span>, <span class="ident">VisitMap</span>, <span class="ident">Visitable</span>};
 
 <span class="doccomment">/// A selector over a package graph.</span>
 <span class="doccomment">///</span>
@@ -698,12 +772,19 @@
     <span class="doccomment">///   within the selected graph.</span>
     <span class="doccomment">/// * If direction is Reverse, return the set of packages that do not have any dependents within</span>
     <span class="doccomment">///   the selected graph.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Cycles</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If a root consists of a dependency cycle, all the packages in it will be returned in</span>
+    <span class="doccomment">/// arbitrary order.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_root_ids</span>(
         <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>();
-        <span class="ident">compute_roots</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>, <span class="ident">direction</span>)
+        <span class="kw">let</span> <span class="ident">prefilter</span> <span class="op">=</span> <span class="ident">SelectPrefilter</span>::<span class="ident">new</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>);
+        <span class="ident">prefilter</span>
+            .<span class="ident">roots</span>(<span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">package_ix</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">dep_graph</span>[<span class="ident">package_ix</span>])
     }
@@ -713,26 +794,47 @@
     <span class="doccomment">/// The default order of iteration is determined by the type of query:</span>
     <span class="doccomment">/// * for `all` and `forward` queries, package IDs are returned in forward order.</span>
     <span class="doccomment">/// * for `reverse` queries, package IDs are returned in reverse order.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Cycles</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The packages within a dependency cycle will be returned in arbitrary order, but overall</span>
+    <span class="doccomment">/// topological order will be maintained.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_iter_ids</span>(<span class="self">self</span>, <span class="ident">direction_opt</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DependencyDirection</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IntoIterIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">direction</span> <span class="op">=</span> <span class="ident">direction_opt</span>.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">default_direction</span>());
         <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>();
+        <span class="kw">let</span> <span class="ident">sccs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>();
 
         <span class="comment">// If the topo order guarantee weren&#39;t present, this could potentially be done in a lazier</span>
         <span class="comment">// fashion, where reachable nodes are discovered dynamically. However, there&#39;s value in</span>
         <span class="comment">// topological ordering so pay the cost of computing the reachable map upfront. As a bonus,</span>
         <span class="comment">// this approach also allows the iterator to implement ExactSizeIterator.</span>
-        <span class="kw">let</span> (<span class="ident">reachable</span>, <span class="ident">count</span>) <span class="op">=</span> <span class="ident">select_prefilter</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>);
-        <span class="kw">let</span> <span class="ident">filtered_graph</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="ident">dep_graph</span>, <span class="ident">reachable</span>);
+        <span class="kw">let</span> <span class="ident">prefilter</span> <span class="op">=</span> <span class="ident">SelectPrefilter</span>::<span class="ident">new</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>);
 
-        <span class="kw">let</span> <span class="ident">topo</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">direction</span> {
-            <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Topo</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_graph</span>),
-            <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Topo</span>::<span class="ident">new</span>(<span class="ident">Reversed</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_graph</span>)),
-        };
+        <span class="comment">// ---</span>
+        <span class="comment">// IMPORTANT</span>
+        <span class="comment">// ---</span>
+        <span class="comment">//</span>
+        <span class="comment">// This uses the same list of sccs that&#39;s computed for the entire graph. This is *currently*</span>
+        <span class="comment">// fine because with our current filters, if one element of an SCC is present all others</span>
+        <span class="comment">// will be present as well.</span>
+        <span class="comment">//</span>
+        <span class="comment">// However:</span>
+        <span class="comment">// * If we allow for custom visitors that can control the reachable map, it is possible that</span>
+        <span class="comment">//   SCCs in the main graph aren&#39;t in the subgraph. That might make the returned order</span>
+        <span class="comment">//   incorrect.</span>
+        <span class="comment">// * This requires iterating over every node in the graph even if the set of returned nodes</span>
+        <span class="comment">//   is very small. There&#39;s a tradeoff here between allocating memory to store a custom list</span>
+        <span class="comment">//   of SCCs and just using the one available. More benchmarking is required to figure out</span>
+        <span class="comment">//   the best approach.</span>
+        <span class="comment">//</span>
+        <span class="comment">// Note that the SCCs can be computed in reachable_map by adapting parts of kosaraju_scc.</span>
+        <span class="kw">let</span> <span class="ident">node_iter</span> <span class="op">=</span> <span class="ident">sccs</span>.<span class="ident">node_iter</span>(<span class="ident">direction</span>.<span class="ident">into</span>());
+
         <span class="ident">IntoIterIds</span> {
-            <span class="ident">graph</span>: <span class="ident">filtered_graph</span>,
-            <span class="ident">topo</span>,
-            <span class="ident">direction</span>,
-            <span class="ident">remaining</span>: <span class="ident">count</span>,
+            <span class="ident">graph</span>: <span class="ident">dep_graph</span>,
+            <span class="ident">node_iter</span>,
+            <span class="ident">reachable</span>: <span class="ident">prefilter</span>.<span class="ident">reachable</span>,
+            <span class="ident">remaining</span>: <span class="ident">prefilter</span>.<span class="ident">count</span>,
         }
     }
 
@@ -742,13 +844,20 @@
     <span class="doccomment">///   within the selected graph.</span>
     <span class="doccomment">/// * If direction is Reverse, return the set of metadatas that do not have any dependents within</span>
     <span class="doccomment">///   the selected graph.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Cycles</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If a root consists of a dependency cycle, all the packages in it will be returned in</span>
+    <span class="doccomment">/// arbitrary order.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_root_metadatas</span>(
         <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>;
         <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="ident">package_graph</span>.<span class="ident">dep_graph</span>();
-        <span class="ident">compute_roots</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>, <span class="ident">direction</span>)
+        <span class="kw">let</span> <span class="ident">prefilter</span> <span class="op">=</span> <span class="ident">SelectPrefilter</span>::<span class="ident">new</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>);
+        <span class="ident">prefilter</span>
+            .<span class="ident">roots</span>(<span class="ident">package_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">package_ix</span><span class="op">|</span> {
                 <span class="ident">package_graph</span>
@@ -763,6 +872,11 @@
     <span class="doccomment">/// The default order of iteration is determined by the type of query:</span>
     <span class="doccomment">/// * for `all` and `forward` queries, package IDs are returned in forward order.</span>
     <span class="doccomment">/// * for `reverse` queries, package IDs are returned in reverse order.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Cycles</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The packages within a dependency cycle will be returned in arbitrary order, but overall</span>
+    <span class="doccomment">/// topological order will be maintained.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_iter_metadatas</span>(
         <span class="self">self</span>,
         <span class="ident">direction_opt</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DependencyDirection</span><span class="op">&gt;</span>,
@@ -794,7 +908,8 @@
         <span class="kw">let</span> <span class="ident">direction</span> <span class="op">=</span> <span class="ident">direction_opt</span>.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">default_direction</span>());
         <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>();
 
-        <span class="kw">let</span> (<span class="ident">reachable</span>, <span class="ident">initials</span>) <span class="op">=</span> <span class="ident">select_postfilter</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>, <span class="ident">direction</span>);
+        <span class="kw">let</span> (<span class="ident">reachable</span>, <span class="ident">initials</span>) <span class="op">=</span>
+            <span class="ident">select_postfilter</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">params</span>, <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>);
 
         <span class="kw">let</span> (<span class="ident">reachable</span>, <span class="ident">edge_dfs</span>) <span class="op">=</span> <span class="kw">match</span> (<span class="ident">reachable</span>, <span class="ident">direction</span>) {
             (<span class="prelude-val">Some</span>(<span class="ident">reachable</span>), <span class="ident">Forward</span>) <span class="op">=</span><span class="op">&gt;</span> {
@@ -820,35 +935,60 @@
     }
 }
 
-<span class="doccomment">/// Computes the roots for this graph and parameters.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">compute_roots</span><span class="op">&lt;</span><span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span>(
-    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Node</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">Directed</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
-    <span class="ident">params</span>: <span class="ident">SelectParams</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
-    <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="comment">// XXX It would be nice if compute_roots returned an iterator, but there are some thorny</span>
-    <span class="comment">// ownership issues that need to be resolved for that to happen.</span>
-    <span class="kw">let</span> (<span class="ident">reachable_map</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">select_prefilter</span>(<span class="ident">graph</span>, <span class="ident">params</span>);
-    <span class="kw">match</span> <span class="ident">direction</span> {
-        <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">NodeFiltered</span>(<span class="ident">graph</span>, <span class="ident">reachable_map</span>)).<span class="ident">collect</span>(),
-        <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">NodeFiltered</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="ident">reachable_map</span>)).<span class="ident">collect</span>()
-        }
-    }
-}
-
 <span class="doccomment">/// Computes intermediate state for operations where the graph must be pre-filtered before any</span>
 <span class="doccomment">/// traversals happen.</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">select_prefilter</span><span class="op">&lt;</span><span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span>(
-    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Node</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">Directed</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
-    <span class="ident">params</span>: <span class="ident">SelectParams</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">FixedBitSet</span>, <span class="ident">usize</span>) {
-    <span class="kw">use</span> <span class="ident">SelectParams</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">SelectPrefilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span> {
+    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Node</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">Directed</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">reachable</span>: <span class="ident">FixedBitSet</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">count</span>: <span class="ident">usize</span>,
+}
 
-    <span class="kw">match</span> <span class="ident">params</span> {
-        <span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">all_visit_map</span>(<span class="ident">graph</span>),
-        <span class="ident">SelectForward</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map</span>(<span class="ident">graph</span>, <span class="ident">initials</span>),
-        <span class="ident">SelectReverse</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="ident">initials</span>),
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span> <span class="ident">SelectPrefilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Node</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">Directed</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
+        <span class="ident">params</span>: <span class="ident">SelectParams</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">use</span> <span class="ident">SelectParams</span>::<span class="kw-2">*</span>;
+
+        <span class="kw">let</span> (<span class="ident">reachable</span>, <span class="ident">count</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">params</span> {
+            <span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">all_visit_map</span>(<span class="ident">graph</span>),
+            <span class="ident">SelectForward</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map</span>(<span class="ident">graph</span>, <span class="ident">initials</span>),
+            <span class="ident">SelectReverse</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="ident">initials</span>),
+        };
+        <span class="self">Self</span> {
+            <span class="ident">graph</span>,
+            <span class="ident">reachable</span>,
+            <span class="ident">count</span>,
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">roots</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">sccs</span>: <span class="kw-2">&amp;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
+        <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">G</span>::<span class="ident">Node</span>: ::<span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>,
+    {
+        <span class="comment">// If any element of an SCC is in the reachable map, so would every other element. This</span>
+        <span class="comment">// means that any SCC map computed on the full graph will work on a prefiltered graph. (This</span>
+        <span class="comment">// will change if we decide to implement edge visiting/filtering.)</span>
+        <span class="comment">//</span>
+        <span class="comment">// TODO: petgraph 0.5.1 will allow the closure to be replaced with &amp;self.reachable. Switch</span>
+        <span class="comment">// to it when it&#39;s out.</span>
+        <span class="kw">match</span> <span class="ident">direction</span> {
+            <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">sccs</span>
+                .<span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">NodeFiltered</span>::<span class="ident">from_fn</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="op">|</span><span class="ident">x</span><span class="op">|</span> {
+                    <span class="self">self</span>.<span class="ident">reachable</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">x</span>)
+                }))
+                .<span class="ident">collect</span>(),
+            <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">sccs</span>
+                .<span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">NodeFiltered</span>::<span class="ident">from_fn</span>(<span class="ident">Reversed</span>(<span class="self">self</span>.<span class="ident">graph</span>), <span class="op">|</span><span class="ident">x</span><span class="op">|</span> {
+                    <span class="self">self</span>.<span class="ident">reachable</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">x</span>)
+                }))
+                .<span class="ident">collect</span>(),
+        }
     }
 }
 
@@ -860,21 +1000,25 @@
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">select_postfilter</span><span class="op">&lt;</span><span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span>(
     <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Node</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">Directed</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
     <span class="ident">params</span>: <span class="ident">SelectParams</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
+    <span class="ident">sccs</span>: <span class="kw-2">&amp;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
     <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
     <span class="kw">use</span> <span class="ident">DependencyDirection</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">SelectParams</span>::<span class="kw-2">*</span>;
 
+    <span class="comment">// If any element of an SCC is in the reachable map, so would every other element. This means</span>
+    <span class="comment">// that any SCC map computed on the full graph will work on a prefiltered graph. (This will</span>
+    <span class="comment">// change if we decide to implement edge visiting/filtering.)</span>
     <span class="kw">match</span> (<span class="ident">params</span>, <span class="ident">direction</span>) {
         (<span class="ident">All</span>, <span class="ident">Forward</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="comment">// No need for a reachable map, and use all roots.</span>
-            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">externals</span>(<span class="ident">graph</span>).<span class="ident">collect</span>();
+            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">sccs</span>.<span class="ident">externals</span>(<span class="ident">graph</span>).<span class="ident">collect</span>();
             (<span class="prelude-val">None</span>, <span class="ident">roots</span>)
         }
         (<span class="ident">All</span>, <span class="ident">Reverse</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="comment">// No need for a reachable map, and use all roots.</span>
             <span class="kw">let</span> <span class="ident">reversed_graph</span> <span class="op">=</span> <span class="ident">Reversed</span>(<span class="ident">graph</span>);
-            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">externals</span>(<span class="ident">reversed_graph</span>).<span class="ident">collect</span>();
+            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">sccs</span>.<span class="ident">externals</span>(<span class="ident">reversed_graph</span>).<span class="ident">collect</span>();
             (<span class="prelude-val">None</span>, <span class="ident">roots</span>)
         }
         (<span class="ident">SelectForward</span>(<span class="ident">initials</span>), <span class="ident">Forward</span>) <span class="op">=</span><span class="op">&gt;</span> {
@@ -887,7 +1031,7 @@
             <span class="kw">let</span> <span class="ident">filtered_reversed_graph</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="ident">reachable</span>);
             <span class="comment">// The filtered + reversed graph will have its own roots since the iteration order</span>
             <span class="comment">// is reversed from the specified roots.</span>
-            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_reversed_graph</span>).<span class="ident">collect</span>();
+            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">sccs</span>.<span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_reversed_graph</span>).<span class="ident">collect</span>();
 
             (<span class="prelude-val">Some</span>(<span class="ident">filtered_reversed_graph</span>.<span class="number">1</span>), <span class="ident">roots</span>)
         }
@@ -898,7 +1042,7 @@
             <span class="kw">let</span> <span class="ident">filtered_graph</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="ident">graph</span>, <span class="ident">reachable</span>);
             <span class="comment">// The filtered graph will have its own roots since the iteration order is reversed</span>
             <span class="comment">// from the specified roots.</span>
-            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_graph</span>).<span class="ident">collect</span>();
+            <span class="kw">let</span> <span class="ident">roots</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">sccs</span>.<span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_graph</span>).<span class="ident">collect</span>();
 
             (<span class="prelude-val">Some</span>(<span class="ident">filtered_graph</span>.<span class="number">1</span>), <span class="ident">roots</span>)
         }
@@ -916,18 +1060,16 @@
 <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IntoIterIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span> <span class="op">=</span> <span class="string">&quot;ignore&quot;</span>)]</span>
-    <span class="ident">graph</span>: <span class="ident">NodeFiltered</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
-    <span class="comment">// XXX Topo really should implement Debug in petgraph upstream.</span>
-    <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span> <span class="op">=</span> <span class="string">&quot;ignore&quot;</span>)]</span>
-    <span class="ident">topo</span>: <span class="ident">Topo</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
-    <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
+    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    <span class="ident">node_iter</span>: <span class="ident">NodeIter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    <span class="ident">reachable</span>: <span class="ident">FixedBitSet</span>,
     <span class="ident">remaining</span>: <span class="ident">usize</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">IntoIterIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns the direction the iteration is happening in.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direction</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyDirection</span> {
-        <span class="self">self</span>.<span class="ident">direction</span>
+        <span class="self">self</span>.<span class="ident">node_iter</span>.<span class="ident">direction</span>().<span class="ident">into</span>()
     }
 }
 
@@ -935,14 +1077,14 @@
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>;
 
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">next_idx</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">direction</span> {
-            <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">topo</span>.<span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>),
-            <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">topo</span>.<span class="ident">next</span>(<span class="ident">Reversed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>)),
-        };
-        <span class="ident">next_idx</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">ix</span><span class="op">|</span> {
+        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">node_iter</span>.<span class="ident">next</span>() {
+            <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">reachable</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">ix</span>) {
+                <span class="kw">continue</span>;
+            }
             <span class="self">self</span>.<span class="ident">remaining</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>[<span class="ident">ix</span>]
-        })
+            <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>[<span class="ident">ix</span>]);
+        }
+        <span class="prelude-val">None</span>
     }
 
     <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
@@ -968,7 +1110,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">IntoIterMetadatas</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns the direction the iteration is happening in.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direction</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyDirection</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">direction</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">direction</span>()
     }
 }
 
@@ -1111,10 +1253,16 @@
     <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="comment">// To figure out what nodes are reachable, run a DFS starting from the roots.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">Dfs</span>::<span class="ident">from_parts</span>(<span class="ident">roots</span>, <span class="ident">graph</span>.<span class="ident">visit_map</span>());
+    <span class="comment">// This is DfsPostOrder since that handles cycles while a regular DFS doesn&#39;t.</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">DfsPostOrder</span>::<span class="ident">empty</span>(<span class="ident">graph</span>);
+    <span class="ident">dfs</span>.<span class="ident">stack</span> <span class="op">=</span> <span class="ident">roots</span>;
     <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">next</span>(<span class="ident">graph</span>) {}
 
-    <span class="comment">// Once the DFS is done, the discovered map is what&#39;s reachable.</span>
+    <span class="comment">// Once the DFS is done, the discovered map (or the finished map) is what&#39;s reachable.</span>
+    <span class="macro">debug_assert_eq</span><span class="macro">!</span>(
+        <span class="ident">dfs</span>.<span class="ident">discovered</span>, <span class="ident">dfs</span>.<span class="ident">finished</span>,
+        <span class="string">&quot;discovered and finished maps match at the end&quot;</span>
+    );
     <span class="kw">let</span> <span class="ident">reachable</span> <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">discovered</span>;
     <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="ident">reachable</span>.<span class="ident">count_ones</span>(..);
     (<span class="ident">reachable</span>, <span class="ident">count</span>)
