@@ -179,25 +179,31 @@ impl Fixture {
 /// This captures metadata fields that are relevant for tests. They are meant to be written out
 /// lazily as tests are filled out -- feel free to add more details as necessary!
 pub(crate) struct FixtureDetails {
-    workspace_members: BTreeMap<PathBuf, PackageId>,
+    workspace_members: Option<BTreeMap<PathBuf, PackageId>>,
     package_details: HashMap<PackageId, PackageDetails>,
     feature_graph_warnings: Vec<FeatureGraphWarning>,
 }
 
 impl FixtureDetails {
-    pub(crate) fn new<'a>(
-        workspace_members: impl IntoIterator<Item = (impl Into<PathBuf>, &'a str)>,
-        package_details: HashMap<PackageId, PackageDetails>,
-    ) -> Self {
-        let workspace_members = workspace_members
-            .into_iter()
-            .map(|(path, id)| (path.into(), package_id(id)))
-            .collect();
+    pub(crate) fn new(package_details: HashMap<PackageId, PackageDetails>) -> Self {
         Self {
-            workspace_members,
+            workspace_members: None,
             package_details,
             feature_graph_warnings: vec![],
         }
+    }
+
+    pub(crate) fn with_workspace_members<'a>(
+        mut self,
+        workspace_members: impl IntoIterator<Item = (impl Into<PathBuf>, &'a str)>,
+    ) -> Self {
+        self.workspace_members = Some(
+            workspace_members
+                .into_iter()
+                .map(|(path, id)| (path.into(), package_id(id)))
+                .collect(),
+        );
+        self
     }
 
     pub(crate) fn with_feature_graph_warnings(
@@ -214,15 +220,17 @@ impl FixtureDetails {
     }
 
     pub(crate) fn assert_workspace(&self, workspace: &Workspace) {
-        let members: Vec<_> = workspace.members().into_iter().collect();
-        assert_eq!(
-            self.workspace_members
-                .iter()
-                .map(|(path, id)| (path.as_path(), id))
-                .collect::<Vec<_>>(),
-            members,
-            "workspace members should be correct"
-        );
+        if let Some(expected_members) = &self.workspace_members {
+            let members: Vec<_> = workspace.members().into_iter().collect();
+            assert_eq!(
+                expected_members
+                    .iter()
+                    .map(|(path, id)| (path.as_path(), id))
+                    .collect::<Vec<_>>(),
+                members,
+                "workspace members should be correct"
+            );
+        }
     }
 
     pub(crate) fn assert_topo(&self, graph: &PackageGraph) {
@@ -377,7 +385,7 @@ impl FixtureDetails {
         .with_reverse_deps(vec![("datatest", METADATA1_TESTCRATE)])
         .insert_into(&mut details);
 
-        Self::new(vec![("", METADATA1_TESTCRATE)], details)
+        Self::new(details).with_workspace_members(vec![("", METADATA1_TESTCRATE)])
     }
 
     pub(crate) fn metadata2() -> Self {
@@ -453,13 +461,10 @@ impl FixtureDetails {
         .with_named_features(vec!["default", "proc-macro"])
         .insert_into(&mut details);
 
-        Self::new(
-            vec![
-                ("testcrate", METADATA2_TESTCRATE),
-                ("walkdir", METADATA2_WALKDIR),
-            ],
-            details,
-        )
+        Self::new(details).with_workspace_members(vec![
+            ("testcrate", METADATA2_TESTCRATE),
+            ("walkdir", METADATA2_WALKDIR),
+        ])
     }
 
     pub(crate) fn metadata_dups() -> Self {
@@ -481,7 +486,7 @@ impl FixtureDetails {
         ])
         .insert_into(&mut details);
 
-        Self::new(vec![("", METADATA_DUPS_TESTCRATE)], details)
+        Self::new(details).with_workspace_members(vec![("", METADATA_DUPS_TESTCRATE)])
     }
 
     pub(crate) fn metadata_libra() -> Self {
@@ -605,17 +610,19 @@ impl FixtureDetails {
             ("x", "x 0.1.0 (path+file:///Users/fakeuser/local/libra/x)"),
         ];
 
-        Self::new(workspace_members, details).with_feature_graph_warnings(vec![
-            // See https://github.com/alexcrichton/cfg-if/issues/22 for more.
-            FeatureGraphWarning::MissingFeature {
-                stage: FeatureBuildStage::AddNamedFeatureEdges {
-                    package_id: package_id(METADATA_LIBRA_BACKTRACE),
-                    from_feature: "rustc-dep-of-std".to_string(),
+        Self::new(details)
+            .with_workspace_members(workspace_members)
+            .with_feature_graph_warnings(vec![
+                // See https://github.com/alexcrichton/cfg-if/issues/22 for more.
+                FeatureGraphWarning::MissingFeature {
+                    stage: FeatureBuildStage::AddNamedFeatureEdges {
+                        package_id: package_id(METADATA_LIBRA_BACKTRACE),
+                        from_feature: "rustc-dep-of-std".to_string(),
+                    },
+                    package_id: package_id(METADATA_LIBRA_CFG_IF),
+                    feature_name: "rustc-dep-of-std".to_string(),
                 },
-                package_id: package_id(METADATA_LIBRA_CFG_IF),
-                feature_name: "rustc-dep-of-std".to_string(),
-            },
-        ])
+            ])
     }
 }
 
