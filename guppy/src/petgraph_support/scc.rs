@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use fixedbitset::FixedBitSet;
+use nested::Nested;
 use petgraph::algo::kosaraju_scc;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers, VisitMap, Visitable};
 use std::collections::HashMap;
+use std::slice;
 
 #[derive(Clone, Debug)]
 pub(crate) struct Sccs<Ix: IndexType> {
-    // TODO: This is somewhat inefficient as storage -- might be better to use something like Nested
-    // once https://github.com/tafia/nested/pull/1 lands.
-    sccs: Vec<Vec<NodeIndex<Ix>>>,
+    sccs: Nested<Vec<NodeIndex<Ix>>>,
     multi_map: HashMap<NodeIndex<Ix>, usize>,
 }
 
@@ -26,6 +26,7 @@ impl<Ix: IndexType> Sccs<Ix> {
         // Use kosaraju_scc since it is iterative (tarjan_scc is recursive) and package graphs
         // have unbounded depth.
         let sccs = kosaraju_scc(graph);
+        let sccs: Nested<Vec<_>> = sccs.into_iter().collect();
         let mut multi_map = HashMap::new();
         for (idx, scc) in sccs.iter().enumerate() {
             if scc.len() > 1 {
@@ -46,20 +47,9 @@ impl<Ix: IndexType> Sccs<Ix> {
         }
     }
 
-    /// Returns all the SCCs in this graph.
-    pub fn sccs(&self) -> &[Vec<NodeIndex<Ix>>] {
-        &self.sccs
-    }
-
     /// Returns all the SCCs with more than one element.
     pub fn multi_sccs(&self) -> impl Iterator<Item = &[NodeIndex<Ix>]> {
-        self.sccs.iter().filter_map(|scc| {
-            if scc.len() > 1 {
-                Some(scc.as_slice())
-            } else {
-                None
-            }
-        })
+        self.sccs.iter().filter(|scc| scc.len() > 1)
     }
 
     /// Returns all the nodes of this graph that have no incoming edges to them, and all the nodes
@@ -117,10 +107,8 @@ impl<Ix: IndexType> Sccs<Ix> {
     /// Iterate over all nodes in the direction specified.
     pub fn node_iter(&self, direction: Direction) -> NodeIter<Ix> {
         NodeIter {
-            sccs: self.sccs(),
+            node_ixs: self.sccs.data().iter(),
             direction,
-            next_scc: 0,
-            next_idx: 0,
         }
     }
 }
@@ -128,10 +116,8 @@ impl<Ix: IndexType> Sccs<Ix> {
 /// An iterator over the nodes of strongly connected components.
 #[derive(Clone, Debug)]
 pub(crate) struct NodeIter<'a, Ix> {
-    sccs: &'a [Vec<NodeIndex<Ix>>],
+    node_ixs: slice::Iter<'a, NodeIndex<Ix>>,
     direction: Direction,
-    next_scc: usize,
-    next_idx: usize,
 }
 
 impl<'a, Ix> NodeIter<'a, Ix> {
@@ -145,49 +131,11 @@ impl<'a, Ix: IndexType> Iterator for NodeIter<'a, Ix> {
     type Item = NodeIndex<Ix>;
 
     fn next(&mut self) -> Option<NodeIndex<Ix>> {
-        // note that outgoing implies iterating over the sccs in reverse order, while incoming means
-        // sccs in forward order
-        // This would be easy to do using flat_map, but then the type can't be named :(
-        // It would also be easy to do using https://github.com/tafia/nested once available!
-        if self.direction == Direction::Outgoing {
-            loop {
-                let prev_scc_plus_1 = self.sccs.len() - self.next_scc;
-                if prev_scc_plus_1 == 0 {
-                    return None;
-                }
-                // This won't panic because prev_scc_plus_1 >= 1.
-                let prev_scc = &self.sccs[prev_scc_plus_1 - 1];
-
-                let prev_idx_plus_1 = prev_scc.len() - self.next_idx;
-                if prev_idx_plus_1 == 0 {
-                    // Exhausted this SCC -- move to the next one.
-                    self.next_scc += 1;
-                    self.next_idx = 0;
-                    continue;
-                }
-
-                self.next_idx += 1;
-                // This won't panic because prev_idx_plus_1 >= 1.
-                let ix = &prev_scc[prev_idx_plus_1 - 1];
-                return Some(*ix);
-            }
-        } else {
-            // This looks different but is basically the same as the loop above.
-            while let Some(next_scc) = self.sccs.get(self.next_scc) {
-                match next_scc.get(self.next_idx) {
-                    Some(ix) => {
-                        self.next_idx += 1;
-                        return Some(*ix);
-                    }
-                    None => {
-                        // Exhausted this SCC -- move to the next one.
-                        self.next_scc += 1;
-                        self.next_idx = 0;
-                    }
-                }
-            }
-            // Exhausted all SCCs.
-            None
+        // Note that outgoing implies iterating over the sccs in reverse order, while incoming means
+        // sccs in forward order.
+        match self.direction {
+            Direction::Outgoing => self.node_ixs.next_back().copied(),
+            Direction::Incoming => self.node_ixs.next().copied(),
         }
     }
 }
