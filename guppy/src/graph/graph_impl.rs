@@ -633,7 +633,7 @@ impl PackageMetadata {
     ///
     /// This is the same as the `publish` field of `Cargo.toml`.
     pub fn publish(&self) -> Option<&[String]> {
-        self.publish.as_ref().map(|publish| publish.as_slice())
+        self.publish.as_deref()
     }
 
     /// Returns true if this package is in the workspace.
@@ -830,6 +830,6 @@ impl DependencyMetadata {
     /// See [Platform specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
     /// in the Cargo reference for more details.
     pub fn target(&self) -> Option<&str> {
-        self.target.as_ref().map(|x| x.as_str())
+        self.target.as_deref()
     }
 }
