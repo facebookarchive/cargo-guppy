@@ -8,10 +8,4 @@ implementors["semver"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.ru
 implementors["semver_parser"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html\" title=\"trait core::str::FromStr\">FromStr</a> for <a class=\"enum\" href=\"semver_parser/range/enum.Op.html\" title=\"enum semver_parser::range::Op\">Op</a>","synthetic":false,"types":["semver_parser::range::Op"]}];
 implementors["serde_json"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html\" title=\"trait core::str::FromStr\">FromStr</a> for <a class=\"struct\" href=\"serde_json/struct.Number.html\" title=\"struct serde_json::Number\">Number</a>","synthetic":false,"types":["serde_json::number::Number"]},{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html\" title=\"trait core::str::FromStr\">FromStr</a> for <a class=\"enum\" href=\"serde_json/value/enum.Value.html\" title=\"enum serde_json::value::Value\">Value</a>","synthetic":false,"types":["serde_json::value::Value"]}];
 implementors["toml"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html\" title=\"trait core::str::FromStr\">FromStr</a> for <a class=\"enum\" href=\"toml/value/enum.Value.html\" title=\"enum toml::value::Value\">Value</a>","synthetic":false,"types":["toml::value::Value"]},{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html\" title=\"trait core::str::FromStr\">FromStr</a> for <a class=\"struct\" href=\"toml/value/struct.Datetime.html\" title=\"struct toml::value::Datetime\">Datetime</a>","synthetic":false,"types":["toml::datetime::Datetime"]}];
-
-            if (window.register_implementors) {
-                window.register_implementors(implementors);
-            } else {
-                window.pending_implementors = implementors;
-            }
-        })()
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

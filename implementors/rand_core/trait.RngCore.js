@@ -7,10 +7,4 @@ implementors["rand_jitter"] = [{"text":"impl <a class=\"trait\" href=\"rand_core
 implementors["rand_os"] = [{"text":"impl <a class=\"trait\" href=\"rand_core/trait.RngCore.html\" title=\"trait rand_core::RngCore\">RngCore</a> for <a class=\"struct\" href=\"rand_os/struct.OsRng.html\" title=\"struct rand_os::OsRng\">OsRng</a>","synthetic":false,"types":["rand_os::OsRng"]}];
 implementors["rand_pcg"] = [{"text":"impl <a class=\"trait\" href=\"rand_core/trait.RngCore.html\" title=\"trait rand_core::RngCore\">RngCore</a> for <a class=\"struct\" href=\"rand_pcg/struct.Lcg64Xsh32.html\" title=\"struct rand_pcg::Lcg64Xsh32\">Lcg64Xsh32</a>","synthetic":false,"types":["rand_pcg::pcg64::Lcg64Xsh32"]},{"text":"impl <a class=\"trait\" href=\"rand_core/trait.RngCore.html\" title=\"trait rand_core::RngCore\">RngCore</a> for <a class=\"struct\" href=\"rand_pcg/struct.Mcg128Xsl64.html\" title=\"struct rand_pcg::Mcg128Xsl64\">Mcg128Xsl64</a>","synthetic":false,"types":["rand_pcg::pcg128::Mcg128Xsl64"]}];
 implementors["rand_xorshift"] = [{"text":"impl <a class=\"trait\" href=\"rand_core/trait.RngCore.html\" title=\"trait rand_core::RngCore\">RngCore</a> for <a class=\"struct\" href=\"rand_xorshift/struct.XorShiftRng.html\" title=\"struct rand_xorshift::XorShiftRng\">XorShiftRng</a>","synthetic":false,"types":["rand_xorshift::XorShiftRng"]}];
-
-            if (window.register_implementors) {
-                window.register_implementors(implementors);
-            } else {
-                window.pending_implementors = implementors;
-            }
-        })()
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

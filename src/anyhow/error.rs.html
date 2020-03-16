@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/anyhow-1.0.26/src/error.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>error.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../anyhow/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/anyhow-1.0.27/src/error.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>error.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../anyhow/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -791,6 +791,14 @@
 <span id="791">791</span>
 <span id="792">792</span>
 <span id="793">793</span>
+<span id="794">794</span>
+<span id="795">795</span>
+<span id="796">796</span>
+<span id="797">797</span>
+<span id="798">798</span>
+<span id="799">799</span>
+<span id="800">800</span>
+<span id="801">801</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">alloc</span>::<span class="ident">Box</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">backtrace</span>::<span class="ident">Backtrace</span>;
@@ -1084,10 +1092,18 @@
     <span class="doccomment">/// Backtraces are only available on the nightly channel. Tracking issue:</span>
     <span class="doccomment">/// [rust-lang/rust#53487][tracking].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// In order for the backtrace to be meaningful, the environment variable</span>
-    <span class="doccomment">/// `RUST_LIB_BACKTRACE=1` must be defined. Backtraces are somewhat</span>
+    <span class="doccomment">/// In order for the backtrace to be meaningful, one of the two environment</span>
+    <span class="doccomment">/// variables `RUST_LIB_BACKTRACE=1` or `RUST_BACKTRACE=1` must be defined</span>
+    <span class="doccomment">/// and `RUST_LIB_BACKTRACE` must not be `0`. Backtraces are somewhat</span>
     <span class="doccomment">/// expensive to capture in Rust, so we don&#39;t necessarily want to be</span>
     <span class="doccomment">/// capturing them all over the place all the time.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// - If you want panics and errors to both have backtraces, set</span>
+    <span class="doccomment">///   `RUST_BACKTRACE=1`;</span>
+    <span class="doccomment">/// - If you want only errors to have backtraces, set</span>
+    <span class="doccomment">///   `RUST_LIB_BACKTRACE=1`;</span>
+    <span class="doccomment">/// - If you want only panics to have backtraces, set `RUST_BACKTRACE=1` and</span>
+    <span class="doccomment">///   `RUST_LIB_BACKTRACE=0`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// [tracking]: https://github.com/rust-lang/rust/issues/53487</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">backtrace</span>)]</span>
