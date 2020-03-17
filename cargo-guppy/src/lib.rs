@@ -176,7 +176,7 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
         let direct_dep = pkg_graph
             .reverse_dep_links(package_id)
             .unwrap()
-            .any(|l| l.from.in_workspace());
+            .any(|l| l.from.in_workspace() && !l.to.in_workspace());
         let show_package = match options.filter_opts.kind {
             Kind::All => true,
             Kind::Workspace => in_workspace,
