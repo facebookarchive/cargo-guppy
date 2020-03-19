@@ -8,7 +8,6 @@ use cargo_metadata::Error as MetadataError;
 use serde_json;
 use std::error;
 use std::fmt;
-use std::io;
 
 use Error::*;
 
@@ -16,11 +15,6 @@ use Error::*;
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    // The config API isn't public yet, so hide errors within it.
-    #[doc(hidden)]
-    ConfigIoError(io::Error),
-    #[doc(hidden)]
-    ConfigParseError(toml::de::Error),
     /// An error occurred while executing `cargo metadata`.
     CommandError(MetadataError),
     /// An error occurred while parsing cargo metadata JSON.
@@ -38,8 +32,6 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigIoError(err) => write!(f, "Error while reading config file: {}", err),
-            ConfigParseError(err) => write!(f, "Error while parsing config file: {}", err),
             CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
             MetadataParseError(err) => write!(
                 f,
@@ -62,8 +54,6 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            ConfigIoError(err) => Some(err),
-            ConfigParseError(err) => Some(err),
             MetadataParseError(err) => Some(err),
             CommandError(_) => None,
             PackageGraphConstructError(_) => None,
