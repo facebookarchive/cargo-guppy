@@ -68,7 +68,6 @@ ALIASES["syn_mid"] = {};
 ALIASES["target_spec"] = {};
 ALIASES["tempfile"] = {};
 ALIASES["textwrap"] = {};
-ALIASES["toml"] = {};
 ALIASES["unicode_segmentation"] = {};
 ALIASES["unicode_width"] = {};
 ALIASES["unicode_xid"] = {};
