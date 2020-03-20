@@ -70,6 +70,11 @@
 <span id="70">70</span>
 <span id="71">71</span>
 <span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -101,10 +106,16 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">discovered</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">visit_map</span>();
         <span class="kw">let</span> <span class="ident">stack</span> <span class="op">=</span> <span class="ident">initials</span>
             .<span class="ident">into_iter</span>()
-            .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">node_ix</span><span class="op">|</span> {
-                <span class="ident">discovered</span>.<span class="ident">visit</span>(<span class="ident">node_ix</span>);
-                <span class="ident">graph</span>.<span class="ident">edges</span>(<span class="ident">node_ix</span>).<span class="ident">map</span>(<span class="ident">edge_triple</span>)
+            .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">node_ix</span><span class="op">|</span> {
+                <span class="comment">// This check ensures that if a node is repeated in initials, its edges are only</span>
+                <span class="comment">// added once.</span>
+                <span class="kw">if</span> <span class="ident">discovered</span>.<span class="ident">visit</span>(<span class="ident">node_ix</span>) {
+                    <span class="prelude-val">Some</span>(<span class="ident">graph</span>.<span class="ident">edges</span>(<span class="ident">node_ix</span>).<span class="ident">map</span>(<span class="ident">edge_triple</span>))
+                } <span class="kw">else</span> {
+                    <span class="prelude-val">None</span>
+                }
             })
+            .<span class="ident">flatten</span>()
             .<span class="ident">collect</span>();
         <span class="self">Self</span> { <span class="ident">stack</span>, <span class="ident">discovered</span> }
     }
@@ -124,12 +135,11 @@
     <span class="kw">where</span>
         <span class="ident">G</span>: <span class="ident">IntoEdges</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span>, <span class="ident">EdgeId</span> <span class="op">=</span> <span class="ident">E</span><span class="op">&gt;</span>,
     {
-        <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">pop</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">source</span>, <span class="ident">target</span>, <span class="ident">edge</span>)<span class="op">|</span> {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">discovered</span>.<span class="ident">visit</span>(<span class="ident">target</span>) {
-                <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">extend</span>(<span class="ident">graph</span>.<span class="ident">edges</span>(<span class="ident">target</span>).<span class="ident">map</span>(<span class="ident">edge_triple</span>));
-            }
-            (<span class="ident">source</span>, <span class="ident">target</span>, <span class="ident">edge</span>)
-        })
+        <span class="kw">let</span> (<span class="ident">source</span>, <span class="ident">target</span>, <span class="ident">edge</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">pop</span>()<span class="question-mark">?</span>;
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">discovered</span>.<span class="ident">visit</span>(<span class="ident">target</span>) {
+            <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">extend</span>(<span class="ident">graph</span>.<span class="ident">edges</span>(<span class="ident">target</span>).<span class="ident">map</span>(<span class="ident">edge_triple</span>));
+        }
+        <span class="prelude-val">Some</span>((<span class="ident">source</span>, <span class="ident">target</span>, <span class="ident">edge</span>))
     }
 }
 
