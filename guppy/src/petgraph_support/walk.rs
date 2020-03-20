@@ -28,10 +28,16 @@ where
         let mut discovered = graph.visit_map();
         let stack = initials
             .into_iter()
-            .flat_map(|node_ix| {
-                discovered.visit(node_ix);
-                graph.edges(node_ix).map(edge_triple)
+            .filter_map(|node_ix| {
+                // This check ensures that if a node is repeated in initials, its edges are only
+                // added once.
+                if discovered.visit(node_ix) {
+                    Some(graph.edges(node_ix).map(edge_triple))
+                } else {
+                    None
+                }
             })
+            .flatten()
             .collect();
         Self { stack, discovered }
     }
