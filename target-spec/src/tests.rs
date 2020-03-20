@@ -14,7 +14,9 @@ fn test_triple() {
 fn test_single() {
     assert_eq!(
         parse("cfg(windows)"),
-        Ok(Target::Spec(Expr::TestSet(Atom::Ident("windows".to_string())))),
+        Ok(Target::Spec(Expr::TestSet(Atom::Ident(
+            "windows".to_string()
+        )))),
     );
 }
 
@@ -22,7 +24,9 @@ fn test_single() {
 fn test_not() {
     assert_eq!(
         parse("cfg(not(windows))"),
-        Ok(Target::Spec(Expr::Not(Box::new(Expr::TestSet(Atom::Ident("windows".to_string())))))),
+        Ok(Target::Spec(Expr::Not(Box::new(Expr::TestSet(
+            Atom::Ident("windows".to_string())
+        ))))),
     );
 }
 
@@ -30,6 +34,9 @@ fn test_not() {
 fn test_testequal() {
     assert_eq!(
         parse("cfg(target_os = \"windows\")"),
-        Ok(Target::Spec(Expr::TestEqual((Atom::Ident("target_os".to_string()), Atom::Value("windows".to_string()))))),
+        Ok(Target::Spec(Expr::TestEqual((
+            Atom::Ident("target_os".to_string()),
+            Atom::Value("windows".to_string())
+        )))),
     );
 }
