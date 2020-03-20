@@ -14,8 +14,8 @@ use nom::{
 };
 use std::{error, fmt};
 
-#[derive(Default, PartialEq)]
-pub struct ParseError;
+#[derive(Clone, Debug, PartialEq)]
+pub struct ParseError(pub(crate) nom::Err<(String, nom::error::ErrorKind)>);
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -23,13 +23,11 @@ impl fmt::Display for ParseError {
     }
 }
 
-impl fmt::Debug for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        <ParseError as fmt::Display>::fmt(self, f)
+impl error::Error for ParseError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        Some(&self.0)
     }
 }
-
-impl error::Error for ParseError {}
 
 fn identifier(input: &str) -> IResult<&str, Atom> {
     let (i, start) = input
@@ -117,7 +115,12 @@ fn spec(input: &str) -> IResult<&str, Target> {
     map(
         delimited(
             space0,
-            preceded(tag("cfg"), delimited(char('('), expression, char(')'))),
+            preceded(
+                tag("cfg"),
+                // This "cut" is here to prevent backtracking and trying out the "triple" parser if
+                // the initial "cfg" is recognized.
+                cut(delimited(char('('), expression, char(')'))),
+            ),
             space0,
         ),
         Target::Spec,
@@ -139,12 +142,13 @@ pub fn target(input: &str) -> IResult<&str, Target> {
     alt((spec, triple))(input)
 }
 
-pub fn parse(input: &str) -> Result<Target, ParseError> {
-    let (_, expr) = all_consuming(target)(input).map_err(|e| {
-        println!("{:?}", e);
-        ParseError
-    })?;
+pub fn parse_impl(input: &str) -> Result<Target, nom::Err<(&str, nom::error::ErrorKind)>> {
+    let (_, expr) = all_consuming(target)(input)?;
     Ok(expr)
+}
+
+pub fn parse(input: &str) -> Result<Target, ParseError> {
+    parse_impl(input).map_err(|err| ParseError(err.to_owned()))
 }
 
 #[cfg(test)]
