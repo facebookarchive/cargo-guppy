@@ -3,7 +3,7 @@
 
 use crate::parser::parse;
 use crate::types::{Atom, Expr, Target};
-use platforms::{Platform, target::OS};
+use platforms::{target::OS, Platform};
 use std::{error, fmt};
 
 #[derive(PartialEq)]
@@ -68,17 +68,13 @@ fn eval_spec(spec: &Expr, platform: &Platform) -> Result<bool, EvalError> {
             }
             Ok(true)
         }
-        Expr::Not(ref expr) => {
-            eval_spec(expr, platform).map(|b| !b)
-        }
+        Expr::Not(ref expr) => eval_spec(expr, platform).map(|b| !b),
         // target_family can be either unix or windows
-        Expr::TestSet(Atom::Ident(ref family)) => {
-            match family.as_str() {
-                "windows" => Ok(platform.target_os == OS::Windows),
-                "unix" => Ok(platform.target_os == OS::Linux || platform.target_os == OS::MacOS),
-                _ => Err(EvalError::UnknownOption(family.clone())),
-            }
-        }
+        Expr::TestSet(Atom::Ident(ref family)) => match family.as_str() {
+            "windows" => Ok(platform.target_os == OS::Windows),
+            "unix" => Ok(platform.target_os == OS::Linux || platform.target_os == OS::MacOS),
+            _ => Err(EvalError::UnknownOption(family.clone())),
+        },
         // supports only target_os currently
         Expr::TestEqual((Atom::Ident(ref name), Atom::Value(ref value))) => {
             if name == "target_os" {
@@ -105,16 +101,16 @@ fn eval_spec(spec: &Expr, platform: &Platform) -> Result<bool, EvalError> {
 
 #[test]
 fn test_windows() {
-    assert_eq!(
-        eval("cfg(windows)", "x86_64-pc-windows-msvc"),
-        Ok(true),
-    );
+    assert_eq!(eval("cfg(windows)", "x86_64-pc-windows-msvc"), Ok(true),);
 }
 
 #[test]
 fn test_not_target_os() {
     assert_eq!(
-        eval("cfg(not(target_os = \"windows\"))", "x86_64-unknown-linux-gnu"),
+        eval(
+            "cfg(not(target_os = \"windows\"))",
+            "x86_64-unknown-linux-gnu"
+        ),
         Ok(true),
     );
 }
@@ -122,7 +118,10 @@ fn test_not_target_os() {
 #[test]
 fn test_not_target_os_false() {
     assert_eq!(
-        eval("cfg(not(target_os = \"windows\"))", "x86_64-pc-windows-msvc"),
+        eval(
+            "cfg(not(target_os = \"windows\"))",
+            "x86_64-pc-windows-msvc"
+        ),
         Ok(false),
     );
 }
@@ -138,7 +137,10 @@ fn test_exact_triple() {
 #[test]
 fn test_redox() {
     assert_eq!(
-        eval("cfg(any(unix, target_os = \"redox\"))", "x86_64-unknown-linux-gnu"),
+        eval(
+            "cfg(any(unix, target_os = \"redox\"))",
+            "x86_64-unknown-linux-gnu"
+        ),
         Ok(true),
     );
 }
