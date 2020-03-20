@@ -38,22 +38,6 @@ fn identifier(input: &str) -> IResult<&str, Atom> {
     Ok((i, Atom::Ident([start, rest].concat())))
 }
 
-#[test]
-fn test_id() {
-    assert_eq!(
-        identifier("target"),
-        Ok(("", Atom::Ident("target".to_string()))),
-    );
-}
-
-#[test]
-fn test_id_underscore() {
-    assert_eq!(
-        identifier("target_os"),
-        Ok(("", Atom::Ident("target_os".to_string()))),
-    );
-}
-
 fn value(input: &str) -> IResult<&str, Atom> {
     map(
         preceded(
@@ -71,19 +55,6 @@ fn value(input: &str) -> IResult<&str, Atom> {
     )(input)
 }
 
-#[test]
-fn test_value() {
-    assert_eq!(
-        value("\"bar \\\" foo\""),
-        Ok(("", Atom::Value("bar \" foo".to_string()))),
-    );
-}
-
-#[test]
-fn test_empty_value() {
-    assert_eq!(value("\"\""), Ok(("", Atom::Value("".to_string()))));
-}
-
 fn any(input: &str) -> IResult<&str, Expr> {
     map(
         delimited(
@@ -96,23 +67,6 @@ fn any(input: &str) -> IResult<&str, Expr> {
         ),
         Expr::Any,
     )(input)
-}
-
-#[test]
-fn test_any() {
-    assert_eq!(
-        any("any(unix, target_os = \"redox\")"),
-        Ok((
-            "",
-            Expr::Any(vec![
-                Expr::TestSet(Atom::Ident("unix".to_string())),
-                Expr::TestEqual((
-                    Atom::Ident("target_os".to_string()),
-                    Atom::Value("redox".to_string())
-                ))
-            ])
-        )),
-    );
 }
 
 fn all(input: &str) -> IResult<&str, Expr> {
@@ -155,20 +109,6 @@ fn test_equal(input: &str) -> IResult<&str, Expr> {
     )(input)
 }
 
-#[test]
-fn test_test_equal() {
-    assert_eq!(
-        test_equal("foo = \"bar\""),
-        Ok((
-            "",
-            Expr::TestEqual((
-                Atom::Ident("foo".to_string()),
-                Atom::Value("bar".to_string())
-            ))
-        )),
-    );
-}
-
 fn expression(input: &str) -> IResult<&str, Expr> {
     alt((any, all, not, test_equal, test_set))(input)
 }
@@ -205,4 +145,69 @@ pub fn parse(input: &str) -> Result<Target, ParseError> {
         ParseError
     })?;
     Ok(expr)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_id() {
+        assert_eq!(
+            identifier("target"),
+            Ok(("", Atom::Ident("target".to_string()))),
+        );
+    }
+
+    #[test]
+    fn test_id_underscore() {
+        assert_eq!(
+            identifier("target_os"),
+            Ok(("", Atom::Ident("target_os".to_string()))),
+        );
+    }
+
+    #[test]
+    fn test_value() {
+        assert_eq!(
+            value("\"bar \\\" foo\""),
+            Ok(("", Atom::Value("bar \" foo".to_string()))),
+        );
+    }
+
+    #[test]
+    fn test_empty_value() {
+        assert_eq!(value("\"\""), Ok(("", Atom::Value("".to_string()))));
+    }
+
+    #[test]
+    fn test_any() {
+        assert_eq!(
+            any("any(unix, target_os = \"redox\")"),
+            Ok((
+                "",
+                Expr::Any(vec![
+                    Expr::TestSet(Atom::Ident("unix".to_string())),
+                    Expr::TestEqual((
+                        Atom::Ident("target_os".to_string()),
+                        Atom::Value("redox".to_string())
+                    ))
+                ])
+            )),
+        );
+    }
+
+    #[test]
+    fn test_test_equal() {
+        assert_eq!(
+            test_equal("foo = \"bar\""),
+            Ok((
+                "",
+                Expr::TestEqual((
+                    Atom::Ident("foo".to_string()),
+                    Atom::Value("bar".to_string())
+                ))
+            )),
+        );
+    }
 }

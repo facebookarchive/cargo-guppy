@@ -99,48 +99,53 @@ fn eval_spec(spec: &Expr, platform: &Platform) -> Result<bool, EvalError> {
     }
 }
 
-#[test]
-fn test_windows() {
-    assert_eq!(eval("cfg(windows)", "x86_64-pc-windows-msvc"), Ok(true),);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_not_target_os() {
-    assert_eq!(
-        eval(
-            "cfg(not(target_os = \"windows\"))",
-            "x86_64-unknown-linux-gnu"
-        ),
-        Ok(true),
-    );
-}
+    #[test]
+    fn test_windows() {
+        assert_eq!(eval("cfg(windows)", "x86_64-pc-windows-msvc"), Ok(true),);
+    }
 
-#[test]
-fn test_not_target_os_false() {
-    assert_eq!(
-        eval(
-            "cfg(not(target_os = \"windows\"))",
-            "x86_64-pc-windows-msvc"
-        ),
-        Ok(false),
-    );
-}
+    #[test]
+    fn test_not_target_os() {
+        assert_eq!(
+            eval(
+                "cfg(not(target_os = \"windows\"))",
+                "x86_64-unknown-linux-gnu"
+            ),
+            Ok(true),
+        );
+    }
 
-#[test]
-fn test_exact_triple() {
-    assert_eq!(
-        eval("x86_64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"),
-        Ok(true),
-    );
-}
+    #[test]
+    fn test_not_target_os_false() {
+        assert_eq!(
+            eval(
+                "cfg(not(target_os = \"windows\"))",
+                "x86_64-pc-windows-msvc"
+            ),
+            Ok(false),
+        );
+    }
 
-#[test]
-fn test_redox() {
-    assert_eq!(
-        eval(
-            "cfg(any(unix, target_os = \"redox\"))",
-            "x86_64-unknown-linux-gnu"
-        ),
-        Ok(true),
-    );
+    #[test]
+    fn test_exact_triple() {
+        assert_eq!(
+            eval("x86_64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"),
+            Ok(true),
+        );
+    }
+
+    #[test]
+    fn test_redox() {
+        assert_eq!(
+            eval(
+                "cfg(any(unix, target_os = \"redox\"))",
+                "x86_64-unknown-linux-gnu"
+            ),
+            Ok(true),
+        );
+    }
 }
