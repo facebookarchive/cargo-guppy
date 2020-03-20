@@ -57,12 +57,11 @@ where
     where
         G: IntoEdges<NodeId = N, EdgeId = E>,
     {
-        self.stack.pop().map(|(source, target, edge)| {
-            if self.discovered.visit(target) {
-                self.stack.extend(graph.edges(target).map(edge_triple));
-            }
-            (source, target, edge)
-        })
+        let (source, target, edge) = self.stack.pop()?;
+        if self.discovered.visit(target) {
+            self.stack.extend(graph.edges(target).map(edge_triple));
+        }
+        Some((source, target, edge))
     }
 }
 
