@@ -1,14 +1,14 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::parser::parse;
+use crate::parser::{parse, ParseError};
 use crate::types::{Atom, Expr, Target};
 use platforms::{target::OS, Platform};
 use std::{error, fmt};
 
 #[derive(PartialEq)]
 pub enum EvalError {
-    InvalidSpec,
+    InvalidSpec(ParseError),
     TargetNotFound,
     UnknownOption(String),
 }
@@ -16,7 +16,7 @@ pub enum EvalError {
 impl fmt::Display for EvalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            EvalError::InvalidSpec => write!(f, "target spec is invalid failed"),
+            EvalError::InvalidSpec(_) => write!(f, "invalid target spec"),
             EvalError::TargetNotFound => write!(f, "target triple not found in database"),
             EvalError::UnknownOption(ref opt) => write!(f, "target family not recognized: {}", opt),
         }
@@ -29,13 +29,20 @@ impl fmt::Debug for EvalError {
     }
 }
 
-impl error::Error for EvalError {}
+impl error::Error for EvalError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            EvalError::InvalidSpec(err) => Some(err),
+            EvalError::TargetNotFound | EvalError::UnknownOption(_) => None,
+        }
+    }
+}
 
 pub fn eval(spec_or_triple: &str, target: &str) -> Result<bool, EvalError> {
     match platforms::find(target) {
         None => Err(EvalError::TargetNotFound),
         Some(platform) => {
-            let spec = parse(spec_or_triple).map_err(|_| EvalError::InvalidSpec)?;
+            let spec = parse(spec_or_triple).map_err(EvalError::InvalidSpec)?;
             match spec {
                 Target::Triple(ref triple) => Ok(platform.target_triple == triple),
                 Target::Spec(ref expr) => eval_spec(expr, &platform),
