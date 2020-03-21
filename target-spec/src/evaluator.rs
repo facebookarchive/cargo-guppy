@@ -33,7 +33,7 @@ impl error::Error for EvalError {}
 
 pub fn eval(spec_or_triple: &str, target: &str) -> Result<bool, EvalError> {
     match platforms::find(target) {
-        None => return Err(EvalError::TargetNotFound),
+        None => Err(EvalError::TargetNotFound),
         Some(platform) => {
             let spec = parse(spec_or_triple).map_err(|_| EvalError::InvalidSpec)?;
             match spec {

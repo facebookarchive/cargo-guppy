@@ -67,7 +67,7 @@ fn value(input: &str) -> IResult<&str, Atom> {
                 char('"'),
             )),
         ),
-        |s| Atom::Value(s.unwrap_or("".to_string())),
+        |s| Atom::Value(s.unwrap_or_else(|| "".to_string())),
     )(input)
 }
 
