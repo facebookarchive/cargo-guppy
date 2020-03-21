@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["eval",""]]});
+initSidebarItems({"enum":[["EvalError","An error that occurred during target evaluation."]],"fn":[["eval","Evaluates the given spec against the provided target and returns true on a successful match."]],"struct":[["ParseError","An error that occurred while attempting to parse a target specification."]]});

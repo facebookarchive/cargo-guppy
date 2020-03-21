@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/target-spec-ef01addaffbe0ed6/1609fb5/src/parser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parser.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../target_spec/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `target-spec/src/parser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parser.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../target_spec/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -216,22 +216,12 @@
 <span id="216">216</span>
 <span id="217">217</span>
 <span id="218">218</span>
-<span id="219">219</span>
-<span id="220">220</span>
-<span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
-<span id="229">229</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
+<span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
+
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">types</span>::{<span class="ident">Atom</span>, <span class="ident">Expr</span>, <span class="ident">Target</span>};
 <span class="kw">use</span> <span class="ident">nom</span>::{
-    <span class="ident">AsChar</span>,
-    <span class="ident">IResult</span>,
-    <span class="ident">InputTakeAtPosition</span>,
     <span class="ident">branch</span>::<span class="ident">alt</span>,
     <span class="ident">bytes</span>::<span class="ident">complete</span>::{<span class="ident">escaped_transform</span>, <span class="ident">tag</span>},
     <span class="ident">character</span>::<span class="ident">complete</span>::{<span class="ident">char</span>, <span class="ident">none_of</span>, <span class="ident">space0</span>},
@@ -239,12 +229,13 @@
     <span class="ident">error</span>::<span class="ident">ErrorKind</span>,
     <span class="ident">multi</span>::<span class="ident">separated_list</span>,
     <span class="ident">sequence</span>::{<span class="ident">delimited</span>, <span class="ident">preceded</span>, <span class="ident">separated_pair</span>, <span class="ident">terminated</span>},
+    <span class="ident">AsChar</span>, <span class="ident">IResult</span>, <span class="ident">InputTakeAtPosition</span>,
 };
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">error</span>, <span class="ident">fmt</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">types</span>::{<span class="ident">Atom</span>, <span class="ident">Expr</span>, <span class="ident">Target</span>};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ParseError</span>;
+<span class="doccomment">/// An error that occurred while attempting to parse a target specification.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ParseError</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">nom</span>::<span class="prelude-val">Err</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="ident">nom</span>::<span class="ident">error</span>::<span class="ident">ErrorKind</span>)<span class="op">&gt;</span>);
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">ParseError</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
@@ -252,72 +243,34 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">ParseError</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="op">&lt;</span><span class="ident">ParseError</span> <span class="kw">as</span> <span class="ident">fmt</span>::<span class="ident">Display</span><span class="op">&gt;</span>::<span class="ident">fmt</span>(<span class="self">self</span>, <span class="ident">f</span>)
+<span class="kw">impl</span> <span class="ident">error</span>::<span class="ident">Error</span> <span class="kw">for</span> <span class="ident">ParseError</span> {
+    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">error</span>::<span class="ident">Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">error</span>::<span class="ident">Error</span> <span class="kw">for</span> <span class="ident">ParseError</span> {}
-
 <span class="kw">fn</span> <span class="ident">identifier</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">Atom</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">i</span>, <span class="ident">start</span>) <span class="op">=</span> <span class="ident">input</span>.<span class="ident">split_at_position1_complete</span>(<span class="op">|</span><span class="ident">item</span><span class="op">|</span> <span class="op">!</span><span class="ident">item</span>.<span class="ident">is_alpha</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;_&#39;</span>, <span class="ident">ErrorKind</span>::<span class="ident">Alpha</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> (<span class="ident">i</span>, <span class="ident">rest</span>) <span class="op">=</span> <span class="ident">i</span>.<span class="ident">split_at_position_complete</span>(<span class="op">|</span><span class="ident">item</span><span class="op">|</span> {
-        <span class="op">!</span><span class="ident">item</span>.<span class="ident">is_alphanum</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;_&#39;</span>
-    })<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">i</span>, <span class="ident">start</span>) <span class="op">=</span> <span class="ident">input</span>
+        .<span class="ident">split_at_position1_complete</span>(<span class="op">|</span><span class="ident">item</span><span class="op">|</span> <span class="op">!</span><span class="ident">item</span>.<span class="ident">is_alpha</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;_&#39;</span>, <span class="ident">ErrorKind</span>::<span class="ident">Alpha</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">i</span>, <span class="ident">rest</span>) <span class="op">=</span> <span class="ident">i</span>.<span class="ident">split_at_position_complete</span>(<span class="op">|</span><span class="ident">item</span><span class="op">|</span> <span class="op">!</span><span class="ident">item</span>.<span class="ident">is_alphanum</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;_&#39;</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((<span class="ident">i</span>, <span class="ident">Atom</span>::<span class="ident">Ident</span>([<span class="ident">start</span>, <span class="ident">rest</span>].<span class="ident">concat</span>())))
 }
-
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_id</span>() {
-    <span class="macro">assert_eq</span><span class="macro">!</span>(
-        <span class="ident">identifier</span>(<span class="string">&quot;target&quot;</span>),
-        <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;target&quot;</span>.<span class="ident">to_string</span>()))),
-    );
-}
-
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_id_underscore</span>() {
-    <span class="macro">assert_eq</span><span class="macro">!</span>(
-        <span class="ident">identifier</span>(<span class="string">&quot;target_os&quot;</span>),
-        <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;target_os&quot;</span>.<span class="ident">to_string</span>()))),
-    );
-}
-
 
 <span class="kw">fn</span> <span class="ident">value</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">Atom</span><span class="op">&gt;</span> {
     <span class="ident">map</span>(
         <span class="ident">preceded</span>(
             <span class="ident">char</span>(<span class="string">&#39;&quot;&#39;</span>),
-            <span class="ident">cut</span>(
-                <span class="ident">terminated</span>(
-                    <span class="ident">opt</span>(<span class="ident">escaped_transform</span>(
-                        <span class="ident">none_of</span>(<span class="string">&quot;\\\&quot;&quot;</span>),
-                        <span class="string">&#39;\\&#39;</span>,
-                        <span class="ident">alt</span>((
-                            <span class="ident">tag</span>(<span class="string">&quot;\\&quot;</span>),
-                            <span class="ident">tag</span>(<span class="string">&quot;\&quot;&quot;</span>),
-                        )),
-                    )),
-                    <span class="ident">char</span>(<span class="string">&#39;&quot;&#39;</span>),
-                )
-            )
+            <span class="ident">cut</span>(<span class="ident">terminated</span>(
+                <span class="ident">opt</span>(<span class="ident">escaped_transform</span>(
+                    <span class="ident">none_of</span>(<span class="string">&quot;\\\&quot;&quot;</span>),
+                    <span class="string">&#39;\\&#39;</span>,
+                    <span class="ident">alt</span>((<span class="ident">tag</span>(<span class="string">&quot;\\&quot;</span>), <span class="ident">tag</span>(<span class="string">&quot;\&quot;&quot;</span>))),
+                )),
+                <span class="ident">char</span>(<span class="string">&#39;&quot;&#39;</span>),
+            )),
         ),
-        <span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="ident">s</span>.<span class="ident">unwrap_or</span>(<span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>())),
+        <span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="ident">s</span>.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>())),
     )(<span class="ident">input</span>)
-}
-
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_value</span>() {
-    <span class="macro">assert_eq</span><span class="macro">!</span>(
-        <span class="ident">value</span>(<span class="string">&quot;\&quot;bar \\\&quot; foo\&quot;&quot;</span>),
-        <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;bar \&quot; foo&quot;</span>.<span class="ident">to_string</span>()))),
-    );
-}
-
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_empty_value</span>() {
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">value</span>(<span class="string">&quot;\&quot;\&quot;&quot;</span>), <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>()))));
 }
 
 <span class="kw">fn</span> <span class="ident">any</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">Expr</span><span class="op">&gt;</span> {
@@ -326,27 +279,12 @@
             <span class="ident">space0</span>,
             <span class="ident">preceded</span>(
                 <span class="ident">tag</span>(<span class="string">&quot;any&quot;</span>),
-                <span class="ident">delimited</span>(
-                    <span class="ident">char</span>(<span class="string">&#39;(&#39;</span>),
-                    <span class="ident">separated_list</span>(
-                        <span class="ident">char</span>(<span class="string">&#39;,&#39;</span>),
-                        <span class="ident">expression</span>,
-                    ),
-                    <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>),
-                ),
+                <span class="ident">delimited</span>(<span class="ident">char</span>(<span class="string">&#39;(&#39;</span>), <span class="ident">separated_list</span>(<span class="ident">char</span>(<span class="string">&#39;,&#39;</span>), <span class="ident">expression</span>), <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>)),
             ),
             <span class="ident">space0</span>,
         ),
         <span class="ident">Expr</span>::<span class="ident">Any</span>,
     )(<span class="ident">input</span>)
-}
-
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_any</span>() {
-    <span class="macro">assert_eq</span><span class="macro">!</span>(
-        <span class="ident">any</span>(<span class="string">&quot;any(unix, target_os = \&quot;redox\&quot;)&quot;</span>),
-        <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Expr</span>::<span class="ident">Any</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Expr</span>::<span class="ident">TestSet</span>(<span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;unix&quot;</span>.<span class="ident">to_string</span>())), <span class="ident">Expr</span>::<span class="ident">TestEqual</span>((<span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;target_os&quot;</span>.<span class="ident">to_string</span>()), <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;redox&quot;</span>.<span class="ident">to_string</span>())))]))),
-    );
 }
 
 <span class="kw">fn</span> <span class="ident">all</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">Expr</span><span class="op">&gt;</span> {
@@ -355,14 +293,7 @@
             <span class="ident">space0</span>,
             <span class="ident">preceded</span>(
                 <span class="ident">tag</span>(<span class="string">&quot;all&quot;</span>),
-                <span class="ident">delimited</span>(
-                    <span class="ident">char</span>(<span class="string">&#39;(&#39;</span>),
-                    <span class="ident">separated_list</span>(
-                        <span class="ident">char</span>(<span class="string">&#39;,&#39;</span>),
-                        <span class="ident">expression</span>,
-                    ),
-                    <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>),
-                ),
+                <span class="ident">delimited</span>(<span class="ident">char</span>(<span class="string">&#39;(&#39;</span>), <span class="ident">separated_list</span>(<span class="ident">char</span>(<span class="string">&#39;,&#39;</span>), <span class="ident">expression</span>), <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>)),
             ),
             <span class="ident">space0</span>,
         ),
@@ -374,14 +305,7 @@
     <span class="ident">map</span>(
         <span class="ident">delimited</span>(
             <span class="ident">space0</span>,
-            <span class="ident">preceded</span>(
-                <span class="ident">tag</span>(<span class="string">&quot;not&quot;</span>),
-                <span class="ident">delimited</span>(
-                    <span class="ident">char</span>(<span class="string">&#39;(&#39;</span>),
-                    <span class="ident">expression</span>,
-                    <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>),
-                ),
-            ),
+            <span class="ident">preceded</span>(<span class="ident">tag</span>(<span class="string">&quot;not&quot;</span>), <span class="ident">delimited</span>(<span class="ident">char</span>(<span class="string">&#39;(&#39;</span>), <span class="ident">expression</span>, <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>))),
             <span class="ident">space0</span>,
         ),
         <span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Expr</span>::<span class="ident">Not</span>(<span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">e</span>)),
@@ -396,23 +320,11 @@
     <span class="ident">map</span>(
         <span class="ident">delimited</span>(
             <span class="ident">space0</span>,
-            <span class="ident">separated_pair</span>(
-                <span class="ident">identifier</span>,
-                <span class="ident">delimited</span>(<span class="ident">space0</span>, <span class="ident">char</span>(<span class="string">&#39;=&#39;</span>), <span class="ident">space0</span>),
-                <span class="ident">value</span>,
-            ),
+            <span class="ident">separated_pair</span>(<span class="ident">identifier</span>, <span class="ident">delimited</span>(<span class="ident">space0</span>, <span class="ident">char</span>(<span class="string">&#39;=&#39;</span>), <span class="ident">space0</span>), <span class="ident">value</span>),
             <span class="ident">space0</span>,
         ),
         <span class="ident">Expr</span>::<span class="ident">TestEqual</span>,
     )(<span class="ident">input</span>)
-}
-
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_test_equal</span>() {
-    <span class="macro">assert_eq</span><span class="macro">!</span>(
-        <span class="ident">test_equal</span>(<span class="string">&quot;foo = \&quot;bar\&quot;&quot;</span>),
-        <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Expr</span>::<span class="ident">TestEqual</span>((<span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;foo&quot;</span>.<span class="ident">to_string</span>()), <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;bar&quot;</span>.<span class="ident">to_string</span>()))))),
-    );
 }
 
 <span class="kw">fn</span> <span class="ident">expression</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">Expr</span><span class="op">&gt;</span> {
@@ -425,11 +337,9 @@
             <span class="ident">space0</span>,
             <span class="ident">preceded</span>(
                 <span class="ident">tag</span>(<span class="string">&quot;cfg&quot;</span>),
-                <span class="ident">delimited</span>(
-                    <span class="ident">char</span>(<span class="string">&#39;(&#39;</span>),
-                    <span class="ident">expression</span>,
-                    <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>),
-                ),
+                <span class="comment">// This &quot;cut&quot; is here to prevent backtracking and trying out the &quot;triple&quot; parser if</span>
+                <span class="comment">// the initial &quot;cfg&quot; is recognized.</span>
+                <span class="ident">cut</span>(<span class="ident">delimited</span>(<span class="ident">char</span>(<span class="string">&#39;(&#39;</span>), <span class="ident">expression</span>, <span class="ident">char</span>(<span class="string">&#39;)&#39;</span>))),
             ),
             <span class="ident">space0</span>,
         ),
@@ -438,9 +348,8 @@
 }
 
 <span class="kw">fn</span> <span class="ident">triple_string</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
-    <span class="ident">input</span>.<span class="ident">split_at_position1_complete</span>(<span class="op">|</span><span class="ident">item</span><span class="op">|</span> {
-        <span class="op">!</span><span class="ident">item</span>.<span class="ident">is_alphanum</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;_&#39;</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;-&#39;</span>
-    },
+    <span class="ident">input</span>.<span class="ident">split_at_position1_complete</span>(
+        <span class="op">|</span><span class="ident">item</span><span class="op">|</span> <span class="op">!</span><span class="ident">item</span>.<span class="ident">is_alphanum</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;_&#39;</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">item</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;-&#39;</span>,
         <span class="ident">ErrorKind</span>::<span class="ident">AlphaNumeric</span>,
     )
 }
@@ -453,9 +362,78 @@
     <span class="ident">alt</span>((<span class="ident">spec</span>, <span class="ident">triple</span>))(<span class="ident">input</span>)
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Target</span>, <span class="ident">ParseError</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">expr</span>) <span class="op">=</span> <span class="ident">all_consuming</span>(<span class="ident">target</span>)(<span class="ident">input</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {<span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>); <span class="ident">ParseError</span>})<span class="question-mark">?</span>;
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_impl</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Target</span>, <span class="ident">nom</span>::<span class="prelude-val">Err</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">nom</span>::<span class="ident">error</span>::<span class="ident">ErrorKind</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">expr</span>) <span class="op">=</span> <span class="ident">all_consuming</span>(<span class="ident">target</span>)(<span class="ident">input</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(<span class="ident">expr</span>)
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Target</span>, <span class="ident">ParseError</span><span class="op">&gt;</span> {
+    <span class="ident">parse_impl</span>(<span class="ident">input</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">ParseError</span>(<span class="ident">err</span>.<span class="ident">to_owned</span>()))
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_id</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="ident">identifier</span>(<span class="string">&quot;target&quot;</span>),
+            <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;target&quot;</span>.<span class="ident">to_string</span>()))),
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_id_underscore</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="ident">identifier</span>(<span class="string">&quot;target_os&quot;</span>),
+            <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;target_os&quot;</span>.<span class="ident">to_string</span>()))),
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_value</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="ident">value</span>(<span class="string">&quot;\&quot;bar \\\&quot; foo\&quot;&quot;</span>),
+            <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;bar \&quot; foo&quot;</span>.<span class="ident">to_string</span>()))),
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_empty_value</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">value</span>(<span class="string">&quot;\&quot;\&quot;&quot;</span>), <span class="prelude-val">Ok</span>((<span class="string">&quot;&quot;</span>, <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>()))));
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_any</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="ident">any</span>(<span class="string">&quot;any(unix, target_os = \&quot;redox\&quot;)&quot;</span>),
+            <span class="prelude-val">Ok</span>((
+                <span class="string">&quot;&quot;</span>,
+                <span class="ident">Expr</span>::<span class="ident">Any</span>(<span class="macro">vec</span><span class="macro">!</span>[
+                    <span class="ident">Expr</span>::<span class="ident">TestSet</span>(<span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;unix&quot;</span>.<span class="ident">to_string</span>())),
+                    <span class="ident">Expr</span>::<span class="ident">TestEqual</span>((
+                        <span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;target_os&quot;</span>.<span class="ident">to_string</span>()),
+                        <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;redox&quot;</span>.<span class="ident">to_string</span>())
+                    ))
+                ])
+            )),
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_test_equal</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="ident">test_equal</span>(<span class="string">&quot;foo = \&quot;bar\&quot;&quot;</span>),
+            <span class="prelude-val">Ok</span>((
+                <span class="string">&quot;&quot;</span>,
+                <span class="ident">Expr</span>::<span class="ident">TestEqual</span>((
+                    <span class="ident">Atom</span>::<span class="ident">Ident</span>(<span class="string">&quot;foo&quot;</span>.<span class="ident">to_string</span>()),
+                    <span class="ident">Atom</span>::<span class="ident">Value</span>(<span class="string">&quot;bar&quot;</span>.<span class="ident">to_string</span>())
+                ))
+            )),
+        );
+    }
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "target_spec";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
