@@ -6,10 +6,14 @@ use crate::types::{Atom, Expr, Target};
 use platforms::{target::OS, Platform};
 use std::{error, fmt};
 
+/// An error that occurred during target evaluation.
 #[derive(PartialEq)]
 pub enum EvalError {
+    /// An invalid target was specified.
     InvalidSpec(ParseError),
+    /// The target triple was not found in the database.
     TargetNotFound,
+    /// The target family wasn't recognized.
     UnknownOption(String),
 }
 
@@ -38,6 +42,9 @@ impl error::Error for EvalError {
     }
 }
 
+/// Evaluates the given spec against the provided target and returns true on a successful match.
+///
+/// For more information, see the crate-level documentation.
 pub fn eval(spec_or_triple: &str, target: &str) -> Result<bool, EvalError> {
     match platforms::find(target) {
         None => Err(EvalError::TargetNotFound),
