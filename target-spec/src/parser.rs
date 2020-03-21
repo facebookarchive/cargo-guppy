@@ -14,6 +14,7 @@ use nom::{
 };
 use std::{error, fmt};
 
+/// An error that occurred while attempting to parse a target specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ParseError(pub(crate) nom::Err<(String, nom::error::ErrorKind)>);
 
