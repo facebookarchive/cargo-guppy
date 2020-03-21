@@ -4,6 +4,7 @@
 
 This repository contains the source code for:
 * [`guppy`](guppy): a library for performing queries on Cargo dependency graphs [![guppy on crates.io](https://img.shields.io/crates/v/guppy)](https://crates.io/crates/guppy) [![Documentation (latest release)](https://docs.rs/guppy/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://calibra.github.io/cargo-guppy/guppy/)
+* [`target-spec`](target-spec): an evaluator for `Cargo.toml` target specifications [![target-spec on crates.io](https://img.shields.io/crates/v/target-spec)](https://crates.io/crates/target-spec) [![Documentation (latest release)](https://docs.rs/target-spec/badge.svg)](https://docs.rs/target-spec/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://calibra.github.io/cargo-guppy/target_spec/)
 * [`cargo-guppy`](cargo-guppy): a command-line frontend for the `guppy` library
 
 The code in this repository is in a **pre-release** state and is under active development.
