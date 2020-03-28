@@ -135,7 +135,10 @@ impl<'g> FeatureGraphBuildState<'g> {
                             }
                         }
                     })
+                    // The filter_map above holds an &mut reference to self, which is why it needs to be
+                    // collected.
                     .collect();
+
                 // Don't create a map to the base 'from' node since it is already created in
                 // add_nodes.
                 self.add_edges(from_node, to_nodes, FeatureEdge::FeatureDependency);
