@@ -444,7 +444,7 @@ impl FeatureNode {
 }
 
 /// Information about why a feature depends on another feature.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug)]
 pub(in crate::graph) enum FeatureEdge {
     /// This edge is from a feature to its base package.
     FeatureToBase,
