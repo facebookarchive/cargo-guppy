@@ -320,7 +320,9 @@ fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
             edge.normal()
                 .and_then(|meta| meta.target())
                 .and_then(|edge_target| {
-                    let res = target_spec::eval(edge_target, target).unwrap_or(true);
+                    let res = target_spec::eval(edge_target, target)
+                        .unwrap_or(Some(true))
+                        .unwrap_or(true);
                     Some(res)
                 })
                 .unwrap_or(true)
