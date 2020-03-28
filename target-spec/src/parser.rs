@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::types::{Atom, Expr, Target};
+use crate::types::{Atom, Expr, TargetEnum};
 use nom::{
     branch::alt,
     bytes::complete::{escaped_transform, tag},
@@ -112,7 +112,7 @@ fn expression(input: &str) -> IResult<&str, Expr> {
     alt((any, all, not, test_equal, test_set))(input)
 }
 
-fn spec(input: &str) -> IResult<&str, Target> {
+fn spec(input: &str) -> IResult<&str, TargetEnum> {
     map(
         delimited(
             space0,
@@ -124,7 +124,7 @@ fn spec(input: &str) -> IResult<&str, Target> {
             ),
             space0,
         ),
-        Target::Spec,
+        TargetEnum::Spec,
     )(input)
 }
 
@@ -135,21 +135,19 @@ fn triple_string(input: &str) -> IResult<&str, &str> {
     )
 }
 
-pub fn triple(input: &str) -> IResult<&str, Target> {
-    map(triple_string, |s| Target::Triple(s.to_string()))(input)
+fn triple(input: &str) -> IResult<&str, TargetEnum> {
+    map(triple_string, |s| TargetEnum::Triple(s.to_string()))(input)
 }
 
-pub fn target(input: &str) -> IResult<&str, Target> {
+fn target(input: &str) -> IResult<&str, TargetEnum> {
     alt((spec, triple))(input)
 }
 
-pub fn parse_impl(input: &str) -> Result<Target, nom::Err<(&str, nom::error::ErrorKind)>> {
+pub(crate) fn parse_impl(
+    input: &str,
+) -> Result<TargetEnum, nom::Err<(&str, nom::error::ErrorKind)>> {
     let (_, expr) = all_consuming(target)(input)?;
     Ok(expr)
-}
-
-pub fn parse(input: &str) -> Result<Target, ParseError> {
-    parse_impl(input).map_err(|err| ParseError(err.to_owned()))
 }
 
 #[cfg(test)]
