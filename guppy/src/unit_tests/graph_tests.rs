@@ -89,7 +89,7 @@ mod small {
 
         let feature_graph = graph.feature_graph();
         assert_eq!(feature_graph.feature_count(), 492, "feature count");
-        assert_eq!(feature_graph.link_count(), 609, "link count");
+        assert_eq!(feature_graph.link_count(), 608, "link count");
         let root_ids: Vec<_> = feature_graph
             .select_workspace(all_filter())
             .into_root_ids(DependencyDirection::Forward)
@@ -143,6 +143,14 @@ mod small {
     }
 
     proptest_suite!(metadata_cycle2);
+
+    #[test]
+    fn metadata_targets1() {
+        let metadata_targets1 = Fixture::metadata_targets1();
+        metadata_targets1.verify();
+    }
+
+    proptest_suite!(metadata_targets1);
 }
 
 mod large {

@@ -5,10 +5,15 @@ use crate::errors::{FeatureBuildStage, FeatureGraphWarning};
 use crate::graph::feature::{
     FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
-use crate::graph::{DependencyLink, FeatureIx, PackageGraph, PackageMetadata};
+use crate::graph::{
+    DependencyEdge, DependencyLink, DependencyReqImpl, FeatureIx, PackageGraph, PackageMetadata,
+    TargetPredicate,
+};
+use cargo_metadata::DependencyKind;
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use target_spec::TargetSpec;
 
 #[derive(Debug)]
 pub(super) struct FeatureGraphBuildState<'g> {
@@ -141,7 +146,12 @@ impl<'g> FeatureGraphBuildState<'g> {
 
                 // Don't create a map to the base 'from' node since it is already created in
                 // add_nodes.
-                self.add_edges(from_node, to_nodes, FeatureEdge::FeatureDependency);
+                self.add_edges(
+                    from_node,
+                    to_nodes
+                        .into_iter()
+                        .map(|to_node| (to_node, FeatureEdge::FeatureDependency)),
+                );
             })
     }
 
@@ -181,59 +191,17 @@ impl<'g> FeatureGraphBuildState<'g> {
         // be built with "a", but as it turns out Cargo actually *unifies* the features, such
         // that foo is built with both "a" and "b".
         //
-        // There's one nuance: Cargo doesn't consider dev-dependencies of non-workspace
-        // packages. So if 'from' is a workspace package, look at normal, dev and build
-        // dependencies. If it isn't, look at normal and build dependencies.
+        // Nuances
+        // -------
+        //
+        // Cargo doesn't consider dev-dependencies of non-workspace packages. So if 'from' is a
+        // workspace package, look at normal, dev and build dependencies. If it isn't, look at
+        // normal and build dependencies.
         //
         // XXX double check the assertion that Cargo doesn't consider dev-dependencies of
         // non-workspace crates.
-        let unified_metadata =
-            edge.normal()
-                .into_iter()
-                .chain(edge.build())
-                .chain(if from.in_workspace() {
-                    edge.dev()
-                } else {
-                    None
-                });
-
-        let mut unified_features = HashSet::new();
-        for metadata in unified_metadata {
-            let default_idx = match (
-                metadata.uses_default_features(),
-                to.get_feature_idx("default"),
-            ) {
-                (true, Some(default_idx)) => Some(default_idx),
-                // Packages without an explicit feature named "default" get pointed to the base.
-                _ => None,
-            };
-
-            let feature_idxs =
-                default_idx
-                    .into_iter()
-                    .chain(metadata.features().iter().filter_map(|to_feature| {
-                        match to.get_feature_idx(to_feature) {
-                            Some(feature_idx) => Some(feature_idx),
-                            None => {
-                                // The destination feature is missing -- this is accepted by cargo
-                                // in some circumstances, so use a warning rather than an error.
-                                self.warnings.push(FeatureGraphWarning::MissingFeature {
-                                    stage: FeatureBuildStage::AddDependencyEdges {
-                                        package_id: from.id().clone(),
-                                        dep_name: edge.dep_name().to_string(),
-                                    },
-                                    package_id: to.id().clone(),
-                                    feature_name: to_feature.clone(),
-                                });
-                                None
-                            }
-                        }
-                    }));
-            unified_features.extend(feature_idxs);
-        }
-
-        // What feature unification does not impact, though, is whether the dependency is
-        // actually included in the build or not. Again, consider:
+        //
+        // Also, feature unification is impacted by whether the dependency is optional.
         //
         // [dependencies]
         // foo = { version = "1", features = ["a"] }
@@ -242,49 +210,55 @@ impl<'g> FeatureGraphBuildState<'g> {
         // foo = { version = "1", optional = true, features = ["b"] }
         //
         // This will include 'foo' as a normal dependency but *not* as a build dependency by
-        // default. However, the normal dependency will include both features "a" and "b".
+        // default.
+        // * Without '--features foo', the `foo` dependency will be built with "a".
+        // * With '--features foo', `foo` will be both a normal and a build dependency, with
+        //   features "a" and "b" in both instances.
         //
         // This means that up to two separate edges have to be represented:
-        // * a 'mandatory edge', which will be from the base node for 'from' to the feature
-        //   nodes for each feature in 'to'.
+        // * a 'mandatory edge', which will be from the base node for 'from' to the feature nodes
+        //   for each mandatory feature in 'to'.
         // * an 'optional edge', which will be from the feature node (from, dep_name) to the
-        //   feature nodes for each feature in 'to'.
+        //   feature nodes for each optional feature in 'to'. This edge is only added if at least
+        //   one line is optional.
 
-        fn extract<T: Eq>(x: Option<T>, expected_val: T, track: &mut bool) -> bool {
-            match &x {
-                Some(val) if val == &expected_val => {
-                    *track = true;
-                    true
-                }
-                _ => false,
-            }
+        let unified_metadata = edge
+            .normal()
+            .map(|metadata| (DependencyKind::Normal, metadata))
+            .into_iter()
+            .chain(
+                edge.build()
+                    .map(|metadata| (DependencyKind::Build, metadata)),
+            )
+            .chain(if from.in_workspace() {
+                edge.dev()
+                    .map(|metadata| (DependencyKind::Development, metadata))
+            } else {
+                None
+            });
+
+        let mut mandatory_req = FeatureReq::new(from, to, edge);
+        let mut optional_req = FeatureReq::new(from, to, edge);
+        for (dep_kind, metadata) in unified_metadata {
+            mandatory_req.add_features(
+                dep_kind,
+                &metadata.dependency_req.mandatory,
+                &mut self.warnings,
+            );
+            optional_req.add_features(
+                dep_kind,
+                &metadata.dependency_req.optional,
+                &mut self.warnings,
+            );
         }
 
-        // None = no edge, false = mandatory, true = optional
-        let normal = edge.normal().map(|metadata| metadata.optional());
-        let build = edge.build().map(|metadata| metadata.optional());
-        // None = no edge, () = mandatory (dev dependencies cannot be optional)
-        let dev = edge.dev().map(|_| ());
+        // Add the mandatory edges (base -> features).
+        self.add_edges(FeatureNode::base(from.package_ix), mandatory_req.finish());
 
-        // These variables track whether the edges should actually be added to the graph -- an edge
-        // where everything's set to false won't be.
-        let mut add_optional = false;
-        let mut add_mandatory = false;
-
-        let optional_edge = FeatureEdge::Dependency {
-            normal: extract(normal, true, &mut add_optional),
-            build: extract(build, true, &mut add_optional),
-            dev: false,
-        };
-        let mandatory_edge = FeatureEdge::Dependency {
-            normal: extract(normal, false, &mut add_mandatory),
-            build: extract(build, false, &mut add_mandatory),
-            dev: extract(dev, (), &mut add_mandatory),
-        };
-
-        if add_optional {
-            // If add_optional is true, the dep name would have been added as an optional dependency
-            // node to the package metadata.
+        if !optional_req.is_empty() {
+            // This means that there is at least one instance of this dependency with optional =
+            // true. The dep name should have been added as an optional dependency node to the
+            // package metadata.
             let from_node = FeatureNode::new(
                 from.package_ix,
                 from.get_feature_idx(edge.dep_name()).unwrap_or_else(|| {
@@ -295,15 +269,7 @@ impl<'g> FeatureGraphBuildState<'g> {
                     );
                 }),
             );
-            let to_nodes =
-                FeatureNode::base_and_all_features(to.package_ix, unified_features.iter().copied());
-            self.add_edges(from_node, to_nodes, optional_edge);
-        }
-        if add_mandatory {
-            let from_node = FeatureNode::base(from.package_ix);
-            let to_nodes =
-                FeatureNode::base_and_all_features(to.package_ix, unified_features.iter().copied());
-            self.add_edges(from_node, to_nodes, mandatory_edge);
+            self.add_edges(from_node, optional_req.finish());
         }
     }
 
@@ -326,8 +292,7 @@ impl<'g> FeatureGraphBuildState<'g> {
     fn add_edges(
         &mut self,
         from_node: FeatureNode,
-        to_nodes: impl IntoIterator<Item = FeatureNode>,
-        edge: FeatureEdge,
+        to_nodes_edges: impl IntoIterator<Item = (FeatureNode, FeatureEdge)>,
     ) {
         // The from node should always be present because it is a known node.
         let from_ix = self.lookup_node(&from_node).unwrap_or_else(|| {
@@ -336,11 +301,11 @@ impl<'g> FeatureGraphBuildState<'g> {
                 from_node
             );
         });
-        to_nodes.into_iter().for_each(|to_node| {
+        to_nodes_edges.into_iter().for_each(|(to_node, edge)| {
             let to_ix = self.lookup_node(&to_node).unwrap_or_else(|| {
                 panic!("while adding feature edges, missing 'to': {:?}", to_node)
             });
-            self.graph.update_edge(from_ix, to_ix, edge.clone());
+            self.graph.update_edge(from_ix, to_ix, edge);
         })
     }
 
@@ -354,6 +319,131 @@ impl<'g> FeatureGraphBuildState<'g> {
             map: self.map,
             warnings: self.warnings,
             sccs: OnceCell::new(),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct FeatureReq<'g> {
+    from: &'g PackageMetadata,
+    to: &'g PackageMetadata,
+    edge: &'g DependencyEdge,
+    to_default_idx: Option<usize>,
+    features: HashMap<Option<usize>, DependencyBuildState>,
+}
+
+impl<'g> FeatureReq<'g> {
+    fn new(from: &'g PackageMetadata, to: &'g PackageMetadata, edge: &'g DependencyEdge) -> Self {
+        Self {
+            from,
+            to,
+            edge,
+            to_default_idx: to.get_feature_idx("default"),
+            features: HashMap::new(),
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        // add_features below is guaranteed to add at least one element to the hashmap (to the base
+        // feature) if req.target_features is non-empty.
+        self.features.is_empty()
+    }
+
+    fn add_features(
+        &mut self,
+        dep_kind: DependencyKind,
+        req: &DependencyReqImpl,
+        warnings: &mut Vec<FeatureGraphWarning>,
+    ) {
+        if let (Some(default_idx), false) =
+            (self.to_default_idx, req.default_features_if.is_never())
+        {
+            // Add all the conditions for the default feature to the default predicate.
+            self.features
+                .entry(Some(default_idx))
+                .or_default()
+                .add_predicate(dep_kind, &req.default_features_if);
+        } else {
+            // Packages without an explicit feature named "default" get pointed to the base. Whether
+            // default features are enabled or not becomes irrelevant in that case.
+        }
+
+        for (target_spec, features) in &req.target_features {
+            // Base feature.
+            self.features
+                .entry(None)
+                .or_default()
+                .add_spec(dep_kind, target_spec.as_ref());
+
+            for to_feature in features {
+                match self.to.get_feature_idx(to_feature) {
+                    Some(feature_idx) => {
+                        self.features
+                            .entry(Some(feature_idx))
+                            .or_default()
+                            .add_spec(dep_kind, target_spec.as_ref());
+                    }
+                    None => {
+                        // The destination feature is missing -- this is accepted by cargo
+                        // in some circumstances, so use a warning rather than an error.
+                        warnings.push(FeatureGraphWarning::MissingFeature {
+                            stage: FeatureBuildStage::AddDependencyEdges {
+                                package_id: self.from.id().clone(),
+                                dep_name: self.edge.dep_name().to_string(),
+                            },
+                            package_id: self.to.id().clone(),
+                            feature_name: to_feature.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    fn finish(self) -> impl Iterator<Item = (FeatureNode, FeatureEdge)> {
+        let package_ix = self.to.package_ix;
+        self.features
+            .into_iter()
+            .map(move |(feature_idx, build_state)| {
+                (
+                    FeatureNode::new_opt(package_ix, feature_idx),
+                    build_state.finish(),
+                )
+            })
+    }
+}
+
+#[derive(Debug, Default)]
+struct DependencyBuildState {
+    normal: TargetPredicate,
+    build: TargetPredicate,
+    dev: TargetPredicate,
+}
+
+impl DependencyBuildState {
+    fn add_predicate(&mut self, dep_kind: DependencyKind, pred: &TargetPredicate) {
+        match dep_kind {
+            DependencyKind::Normal => self.normal.extend(pred),
+            DependencyKind::Build => self.build.extend(pred),
+            DependencyKind::Development => self.dev.extend(pred),
+            _ => panic!("unknown dependency kind"),
+        }
+    }
+
+    fn add_spec(&mut self, dep_kind: DependencyKind, spec: Option<&TargetSpec>) {
+        match dep_kind {
+            DependencyKind::Normal => self.normal.add_spec(spec),
+            DependencyKind::Build => self.build.add_spec(spec),
+            DependencyKind::Development => self.dev.add_spec(spec),
+            _ => panic!("unknown dependency kind"),
+        }
+    }
+
+    fn finish(self) -> FeatureEdge {
+        FeatureEdge::Dependency {
+            normal: self.normal,
+            build: self.build,
+            dev: self.dev,
         }
     }
 }
