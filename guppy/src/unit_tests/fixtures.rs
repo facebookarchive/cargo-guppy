@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::errors::FeatureBuildStage;
-use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, Workspace};
+use crate::graph::{
+    kind_str, DependencyDirection, DependencyEdge, EnabledStatus, PackageGraph, PackageMetadata,
+    UnknownStatus, Workspace,
+};
 use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
     assert_transitive_deps_internal,
 };
-use crate::{errors::FeatureGraphWarning, PackageId};
+use crate::{errors::FeatureGraphWarning, DependencyKind, PackageId, Platform};
 use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
+use target_spec::TargetFeatures;
 
 // Metadata along with interesting crate names.
 pub(crate) static METADATA1: &str = include_str!("../../fixtures/small/metadata1.json");
@@ -57,6 +61,21 @@ pub(crate) static METADATA_CYCLE2_LOWER_A: &str =
     "lower-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-a)";
 pub(crate) static METADATA_CYCLE2_LOWER_B: &str =
     "lower-b 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-b)";
+
+pub(crate) static METADATA_TARGETS1: &str =
+    include_str!("../../fixtures/small/metadata_targets1.json");
+pub(crate) static METADATA_TARGETS1_TESTCRATE: &str =
+    "testcrate-targets 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-targets)";
+pub(crate) static METADATA_TARGETS1_LAZY_STATIC_1: &str =
+    "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_TARGETS1_LAZY_STATIC_02: &str =
+    "lazy_static 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_TARGETS1_LAZY_STATIC_01: &str =
+    "lazy_static 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_TARGETS1_BYTES: &str =
+    "bytes 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)";
+pub(crate) static METADATA_TARGETS1_DEP_A: &str =
+    "dep-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/dep-a)";
 
 pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/large/metadata_libra.json");
 pub(crate) static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
@@ -183,6 +202,9 @@ impl Fixture {
             }
         }
 
+        self.details
+            .assert_link_details(&self.graph, "link details");
+
         // Tests for the feature graph.
         self.details
             .assert_feature_graph_warnings(&self.graph, "feature graph warnings");
@@ -225,6 +247,13 @@ impl Fixture {
         }
     }
 
+    pub(crate) fn metadata_targets1() -> Self {
+        Self {
+            graph: Self::parse_graph(METADATA_TARGETS1),
+            details: FixtureDetails::metadata_targets1(),
+        }
+    }
+
     pub(crate) fn metadata_libra() -> Self {
         Self {
             graph: Self::parse_graph(METADATA_LIBRA),
@@ -257,6 +286,7 @@ impl Fixture {
 pub(crate) struct FixtureDetails {
     workspace_members: Option<BTreeMap<PathBuf, PackageId>>,
     package_details: HashMap<PackageId, PackageDetails>,
+    link_details: HashMap<(PackageId, PackageId), LinkDetails>,
     feature_graph_warnings: Vec<FeatureGraphWarning>,
     cycles: Vec<Vec<PackageId>>,
 }
@@ -266,6 +296,7 @@ impl FixtureDetails {
         Self {
             workspace_members: None,
             package_details,
+            link_details: HashMap::new(),
             feature_graph_warnings: vec![],
             cycles: vec![],
         }
@@ -281,6 +312,14 @@ impl FixtureDetails {
                 .map(|(path, id)| (path.into(), package_id(id)))
                 .collect(),
         );
+        self
+    }
+
+    pub(crate) fn with_link_details<'a>(
+        mut self,
+        link_details: HashMap<(PackageId, PackageId), LinkDetails>,
+    ) -> Self {
+        self.link_details = link_details;
         self
     }
 
@@ -413,6 +452,36 @@ impl FixtureDetails {
         )
     }
 
+    // ---
+    // Links
+    // ---
+
+    pub(crate) fn assert_link_details(&self, graph: &PackageGraph, msg: &str) {
+        for ((from, to), details) in &self.link_details {
+            let mut links: Vec<_> = graph
+                .dep_links(from)
+                .unwrap_or_else(|| panic!("{}: known package ID '{}' should be valid", msg, from))
+                .filter(|link| link.to.id() == to)
+                .collect();
+            assert_eq!(
+                links.len(),
+                1,
+                "{}: exactly 1 link between '{}' and '{}'",
+                msg,
+                from,
+                to
+            );
+
+            let link = links.pop().unwrap();
+            let msg = format!("{}: {} -> {}", msg, from, to);
+            details.assert_metadata(link.edge, &msg);
+        }
+    }
+
+    // ---
+    // Features
+    // ---
+
     pub(crate) fn has_named_features(&self, id: &PackageId) -> bool {
         self.package_details[id].named_features.is_some()
     }
@@ -428,6 +497,16 @@ impl FixtureDetails {
         assert_eq!(expected, &actual, "{}", msg);
     }
 
+    pub(crate) fn assert_feature_graph_warnings(&self, graph: &PackageGraph, msg: &str) {
+        let mut actual: Vec<_> = graph.feature_graph().build_warnings().to_vec();
+        actual.sort();
+        assert_eq!(&self.feature_graph_warnings, &actual, "{}", msg);
+    }
+
+    // ---
+    // Cycles
+    // ---
+
     pub(crate) fn assert_cycles(&self, graph: &PackageGraph, msg: &str) {
         let mut actual: Vec<_> = graph
             .cycles()
@@ -442,12 +521,6 @@ impl FixtureDetails {
         actual.sort();
 
         assert_eq!(&self.cycles, &actual, "{}", msg);
-    }
-
-    pub(crate) fn assert_feature_graph_warnings(&self, graph: &PackageGraph, msg: &str) {
-        let mut actual: Vec<_> = graph.feature_graph().build_warnings().to_vec();
-        actual.sort();
-        assert_eq!(&self.feature_graph_warnings, &actual, "{}", msg);
     }
 
     // Specific fixtures follow.
@@ -735,6 +808,294 @@ impl FixtureDetails {
                 vec![METADATA_CYCLE2_UPPER_A, METADATA_CYCLE2_UPPER_B],
                 vec![METADATA_CYCLE2_LOWER_A, METADATA_CYCLE2_LOWER_B],
             ])
+    }
+
+    pub(crate) fn metadata_targets1() -> Self {
+        // In the testcrate:
+        //
+        // ```
+        // [dependencies]
+        // lazy_static = "1"
+        // bytes = { version = "0.5", default-features = false, features = ["serde"] }
+        // dep-a = { path = "../dep-a", optional = true }
+        //
+        // [target.'cfg(not(windows))'.dependencies]
+        // lazy_static = "0.2"
+        // dep-a = { path = "../dep-a", features = ["foo"] }
+        //
+        // [target.'cfg(windows)'.dev-dependencies]
+        // lazy_static = "0.1"
+        //
+        // [target.'cfg(target_arch = "x86")'.dependencies]
+        // bytes = { version = "=0.5.3", optional = false }
+        // dep-a = { path = "../dep-a", features = ["bar"] }
+        //
+        // [target.x86_64-unknown-linux-gnu.build-dependencies]
+        // bytes = { version = "0.5.2", optional = true, default-features = false, features = ["std"] }
+        //
+        // # Platform-specific dev-dependencies.
+        //
+        // [target.'cfg(any(target_feature = "sse2", target_feature = "atomics"))'.dev-dependencies]
+        // dep-a = { path = "../dep-a", default-features = false, features = ["baz"] }
+        //
+        // [target.'cfg(all(unix, not(target_feature = "sse")))'.dev-dependencies]
+        // dep-a = { path = "../dep-a" }
+        //
+        // [target.'cfg(any(unix, target_feature = "sse"))'.dev-dependencies]
+        // dep-a = { path = "../dep-a", default-features = false, features = ["quux"] }
+        //
+        // # Platform-specific build dependencies.
+        //
+        // [target.'cfg(target_feature = "sse")'.build-dependencies]
+        // dep-a = { path = "../dep-a", default-features = false, features = ["foo"] }
+        //
+        // # any -- evaluates to true for unix.
+        // [target.'cfg(any(unix, target_feature = "sse"))'.build-dependencies]
+        // dep-a = { path = "../dep-a", optional = true, default-features = true }
+        //
+        // # all -- evaluates to unknown on unixes if the target features are unknown.
+        // # Evaluates to false on Windows whether target features are known or not.
+        // [target.'cfg(all(unix, target_feature = "sse"))'.build-dependencies]
+        // dep-a = { path = "../dep-a", optional = true, default-features = false, features = ["bar"] }
+        // ```
+        let mut details = HashMap::new();
+
+        PackageDetails::new(
+            METADATA_TARGETS1_TESTCRATE,
+            "testcrate-targets",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_deps(vec![
+            ("lazy_static", METADATA_TARGETS1_LAZY_STATIC_1),
+            ("lazy_static", METADATA_TARGETS1_LAZY_STATIC_02),
+            ("lazy_static", METADATA_TARGETS1_LAZY_STATIC_01),
+            ("bytes", METADATA_TARGETS1_BYTES),
+            ("dep-a", METADATA_TARGETS1_DEP_A),
+        ])
+        .insert_into(&mut details);
+
+        let x86_64_linux =
+            Platform::new("x86_64-unknown-linux-gnu", TargetFeatures::Unknown).unwrap();
+        let i686_windows = Platform::new(
+            "i686-pc-windows-msvc",
+            TargetFeatures::features(&["sse", "sse2"]),
+        )
+        .unwrap();
+        let x86_64_windows =
+            Platform::new("x86_64-pc-windows-msvc", TargetFeatures::Unknown).unwrap();
+
+        let mut link_details = HashMap::new();
+
+        // testcrate -> lazy_static 1.
+        LinkDetails::new(
+            package_id(METADATA_TARGETS1_TESTCRATE),
+            package_id(METADATA_TARGETS1_LAZY_STATIC_1),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            x86_64_linux.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            i686_windows.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+        )
+        .insert_into(&mut link_details);
+
+        // testcrate -> lazy_static 0.2.
+        // Included on not-Windows.
+        LinkDetails::new(
+            package_id(METADATA_TARGETS1_TESTCRATE),
+            package_id(METADATA_TARGETS1_LAZY_STATIC_02),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            x86_64_linux.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            i686_windows.clone(),
+            PlatformStatus::new(EnabledStatus::Never, EnabledStatus::Never),
+        )
+        .insert_into(&mut link_details);
+
+        // testcrate -> lazy_static 0.1.
+        // Included as a dev-dependency on Windows.
+        LinkDetails::new(
+            package_id(METADATA_TARGETS1_TESTCRATE),
+            package_id(METADATA_TARGETS1_LAZY_STATIC_01),
+        )
+        .with_platform_status(
+            DependencyKind::Development,
+            x86_64_linux.clone(),
+            PlatformStatus::new(EnabledStatus::Never, EnabledStatus::Never),
+        )
+        .with_platform_status(
+            DependencyKind::Development,
+            i686_windows.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+        )
+        .insert_into(&mut link_details);
+
+        // testcrate -> bytes.
+        // As a normal dependency, this is always built but default-features varies.
+        // As a build dependency, it is only present on Linux.
+        LinkDetails::new(
+            package_id(METADATA_TARGETS1_TESTCRATE),
+            package_id(METADATA_TARGETS1_BYTES),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            x86_64_linux.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Never)
+                .with_feature_status("serde", EnabledStatus::Always)
+                .with_feature_status("std", EnabledStatus::Never),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            i686_windows.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always)
+                .with_feature_status("serde", EnabledStatus::Always)
+                .with_feature_status("std", EnabledStatus::Never),
+        )
+        .with_features(DependencyKind::Normal, vec!["serde"])
+        .with_platform_status(
+            DependencyKind::Build,
+            x86_64_linux.clone(),
+            PlatformStatus::new(EnabledStatus::Optional, EnabledStatus::Never)
+                .with_feature_status("serde", EnabledStatus::Never)
+                .with_feature_status("std", EnabledStatus::Optional),
+        )
+        .with_platform_status(
+            DependencyKind::Build,
+            i686_windows.clone(),
+            PlatformStatus::new(EnabledStatus::Never, EnabledStatus::Never)
+                .with_feature_status("serde", EnabledStatus::Never)
+                .with_feature_status("std", EnabledStatus::Never),
+        )
+        .with_features(DependencyKind::Build, vec!["std"])
+        .insert_into(&mut link_details);
+
+        // testcrate -> dep-a.
+        // As a normal dependency, this is optionally built by default, but on not-Windows or on x86
+        // it is mandatory.
+        // As a dev dependency, it is present if sse2 or atomics are turned on.
+        LinkDetails::new(
+            package_id(METADATA_TARGETS1_TESTCRATE),
+            package_id(METADATA_TARGETS1_DEP_A),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            x86_64_linux.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always)
+                .with_feature_status("foo", EnabledStatus::Always)
+                .with_feature_status("bar", EnabledStatus::Never)
+                .with_feature_status("baz", EnabledStatus::Never)
+                .with_feature_status("quux", EnabledStatus::Never),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            i686_windows.clone(),
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always)
+                .with_feature_status("foo", EnabledStatus::Never)
+                .with_feature_status("bar", EnabledStatus::Always)
+                .with_feature_status("baz", EnabledStatus::Never)
+                .with_feature_status("quux", EnabledStatus::Never),
+        )
+        .with_platform_status(
+            DependencyKind::Normal,
+            x86_64_windows.clone(),
+            PlatformStatus::new(EnabledStatus::Optional, EnabledStatus::Optional)
+                .with_feature_status("foo", EnabledStatus::Never)
+                .with_feature_status("bar", EnabledStatus::Never)
+                .with_feature_status("baz", EnabledStatus::Never)
+                .with_feature_status("quux", EnabledStatus::Never),
+        )
+        .with_platform_status(
+            DependencyKind::Development,
+            x86_64_linux.clone(),
+            // x86_64_linux uses TargetFeature::Unknown.
+            PlatformStatus::new(
+                EnabledStatus::Always,
+                EnabledStatus::Unknown(UnknownStatus::Unknown),
+            )
+            .with_feature_status("foo", EnabledStatus::Never)
+            .with_feature_status("bar", EnabledStatus::Never)
+            .with_feature_status("baz", EnabledStatus::Unknown(UnknownStatus::Unknown))
+            .with_feature_status("quux", EnabledStatus::Always),
+        )
+        .with_platform_status(
+            DependencyKind::Development,
+            i686_windows.clone(),
+            // i686_windows turns on sse and sse2.
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Never)
+                .with_feature_status("foo", EnabledStatus::Never)
+                .with_feature_status("bar", EnabledStatus::Never)
+                .with_feature_status("baz", EnabledStatus::Always)
+                .with_feature_status("quux", EnabledStatus::Always),
+        )
+        .with_platform_status(
+            DependencyKind::Development,
+            x86_64_windows.clone(),
+            // x86_64_windows uses TargetFeatures::Unknown.
+            PlatformStatus::new(
+                EnabledStatus::Unknown(UnknownStatus::Unknown),
+                EnabledStatus::Never,
+            )
+            .with_feature_status("foo", EnabledStatus::Never)
+            .with_feature_status("bar", EnabledStatus::Never)
+            .with_feature_status("baz", EnabledStatus::Unknown(UnknownStatus::Unknown))
+            .with_feature_status("quux", EnabledStatus::Unknown(UnknownStatus::Unknown)),
+        )
+        .with_platform_status(
+            DependencyKind::Build,
+            x86_64_linux.clone(),
+            // x86_64_linux uses TargetFeature::Unknown.
+            PlatformStatus::new(
+                EnabledStatus::Unknown(UnknownStatus::OptionalPresent),
+                EnabledStatus::Optional,
+            )
+            .with_feature_status("foo", EnabledStatus::Unknown(UnknownStatus::Unknown))
+            .with_feature_status(
+                "bar",
+                EnabledStatus::Unknown(UnknownStatus::OptionalUnknown),
+            )
+            .with_feature_status("baz", EnabledStatus::Never)
+            .with_feature_status("quux", EnabledStatus::Never),
+        )
+        .with_platform_status(
+            DependencyKind::Build,
+            i686_windows.clone(),
+            // i686_windows turns on sse and sse2.
+            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Optional)
+                .with_feature_status("foo", EnabledStatus::Always)
+                .with_feature_status("bar", EnabledStatus::Never)
+                .with_feature_status("baz", EnabledStatus::Never)
+                .with_feature_status("quux", EnabledStatus::Never),
+        )
+        .with_platform_status(
+            DependencyKind::Build,
+            x86_64_windows.clone(),
+            // x86_64_windows uses TargetFeatures::Unknown.
+            PlatformStatus::new(
+                EnabledStatus::Unknown(UnknownStatus::Unknown),
+                EnabledStatus::Unknown(UnknownStatus::OptionalUnknown),
+            )
+            .with_feature_status("foo", EnabledStatus::Unknown(UnknownStatus::Unknown))
+            .with_feature_status("bar", EnabledStatus::Never)
+            .with_feature_status("baz", EnabledStatus::Never)
+            .with_feature_status("quux", EnabledStatus::Never),
+        )
+        .insert_into(&mut link_details);
+
+        Self::new(details)
+            .with_workspace_members(vec![("", METADATA_TARGETS1_TESTCRATE)])
+            .with_link_details(link_details)
     }
 
     pub(crate) fn metadata_libra() -> Self {
@@ -1044,6 +1405,124 @@ impl PackageDetails {
             msg
         );
         assert_eq!(&self.license, &metadata.license(), "{}: same license", msg);
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct LinkDetails {
+    from: PackageId,
+    to: PackageId,
+    platform_statuses: Vec<(DependencyKind, Platform<'static>, PlatformStatus)>,
+    features: Vec<(DependencyKind, Vec<&'static str>)>,
+}
+
+impl LinkDetails {
+    pub(crate) fn new(from: PackageId, to: PackageId) -> Self {
+        Self {
+            from,
+            to,
+            platform_statuses: vec![],
+            features: vec![],
+        }
+    }
+
+    pub(crate) fn with_platform_status(
+        mut self,
+        dep_kind: DependencyKind,
+        platform: Platform<'static>,
+        status: PlatformStatus,
+    ) -> Self {
+        self.platform_statuses.push((dep_kind, platform, status));
+        self
+    }
+
+    pub(crate) fn with_features(
+        mut self,
+        dep_kind: DependencyKind,
+        mut features: Vec<&'static str>,
+    ) -> Self {
+        features.sort();
+        self.features.push((dep_kind, features));
+        self
+    }
+
+    pub(crate) fn insert_into(self, map: &mut HashMap<(PackageId, PackageId), Self>) {
+        map.insert((self.from.clone(), self.to.clone()), self);
+    }
+
+    pub(crate) fn assert_metadata(&self, edge: &DependencyEdge, msg: &str) {
+        for (dep_kind, platform, status) in &self.platform_statuses {
+            let metadata = edge.metadata_for_kind(*dep_kind).unwrap_or_else(|| {
+                panic!(
+                    "{}: dependency metadata not found for kind {}",
+                    msg,
+                    kind_str(*dep_kind)
+                )
+            });
+            assert_eq!(
+                metadata.enabled_on(platform),
+                status.enabled,
+                "{}: for platform '{}', kind {}, enabled is correct",
+                msg,
+                platform.triple(),
+                kind_str(*dep_kind),
+            );
+            assert_eq!(
+                metadata.default_features_on(platform),
+                status.default_features,
+                "{}: for platform '{}', kind {}, default features is correct",
+                msg,
+                platform.triple(),
+                kind_str(*dep_kind),
+            );
+            for (feature, status) in &status.feature_statuses {
+                assert_eq!(
+                    metadata.feature_enabled_on(feature, platform),
+                    *status,
+                    "{}: for platform '{}', kind {}, feature '{}' has correct status",
+                    msg,
+                    platform.triple(),
+                    kind_str(*dep_kind),
+                    feature
+                );
+            }
+        }
+
+        for (dep_kind, features) in &self.features {
+            let metadata = edge.metadata_for_kind(*dep_kind).unwrap_or_else(|| {
+                panic!(
+                    "{}: dependency metadata not found for kind {}",
+                    msg,
+                    kind_str(*dep_kind)
+                )
+            });
+            let mut actual_features: Vec<_> =
+                metadata.features().iter().map(|s| s.as_str()).collect();
+            actual_features.sort();
+            assert_eq!(&actual_features, features, "{}: features is correct", msg);
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct PlatformStatus {
+    enabled: EnabledStatus,
+    default_features: EnabledStatus,
+    feature_statuses: HashMap<String, EnabledStatus>,
+}
+
+impl PlatformStatus {
+    fn new(enabled: EnabledStatus, default_features: EnabledStatus) -> Self {
+        Self {
+            enabled,
+            default_features,
+            feature_statuses: HashMap::new(),
+        }
+    }
+
+    fn with_feature_status(mut self, feature: &str, status: EnabledStatus) -> Self {
+        self.feature_statuses.insert(feature.to_string(), status);
+        self
     }
 }
 

@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    cargo_version_matches, kind_str, DependencyEdge, DependencyMetadata, PackageGraph,
-    PackageGraphData, PackageIx, PackageMetadata, Workspace,
+    cargo_version_matches, DependencyEdge, DependencyMetadata, DependencyReq, DependencyReqImpl,
+    PackageGraph, PackageGraphData, PackageIx, PackageMetadata, TargetPredicate, Workspace,
 };
-use crate::{Error, Metadata, PackageId};
+use crate::{Error, Metadata, PackageId, Platform};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
-use semver::Version;
+use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::mem;
 use std::path::{Path, PathBuf};
+use target_spec::TargetSpec;
 
 impl PackageGraph {
     /// Constructs a new `PackageGraph` instances from the given metadata.
@@ -437,10 +439,9 @@ impl DependencyEdge {
         resolved_name: &str,
         deps: impl IntoIterator<Item = &'a Dependency>,
     ) -> Result<Self, Error> {
-        // deps should have at most 1 normal dependency, 1 build dep and 1 dev dep.
-        let mut normal: Option<DependencyMetadata> = None;
-        let mut build: Option<DependencyMetadata> = None;
-        let mut dev: Option<DependencyMetadata> = None;
+        let mut normal = DependencyBuildState::default();
+        let mut build = DependencyBuildState::default();
+        let mut dev = DependencyBuildState::default();
         for dep in deps {
             // Dev dependencies cannot be optional.
             if dep.kind == DependencyKind::Development && dep.optional {
@@ -450,71 +451,207 @@ impl DependencyEdge {
                 )));
             }
 
-            let to_set = match dep.kind {
-                DependencyKind::Normal => &mut normal,
-                DependencyKind::Build => &mut build,
-                DependencyKind::Development => &mut dev,
+            match dep.kind {
+                DependencyKind::Normal => normal.add_instance(from_id, dep)?,
+                DependencyKind::Build => build.add_instance(from_id, dep)?,
+                DependencyKind::Development => dev.add_instance(from_id, dep)?,
                 _ => {
                     // unknown dependency kind -- can't do much with this!
                     continue;
                 }
             };
-            let metadata = DependencyMetadata {
-                version_req: dep.req.clone(),
-                optional: dep.optional,
-                uses_default_features: dep.uses_default_features,
-                features: dep.features.clone(),
-                target: dep.target.as_ref().map(|t| format!("{}", t)),
-            };
-
-            // It is typically an error for the same dependency to be listed multiple times for
-            // the same kind, but there are some situations in which it's possible. The main one
-            // is if there's a custom 'target' field -- one real world example is at
-            // https://github.com/alexcrichton/flate2-rs/blob/5751ad9/Cargo.toml#L29-L33:
-            //
-            // [dependencies]
-            // miniz_oxide = { version = "0.3.2", optional = true}
-            //
-            // [target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
-            // miniz_oxide = "0.3.2"
-            //
-            // For now, prefer target = null (the more general target) in such cases, and error out
-            // if both sides are null.
-            //
-            // TODO: Handle this better, probably through some sort of target resolution.
-            let write_to_set = match to_set {
-                Some(old) => match (old.target(), metadata.target()) {
-                    (Some(_), None) => true,
-                    (None, Some(_)) => false,
-                    (Some(_), Some(_)) => {
-                        // Both targets are set. We don't yet know if they are mutually exclusive,
-                        // so take the first one.
-                        // XXX This is wrong and needs to be fixed along with target resolution
-                        // in general.
-                        false
-                    }
-                    (None, None) => {
-                        return Err(Error::PackageGraphConstructError(format!(
-                            "{}: duplicate dependencies found for '{}' (kind: {})",
-                            from_id,
-                            name,
-                            kind_str(dep.kind)
-                        )))
-                    }
-                },
-                None => true,
-            };
-            if write_to_set {
-                to_set.replace(metadata);
-            }
         }
 
         Ok(DependencyEdge {
             dep_name: name.into(),
             resolved_name: resolved_name.into(),
-            normal,
-            build,
-            dev,
+            normal: normal.finish()?,
+            build: build.finish()?,
+            dev: dev.finish()?,
         })
+    }
+}
+
+/// It is possible to specify a dependency several times within the same section through
+/// platform-specific dependencies and the [target] section. For example:
+/// https://github.com/alexcrichton/flate2-rs/blob/5751ad9/Cargo.toml#L29-L33
+///
+/// ```toml
+/// [dependencies]
+/// miniz_oxide = { version = "0.3.2", optional = true}
+///
+/// [target.'cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))'.dependencies]
+/// miniz_oxide = "0.3.2"
+/// ```
+///
+/// (From here on, each separate time a particular version of a dependency
+/// is listed, it is called an "instance".)
+///
+/// For such situations, there are two separate analyses that happen:
+///
+/// 1. Whether the dependency is included at all. This is a union of all instances, conditional on
+///    the specifics of the `[target]` lines.
+/// 2. What features are enabled. As of cargo 1.42, this is unified across all instances but
+///    separately for mandatory/optional instances.
+///
+/// Note that the new feature resolver
+/// (https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#features)'s `itarget` setting
+/// causes this union-ing to *not* happen, so that's why we store all the features enabled by
+/// each target separately.
+#[derive(Debug, Default)]
+struct DependencyBuildState {
+    // This is the `req` field from the first instance seen if there are any, or `None` if none are
+    // seen.
+    version_req: Option<VersionReq>,
+    dependency_req: DependencyReq,
+    // Set if there's a single target -- mostly there for backwards compat support.
+    single_target: Option<String>,
+}
+
+impl DependencyBuildState {
+    fn add_instance(&mut self, from_id: &PackageId, dep: &Dependency) -> Result<(), Error> {
+        match &self.version_req {
+            Some(_) => {
+                // There's more than one instance, so mark the single target `None`.
+                self.single_target = None;
+            }
+            None => {
+                self.version_req = Some(dep.req.clone());
+                self.single_target = dep.target.as_ref().map(|platform| format!("{}", platform));
+            }
+        }
+        self.dependency_req.add_instance(from_id, dep)?;
+
+        Ok(())
+    }
+
+    fn finish(self) -> Result<Option<DependencyMetadata>, Error> {
+        let version_req = match self.version_req {
+            Some(version_req) => version_req,
+            None => {
+                // No instances seen.
+                return Ok(None);
+            }
+        };
+
+        let dependency_req = self.dependency_req;
+
+        // Evaluate this dependency against the current platform.
+        let current_platform = Platform::current().ok_or(Error::UnknownCurrentPlatform)?;
+        let current_enabled = dependency_req.enabled_on(&current_platform);
+        let current_default_features = dependency_req.default_features_on(&current_platform);
+
+        // Collect all features from both the optional and mandatory instances.
+        let all_features: HashSet<_> = dependency_req.all_features().collect();
+        let all_features: Vec<_> = all_features
+            .into_iter()
+            .map(|feature| feature.to_string())
+            .collect();
+
+        // Collect the status of every feature on this platform.
+        let current_feature_statuses = all_features
+            .iter()
+            .map(|feature| {
+                (
+                    feature.clone(),
+                    dependency_req.feature_enabled_on(feature, &current_platform),
+                )
+            })
+            .collect();
+
+        Ok(Some(DependencyMetadata {
+            version_req,
+            dependency_req,
+            current_enabled,
+            current_default_features,
+            all_features,
+            current_feature_statuses,
+            single_target: self.single_target,
+        }))
+    }
+}
+
+impl DependencyReq {
+    fn add_instance(&mut self, from_id: &PackageId, dep: &Dependency) -> Result<(), Error> {
+        if dep.optional {
+            self.optional.add_instance(from_id, dep)
+        } else {
+            self.mandatory.add_instance(from_id, dep)
+        }
+    }
+
+    fn all_features(&self) -> impl Iterator<Item = &str> {
+        self.mandatory
+            .all_features()
+            .chain(self.optional.all_features())
+    }
+}
+
+impl DependencyReqImpl {
+    fn add_instance(&mut self, from_id: &PackageId, dep: &Dependency) -> Result<(), Error> {
+        // target_spec is None if this is not a platform-specific dependency.
+        let target_spec = match dep.target.as_ref() {
+            Some(spec_or_triple) => {
+                // This is a platform-specific dependency, so add it to the list of specs.
+                let spec_or_triple = format!("{}", spec_or_triple);
+                let target_spec: TargetSpec = spec_or_triple.parse().map_err(|err| {
+                    Error::PackageGraphConstructError(format!(
+                        "for package '{}': for dependency '{}', parsing target '{}' failed: {}",
+                        from_id, dep.name, spec_or_triple, err
+                    ))
+                })?;
+                Some(target_spec)
+            }
+            None => None,
+        };
+
+        self.build_if.add_spec(target_spec.as_ref());
+        if dep.uses_default_features {
+            self.default_features_if.add_spec(target_spec.as_ref());
+        }
+        self.target_features
+            .push((target_spec, dep.features.clone()));
+        Ok(())
+    }
+}
+
+impl TargetPredicate {
+    pub(super) fn extend(&mut self, other: &TargetPredicate) {
+        // &mut *self is a reborrow to allow mem::replace to work below.
+        match (&mut *self, other) {
+            (TargetPredicate::Always, _) => {
+                // Always stays the same since it means all specs are included.
+            }
+            (TargetPredicate::Specs(_), TargetPredicate::Always) => {
+                // Mark self as Always.
+                mem::replace(self, TargetPredicate::Always);
+            }
+            (TargetPredicate::Specs(specs), TargetPredicate::Specs(other)) => {
+                specs.extend_from_slice(other.as_slice());
+            }
+        }
+    }
+
+    pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec>) {
+        // &mut *self is a reborrow to allow mem::replace to work below.
+        match (&mut *self, spec) {
+            (TargetPredicate::Always, _) => {
+                // Always stays the same since it means all specs are included.
+            }
+            (TargetPredicate::Specs(_), None) => {
+                // Mark self as Always.
+                mem::replace(self, TargetPredicate::Always);
+            }
+            (TargetPredicate::Specs(specs), Some(spec)) => {
+                specs.push(spec.clone());
+            }
+        }
+    }
+}
+
+impl Default for TargetPredicate {
+    fn default() -> Self {
+        // Empty vector means never.
+        TargetPredicate::Specs(vec![])
     }
 }

@@ -3,9 +3,10 @@
 
 use anyhow;
 use clap::arg_enum;
+use guppy::graph::EnabledStatus;
 use guppy::{
     graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageGraph, PackageMetadata},
-    MetadataCommand, PackageId,
+    MetadataCommand, PackageId, Platform, TargetFeatures,
 };
 use itertools;
 use std::cmp;
@@ -15,7 +16,6 @@ use std::fs;
 use std::io::Write;
 use std::iter;
 use structopt::StructOpt;
-use target_spec;
 
 mod diff;
 
@@ -305,6 +305,13 @@ fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
         }
     }
 
+    let platform = if let Some(ref target) = options.target {
+        // The features are unknown.
+        Some(Platform::new(target, TargetFeatures::Unknown).unwrap())
+    } else {
+        None
+    };
+
     pkg_graph.retain_edges(|_, DependencyLink { from, to, edge }| {
         // filter by the kind of dependency (--kind)
         // NOTE: We always retain all workspace deps in the graph, otherwise
@@ -316,14 +323,12 @@ fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
         };
 
         // filter out irrelevant dependencies for a specific target (--target)
-        let include_target = if let Some(ref target) = options.target {
+        let include_target = if let Some(platform) = &platform {
             edge.normal()
-                .and_then(|meta| meta.target())
-                .and_then(|edge_target| {
-                    let res = target_spec::eval(edge_target, target)
-                        .unwrap_or(Some(true))
-                        .unwrap_or(true);
-                    Some(res)
+                .map(|meta| {
+                    // Include this dependency if it's optional or mandatory or if the status is
+                    // unknown.
+                    meta.enabled_on(platform) != EnabledStatus::Never
                 })
                 .unwrap_or(true)
         } else {

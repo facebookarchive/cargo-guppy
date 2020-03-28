@@ -3,10 +3,11 @@
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
 use crate::graph::{
-    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageMetadata,
+    kind_str, DependencyDirection, DependencyEdge, DependencyLink, DependencyMetadata,
+    PackageGraph, PackageMetadata,
 };
 use crate::unit_tests::fixtures::PackageDetails;
-use crate::{Error, PackageId};
+use crate::{DependencyKind, Error, PackageId};
 use pretty_assertions::assert_eq;
 use std::collections::{BTreeSet, HashSet};
 use std::fmt;
@@ -307,6 +308,26 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
         msg
     );
 
+    // The enabled status can't be unknown on the current platform.
+    for DependencyLink { from, to, edge } in &all_links {
+        for dep_kind in &[
+            DependencyKind::Normal,
+            DependencyKind::Build,
+            DependencyKind::Development,
+        ] {
+            assert_enabled_status_is_known(
+                edge.metadata_for_kind(*dep_kind),
+                &format!(
+                    "{}: {} -> {} ({})",
+                    msg,
+                    from.id(),
+                    to.id(),
+                    kind_str(*dep_kind)
+                ),
+            );
+        }
+    }
+
     // all_links should be in the correct order.
     assert_link_order(
         all_links,
@@ -314,6 +335,32 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
         desc,
         msg,
     );
+}
+
+fn assert_enabled_status_is_known(metadata: Option<&DependencyMetadata>, msg: &str) {
+    let metadata = match metadata {
+        Some(metadata) => metadata,
+        None => return,
+    };
+
+    assert!(
+        metadata.enabled().is_known(),
+        "{}: enabled status known for current platform",
+        msg
+    );
+    assert!(
+        metadata.default_features().is_known(),
+        "{}: default feature status known for current platform",
+        msg
+    );
+    for feature in metadata.features() {
+        assert!(
+            metadata.feature_enabled(feature).is_known(),
+            "{}: for feature '{}', status known for current platform",
+            msg,
+            feature
+        );
+    }
 }
 
 pub(super) trait GraphAssert<'g> {

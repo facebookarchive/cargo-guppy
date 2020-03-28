@@ -4,8 +4,9 @@
 use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
 use crate::graph::{cargo_version_matches, kind_str, Cycles, DependencyDirection, PackageIx};
 use crate::petgraph_support::scc::Sccs;
-use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId};
+use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId, Platform};
 use cargo_metadata::{DependencyKind, NodeDep};
+use cfg_expr::expr::Logic;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
@@ -16,6 +17,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
 use std::mem;
 use std::path::{Path, PathBuf};
+use target_spec::TargetSpec;
 
 /// A graph of packages and dependencies between them, parsed from metadata returned by `cargo
 /// metadata`.
@@ -787,10 +789,17 @@ impl DependencyEdge {
 #[derive(Clone, Debug)]
 pub struct DependencyMetadata {
     pub(super) version_req: VersionReq,
-    pub(super) optional: bool,
-    pub(super) uses_default_features: bool,
-    pub(super) features: Vec<String>,
-    pub(super) target: Option<String>,
+    pub(super) dependency_req: DependencyReq,
+
+    // Results of some queries as evaluated on the current platform.
+    pub(super) current_enabled: EnabledStatus,
+    pub(super) current_default_features: EnabledStatus,
+    pub(super) all_features: Vec<String>,
+    pub(super) current_feature_statuses: HashMap<String, EnabledStatus>,
+
+    // single_target is deprecated -- it is only Some if there's exactly one instance of this
+    // dependency.
+    pub(super) single_target: Option<String>,
 }
 
 impl DependencyMetadata {
@@ -809,19 +818,89 @@ impl DependencyMetadata {
         &self.version_req
     }
 
-    /// Returns true if this is an optional dependency.
+    /// Returns true if this is an optional dependency on the platform `guppy` is running on.
+    ///
+    /// This will also return true if this dependency will never be included on this platform at
+    /// all, or if the status is unknown. To get finer-grained information, use the `enabled` method
+    /// instead.
     pub fn optional(&self) -> bool {
-        self.optional
+        self.current_enabled != EnabledStatus::Always
     }
 
-    /// Returns true if the default features of this dependency are enabled.
+    /// Returns true if this is an optional dependency on the given platform.
+    ///
+    /// This will also return true if this dependency will never be included on this platform at
+    /// all, or if the status is unknown. To get finer-grained information, use the `enabled_on`
+    /// method instead.
+    pub fn optional_on(&self, platform: &Platform<'_>) -> bool {
+        self.dependency_req.enabled_on(platform) != EnabledStatus::Always
+    }
+
+    /// Returns the enabled status of this dependency on the platform `guppy` is running on.
+    ///
+    /// See the documentation for `EnabledStatus` for more.
+    pub fn enabled(&self) -> EnabledStatus {
+        self.current_enabled
+    }
+
+    /// Returns the enabled status of this dependency on the given platform.
+    ///
+    /// See the documentation for `EnabledStatus` for more.
+    pub fn enabled_on(&self, platform: &Platform<'_>) -> EnabledStatus {
+        self.dependency_req.enabled_on(platform)
+    }
+
+    /// Returns true if the default features of this dependency are enabled on the platform `guppy`
+    /// is running on.
+    ///
+    /// It is possible for default features to be turned off by default, but be optionally included.
+    /// This method returns true in those cases. To get finer-grained information, use
+    /// the `default_features` method instead.
     pub fn uses_default_features(&self) -> bool {
-        self.uses_default_features
+        self.current_default_features != EnabledStatus::Never
     }
 
-    /// Returns a list of the features enabled by this dependency.
+    /// Returns the status of default features on the platform `guppy` is running on.
+    ///
+    /// See the documentation for `EnabledStatus` for more.
+    pub fn default_features(&self) -> EnabledStatus {
+        self.current_default_features
+    }
+
+    /// Returns the status of default features of this dependency on the given platform.
+    ///
+    /// See the documentation for `EnabledStatus` for more.
+    pub fn default_features_on(&self, platform: &Platform<'_>) -> EnabledStatus {
+        self.dependency_req.default_features_on(platform)
+    }
+
+    /// Returns a list of all features possibly enabled by this dependency. This includes features
+    /// that are only turned on if the dependency is optional, or features enabled by inactive
+    /// platforms.
     pub fn features(&self) -> &[String] {
-        &self.features
+        &self.all_features
+    }
+
+    /// Returns the enabled status of the feature on the platform `guppy` is running on.
+    ///
+    /// Note that as of Rust 1.42, the default feature resolver behaves in potentially surprising
+    /// ways. See the [Cargo
+    /// reference](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#features) for
+    /// more.
+    ///
+    /// See the documentation for `EnabledStatus` for more.
+    pub fn feature_enabled(&self, feature: &str) -> EnabledStatus {
+        self.current_feature_statuses
+            .get(feature)
+            .copied()
+            .unwrap_or(EnabledStatus::Never)
+    }
+
+    /// Returns the enabled status of the feature on the given platform.
+    ///
+    /// See the documentation of `EnabledStatus` for more.
+    pub fn feature_enabled_on(&self, feature: &str, platform: &Platform<'_>) -> EnabledStatus {
+        self.dependency_req.feature_enabled_on(feature, platform)
     }
 
     /// Returns the target string for this dependency, if specified. This is a string like
@@ -829,7 +908,234 @@ impl DependencyMetadata {
     ///
     /// See [Platform specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
     /// in the Cargo reference for more details.
+    ///
+    /// This will return `None` if this dependency is specified for more than one target
+    /// (including unconditionally, as e.g. `[dependencies]`). Therefore, this is deprecated in
+    /// favor of `enabled_on`.
+    #[deprecated(since = "0.1.7", note = "use `enabled_on` instead")]
     pub fn target(&self) -> Option<&str> {
-        self.target.as_deref()
+        self.single_target.as_deref()
+    }
+}
+
+/// Whether a dependency or feature is enabled on a specific platform.
+///
+/// Returned by the methods on `DependencyMetadata`.
+///
+/// ## Examples
+///
+/// ```toml
+/// [dependencies]
+/// once_cell = "1"
+/// ```
+///
+/// The dependency and default features are *always* enabled on all platforms.
+///
+/// ```toml
+/// [dependencies]
+/// once_cell = { version = "1", optional = true }
+/// ```
+///
+/// The dependency and default features are *optional* on all platforms.
+///
+/// ```toml
+/// [target.'cfg(windows)'.dependencies]
+/// once_cell = { version = "1", optional = true }
+/// ```
+///
+/// On Windows, the dependency and default features are both *optional*. On non-Windows platforms,
+/// the dependency and default features are *never* enabled.
+///
+/// ```toml
+/// [dependencies]
+/// once_cell = { version = "1", optional = true }
+///
+/// [target.'cfg(windows)'.dependencies]
+/// once_cell = { version = "1", optional = false, default-features = false }
+/// ```
+///
+/// On Windows, the dependency is *always* enabled and default features are *optional* (i.e. enabled
+/// if the `once_cell` feature is turned on).
+///
+/// On Unix platforms, the dependency and default features are both *optional*.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum EnabledStatus {
+    /// This dependency or feature is always enabled on this platform.
+    Always,
+    /// This dependency or feature is optionally enabled on this platform.
+    Optional,
+    /// This dependency or feature is never enabled on this platform, even if the optional
+    /// dependency is turned on.
+    Never,
+    /// The status of this dependency is *unknown* because the evaluation involved target features
+    /// whose status is unknown.
+    ///
+    /// This can only be returned if the set of target features is unknown. In particular, it is
+    /// guaranteed never to be returned for queries being evaluated against the current platform,
+    /// since the exact set of target features is already known.
+    Unknown(UnknownStatus),
+}
+
+impl EnabledStatus {
+    /// Converts a mandatory evaluation result and a thunk returning the optional result into an
+    /// `EnabledStatus`.
+    pub(super) fn new(
+        mandatory_res: Option<bool>,
+        optional_res_fn: impl FnOnce() -> Option<bool>,
+    ) -> Self {
+        //    mandatory     optional     |      result
+        //                               |
+        //        T            *         |      always
+        //        U            T         |  optional present
+        //        U            U         |      unknown   [1]
+        //        U            F         |      unknown   [1]
+        //        F            T         |      optional
+        //        F            U         |  optional unknown
+        //        F            F         |       never
+        //
+        // [1] note that both these cases are collapsed into "unknown" -- for either of these it's
+        //     not known whether the dependency will be included at all.
+
+        match mandatory_res {
+            Some(true) => EnabledStatus::Always,
+            None => match optional_res_fn() {
+                Some(true) => EnabledStatus::Unknown(UnknownStatus::OptionalPresent),
+                None | Some(false) => EnabledStatus::Unknown(UnknownStatus::Unknown),
+            },
+            Some(false) => match optional_res_fn() {
+                Some(true) => EnabledStatus::Optional,
+                None => EnabledStatus::Unknown(UnknownStatus::OptionalUnknown),
+                Some(false) => EnabledStatus::Never,
+            },
+        }
+    }
+
+    /// Returns true if the enabled status is not `Unknown`.
+    pub fn is_known(self) -> bool {
+        match self {
+            EnabledStatus::Always | EnabledStatus::Optional | EnabledStatus::Never => true,
+            EnabledStatus::Unknown(_) => false,
+        }
+    }
+}
+
+/// More information about a dependency or feature whose evaluation is unknown.
+///
+/// If the result of evaluating a dependency or feature is unknown, this enum specifies why.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
+pub enum UnknownStatus {
+    /// Whether this dependency or feature is present by default or optionally is unknown.
+    Unknown,
+    /// This dependency or feature is present optionally, but whether it is included by default is
+    /// unknown.
+    OptionalPresent,
+    /// This dependency or feature is not present by default, and whether it is included optionally
+    /// is unknown.
+    OptionalUnknown,
+}
+
+/// Information about dependency requirements.
+#[derive(Clone, Debug, Default)]
+pub(super) struct DependencyReq {
+    pub(super) mandatory: DependencyReqImpl,
+    pub(super) optional: DependencyReqImpl,
+}
+
+impl DependencyReq {
+    pub(super) fn enabled_on(&self, platform: &Platform<'_>) -> EnabledStatus {
+        self.eval(|req_impl| &req_impl.build_if, platform)
+    }
+
+    pub(super) fn default_features_on(&self, platform: &Platform<'_>) -> EnabledStatus {
+        self.eval(|req_impl| &req_impl.default_features_if, platform)
+    }
+
+    fn eval(
+        &self,
+        pred_fn: impl Fn(&DependencyReqImpl) -> &TargetPredicate,
+        platform: &Platform<'_>,
+    ) -> EnabledStatus {
+        let mandatory_res = pred_fn(&self.mandatory).eval(platform);
+        EnabledStatus::new(mandatory_res, || pred_fn(&self.optional).eval(platform))
+    }
+
+    pub(super) fn feature_enabled_on(
+        &self,
+        feature: &str,
+        platform: &Platform<'_>,
+    ) -> EnabledStatus {
+        let matches = move |req: &DependencyReqImpl| {
+            let mut res = Some(false);
+            for (target, features) in &req.target_features {
+                if !features.iter().any(|f| f == feature) {
+                    continue;
+                }
+                let target_matches = match target {
+                    Some(spec) => spec.eval(platform),
+                    None => Some(true),
+                };
+                // Short-circuit evaluation if possible.
+                if target_matches == Some(true) {
+                    return Some(true);
+                }
+                res = Logic::or(res, target_matches);
+            }
+            res
+        };
+
+        EnabledStatus::new(matches(&self.mandatory), || matches(&self.optional))
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub(super) struct DependencyReqImpl {
+    pub(super) build_if: TargetPredicate,
+    pub(super) default_features_if: TargetPredicate,
+    pub(super) target_features: Vec<(Option<TargetSpec>, Vec<String>)>,
+}
+
+impl DependencyReqImpl {
+    pub(super) fn all_features(&self) -> impl Iterator<Item = &str> {
+        self.target_features
+            .iter()
+            .flat_map(|(_, features)| features)
+            .map(|s| s.as_str())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) enum TargetPredicate {
+    Always,
+    // Empty vector means never.
+    Specs(Vec<TargetSpec>),
+}
+
+impl TargetPredicate {
+    /// Returns true if this is an empty predicate (i.e. will never match).
+    pub(super) fn is_never(&self) -> bool {
+        match self {
+            TargetPredicate::Always => false,
+            TargetPredicate::Specs(specs) => specs.is_empty(),
+        }
+    }
+
+    /// Evaluates this target against the given platform triple.
+    pub(super) fn eval(&self, platform: &Platform<'_>) -> Option<bool> {
+        match self {
+            TargetPredicate::Always => Some(true),
+            TargetPredicate::Specs(specs) => {
+                let mut res = Some(false);
+                for spec in specs.iter() {
+                    let matches = spec.eval(platform);
+                    // Short-circuit evaluation if possible.
+                    if matches == Some(true) {
+                        return Some(true);
+                    }
+                    res = Logic::or(res, matches);
+                }
+                res
+            }
+        }
     }
 }

@@ -56,8 +56,11 @@ pub use errors::Error;
 // Public re-exports for upstream crates used in APIs. The no_inline ensures that they show up as
 // re-exports in documentation.
 #[doc(no_inline)]
-pub use cargo_metadata::{Metadata, MetadataCommand, PackageId};
+pub use cargo_metadata::{DependencyKind, Metadata, MetadataCommand, PackageId};
 #[doc(no_inline)]
 pub use semver::Version;
 #[doc(no_inline)]
 pub use serde_json::Value as JsonValue;
+// These are inlined -- generally, treat target_spec as a private dependency so expose these types
+// as part of guppy's API.
+pub use target_spec::{Platform, TargetFeatures};
