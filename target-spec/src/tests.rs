@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::parser::parse_impl;
-use crate::types::{Atom, Expr, Target};
+use crate::types::{Atom, Expr, TargetEnum};
 use nom::error::ErrorKind;
 
 #[test]
 fn test_triple() {
     let res = parse_impl("x86_64-apple-darwin");
-    assert_eq!(res, Ok(Target::Triple("x86_64-apple-darwin".to_string())));
+    assert_eq!(
+        res,
+        Ok(TargetEnum::Triple("x86_64-apple-darwin".to_string()))
+    );
 }
 
 #[test]
 fn test_single() {
     assert_eq!(
         parse_impl("cfg(windows)"),
-        Ok(Target::Spec(Expr::TestSet(Atom::Ident(
+        Ok(TargetEnum::Spec(Expr::TestSet(Atom::Ident(
             "windows".to_string()
         )))),
     );
@@ -25,7 +28,7 @@ fn test_single() {
 fn test_not() {
     assert_eq!(
         parse_impl("cfg(not(windows))"),
-        Ok(Target::Spec(Expr::Not(Box::new(Expr::TestSet(
+        Ok(TargetEnum::Spec(Expr::Not(Box::new(Expr::TestSet(
             Atom::Ident("windows".to_string())
         ))))),
     );
@@ -35,7 +38,7 @@ fn test_not() {
 fn test_testequal() {
     assert_eq!(
         parse_impl("cfg(target_os = \"windows\")"),
-        Ok(Target::Spec(Expr::TestEqual((
+        Ok(TargetEnum::Spec(Expr::TestEqual((
             Atom::Ident("target_os".to_string()),
             Atom::Value("windows".to_string())
         )))),

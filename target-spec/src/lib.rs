@@ -45,3 +45,4 @@ mod types;
 
 pub use evaluator::*;
 pub use parser::ParseError;
+pub use types::TargetSpec;

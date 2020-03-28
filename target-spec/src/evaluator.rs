@@ -1,8 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::parser::{parse, ParseError};
-use crate::types::{Atom, Expr, Target};
+use crate::parser::ParseError;
+use crate::types::{Atom, Expr, TargetEnum};
+use crate::TargetSpec;
 use platforms::{target::OS, Platform};
 use std::{error, fmt};
 
@@ -45,24 +46,28 @@ impl error::Error for EvalError {
 /// Evaluates the given spec against the provided target and returns true on a successful match.
 ///
 /// For more information, see the crate-level documentation.
-pub fn eval(spec_or_triple: &str, target: &str) -> Result<bool, EvalError> {
-    match platforms::find(target) {
+pub fn eval(spec_or_triple: &str, platform: &str) -> Result<bool, EvalError> {
+    let target_spec = spec_or_triple
+        .parse::<TargetSpec>()
+        .map_err(EvalError::InvalidSpec)?;
+    target_spec.eval(platform)
+}
+
+pub(crate) fn eval_target(target: &TargetEnum, platform: &str) -> Result<bool, EvalError> {
+    match platforms::find(platform) {
         None => Err(EvalError::TargetNotFound),
-        Some(platform) => {
-            let spec = parse(spec_or_triple).map_err(EvalError::InvalidSpec)?;
-            match spec {
-                Target::Triple(ref triple) => Ok(platform.target_triple == triple),
-                Target::Spec(ref expr) => eval_spec(expr, &platform),
-            }
-        }
+        Some(platform) => match target {
+            TargetEnum::Triple(ref triple) => Ok(platform.target_triple == triple),
+            TargetEnum::Spec(ref expr) => eval_expr(expr, &platform),
+        },
     }
 }
 
-fn eval_spec(spec: &Expr, platform: &Platform) -> Result<bool, EvalError> {
+fn eval_expr(spec: &Expr, platform: &Platform) -> Result<bool, EvalError> {
     match *spec {
         Expr::Any(ref exprs) => {
             for e in exprs {
-                let res = eval_spec(e, platform);
+                let res = eval_expr(e, platform);
                 match res {
                     Ok(true) => return Ok(true),
                     Ok(false) => continue,
@@ -73,7 +78,7 @@ fn eval_spec(spec: &Expr, platform: &Platform) -> Result<bool, EvalError> {
         }
         Expr::All(ref exprs) => {
             for e in exprs {
-                let res = eval_spec(e, platform);
+                let res = eval_expr(e, platform);
                 match res {
                     Ok(true) => continue,
                     Ok(false) => return Ok(false),
@@ -82,7 +87,7 @@ fn eval_spec(spec: &Expr, platform: &Platform) -> Result<bool, EvalError> {
             }
             Ok(true)
         }
-        Expr::Not(ref expr) => eval_spec(expr, platform).map(|b| !b),
+        Expr::Not(ref expr) => eval_expr(expr, platform).map(|b| !b),
         // target_family can be either unix or windows
         Expr::TestSet(Atom::Ident(ref family)) => match family.as_str() {
             "windows" => Ok(platform.target_os == OS::Windows),
