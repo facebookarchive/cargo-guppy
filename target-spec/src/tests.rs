@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::parser::parse;
-use crate::types::TargetEnum;
+use crate::types::Target;
 use cfg_expr::targets::{Family, Os};
 use cfg_expr::{Predicate, TargetPredicate};
 
@@ -11,17 +11,17 @@ fn test_triple() {
     let res = parse("x86_64-apple-darwin");
     assert!(matches!(
         res,
-        Ok(TargetEnum::TargetInfo(target_info)) if target_info.triple == "x86_64-apple-darwin"
+        Ok(Target::TargetInfo(target_info)) if target_info.triple == "x86_64-apple-darwin"
     ));
 }
 
 #[test]
 fn test_single() {
     let expr = match parse("cfg(windows)").unwrap() {
-        TargetEnum::TargetInfo(target_info) => {
+        Target::TargetInfo(target_info) => {
             panic!("expected spec, got target info: {:?}", target_info)
         }
-        TargetEnum::Spec(expr) => expr,
+        Target::Spec(expr) => expr,
     };
     assert_eq!(
         expr.predicates().collect::<Vec<_>>(),
@@ -33,19 +33,16 @@ fn test_single() {
 
 #[test]
 fn test_not() {
-    assert!(matches!(
-        parse("cfg(not(windows))"),
-        Ok(TargetEnum::Spec(_))
-    ));
+    assert!(matches!(parse("cfg(not(windows))"), Ok(Target::Spec(_))));
 }
 
 #[test]
 fn test_testequal() {
     let expr = match parse("cfg(target_os = \"windows\")").unwrap() {
-        TargetEnum::TargetInfo(target_info) => {
+        Target::TargetInfo(target_info) => {
             panic!("expected spec, got target info: {:?}", target_info)
         }
-        TargetEnum::Spec(expr) => expr,
+        Target::Spec(expr) => expr,
     };
 
     assert_eq!(

@@ -3,7 +3,7 @@
 
 use crate::parser::ParseError;
 use crate::platform::{Platform, TargetFeatures};
-use crate::types::TargetEnum;
+use crate::types::Target;
 use crate::TargetSpec;
 use cfg_expr::{Expression, Predicate};
 use std::sync::Arc;
@@ -65,14 +65,12 @@ pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, EvalEr
 }
 
 pub(crate) fn eval_target(
-    target: &TargetEnum,
+    target: &Target,
     platform: &Platform<'_>,
 ) -> Result<Option<bool>, EvalError> {
     match target {
-        TargetEnum::TargetInfo(ref target_info) => {
-            Ok(Some(platform.triple() == target_info.triple))
-        }
-        TargetEnum::Spec(ref expr) => eval_expr(expr, platform),
+        Target::TargetInfo(ref target_info) => Ok(Some(platform.triple() == target_info.triple)),
+        Target::Spec(ref expr) => eval_expr(expr, platform),
     }
 }
 

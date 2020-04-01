@@ -34,7 +34,7 @@ use std::sync::Arc;
 /// ```
 #[derive(Clone, Debug)]
 pub struct TargetSpec {
-    target: TargetEnum,
+    target: Target,
 }
 
 impl TargetSpec {
@@ -57,7 +57,7 @@ impl FromStr for TargetSpec {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum TargetEnum {
+pub(crate) enum Target {
     TargetInfo(&'static TargetInfo),
     Spec(Arc<Expression>),
 }
