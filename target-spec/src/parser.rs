@@ -3,7 +3,7 @@
 
 use crate::{eval_target, EvalError, Platform};
 use cfg_expr::targets::{get_target_by_triple, TargetInfo};
-use cfg_expr::Expression;
+use cfg_expr::{Expression, Predicate};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::{error, fmt};
@@ -65,30 +65,61 @@ impl Target {
     /// Parses this expression into a `Target` instance.
     fn parse(input: &str) -> Result<Target, ParseError> {
         if input.starts_with("cfg(") {
-            Ok(Target::Spec(Arc::new(
-                Expression::parse(input).map_err(ParseError::new)?,
-            )))
+            let expr = Expression::parse(input).map_err(ParseError::invalid_cfg)?;
+            Self::verify_expr(expr)
         } else {
             Ok(Target::TargetInfo(get_target_by_triple(input).ok_or_else(
-                || ParseError(format!("unrecognized target triple '{}'", input)),
+                || ParseError::UnknownTriple(input.to_string()),
             )?))
         }
+    }
+
+    /// Verify this `cfg()` expression.
+    fn verify_expr(expr: Expression) -> Result<Self, ParseError> {
+        // Error out on unknown flags or key-value pairs. Everything else is recognized (though
+        // DebugAssertions/ProcMacro etc always return false.)
+        for pred in expr.predicates() {
+            match pred {
+                Predicate::Flag(flag) => {
+                    return Err(ParseError::UnknownPredicate(flag.to_string()))
+                }
+                Predicate::KeyValue { key, .. } => {
+                    return Err(ParseError::UnknownPredicate(key.to_string()))
+                }
+                _ => {}
+            }
+        }
+        Ok(Target::Spec(Arc::new(expr)))
     }
 }
 
 /// An error that occurred while attempting to parse a target specification.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ParseError(String);
+#[non_exhaustive]
+pub enum ParseError {
+    /// This `cfg()` expression was invalid and could not be parsed.
+    InvalidCfg(String),
+    /// The provided target triple was unknown.
+    UnknownTriple(String),
+    /// The provided `cfg()` expression parsed correctly, but it had an unknown predicate.
+    UnknownPredicate(String),
+}
 
 impl ParseError {
-    pub(crate) fn new(err: cfg_expr::ParseError<'_>) -> Self {
-        ParseError(format!("{}", err))
+    pub(crate) fn invalid_cfg(err: cfg_expr::ParseError<'_>) -> Self {
+        ParseError::InvalidCfg(format!("{}", err))
     }
 }
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "error parsing target spec: {}", self.0)
+        match self {
+            ParseError::InvalidCfg(err) => write!(f, "invalid cfg() expression: {}", err),
+            ParseError::UnknownTriple(triple) => write!(f, "unknown triple: {}", triple),
+            ParseError::UnknownPredicate(pred) => {
+                write!(f, "cfg() expression has unknown predicate: {}", pred)
+            }
+        }
     }
 }
 
@@ -146,6 +177,23 @@ mod tests {
             expr.predicates().collect::<Vec<_>>(),
             vec![Predicate::Target(TargetPredicate::Os(Some(Os::windows)))],
         );
+    }
+
+    #[test]
+    fn test_unknown_triple() {
+        let err = Target::parse("x86_64-pc-darwin").expect_err("unknown triple");
+        assert_eq!(
+            err,
+            ParseError::UnknownTriple("x86_64-pc-darwin".to_string())
+        );
+    }
+
+    #[test]
+    fn test_unknown_predicate() {
+        let err = Target::parse("cfg(foo)").expect_err("unknown predicate");
+        assert_eq!(err, ParseError::UnknownPredicate("foo".to_string()));
+        let err = Target::parse("cfg(bogus_key = \"bogus_value\")").expect_err("unknown predicate");
+        assert_eq!(err, ParseError::UnknownPredicate("bogus_key".to_string()));
     }
 
     #[test]

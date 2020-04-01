@@ -178,14 +178,18 @@ mod tests {
         for family in &["foo", "bar", "nonsense"] {
             let cfg = format!("cfg({})", family);
             let cfg_not = format!("cfg(not({}))", family);
-            assert!(matches!(
+            assert_eq!(
                 eval(&cfg, "x86_64-unknown-linux-gnu"),
-                Err(EvalError::UnknownOption(_))
-            ));
-            assert!(matches!(
+                Err(EvalError::InvalidSpec(ParseError::UnknownPredicate(
+                    family.to_string()
+                )))
+            );
+            assert_eq!(
                 eval(&cfg_not, "x86_64-unknown-linux-gnu"),
-                Err(EvalError::UnknownOption(_))
-            ));
+                Err(EvalError::InvalidSpec(ParseError::UnknownPredicate(
+                    family.to_string()
+                )))
+            );
         }
     }
 
