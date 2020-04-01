@@ -12,10 +12,10 @@ use std::{error, fmt};
 /// An error that occurred during target evaluation.
 #[derive(PartialEq)]
 pub enum EvalError {
-    /// An invalid target was specified.
+    /// An invalid target spec was specified.
     InvalidSpec(ParseError),
-    /// The target triple was not found in the database.
-    TargetNotFound,
+    /// The platform was not found in the database.
+    PlatformNotFound,
     /// The target family wasn't recognized.
     UnknownOption(String),
 }
@@ -24,7 +24,7 @@ impl fmt::Display for EvalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             EvalError::InvalidSpec(_) => write!(f, "invalid target spec"),
-            EvalError::TargetNotFound => write!(f, "target triple not found in database"),
+            EvalError::PlatformNotFound => write!(f, "platform not found in database"),
             EvalError::UnknownOption(ref opt) => write!(f, "target family not recognized: {}", opt),
         }
     }
@@ -40,7 +40,7 @@ impl error::Error for EvalError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             EvalError::InvalidSpec(err) => Some(err),
-            EvalError::TargetNotFound | EvalError::UnknownOption(_) => None,
+            EvalError::PlatformNotFound | EvalError::UnknownOption(_) => None,
         }
     }
 }
@@ -59,7 +59,7 @@ pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, EvalEr
         .parse::<TargetSpec>()
         .map_err(EvalError::InvalidSpec)?;
     match Platform::new(platform, TargetFeatures::Unknown) {
-        None => Err(EvalError::TargetNotFound),
+        None => Err(EvalError::PlatformNotFound),
         Some(platform) => target_spec.eval(&platform),
     }
 }
