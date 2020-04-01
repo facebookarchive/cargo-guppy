@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["errors","Contains types that describe errors and warnings that `guppy` methods can return."],["graph","Entry point for analyzing Cargo dependency graphs."]]});
+initSidebarItems({"enum":[["TargetFeatures","A set of target features to match."]],"mod":[["errors","Contains types that describe errors and warnings that `guppy` methods can return."],["graph","Entry point for analyzing Cargo dependency graphs."]],"struct":[["Platform","A platform to evaluate target specs against."]]});
