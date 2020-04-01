@@ -11,13 +11,12 @@ use std::{error, fmt};
 
 /// An error that occurred during target evaluation.
 #[derive(PartialEq)]
+#[non_exhaustive]
 pub enum EvalError {
     /// An invalid target spec was specified.
     InvalidSpec(ParseError),
     /// The platform was not found in the database.
     PlatformNotFound,
-    /// The target family wasn't recognized.
-    UnknownOption(String),
 }
 
 impl fmt::Display for EvalError {
@@ -25,7 +24,6 @@ impl fmt::Display for EvalError {
         match *self {
             EvalError::InvalidSpec(_) => write!(f, "invalid target spec"),
             EvalError::PlatformNotFound => write!(f, "platform not found in database"),
-            EvalError::UnknownOption(ref opt) => write!(f, "target family not recognized: {}", opt),
         }
     }
 }
@@ -40,7 +38,7 @@ impl error::Error for EvalError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             EvalError::InvalidSpec(err) => Some(err),
-            EvalError::PlatformNotFound | EvalError::UnknownOption(_) => None,
+            EvalError::PlatformNotFound => None,
         }
     }
 }
@@ -60,25 +58,19 @@ pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, EvalEr
         .map_err(EvalError::InvalidSpec)?;
     match Platform::new(platform, TargetFeatures::Unknown) {
         None => Err(EvalError::PlatformNotFound),
-        Some(platform) => target_spec.eval(&platform),
+        Some(platform) => Ok(target_spec.eval(&platform)),
     }
 }
 
-pub(crate) fn eval_target(
-    target: &Target,
-    platform: &Platform<'_>,
-) -> Result<Option<bool>, EvalError> {
+pub(crate) fn eval_target(target: &Target, platform: &Platform<'_>) -> Option<bool> {
     match target {
-        Target::TargetInfo(ref target_info) => Ok(Some(platform.triple() == target_info.triple)),
+        Target::TargetInfo(ref target_info) => Some(platform.triple() == target_info.triple),
         Target::Spec(ref expr) => eval_expr(expr, platform),
     }
 }
 
-fn eval_expr(spec: &Arc<Expression>, platform: &Platform<'_>) -> Result<Option<bool>, EvalError> {
-    // Expression::eval doesn't support returning errors, so have an Option at the top to set errors
-    // into.
-    let mut err = None;
-    let res: Option<bool> = spec.eval(|pred| {
+fn eval_expr(spec: &Arc<Expression>, platform: &Platform<'_>) -> Option<bool> {
+    spec.eval(|pred| {
         match pred {
             Predicate::Target(target) => Some(target.matches(platform.target_info())),
             Predicate::TargetFeature(feature) => platform.target_features().matches(feature),
@@ -92,23 +84,11 @@ fn eval_expr(spec: &Arc<Expression>, platform: &Platform<'_>) -> Result<Option<b
                 // https://github.com/rust-lang/cargo/issues/7442 for more details.
                 Some(false)
             }
-            Predicate::KeyValue { key, .. } => {
-                err.replace(EvalError::UnknownOption((*key).to_string()));
-                Some(false)
-            }
-            Predicate::Flag(other) => {
-                // cfg_expr turns "windows" and "unix" into target families, so they don't need to
-                // be handled explicitly.
-                err.replace(EvalError::UnknownOption((*other).to_string()));
-                Some(false)
+            Predicate::KeyValue { .. } | Predicate::Flag(_) => {
+                unreachable!("these predicates are disallowed at TargetSpec construction time")
             }
         }
-    });
-
-    match err {
-        Some(err) => Err(err),
-        None => Ok(res),
-    }
+    })
 }
 
 #[cfg(test)]
@@ -215,7 +195,7 @@ mod tests {
             Ok(None),
         );
 
-        fn eval_ext(spec: &str, platform: &str) -> Result<Option<bool>, EvalError> {
+        fn eval_ext(spec: &str, platform: &str) -> Option<bool> {
             let platform = Platform::new(platform, TargetFeatures::features(&["sse", "sse2"]))
                 .expect("platform should be found");
             let spec: TargetSpec = spec.parse().unwrap();
@@ -224,25 +204,25 @@ mod tests {
 
         assert_eq!(
             eval_ext("cfg(target_feature = \"sse\")", "x86_64-unknown-linux-gnu"),
-            Ok(Some(true)),
+            Some(true),
         );
         assert_eq!(
             eval_ext(
                 "cfg(not(target_feature = \"sse\"))",
                 "x86_64-unknown-linux-gnu",
             ),
-            Ok(Some(false)),
+            Some(false),
         );
         assert_eq!(
             eval_ext("cfg(target_feature = \"fxsr\")", "x86_64-unknown-linux-gnu"),
-            Ok(Some(false)),
+            Some(false),
         );
         assert_eq!(
             eval_ext(
                 "cfg(not(target_feature = \"fxsr\"))",
                 "x86_64-unknown-linux-gnu",
             ),
-            Ok(Some(true)),
+            Some(true),
         );
     }
 }

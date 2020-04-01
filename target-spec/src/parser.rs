@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{eval_target, EvalError, Platform};
+use crate::{eval_target, Platform};
 use cfg_expr::targets::{get_target_by_triple, TargetInfo};
 use cfg_expr::{Expression, Predicate};
 use std::str::FromStr;
@@ -22,14 +22,14 @@ use std::{error, fmt};
 /// let i686_linux = Platform::new("i686-unknown-linux-gnu", TargetFeatures::features(&["sse2"])).unwrap();
 ///
 /// let spec: TargetSpec = "cfg(any(windows, target_arch = \"x86_64\"))".parse().unwrap();
-/// assert_eq!(spec.eval(&i686_windows).unwrap(), Some(true), "i686 Windows");
-/// assert_eq!(spec.eval(&x86_64_mac).unwrap(), Some(true), "x86_64 MacOS");
-/// assert_eq!(spec.eval(&i686_linux).unwrap(), Some(false), "i686 Linux (should not match)");
+/// assert_eq!(spec.eval(&i686_windows), Some(true), "i686 Windows");
+/// assert_eq!(spec.eval(&x86_64_mac), Some(true), "x86_64 MacOS");
+/// assert_eq!(spec.eval(&i686_linux), Some(false), "i686 Linux (should not match)");
 ///
 /// let spec: TargetSpec = "cfg(any(target_feature = \"sse2\", target_feature = \"sse\"))".parse().unwrap();
-/// assert_eq!(spec.eval(&i686_windows).unwrap(), None, "i686 Windows features are unknown");
-/// assert_eq!(spec.eval(&x86_64_mac).unwrap(), Some(false), "x86_64 MacOS matches no features");
-/// assert_eq!(spec.eval(&i686_linux).unwrap(), Some(true), "i686 Linux matches some features");
+/// assert_eq!(spec.eval(&i686_windows), None, "i686 Windows features are unknown");
+/// assert_eq!(spec.eval(&x86_64_mac), Some(false), "x86_64 MacOS matches no features");
+/// assert_eq!(spec.eval(&i686_linux), Some(true), "i686 Linux matches some features");
 /// ```
 #[derive(Clone, Debug)]
 pub struct TargetSpec {
@@ -37,10 +37,12 @@ pub struct TargetSpec {
 }
 
 impl TargetSpec {
-    /// Evaluates this specification against the given platform triple, defaulting to accepting all
-    /// target features.
+    /// Evaluates this specification against the given platform triple.
+    ///
+    /// Returns `Some(true)` if there's a match, `Some(false)` if there's none, or `None` if the
+    /// result of the evaluation is unknown (typically found if target families are involved).
     #[inline]
-    pub fn eval(&self, platform: &Platform<'_>) -> Result<Option<bool>, EvalError> {
+    pub fn eval(&self, platform: &Platform<'_>) -> Option<bool> {
         eval_target(&self.target, platform)
     }
 }
