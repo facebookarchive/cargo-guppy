@@ -3,7 +3,7 @@
 
 use crate::parser::ParseError;
 use crate::platform::{Platform, TargetFeatures};
-use crate::types::Target;
+use crate::Target;
 use crate::TargetSpec;
 use cfg_expr::{Expression, Predicate};
 use std::sync::Arc;
