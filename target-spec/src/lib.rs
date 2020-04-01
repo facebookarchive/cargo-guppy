@@ -40,11 +40,7 @@
 mod evaluator;
 mod parser;
 mod platform;
-#[cfg(test)]
-mod tests;
-mod types;
 
 pub use evaluator::*;
-pub use parser::ParseError;
+pub use parser::*;
 pub use platform::*;
-pub use types::*;
