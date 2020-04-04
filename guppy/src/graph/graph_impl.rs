@@ -6,7 +6,6 @@ use crate::graph::{cargo_version_matches, kind_str, Cycles, DependencyDirection,
 use crate::petgraph_support::scc::Sccs;
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId, Platform};
 use cargo_metadata::{DependencyKind, NodeDep};
-use cfg_expr::expr::Logic;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
@@ -1079,7 +1078,7 @@ impl DependencyReq {
                 if target_matches == Some(true) {
                     return Some(true);
                 }
-                res = Logic::or(res, target_matches);
+                res = k3_or(res, target_matches);
             }
             res
         };
@@ -1132,10 +1131,20 @@ impl TargetPredicate {
                     if matches == Some(true) {
                         return Some(true);
                     }
-                    res = Logic::or(res, matches);
+                    res = k3_or(res, matches);
                 }
                 res
             }
         }
+    }
+}
+
+/// The OR operation for a 3-valued logic with true, false and unknown. One example of this is the
+/// Kleene K3 logic.
+fn k3_or(a: Option<bool>, b: Option<bool>) -> Option<bool> {
+    match (a, b) {
+        (Some(false), Some(false)) => Some(false),
+        (Some(true), _) | (_, Some(true)) => Some(true),
+        _ => None,
     }
 }
