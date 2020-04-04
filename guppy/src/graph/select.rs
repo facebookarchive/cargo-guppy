@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::debug_ignore::DebugIgnore;
 use crate::graph::{
     DependencyDirection, DependencyEdge, DependencyLink, GraphSpec, PackageGraph, PackageIx,
     PackageMetadata,
@@ -8,7 +9,6 @@ use crate::graph::{
 use crate::petgraph_support::scc::{NodeIter, Sccs};
 use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
-use derivative::Derivative;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
@@ -196,7 +196,7 @@ impl<'g> PackageSelect<'g> {
         let node_iter = sccs.node_iter(direction.into());
 
         IntoIterIds {
-            graph: dep_graph,
+            graph: DebugIgnore(dep_graph),
             node_iter,
             reachable: prefilter.reachable,
             remaining: prefilter.count,
@@ -292,7 +292,7 @@ impl<'g> PackageSelect<'g> {
         };
 
         IntoIterLinks {
-            package_graph: self.package_graph,
+            package_graph: DebugIgnore(self.package_graph),
             reachable,
             edge_dfs,
             direction,
@@ -421,11 +421,9 @@ pub(super) fn select_postfilter<G: GraphSpec>(
 /// An iterator over package IDs in topological order.
 ///
 /// The items returned are of type `&'g PackageId`. Returned by `PackageSelect::into_iter_ids`.
-#[derive(Clone, Derivative)]
-#[derivative(Debug)]
+#[derive(Clone, Debug)]
 pub struct IntoIterIds<'g> {
-    #[derivative(Debug = "ignore")]
-    graph: &'g Graph<PackageId, DependencyEdge, Directed, PackageIx>,
+    graph: DebugIgnore<&'g Graph<PackageId, DependencyEdge, Directed, PackageIx>>,
     node_iter: NodeIter<'g, PackageIx>,
     reachable: FixedBitSet,
     remaining: usize,
@@ -505,11 +503,9 @@ impl<'g> ExactSizeIterator for IntoIterMetadatas<'g> {
 /// An iterator over dependency links.
 ///
 /// The items returned are of type `DependencyLink<'g>`. Returned by `PackageSelect::into_iter_ids`.
-#[derive(Clone, Derivative)]
-#[derivative(Debug)]
+#[derive(Clone, Debug)]
 pub struct IntoIterLinks<'g> {
-    #[derivative(Debug = "ignore")]
-    package_graph: &'g PackageGraph,
+    package_graph: DebugIgnore<&'g PackageGraph>,
     reachable: Option<FixedBitSet>,
     edge_dfs: EdgeDfs<EdgeIndex<PackageIx>, NodeIndex<PackageIx>, FixedBitSet>,
     direction: DependencyDirection,

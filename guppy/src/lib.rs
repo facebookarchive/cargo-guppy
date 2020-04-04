@@ -45,6 +45,7 @@
 
 #![warn(missing_docs)]
 
+mod debug_ignore;
 pub mod errors;
 pub mod graph;
 pub(crate) mod petgraph_support;
