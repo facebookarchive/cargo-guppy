@@ -11,7 +11,6 @@ ALIASES["cargo_metadata"] = {};
 ALIASES["cfg_expr"] = {};
 ALIASES["cfg_if"] = {};
 ALIASES["clap"] = {};
-ALIASES["derivative"] = {};
 ALIASES["either"] = {};
 ALIASES["fixedbitset"] = {};
 ALIASES["fnv"] = {};

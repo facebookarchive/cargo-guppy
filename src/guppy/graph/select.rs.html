@@ -628,14 +628,11 @@
 <span id="628">628</span>
 <span id="629">629</span>
 <span id="630">630</span>
-<span id="631">631</span>
-<span id="632">632</span>
-<span id="633">633</span>
-<span id="634">634</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">debug_ignore</span>::<span class="ident">DebugIgnore</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
     <span class="ident">DependencyDirection</span>, <span class="ident">DependencyEdge</span>, <span class="ident">DependencyLink</span>, <span class="ident">GraphSpec</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>,
     <span class="ident">PackageMetadata</span>,
@@ -643,7 +640,6 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">scc</span>::{<span class="ident">NodeIter</span>, <span class="ident">Sccs</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">walk</span>::<span class="ident">EdgeDfs</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
-<span class="kw">use</span> <span class="ident">derivative</span>::<span class="ident">Derivative</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graph</span>::<span class="ident">IndexType</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
@@ -831,7 +827,7 @@
         <span class="kw">let</span> <span class="ident">node_iter</span> <span class="op">=</span> <span class="ident">sccs</span>.<span class="ident">node_iter</span>(<span class="ident">direction</span>.<span class="ident">into</span>());
 
         <span class="ident">IntoIterIds</span> {
-            <span class="ident">graph</span>: <span class="ident">dep_graph</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">dep_graph</span>),
             <span class="ident">node_iter</span>,
             <span class="ident">reachable</span>: <span class="ident">prefilter</span>.<span class="ident">reachable</span>,
             <span class="ident">remaining</span>: <span class="ident">prefilter</span>.<span class="ident">count</span>,
@@ -927,7 +923,7 @@
         };
 
         <span class="ident">IntoIterLinks</span> {
-            <span class="ident">package_graph</span>: <span class="self">self</span>.<span class="ident">package_graph</span>,
+            <span class="ident">package_graph</span>: <span class="ident">DebugIgnore</span>(<span class="self">self</span>.<span class="ident">package_graph</span>),
             <span class="ident">reachable</span>,
             <span class="ident">edge_dfs</span>,
             <span class="ident">direction</span>,
@@ -1056,11 +1052,9 @@
 <span class="doccomment">/// An iterator over package IDs in topological order.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The items returned are of type `&amp;&#39;g PackageId`. Returned by `PackageSelect::into_iter_ids`.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Derivative</span>)]</span>
-<span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IntoIterIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span> <span class="op">=</span> <span class="string">&quot;ignore&quot;</span>)]</span>
-    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    <span class="ident">graph</span>: <span class="ident">DebugIgnore</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">node_iter</span>: <span class="ident">NodeIter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="ident">reachable</span>: <span class="ident">FixedBitSet</span>,
     <span class="ident">remaining</span>: <span class="ident">usize</span>,
@@ -1140,11 +1134,9 @@
 <span class="doccomment">/// An iterator over dependency links.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The items returned are of type `DependencyLink&lt;&#39;g&gt;`. Returned by `PackageSelect::into_iter_ids`.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Derivative</span>)]</span>
-<span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IntoIterLinks</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">derivative</span>(<span class="ident">Debug</span> <span class="op">=</span> <span class="string">&quot;ignore&quot;</span>)]</span>
-    <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
+    <span class="ident">package_graph</span>: <span class="ident">DebugIgnore</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span><span class="op">&gt;</span>,
     <span class="ident">reachable</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
     <span class="ident">edge_dfs</span>: <span class="ident">EdgeDfs</span><span class="op">&lt;</span><span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">FixedBitSet</span><span class="op">&gt;</span>,
     <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,

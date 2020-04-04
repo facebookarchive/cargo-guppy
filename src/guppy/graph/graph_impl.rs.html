@@ -1139,6 +1139,15 @@
 <span id="1139">1139</span>
 <span id="1140">1140</span>
 <span id="1141">1141</span>
+<span id="1142">1142</span>
+<span id="1143">1143</span>
+<span id="1144">1144</span>
+<span id="1145">1145</span>
+<span id="1146">1146</span>
+<span id="1147">1147</span>
+<span id="1148">1148</span>
+<span id="1149">1149</span>
+<span id="1150">1150</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1148,7 +1157,6 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">scc</span>::<span class="ident">Sccs</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">JsonValue</span>, <span class="ident">Metadata</span>, <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>, <span class="ident">Platform</span>};
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">DependencyKind</span>, <span class="ident">NodeDep</span>};
-<span class="kw">use</span> <span class="ident">cfg_expr</span>::<span class="ident">expr</span>::<span class="ident">Logic</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">indexmap</span>::<span class="ident">IndexMap</span>;
 <span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
@@ -2221,7 +2229,7 @@
                 <span class="kw">if</span> <span class="ident">target_matches</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
                     <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="bool-val">true</span>);
                 }
-                <span class="ident">res</span> <span class="op">=</span> <span class="ident">Logic</span>::<span class="ident">or</span>(<span class="ident">res</span>, <span class="ident">target_matches</span>);
+                <span class="ident">res</span> <span class="op">=</span> <span class="ident">k3_or</span>(<span class="ident">res</span>, <span class="ident">target_matches</span>);
             }
             <span class="ident">res</span>
         };
@@ -2274,11 +2282,21 @@
                     <span class="kw">if</span> <span class="ident">matches</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
                         <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="bool-val">true</span>);
                     }
-                    <span class="ident">res</span> <span class="op">=</span> <span class="ident">Logic</span>::<span class="ident">or</span>(<span class="ident">res</span>, <span class="ident">matches</span>);
+                    <span class="ident">res</span> <span class="op">=</span> <span class="ident">k3_or</span>(<span class="ident">res</span>, <span class="ident">matches</span>);
                 }
                 <span class="ident">res</span>
             }
         }
+    }
+}
+
+<span class="doccomment">/// The OR operation for a 3-valued logic with true, false and unknown. One example of this is the</span>
+<span class="doccomment">/// Kleene K3 logic.</span>
+<span class="kw">fn</span> <span class="ident">k3_or</span>(<span class="ident">a</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>, <span class="ident">b</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">match</span> (<span class="ident">a</span>, <span class="ident">b</span>) {
+        (<span class="prelude-val">Some</span>(<span class="bool-val">false</span>), <span class="prelude-val">Some</span>(<span class="bool-val">false</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="bool-val">false</span>),
+        (<span class="prelude-val">Some</span>(<span class="bool-val">true</span>), <span class="kw">_</span>) <span class="op">|</span> (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
+        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
     }
 }
 </pre></div>
