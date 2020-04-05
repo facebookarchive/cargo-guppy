@@ -22,6 +22,7 @@ the `cargo-guppy` CLI as well:
 * iterate over reverse dependencies of a crate in topological order
 * iterate over some or all links (edges) in a dependency graph, querying if the link is a build, dev or regular
   dependency
+* evaluation of target specs for [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
 * filter out dev-only dependencies while performing queries, since they're typically not included in release builds
 * print out a `dot` graph for a subset of crates, for formatting with [graphviz](https://www.graphviz.org/)
 
@@ -30,7 +31,6 @@ Still to come:
 * receive CI feedback if a dependency is added, updated or removed
 * receive CI feedback if a package goes from not being included in a high-assurance subset to being included
 * queries based on features
-* evaluation of target specs for [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
 * a command-line query language
 
 This code has been written for the [Libra Core](https://github.com/libra/libra) project, but it may be useful for other
