@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.7] - 2020-04-05
+### Added
+- Support for [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies), including:
+   - Querying whether a dependency is mandatory or optional on the current platform, or on any other platform.
+   - Evaluating which features are enabled on a platform.
+   - Handling situations where the set of [target features](https://github.com/rust-lang/rfcs/blob/master/text/2045-target-feature.md) isn't known.
+
+### Changed
+- Internal improvements -- `into_iter_ids` is a further 10-15% faster for large graphs.
+- Made several internal changes to prepare for feature graph support, coming soon.
+- Sped up build times by removing some dependencies.
+
+### Deprecated
+- As part of support for platform-specific dependencies, `DependencyMetadata::target` has been replaced with the `_on` methods.
+  - For example, to figure out if a dependency is enabled on a platform, use the `enabled_on` method.
+
 ## [0.1.6] - 2020-03-11
 ### Fixed
 - Handle cyclic dev-dependencies properly. Previously, `guppy` could produce incomplete results if it encountered cycles.
@@ -57,8 +73,9 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
-<!-- Previous releases were simply tagged "$VERSION", not "guppy-$VERSION". -->
+[0.1.7]: https://github.com/calibra/cargo-guppy/releases/tag/guppy-0.1.7
 
+<!-- Previous releases were simply tagged "$VERSION", not "guppy-$VERSION". -->
 [0.1.6]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.6
 [0.1.5]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.5
 [0.1.4]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.4
