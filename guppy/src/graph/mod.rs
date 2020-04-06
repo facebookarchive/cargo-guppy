@@ -15,9 +15,10 @@ mod cycles;
 #[doc(hidden)]
 pub mod feature;
 mod graph_impl;
-mod print;
 #[cfg(feature = "proptest09")]
 mod proptest09;
+mod resolve;
+mod resolve_core;
 mod select;
 mod select_core;
 
@@ -26,7 +27,7 @@ pub use cycles::*;
 pub use graph_impl::*;
 use once_cell::sync::Lazy;
 use petgraph::graph::IndexType;
-pub use print::*;
+pub use resolve::*;
 pub use select::*;
 use semver::{Version, VersionReq};
 

@@ -3,7 +3,7 @@
 
 use anyhow;
 use clap::arg_enum;
-use guppy::graph::EnabledStatus;
+use guppy::graph::{DependencyDirection, EnabledStatus};
 use guppy::{
     graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageGraph, PackageMetadata},
     MetadataCommand, PackageId, Platform, TargetFeatures,
@@ -50,7 +50,10 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     let selection = pkg_graph.select_workspace();
 
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
-    for package in selection.into_iter_metadatas(None) {
+    for package in selection
+        .resolve()
+        .into_metadatas(DependencyDirection::Forward)
+    {
         dupe_map.entry(package.name()).or_default().push(package);
     }
 
@@ -170,7 +173,9 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
 
     narrow_graph(&mut pkg_graph, &options.filter_opts);
 
-    for package_id in pkg_graph.select_forward(&package_ids)?.into_iter_ids(None) {
+    let resolve = pkg_graph.select_forward(&package_ids)?.resolve();
+
+    for package_id in resolve.clone().into_ids(DependencyDirection::Forward) {
         let package = pkg_graph.metadata(package_id).unwrap();
         let in_workspace = package.in_workspace();
         let direct_dep = pkg_graph
@@ -189,9 +194,7 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
     }
 
     if let Some(ref output_file) = options.output_dot {
-        let dot = pkg_graph
-            .select_forward(&package_ids)?
-            .into_dot(NameVisitor);
+        let dot = resolve.into_dot(NameVisitor);
         let mut f = fs::File::create(output_file)?;
         write!(f, "{}", dot)?;
     }
@@ -234,18 +237,16 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     };
 
     let mut unique_deps: HashMap<&PackageId, HashSet<&PackageId>> = HashMap::new();
-    for package_id in selection.into_iter_ids(None) {
+    for package_id in selection.resolve().into_ids(DependencyDirection::Forward) {
         let subtree_package_set: HashSet<&PackageId> = pkg_graph
             .select_forward(iter::once(package_id))?
-            .into_iter_ids(None)
+            .resolve()
+            .into_ids(DependencyDirection::Forward)
             .collect();
         let mut nonunique_deps_set: HashSet<&PackageId> = HashSet::new();
-        for dep_package_id in pkg_graph
-            .select_forward(iter::once(package_id))?
-            .into_iter_ids(None)
-        {
+        for dep_package_id in &subtree_package_set {
             // don't count ourself
-            if dep_package_id == package_id {
+            if *dep_package_id == package_id {
                 continue;
             }
 

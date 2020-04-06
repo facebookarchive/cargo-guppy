@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::debug_ignore::DebugIgnore;
-use crate::graph::select_core::{select_postfilter, SelectParams, SelectPrefilter};
+use crate::graph::select_core::{select_postfilter, SelectParams};
 use crate::graph::{
-    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata,
+    DependencyDirection, DependencyLink, IntoIds, IntoMetadatas, PackageDotVisitor, PackageGraph,
+    PackageIx, PackageMetadata, PackageResolve,
 };
-use crate::petgraph_support::scc::NodeIter;
 use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
+use std::fmt;
 
 /// A selector over a package graph.
 ///
@@ -130,6 +131,13 @@ impl PackageGraph {
 }
 
 impl<'g> PackageSelect<'g> {
+    /// Resolves this selector into a set of known packages.
+    ///
+    /// This is the entry point for iterators.
+    pub fn resolve(self) -> PackageResolve<'g> {
+        PackageResolve::new(self.package_graph, self.params)
+    }
+
     /// Returns the set of "root packages" in the specified direction.
     ///
     /// * If direction is Forward, return the set of packages that do not have any dependencies
@@ -141,16 +149,12 @@ impl<'g> PackageSelect<'g> {
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
     /// arbitrary order.
+    #[deprecated(since = "0.1.8", note = "use `resolve().into_root_ids()` instead")]
     pub fn into_root_ids(
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
-        let dep_graph = self.package_graph.dep_graph();
-        let prefilter = SelectPrefilter::new(dep_graph, self.params);
-        prefilter
-            .roots(self.package_graph.sccs(), direction)
-            .into_iter()
-            .map(move |package_ix| &dep_graph[package_ix])
+        self.resolve().into_root_ids(direction)
     }
 
     /// Consumes this query and creates an iterator over package IDs, returned in topological order.
@@ -163,43 +167,10 @@ impl<'g> PackageSelect<'g> {
     ///
     /// The packages within a dependency cycle will be returned in arbitrary order, but overall
     /// topological order will be maintained.
-    pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> IntoIterIds<'g> {
+    #[deprecated(since = "0.1.8", note = "use `resolve().into_ids()` instead")]
+    pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> IntoIds<'g> {
         let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
-        let dep_graph = self.package_graph.dep_graph();
-        let sccs = self.package_graph.sccs();
-
-        // If the topo order guarantee weren't present, this could potentially be done in a lazier
-        // fashion, where reachable nodes are discovered dynamically. However, there's value in
-        // topological ordering so pay the cost of computing the reachable map upfront. As a bonus,
-        // this approach also allows the iterator to implement ExactSizeIterator.
-        let prefilter = SelectPrefilter::new(dep_graph, self.params);
-
-        // ---
-        // IMPORTANT
-        // ---
-        //
-        // This uses the same list of sccs that's computed for the entire graph. This is *currently*
-        // fine because with our current filters, if one element of an SCC is present all others
-        // will be present as well.
-        //
-        // However:
-        // * If we allow for custom visitors that can control the reachable map, it is possible that
-        //   SCCs in the main graph aren't in the subgraph. That might make the returned order
-        //   incorrect.
-        // * This requires iterating over every node in the graph even if the set of returned nodes
-        //   is very small. There's a tradeoff here between allocating memory to store a custom list
-        //   of SCCs and just using the one available. More benchmarking is required to figure out
-        //   the best approach.
-        //
-        // Note that the SCCs can be computed in reachable_map by adapting parts of kosaraju_scc.
-        let node_iter = sccs.node_iter(direction.into());
-
-        IntoIterIds {
-            graph: DebugIgnore(dep_graph),
-            node_iter,
-            reachable: prefilter.reachable,
-            remaining: prefilter.count,
-        }
+        self.resolve().into_ids(direction)
     }
 
     /// Returns the set of "root package" metadata in the specified direction.
@@ -213,21 +184,15 @@ impl<'g> PackageSelect<'g> {
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
     /// arbitrary order.
+    #[deprecated(
+        since = "0.1.8",
+        note = "use `resolve().into_root_metadatas()` instead"
+    )]
     pub fn into_root_metadatas(
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
-        let package_graph = self.package_graph;
-        let dep_graph = package_graph.dep_graph();
-        let prefilter = SelectPrefilter::new(dep_graph, self.params);
-        prefilter
-            .roots(package_graph.sccs(), direction)
-            .into_iter()
-            .map(move |package_ix| {
-                package_graph
-                    .metadata(&dep_graph[package_ix])
-                    .expect("invalid node index")
-            })
+        self.resolve().into_root_metadatas(direction)
     }
 
     /// Consumes this query and creates an iterator over `PackageMetadata` instances, returned in
@@ -241,16 +206,13 @@ impl<'g> PackageSelect<'g> {
     ///
     /// The packages within a dependency cycle will be returned in arbitrary order, but overall
     /// topological order will be maintained.
+    #[deprecated(since = "0.1.8", note = "use `resolve().into_metadatas()` instead")]
     pub fn into_iter_metadatas(
         self,
         direction_opt: Option<DependencyDirection>,
-    ) -> IntoIterMetadatas<'g> {
-        let package_graph = self.package_graph;
-        let inner = self.into_iter_ids(direction_opt);
-        IntoIterMetadatas {
-            package_graph,
-            inner,
-        }
+    ) -> IntoMetadatas<'g> {
+        let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
+        self.resolve().into_metadatas(direction)
     }
 
     /// Consumes this query and creates an iterator over dependency links.
@@ -297,88 +259,21 @@ impl<'g> PackageSelect<'g> {
             direction,
         }
     }
-}
-/// An iterator over package IDs in topological order.
-///
-/// The items returned are of type `&'g PackageId`. Returned by `PackageSelect::into_iter_ids`.
-#[derive(Clone, Debug)]
-pub struct IntoIterIds<'g> {
-    graph: DebugIgnore<&'g Graph<PackageId, DependencyEdge, Directed, PackageIx>>,
-    node_iter: NodeIter<'g, PackageIx>,
-    reachable: FixedBitSet,
-    remaining: usize,
-}
 
-impl<'g> IntoIterIds<'g> {
-    /// Returns the direction the iteration is happening in.
-    pub fn direction(&self) -> DependencyDirection {
-        self.node_iter.direction().into()
+    /// Constructs a representation of the selected packages in `dot` format.
+    #[deprecated(since = "0.1.8", note = "use `resolve().into_dot()` instead")]
+    pub fn into_dot<V: PackageDotVisitor + 'g>(self, visitor: V) -> impl fmt::Display + 'g {
+        self.resolve().into_dot(visitor)
     }
 }
 
-impl<'g> Iterator for IntoIterIds<'g> {
-    type Item = &'g PackageId;
+/// A type alias for `IntoIds` for backwards compatibility.
+#[deprecated(since = "0.1.8", note = "use `IntoIds` instead")]
+pub type IntoIterIds<'g> = IntoIds<'g>;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        while let Some(ix) = self.node_iter.next() {
-            if !self.reachable.is_visited(&ix) {
-                continue;
-            }
-            self.remaining -= 1;
-            return Some(&self.graph[ix]);
-        }
-        None
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.remaining, Some(self.remaining))
-    }
-}
-
-impl<'g> ExactSizeIterator for IntoIterIds<'g> {
-    fn len(&self) -> usize {
-        self.remaining
-    }
-}
-
-/// An iterator over package metadata in topological order.
-///
-/// The items returned are of type `&'g PackageMetadata`. Returned by `PackageSelect::into_iter_metadatas`.
-#[derive(Clone, Debug)]
-pub struct IntoIterMetadatas<'g> {
-    package_graph: &'g PackageGraph,
-    inner: IntoIterIds<'g>,
-}
-
-impl<'g> IntoIterMetadatas<'g> {
-    /// Returns the direction the iteration is happening in.
-    pub fn direction(&self) -> DependencyDirection {
-        self.inner.direction()
-    }
-}
-
-impl<'g> Iterator for IntoIterMetadatas<'g> {
-    type Item = &'g PackageMetadata;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next_id = self.inner.next()?;
-        Some(
-            self.package_graph.metadata(next_id).unwrap_or_else(|| {
-                panic!("known package ID '{}' not found in metadata map", next_id)
-            }),
-        )
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
-    }
-}
-
-impl<'g> ExactSizeIterator for IntoIterMetadatas<'g> {
-    fn len(&self) -> usize {
-        self.inner.len()
-    }
-}
+/// A type alias for `IntoMetadatas` for backwards compatibility.
+#[deprecated(since = "0.1.8", note = "use `IntoMetadatas` instead")]
+pub type IntoIterMetadatas<'g> = IntoMetadatas<'g>;
 
 /// An iterator over dependency links.
 ///

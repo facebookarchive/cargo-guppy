@@ -129,7 +129,11 @@ pub(super) fn link_order(
     // If the select and query directions are the opposite, the set of initial IDs will be
     // different as well. Compute the root IDs from the graph in that case.
     let initials = if select_direction != query_direction {
-        select.clone().into_root_ids(query_direction).collect()
+        select
+            .clone()
+            .resolve()
+            .into_root_ids(query_direction)
+            .collect()
     } else {
         ids.to_vec()
     };

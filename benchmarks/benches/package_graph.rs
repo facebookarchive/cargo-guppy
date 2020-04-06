@@ -37,7 +37,7 @@ pub fn benchmarks(c: &mut Criterion) {
         )
     });
 
-    c.bench_function("into_iter_ids", |b| {
+    c.bench_function("into_ids", |b| {
         b.iter_batched_ref(
             || gen.generate(ids_directions_strategy(&package_graph)),
             |ids_directions| {
@@ -46,7 +46,7 @@ pub fn benchmarks(c: &mut Criterion) {
                         let select = package_graph
                             .select_directed(package_ids.iter().copied(), *select_direction)
                             .unwrap();
-                        let _: Vec<_> = select.into_iter_ids(Some(*query_direction)).collect();
+                        let _: Vec<_> = select.resolve().into_ids(*query_direction).collect();
                     },
                 )
             },
