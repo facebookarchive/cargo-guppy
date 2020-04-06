@@ -6,7 +6,7 @@ use crate::petgraph_support::scc::Sccs;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighbors, NodeFiltered, Reversed, VisitMap, Visitable};
+use petgraph::visit::{IntoNeighbors, NodeFiltered, Reversed, Visitable};
 
 #[derive(Clone, Debug)]
 pub(super) enum SelectParams<G: GraphSpec> {
@@ -20,63 +20,6 @@ impl<G: GraphSpec> SelectParams<G> {
         match self {
             SelectParams::All | SelectParams::SelectForward(_) => DependencyDirection::Forward,
             SelectParams::SelectReverse(_) => DependencyDirection::Reverse,
-        }
-    }
-}
-
-/// Computes intermediate state for operations where the graph must be pre-filtered before any
-/// traversals happen.
-#[derive(Debug)]
-pub(super) struct SelectPrefilter<'g, G: GraphSpec> {
-    graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
-    pub(super) reachable: FixedBitSet,
-    pub(super) count: usize,
-}
-
-impl<'g, G: GraphSpec> SelectPrefilter<'g, G> {
-    pub(super) fn new(
-        graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
-        params: SelectParams<G>,
-    ) -> Self {
-        use SelectParams::*;
-
-        let (reachable, count) = match params {
-            All => all_visit_map(graph),
-            SelectForward(initials) => reachable_map(graph, initials),
-            SelectReverse(initials) => reachable_map(Reversed(graph), initials),
-        };
-        Self {
-            graph,
-            reachable,
-            count,
-        }
-    }
-
-    pub(super) fn roots(
-        &self,
-        sccs: &Sccs<G::Ix>,
-        direction: DependencyDirection,
-    ) -> Vec<NodeIndex<G::Ix>>
-    where
-        G::Node: ::std::fmt::Debug,
-    {
-        // If any element of an SCC is in the reachable map, so would every other element. This
-        // means that any SCC map computed on the full graph will work on a prefiltered graph. (This
-        // will change if we decide to implement edge visiting/filtering.)
-        //
-        // TODO: petgraph 0.5.1 will allow the closure to be replaced with &self.reachable. Switch
-        // to it when it's out.
-        match direction {
-            DependencyDirection::Forward => sccs
-                .externals(&NodeFiltered::from_fn(self.graph, |x| {
-                    self.reachable.is_visited(&x)
-                }))
-                .collect(),
-            DependencyDirection::Reverse => sccs
-                .externals(&NodeFiltered::from_fn(Reversed(self.graph), |x| {
-                    self.reachable.is_visited(&x)
-                }))
-                .collect(),
         }
     }
 }
@@ -142,7 +85,7 @@ pub(super) fn select_postfilter<G: GraphSpec>(
     }
 }
 
-fn all_visit_map<G, Ix>(graph: G) -> (FixedBitSet, usize)
+pub(super) fn all_visit_map<G, Ix>(graph: G) -> (FixedBitSet, usize)
 where
     G: Visitable<NodeId = NodeIndex<Ix>, Map = FixedBitSet>,
     Ix: IndexType,
@@ -154,7 +97,7 @@ where
     (visit_map, count)
 }
 
-fn reachable_map<G, Ix>(graph: G, roots: Vec<G::NodeId>) -> (FixedBitSet, usize)
+pub(super) fn reachable_map<G, Ix>(graph: G, roots: Vec<G::NodeId>) -> (FixedBitSet, usize)
 where
     G: Visitable<NodeId = NodeIndex<Ix>, Map = FixedBitSet> + IntoNeighbors,
     Ix: IndexType,

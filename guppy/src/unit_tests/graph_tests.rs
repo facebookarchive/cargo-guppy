@@ -58,6 +58,7 @@ mod small {
                 fixtures::METADATA1_REGION,
             )))
             .unwrap()
+            .resolve()
             .into_dot(NameVisitor);
         assert_eq!(
             EXPECTED_DOT,
@@ -79,6 +80,7 @@ mod small {
         let actual_dot_reversed = graph
             .select_reverse(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
             .unwrap()
+            .resolve()
             .into_dot(NameVisitor);
 
         assert_eq!(
@@ -92,6 +94,7 @@ mod small {
         assert_eq!(feature_graph.link_count(), 608, "link count");
         let root_ids: Vec<_> = feature_graph
             .select_workspace(all_filter())
+            .resolve()
             .into_root_ids(DependencyDirection::Forward)
             .collect();
         let testcrate_id = fixtures::package_id(fixtures::METADATA1_TESTCRATE);
@@ -111,6 +114,7 @@ mod small {
         assert_eq!(feature_graph.link_count(), 570, "link count");
         let root_ids: Vec<_> = feature_graph
             .select_workspace(none_filter())
+            .resolve()
             .into_root_ids(DependencyDirection::Forward)
             .collect();
         let testcrate_id = fixtures::package_id(fixtures::METADATA2_TESTCRATE);

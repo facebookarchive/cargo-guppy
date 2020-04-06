@@ -1,8 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
-use crate::graph::select_core::{SelectParams, SelectPrefilter};
+use crate::graph::feature::{FeatureGraph, FeatureId, FeatureResolve};
+use crate::graph::select_core::SelectParams;
 use crate::graph::{DependencyDirection, PackageSelect};
 use crate::Error;
 use std::collections::HashSet;
@@ -242,55 +242,10 @@ impl<'g> FeatureGraph<'g> {
 }
 
 impl<'g> FeatureSelect<'g> {
-    /// Returns the set of "root feature" IDs in the specified direction.
+    /// Resolves this selector into a set of known feature IDs.
     ///
-    /// * If direction is Forward, return the set of feature IDs that do not have any dependencies
-    ///   within the selected graph.
-    /// * If direction is Reverse, return the set of feature IDs that do not have any dependents
-    ///   within the selected graph.
-    ///
-    /// ## Cycles
-    ///
-    /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.
-    pub fn into_root_ids(
-        self,
-        direction: DependencyDirection,
-    ) -> impl Iterator<Item = FeatureId<'g>> + 'g {
-        let dep_graph = self.graph.dep_graph();
-        let package_graph = self.graph.package_graph;
-        let prefilter = SelectPrefilter::new(dep_graph, self.params);
-        prefilter
-            .roots(self.graph.sccs(), direction)
-            .into_iter()
-            .map(move |feature_ix| FeatureId::from_node(package_graph, &dep_graph[feature_ix]))
-    }
-
-    /// Return the set of "root feature" metadatas in the specified direction.
-    ///
-    /// * If direction is Forward, return the set of metadatas that do not have any dependencies
-    ///   within the selected graph.
-    /// * If direction is Reverse, return the set of metadatas that do not have any dependents
-    ///   within the selected graph.
-    ///
-    /// ## Cycles
-    ///
-    /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.
-    pub fn into_root_metadatas(
-        self,
-        direction: DependencyDirection,
-    ) -> impl Iterator<Item = FeatureMetadata<'g>> + 'g {
-        let feature_graph = self.graph;
-        let prefilter = SelectPrefilter::new(feature_graph.dep_graph(), self.params);
-        prefilter
-            .roots(feature_graph.sccs(), direction)
-            .into_iter()
-            .map(move |feature_ix| {
-                let feature_node = &feature_graph.dep_graph()[feature_ix];
-                feature_graph
-                    .metadata_for_node(feature_node)
-                    .expect("feature node should be known")
-            })
+    /// This is the entry point for iterators.
+    pub fn resolve(self) -> FeatureResolve<'g> {
+        FeatureResolve::new(self.graph, self.params)
     }
 }

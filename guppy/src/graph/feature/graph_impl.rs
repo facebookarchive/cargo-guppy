@@ -367,11 +367,12 @@ impl FeatureGraphImpl {
         // The iteration order is bottom-up to allow linking up for "a/foo" style feature specs.
         for metadata in package_graph
             .select_all()
-            .into_iter_metadatas(Some(DependencyDirection::Reverse))
+            .resolve()
+            .into_metadatas(DependencyDirection::Reverse)
         {
             build_state.add_nodes(metadata);
-            // into_iter_metadatas is in topological order, so all the dependencies of this package
-            // would have been added already. So named feature edges can safely be added.
+            // into_metadatas is in topological order, so all the dependencies of this package would
+            // have been added already. So named feature edges can safely be added.
             build_state.add_named_feature_edges(metadata);
         }
 

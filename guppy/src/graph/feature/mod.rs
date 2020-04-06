@@ -12,8 +12,10 @@ mod cycles;
 mod graph_impl;
 #[cfg(feature = "proptest09")]
 mod proptest09;
+mod resolve;
 mod select;
 
 pub use cycles::*;
 pub use graph_impl::*;
+pub use resolve::*;
 pub use select::*;

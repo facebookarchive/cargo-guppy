@@ -6,7 +6,7 @@
 //! Dev-only dependencies are typically not included in release builds, so it's useful to be able
 //! to filter out those links.
 
-use guppy::graph::PackageGraph;
+use guppy::graph::{DependencyDirection, PackageGraph};
 use guppy::Error;
 use std::iter;
 
@@ -27,7 +27,8 @@ fn main() -> Result<(), Error> {
 
     let before_count = package_graph
         .select_forward(iter::once(&libra_node_id))?
-        .into_iter_ids(None)
+        .resolve()
+        .into_ids(DependencyDirection::Forward)
         .count();
     println!("number of packages before: {}", before_count);
 
@@ -55,7 +56,8 @@ fn main() -> Result<(), Error> {
     // Count the number of packages after.
     let after_count = package_graph
         .select_forward(iter::once(&libra_node_id))?
-        .into_iter_ids(None)
+        .resolve()
+        .into_ids(DependencyDirection::Forward)
         .count();
     println!("number of packages after: {}", after_count);
 

@@ -17,10 +17,10 @@ fn main() -> Result<(), Error> {
     // Non-workspace packages cannot depend on packages within the workspace, so the reverse
     // transitive deps of workspace packages are exactly the set of workspace packages.
     let select = package_graph.select_reverse(package_graph.workspace().member_ids())?;
+    let resolve = select.resolve();
 
-    // Here we pass in `Forward` -- by default, select_reverse will cause packages
-    // to be returned in reverse topo order.
-    for package in select.into_iter_metadatas(Some(DependencyDirection::Forward)) {
+    // Iterate over packages in forward topo order.
+    for package in resolve.into_metadatas(DependencyDirection::Forward) {
         // All selected packages are in the workspace.
         let workspace_path = package
             .workspace_path()

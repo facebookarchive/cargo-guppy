@@ -160,7 +160,7 @@ pub(crate) fn assert_transitive_deps_internal(
                 msg, desc.direction_desc, err
             )
         });
-    let package_ids = select.clone().into_iter_ids(None);
+    let package_ids = select.clone().resolve().into_ids(direction);
     let mut actual_dep_ids: Vec<_> = package_ids.collect();
     actual_dep_ids.sort();
 
@@ -189,7 +189,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // up at least once in 'to' before it ever shows up in 'from'.
     assert_link_order(
         actual_deps,
-        select.clone().into_root_ids(direction),
+        select.clone().resolve().into_root_ids(direction),
         desc,
         &format!("{}: actual link order", msg),
     );
@@ -209,7 +209,7 @@ pub(crate) fn assert_transitive_deps_internal(
 
     assert_link_order(
         opposite_deps,
-        select.into_root_ids(opposite),
+        select.resolve().into_root_ids(opposite),
         opposite_desc,
         &format!("{}: opposite link order", msg),
     );
@@ -227,7 +227,8 @@ pub(crate) fn assert_transitive_deps_internal(
                     msg, desc.direction_desc, dep_id.repr, err
                 )
             })
-            .into_iter_ids(None)
+            .resolve()
+            .into_ids(direction)
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
         let difference: Vec<_> = dep_actual_dep_ids.difference(&ids_from_links_set).collect();
@@ -265,7 +266,7 @@ pub(crate) fn assert_transitive_deps_internal(
 }
 
 pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
-    let topo_ids = graph.select_all().into_iter_ids(Some(direction));
+    let topo_ids = graph.select_all().resolve().into_ids(direction);
     assert_eq!(
         topo_ids.len(),
         graph.package_count(),
@@ -282,7 +283,7 @@ pub(crate) fn assert_topo_metadatas(
     direction: DependencyDirection,
     msg: &str,
 ) {
-    let topo_metadatas = graph.select_all().into_iter_metadatas(Some(direction));
+    let topo_metadatas = graph.select_all().resolve().into_metadatas(direction);
     assert_eq!(
         topo_metadatas.len(),
         graph.package_count(),
@@ -331,7 +332,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     // all_links should be in the correct order.
     assert_link_order(
         all_links,
-        graph.select_all().into_root_ids(direction),
+        graph.select_all().resolve().into_root_ids(direction),
         desc,
         msg,
     );
@@ -536,9 +537,9 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
         let select = self
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
-        let into_iter_ids = select.into_iter_ids(Some(query_direction));
-        let expected_len = into_iter_ids.len();
-        let ids: Vec<_> = into_iter_ids.collect();
+        let into_ids = select.resolve().into_ids(query_direction);
+        let expected_len = into_ids.len();
+        let ids: Vec<_> = into_ids.collect();
         assert_eq!(
             expected_len,
             ids.len(),
@@ -556,7 +557,7 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
         let select = self
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
-        select.into_root_ids(query_direction).collect()
+        select.resolve().into_root_ids(query_direction).collect()
     }
 
     fn root_metadatas(
@@ -568,7 +569,10 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
         let select = self
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
-        select.into_root_metadatas(query_direction).collect()
+        select
+            .resolve()
+            .into_root_metadatas(query_direction)
+            .collect()
     }
 }
 
@@ -611,7 +615,7 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
         let select = self
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
-        select.into_root_ids(query_direction).collect()
+        select.resolve().into_root_ids(query_direction).collect()
     }
 
     fn root_metadatas(
@@ -623,7 +627,10 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
         let select = self
             .select_directed(initials.iter().copied(), select_direction)
             .unwrap();
-        select.into_root_metadatas(query_direction).collect()
+        select
+            .resolve()
+            .into_root_metadatas(query_direction)
+            .collect()
     }
 }
 
