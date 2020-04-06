@@ -19,6 +19,7 @@ mod print;
 #[cfg(feature = "proptest09")]
 mod proptest09;
 mod select;
+mod select_core;
 
 pub use crate::petgraph_support::dot::DotWrite;
 pub use cycles::*;
