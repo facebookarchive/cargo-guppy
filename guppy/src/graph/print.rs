@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::select::SelectPrefilter;
+use crate::graph::select_core::SelectPrefilter;
 use crate::graph::{
     DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata, PackageSelect,
 };

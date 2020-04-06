@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
-use crate::graph::{DependencyDirection, PackageSelect, SelectParams, SelectPrefilter};
+use crate::graph::select_core::{SelectParams, SelectPrefilter};
+use crate::graph::{DependencyDirection, PackageSelect};
 use crate::Error;
 use std::collections::HashSet;
 
