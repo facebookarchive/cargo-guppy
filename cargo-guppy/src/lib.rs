@@ -91,30 +91,17 @@ pub struct CmdSelectOptions {
     /// Save selection graph in .dot format
     output_dot: Option<String>,
 
-    #[structopt(rename_all = "screaming_snake_case")]
-    /// The root packages to start the selection from
-    roots: Vec<String>,
+    #[structopt(flatten)]
+    select_opts: SelectOptions,
 }
 
 pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    let package_ids = if !options.roots.is_empty() {
-        // NOTE: The root set packages are specified by name. The tool currently
-        // does not handle multiple version of the same package as the current use
-        // cases are passing workspace members as the root set, which won't be
-        // duplicated.
-        let root_set = options.roots.iter().map(|s| s.as_str()).collect();
-        names_to_ids(&pkg_graph, &root_set)
-    } else {
-        pkg_graph.workspace().member_ids().collect()
-    };
-
+    let select = options.select_opts.apply(&pkg_graph)?;
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
-    let resolve = pkg_graph
-        .select_forward(package_ids)?
-        .resolve_with_fn(resolver);
+    let resolve = select.resolve_with_fn(resolver);
 
     for package_id in resolve.clone().into_ids(DependencyDirection::Forward) {
         let package = pkg_graph.metadata(package_id).unwrap();
@@ -148,6 +135,7 @@ pub struct SubtreeSizeOptions {
     #[structopt(flatten)]
     filter_opts: FilterOptions,
 
+    // TODO: potentially replace this with SelectOptions
     #[structopt(rename_all = "screaming_snake_case")]
     /// The root packages to start the selection from
     root: Option<String>,
