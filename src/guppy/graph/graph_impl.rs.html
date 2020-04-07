@@ -1148,6 +1148,13 @@
 <span id="1148">1148</span>
 <span id="1149">1149</span>
 <span id="1150">1150</span>
+<span id="1151">1151</span>
+<span id="1152">1152</span>
+<span id="1153">1153</span>
+<span id="1154">1154</span>
+<span id="1155">1155</span>
+<span id="1156">1156</span>
+<span id="1157">1157</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1458,6 +1465,12 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">invalidate_caches</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">sccs</span>, <span class="ident">OnceCell</span>::<span class="ident">new</span>());
         <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">feature_graph</span>, <span class="ident">OnceCell</span>::<span class="ident">new</span>());
+
+        <span class="comment">// The edge indexes got compacted as well.</span>
+        <span class="kw">for</span> <span class="ident">edge_ix</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">edge_count</span>() {
+            <span class="kw">let</span> <span class="ident">edge_ix</span> <span class="op">=</span> <span class="ident">EdgeIndex</span>::<span class="ident">new</span>(<span class="ident">edge_ix</span>);
+            <span class="self">self</span>.<span class="ident">dep_graph</span>[<span class="ident">edge_ix</span>].<span class="ident">edge_ix</span> <span class="op">=</span> <span class="ident">edge_ix</span>;
+        }
     }
 
     <span class="doccomment">/// Returns the inner dependency graph.</span>
@@ -1879,6 +1892,7 @@
 <span class="doccomment">/// * if this is a normal, dev or build dependency.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyEdge</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_name</span>: <span class="ident">String</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">resolved_name</span>: <span class="ident">String</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">normal</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DependencyMetadata</span><span class="op">&gt;</span>,

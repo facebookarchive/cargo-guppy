@@ -489,6 +489,7 @@
 <span id="489">489</span>
 <span id="490">490</span>
 <span id="491">491</span>
+<span id="492">492</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -676,7 +677,7 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">feature_ixs_for_packages</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
         <span class="ident">package_ixs</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
-        <span class="ident">filter</span>: <span class="kw">impl</span> <span class="ident">FeatureFilter</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
+        <span class="ident">filter</span>: <span class="kw">impl</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">filter</span> <span class="op">=</span> <span class="ident">filter</span>;
         <span class="ident">package_ixs</span>.<span class="ident">into_iter</span>().<span class="ident">flat_map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">package_ix</span><span class="op">|</span> {
@@ -859,11 +860,12 @@
         <span class="comment">// The iteration order is bottom-up to allow linking up for &quot;a/foo&quot; style feature specs.</span>
         <span class="kw">for</span> <span class="ident">metadata</span> <span class="kw">in</span> <span class="ident">package_graph</span>
             .<span class="ident">select_all</span>()
-            .<span class="ident">into_iter_metadatas</span>(<span class="prelude-val">Some</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span>))
+            .<span class="ident">resolve</span>()
+            .<span class="ident">into_metadatas</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span>)
         {
             <span class="ident">build_state</span>.<span class="ident">add_nodes</span>(<span class="ident">metadata</span>);
-            <span class="comment">// into_iter_metadatas is in topological order, so all the dependencies of this package</span>
-            <span class="comment">// would have been added already. So named feature edges can safely be added.</span>
+            <span class="comment">// into_metadatas is in topological order, so all the dependencies of this package would</span>
+            <span class="comment">// have been added already. So named feature edges can safely be added.</span>
             <span class="ident">build_state</span>.<span class="ident">add_named_feature_edges</span>(<span class="ident">metadata</span>);
         }
 
