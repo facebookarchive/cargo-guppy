@@ -5,14 +5,15 @@ use crate::graph::select_core::{all_visit_map, reachable_map, SelectParams};
 use crate::graph::{DependencyDirection, GraphSpec};
 use crate::petgraph_support::scc::{NodeIter, Sccs};
 use fixedbitset::FixedBitSet;
+use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
-use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
+use petgraph::visit::{EdgeFiltered, NodeFiltered, Reversed, VisitMap};
 use serde::export::PhantomData;
 
 /// Core logic for select queries that have been resolved into a known set of packages.
 ///
 /// The `G` param ensures that package and feature resolutions aren't mixed up accidentally.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct ResolveCore<G> {
     pub(super) included: FixedBitSet,
     pub(super) count: usize,
@@ -28,6 +29,30 @@ impl<G: GraphSpec> ResolveCore<G> {
             SelectParams::All => all_visit_map(graph),
             SelectParams::SelectForward(initials) => reachable_map(graph, initials),
             SelectParams::SelectReverse(initials) => reachable_map(Reversed(graph), initials),
+        };
+        Self {
+            included,
+            count,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub(super) fn with_edge_filter<'g>(
+        graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
+        params: SelectParams<G>,
+        filter: impl Fn(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
+    ) -> Self {
+        let (included, count) = match params {
+            SelectParams::All => {
+                // Not much we can do with the resolver when we've explicitly selected all packages.
+                all_visit_map(graph)
+            }
+            SelectParams::SelectForward(initials) => {
+                reachable_map(&EdgeFiltered::from_fn(graph, filter), initials)
+            }
+            SelectParams::SelectReverse(initials) => {
+                reachable_map(Reversed(&EdgeFiltered::from_fn(graph, filter)), initials)
+            }
         };
         Self {
             included,
@@ -68,14 +93,13 @@ impl<G: GraphSpec> ResolveCore<G> {
         // IMPORTANT
         // ---
         //
-        // This uses the same list of sccs that's computed for the entire graph. This is *currently*
-        // fine because with our current filters, if one element of an SCC is present all others
-        // will be present as well.
+        // This uses the same list of sccs that's computed for the entire graph. This is fine for
+        // resolve() -- over there, if one element of an SCC is present all others will be present
+        // as well.
         //
-        // However:
-        // * If we allow for custom visitors that can control the reachable map, it is possible that
-        //   SCCs in the main graph aren't in the subgraph. That might make the returned order
-        //   incorrect.
+        // * However, with resolve_with() and a custom resolver, it is possible that SCCs in the
+        //   main graph aren't in the subgraph. That makes the returned order "incorrect", but it's
+        //   a very minor sin and probably not worth the extra complexity to deal with.
         // * This requires iterating over every node in the graph even if the set of returned nodes
         //   is very small. There's a tradeoff here between allocating memory to store a custom list
         //   of SCCs and just using the one available. More benchmarking is required to figure out

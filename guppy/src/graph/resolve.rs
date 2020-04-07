@@ -30,6 +30,24 @@ impl<'g> PackageResolve<'g> {
         }
     }
 
+    pub(super) fn with_resolver(
+        package_graph: &'g PackageGraph,
+        params: SelectParams<PackageGraph>,
+        resolver: impl PackageResolver<'g>,
+    ) -> Self {
+        Self {
+            package_graph,
+            core: ResolveCore::with_edge_filter(package_graph.dep_graph(), params, |edge_ref| {
+                let link = package_graph.edge_to_link(
+                    edge_ref.source(),
+                    edge_ref.target(),
+                    edge_ref.weight(),
+                );
+                resolver.accept(link)
+            }),
+        }
+    }
+
     /// Iterates over package IDs, in topological order in the direction specified.
     ///
     /// ## Cycles
@@ -116,6 +134,50 @@ impl<'g> PackageResolve<'g> {
     pub fn into_dot<V: PackageDotVisitor + 'g>(self, visitor: V) -> impl fmt::Display + 'g {
         let node_filtered = NodeFiltered(self.package_graph.dep_graph(), self.core.included);
         DotFmt::new(node_filtered, VisitorWrap::new(self.package_graph, visitor))
+    }
+}
+
+/// Represents whether a particular link within a package graph should be followed during a
+/// resolve operation.
+///
+/// This trait is implemented for all functions that match `Fn(DependencyLink<'g>) -> bool`.
+pub trait PackageResolver<'g> {
+    /// Returns true if this link should be followed during a resolve operation.
+    ///
+    /// Returning false does not prevent the `to` package (or `from` package with `select_reverse`)
+    /// from being included if it's reachable through other means.
+    fn accept(&self, link: DependencyLink<'g>) -> bool;
+}
+
+impl<'g, 'a, T> PackageResolver<'g> for &'a T
+where
+    T: PackageResolver<'g>,
+{
+    fn accept(&self, link: DependencyLink<'g>) -> bool {
+        (**self).accept(link)
+    }
+}
+
+impl<'g, 'a> PackageResolver<'g> for Box<dyn PackageResolver<'g> + 'a> {
+    fn accept(&self, link: DependencyLink<'g>) -> bool {
+        (**self).accept(link)
+    }
+}
+
+impl<'g, 'a> PackageResolver<'g> for &'a dyn PackageResolver<'g> {
+    fn accept(&self, link: DependencyLink<'g>) -> bool {
+        (**self).accept(link)
+    }
+}
+
+pub(super) struct ResolverFn<F>(pub(super) F);
+
+impl<'g, F> PackageResolver<'g> for ResolverFn<F>
+where
+    F: Fn(DependencyLink<'g>) -> bool,
+{
+    fn accept(&self, link: DependencyLink<'g>) -> bool {
+        (self.0)(link)
     }
 }
 

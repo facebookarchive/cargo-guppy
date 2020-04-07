@@ -89,6 +89,38 @@ mod small {
             "reversed dot output matches"
         );
 
+        // ---
+
+        // Check that resolve_with works by dropping all edges into libc (compare to example above).
+        static EXPECTED_DOT_NO_LIBC: &str = r#"digraph {
+    0 [label="winapi-x86_64-pc-windows-gnu"]
+    11 [label="mach"]
+    13 [label="winapi"]
+    20 [label="winapi-i686-pc-windows-gnu"]
+    26 [label="region"]
+    31 [label="bitflags"]
+    13 -> 20 [label="winapi-i686-pc-windows-gnu"]
+    13 -> 0 [label="winapi-x86_64-pc-windows-gnu"]
+    26 -> 31 [label="bitflags"]
+    26 -> 11 [label="mach"]
+    26 -> 13 [label="winapi"]
+}
+"#;
+        let actual_dot = graph
+            .select_forward(iter::once(&fixtures::package_id(
+                fixtures::METADATA1_REGION,
+            )))
+            .unwrap()
+            .resolve_with_fn(|link| link.to.name() != "libc")
+            .into_dot(NameVisitor);
+        assert_eq!(
+            EXPECTED_DOT_NO_LIBC,
+            format!("{}", actual_dot),
+            "dot output matches"
+        );
+
+        // ---
+
         let feature_graph = graph.feature_graph();
         assert_eq!(feature_graph.feature_count(), 492, "feature count");
         assert_eq!(feature_graph.link_count(), 608, "link count");
