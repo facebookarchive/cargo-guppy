@@ -100,7 +100,6 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
     let mut package_ids = HashSet::new();
-    let mut omitted_package_ids = HashSet::new();
 
     // NOTE: The root set packages are specified by name. The tool currently
     // does not handle multiple version of the same package as the current use
@@ -116,19 +115,9 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
             .collect()
     };
 
-    let omitted_set: HashSet<String> = options
-        .filter_opts
-        .omit_edges_into
-        .iter()
-        .cloned()
-        .collect();
-
     for metadata in pkg_graph.packages() {
         if root_set.contains(metadata.name()) {
             package_ids.insert(metadata.id().clone());
-        }
-        if omitted_set.contains(metadata.name()) {
-            omitted_package_ids.insert(metadata.id().clone());
         }
     }
 
