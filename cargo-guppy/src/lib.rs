@@ -297,7 +297,7 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
 
 /// Narrow a package graph by removing specific edges.
 fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
-    let omitted_set: HashSet<String> = options.omit_edges_into.iter().cloned().collect();
+    let omitted_set: HashSet<&str> = options.omit_edges_into.iter().map(|s| s.as_str()).collect();
 
     let mut omitted_package_ids = HashSet::new();
     for metadata in pkg_graph.packages() {
