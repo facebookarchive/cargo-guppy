@@ -100,21 +100,16 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    // NOTE: The root set packages are specified by name. The tool currently
-    // does not handle multiple version of the same package as the current use
-    // cases are passing workspace members as the root set, which won't be
-    // duplicated.
-    let root_set: HashSet<&str> = if !options.roots.is_empty() {
-        options.roots.iter().map(|s| s.as_str()).collect()
+    let package_ids = if !options.roots.is_empty() {
+        // NOTE: The root set packages are specified by name. The tool currently
+        // does not handle multiple version of the same package as the current use
+        // cases are passing workspace members as the root set, which won't be
+        // duplicated.
+        let root_set = options.roots.iter().map(|s| s.as_str()).collect();
+        names_to_ids(&pkg_graph, &root_set)
     } else {
-        pkg_graph
-            .workspace()
-            .member_ids()
-            .map(|pkg_id| pkg_graph.metadata(pkg_id).unwrap().name())
-            .collect()
+        pkg_graph.workspace().member_ids().collect()
     };
-
-    let package_ids: HashSet<_> = names_to_ids(&pkg_graph, &root_set);
 
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
     let resolve = pkg_graph
