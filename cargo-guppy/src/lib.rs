@@ -87,6 +87,10 @@ pub struct CmdSelectOptions {
     #[structopt(flatten)]
     filter_opts: FilterOptions,
 
+    #[structopt(long = "output-reverse", parse(from_flag = parse_direction))]
+    /// Output results in reverse topological order (default: forward)
+    output_direction: DependencyDirection,
+
     #[structopt(long, rename_all = "kebab-case")]
     /// Save selection graph in .dot format
     output_dot: Option<String>,
@@ -103,7 +107,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
     let resolve = select.resolve_with_fn(resolver);
 
-    for package_id in resolve.clone().into_ids(DependencyDirection::Forward) {
+    for package_id in resolve.clone().into_ids(options.output_direction) {
         let package = pkg_graph.metadata(package_id).unwrap();
         let in_workspace = package.in_workspace();
         let direct_dep = pkg_graph
