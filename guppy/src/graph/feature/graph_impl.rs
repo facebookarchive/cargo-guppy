@@ -184,7 +184,7 @@ impl<'g> FeatureGraph<'g> {
     pub(super) fn feature_ixs_for_packages<'a>(
         &'a self,
         package_ixs: impl IntoIterator<Item = NodeIndex<PackageIx>> + 'a,
-        filter: impl FeatureFilter + 'a,
+        filter: impl FeatureFilter<'g> + 'a,
     ) -> impl Iterator<Item = NodeIndex<FeatureIx>> + 'a {
         let mut filter = filter;
         package_ixs.into_iter().flat_map(move |package_ix| {
