@@ -5,7 +5,7 @@ use crate::debug_ignore::DebugIgnore;
 use crate::graph::select_core::{select_postfilter, SelectParams};
 use crate::graph::{
     DependencyDirection, DependencyLink, IntoIds, IntoMetadatas, PackageDotVisitor, PackageGraph,
-    PackageIx, PackageMetadata, PackageResolve,
+    PackageIx, PackageMetadata, PackageResolve, PackageResolver, ResolverFn,
 };
 use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
@@ -136,6 +136,25 @@ impl<'g> PackageSelect<'g> {
     /// This is the entry point for iterators.
     pub fn resolve(self) -> PackageResolve<'g> {
         PackageResolve::new(self.package_graph, self.params)
+    }
+
+    /// Resolves this selector into a set of known packages, using the provided resolver to
+    /// determine which links are followed.
+    ///
+    /// The resolver is ignored for `select_all()` queries.
+    pub fn resolve_with(self, resolver: impl PackageResolver<'g>) -> PackageResolve<'g> {
+        PackageResolve::with_resolver(self.package_graph, self.params, resolver)
+    }
+
+    /// Resolves this selector into a set of known packages, using the provided resolver function
+    /// to determine which links are followed.
+    ///
+    /// The resolver function is ignored for `select_all()` queries.
+    pub fn resolve_with_fn(
+        self,
+        resolver_fn: impl Fn(DependencyLink<'g>) -> bool,
+    ) -> PackageResolve<'g> {
+        self.resolve_with(ResolverFn(resolver_fn))
     }
 
     /// Returns the set of "root packages" in the specified direction.

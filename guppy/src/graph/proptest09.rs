@@ -1,9 +1,12 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{DependencyLink, PackageGraph};
+use crate::graph::{DependencyLink, PackageGraph, PackageResolver};
 use crate::PackageId;
+use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
+use petgraph::visit::VisitMap;
+use proptest::collection::vec;
 use proptest::prelude::*;
 
 /// ## Helpers for property testing
@@ -50,4 +53,35 @@ impl PackageGraph {
             self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
         })
     }
+
+    /// Returns a `Strategy` that generates a random `PackageResolver` instance from this graph.
+    ///
+    /// Requires the `proptest09` feature to be enabled.
+    pub fn prop09_resolver_strategy<'g>(&'g self) -> impl Strategy<Value = Prop09Resolver> + 'g {
+        // Generate a FixedBitSet to filter based off of.
+        fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop09Resolver)
+    }
+}
+
+/// A randomly generated package resolver.
+///
+/// Created by `PackageGraph::prop09_resolver_strategy`. Requires the `proptest09` feature to be
+/// enabled.
+#[derive(Clone, Debug)]
+pub struct Prop09Resolver(FixedBitSet);
+
+impl<'a, 'g> PackageResolver<'g> for Prop09Resolver {
+    fn accept(&self, link: DependencyLink<'g>) -> bool {
+        self.0.is_visited(&link.edge.edge_ix)
+    }
+}
+
+pub(super) fn fixedbitset_strategy(len: usize) -> impl Strategy<Value = FixedBitSet> {
+    vec(any::<bool>(), len).prop_map(|bits| {
+        // FixedBitSet implements FromIterator<usize> for indexes, so just collect into it.
+        bits.into_iter()
+            .enumerate()
+            .filter_map(|(idx, bit)| if bit { Some(idx) } else { None })
+            .collect()
+    })
 }

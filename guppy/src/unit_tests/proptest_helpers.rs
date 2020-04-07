@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{DependencyDirection, PackageGraph};
+use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Resolver};
 use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata};
 use crate::PackageId;
 use pretty_assertions::assert_eq;
@@ -90,6 +90,21 @@ macro_rules! proptest_suite {
                         query_indexes,
                         "feature_select_roots",
                     )?;
+                });
+            }
+
+            #[test]
+            fn proptest_resolver_retain_equivalence() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+
+                // Reduce the number of tests because each run is kind of expensive.
+                proptest!(ProptestConfig::with_cases(64), |(
+                    ids in vec(package_graph.prop09_id_strategy(), 1..16),
+                    direction in any::<DependencyDirection>(),
+                    resolver in package_graph.prop09_resolver_strategy(),
+                )| {
+                    resolver_retain_equivalence(&mut package_graph.clone(), &ids, direction, resolver);
                 });
             }
         }
@@ -193,6 +208,46 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
         }
     }
     Ok(())
+}
+
+/// Test that using a custom resolver and using retain_edges produce the same results.
+pub(super) fn resolver_retain_equivalence(
+    graph: &mut PackageGraph,
+    ids: &[&PackageId],
+    direction: DependencyDirection,
+    resolver: Prop09Resolver,
+) {
+    let mut resolver_ids: Vec<_> = graph
+        .select_directed(ids.iter().copied(), direction)
+        .unwrap()
+        .resolve_with(&resolver)
+        .into_ids(direction)
+        // Clone to release borrow on the graph.
+        .cloned()
+        .collect();
+    // While we're here, might as well check topological order.
+    (&*graph).assert_topo_order(&resolver_ids, direction, "topo order for resolver IDs");
+    // Sort because the topological order may be different from above.
+    resolver_ids.sort();
+
+    // Now do the filtering through retain_edges.
+    graph.retain_edges(|_data, link| resolver.accept(link));
+    let mut retain_ids: Vec<_> = graph
+        .select_directed(ids.iter().copied(), direction)
+        .unwrap()
+        .resolve()
+        .into_ids(direction)
+        // Clone because PartialEq isn't implemented for &PackageId and PackageId :/ sigh.
+        .cloned()
+        .collect();
+    (&*graph).assert_topo_order(&retain_ids, direction, "topo order for retain IDs");
+    // Sort because the topological order may be different from above.
+    retain_ids.sort();
+
+    assert_eq!(
+        resolver_ids, retain_ids,
+        "ids through resolver and retain_edges should be the same"
+    );
 }
 
 // TODO: Test FeatureFilter implementations.

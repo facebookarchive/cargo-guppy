@@ -6,7 +6,7 @@
 //! Dev-only dependencies are typically not included in release builds, so it's useful to be able
 //! to filter out those links.
 
-use guppy::graph::{DependencyDirection, PackageGraph};
+use guppy::graph::{DependencyDirection, DependencyLink, PackageGraph};
 use guppy::Error;
 use std::iter;
 
@@ -32,20 +32,34 @@ fn main() -> Result<(), Error> {
         .count();
     println!("number of packages before: {}", before_count);
 
-    // `retain_edges` takes a closure that returns `true` if this edge should be kept in the graph.
-    package_graph.retain_edges(|_data, link| {
-        // '_data' contains metadata for every package. It isn't used in this example but some
-        // complex filters may make use of it.
-
+    // A package resolver allows for fine-grained control over which links are followed. In general,
+    // it is anything that implements the `PackageResolver` trait. A function with this signature
+    // can be used with the `resolve_with_fn` method.
+    let resolver_fn = |link: DependencyLink<'_>| {
         if link.edge.dev_only() {
             println!(
-                "filtering out dev-only link: {} -> {}",
+                "*** filtering out dev-only link: {} -> {}",
                 link.from.name(),
                 link.to.name()
             );
             return false;
         }
         true
+    };
+
+    // Use `resolve_with` to filter out dev-only links.
+    let resolve_with_len = package_graph
+        .select_forward(iter::once(&libra_node_id))?
+        .resolve_with_fn(resolver_fn)
+        .into_ids(DependencyDirection::Forward)
+        .len();
+    println!("number of packages with resolve_with: {}", resolve_with_len);
+
+    // Alternatively, `retain_edges` takes a closure that returns `true` if this edge should be kept in the graph.
+    package_graph.retain_edges(|_data, link| {
+        // '_data' contains metadata for every package. It isn't used in this example but some
+        // complex filters may make use of it.
+        resolver_fn(link)
     });
 
     // Iterate over all links and assert that there are no dev-only links.
@@ -59,7 +73,7 @@ fn main() -> Result<(), Error> {
         .resolve()
         .into_ids(DependencyDirection::Forward)
         .count();
-    println!("number of packages after: {}", after_count);
+    println!("number of packages after retain_edges: {}", after_count);
 
     Ok(())
 }

@@ -27,6 +27,8 @@ pub use cycles::*;
 pub use graph_impl::*;
 use once_cell::sync::Lazy;
 use petgraph::graph::IndexType;
+#[cfg(feature = "proptest09")]
+pub use proptest09::*;
 pub use resolve::*;
 pub use select::*;
 use semver::{Version, VersionReq};
