@@ -42,16 +42,14 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
 
 pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
-    let mut pkg_graph = PackageGraph::from_command(&mut command)?;
+    let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    // narrow the graph
-    narrow_graph(&mut pkg_graph, &filter_opts);
-
+    let resolver = make_resolver(&pkg_graph, filter_opts);
     let selection = pkg_graph.select_workspace();
 
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
     for package in selection
-        .resolve()
+        .resolve_with_fn(resolver)
         .into_metadatas(DependencyDirection::Forward)
     {
         dupe_map.entry(package.name()).or_default().push(package);
@@ -137,7 +135,7 @@ pub struct FilterOptions {
 
 pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
-    let mut pkg_graph = PackageGraph::from_command(&mut command)?;
+    let pkg_graph = PackageGraph::from_command(&mut command)?;
     let mut package_ids = HashSet::new();
     let mut omitted_package_ids = HashSet::new();
 
@@ -171,9 +169,10 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
         }
     }
 
-    narrow_graph(&mut pkg_graph, &options.filter_opts);
-
-    let resolve = pkg_graph.select_forward(&package_ids)?.resolve();
+    let resolver = make_resolver(&pkg_graph, &options.filter_opts);
+    let resolve = pkg_graph
+        .select_forward(&package_ids)?
+        .resolve_with_fn(resolver);
 
     for package_id in resolve.clone().into_ids(DependencyDirection::Forward) {
         let package = pkg_graph.metadata(package_id).unwrap();
@@ -214,10 +213,9 @@ pub struct SubtreeSizeOptions {
 
 pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
-    let mut pkg_graph = PackageGraph::from_command(&mut command)?;
+    let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    // narrow the graph
-    narrow_graph(&mut pkg_graph, &options.filter_opts);
+    let resolver = make_resolver(&pkg_graph, &options.filter_opts);
 
     let mut dep_cache = pkg_graph.new_depends_cache();
 
@@ -237,10 +235,13 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     };
 
     let mut unique_deps: HashMap<&PackageId, HashSet<&PackageId>> = HashMap::new();
-    for package_id in selection.resolve().into_ids(DependencyDirection::Forward) {
+    for package_id in selection
+        .resolve_with_fn(&resolver)
+        .into_ids(DependencyDirection::Forward)
+    {
         let subtree_package_set: HashSet<&PackageId> = pkg_graph
             .select_forward(iter::once(package_id))?
-            .resolve()
+            .resolve_with_fn(&resolver)
             .into_ids(DependencyDirection::Forward)
             .collect();
         let mut nonunique_deps_set: HashSet<&PackageId> = HashSet::new();
@@ -295,8 +296,11 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     Ok(())
 }
 
-/// Narrow a package graph by removing specific edges.
-fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
+/// Construct a package resolver based on the filter options..
+fn make_resolver<'g>(
+    pkg_graph: &'g PackageGraph,
+    options: &'g FilterOptions,
+) -> impl Fn(DependencyLink<'g>) -> bool + 'g {
     let omitted_set: HashSet<&str> = options.omit_edges_into.iter().map(|s| s.as_str()).collect();
 
     let mut omitted_package_ids = HashSet::new();
@@ -313,7 +317,7 @@ fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
         None
     };
 
-    pkg_graph.retain_edges(|_, DependencyLink { from, to, edge }| {
+    move |DependencyLink { from, to, edge }| {
         // filter by the kind of dependency (--kind)
         // NOTE: We always retain all workspace deps in the graph, otherwise
         // we'll get a disconnected graph.
@@ -345,5 +349,5 @@ fn narrow_graph(pkg_graph: &mut PackageGraph, options: &FilterOptions) {
         let include_edge = !omitted_package_ids.contains(to.id());
 
         include_kind && include_target && include_type && include_edge
-    });
+    }
 }
