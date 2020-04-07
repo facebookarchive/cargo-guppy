@@ -73,13 +73,13 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
-[0.1.7]: https://github.com/calibra/cargo-guppy/releases/tag/guppy-0.1.7
+[0.1.7]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.1.7
 
 <!-- Previous releases were simply tagged "$VERSION", not "guppy-$VERSION". -->
-[0.1.6]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.6
-[0.1.5]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.5
-[0.1.4]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.4
-[0.1.3]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.3
-[0.1.2]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.2
-[0.1.1]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.1
-[0.1.0]: https://github.com/calibra/cargo-guppy/releases/tag/0.1.0
+[0.1.6]: https://github.com/facebookincubator/cargo-guppy/releases/tag/0.1.6
+[0.1.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/0.1.5
+[0.1.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/0.1.4
+[0.1.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/0.1.3
+[0.1.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/0.1.2
+[0.1.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/0.1.1
+[0.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/0.1.0

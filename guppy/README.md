@@ -42,7 +42,7 @@ for link in package_graph.dep_links(&package_id).unwrap() {
 ```
 
 For more examples, see
-[the `examples` directory](https://github.com/calibra/cargo-guppy/tree/master/guppy/examples).
+[the `examples` directory](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy/examples).
 
 ## Contributing
 
