@@ -83,7 +83,7 @@ impl PackageDotVisitor for NameVisitor {
 }
 
 #[derive(Debug, StructOpt)]
-pub struct SelectOptions {
+pub struct CmdSelectOptions {
     #[structopt(flatten)]
     filter_opts: FilterOptions,
 
@@ -96,7 +96,7 @@ pub struct SelectOptions {
     roots: Vec<String>,
 }
 
-pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
+pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
     let mut package_ids = HashSet::new();
