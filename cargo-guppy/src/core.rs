@@ -5,7 +5,7 @@
 
 use clap::arg_enum;
 use guppy::graph::{DependencyLink, EnabledStatus, PackageGraph};
-use guppy::{Platform, TargetFeatures};
+use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
 use structopt::StructOpt;
 
@@ -55,13 +55,7 @@ impl FilterOptions {
         pkg_graph: &'g PackageGraph,
     ) -> impl Fn(DependencyLink<'g>) -> bool + 'g {
         let omitted_set: HashSet<&str> = self.omit_edges_into.iter().map(|s| s.as_str()).collect();
-
-        let mut omitted_package_ids = HashSet::new();
-        for metadata in pkg_graph.packages() {
-            if omitted_set.contains(metadata.name()) {
-                omitted_package_ids.insert(metadata.id().clone());
-            }
-        }
+        let omitted_package_ids = names_to_ids(pkg_graph, &omitted_set);
 
         let platform = if let Some(ref target) = self.target {
             // The features are unknown.
@@ -104,4 +98,20 @@ impl FilterOptions {
             include_kind && include_target && include_type && include_edge
         }
     }
+}
+
+pub(crate) fn names_to_ids<'g>(
+    pkg_graph: &'g PackageGraph,
+    names: &HashSet<&str>,
+) -> HashSet<&'g PackageId> {
+    pkg_graph
+        .packages()
+        .filter_map(|metadata| {
+            if names.contains(metadata.name()) {
+                Some(metadata.id())
+            } else {
+                None
+            }
+        })
+        .collect()
 }
