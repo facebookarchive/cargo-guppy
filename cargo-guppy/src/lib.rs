@@ -1,12 +1,16 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+mod core;
+mod diff;
+
+pub use crate::core::*;
+
 use anyhow;
-use clap::arg_enum;
-use guppy::graph::{DependencyDirection, EnabledStatus};
+use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageGraph, PackageMetadata},
-    MetadataCommand, PackageId, Platform, TargetFeatures,
+    MetadataCommand, PackageId,
 };
 use itertools;
 use std::cmp;
@@ -16,8 +20,6 @@ use std::fs;
 use std::io::Write;
 use std::iter;
 use structopt::StructOpt;
-
-mod diff;
 
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
     let old_json = fs::read_to_string(old)?;
@@ -44,7 +46,7 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    let resolver = make_resolver(&pkg_graph, filter_opts);
+    let resolver = filter_opts.make_resolver(&pkg_graph);
     let selection = pkg_graph.select_workspace();
 
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
@@ -66,16 +68,6 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     }
 
     Ok(())
-}
-
-arg_enum! {
-    #[derive(Debug)]
-    pub enum Kind {
-        All,
-        Workspace,
-        DirectThirdParty,
-        ThirdParty,
-    }
 }
 
 struct NameVisitor;
@@ -102,35 +94,6 @@ pub struct SelectOptions {
     #[structopt(rename_all = "screaming_snake_case")]
     /// The root packages to start the selection from
     roots: Vec<String>,
-}
-
-#[derive(Debug, StructOpt)]
-pub struct FilterOptions {
-    #[structopt(long, short, possible_values = &Kind::variants(), case_insensitive = true, default_value = "all")]
-    /// Kind of crates to select
-    kind: Kind,
-
-    #[structopt(long, rename_all = "kebab-case")]
-    /// Include dev dependencies
-    include_dev: bool,
-
-    #[structopt(long, rename_all = "kebab-case")]
-    /// Include build dependencies
-    include_build: bool,
-
-    #[structopt(long)]
-    /// Target to select for, default is to match all targets
-    target: Option<String>,
-
-    #[structopt(
-        long,
-        rename_all = "kebab-case",
-        name = "package",
-        number_of_values = 1
-    )]
-    /// Omit edges that point into a given package; useful for seeing how
-    /// removing a dependency affects the graph
-    omit_edges_into: Vec<String>,
 }
 
 pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
@@ -169,7 +132,7 @@ pub fn cmd_select(options: &SelectOptions) -> Result<(), anyhow::Error> {
         }
     }
 
-    let resolver = make_resolver(&pkg_graph, &options.filter_opts);
+    let resolver = options.filter_opts.make_resolver(&pkg_graph);
     let resolve = pkg_graph
         .select_forward(&package_ids)?
         .resolve_with_fn(resolver);
@@ -215,7 +178,7 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    let resolver = make_resolver(&pkg_graph, &options.filter_opts);
+    let resolver = options.filter_opts.make_resolver(&pkg_graph);
 
     let mut dep_cache = pkg_graph.new_depends_cache();
 
@@ -294,60 +257,4 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     }
 
     Ok(())
-}
-
-/// Construct a package resolver based on the filter options..
-fn make_resolver<'g>(
-    pkg_graph: &'g PackageGraph,
-    options: &'g FilterOptions,
-) -> impl Fn(DependencyLink<'g>) -> bool + 'g {
-    let omitted_set: HashSet<&str> = options.omit_edges_into.iter().map(|s| s.as_str()).collect();
-
-    let mut omitted_package_ids = HashSet::new();
-    for metadata in pkg_graph.packages() {
-        if omitted_set.contains(metadata.name()) {
-            omitted_package_ids.insert(metadata.id().clone());
-        }
-    }
-
-    let platform = if let Some(ref target) = options.target {
-        // The features are unknown.
-        Some(Platform::new(target, TargetFeatures::Unknown).unwrap())
-    } else {
-        None
-    };
-
-    move |DependencyLink { from, to, edge }| {
-        // filter by the kind of dependency (--kind)
-        // NOTE: We always retain all workspace deps in the graph, otherwise
-        // we'll get a disconnected graph.
-        let include_kind = match options.kind {
-            Kind::All | Kind::ThirdParty => true,
-            Kind::DirectThirdParty => from.in_workspace(),
-            Kind::Workspace => from.in_workspace() && to.in_workspace(),
-        };
-
-        // filter out irrelevant dependencies for a specific target (--target)
-        let include_target = if let Some(platform) = &platform {
-            edge.normal()
-                .map(|meta| {
-                    // Include this dependency if it's optional or mandatory or if the status is
-                    // unknown.
-                    meta.enabled_on(platform) != EnabledStatus::Never
-                })
-                .unwrap_or(true)
-        } else {
-            true
-        };
-
-        // filter normal, dev, and build dependencies (--include-build, --include-dev)
-        let include_type = edge.normal().is_some()
-            || options.include_dev && edge.dev().is_some()
-            || options.include_build && edge.build().is_some();
-
-        // filter out provided edge targets (--omit-edges-into)
-        let include_edge = !omitted_package_ids.contains(to.id());
-
-        include_kind && include_target && include_type && include_edge
-    }
 }
