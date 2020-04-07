@@ -4,7 +4,7 @@
 //! Implementations for options shared by commands.
 
 use clap::arg_enum;
-use guppy::graph::{DependencyLink, EnabledStatus, PackageGraph};
+use guppy::graph::{DependencyLink, EnabledStatus, PackageGraph, PackageSelect};
 use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
 use structopt::StructOpt;
@@ -16,6 +16,32 @@ arg_enum! {
         Workspace,
         DirectThirdParty,
         ThirdParty,
+    }
+}
+
+#[derive(Debug, StructOpt)]
+pub struct SelectOptions {
+    #[structopt(rename_all = "screaming_snake_case")]
+    /// The root packages to start the selection from
+    roots: Vec<String>,
+}
+
+impl SelectOptions {
+    /// Constructs a `PackageSelect` based on these options.
+    pub fn apply<'g>(
+        &self,
+        pkg_graph: &'g PackageGraph,
+    ) -> Result<PackageSelect<'g>, anyhow::Error> {
+        if !self.roots.is_empty() {
+            // NOTE: The root set packages are specified by name. The tool currently
+            // does not handle multiple version of the same package as the current use
+            // cases are passing workspace members as the root set, which won't be
+            // duplicated.
+            let root_set = self.roots.iter().map(|s| s.as_str()).collect();
+            Ok(pkg_graph.select_forward(names_to_ids(&pkg_graph, &root_set))?)
+        } else {
+            Ok(pkg_graph.select_workspace())
+        }
     }
 }
 
@@ -55,7 +81,7 @@ impl FilterOptions {
         pkg_graph: &'g PackageGraph,
     ) -> impl Fn(DependencyLink<'g>) -> bool + 'g {
         let omitted_set: HashSet<&str> = self.omit_edges_into.iter().map(|s| s.as_str()).collect();
-        let omitted_package_ids = names_to_ids(pkg_graph, &omitted_set);
+        let omitted_package_ids: HashSet<_> = names_to_ids(pkg_graph, &omitted_set).collect();
 
         let platform = if let Some(ref target) = self.target {
             // The features are unknown.
@@ -100,18 +126,15 @@ impl FilterOptions {
     }
 }
 
-pub(crate) fn names_to_ids<'g>(
+pub(crate) fn names_to_ids<'g: 'a, 'a>(
     pkg_graph: &'g PackageGraph,
-    names: &HashSet<&str>,
-) -> HashSet<&'g PackageId> {
-    pkg_graph
-        .packages()
-        .filter_map(|metadata| {
-            if names.contains(metadata.name()) {
-                Some(metadata.id())
-            } else {
-                None
-            }
-        })
-        .collect()
+    names: &'a HashSet<&str>,
+) -> impl Iterator<Item = &'g PackageId> + 'a {
+    pkg_graph.packages().filter_map(move |metadata| {
+        if names.contains(metadata.name()) {
+            Some(metadata.id())
+        } else {
+            None
+        }
+    })
 }
