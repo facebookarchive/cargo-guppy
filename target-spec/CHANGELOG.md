@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.1] - 2020-04-07
+### Changed
+- Updated repository links.
+
 ## [0.2.0] - 2020-04-05
 ### Added
 - Added support for parsing specs and platforms separately from evaluating them, making error-less evaluation possible.
@@ -11,5 +15,6 @@
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[0.2.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.1
 [0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.0
 [0.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.1.0
