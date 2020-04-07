@@ -99,31 +99,26 @@ pub struct CmdSelectOptions {
 pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
-    let mut package_ids = HashSet::new();
 
     // NOTE: The root set packages are specified by name. The tool currently
     // does not handle multiple version of the same package as the current use
     // cases are passing workspace members as the root set, which won't be
     // duplicated.
-    let root_set: HashSet<String> = if !options.roots.is_empty() {
-        options.roots.iter().cloned().collect()
+    let root_set: HashSet<&str> = if !options.roots.is_empty() {
+        options.roots.iter().map(|s| s.as_str()).collect()
     } else {
         pkg_graph
             .workspace()
             .member_ids()
-            .map(|pkg_id| pkg_graph.metadata(pkg_id).unwrap().name().to_string())
+            .map(|pkg_id| pkg_graph.metadata(pkg_id).unwrap().name())
             .collect()
     };
 
-    for metadata in pkg_graph.packages() {
-        if root_set.contains(metadata.name()) {
-            package_ids.insert(metadata.id().clone());
-        }
-    }
+    let package_ids: HashSet<_> = names_to_ids(&pkg_graph, &root_set);
 
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
     let resolve = pkg_graph
-        .select_forward(&package_ids)?
+        .select_forward(package_ids)?
         .resolve_with_fn(resolver);
 
     for package_id in resolve.clone().into_ids(DependencyDirection::Forward) {
