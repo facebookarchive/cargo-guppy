@@ -3,8 +3,11 @@
 
 //! Implementations for options shared by commands.
 
+use anyhow::{anyhow, ensure};
 use clap::arg_enum;
-use guppy::graph::{DependencyLink, EnabledStatus, PackageGraph, PackageSelect};
+use guppy::graph::{
+    DependencyDirection, DependencyLink, EnabledStatus, PackageGraph, PackageSelect,
+};
 use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
 use structopt::StructOpt;
@@ -21,6 +24,10 @@ arg_enum! {
 
 #[derive(Debug, StructOpt)]
 pub struct SelectOptions {
+    /// Select reverse transitive dependencies (default: forward)
+    #[structopt(long = "select-reverse", parse(from_flag = parse_direction))]
+    direction: DependencyDirection,
+
     #[structopt(rename_all = "screaming_snake_case")]
     /// The root packages to start the selection from
     roots: Vec<String>,
@@ -38,8 +45,12 @@ impl SelectOptions {
             // cases are passing workspace members as the root set, which won't be
             // duplicated.
             let root_set = self.roots.iter().map(|s| s.as_str()).collect();
-            Ok(pkg_graph.select_forward(names_to_ids(&pkg_graph, &root_set))?)
+            Ok(pkg_graph.select_directed(names_to_ids(&pkg_graph, &root_set), self.direction)?)
         } else {
+            ensure!(
+                self.direction == DependencyDirection::Forward,
+                anyhow!("--select-reverse requires roots to be specified")
+            );
             Ok(pkg_graph.select_workspace())
         }
     }
@@ -123,6 +134,14 @@ impl FilterOptions {
 
             include_kind && include_target && include_type && include_edge
         }
+    }
+}
+
+pub(crate) fn parse_direction(reverse: bool) -> DependencyDirection {
+    if reverse {
+        DependencyDirection::Reverse
+    } else {
+        DependencyDirection::Forward
     }
 }
 
