@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use cargo_guppy::{FilterOptions, SelectOptions, SubtreeSizeOptions};
+use cargo_guppy::{CmdSelectOptions, FilterOptions, SubtreeSizeOptions};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -26,7 +26,7 @@ enum Command {
     Duplicates(FilterOptions),
     #[structopt(name = "select")]
     /// Select packages and their transitive dependencies
-    Select(SelectOptions),
+    Select(CmdSelectOptions),
     #[structopt(name = "subtree-size")]
     /// Print a list of dependencies along with their unique subtree size
     SubtreeSize(SubtreeSizeOptions),
