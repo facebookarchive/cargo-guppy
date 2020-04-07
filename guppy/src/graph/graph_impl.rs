@@ -307,6 +307,12 @@ impl PackageGraph {
     pub(super) fn invalidate_caches(&mut self) {
         mem::replace(&mut self.sccs, OnceCell::new());
         mem::replace(&mut self.feature_graph, OnceCell::new());
+
+        // The edge indexes got compacted as well.
+        for edge_ix in 0..self.dep_graph.edge_count() {
+            let edge_ix = EdgeIndex::new(edge_ix);
+            self.dep_graph[edge_ix].edge_ix = edge_ix;
+        }
     }
 
     /// Returns the inner dependency graph.
@@ -728,6 +734,7 @@ impl PackageMetadata {
 /// * if this is a normal, dev or build dependency.
 #[derive(Clone, Debug)]
 pub struct DependencyEdge {
+    pub(super) edge_ix: EdgeIndex<PackageIx>,
     pub(super) dep_name: String,
     pub(super) resolved_name: String,
     pub(super) normal: Option<DependencyMetadata>,

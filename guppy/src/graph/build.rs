@@ -171,7 +171,8 @@ impl<'a> GraphBuildState<'a> {
             // Use update_edge instead of add_edge to prevent multiple edges from being added
             // between these two nodes.
             // XXX maybe check for an existing edge?
-            self.dep_graph.update_edge(package_ix, dep_idx, edge);
+            let edge_ix = self.dep_graph.update_edge(package_ix, dep_idx, edge);
+            self.dep_graph[edge_ix].edge_ix = edge_ix;
         }
 
         let has_default_feature = package.features.contains_key("default");
@@ -463,6 +464,8 @@ impl DependencyEdge {
         }
 
         Ok(DependencyEdge {
+            // edge_ix gets filled out once the edge is added.
+            edge_ix: EdgeIndex::end(),
             dep_name: name.into(),
             resolved_name: resolved_name.into(),
             normal: normal.finish()?,
