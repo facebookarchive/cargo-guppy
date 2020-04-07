@@ -41,7 +41,7 @@
 //! ```
 //!
 //! For more examples, see
-//! [the `examples` directory](https://github.com/calibra/cargo-guppy/tree/master/guppy/examples).
+//! [the `examples` directory](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy/examples).
 
 #![warn(missing_docs)]
 

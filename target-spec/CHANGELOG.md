@@ -11,5 +11,5 @@
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
-[0.2.0]: https://github.com/calibra/cargo-guppy/releases/tag/target-spec-0.2.0
-[0.1.0]: https://github.com/calibra/cargo-guppy/releases/tag/target-spec-0.1.0
+[0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.0
+[0.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.1.0
