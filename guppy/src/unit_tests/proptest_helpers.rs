@@ -5,6 +5,7 @@ use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Res
 use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphResolve};
 use crate::PackageId;
 use pretty_assertions::assert_eq;
+use proptest::collection::vec;
 use proptest::prelude::*;
 use proptest::sample::Index;
 use std::collections::HashSet;
@@ -135,8 +136,21 @@ macro_rules! proptest_suite {
                 )| {
                     resolve_contains(feature_graph, &select_ids, direction, &query_ids);
                 });
-
             }
+
+            #[test]
+            fn proptest_resolve_ops() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+
+                proptest!(|(
+                    resolve_tree in ResolveTree::strategy(package_graph.prop09_id_strategy())
+                )| {
+                    resolve_ops(package_graph, resolve_tree);
+                });
+            }
+
+            // TODO: proptest_feature_resolve_ops once FeatureResolve::into_ids is available.
         }
     }
 }
@@ -299,6 +313,116 @@ pub(super) fn resolve_contains<'g, G: GraphAssert<'g>>(
                     "not contains => not depends on",
                 );
             }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) enum ResolveTree<G: GraphAssert<'static>> {
+    Resolve {
+        initials: Vec<G::Id>,
+        direction: DependencyDirection,
+    },
+    Union(Box<ResolveTree<G>>, Box<ResolveTree<G>>),
+    Intersection(Box<ResolveTree<G>>, Box<ResolveTree<G>>),
+    Difference(Box<ResolveTree<G>>, Box<ResolveTree<G>>),
+    SymmetricDifference(Box<ResolveTree<G>>, Box<ResolveTree<G>>),
+}
+
+// The 'statics are required because prop_recursive requires the leaf to be 'static.
+impl<G: GraphAssert<'static> + 'static> ResolveTree<G> {
+    pub(super) fn strategy(
+        id_strategy: impl Strategy<Value = G::Id> + 'static,
+    ) -> impl Strategy<Value = ResolveTree<G>> + 'static {
+        let leaf = (vec(id_strategy, 1..16), any::<DependencyDirection>()).prop_map(
+            |(initials, direction)| ResolveTree::Resolve {
+                initials,
+                direction,
+            },
+        );
+        leaf.prop_recursive(
+            4,  // 4 levels deep
+            16, // 2**4 = 16 nodes max
+            2,  // 2 items per non-leaf node,
+            |inner| {
+                prop_oneof![
+                    (inner.clone(), inner.clone())
+                        .prop_map(|(a, b)| ResolveTree::Union(Box::new(a), Box::new(b))),
+                    (inner.clone(), inner.clone())
+                        .prop_map(|(a, b)| ResolveTree::Intersection(Box::new(a), Box::new(b))),
+                    (inner.clone(), inner.clone())
+                        .prop_map(|(a, b)| ResolveTree::Difference(Box::new(a), Box::new(b))),
+                    (inner.clone(), inner).prop_map(|(a, b)| ResolveTree::SymmetricDifference(
+                        Box::new(a),
+                        Box::new(b)
+                    )),
+                ]
+            },
+        )
+    }
+}
+
+pub(super) fn resolve_ops<G: GraphAssert<'static>>(graph: G, resolve_tree: ResolveTree<G>) {
+    let (resolve, hashset) = resolve_ops_impl(graph, &resolve_tree);
+    assert_eq!(
+        resolve.len(),
+        hashset.len(),
+        "resolve and hashset lengths match"
+    );
+    let ids: HashSet<_> = resolve
+        .ids(DependencyDirection::Forward)
+        .into_iter()
+        .collect();
+    assert_eq!(ids, hashset, "operations on resolve and hashset match");
+}
+
+fn resolve_ops_impl<G: GraphAssert<'static>>(
+    graph: G,
+    resolve_tree: &ResolveTree<G>,
+) -> (G::Resolve, HashSet<G::Id>) {
+    match resolve_tree {
+        ResolveTree::Resolve {
+            initials,
+            direction,
+        } => {
+            let resolve = graph.resolve(&initials, *direction);
+            let ids = resolve.clone().ids(*direction).into_iter().collect();
+            (resolve, ids)
+        }
+        ResolveTree::Union(a, b) => {
+            let (resolve_a, hashset_a) = resolve_ops_impl(graph, a);
+            let (resolve_b, hashset_b) = resolve_ops_impl(graph, b);
+            (
+                resolve_a.union(&resolve_b),
+                hashset_a.union(&hashset_b).copied().collect(),
+            )
+        }
+        ResolveTree::Intersection(a, b) => {
+            let (resolve_a, hashset_a) = resolve_ops_impl(graph, a);
+            let (resolve_b, hashset_b) = resolve_ops_impl(graph, b);
+            (
+                resolve_a.intersection(&resolve_b),
+                hashset_a.intersection(&hashset_b).copied().collect(),
+            )
+        }
+        ResolveTree::Difference(a, b) => {
+            let (resolve_a, hashset_a) = resolve_ops_impl(graph, a);
+            let (resolve_b, hashset_b) = resolve_ops_impl(graph, b);
+            (
+                resolve_a.difference(&resolve_b),
+                hashset_a.difference(&hashset_b).copied().collect(),
+            )
+        }
+        ResolveTree::SymmetricDifference(a, b) => {
+            let (resolve_a, hashset_a) = resolve_ops_impl(graph, a);
+            let (resolve_b, hashset_b) = resolve_ops_impl(graph, b);
+            (
+                resolve_a.symmetric_difference(&resolve_b),
+                hashset_a
+                    .symmetric_difference(&hashset_b)
+                    .copied()
+                    .collect(),
+            )
         }
     }
 }

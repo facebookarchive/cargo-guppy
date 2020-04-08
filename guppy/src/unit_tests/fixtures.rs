@@ -133,15 +133,13 @@ pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 macro_rules! define_fixture {
     ($name: ident, $json: ident) => {
         pub(crate) fn $name() -> &'static Fixture {
-            static FIXTURE: Lazy<Fixture> = Lazy::new(|| {
-                Fixture {
-                    graph: Fixture::parse_graph($json),
-                    details: FixtureDetails::$name(),
-                }
+            static FIXTURE: Lazy<Fixture> = Lazy::new(|| Fixture {
+                graph: Fixture::parse_graph($json),
+                details: FixtureDetails::$name(),
             });
             &*FIXTURE
         }
-    }
+    };
 }
 
 pub(crate) struct Fixture {

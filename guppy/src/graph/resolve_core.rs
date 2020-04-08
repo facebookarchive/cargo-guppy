@@ -61,6 +61,15 @@ impl<G: GraphSpec> ResolveCore<G> {
         }
     }
 
+    pub(super) fn from_included(included: FixedBitSet) -> Self {
+        let len = included.count_ones(..);
+        Self {
+            included,
+            len,
+            _phantom: PhantomData,
+        }
+    }
+
     pub(super) fn len(&self) -> usize {
         self.len
     }
@@ -71,6 +80,34 @@ impl<G: GraphSpec> ResolveCore<G> {
 
     pub(super) fn contains(&self, ix: NodeIndex<G::Ix>) -> bool {
         self.included.is_visited(&ix)
+    }
+
+    // ---
+    // Set operations
+    // ---
+
+    pub(super) fn union_with(&mut self, other: &Self) {
+        self.included.union_with(&other.included);
+        self.invalidate_caches();
+    }
+
+    pub(super) fn intersect_with(&mut self, other: &Self) {
+        self.included.intersect_with(&other.included);
+        self.invalidate_caches();
+    }
+
+    // fixedbitset 0.2.0 doesn't have a difference_with :(
+    pub(super) fn difference(&self, other: &Self) -> Self {
+        Self::from_included(self.included.difference(&other.included).collect())
+    }
+
+    pub(super) fn symmetric_difference_with(&mut self, other: &Self) {
+        self.included.symmetric_difference_with(&other.included);
+        self.invalidate_caches();
+    }
+
+    pub(super) fn invalidate_caches(&mut self) {
+        self.len = self.included.count_ones(..);
     }
 
     /// Returns the root metadatas in the specified direction.

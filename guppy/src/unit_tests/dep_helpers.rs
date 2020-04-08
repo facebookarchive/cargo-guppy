@@ -364,7 +364,7 @@ fn assert_enabled_status_is_known(metadata: Option<&DependencyMetadata>, msg: &s
     }
 }
 
-pub(super) trait GraphAssert<'g> {
+pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Metadata: GraphMetadata<'g, Id = Self::Id>;
     type Resolve: GraphResolve<'g, Id = Self::Id, Metadata = Self::Metadata>;
@@ -529,11 +529,17 @@ pub(super) trait GraphMetadata<'g> {
     fn id(&self) -> Self::Id;
 }
 
-pub(super) trait GraphResolve<'g>: Clone {
+pub(super) trait GraphResolve<'g>: Clone + fmt::Debug {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Metadata: GraphMetadata<'g, Id = Self::Id>;
     fn len(&self) -> usize;
     fn contains(&self, id: Self::Id) -> bool;
+
+    fn union(&self, other: &Self) -> Self;
+    fn intersection(&self, other: &Self) -> Self;
+    fn difference(&self, other: &Self) -> Self;
+    fn symmetric_difference(&self, other: &Self) -> Self;
+
     fn ids(self, direction: DependencyDirection) -> Vec<Self::Id>;
     fn metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata>;
     fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id>;
@@ -579,6 +585,22 @@ impl<'g> GraphResolve<'g> for PackageResolve<'g> {
 
     fn contains(&self, id: Self::Id) -> bool {
         self.contains(id).unwrap()
+    }
+
+    fn union(&self, other: &Self) -> Self {
+        self.union(other)
+    }
+
+    fn intersection(&self, other: &Self) -> Self {
+        self.intersection(other)
+    }
+
+    fn difference(&self, other: &Self) -> Self {
+        self.difference(other)
+    }
+
+    fn symmetric_difference(&self, other: &Self) -> Self {
+        self.symmetric_difference(other)
     }
 
     fn ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
@@ -637,6 +659,22 @@ impl<'g> GraphResolve<'g> for FeatureResolve<'g> {
 
     fn contains(&self, id: Self::Id) -> bool {
         self.contains(id).unwrap()
+    }
+
+    fn union(&self, other: &Self) -> Self {
+        self.union(other)
+    }
+
+    fn intersection(&self, other: &Self) -> Self {
+        self.intersection(other)
+    }
+
+    fn difference(&self, other: &Self) -> Self {
+        self.difference(other)
+    }
+
+    fn symmetric_difference(&self, other: &Self) -> Self {
+        self.symmetric_difference(other)
     }
 
     fn ids(self, _direction: DependencyDirection) -> Vec<Self::Id> {

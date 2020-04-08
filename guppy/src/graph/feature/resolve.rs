@@ -45,6 +45,89 @@ impl<'g> FeatureResolve<'g> {
         )
     }
 
+    // ---
+    // Set operations
+    // ---
+
+    /// Returns a `PackageResolve` that contains all packages present in at least one of `self`
+    /// and `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn union(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(
+                self.feature_graph.package_graph,
+                self.feature_graph.package_graph
+            ),
+            "package graphs passed into union() match"
+        );
+        let mut res = self.clone();
+        res.core.union_with(&other.core);
+        res
+    }
+
+    /// Returns a `PackageResolve` that contains all packages present in both `self` and `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn intersection(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(
+                self.feature_graph.package_graph,
+                self.feature_graph.package_graph
+            ),
+            "package graphs passed into intersection() match"
+        );
+        let mut res = self.clone();
+        res.core.intersect_with(&other.core);
+        res
+    }
+
+    /// Returns a `PackageResolve` that contains all packages present in `self` but not `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn difference(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(
+                self.feature_graph.package_graph,
+                self.feature_graph.package_graph
+            ),
+            "package graphs passed into difference() match"
+        );
+        Self {
+            feature_graph: self.feature_graph,
+            core: self.core.difference(&other.core),
+        }
+    }
+
+    /// Returns a `PackageResolve` that contains all packages present in exactly one of `self` and
+    /// `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn symmetric_difference(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(
+                self.feature_graph.package_graph,
+                self.feature_graph.package_graph
+            ),
+            "package graphs passed into symmetric_difference() match"
+        );
+        let mut res = self.clone();
+        res.core.symmetric_difference_with(&other.core);
+        res
+    }
+
+    // ---
+    // Iterators
+    // ---
+
     /// Returns the set of "root feature" IDs in the specified direction.
     ///
     /// * If direction is Forward, return the set of feature IDs that do not have any dependencies
