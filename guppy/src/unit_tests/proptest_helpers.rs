@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Resolver};
-use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphResolve};
+use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphSet};
 use crate::PackageId;
 use pretty_assertions::assert_eq;
 use proptest::collection::vec;
@@ -150,7 +150,7 @@ macro_rules! proptest_suite {
                 });
             }
 
-            // TODO: proptest_feature_resolve_ops once FeatureResolve::into_ids is available.
+            // TODO: proptest_feature_resolve_ops once FeatureSet::into_ids is available.
         }
     }
 }
@@ -300,9 +300,9 @@ pub(super) fn resolve_contains<'g, G: GraphAssert<'g>>(
     direction: DependencyDirection,
     query_ids: &[G::Id],
 ) {
-    let resolve = graph.resolve(select_ids, direction);
+    let resolve_set = graph.resolve(select_ids, direction);
     for query_id in query_ids {
-        if resolve.contains(*query_id) {
+        if resolve_set.contains(*query_id) {
             graph.assert_depends_on_any(select_ids, *query_id, direction, "contains => depends on");
         } else {
             for select_id in select_ids {
@@ -379,15 +379,15 @@ pub(super) fn resolve_ops<G: GraphAssert<'static>>(graph: G, resolve_tree: Resol
 fn resolve_ops_impl<G: GraphAssert<'static>>(
     graph: G,
     resolve_tree: &ResolveTree<G>,
-) -> (G::Resolve, HashSet<G::Id>) {
+) -> (G::Set, HashSet<G::Id>) {
     match resolve_tree {
         ResolveTree::Resolve {
             initials,
             direction,
         } => {
-            let resolve = graph.resolve(&initials, *direction);
-            let ids = resolve.clone().ids(*direction).into_iter().collect();
-            (resolve, ids)
+            let resolve_set = graph.resolve(&initials, *direction);
+            let ids = resolve_set.clone().ids(*direction).into_iter().collect();
+            (resolve_set, ids)
         }
         ResolveTree::Union(a, b) => {
             let (resolve_a, hashset_a) = resolve_ops_impl(graph, a);

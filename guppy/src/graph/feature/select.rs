@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureResolve};
+use crate::graph::feature::{FeatureGraph, FeatureId, FeatureSet};
 use crate::graph::select_core::SelectParams;
 use crate::graph::{DependencyDirection, PackageSelect};
 use crate::Error;
@@ -245,7 +245,7 @@ impl<'g> FeatureSelect<'g> {
     /// Resolves this selector into a set of known feature IDs.
     ///
     /// This is the entry point for iterators.
-    pub fn resolve(self) -> FeatureResolve<'g> {
-        FeatureResolve::new(self.graph, self.params)
+    pub fn resolve(self) -> FeatureSet<'g> {
+        FeatureSet::new(self.graph, self.params)
     }
 }

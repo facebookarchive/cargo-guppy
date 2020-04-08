@@ -28,8 +28,8 @@ fn main() -> Result<(), Error> {
     // Transitive dependencies are obtained through the `select_` APIs. They are always presented in
     // topological order.
     let select = package_graph.select_forward(iter::once(&package_id))?;
-    let resolve = select.resolve();
-    for dep_id in resolve.into_ids(DependencyDirection::Forward) {
+    let package_set = select.resolve();
+    for dep_id in package_set.into_ids(DependencyDirection::Forward) {
         // The select API also has an `into_iter_links()` method which returns links instead of IDs.
         println!("transitive: {}", dep_id);
     }

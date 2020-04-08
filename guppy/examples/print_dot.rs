@@ -47,10 +47,10 @@ fn main() -> Result<(), Error> {
     // Non-workspace packages cannot depend on packages within the workspace, so the reverse
     // transitive deps of workspace packages are exactly the set of workspace packages.
     let select = package_graph.select_reverse(package_graph.workspace().member_ids())?;
-    let resolve = select.resolve();
+    let package_set = select.resolve();
 
     // resolve.into_dot() implements `std::fmt::Display`, so it can be written out to a file, a
     // string, stdout, etc.
-    println!("{}", resolve.into_dot(PackageNameVisitor));
+    println!("{}", package_set.into_dot(PackageNameVisitor));
     Ok(())
 }

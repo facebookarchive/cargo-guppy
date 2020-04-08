@@ -10,12 +10,12 @@ use crate::graph::DependencyDirection;
 ///
 /// Created by `FeatureSelect::resolve`.
 #[derive(Clone, Debug)]
-pub struct FeatureResolve<'g> {
+pub struct FeatureSet<'g> {
     feature_graph: FeatureGraph<'g>,
     core: ResolveCore<FeatureGraph<'g>>,
 }
 
-impl<'g> FeatureResolve<'g> {
+impl<'g> FeatureSet<'g> {
     pub(super) fn new(
         feature_graph: FeatureGraph<'g>,
         params: SelectParams<FeatureGraph<'g>>,
@@ -49,7 +49,7 @@ impl<'g> FeatureResolve<'g> {
     // Set operations
     // ---
 
-    /// Returns a `PackageResolve` that contains all packages present in at least one of `self`
+    /// Returns a `PackageSet` that contains all packages present in at least one of `self`
     /// and `other`.
     ///
     /// ## Panics
@@ -68,7 +68,7 @@ impl<'g> FeatureResolve<'g> {
         res
     }
 
-    /// Returns a `PackageResolve` that contains all packages present in both `self` and `other`.
+    /// Returns a `PackageSet` that contains all packages present in both `self` and `other`.
     ///
     /// ## Panics
     ///
@@ -86,7 +86,7 @@ impl<'g> FeatureResolve<'g> {
         res
     }
 
-    /// Returns a `PackageResolve` that contains all packages present in `self` but not `other`.
+    /// Returns a `PackageSet` that contains all packages present in `self` but not `other`.
     ///
     /// ## Panics
     ///
@@ -105,7 +105,7 @@ impl<'g> FeatureResolve<'g> {
         }
     }
 
-    /// Returns a `PackageResolve` that contains all packages present in exactly one of `self` and
+    /// Returns a `PackageSet` that contains all packages present in exactly one of `self` and
     /// `other`.
     ///
     /// ## Panics

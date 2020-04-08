@@ -105,9 +105,9 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
 
     let select = options.select_opts.apply(&pkg_graph)?;
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
-    let resolve = select.resolve_with_fn(resolver);
+    let package_set = select.resolve_with_fn(resolver);
 
-    for package_id in resolve.clone().into_ids(options.output_direction) {
+    for package_id in package_set.clone().into_ids(options.output_direction) {
         let package = pkg_graph.metadata(package_id).unwrap();
         let in_workspace = package.in_workspace();
         let direct_dep = pkg_graph
@@ -126,7 +126,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     }
 
     if let Some(ref output_file) = options.output_dot {
-        let dot = resolve.into_dot(NameVisitor);
+        let dot = package_set.into_dot(NameVisitor);
         let mut f = fs::File::create(output_file)?;
         write!(f, "{}", dot)?;
     }
