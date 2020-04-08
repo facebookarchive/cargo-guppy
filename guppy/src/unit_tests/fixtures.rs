@@ -11,6 +11,7 @@ use crate::unit_tests::dep_helpers::{
     assert_transitive_deps_internal,
 };
 use crate::{errors::FeatureGraphWarning, DependencyKind, PackageId, Platform};
+use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
@@ -129,6 +130,20 @@ pub(crate) static METADATA_LIBRA_9FFD93B: &str =
 
 pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
+macro_rules! define_fixture {
+    ($name: ident, $json: ident) => {
+        pub(crate) fn $name() -> &'static Fixture {
+            static FIXTURE: Lazy<Fixture> = Lazy::new(|| {
+                Fixture {
+                    graph: Fixture::parse_graph($json),
+                    details: FixtureDetails::$name(),
+                }
+            });
+            &*FIXTURE
+        }
+    }
+}
+
 pub(crate) struct Fixture {
     graph: PackageGraph,
     details: FixtureDetails,
@@ -212,68 +227,15 @@ impl Fixture {
 
     // Specific fixtures follow.
 
-    pub(crate) fn metadata1() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA1),
-            details: FixtureDetails::metadata1(),
-        }
-    }
-
-    pub(crate) fn metadata2() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA2),
-            details: FixtureDetails::metadata2(),
-        }
-    }
-
-    pub(crate) fn metadata_dups() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA_DUPS),
-            details: FixtureDetails::metadata_dups(),
-        }
-    }
-
-    pub(crate) fn metadata_cycle1() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA_CYCLE1),
-            details: FixtureDetails::metadata_cycle1(),
-        }
-    }
-
-    pub(crate) fn metadata_cycle2() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA_CYCLE2),
-            details: FixtureDetails::metadata_cycle2(),
-        }
-    }
-
-    pub(crate) fn metadata_targets1() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA_TARGETS1),
-            details: FixtureDetails::metadata_targets1(),
-        }
-    }
-
-    pub(crate) fn metadata_libra() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA_LIBRA),
-            details: FixtureDetails::metadata_libra(),
-        }
-    }
-
-    pub(crate) fn metadata_libra_f0091a4() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA_LIBRA_F0091A4),
-            details: FixtureDetails::metadata_libra_f0091a4(),
-        }
-    }
-
-    pub(crate) fn metadata_libra_9ffd93b() -> Self {
-        Self {
-            graph: Self::parse_graph(METADATA_LIBRA_9FFD93B),
-            details: FixtureDetails::metadata_libra_9ffd93b(),
-        }
-    }
+    define_fixture!(metadata1, METADATA1);
+    define_fixture!(metadata2, METADATA2);
+    define_fixture!(metadata_dups, METADATA_DUPS);
+    define_fixture!(metadata_cycle1, METADATA_CYCLE1);
+    define_fixture!(metadata_cycle2, METADATA_CYCLE2);
+    define_fixture!(metadata_targets1, METADATA_TARGETS1);
+    define_fixture!(metadata_libra, METADATA_LIBRA);
+    define_fixture!(metadata_libra_f0091a4, METADATA_LIBRA_F0091A4);
+    define_fixture!(metadata_libra_9ffd93b, METADATA_LIBRA_9FFD93B);
 
     fn parse_graph(json: &str) -> PackageGraph {
         let metadata = serde_json::from_str(json).expect("parsing metadata JSON should succeed");
