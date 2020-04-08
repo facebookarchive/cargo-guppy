@@ -17,12 +17,12 @@ use std::fmt;
 ///
 /// Created by `PackageSelect::resolve`.
 #[derive(Clone, Debug)]
-pub struct PackageResolve<'g> {
+pub struct PackageSet<'g> {
     package_graph: &'g PackageGraph,
     core: ResolveCore<PackageGraph>,
 }
 
-impl<'g> PackageResolve<'g> {
+impl<'g> PackageSet<'g> {
     pub(super) fn new(package_graph: &'g PackageGraph, params: SelectParams<PackageGraph>) -> Self {
         Self {
             package_graph,
@@ -71,7 +71,7 @@ impl<'g> PackageResolve<'g> {
     // Set operations
     // ---
 
-    /// Returns a `PackageResolve` that contains all packages present in at least one of `self`
+    /// Returns a `PackageSet` that contains all packages present in at least one of `self`
     /// and `other`.
     ///
     /// ## Panics
@@ -87,7 +87,7 @@ impl<'g> PackageResolve<'g> {
         res
     }
 
-    /// Returns a `PackageResolve` that contains all packages present in both `self` and `other`.
+    /// Returns a `PackageSet` that contains all packages present in both `self` and `other`.
     ///
     /// ## Panics
     ///
@@ -102,7 +102,7 @@ impl<'g> PackageResolve<'g> {
         res
     }
 
-    /// Returns a `PackageResolve` that contains all packages present in `self` but not `other`.
+    /// Returns a `PackageSet` that contains all packages present in `self` but not `other`.
     ///
     /// ## Panics
     ///
@@ -118,7 +118,7 @@ impl<'g> PackageResolve<'g> {
         }
     }
 
-    /// Returns a `PackageResolve` that contains all packages present in exactly one of `self` and
+    /// Returns a `PackageSet` that contains all packages present in exactly one of `self` and
     /// `other`.
     ///
     /// ## Panics
@@ -273,7 +273,7 @@ where
 
 /// An iterator over package IDs in topological order.
 ///
-/// The items returned are of type `&'g PackageId`. Returned by `PackageResolve::into_ids`.
+/// The items returned are of type `&'g PackageId`. Returned by `PackageSet::into_ids`.
 pub struct IntoIds<'g> {
     graph: &'g Graph<PackageId, DependencyEdge, Directed, PackageIx>,
     inner: Topo<'g, PackageGraph>,
@@ -307,7 +307,7 @@ impl<'g> ExactSizeIterator for IntoIds<'g> {
 /// An iterator over package metadata in topological order.
 ///
 /// The items returned are of type `&'g PackageMetadata`. Returned by
-/// `PackageResolve::into_metadatas`.
+/// `PackageSet::into_metadatas`.
 #[derive(Clone, Debug)]
 pub struct IntoMetadatas<'g> {
     graph: &'g PackageGraph,
