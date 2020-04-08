@@ -61,6 +61,18 @@ impl<G: GraphSpec> ResolveCore<G> {
         }
     }
 
+    pub(super) fn len(&self) -> usize {
+        self.len
+    }
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    pub(super) fn contains(&self, ix: NodeIndex<G::Ix>) -> bool {
+        self.included.is_visited(&ix)
+    }
+
     /// Returns the root metadatas in the specified direction.
     pub(super) fn roots(
         &self,

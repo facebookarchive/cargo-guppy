@@ -48,6 +48,25 @@ impl<'g> PackageResolve<'g> {
         }
     }
 
+    /// Returns the number of packages in this set.
+    pub fn len(&self) -> usize {
+        self.core.len()
+    }
+
+    /// Returns true if no packages were resolved in this set.
+    pub fn is_empty(&self) -> bool {
+        self.core.is_empty()
+    }
+
+    /// Returns true if this package ID is contained in this resolve set, false if it isn't, and
+    /// None if the package ID wasn't found.
+    pub fn contains(&self, package_id: &PackageId) -> Option<bool> {
+        Some(
+            self.core
+                .contains(self.package_graph.package_ix(package_id)?),
+        )
+    }
+
     /// Iterates over package IDs, in topological order in the direction specified.
     ///
     /// ## Cycles

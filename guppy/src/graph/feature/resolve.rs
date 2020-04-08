@@ -26,6 +26,25 @@ impl<'g> FeatureResolve<'g> {
         }
     }
 
+    /// Returns the number of feature IDs in this set.
+    pub fn len(&self) -> usize {
+        self.core.len()
+    }
+
+    /// Returns true if no feature IDs were resolved in this set.
+    pub fn is_empty(&self) -> bool {
+        self.core.is_empty()
+    }
+
+    /// Returns true if this set contains the given feature ID, false if it doesn't, or None if it
+    /// wasn't found.
+    pub fn contains<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Option<bool> {
+        Some(
+            self.core
+                .contains(self.feature_graph.feature_ix(feature_id.into())?),
+        )
+    }
+
     /// Returns the set of "root feature" IDs in the specified direction.
     ///
     /// * If direction is Forward, return the set of feature IDs that do not have any dependencies
