@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Resolver};
-use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata};
+use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphResolve};
 use crate::PackageId;
 use pretty_assertions::assert_eq;
 use proptest::prelude::*;
@@ -107,6 +107,36 @@ macro_rules! proptest_suite {
                     resolver_retain_equivalence(&mut package_graph.clone(), &ids, direction, resolver);
                 });
             }
+
+            #[test]
+            fn proptest_resolve_contains() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+
+                proptest!(|(
+                    select_ids in vec(package_graph.prop09_id_strategy(), 1..16),
+                    direction in any::<DependencyDirection>(),
+                    query_ids in vec(package_graph.prop09_id_strategy(), 0..64),
+                )| {
+                    resolve_contains(package_graph, &select_ids, direction, &query_ids);
+                });
+            }
+
+            #[test]
+            fn proptest_feature_resolve_contains() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(
+                    select_ids in vec(feature_graph.prop09_id_strategy(), 1..16),
+                    direction in any::<DependencyDirection>(),
+                    query_ids in vec(feature_graph.prop09_id_strategy(), 0..64),
+                )| {
+                    resolve_contains(feature_graph, &select_ids, direction, &query_ids);
+                });
+
+            }
         }
     }
 }
@@ -122,7 +152,7 @@ pub(super) fn depends_on<'g, G: GraphAssert<'g>>(
     msg: &str,
 ) {
     let msg = format!("{}: reachable means depends on", msg);
-    let reachable_ids = graph.iter_ids(ids, select_direction, query_direction);
+    let reachable_ids = graph.ids(ids, select_direction, query_direction);
 
     for index in query_indexes {
         let query_id = index.get(&reachable_ids);
@@ -248,6 +278,29 @@ pub(super) fn resolver_retain_equivalence(
         resolver_ids, retain_ids,
         "ids through resolver and retain_edges should be the same"
     );
+}
+
+pub(super) fn resolve_contains<'g, G: GraphAssert<'g>>(
+    graph: G,
+    select_ids: &[G::Id],
+    direction: DependencyDirection,
+    query_ids: &[G::Id],
+) {
+    let resolve = graph.resolve(select_ids, direction);
+    for query_id in query_ids {
+        if resolve.contains(*query_id) {
+            graph.assert_depends_on_any(select_ids, *query_id, direction, "contains => depends on");
+        } else {
+            for select_id in select_ids {
+                graph.assert_not_depends_on(
+                    *select_id,
+                    *query_id,
+                    direction,
+                    "not contains => not depends on",
+                );
+            }
+        }
+    }
 }
 
 // TODO: Test FeatureFilter implementations.

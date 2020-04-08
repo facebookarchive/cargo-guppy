@@ -1,10 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
+use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureResolve};
 use crate::graph::{
     kind_str, DependencyDirection, DependencyEdge, DependencyLink, DependencyMetadata,
-    PackageGraph, PackageMetadata,
+    PackageGraph, PackageMetadata, PackageResolve,
 };
 use crate::unit_tests::fixtures::PackageDetails;
 use crate::{DependencyKind, Error, PackageId};
@@ -367,6 +367,7 @@ fn assert_enabled_status_is_known(metadata: Option<&DependencyMetadata>, msg: &s
 pub(super) trait GraphAssert<'g> {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Metadata: GraphMetadata<'g, Id = Self::Id>;
+    type Resolve: GraphResolve<'g, Id = Self::Id, Metadata = Self::Metadata>;
     const NAME: &'static str;
 
     // TODO: Add support for checks around links once they're defined for feature graphs.
@@ -375,26 +376,40 @@ pub(super) trait GraphAssert<'g> {
 
     fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
 
-    fn iter_ids(
+    fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Resolve;
+
+    fn ids(
         &self,
         initials: &[Self::Id],
         select_direction: DependencyDirection,
         query_direction: DependencyDirection,
-    ) -> Vec<Self::Id>;
+    ) -> Vec<Self::Id> {
+        let resolve = self.resolve(initials, select_direction);
+        let resolve_len = resolve.len();
+        let ids = resolve.ids(query_direction);
+        assert_eq!(resolve_len, ids.len(), "resolve.len() is correct");
+        ids
+    }
 
     fn root_ids(
         &self,
         initials: &[Self::Id],
         select_direction: DependencyDirection,
         query_direction: DependencyDirection,
-    ) -> Vec<Self::Id>;
+    ) -> Vec<Self::Id> {
+        self.resolve(initials, select_direction)
+            .root_ids(query_direction)
+    }
 
     fn root_metadatas(
         &self,
         initials: &[Self::Id],
         select_direction: DependencyDirection,
         query_direction: DependencyDirection,
-    ) -> Vec<Self::Metadata>;
+    ) -> Vec<Self::Metadata> {
+        self.resolve(initials, select_direction)
+            .root_metadatas(query_direction)
+    }
 
     fn assert_topo_order<'a>(
         &self,
@@ -514,9 +529,21 @@ pub(super) trait GraphMetadata<'g> {
     fn id(&self) -> Self::Id;
 }
 
+pub(super) trait GraphResolve<'g>: Clone {
+    type Id: Copy + Eq + Hash + fmt::Debug;
+    type Metadata: GraphMetadata<'g, Id = Self::Id>;
+    fn len(&self) -> usize;
+    fn contains(&self, id: Self::Id) -> bool;
+    fn ids(self, direction: DependencyDirection) -> Vec<Self::Id>;
+    fn metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata>;
+    fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id>;
+    fn root_metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata>;
+}
+
 impl<'g> GraphAssert<'g> for &'g PackageGraph {
     type Id = &'g PackageId;
     type Metadata = &'g PackageMetadata;
+    type Resolve = PackageResolve<'g>;
     const NAME: &'static str = "package";
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
@@ -528,51 +555,10 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
         cycles.is_cyclic(a_id, b_id)
     }
 
-    fn iter_ids(
-        &self,
-        initials: &[Self::Id],
-        select_direction: DependencyDirection,
-        query_direction: DependencyDirection,
-    ) -> Vec<Self::Id> {
-        let select = self
-            .select_directed(initials.iter().copied(), select_direction)
-            .unwrap();
-        let into_ids = select.resolve().into_ids(query_direction);
-        let expected_len = into_ids.len();
-        let ids: Vec<_> = into_ids.collect();
-        assert_eq!(
-            expected_len,
-            ids.len(),
-            "ExactSizeIterator for IntoIterIds: correct length"
-        );
-        ids
-    }
-
-    fn root_ids(
-        &self,
-        initials: &[Self::Id],
-        select_direction: DependencyDirection,
-        query_direction: DependencyDirection,
-    ) -> Vec<Self::Id> {
-        let select = self
-            .select_directed(initials.iter().copied(), select_direction)
-            .unwrap();
-        select.resolve().into_root_ids(query_direction).collect()
-    }
-
-    fn root_metadatas(
-        &self,
-        initials: &[Self::Id],
-        select_direction: DependencyDirection,
-        query_direction: DependencyDirection,
-    ) -> Vec<Self::Metadata> {
-        let select = self
-            .select_directed(initials.iter().copied(), select_direction)
-            .unwrap();
-        select
+    fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Resolve {
+        self.select_directed(initials.iter().copied(), direction)
+            .unwrap()
             .resolve()
-            .into_root_metadatas(query_direction)
-            .collect()
     }
 }
 
@@ -583,9 +569,39 @@ impl<'g> GraphMetadata<'g> for &'g PackageMetadata {
     }
 }
 
+impl<'g> GraphResolve<'g> for PackageResolve<'g> {
+    type Id = &'g PackageId;
+    type Metadata = &'g PackageMetadata;
+
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    fn contains(&self, id: Self::Id) -> bool {
+        self.contains(id).unwrap()
+    }
+
+    fn ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
+        self.into_ids(direction).collect()
+    }
+
+    fn metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        self.into_metadatas(direction).collect()
+    }
+
+    fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
+        self.into_root_ids(direction).collect()
+    }
+
+    fn root_metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        self.into_root_metadatas(direction).collect()
+    }
+}
+
 impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
     type Id = FeatureId<'g>;
     type Metadata = FeatureMetadata<'g>;
+    type Resolve = FeatureResolve<'g>;
     const NAME: &'static str = "feature";
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
@@ -597,40 +613,10 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
         cycles.is_cyclic(a_id, b_id)
     }
 
-    fn iter_ids(
-        &self,
-        _initials: &[Self::Id],
-        _select_direction: DependencyDirection,
-        _query_direction: DependencyDirection,
-    ) -> Vec<Self::Id> {
-        unimplemented!("TODO: implement once FeatureGraph::into_iter_ids is implemented");
-    }
-
-    fn root_ids(
-        &self,
-        initials: &[Self::Id],
-        select_direction: DependencyDirection,
-        query_direction: DependencyDirection,
-    ) -> Vec<Self::Id> {
-        let select = self
-            .select_directed(initials.iter().copied(), select_direction)
-            .unwrap();
-        select.resolve().into_root_ids(query_direction).collect()
-    }
-
-    fn root_metadatas(
-        &self,
-        initials: &[Self::Id],
-        select_direction: DependencyDirection,
-        query_direction: DependencyDirection,
-    ) -> Vec<Self::Metadata> {
-        let select = self
-            .select_directed(initials.iter().copied(), select_direction)
-            .unwrap();
-        select
+    fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Resolve {
+        self.select_directed(initials.iter().copied(), direction)
+            .unwrap()
             .resolve()
-            .into_root_metadatas(query_direction)
-            .collect()
     }
 }
 
@@ -638,6 +624,35 @@ impl<'g> GraphMetadata<'g> for FeatureMetadata<'g> {
     type Id = FeatureId<'g>;
     fn id(&self) -> Self::Id {
         self.feature_id()
+    }
+}
+
+impl<'g> GraphResolve<'g> for FeatureResolve<'g> {
+    type Id = FeatureId<'g>;
+    type Metadata = FeatureMetadata<'g>;
+
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    fn contains(&self, id: Self::Id) -> bool {
+        self.contains(id).unwrap()
+    }
+
+    fn ids(self, _direction: DependencyDirection) -> Vec<Self::Id> {
+        unimplemented!("TODO: implement this once FeatureResolve::into_ids is available")
+    }
+
+    fn metadatas(self, _direction: DependencyDirection) -> Vec<Self::Metadata> {
+        unimplemented!("TODO: implement this once FeatureResolve::into_metadatas is available")
+    }
+
+    fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
+        self.into_root_ids(direction).collect()
+    }
+
+    fn root_metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        self.into_root_metadatas(direction).collect()
     }
 }
 
