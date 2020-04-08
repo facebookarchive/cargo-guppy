@@ -13,9 +13,8 @@ use std::collections::HashSet;
 /// Cargo.
 ///
 /// Most uses will involve using one of the predefined filters: `all_filter`, `default_filter`, or
-/// `none_filter`. For advanced uses, the trait is implemented for all functions that match
-/// `FnMut(&FeatureGraph<'g>, FeatureId<'g>) -> bool`. The `filter_fn` helper is provided to
-/// assist with type inference.
+/// `none_filter`. A customized filter can be provided either through `filter_fn` or by implementing
+/// this trait.
 pub trait FeatureFilter<'g> {
     /// Returns true if this feature ID should be selected in the graph.
     ///
@@ -28,12 +27,12 @@ pub trait FeatureFilter<'g> {
     fn accept(&mut self, graph: &FeatureGraph<'g>, feature_id: FeatureId<'g>) -> bool;
 }
 
-impl<'g, F> FeatureFilter<'g> for F
+impl<'g, 'a, T> FeatureFilter<'g> for &'a mut T
 where
-    F: FnMut(&FeatureGraph<'g>, FeatureId<'g>) -> bool,
+    T: FeatureFilter<'g>,
 {
     fn accept(&mut self, graph: &FeatureGraph<'g>, feature_id: FeatureId<'g>) -> bool {
-        self(graph, feature_id)
+        (**self).accept(graph, feature_id)
     }
 }
 
@@ -49,28 +48,41 @@ impl<'g, 'a> FeatureFilter<'g> for &'a mut dyn FeatureFilter<'g> {
     }
 }
 
-/// Returns a `FeatureFilter` which simply calls the function that's passed in.
-///
-/// This is a no-op and is not strictly necessary, but can assist with type inference.
-pub fn filter_fn<'g, F>(filter_fn: F) -> impl FeatureFilter<'g>
+/// A `FeatureFilter` which calls the function that's passed in.
+#[derive(Clone, Debug)]
+pub struct FeatureFilterFn<F>(F);
+
+impl<'g, F> FeatureFilterFn<F>
 where
     F: FnMut(&FeatureGraph<'g>, FeatureId<'g>) -> bool,
 {
-    filter_fn
+    /// Returns a new instance of this wrapper.
+    pub fn new(f: F) -> Self {
+        FeatureFilterFn(f)
+    }
+}
+
+impl<'g, F> FeatureFilter<'g> for FeatureFilterFn<F>
+where
+    F: FnMut(&FeatureGraph<'g>, FeatureId<'g>) -> bool,
+{
+    fn accept(&mut self, graph: &FeatureGraph<'g>, feature_id: FeatureId<'g>) -> bool {
+        (self.0)(graph, feature_id)
+    }
 }
 
 /// Returns a `FeatureFilter` that selects all features from the given packages.
 ///
 /// This is equivalent to a build with `--all-features`.
 pub fn all_filter<'g>() -> impl FeatureFilter<'g> {
-    filter_fn(|_, _| true)
+    FeatureFilterFn::new(|_, _| true)
 }
 
 /// Returns a `FeatureFilter` that selects no features from the given packages.
 ///
 /// This is equivalent to a build with `--no-default-features`.
 pub fn none_filter<'g>() -> impl FeatureFilter<'g> {
-    filter_fn(|_, feature_id| {
+    FeatureFilterFn::new(|_, feature_id| {
         // The only feature ID that should be accepted is the base one.
         feature_id.is_base()
     })
@@ -80,7 +92,7 @@ pub fn none_filter<'g>() -> impl FeatureFilter<'g> {
 ///
 /// This is equivalent to a standard `cargo build`.
 pub fn default_filter<'g>() -> impl FeatureFilter<'g> {
-    filter_fn(|feature_graph, feature_id| {
+    FeatureFilterFn::new(|feature_graph, feature_id| {
         // XXX it kinda sucks that we already know about the exact feature ixs but need to go
         // through the feature ID over here. Might be worth reorganizing the code to not do that.
         feature_graph
@@ -102,7 +114,7 @@ pub fn feature_filter<'g: 'a, 'a>(
 ) -> impl FeatureFilter<'g> + 'a {
     let mut base = base;
     let features: HashSet<_> = features.into_iter().collect();
-    filter_fn(move |feature_graph, feature_id| {
+    FeatureFilterFn::new(move |feature_graph, feature_id| {
         if base.accept(feature_graph, feature_id) {
             return true;
         }
@@ -130,7 +142,7 @@ pub fn feature_id_filter<'g: 'a, 'a>(
         .into_iter()
         .map(|feature_id| feature_id.into())
         .collect();
-    filter_fn(move |feature_graph, feature_id| {
+    FeatureFilterFn::new(move |feature_graph, feature_id| {
         base.accept(feature_graph, feature_id) || feature_ids.contains(&feature_id)
     })
 }
