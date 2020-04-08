@@ -67,6 +67,77 @@ impl<'g> PackageResolve<'g> {
         )
     }
 
+    // ---
+    // Set operations
+    // ---
+
+    /// Returns a `PackageResolve` that contains all packages present in at least one of `self`
+    /// and `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn union(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(self.package_graph, other.package_graph),
+            "package graphs passed into union() match"
+        );
+        let mut res = self.clone();
+        res.core.union_with(&other.core);
+        res
+    }
+
+    /// Returns a `PackageResolve` that contains all packages present in both `self` and `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn intersection(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(self.package_graph, other.package_graph),
+            "package graphs passed into intersection() match"
+        );
+        let mut res = self.clone();
+        res.core.intersect_with(&other.core);
+        res
+    }
+
+    /// Returns a `PackageResolve` that contains all packages present in `self` but not `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn difference(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(self.package_graph, other.package_graph),
+            "package graphs passed into difference() match"
+        );
+        Self {
+            package_graph: self.package_graph,
+            core: self.core.difference(&other.core),
+        }
+    }
+
+    /// Returns a `PackageResolve` that contains all packages present in exactly one of `self` and
+    /// `other`.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the package graphs associated with `self` and `other` don't match.
+    pub fn symmetric_difference(&self, other: &Self) -> Self {
+        assert!(
+            ::std::ptr::eq(self.package_graph, other.package_graph),
+            "package graphs passed into symmetric_difference() match"
+        );
+        let mut res = self.clone();
+        res.core.symmetric_difference_with(&other.core);
+        res
+    }
+
+    // ---
+    // Iterators
+    // ---
+
     /// Iterates over package IDs, in topological order in the direction specified.
     ///
     /// ## Cycles
