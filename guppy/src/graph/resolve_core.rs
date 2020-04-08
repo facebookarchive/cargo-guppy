@@ -16,7 +16,7 @@ use serde::export::PhantomData;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct ResolveCore<G> {
     pub(super) included: FixedBitSet,
-    pub(super) count: usize,
+    pub(super) len: usize,
     _phantom: PhantomData<G>,
 }
 
@@ -25,14 +25,14 @@ impl<G: GraphSpec> ResolveCore<G> {
         graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
         params: SelectParams<G>,
     ) -> Self {
-        let (included, count) = match params {
+        let (included, len) = match params {
             SelectParams::All => all_visit_map(graph),
             SelectParams::SelectForward(initials) => reachable_map(graph, initials),
             SelectParams::SelectReverse(initials) => reachable_map(Reversed(graph), initials),
         };
         Self {
             included,
-            count,
+            len,
             _phantom: PhantomData,
         }
     }
@@ -42,7 +42,7 @@ impl<G: GraphSpec> ResolveCore<G> {
         params: SelectParams<G>,
         filter: impl Fn(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
     ) -> Self {
-        let (included, count) = match params {
+        let (included, len) = match params {
             SelectParams::All => {
                 // Not much we can do with the resolver when we've explicitly selected all packages.
                 all_visit_map(graph)
@@ -56,7 +56,7 @@ impl<G: GraphSpec> ResolveCore<G> {
         };
         Self {
             included,
-            count,
+            len,
             _phantom: PhantomData,
         }
     }
@@ -111,7 +111,7 @@ impl<G: GraphSpec> ResolveCore<G> {
         Topo {
             node_iter,
             included: self.included,
-            remaining: self.count,
+            remaining: self.len,
         }
     }
 }
