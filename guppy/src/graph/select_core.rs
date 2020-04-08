@@ -93,8 +93,8 @@ where
     let mut visit_map = graph.visit_map();
     // Mark all nodes visited.
     visit_map.insert_range(..);
-    let count = visit_map.len();
-    (visit_map, count)
+    let len = visit_map.len();
+    (visit_map, len)
 }
 
 pub(super) fn reachable_map<G, Ix>(graph: G, roots: Vec<G::NodeId>) -> (FixedBitSet, usize)
@@ -114,6 +114,6 @@ where
         "discovered and finished maps match at the end"
     );
     let reachable = dfs.discovered;
-    let count = reachable.count_ones(..);
-    (reachable, count)
+    let len = reachable.count_ones(..);
+    (reachable, len)
 }
