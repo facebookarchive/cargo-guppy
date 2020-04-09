@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.8] - 2020-04-08
+### Added
+- Implemented package resolution using custom resolvers, represented by the `PackageResolver` trait.
+  - Added new APIs `PackageSelect::resolve_with` and `PackageSelect::resolve_with_fn`.
+  - A `PackageResolver` provides fine-grained control over which links are followed.
+  - It is equivalent to `PackageGraph::retain_edges`, but doesn't borrow mutably and is scoped to a single selector.
+- Added `PackageSet` to represent a set of known, resolved packages.
+  - `PackageSet` comes with the standard set operations: `len`, `contains`, `union`, `intersection`, `difference` and
+    `symmetric_difference`.
+  - A `PackageSet` can also be iterated on in various ways, listed in the "Deprecated" section.
+
+### Changed
+- Updated repository links.
+
+### Deprecated
+- The following `into_` methods on `PackageSelect` have been deprecated and moved to `PackageSet`.
+  - `select.into_iter_ids()` -> `select.resolve().into_ids()`
+  - `select.into_iter_metadatas()` -> `select.resolve().into_metadatas()`
+  - `select.into_root_ids()` -> `select.resolve().into_root_ids()`
+  - `select.into_root_metadatas()` -> `select.resolve().into_root_metadatas()`
+
 ## [0.1.7] - 2020-04-05
 ### Added
 - Support for [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies), including:
@@ -73,6 +94,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.1.8]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.1.8
 [0.1.7]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.1.7
 
 <!-- Previous releases were simply tagged "$VERSION", not "guppy-$VERSION". -->
