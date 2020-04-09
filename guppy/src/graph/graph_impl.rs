@@ -198,6 +198,9 @@ impl PackageGraph {
 
     /// Keeps all edges that return true from the visit closure, and removes the others.
     ///
+    /// For an equivalent operation which doesn't mutate the graph, see
+    /// `PackageSelect::resolve_with` and `PackageSelect::resolve_with_fn`.
+    ///
     /// The order edges are visited is not specified.
     pub fn retain_edges<F>(&mut self, visit: F)
     where

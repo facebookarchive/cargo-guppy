@@ -131,7 +131,8 @@ impl PackageGraph {
 }
 
 impl<'g> PackageSelect<'g> {
-    /// Resolves this selector into a set of known packages.
+    /// Resolves this selector into a set of known packages, following every link found along the
+    /// way.
     ///
     /// This is the entry point for iterators.
     pub fn resolve(self) -> PackageSet<'g> {
