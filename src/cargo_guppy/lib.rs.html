@@ -337,9 +337,9 @@
 
     <span class="kw">let</span> <span class="ident">select</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">select_opts</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">filter_opts</span>.<span class="ident">make_resolver</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>);
-    <span class="kw">let</span> <span class="ident">resolve</span> <span class="op">=</span> <span class="ident">select</span>.<span class="ident">resolve_with_fn</span>(<span class="ident">resolver</span>);
+    <span class="kw">let</span> <span class="ident">package_set</span> <span class="op">=</span> <span class="ident">select</span>.<span class="ident">resolve_with_fn</span>(<span class="ident">resolver</span>);
 
-    <span class="kw">for</span> <span class="ident">package_id</span> <span class="kw">in</span> <span class="ident">resolve</span>.<span class="ident">clone</span>().<span class="ident">into_ids</span>(<span class="ident">options</span>.<span class="ident">output_direction</span>) {
+    <span class="kw">for</span> <span class="ident">package_id</span> <span class="kw">in</span> <span class="ident">package_set</span>.<span class="ident">clone</span>().<span class="ident">into_ids</span>(<span class="ident">options</span>.<span class="ident">output_direction</span>) {
         <span class="kw">let</span> <span class="ident">package</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">in_workspace</span> <span class="op">=</span> <span class="ident">package</span>.<span class="ident">in_workspace</span>();
         <span class="kw">let</span> <span class="ident">direct_dep</span> <span class="op">=</span> <span class="ident">pkg_graph</span>
@@ -358,7 +358,7 @@
     }
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">output_file</span>) <span class="op">=</span> <span class="ident">options</span>.<span class="ident">output_dot</span> {
-        <span class="kw">let</span> <span class="ident">dot</span> <span class="op">=</span> <span class="ident">resolve</span>.<span class="ident">into_dot</span>(<span class="ident">NameVisitor</span>);
+        <span class="kw">let</span> <span class="ident">dot</span> <span class="op">=</span> <span class="ident">package_set</span>.<span class="ident">into_dot</span>(<span class="ident">NameVisitor</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">File</span>::<span class="ident">create</span>(<span class="ident">output_file</span>)<span class="question-mark">?</span>;
         <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">dot</span>)<span class="question-mark">?</span>;
     }

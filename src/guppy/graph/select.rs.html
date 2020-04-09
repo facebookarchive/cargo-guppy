@@ -373,6 +373,7 @@
 <span id="373">373</span>
 <span id="374">374</span>
 <span id="375">375</span>
+<span id="376">376</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -381,7 +382,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">select_core</span>::{<span class="ident">select_postfilter</span>, <span class="ident">SelectParams</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
     <span class="ident">DependencyDirection</span>, <span class="ident">DependencyLink</span>, <span class="ident">IntoIds</span>, <span class="ident">IntoMetadatas</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>,
-    <span class="ident">PackageIx</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageResolve</span>, <span class="ident">PackageResolver</span>, <span class="ident">ResolverFn</span>,
+    <span class="ident">PackageIx</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageResolver</span>, <span class="ident">PackageSet</span>, <span class="ident">ResolverFn</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">walk</span>::<span class="ident">EdgeDfs</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
@@ -507,19 +508,20 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PackageSelect</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Resolves this selector into a set of known packages.</span>
+    <span class="doccomment">/// Resolves this selector into a set of known packages, following every link found along the</span>
+    <span class="doccomment">/// way.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the entry point for iterators.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageResolve</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-        <span class="ident">PackageResolve</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">params</span>)
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="ident">PackageSet</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">params</span>)
     }
 
     <span class="doccomment">/// Resolves this selector into a set of known packages, using the provided resolver to</span>
     <span class="doccomment">/// determine which links are followed.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The resolver is ignored for `select_all()` queries.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_with</span>(<span class="self">self</span>, <span class="ident">resolver</span>: <span class="kw">impl</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageResolve</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-        <span class="ident">PackageResolve</span>::<span class="ident">with_resolver</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">params</span>, <span class="ident">resolver</span>)
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_with</span>(<span class="self">self</span>, <span class="ident">resolver</span>: <span class="kw">impl</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="ident">PackageSet</span>::<span class="ident">with_resolver</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">params</span>, <span class="ident">resolver</span>)
     }
 
     <span class="doccomment">/// Resolves this selector into a set of known packages, using the provided resolver function</span>
@@ -529,7 +531,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_with_fn</span>(
         <span class="self">self</span>,
         <span class="ident">resolver_fn</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageResolve</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">resolve_with</span>(<span class="ident">ResolverFn</span>(<span class="ident">resolver_fn</span>))
     }
 
