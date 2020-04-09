@@ -677,12 +677,12 @@ impl<'g> GraphSet<'g> for FeatureSet<'g> {
         self.symmetric_difference(other)
     }
 
-    fn ids(self, _direction: DependencyDirection) -> Vec<Self::Id> {
-        unimplemented!("TODO: implement this once FeatureSet::into_ids is available")
+    fn ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
+        self.into_ids(direction).collect()
     }
 
-    fn metadatas(self, _direction: DependencyDirection) -> Vec<Self::Metadata> {
-        unimplemented!("TODO: implement this once FeatureSet::into_metadatas is available")
+    fn metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        self.into_metadatas(direction).collect()
     }
 
     fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
