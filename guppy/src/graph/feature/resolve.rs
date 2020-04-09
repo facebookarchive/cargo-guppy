@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
-use crate::graph::resolve_core::ResolveCore;
+use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::select_core::SelectParams;
 use crate::graph::DependencyDirection;
 
@@ -128,6 +128,32 @@ impl<'g> FeatureSet<'g> {
     // Iterators
     // ---
 
+    /// Iterates over feature IDs, in topological order in the direction specified.
+    ///
+    /// ## Cycles
+    ///
+    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
+    /// topological order will be maintained.
+    pub fn into_ids(self, direction: DependencyDirection) -> IntoIds<'g> {
+        IntoIds {
+            graph: self.feature_graph,
+            inner: self.core.topo(self.feature_graph.sccs(), direction),
+        }
+    }
+
+    /// Iterates over feature metadatas, in topological order in the direction specified.
+    ///
+    /// ## Cycles
+    ///
+    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
+    /// topological order will be maintained.
+    pub fn into_metadatas(self, direction: DependencyDirection) -> IntoMetadatas<'g> {
+        IntoMetadatas {
+            graph: self.feature_graph,
+            inner: self.core.topo(self.feature_graph.sccs(), direction),
+        }
+    }
+
     /// Returns the set of "root feature" IDs in the specified direction.
     ///
     /// * If direction is Forward, return the set of feature IDs that do not have any dependencies
@@ -176,5 +202,80 @@ impl<'g> FeatureSet<'g> {
                     .metadata_for_node(feature_node)
                     .expect("feature node should be known")
             })
+    }
+}
+
+/// An iterator over feature IDs in topological order.
+///
+/// The items returned are of type `FeatureId<'g>`. Returned by `PackageResolveSet::into_ids`.
+pub struct IntoIds<'g> {
+    graph: FeatureGraph<'g>,
+    inner: Topo<'g, FeatureGraph<'g>>,
+}
+
+impl<'g> IntoIds<'g> {
+    /// Returns the direction the iteration is happening in.
+    pub fn direction(&self) -> DependencyDirection {
+        self.inner.direction()
+    }
+}
+
+impl<'g> Iterator for IntoIds<'g> {
+    type Item = FeatureId<'g>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|feature_ix| {
+            FeatureId::from_node(
+                self.graph.package_graph(),
+                &self.graph.dep_graph()[feature_ix],
+            )
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'g> ExactSizeIterator for IntoIds<'g> {
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+}
+
+/// An iterator over feature metadatas in topological order.
+///
+/// The items returned are of type `FeatureId<'g>`. Returned by `PackageResolveSet::into_ids`.
+pub struct IntoMetadatas<'g> {
+    graph: FeatureGraph<'g>,
+    inner: Topo<'g, FeatureGraph<'g>>,
+}
+
+impl<'g> IntoMetadatas<'g> {
+    /// Returns the direction the iteration is happening in.
+    pub fn direction(&self) -> DependencyDirection {
+        self.inner.direction()
+    }
+}
+
+impl<'g> Iterator for IntoMetadatas<'g> {
+    type Item = FeatureMetadata<'g>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|feature_ix| {
+            self.graph
+                .metadata_for_node(&self.graph.dep_graph()[feature_ix])
+                .expect("feature node should be known")
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'g> ExactSizeIterator for IntoMetadatas<'g> {
+    fn len(&self) -> usize {
+        self.inner.len()
     }
 }

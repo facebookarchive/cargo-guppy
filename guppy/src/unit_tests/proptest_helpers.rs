@@ -36,6 +36,22 @@ macro_rules! proptest_suite {
             }
 
             #[test]
+            fn proptest_feature_select_depends_on() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(
+                    ids in vec(feature_graph.prop09_id_strategy(), 1..16),
+                    select_direction in any::<DependencyDirection>(),
+                    query_direction in any::<DependencyDirection>(),
+                    query_indexes in vec(any::<Index>(), 0..16),
+                )| {
+                    depends_on(feature_graph, &ids, select_direction, query_direction, query_indexes, "feature_select_depends_on");
+                });
+            }
+
+            #[test]
             fn proptest_select_link_order() {
                 let fixture = Fixture::$name();
                 let graph = fixture.graph();
@@ -150,7 +166,18 @@ macro_rules! proptest_suite {
                 });
             }
 
-            // TODO: proptest_feature_resolve_ops once FeatureSet::into_ids is available.
+            #[test]
+            fn proptest_feature_resolve_ops() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(
+                    resolve_tree in ResolveTree::strategy(feature_graph.prop09_id_strategy())
+                )| {
+                    resolve_ops(feature_graph, resolve_tree);
+                });
+            }
         }
     }
 }
