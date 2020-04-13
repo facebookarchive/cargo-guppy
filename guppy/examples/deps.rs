@@ -25,12 +25,12 @@ fn main() -> Result<(), Error> {
         println!("direct: {}", link.to.id());
     }
 
-    // Transitive dependencies are obtained through the `select_` APIs. They are always presented in
+    // Transitive dependencies are obtained through the `query_` APIs. They are always presented in
     // topological order.
-    let select = package_graph.select_forward(iter::once(&package_id))?;
-    let package_set = select.resolve();
+    let query = package_graph.query_forward(iter::once(&package_id))?;
+    let package_set = query.resolve();
     for dep_id in package_set.into_ids(DependencyDirection::Forward) {
-        // The select API also has an `into_iter_links()` method which returns links instead of IDs.
+        // PackageSet also has an `into_links()` method which returns links instead of IDs.
         println!("transitive: {}", dep_id);
     }
     Ok(())

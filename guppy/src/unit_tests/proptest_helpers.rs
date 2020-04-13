@@ -21,91 +21,91 @@ macro_rules! proptest_suite {
             use proptest::sample::Index;
 
             #[test]
-            fn proptest_select_depends_on() {
+            fn proptest_query_depends_on() {
                 let fixture = Fixture::$name();
                 let graph = fixture.graph();
 
                 proptest!(|(
                     ids in vec(graph.prop09_id_strategy(), 1..16),
-                    select_direction in any::<DependencyDirection>(),
                     query_direction in any::<DependencyDirection>(),
+                    iter_direction in any::<DependencyDirection>(),
                     query_indexes in vec(any::<Index>(), 0..16),
                 )| {
-                    depends_on(graph, &ids, select_direction, query_direction, query_indexes, "select_depends_on");
+                    depends_on(graph, &ids, query_direction, iter_direction, query_indexes, "query_depends_on");
                 });
             }
 
             #[test]
-            fn proptest_feature_select_depends_on() {
+            fn proptest_feature_query_depends_on() {
                 let fixture = Fixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
                 proptest!(|(
                     ids in vec(feature_graph.prop09_id_strategy(), 1..16),
-                    select_direction in any::<DependencyDirection>(),
                     query_direction in any::<DependencyDirection>(),
+                    iter_direction in any::<DependencyDirection>(),
                     query_indexes in vec(any::<Index>(), 0..16),
                 )| {
-                    depends_on(feature_graph, &ids, select_direction, query_direction, query_indexes, "feature_select_depends_on");
+                    depends_on(feature_graph, &ids, query_direction, iter_direction, query_indexes, "feature_query_depends_on");
                 });
             }
 
             #[test]
-            fn proptest_select_link_order() {
+            fn proptest_query_link_order() {
                 let fixture = Fixture::$name();
                 let graph = fixture.graph();
 
                 proptest!(|(
                     ids in vec(graph.prop09_id_strategy(), 1..16),
-                    select_direction in any::<DependencyDirection>(),
                     query_direction in any::<DependencyDirection>(),
+                    iter_direction in any::<DependencyDirection>(),
                 )| {
-                    link_order(graph, &ids, select_direction, query_direction, "select_link_order");
+                    link_order(graph, &ids, query_direction, iter_direction, "query_link_order");
                 });
             }
 
             #[test]
-            fn proptest_select_roots() {
+            fn proptest_query_roots() {
                 let fixture = Fixture::$name();
                 let graph = fixture.graph();
 
                 proptest!(|(
                     ids in vec(graph.prop09_id_strategy(), 1..16),
-                    select_direction in any::<DependencyDirection>(),
                     query_direction in any::<DependencyDirection>(),
+                    iter_direction in any::<DependencyDirection>(),
                     query_indexes in vec((any::<Index>(), any::<Index>()), 0..128),
                 )| {
                     roots(
                         graph,
                         &ids,
-                        select_direction,
                         query_direction,
+                        iter_direction,
                         query_indexes,
-                        "select_roots",
+                        "query_roots",
                     )?;
                 });
             }
 
             #[test]
-            fn proptest_feature_select_roots() {
+            fn proptest_feature_query_roots() {
                 let fixture = Fixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
                 proptest!(|(
                     ids in vec(feature_graph.prop09_id_strategy(), 1..16),
-                    select_direction in any::<DependencyDirection>(),
                     query_direction in any::<DependencyDirection>(),
+                    iter_direction in any::<DependencyDirection>(),
                     query_indexes in vec((any::<Index>(), any::<Index>()), 0..128),
                 )| {
                     roots(
                         feature_graph,
                         &ids,
-                        select_direction,
                         query_direction,
+                        iter_direction,
                         query_indexes,
-                        "feature_select_roots",
+                        "feature_query_roots",
                     )?;
                 });
             }
@@ -131,11 +131,11 @@ macro_rules! proptest_suite {
                 let package_graph = fixture.graph();
 
                 proptest!(|(
-                    select_ids in vec(package_graph.prop09_id_strategy(), 1..16),
+                    query_ids in vec(package_graph.prop09_id_strategy(), 1..16),
                     direction in any::<DependencyDirection>(),
-                    query_ids in vec(package_graph.prop09_id_strategy(), 0..64),
+                    test_ids in vec(package_graph.prop09_id_strategy(), 0..64),
                 )| {
-                    resolve_contains(package_graph, &select_ids, direction, &query_ids);
+                    resolve_contains(package_graph, &query_ids, direction, &test_ids);
                 });
             }
 
@@ -146,11 +146,11 @@ macro_rules! proptest_suite {
                 let feature_graph = package_graph.feature_graph();
 
                 proptest!(|(
-                    select_ids in vec(feature_graph.prop09_id_strategy(), 1..16),
+                    query_ids in vec(feature_graph.prop09_id_strategy(), 1..16),
                     direction in any::<DependencyDirection>(),
-                    query_ids in vec(feature_graph.prop09_id_strategy(), 0..64),
+                    test_ids in vec(feature_graph.prop09_id_strategy(), 0..64),
                 )| {
-                    resolve_contains(feature_graph, &select_ids, direction, &query_ids);
+                    resolve_contains(feature_graph, &query_ids, direction, &test_ids);
                 });
             }
 
@@ -187,17 +187,17 @@ macro_rules! proptest_suite {
 pub(super) fn depends_on<'g, G: GraphAssert<'g>>(
     graph: G,
     ids: &[G::Id],
-    select_direction: DependencyDirection,
     query_direction: DependencyDirection,
+    iter_direction: DependencyDirection,
     query_indexes: Vec<Index>,
     msg: &str,
 ) {
     let msg = format!("{}: reachable means depends on", msg);
-    let reachable_ids = graph.ids(ids, select_direction, query_direction);
+    let reachable_ids = graph.ids(ids, query_direction, iter_direction);
 
     for index in query_indexes {
         let query_id = index.get(&reachable_ids);
-        graph.assert_depends_on_any(ids, *query_id, select_direction, &msg);
+        graph.assert_depends_on_any(ids, *query_id, query_direction, &msg);
     }
 }
 
@@ -205,29 +205,31 @@ pub(super) fn depends_on<'g, G: GraphAssert<'g>>(
 pub(super) fn link_order(
     graph: &PackageGraph,
     ids: &[&PackageId],
-    select_direction: DependencyDirection,
     query_direction: DependencyDirection,
+    iter_direction: DependencyDirection,
     msg: &str,
 ) {
-    let select = graph
-        .select_directed(ids.iter().copied(), select_direction)
+    let query = graph
+        .query_directed(ids.iter().copied(), query_direction)
         .unwrap();
-    // If the select and query directions are the opposite, the set of initial IDs will be
-    // different as well. Compute the root IDs from the graph in that case.
-    let initials = if select_direction != query_direction {
-        select
+    // If the query and iter directions are the same, the set of initial IDs may be expanded
+    // in case of cycles. If they are the opposite, the set of initial IDs will be different as
+    // well. Compute the root IDs from the graph in that case.
+    let has_cycles = graph.cycles().all_cycles().count() > 0;
+    let initials = if has_cycles || query_direction != iter_direction {
+        query
             .clone()
             .resolve()
-            .into_root_ids(query_direction)
+            .into_root_ids(iter_direction)
             .collect()
     } else {
         ids.to_vec()
     };
-    let links = select.into_iter_links(Some(query_direction));
+    let links = query.resolve().into_links(iter_direction);
     assert_link_order(
         links,
         initials,
-        query_direction,
+        iter_direction,
         &format!("{}: link order", msg),
     );
 }
@@ -236,12 +238,12 @@ pub(super) fn link_order(
 pub(super) fn roots<'g, G: GraphAssert<'g>>(
     graph: G,
     ids: &[G::Id],
-    select_direction: DependencyDirection,
     query_direction: DependencyDirection,
+    iter_direction: DependencyDirection,
     query_indexes: Vec<(Index, Index)>,
     msg: &str,
 ) -> prop::test_runner::TestCaseResult {
-    let root_ids = graph.root_ids(ids, select_direction, query_direction);
+    let root_ids = graph.root_ids(ids, query_direction, iter_direction);
     let root_id_set: HashSet<_> = root_ids.iter().copied().collect();
     assert_eq!(
         root_ids.len(),
@@ -250,7 +252,7 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
         msg
     );
 
-    let root_metadatas = graph.root_metadatas(ids, select_direction, query_direction);
+    let root_metadatas = graph.root_metadatas(ids, query_direction, iter_direction);
     assert_eq!(
         root_ids.len(),
         root_metadatas.len(),
@@ -275,7 +277,7 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
         let id1 = index1.get(&root_ids);
         let id2 = index2.get(&root_ids);
         if id1 != id2 {
-            graph.assert_not_depends_on(*id1, *id2, select_direction, msg);
+            graph.assert_not_depends_on(*id1, *id2, query_direction, msg);
         }
     }
     Ok(())
@@ -289,7 +291,7 @@ pub(super) fn resolver_retain_equivalence(
     resolver: Prop09Resolver,
 ) {
     let mut resolver_ids: Vec<_> = graph
-        .select_directed(ids.iter().copied(), direction)
+        .query_directed(ids.iter().copied(), direction)
         .unwrap()
         .resolve_with(&resolver)
         .into_ids(direction)
@@ -304,7 +306,7 @@ pub(super) fn resolver_retain_equivalence(
     // Now do the filtering through retain_edges.
     graph.retain_edges(|_data, link| resolver.accept(link));
     let mut retain_ids: Vec<_> = graph
-        .select_directed(ids.iter().copied(), direction)
+        .query_directed(ids.iter().copied(), direction)
         .unwrap()
         .resolve()
         .into_ids(direction)
@@ -323,19 +325,19 @@ pub(super) fn resolver_retain_equivalence(
 
 pub(super) fn resolve_contains<'g, G: GraphAssert<'g>>(
     graph: G,
-    select_ids: &[G::Id],
-    direction: DependencyDirection,
     query_ids: &[G::Id],
+    direction: DependencyDirection,
+    test_ids: &[G::Id],
 ) {
-    let resolve_set = graph.resolve(select_ids, direction);
-    for query_id in query_ids {
-        if resolve_set.contains(*query_id) {
-            graph.assert_depends_on_any(select_ids, *query_id, direction, "contains => depends on");
+    let resolve_set = graph.resolve(query_ids, direction);
+    for test_id in test_ids {
+        if resolve_set.contains(*test_id) {
+            graph.assert_depends_on_any(query_ids, *test_id, direction, "contains => depends on");
         } else {
-            for select_id in select_ids {
+            for query_id in query_ids {
                 graph.assert_not_depends_on(
-                    *select_id,
                     *query_id,
+                    *test_id,
                     direction,
                     "not contains => not depends on",
                 );

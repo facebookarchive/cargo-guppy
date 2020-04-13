@@ -54,7 +54,7 @@ mod small {
 }
 "#;
         let actual_dot = graph
-            .select_forward(iter::once(&fixtures::package_id(
+            .query_forward(iter::once(&fixtures::package_id(
                 fixtures::METADATA1_REGION,
             )))
             .unwrap()
@@ -78,7 +78,7 @@ mod small {
 }
 "#;
         let actual_dot_reversed = graph
-            .select_reverse(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
+            .query_reverse(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
             .unwrap()
             .resolve()
             .into_dot(NameVisitor);
@@ -107,7 +107,7 @@ mod small {
 }
 "#;
         let actual_dot = graph
-            .select_forward(iter::once(&fixtures::package_id(
+            .query_forward(iter::once(&fixtures::package_id(
                 fixtures::METADATA1_REGION,
             )))
             .unwrap()
@@ -125,7 +125,7 @@ mod small {
         assert_eq!(feature_graph.feature_count(), 492, "feature count");
         assert_eq!(feature_graph.link_count(), 608, "link count");
         let root_ids: Vec<_> = feature_graph
-            .select_workspace(all_filter())
+            .query_workspace(all_filter())
             .resolve()
             .into_root_ids(DependencyDirection::Forward)
             .collect();
@@ -145,7 +145,7 @@ mod small {
         assert_eq!(feature_graph.feature_count(), 472, "feature count");
         assert_eq!(feature_graph.link_count(), 570, "link count");
         let root_ids: Vec<_> = feature_graph
-            .select_workspace(none_filter())
+            .query_workspace(none_filter())
             .resolve()
             .into_root_ids(DependencyDirection::Forward)
             .collect();

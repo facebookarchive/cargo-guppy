@@ -26,7 +26,7 @@ fn main() -> Result<(), Error> {
         .clone();
 
     let before_count = package_graph
-        .select_forward(iter::once(&libra_node_id))?
+        .query_forward(iter::once(&libra_node_id))?
         .resolve()
         .into_ids(DependencyDirection::Forward)
         .count();
@@ -49,7 +49,7 @@ fn main() -> Result<(), Error> {
 
     // Use `resolve_with` to filter out dev-only links.
     let resolve_with_len = package_graph
-        .select_forward(iter::once(&libra_node_id))?
+        .query_forward(iter::once(&libra_node_id))?
         .resolve_with_fn(resolver_fn)
         .into_ids(DependencyDirection::Forward)
         .len();
@@ -63,13 +63,16 @@ fn main() -> Result<(), Error> {
     });
 
     // Iterate over all links and assert that there are no dev-only links.
-    for link in package_graph.select_all().into_iter_links(None) {
+    for link in package_graph
+        .resolve_all()
+        .into_links(DependencyDirection::Forward)
+    {
         assert!(!link.edge.dev_only());
     }
 
     // Count the number of packages after.
     let after_count = package_graph
-        .select_forward(iter::once(&libra_node_id))?
+        .query_forward(iter::once(&libra_node_id))?
         .resolve()
         .into_ids(DependencyDirection::Forward)
         .count();

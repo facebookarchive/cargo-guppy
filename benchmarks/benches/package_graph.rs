@@ -41,14 +41,14 @@ pub fn benchmarks(c: &mut Criterion) {
         b.iter_batched_ref(
             || gen.generate(ids_directions_strategy(&package_graph)),
             |ids_directions| {
-                ids_directions.iter().for_each(
-                    |(package_ids, select_direction, query_direction)| {
-                        let select = package_graph
-                            .select_directed(package_ids.iter().copied(), *select_direction)
+                ids_directions
+                    .iter()
+                    .for_each(|(package_ids, query_direction, iter_direction)| {
+                        let query = package_graph
+                            .query_directed(package_ids.iter().copied(), *query_direction)
                             .unwrap();
-                        let _: Vec<_> = select.resolve().into_ids(*query_direction).collect();
-                    },
-                )
+                        let _: Vec<_> = query.resolve().into_ids(*iter_direction).collect();
+                    })
             },
             BatchSize::SmallInput,
         )

@@ -244,7 +244,7 @@ impl<'g> FeatureGraph<'g> {
 
 /// An identifier for a (package, feature) pair in a feature graph.
 ///
-/// Returned by various methods on `FeatureGraph` and `FeatureSelect`.
+/// Returned by various methods on `FeatureGraph` and `FeatureQuery`.
 ///
 /// `From` impls are available for `(&'g PackageId, &'g str)` and `(&'g PackageId, Option<&'g str>)`
 /// tuples.
@@ -366,8 +366,7 @@ impl FeatureGraphImpl {
 
         // The iteration order is bottom-up to allow linking up for "a/foo" style feature specs.
         for metadata in package_graph
-            .select_all()
-            .resolve()
+            .resolve_all()
             .into_metadatas(DependencyDirection::Reverse)
         {
             build_state.add_nodes(metadata);
@@ -379,8 +378,8 @@ impl FeatureGraphImpl {
         // The iteration order doesn't matter here, but use bottom-up for symmetry with the previous
         // loop.
         for link in package_graph
-            .select_all()
-            .into_iter_links(Some(DependencyDirection::Reverse))
+            .resolve_all()
+            .into_links(DependencyDirection::Reverse)
         {
             build_state.add_dependency_edges(link);
         }

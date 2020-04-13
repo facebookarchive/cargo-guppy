@@ -152,19 +152,19 @@ pub(crate) fn assert_transitive_deps_internal(
     // There's no impl of Eq<&PackageId> for PackageId :(
     let expected_dep_id_refs: Vec<_> = expected_dep_ids.iter().collect();
 
-    let select = graph
-        .select_directed(iter::once(known_details.id()), direction)
+    let query = graph
+        .query_directed(iter::once(known_details.id()), direction)
         .unwrap_or_else(|err| {
             panic!(
                 "{}: {} transitive dep query failed: {}",
                 msg, desc.direction_desc, err
             )
         });
-    let package_ids = select.clone().resolve().into_ids(direction);
+    let package_ids = query.clone().resolve().into_ids(direction);
     let mut actual_dep_ids: Vec<_> = package_ids.collect();
     actual_dep_ids.sort();
 
-    let actual_deps: Vec<_> = select.clone().into_iter_links(None).collect();
+    let actual_deps: Vec<_> = query.clone().resolve().into_links(direction).collect();
     let actual_ptrs = dep_link_ptrs(actual_deps.iter().copied());
 
     // Use a BTreeSet for unique identifiers. This is also used later for set operations.
@@ -189,7 +189,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // up at least once in 'to' before it ever shows up in 'from'.
     assert_link_order(
         actual_deps,
-        select.clone().resolve().into_root_ids(direction),
+        query.clone().resolve().into_root_ids(direction),
         desc,
         &format!("{}: actual link order", msg),
     );
@@ -197,7 +197,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // Do a query in the opposite direction as well to test link order.
     let opposite = direction.opposite();
     let opposite_desc = DirectionDesc::new(opposite);
-    let opposite_deps: Vec<_> = select.clone().into_iter_links(Some(opposite)).collect();
+    let opposite_deps: Vec<_> = query.clone().resolve().into_links(opposite).collect();
     let opposite_ptrs = dep_link_ptrs(opposite_deps.iter().copied());
 
     // Checking for pointer equivalence is enough since they both use the same graph as a base.
@@ -209,7 +209,7 @@ pub(crate) fn assert_transitive_deps_internal(
 
     assert_link_order(
         opposite_deps,
-        select.resolve().into_root_ids(opposite),
+        query.resolve().into_root_ids(opposite),
         opposite_desc,
         &format!("{}: opposite link order", msg),
     );
@@ -220,7 +220,7 @@ pub(crate) fn assert_transitive_deps_internal(
 
         // Transitive deps should be transitively closed.
         let dep_actual_dep_ids: BTreeSet<_> = graph
-            .select_directed(iter::once(dep_id), direction)
+            .query_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep id query failed for dependency '{}': {}",
@@ -242,14 +242,15 @@ pub(crate) fn assert_transitive_deps_internal(
         );
 
         let dep_ids_from_links: BTreeSet<_> = graph
-            .select_directed(iter::once(dep_id), direction)
+            .query_directed(iter::once(dep_id), direction)
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep query failed for dependency '{}': {}",
                     msg, desc.direction_desc, dep_id.repr, err
                 )
             })
-            .into_iter_links(None)
+            .resolve()
+            .into_links(direction)
             .flat_map(|dep| vec![dep.from.id(), dep.to.id()])
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
@@ -266,7 +267,7 @@ pub(crate) fn assert_transitive_deps_internal(
 }
 
 pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
-    let topo_ids = graph.select_all().resolve().into_ids(direction);
+    let topo_ids = graph.resolve_all().into_ids(direction);
     assert_eq!(
         topo_ids.len(),
         graph.package_count(),
@@ -283,7 +284,7 @@ pub(crate) fn assert_topo_metadatas(
     direction: DependencyDirection,
     msg: &str,
 ) {
-    let topo_metadatas = graph.select_all().resolve().into_metadatas(direction);
+    let topo_metadatas = graph.resolve_all().into_metadatas(direction);
     assert_eq!(
         topo_metadatas.len(),
         graph.package_count(),
@@ -298,10 +299,7 @@ pub(crate) fn assert_topo_metadatas(
 
 pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
     let desc = DirectionDesc::new(direction);
-    let all_links: Vec<_> = graph
-        .select_all()
-        .into_iter_links(Some(direction))
-        .collect();
+    let all_links: Vec<_> = graph.resolve_all().into_links(direction).collect();
     assert_eq!(
         all_links.len(),
         graph.link_count(),
@@ -332,7 +330,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     // all_links should be in the correct order.
     assert_link_order(
         all_links,
-        graph.select_all().resolve().into_root_ids(direction),
+        graph.resolve_all().into_root_ids(direction),
         desc,
         msg,
     );
@@ -381,12 +379,12 @@ pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
     fn ids(
         &self,
         initials: &[Self::Id],
-        select_direction: DependencyDirection,
         query_direction: DependencyDirection,
+        iter_direction: DependencyDirection,
     ) -> Vec<Self::Id> {
-        let package_set = self.resolve(initials, select_direction);
+        let package_set = self.resolve(initials, query_direction);
         let resolve_len = package_set.len();
-        let ids = package_set.ids(query_direction);
+        let ids = package_set.ids(iter_direction);
         assert_eq!(resolve_len, ids.len(), "resolve.len() is correct");
         ids
     }
@@ -394,21 +392,21 @@ pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
     fn root_ids(
         &self,
         initials: &[Self::Id],
-        select_direction: DependencyDirection,
         query_direction: DependencyDirection,
+        iter_direction: DependencyDirection,
     ) -> Vec<Self::Id> {
-        self.resolve(initials, select_direction)
-            .root_ids(query_direction)
+        self.resolve(initials, query_direction)
+            .root_ids(iter_direction)
     }
 
     fn root_metadatas(
         &self,
         initials: &[Self::Id],
-        select_direction: DependencyDirection,
         query_direction: DependencyDirection,
+        iter_direction: DependencyDirection,
     ) -> Vec<Self::Metadata> {
-        self.resolve(initials, select_direction)
-            .root_metadatas(query_direction)
+        self.resolve(initials, query_direction)
+            .root_metadatas(iter_direction)
     }
 
     fn assert_topo_order<'a>(
@@ -562,7 +560,7 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
     }
 
     fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Set {
-        self.select_directed(initials.iter().copied(), direction)
+        self.query_directed(initials.iter().copied(), direction)
             .unwrap()
             .resolve()
     }
@@ -636,7 +634,7 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
     }
 
     fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Set {
-        self.select_directed(initials.iter().copied(), direction)
+        self.query_directed(initials.iter().copied(), direction)
             .unwrap()
             .resolve()
     }

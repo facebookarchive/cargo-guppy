@@ -6,7 +6,7 @@
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
 use guppy::graph::{
-    DependencyDirection, DependencyLink, EnabledStatus, PackageGraph, PackageSelect,
+    DependencyDirection, DependencyLink, EnabledStatus, PackageGraph, PackageQuery,
 };
 use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
@@ -23,35 +23,35 @@ arg_enum! {
 }
 
 #[derive(Debug, StructOpt)]
-pub struct SelectOptions {
-    /// Select reverse transitive dependencies (default: forward)
-    #[structopt(long = "select-reverse", parse(from_flag = parse_direction))]
+pub struct QueryOptions {
+    /// Query reverse transitive dependencies (default: forward)
+    #[structopt(long = "query-reverse", parse(from_flag = parse_direction))]
     direction: DependencyDirection,
 
     #[structopt(rename_all = "screaming_snake_case")]
-    /// The root packages to start the selection from
+    /// The root packages to start the query from
     roots: Vec<String>,
 }
 
-impl SelectOptions {
-    /// Constructs a `PackageSelect` based on these options.
+impl QueryOptions {
+    /// Constructs a `PackageQuery` based on these options.
     pub fn apply<'g>(
         &self,
         pkg_graph: &'g PackageGraph,
-    ) -> Result<PackageSelect<'g>, anyhow::Error> {
+    ) -> Result<PackageQuery<'g>, anyhow::Error> {
         if !self.roots.is_empty() {
             // NOTE: The root set packages are specified by name. The tool currently
             // does not handle multiple version of the same package as the current use
             // cases are passing workspace members as the root set, which won't be
             // duplicated.
             let root_set = self.roots.iter().map(|s| s.as_str()).collect();
-            Ok(pkg_graph.select_directed(names_to_ids(&pkg_graph, &root_set), self.direction)?)
+            Ok(pkg_graph.query_directed(names_to_ids(&pkg_graph, &root_set), self.direction)?)
         } else {
             ensure!(
                 self.direction == DependencyDirection::Forward,
-                anyhow!("--select-reverse requires roots to be specified")
+                anyhow!("--query-reverse requires roots to be specified")
             );
-            Ok(pkg_graph.select_workspace())
+            Ok(pkg_graph.query_workspace())
         }
     }
 }
@@ -71,7 +71,7 @@ pub struct FilterOptions {
     pub include_build: bool,
 
     #[structopt(long)]
-    /// Target to select for, default is to match all targets
+    /// Target to filter, default is to match all targets
     pub target: Option<String>,
 
     #[structopt(

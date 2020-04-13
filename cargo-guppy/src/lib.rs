@@ -47,7 +47,7 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
     let resolver = filter_opts.make_resolver(&pkg_graph);
-    let selection = pkg_graph.select_workspace();
+    let selection = pkg_graph.query_workspace();
 
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
     for package in selection
@@ -96,16 +96,16 @@ pub struct CmdSelectOptions {
     output_dot: Option<String>,
 
     #[structopt(flatten)]
-    select_opts: SelectOptions,
+    query_opts: QueryOptions,
 }
 
 pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
-    let select = options.select_opts.apply(&pkg_graph)?;
+    let query = options.query_opts.apply(&pkg_graph)?;
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
-    let package_set = select.resolve_with_fn(resolver);
+    let package_set = query.resolve_with_fn(resolver);
 
     for package_id in package_set.clone().into_ids(options.output_direction) {
         let package = pkg_graph.metadata(package_id).unwrap();
@@ -163,9 +163,9 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
         })
         .map(|metadata| metadata.id());
     let selection = if options.root.is_some() {
-        pkg_graph.select_forward(iter::once(root_id.unwrap()))?
+        pkg_graph.query_forward(iter::once(root_id.unwrap()))?
     } else {
-        pkg_graph.select_workspace()
+        pkg_graph.query_workspace()
     };
 
     let mut unique_deps: HashMap<&PackageId, HashSet<&PackageId>> = HashMap::new();
@@ -174,7 +174,7 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
         .into_ids(DependencyDirection::Forward)
     {
         let subtree_package_set: HashSet<&PackageId> = pkg_graph
-            .select_forward(iter::once(package_id))?
+            .query_forward(iter::once(package_id))?
             .resolve_with_fn(&resolver)
             .into_ids(DependencyDirection::Forward)
             .collect();
