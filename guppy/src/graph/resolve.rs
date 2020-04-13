@@ -25,7 +25,7 @@ impl PackageGraph {
     pub fn resolve_all(&self) -> PackageSet {
         PackageSet {
             package_graph: self,
-            core: ResolveCore::all_packages(&self.dep_graph),
+            core: ResolveCore::all_nodes(&self.dep_graph),
         }
     }
 }
@@ -164,8 +164,12 @@ impl<'g> PackageSet<'g> {
     pub fn into_ids(self, direction: DependencyDirection) -> IntoIds<'g> {
         IntoIds {
             graph: self.package_graph.dep_graph(),
-            inner: self.core.topo(self.package_graph.sccs(), direction),
+            inner: self.into_ixs(direction),
         }
+    }
+
+    pub(super) fn into_ixs(self, direction: DependencyDirection) -> Topo<'g, PackageGraph> {
+        self.core.topo(self.package_graph.sccs(), direction)
     }
 
     /// Iterates over package metadatas, in topological order in the direction specified.

@@ -11,6 +11,7 @@ use std::iter;
 
 mod small {
     use super::*;
+    use crate::graph::feature::{default_filter, feature_filter};
     use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
@@ -181,6 +182,28 @@ mod small {
     fn metadata_targets1() {
         let metadata_targets1 = Fixture::metadata_targets1();
         metadata_targets1.verify();
+
+        let package_graph = metadata_targets1.graph();
+        let package_set = package_graph.resolve_all();
+        let feature_graph = metadata_targets1.graph().feature_graph();
+        // Test resolve_packages.
+        let feature_set = feature_graph.resolve_packages(
+            &package_set,
+            feature_filter(default_filter(), ["foo", "bar"].iter().copied()),
+        );
+        let dep_a_id = fixtures::package_id(fixtures::METADATA_TARGETS1_DEP_A);
+        assert!(feature_set
+            .contains((&dep_a_id, "foo"))
+            .expect("valid feature ID"));
+        assert!(feature_set
+            .contains((&dep_a_id, "bar"))
+            .expect("valid feature ID"));
+        assert!(!feature_set
+            .contains((&dep_a_id, "baz"))
+            .expect("valid feature ID"));
+        assert!(!feature_set
+            .contains((&dep_a_id, "quux"))
+            .expect("valid feature ID"));
     }
 
     proptest_suite!(metadata_targets1);

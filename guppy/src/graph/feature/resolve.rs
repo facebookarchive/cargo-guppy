@@ -1,13 +1,14 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
+use crate::graph::feature::{FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata};
 use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{ResolveCore, Topo};
-use crate::graph::DependencyDirection;
+use crate::graph::{DependencyDirection, PackageSet};
+use crate::petgraph_support::IxBitSet;
 
 impl<'g> FeatureGraph<'g> {
-    /// Creates a new `FeatureSet` consisting all members of this feature graph.
+    /// Creates a new `FeatureSet` consisting of all members of this feature graph.
     ///
     /// This will include features that aren't depended on by any workspace packages.
     ///
@@ -16,13 +17,32 @@ impl<'g> FeatureGraph<'g> {
     pub fn resolve_all(&self) -> FeatureSet<'g> {
         FeatureSet {
             feature_graph: *self,
-            core: ResolveCore::all_packages(self.dep_graph()),
+            core: ResolveCore::all_nodes(self.dep_graph()),
+        }
+    }
+
+    /// Creates a new `FeatureSet` consisting of all packages in this `PackageSet`, subject to the
+    /// provided filter.
+    pub fn resolve_packages(
+        &self,
+        packages: &PackageSet<'_>,
+        filter: impl FeatureFilter<'g>,
+    ) -> FeatureSet<'g> {
+        let included: IxBitSet = self.feature_ixs_for_packages(
+            // The direction of iteration doesn't matter.
+            packages.clone().into_ixs(DependencyDirection::Forward),
+            filter,
+        );
+        FeatureSet {
+            feature_graph: *self,
+            core: ResolveCore::from_included(included.0),
         }
     }
 }
+
 /// A set of resolved feature IDs in a feature graph.
 ///
-/// Created by `FeatureQuery::resolve`.
+/// Created by `FeatureQuery::resolve` or the `FeatureGraph::resolve_` methods.
 #[derive(Clone, Debug)]
 pub struct FeatureSet<'g> {
     feature_graph: FeatureGraph<'g>,
@@ -63,7 +83,7 @@ impl<'g> FeatureSet<'g> {
     // Set operations
     // ---
 
-    /// Returns a `PackageSet` that contains all packages present in at least one of `self`
+    /// Returns a `FeatureSet` that contains all packages present in at least one of `self`
     /// and `other`.
     ///
     /// ## Panics
@@ -82,7 +102,7 @@ impl<'g> FeatureSet<'g> {
         res
     }
 
-    /// Returns a `PackageSet` that contains all packages present in both `self` and `other`.
+    /// Returns a `FeatureSet` that contains all packages present in both `self` and `other`.
     ///
     /// ## Panics
     ///
@@ -100,7 +120,7 @@ impl<'g> FeatureSet<'g> {
         res
     }
 
-    /// Returns a `PackageSet` that contains all packages present in `self` but not `other`.
+    /// Returns a `FeatureSet` that contains all packages present in `self` but not `other`.
     ///
     /// ## Panics
     ///
@@ -119,7 +139,7 @@ impl<'g> FeatureSet<'g> {
         }
     }
 
-    /// Returns a `PackageSet` that contains all packages present in exactly one of `self` and
+    /// Returns a `FeatureSet` that contains all packages present in exactly one of `self` and
     /// `other`.
     ///
     /// ## Panics

@@ -170,7 +170,8 @@ impl<'g> FeatureGraph<'g> {
         self.query_packages(&self.package_graph.query_workspace(), filter)
     }
 
-    /// Creates a new selector for all packages selected through this `PackageQuery` instance.
+    /// Creates a new query for all packages selected through this `PackageQuery` instance, subject
+    /// to the provided filter.
     pub fn query_packages(
         &self,
         packages: &PackageQuery<'g>,
