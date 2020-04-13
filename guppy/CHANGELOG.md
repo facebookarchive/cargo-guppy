@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2020-04-13
+
+### Fixed
+- Fixed a build issue on nightly Rust.
+
 ## [0.2.0] - 2020-04-13
 
 This is a breaking release. There are no new or removed features, but many existing APIs have been cleaned up.
@@ -110,6 +115,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.2.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.2.1
 [0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.2.0
 [0.1.8]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.1.8
 [0.1.7]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.1.7
