@@ -13,7 +13,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! guppy = "0.1"
+//! guppy = "0.2"
 //! ```
 //!
 //! # Examples
