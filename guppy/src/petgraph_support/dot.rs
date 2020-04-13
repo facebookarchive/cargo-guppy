@@ -11,11 +11,11 @@ static INDENT: &str = "    ";
 pub trait DotVisitor<NR, ER> {
     /// Visits this node. The implementation may output a label for this node to the given
     /// `DotWrite`.
-    fn visit_node(&self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result;
 
     /// Visits this edge. The implementation may output a label for this edge to the given
     /// `DotWrite`.
-    fn visit_edge(&self, edge: ER, f: DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result;
 
     // TODO: allow more customizations? more labels, colors etc to be set?
 }
@@ -34,11 +34,11 @@ where
     NR::Weight: fmt::Display,
     ER::Weight: fmt::Display,
 {
-    fn visit_node(&self, node: NR, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", node.weight())
     }
 
-    fn visit_edge(&self, edge: ER, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", edge.weight())
     }
 }
@@ -47,11 +47,11 @@ impl<'a, NR, ER, T> DotVisitor<NR, ER> for &'a T
 where
     T: DotVisitor<NR, ER>,
 {
-    fn visit_node(&self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         (*self).visit_node(node, f)
     }
 
-    fn visit_edge(&self, edge: ER, f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         (*self).visit_edge(edge, f)
     }
 }
@@ -85,7 +85,7 @@ where
                 INDENT,
                 (&self.graph).to_index(node.id())
             )?;
-            self.visitor.visit_node(node, DotWrite::new(f))?;
+            self.visitor.visit_node(node, &mut DotWrite::new(f))?;
             writeln!(f, "\"]")?;
         }
 
@@ -99,7 +99,7 @@ where
                 edge_str,
                 (&self.graph).to_index(edge.target())
             )?;
-            self.visitor.visit_edge(edge, DotWrite::new(f))?;
+            self.visitor.visit_edge(edge, &mut DotWrite::new(f))?;
             writeln!(f, "\"]")?;
         }
 

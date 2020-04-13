@@ -419,11 +419,11 @@ impl<'g> ExactSizeIterator for IntoMetadatas<'g> {
 pub trait PackageDotVisitor {
     /// Visits this package. The implementation may output a label for this package to the given
     /// `DotWrite`.
-    fn visit_package(&self, package: &PackageMetadata, f: DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_package(&self, package: &PackageMetadata, f: &mut DotWrite<'_, '_>) -> fmt::Result;
 
     /// Visits this dependency link. The implementation may output a label for this link to the
     /// given `DotWrite`.
-    fn visit_link(&self, link: PackageLink<'_>, f: DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_link(&self, link: PackageLink<'_>, f: &mut DotWrite<'_, '_>) -> fmt::Result;
 }
 
 struct VisitorWrap<'g, V> {
@@ -443,7 +443,7 @@ where
     NR: NodeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageId>,
     ER: EdgeRef<NodeId = NodeIndex<PackageIx>, Weight = DependencyEdge> + ReverseFlip,
 {
-    fn visit_node(&self, node: NR, f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         let metadata = self
             .graph
             .metadata(node.weight())
@@ -451,7 +451,7 @@ where
         self.inner.visit_package(metadata, f)
     }
 
-    fn visit_edge(&self, edge: ER, f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         let (source_idx, target_idx) = ER::reverse_flip(edge.source(), edge.target());
         let link = self
             .graph
