@@ -69,12 +69,12 @@ where
     NR::Weight: fmt::Display,
     ER::Weight: fmt::Display,
 {
-    fn visit_node(&self, node: NR, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         f.set_escape_backslashes(false);
         write!(f, "{}", node.weight())
     }
 
-    fn visit_edge(&self, edge: ER, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         f.set_escape_backslashes(false);
         write!(f, "{}", edge.weight())
     }

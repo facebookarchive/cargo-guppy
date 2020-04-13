@@ -238,11 +238,11 @@ mod large {
 struct NameVisitor;
 
 impl PackageDotVisitor for NameVisitor {
-    fn visit_package(&self, package: &PackageMetadata, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_package(&self, package: &PackageMetadata, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", package.name())
     }
 
-    fn visit_link(&self, link: PackageLink<'_>, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_link(&self, link: PackageLink<'_>, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", link.edge.dep_name())
     }
 }
