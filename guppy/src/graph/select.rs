@@ -68,19 +68,6 @@ impl PackageGraph {
         }
     }
 
-    /// Creates a new selector that returns transitive dependencies of the given packages in the
-    /// specified direction.
-    ///
-    /// Returns an error if any package IDs are unknown.
-    #[deprecated(since = "0.1.3", note = "renamed to `select_directed`")]
-    pub fn select_transitive_deps_directed<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-        dep_direction: DependencyDirection,
-    ) -> Result<PackageSelect<'g>, Error> {
-        self.select_directed(package_ids, dep_direction)
-    }
-
     /// Creates a new selector that returns transitive dependencies of the given packages.
     ///
     /// Returns an error if any package IDs are unknown.
@@ -94,17 +81,6 @@ impl PackageGraph {
         })
     }
 
-    /// Creates a new selector that returns transitive dependencies of the given packages.
-    ///
-    /// Returns an error if any package IDs are unknown.
-    #[deprecated(since = "0.1.3", note = "renamed to `select_forward`")]
-    pub fn select_transitive_deps<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<PackageSelect<'g>, Error> {
-        self.select_forward(package_ids)
-    }
-
     /// Creates a new selector that returns transitive reverse dependencies of the given packages.
     ///
     /// Returns an error if any package IDs are unknown.
@@ -116,17 +92,6 @@ impl PackageGraph {
             package_graph: self,
             params: SelectParams::SelectReverse(self.package_ixs(package_ids)?),
         })
-    }
-
-    /// Creates a new selector that returns reverse transitive dependencies of the given packages.
-    ///
-    /// Returns an error if any package IDs are unknown.
-    #[deprecated(since = "0.1.3", note = "renamed to `select_reverse`")]
-    pub fn select_transitive_reverse_deps<'g, 'a>(
-        &'g self,
-        package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Result<PackageSelect<'g>, Error> {
-        self.select_forward(package_ids)
     }
 }
 
@@ -156,83 +121,6 @@ impl<'g> PackageSelect<'g> {
         resolver_fn: impl Fn(DependencyLink<'g>) -> bool,
     ) -> PackageSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
-    }
-
-    /// Returns the set of "root packages" in the specified direction.
-    ///
-    /// * If direction is Forward, return the set of packages that do not have any dependencies
-    ///   within the selected graph.
-    /// * If direction is Reverse, return the set of packages that do not have any dependents within
-    ///   the selected graph.
-    ///
-    /// ## Cycles
-    ///
-    /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.
-    #[deprecated(since = "0.1.8", note = "use `resolve().into_root_ids()` instead")]
-    pub fn into_root_ids(
-        self,
-        direction: DependencyDirection,
-    ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
-        self.resolve().into_root_ids(direction)
-    }
-
-    /// Consumes this query and creates an iterator over package IDs, returned in topological order.
-    ///
-    /// The default order of iteration is determined by the type of query:
-    /// * for `all` and `forward` queries, package IDs are returned in forward order.
-    /// * for `reverse` queries, package IDs are returned in reverse order.
-    ///
-    /// ## Cycles
-    ///
-    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
-    /// topological order will be maintained.
-    #[deprecated(since = "0.1.8", note = "use `resolve().into_ids()` instead")]
-    pub fn into_iter_ids(self, direction_opt: Option<DependencyDirection>) -> IntoIds<'g> {
-        let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
-        self.resolve().into_ids(direction)
-    }
-
-    /// Returns the set of "root package" metadata in the specified direction.
-    ///
-    /// * If direction is Forward, return the set of metadatas that do not have any dependencies
-    ///   within the selected graph.
-    /// * If direction is Reverse, return the set of metadatas that do not have any dependents within
-    ///   the selected graph.
-    ///
-    /// ## Cycles
-    ///
-    /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.
-    #[deprecated(
-        since = "0.1.8",
-        note = "use `resolve().into_root_metadatas()` instead"
-    )]
-    pub fn into_root_metadatas(
-        self,
-        direction: DependencyDirection,
-    ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
-        self.resolve().into_root_metadatas(direction)
-    }
-
-    /// Consumes this query and creates an iterator over `PackageMetadata` instances, returned in
-    /// topological order.
-    ///
-    /// The default order of iteration is determined by the type of query:
-    /// * for `all` and `forward` queries, package IDs are returned in forward order.
-    /// * for `reverse` queries, package IDs are returned in reverse order.
-    ///
-    /// ## Cycles
-    ///
-    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
-    /// topological order will be maintained.
-    #[deprecated(since = "0.1.8", note = "use `resolve().into_metadatas()` instead")]
-    pub fn into_iter_metadatas(
-        self,
-        direction_opt: Option<DependencyDirection>,
-    ) -> IntoMetadatas<'g> {
-        let direction = direction_opt.unwrap_or_else(|| self.params.default_direction());
-        self.resolve().into_metadatas(direction)
     }
 
     /// Consumes this query and creates an iterator over dependency links.
@@ -279,21 +167,7 @@ impl<'g> PackageSelect<'g> {
             direction,
         }
     }
-
-    /// Constructs a representation of the selected packages in `dot` format.
-    #[deprecated(since = "0.1.8", note = "use `resolve().into_dot()` instead")]
-    pub fn into_dot<V: PackageDotVisitor + 'g>(self, visitor: V) -> impl fmt::Display + 'g {
-        self.resolve().into_dot(visitor)
-    }
 }
-
-/// A type alias for `IntoIds` for backwards compatibility.
-#[deprecated(since = "0.1.8", note = "use `IntoIds` instead")]
-pub type IntoIterIds<'g> = IntoIds<'g>;
-
-/// A type alias for `IntoMetadatas` for backwards compatibility.
-#[deprecated(since = "0.1.8", note = "use `IntoMetadatas` instead")]
-pub type IntoIterMetadatas<'g> = IntoMetadatas<'g>;
 
 /// An iterator over dependency links.
 ///
