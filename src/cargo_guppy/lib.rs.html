@@ -241,7 +241,7 @@
 <span class="kw">use</span> <span class="ident">anyhow</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">DependencyDirection</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::{
-    <span class="ident">graph</span>::{<span class="ident">DependencyLink</span>, <span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>},
+    <span class="ident">graph</span>::{<span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>},
     <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>,
 };
 <span class="kw">use</span> <span class="ident">itertools</span>;
@@ -279,7 +279,7 @@
     <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">filter_opts</span>.<span class="ident">make_resolver</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>);
-    <span class="kw">let</span> <span class="ident">selection</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">select_workspace</span>();
+    <span class="kw">let</span> <span class="ident">selection</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">query_workspace</span>();
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dupe_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
     <span class="kw">for</span> <span class="ident">package</span> <span class="kw">in</span> <span class="ident">selection</span>
@@ -305,11 +305,11 @@
 <span class="kw">struct</span> <span class="ident">NameVisitor</span>;
 
 <span class="kw">impl</span> <span class="ident">PackageDotVisitor</span> <span class="kw">for</span> <span class="ident">NameVisitor</span> {
-    <span class="kw">fn</span> <span class="ident">visit_package</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">visit_package</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">package</span>.<span class="ident">name</span>())
     }
 
-    <span class="kw">fn</span> <span class="ident">visit_link</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_link</span>: <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">visit_link</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;&quot;</span>)
     }
 }
@@ -328,16 +328,16 @@
     <span class="ident">output_dot</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
-    <span class="ident">select_opts</span>: <span class="ident">SelectOptions</span>,
+    <span class="ident">query_opts</span>: <span class="ident">QueryOptions</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_select</span>(<span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CmdSelectOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">MetadataCommand</span>::<span class="ident">new</span>();
     <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">select</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">select_opts</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">query</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">query_opts</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">filter_opts</span>.<span class="ident">make_resolver</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>);
-    <span class="kw">let</span> <span class="ident">package_set</span> <span class="op">=</span> <span class="ident">select</span>.<span class="ident">resolve_with_fn</span>(<span class="ident">resolver</span>);
+    <span class="kw">let</span> <span class="ident">package_set</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">resolve_with_fn</span>(<span class="ident">resolver</span>);
 
     <span class="kw">for</span> <span class="ident">package_id</span> <span class="kw">in</span> <span class="ident">package_set</span>.<span class="ident">clone</span>().<span class="ident">into_ids</span>(<span class="ident">options</span>.<span class="ident">output_direction</span>) {
         <span class="kw">let</span> <span class="ident">package</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>).<span class="ident">unwrap</span>();
@@ -395,9 +395,9 @@
         })
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">metadata</span><span class="op">|</span> <span class="ident">metadata</span>.<span class="ident">id</span>());
     <span class="kw">let</span> <span class="ident">selection</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">root</span>.<span class="ident">is_some</span>() {
-        <span class="ident">pkg_graph</span>.<span class="ident">select_forward</span>(<span class="ident">iter</span>::<span class="ident">once</span>(<span class="ident">root_id</span>.<span class="ident">unwrap</span>()))<span class="question-mark">?</span>
+        <span class="ident">pkg_graph</span>.<span class="ident">query_forward</span>(<span class="ident">iter</span>::<span class="ident">once</span>(<span class="ident">root_id</span>.<span class="ident">unwrap</span>()))<span class="question-mark">?</span>
     } <span class="kw">else</span> {
-        <span class="ident">pkg_graph</span>.<span class="ident">select_workspace</span>()
+        <span class="ident">pkg_graph</span>.<span class="ident">query_workspace</span>()
     };
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unique_deps</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageId</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
@@ -406,7 +406,7 @@
         .<span class="ident">into_ids</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>)
     {
         <span class="kw">let</span> <span class="ident">subtree_package_set</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">pkg_graph</span>
-            .<span class="ident">select_forward</span>(<span class="ident">iter</span>::<span class="ident">once</span>(<span class="ident">package_id</span>))<span class="question-mark">?</span>
+            .<span class="ident">query_forward</span>(<span class="ident">iter</span>::<span class="ident">once</span>(<span class="ident">package_id</span>))<span class="question-mark">?</span>
             .<span class="ident">resolve_with_fn</span>(<span class="kw-2">&amp;</span><span class="ident">resolver</span>)
             .<span class="ident">into_ids</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>)
             .<span class="ident">collect</span>();

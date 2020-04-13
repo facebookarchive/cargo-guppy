@@ -279,18 +279,46 @@
 <span id="279">279</span>
 <span id="280">280</span>
 <span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">select_core</span>::<span class="ident">SelectParams</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">DependencyDirection</span>;
 
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Creates a new `FeatureSet` consisting all members of this feature graph.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This will include features that aren&#39;t depended on by any workspace packages.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// In most situations, `query_workspace().resolve()` is preferred. Use `resolve_all` if you</span>
+    <span class="doccomment">/// know you need parts of the graph that aren&#39;t accessible from the workspace.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="ident">FeatureSet</span> {
+            <span class="ident">feature_graph</span>: <span class="kw-2">*</span><span class="self">self</span>,
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_packages</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>()),
+        }
+    }
+}
 <span class="doccomment">/// A set of resolved feature IDs in a feature graph.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Created by `FeatureSelect::resolve`.</span>
+<span class="doccomment">/// Created by `FeatureQuery::resolve`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">feature_graph</span>: <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
@@ -300,7 +328,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">feature_graph</span>: <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">params</span>: <span class="ident">SelectParams</span><span class="op">&lt;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">params</span>: <span class="ident">QueryParams</span><span class="op">&lt;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">feature_graph</span>,

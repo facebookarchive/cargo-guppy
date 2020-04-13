@@ -488,8 +488,6 @@
 <span id="488">488</span>
 <span id="489">489</span>
 <span id="490">490</span>
-<span id="491">491</span>
-<span id="492">492</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -501,8 +499,7 @@
     <span class="ident">DependencyDirection</span>, <span class="ident">FeatureIx</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageMetadata</span>, <span class="ident">TargetPredicate</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">scc</span>::<span class="ident">Sccs</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
-<span class="kw">use</span> <span class="ident">cargo_metadata</span>::<span class="ident">PackageId</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">algo</span>::<span class="ident">has_path_connecting</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
@@ -737,7 +734,7 @@
 
 <span class="doccomment">/// An identifier for a (package, feature) pair in a feature graph.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Returned by various methods on `FeatureGraph` and `FeatureSelect`.</span>
+<span class="doccomment">/// Returned by various methods on `FeatureGraph` and `FeatureQuery`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// `From` impls are available for `(&amp;&#39;g PackageId, &amp;&#39;g str)` and `(&amp;&#39;g PackageId, Option&lt;&amp;&#39;g str&gt;)`</span>
 <span class="doccomment">/// tuples.</span>
@@ -859,8 +856,7 @@
 
         <span class="comment">// The iteration order is bottom-up to allow linking up for &quot;a/foo&quot; style feature specs.</span>
         <span class="kw">for</span> <span class="ident">metadata</span> <span class="kw">in</span> <span class="ident">package_graph</span>
-            .<span class="ident">select_all</span>()
-            .<span class="ident">resolve</span>()
+            .<span class="ident">resolve_all</span>()
             .<span class="ident">into_metadatas</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span>)
         {
             <span class="ident">build_state</span>.<span class="ident">add_nodes</span>(<span class="ident">metadata</span>);
@@ -872,8 +868,8 @@
         <span class="comment">// The iteration order doesn&#39;t matter here, but use bottom-up for symmetry with the previous</span>
         <span class="comment">// loop.</span>
         <span class="kw">for</span> <span class="ident">link</span> <span class="kw">in</span> <span class="ident">package_graph</span>
-            .<span class="ident">select_all</span>()
-            .<span class="ident">into_iter_links</span>(<span class="prelude-val">Some</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span>))
+            .<span class="ident">resolve_all</span>()
+            .<span class="ident">into_links</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span>)
         {
             <span class="ident">build_state</span>.<span class="ident">add_dependency_edges</span>(<span class="ident">link</span>);
         }

@@ -1140,24 +1140,6 @@
 <span id="1140">1140</span>
 <span id="1141">1141</span>
 <span id="1142">1142</span>
-<span id="1143">1143</span>
-<span id="1144">1144</span>
-<span id="1145">1145</span>
-<span id="1146">1146</span>
-<span id="1147">1147</span>
-<span id="1148">1148</span>
-<span id="1149">1149</span>
-<span id="1150">1150</span>
-<span id="1151">1151</span>
-<span id="1152">1152</span>
-<span id="1153">1153</span>
-<span id="1154">1154</span>
-<span id="1155">1155</span>
-<span id="1156">1156</span>
-<span id="1157">1157</span>
-<span id="1158">1158</span>
-<span id="1159">1159</span>
-<span id="1160">1160</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1188,7 +1170,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageGraph</span> {
     <span class="comment">// Source of truth data.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="comment">// The strongly connected components of the graph, computed on demand.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">sccs</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="comment">// Feature graph, computed on demand.</span>
@@ -1360,12 +1342,12 @@
     <span class="doccomment">/// Keeps all edges that return true from the visit closure, and removes the others.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For an equivalent operation which doesn&#39;t mutate the graph, see</span>
-    <span class="doccomment">/// `PackageSelect::resolve_with` and `PackageSelect::resolve_with_fn`.</span>
+    <span class="doccomment">/// `PackageQuery::resolve_with` and `PackageQuery::resolve_with_fn`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The order edges are visited is not specified.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retain_edges</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">visit</span>: <span class="ident">F</span>)
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">PackageGraphData</span>, <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
+        <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">PackageGraphData</span>, <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
     {
         <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>;
         <span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">retain_edges</span>(<span class="op">|</span><span class="ident">frozen_graph</span>, <span class="ident">edge_idx</span><span class="op">|</span> {
@@ -1377,7 +1359,7 @@
             <span class="kw">let</span> <span class="ident">from</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">packages</span>[<span class="kw-2">&amp;</span><span class="ident">frozen_graph</span>[<span class="ident">source</span>]];
             <span class="kw">let</span> <span class="ident">to</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">packages</span>[<span class="kw-2">&amp;</span><span class="ident">frozen_graph</span>[<span class="ident">target</span>]];
             <span class="kw">let</span> <span class="ident">edge</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">frozen_graph</span>[<span class="ident">edge_idx</span>];
-            <span class="ident">visit</span>(<span class="ident">data</span>, <span class="ident">DependencyLink</span> { <span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">edge</span> })
+            <span class="ident">visit</span>(<span class="ident">data</span>, <span class="ident">PackageLink</span> { <span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">edge</span> })
         });
 
         <span class="self">self</span>.<span class="ident">invalidate_caches</span>();
@@ -1417,7 +1399,7 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">dep_direction</span>: <span class="ident">DependencyDirection</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_links_impl</span>(<span class="ident">package_id</span>, <span class="ident">dep_direction</span>.<span class="ident">into</span>())
     }
 
@@ -1425,7 +1407,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_links</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_links_impl</span>(<span class="ident">package_id</span>, <span class="ident">Outgoing</span>)
     }
 
@@ -1433,7 +1415,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reverse_dep_links</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_links_impl</span>(<span class="ident">package_id</span>, <span class="ident">Incoming</span>)
     }
 
@@ -1441,7 +1423,7 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">dir</span>: <span class="ident">Direction</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">metadata</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">dep_links_ixs_directed</span>(<span class="ident">metadata</span>.<span class="ident">package_ix</span>, <span class="ident">dir</span>))
     }
@@ -1450,13 +1432,13 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">package_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">dir</span>: <span class="ident">Direction</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
             .<span class="ident">edges_directed</span>(<span class="ident">package_ix</span>, <span class="ident">dir</span>)
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">edge</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">edge_to_link</span>(<span class="ident">edge</span>.<span class="ident">source</span>(), <span class="ident">edge</span>.<span class="ident">target</span>(), <span class="ident">edge</span>.<span class="ident">weight</span>()))
     }
 
-    <span class="comment">// For more traversals, see select.rs.</span>
+    <span class="comment">// For more traversals, see query.rs.</span>
 
     <span class="comment">// ---</span>
     <span class="comment">// Helper methods</span>
@@ -1482,7 +1464,7 @@
     <span class="doccomment">/// Returns the inner dependency graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Should this be exposed publicly? Not sure.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">dep_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">DependencyEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">dep_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>
     }
 
@@ -1491,8 +1473,8 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">source</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">target</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
-        <span class="ident">edge</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">DependencyEdge</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="ident">edge</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageEdge</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="comment">// Note: It would be really lovely if this could just take in any EdgeRef with the right</span>
         <span class="comment">// parameters, but &#39;weight&#39; wouldn&#39;t live long enough unfortunately.</span>
         <span class="comment">//</span>
@@ -1504,7 +1486,7 @@
         <span class="kw">let</span> <span class="ident">to</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>[<span class="ident">target</span>])
             .<span class="ident">expect</span>(<span class="string">&quot;&#39;to&#39; should have associated metadata&quot;</span>);
-        <span class="ident">DependencyLink</span> { <span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">edge</span> }
+        <span class="ident">PackageLink</span> { <span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">edge</span> }
     }
 
     <span class="doccomment">/// Maps an iterator of package IDs to their internal graph node indexes.</span>
@@ -1639,13 +1621,13 @@
 
 <span class="doccomment">/// Represents a dependency from one package to another.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// The package which depends on the `to` package.</span>
     <span class="kw">pub</span> <span class="ident">from</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span>,
     <span class="doccomment">/// The package which is depended on by the `from` package.</span>
     <span class="kw">pub</span> <span class="ident">to</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span>,
     <span class="doccomment">/// Information about the specifics of this dependency.</span>
-    <span class="kw">pub</span> <span class="ident">edge</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">DependencyEdge</span>,
+    <span class="kw">pub</span> <span class="ident">edge</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageEdge</span>,
 }
 
 <span class="doccomment">/// Information about a specific package in a `PackageGraph`.</span>
@@ -1891,13 +1873,13 @@
 
 <span class="doccomment">/// Details about a specific dependency from a package to another package.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Usually found within the context of a [`DependencyLink`](struct.DependencyLink.html).</span>
+<span class="doccomment">/// Usually found within the context of a [`PackageLink`](struct.PackageLink.html).</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This struct contains information about:</span>
 <span class="doccomment">/// * whether this dependency was renamed in the context of this crate.</span>
 <span class="doccomment">/// * if this is a normal, dev or build dependency.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyEdge</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageEdge</span> {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dep_name</span>: <span class="ident">String</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">resolved_name</span>: <span class="ident">String</span>,
@@ -1906,7 +1888,7 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">dev</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DependencyMetadata</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">DependencyEdge</span> {
+<span class="kw">impl</span> <span class="ident">PackageEdge</span> {
     <span class="doccomment">/// Returns the name for this dependency edge. This can be affected by a crate rename.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">str</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_name</span>
@@ -1955,7 +1937,7 @@
 <span class="doccomment">/// Information about a specific kind of dependency (normal, build or dev) from a package to another</span>
 <span class="doccomment">/// package.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Usually found within the context of a [`DependencyEdge`](struct.DependencyEdge.html).</span>
+<span class="doccomment">/// Usually found within the context of a [`PackageEdge`](struct.PackageEdge.html).</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyMetadata</span> {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">version_req</span>: <span class="ident">VersionReq</span>,
@@ -1966,16 +1948,12 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">current_default_features</span>: <span class="ident">EnabledStatus</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">all_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">current_feature_statuses</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">EnabledStatus</span><span class="op">&gt;</span>,
-
-    <span class="comment">// single_target is deprecated -- it is only Some if there&#39;s exactly one instance of this</span>
-    <span class="comment">// dependency.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">single_target</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">DependencyMetadata</span> {
     <span class="doccomment">/// Returns the semver requirements specified for this dependency.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// To get the resolved version, see the `to` field of the `DependencyLink` this was part of.</span>
+    <span class="doccomment">/// To get the resolved version, see the `to` field of the `PackageLink` this was part of.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ## Notes</span>
     <span class="doccomment">///</span>
@@ -2071,20 +2049,6 @@
     <span class="doccomment">/// See the documentation of `EnabledStatus` for more.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">feature_enabled_on</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">platform</span>: <span class="kw-2">&amp;</span><span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
         <span class="self">self</span>.<span class="ident">dependency_req</span>.<span class="ident">feature_enabled_on</span>(<span class="ident">feature</span>, <span class="ident">platform</span>)
-    }
-
-    <span class="doccomment">/// Returns the target string for this dependency, if specified. This is a string like</span>
-    <span class="doccomment">/// `cfg(target_arch = &quot;x86_64&quot;)`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// See [Platform specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)</span>
-    <span class="doccomment">/// in the Cargo reference for more details.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This will return `None` if this dependency is specified for more than one target</span>
-    <span class="doccomment">/// (including unconditionally, as e.g. `[dependencies]`). Therefore, this is deprecated in</span>
-    <span class="doccomment">/// favor of `enabled_on`.</span>
-    <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;0.1.7&quot;</span>, <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;use `enabled_on` instead&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">single_target</span>.<span class="ident">as_deref</span>()
     }
 }
 
