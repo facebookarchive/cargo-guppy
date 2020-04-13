@@ -130,7 +130,7 @@ impl<'a> Serialize for Package<'a> {
         S: Serializer,
     {
         let mut state = serializer.serialize_struct("Package", 3)?;
-        state.serialize_field("id", self.0.id())?;
+        state.serialize_field("id", self.0.id().repr())?;
         state.serialize_field("name", self.0.name())?;
         state.serialize_field("version", self.0.version())?;
         state.end()

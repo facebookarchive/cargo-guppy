@@ -6,7 +6,6 @@ use crate::graph::feature::{all_filter, none_filter, FeatureId};
 use crate::graph::{
     DependencyDirection, DotWrite, PackageDotVisitor, PackageLink, PackageMetadata,
 };
-use crate::PackageId;
 use std::fmt;
 use std::iter;
 
@@ -22,9 +21,7 @@ mod small {
 
         let graph = metadata1.graph();
         let mut root_deps: Vec<_> = graph
-            .dep_links(&PackageId {
-                repr: fixtures::METADATA1_TESTCRATE.into(),
-            })
+            .dep_links(&fixtures::package_id(fixtures::METADATA1_TESTCRATE))
             .expect("root crate deps should exist")
             .collect();
 

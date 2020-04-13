@@ -30,7 +30,7 @@
 //!
 //! // `guppy` provides several ways to get hold of package IDs. Use a pre-defined one for this
 //! // example.
-//! let package_id = PackageId { repr: "testcrate 0.1.0 (path+file:///fakepath/testcrate)".into() };
+//! let package_id = PackageId::new("testcrate 0.1.0 (path+file:///fakepath/testcrate)");
 //! // dep_links returns all direct dependencies of a package, and it returns `None` if the package
 //! // ID isn't recognized.
 //! for link in package_graph.dep_links(&package_id).unwrap() {
@@ -48,16 +48,18 @@
 mod debug_ignore;
 pub mod errors;
 pub mod graph;
+mod package_id;
 pub(crate) mod petgraph_support;
 #[cfg(test)]
 mod unit_tests;
 
 pub use errors::Error;
+pub use package_id::PackageId;
 
 // Public re-exports for upstream crates used in APIs. The no_inline ensures that they show up as
 // re-exports in documentation.
 #[doc(no_inline)]
-pub use cargo_metadata::{DependencyKind, Metadata, MetadataCommand, PackageId};
+pub use cargo_metadata::{DependencyKind, Metadata, MetadataCommand};
 #[doc(no_inline)]
 pub use semver::Version;
 #[doc(no_inline)]

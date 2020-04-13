@@ -6,7 +6,7 @@
 use crate::graph::{PackageGraph, PackageIx};
 use crate::petgraph_support::scc::Sccs;
 use crate::Error;
-use cargo_metadata::PackageId;
+use crate::PackageId;
 
 /// Contains information about dependency cycles.
 ///
