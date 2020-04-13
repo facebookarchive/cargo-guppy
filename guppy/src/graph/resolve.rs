@@ -1,8 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::resolve_core::{ResolveCore, Topo};
-use crate::graph::select_core::SelectParams;
+use crate::graph::query_core::QueryParams;
+use crate::graph::resolve_core::{Links, ResolveCore, Topo};
 use crate::graph::{
     DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata,
 };
@@ -13,9 +13,26 @@ use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef};
 use std::fmt;
 
+impl PackageGraph {
+    /// Creates a new `PackageSet` consisting of all members of this package graph.
+    ///
+    /// This is normally the same as `query_workspace().resolve()`, but can differ in some cases:
+    /// * if packages have been replaced with `[patch]` or `[replace]`
+    /// * if some edges have been removed from this graph with `retain_edges`.
+    ///
+    /// In most situations, `query_workspace` is preferred. Use `resolve_all` if you know you need
+    /// parts of the graph that aren't accessible from the workspace.
+    pub fn resolve_all(&self) -> PackageSet {
+        PackageSet {
+            package_graph: self,
+            core: ResolveCore::all_packages(&self.dep_graph),
+        }
+    }
+}
+
 /// A set of resolved packages in a package graph.
 ///
-/// Created by `PackageSelect::resolve`.
+/// Created by `PackageQuery::resolve`.
 #[derive(Clone, Debug)]
 pub struct PackageSet<'g> {
     package_graph: &'g PackageGraph,
@@ -23,7 +40,7 @@ pub struct PackageSet<'g> {
 }
 
 impl<'g> PackageSet<'g> {
-    pub(super) fn new(package_graph: &'g PackageGraph, params: SelectParams<PackageGraph>) -> Self {
+    pub(super) fn new(package_graph: &'g PackageGraph, params: QueryParams<PackageGraph>) -> Self {
         Self {
             package_graph,
             core: ResolveCore::new(package_graph.dep_graph(), params),
@@ -32,7 +49,7 @@ impl<'g> PackageSet<'g> {
 
     pub(super) fn with_resolver(
         package_graph: &'g PackageGraph,
-        params: SelectParams<PackageGraph>,
+        params: QueryParams<PackageGraph>,
         resolver: impl PackageResolver<'g>,
     ) -> Self {
         Self {
@@ -220,6 +237,30 @@ impl<'g> PackageSet<'g> {
             })
     }
 
+    /// Creates an iterator over dependency links.
+    ///
+    /// If the iteration is in forward order, for any given package, at least one link where the
+    /// package is on the `to` end is returned before any links where the package is on the
+    /// `from` end.
+    ///
+    /// If the iteration is in reverse order, for any given package, at least one link where the
+    /// package is on the `from` end is returned before any links where the package is on the `to`
+    /// end.
+    ///
+    /// ## Cycles
+    ///
+    /// The links in a dependency cycle may be returned in arbitrary order.
+    pub fn into_links(self, direction: DependencyDirection) -> IntoLinks<'g> {
+        IntoLinks {
+            graph: self.package_graph,
+            inner: self.core.links(
+                self.package_graph.dep_graph(),
+                self.package_graph.sccs(),
+                direction,
+            ),
+        }
+    }
+
     /// Constructs a representation of the selected packages in `dot` format.
     pub fn into_dot<V: PackageDotVisitor + 'g>(self, visitor: V) -> impl fmt::Display + 'g {
         let node_filtered = NodeFiltered(self.package_graph.dep_graph(), self.core.included);
@@ -234,7 +275,7 @@ impl<'g> PackageSet<'g> {
 pub trait PackageResolver<'g> {
     /// Returns true if this link should be followed during a resolve operation.
     ///
-    /// Returning false does not prevent the `to` package (or `from` package with `select_reverse`)
+    /// Returning false does not prevent the `to` package (or `from` package with `query_reverse`)
     /// from being included if it's reachable through other means.
     fn accept(&self, link: DependencyLink<'g>) -> bool;
 }
@@ -301,6 +342,34 @@ impl<'g> Iterator for IntoIds<'g> {
 impl<'g> ExactSizeIterator for IntoIds<'g> {
     fn len(&self) -> usize {
         self.inner.len()
+    }
+}
+
+/// An iterator over dependency links in topological order.
+///
+/// The items returned are of type `DependencyLink<'g>`. Returned by `PackageSet::into_links`.
+#[derive(Clone, Debug)]
+pub struct IntoLinks<'g> {
+    graph: &'g PackageGraph,
+    inner: Links<'g, PackageGraph>,
+}
+
+impl<'g> IntoLinks<'g> {
+    /// Returns the direction the iteration is happening in.
+    pub fn direction(&self) -> DependencyDirection {
+        self.inner.direction()
+    }
+}
+
+impl<'g> Iterator for IntoLinks<'g> {
+    type Item = DependencyLink<'g>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (source_ix, target_ix, edge_ix) = self.inner.next_triple()?;
+        Some(
+            self.graph
+                .edge_to_link(source_ix, target_ix, &self.graph.dep_graph[edge_ix]),
+        )
     }
 }
 

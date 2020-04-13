@@ -17,10 +17,10 @@ pub mod feature;
 mod graph_impl;
 #[cfg(feature = "proptest09")]
 mod proptest09;
+mod query;
+mod query_core;
 mod resolve;
 mod resolve_core;
-mod select;
-mod select_core;
 
 pub use crate::petgraph_support::dot::DotWrite;
 pub use cycles::*;
@@ -29,8 +29,8 @@ use once_cell::sync::Lazy;
 use petgraph::graph::IndexType;
 #[cfg(feature = "proptest09")]
 pub use proptest09::*;
+pub use query::*;
 pub use resolve::*;
-pub use select::*;
 use semver::{Version, VersionReq};
 
 /// The direction in which to follow dependencies.

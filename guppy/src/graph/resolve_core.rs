@@ -1,16 +1,19 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::select_core::{all_visit_map, reachable_map, SelectParams};
+use crate::debug_ignore::DebugIgnore;
+use crate::graph::query_core::{all_visit_map, reachable_map, QueryParams};
 use crate::graph::{DependencyDirection, GraphSpec};
 use crate::petgraph_support::scc::{NodeIter, Sccs};
+use crate::petgraph_support::walk::EdgeDfs;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
 use petgraph::visit::{EdgeFiltered, NodeFiltered, Reversed, VisitMap};
 use serde::export::PhantomData;
+use std::mem;
 
-/// Core logic for select queries that have been resolved into a known set of packages.
+/// Core logic for queries that have been resolved into a known set of packages.
 ///
 /// The `G` param ensures that package and feature resolutions aren't mixed up accidentally.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -23,13 +26,21 @@ pub(super) struct ResolveCore<G> {
 impl<G: GraphSpec> ResolveCore<G> {
     pub(super) fn new(
         graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
-        params: SelectParams<G>,
+        params: QueryParams<G>,
     ) -> Self {
         let (included, len) = match params {
-            SelectParams::All => all_visit_map(graph),
-            SelectParams::SelectForward(initials) => reachable_map(graph, initials),
-            SelectParams::SelectReverse(initials) => reachable_map(Reversed(graph), initials),
+            QueryParams::Forward(initials) => reachable_map(graph, initials),
+            QueryParams::Reverse(initials) => reachable_map(Reversed(graph), initials),
         };
+        Self {
+            included,
+            len,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub(super) fn all_packages(graph: &Graph<G::Node, G::Edge, Directed, G::Ix>) -> Self {
+        let (included, len) = all_visit_map(graph);
         Self {
             included,
             len,
@@ -39,18 +50,14 @@ impl<G: GraphSpec> ResolveCore<G> {
 
     pub(super) fn with_edge_filter<'g>(
         graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
-        params: SelectParams<G>,
+        params: QueryParams<G>,
         filter: impl Fn(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
     ) -> Self {
         let (included, len) = match params {
-            SelectParams::All => {
-                // Not much we can do with the resolver when we've explicitly selected all packages.
-                all_visit_map(graph)
-            }
-            SelectParams::SelectForward(initials) => {
+            QueryParams::Forward(initials) => {
                 reachable_map(&EdgeFiltered::from_fn(graph, filter), initials)
             }
-            SelectParams::SelectReverse(initials) => {
+            QueryParams::Reverse(initials) => {
                 reachable_map(Reversed(&EdgeFiltered::from_fn(graph, filter)), initials)
             }
         };
@@ -163,6 +170,35 @@ impl<G: GraphSpec> ResolveCore<G> {
             remaining: self.len,
         }
     }
+
+    pub(super) fn links<'g>(
+        self,
+        graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
+        sccs: &Sccs<G::Ix>,
+        direction: DependencyDirection,
+    ) -> Links<'g, G> {
+        let edge_dfs = match direction {
+            DependencyDirection::Forward => {
+                let filtered_graph = NodeFiltered::from_fn(graph, |x| self.included.is_visited(&x));
+                EdgeDfs::new(&filtered_graph, sccs.externals(&filtered_graph))
+            }
+            DependencyDirection::Reverse => {
+                let filtered_reversed_graph =
+                    NodeFiltered::from_fn(Reversed(graph), |x| self.included.is_visited(&x));
+                EdgeDfs::new(
+                    &filtered_reversed_graph,
+                    sccs.externals(&filtered_reversed_graph),
+                )
+            }
+        };
+
+        Links {
+            graph: DebugIgnore(graph),
+            included: self.included,
+            edge_dfs,
+            direction,
+        }
+    }
 }
 
 /// An iterator over package nodes in topological order.
@@ -202,5 +238,52 @@ impl<'g, G: GraphSpec> Iterator for Topo<'g, G> {
 impl<'g, G: GraphSpec> ExactSizeIterator for Topo<'g, G> {
     fn len(&self) -> usize {
         self.remaining
+    }
+}
+
+/// An iterator over dependency links.
+#[derive(Clone, Debug)]
+#[allow(clippy::type_complexity)]
+pub(super) struct Links<'g, G: GraphSpec> {
+    graph: DebugIgnore<&'g Graph<G::Node, G::Edge, Directed, G::Ix>>,
+    included: FixedBitSet,
+    edge_dfs: EdgeDfs<EdgeIndex<G::Ix>, NodeIndex<G::Ix>, FixedBitSet>,
+    direction: DependencyDirection,
+}
+
+impl<'g, G: GraphSpec> Links<'g, G> {
+    /// Returns the direction the iteration is happening in.
+    pub(super) fn direction(&self) -> DependencyDirection {
+        self.direction
+    }
+
+    #[allow(clippy::type_complexity)]
+    pub(super) fn next_triple(
+        &mut self,
+    ) -> Option<(NodeIndex<G::Ix>, NodeIndex<G::Ix>, EdgeIndex<G::Ix>)> {
+        match self.direction {
+            DependencyDirection::Forward => {
+                // TODO: replace with &self.included once petgraph 0.5.1 is out.
+                let included = mem::replace(&mut self.included, FixedBitSet::with_capacity(0));
+                let filtered = NodeFiltered(self.graph.0, included);
+                let res = self.edge_dfs.next(&filtered);
+                mem::replace(&mut self.included, filtered.1);
+                res
+            }
+            DependencyDirection::Reverse => {
+                // TODO: replace with &self.included once petgraph 0.5.1 is out.
+                let included = mem::replace(&mut self.included, FixedBitSet::with_capacity(0));
+                let filtered_reversed = NodeFiltered(Reversed(self.graph.0), included);
+                let res = self.edge_dfs.next(&filtered_reversed).map(
+                    |(source_ix, target_ix, edge_ix)| {
+                        // Flip the source and target around since this is a reversed graph, since the
+                        // 'from' and 'to' are always right way up.
+                        (target_ix, source_ix, edge_ix)
+                    },
+                );
+                mem::replace(&mut self.included, filtered_reversed.1);
+                res
+            }
+        }
     }
 }

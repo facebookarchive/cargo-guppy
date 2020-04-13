@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureSet};
-use crate::graph::select_core::SelectParams;
-use crate::graph::{DependencyDirection, PackageSelect};
+use crate::graph::query_core::QueryParams;
+use crate::graph::{DependencyDirection, PackageQuery};
 use crate::Error;
 use std::collections::HashSet;
 
@@ -147,113 +147,97 @@ pub fn feature_id_filter<'g: 'a, 'a>(
     })
 }
 
-/// A selector over a feature graph.
+/// A query over a feature graph.
 ///
 /// This is the entry point for iterators overs IDs and dependency links, and dot graph presentation.
-/// A `FeatureSelect` is constructed through the `select_` methods on `FeatureGraph`.
+/// A `FeatureQuery` is constructed through the `query_` methods on `FeatureGraph`.
 #[derive(Clone, Debug)]
-pub struct FeatureSelect<'g> {
+pub struct FeatureQuery<'g> {
     graph: FeatureGraph<'g>,
-    pub(super) params: SelectParams<FeatureGraph<'g>>,
+    pub(super) params: QueryParams<FeatureGraph<'g>>,
 }
 
-/// ## Selectors
+/// ## Queries
 ///
-/// The methods in this section create *feature selectors*, which are queries over subsets of this
-/// feature graph. Use the methods here for queries based on transitive dependencies.
+/// The methods in this section create queries over subsets of this feature graph. Use the methods
+/// here to analyze transitive dependencies.
 impl<'g> FeatureGraph<'g> {
-    /// Creates a new selector over the entire workspace.
+    /// Creates a new query over the entire workspace.
     ///
-    /// `select_workspace` will select all workspace packages (subject to the provided filter) and
+    /// `query_workspace` will select all workspace packages (subject to the provided filter) and
     /// their transitive dependencies.
-    pub fn select_workspace(&self, filter: impl FeatureFilter<'g>) -> FeatureSelect<'g> {
-        self.select_packages(&self.package_graph.select_workspace(), filter)
+    pub fn query_workspace(&self, filter: impl FeatureFilter<'g>) -> FeatureQuery<'g> {
+        self.query_packages(&self.package_graph.query_workspace(), filter)
     }
 
-    /// Creates a new selector that returns all members of this feature graph.
-    ///
-    /// This will include features that aren't depended on by any workspace packages.
-    ///
-    /// In most situations, `select_workspace` is preferred. Use `select_all` if you know you need
-    /// parts of the graph that aren't accessible from the workspace.
-    pub fn select_all(&self) -> FeatureSelect<'g> {
-        self.select_packages(&self.package_graph.select_all(), all_filter())
-    }
-
-    /// Creates a new selector for all packages selected through this `PackageSelect` instance.
-    ///
-    /// If `select_all` is passed in, the filter is ignored.
-    pub fn select_packages(
+    /// Creates a new selector for all packages selected through this `PackageQuery` instance.
+    pub fn query_packages(
         &self,
-        packages: &PackageSelect<'g>,
+        packages: &PackageQuery<'g>,
         filter: impl FeatureFilter<'g>,
-    ) -> FeatureSelect<'g> {
+    ) -> FeatureQuery<'g> {
         let params = match &packages.params {
-            SelectParams::All => {
-                // The filter is ignored -- there's no real sensible way to apply it.
-                SelectParams::All
-            }
-            SelectParams::SelectForward(package_ixs) => SelectParams::SelectForward(
+            QueryParams::Forward(package_ixs) => QueryParams::Forward(
                 self.feature_ixs_for_packages(package_ixs.iter().copied(), filter)
                     .collect(),
             ),
-            SelectParams::SelectReverse(package_ixs) => SelectParams::SelectReverse(
+            QueryParams::Reverse(package_ixs) => QueryParams::Reverse(
                 self.feature_ixs_for_packages(package_ixs.iter().copied(), filter)
                     .collect(),
             ),
         };
 
-        FeatureSelect {
+        FeatureQuery {
             graph: *self,
             params,
         }
     }
 
-    /// Creates a new selector that returns transitive dependencies of the given feature IDs in the
+    /// Creates a new query that returns transitive dependencies of the given feature IDs in the
     /// specified direction.
     ///
     /// Returns an error if any feature IDs are unknown.
-    pub fn select_directed<'a>(
+    pub fn query_directed<'a>(
         &self,
         feature_ids: impl IntoIterator<Item = impl Into<FeatureId<'a>>>,
         dep_direction: DependencyDirection,
-    ) -> Result<FeatureSelect<'g>, Error> {
+    ) -> Result<FeatureQuery<'g>, Error> {
         match dep_direction {
-            DependencyDirection::Forward => self.select_forward(feature_ids),
-            DependencyDirection::Reverse => self.select_reverse(feature_ids),
+            DependencyDirection::Forward => self.query_forward(feature_ids),
+            DependencyDirection::Reverse => self.query_reverse(feature_ids),
         }
     }
 
-    /// Creates a new selector that returns transitive dependencies of the given feature IDs.
+    /// Creates a new query that returns transitive dependencies of the given feature IDs.
     ///
     /// Returns an error if any feature IDs are unknown.
-    pub fn select_forward<'a>(
+    pub fn query_forward<'a>(
         &self,
         feature_ids: impl IntoIterator<Item = impl Into<FeatureId<'a>>>,
-    ) -> Result<FeatureSelect<'g>, Error> {
+    ) -> Result<FeatureQuery<'g>, Error> {
         let feature_ids = feature_ids.into_iter().map(|feature_id| feature_id.into());
-        Ok(FeatureSelect {
+        Ok(FeatureQuery {
             graph: *self,
-            params: SelectParams::SelectForward(self.feature_ixs(feature_ids)?),
+            params: QueryParams::Forward(self.feature_ixs(feature_ids)?),
         })
     }
 
-    /// Creates a new selector that returns transitive reverse dependencies of the given feature IDs.
+    /// Creates a new query that returns transitive reverse dependencies of the given feature IDs.
     ///
     /// Returns an error if any feature IDs are unknown.
-    pub fn select_reverse<'a>(
+    pub fn query_reverse<'a>(
         &self,
         feature_ids: impl IntoIterator<Item = impl Into<FeatureId<'a>>>,
-    ) -> Result<FeatureSelect<'g>, Error> {
+    ) -> Result<FeatureQuery<'g>, Error> {
         let feature_ids = feature_ids.into_iter().map(|feature_id| feature_id.into());
-        Ok(FeatureSelect {
+        Ok(FeatureQuery {
             graph: *self,
-            params: SelectParams::SelectReverse(self.feature_ixs(feature_ids)?),
+            params: QueryParams::Reverse(self.feature_ixs(feature_ids)?),
         })
     }
 }
 
-impl<'g> FeatureSelect<'g> {
+impl<'g> FeatureQuery<'g> {
     /// Resolves this selector into a set of known feature IDs.
     ///
     /// This is the entry point for iterators.

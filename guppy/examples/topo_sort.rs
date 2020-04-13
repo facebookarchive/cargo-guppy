@@ -16,8 +16,8 @@ fn main() -> Result<(), Error> {
 
     // Non-workspace packages cannot depend on packages within the workspace, so the reverse
     // transitive deps of workspace packages are exactly the set of workspace packages.
-    let select = package_graph.select_reverse(package_graph.workspace().member_ids())?;
-    let package_set = select.resolve();
+    let query = package_graph.query_reverse(package_graph.workspace().member_ids())?;
+    let package_set = query.resolve();
 
     // Iterate over packages in forward topo order.
     for package in package_set.into_metadatas(DependencyDirection::Forward) {

@@ -2,13 +2,27 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata};
+use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{ResolveCore, Topo};
-use crate::graph::select_core::SelectParams;
 use crate::graph::DependencyDirection;
 
+impl<'g> FeatureGraph<'g> {
+    /// Creates a new `FeatureSet` consisting all members of this feature graph.
+    ///
+    /// This will include features that aren't depended on by any workspace packages.
+    ///
+    /// In most situations, `query_workspace().resolve()` is preferred. Use `resolve_all` if you
+    /// know you need parts of the graph that aren't accessible from the workspace.
+    pub fn resolve_all(&self) -> FeatureSet<'g> {
+        FeatureSet {
+            feature_graph: *self,
+            core: ResolveCore::all_packages(self.dep_graph()),
+        }
+    }
+}
 /// A set of resolved feature IDs in a feature graph.
 ///
-/// Created by `FeatureSelect::resolve`.
+/// Created by `FeatureQuery::resolve`.
 #[derive(Clone, Debug)]
 pub struct FeatureSet<'g> {
     feature_graph: FeatureGraph<'g>,
@@ -18,7 +32,7 @@ pub struct FeatureSet<'g> {
 impl<'g> FeatureSet<'g> {
     pub(super) fn new(
         feature_graph: FeatureGraph<'g>,
-        params: SelectParams<FeatureGraph<'g>>,
+        params: QueryParams<FeatureGraph<'g>>,
     ) -> Self {
         Self {
             feature_graph,
