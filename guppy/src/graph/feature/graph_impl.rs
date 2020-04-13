@@ -180,40 +180,43 @@ impl<'g> FeatureGraph<'g> {
         has_path_connecting(self.dep_graph(), a_ix, b_ix, None)
     }
 
-    pub(super) fn feature_ixs_for_packages<'a>(
-        &'a self,
-        package_ixs: impl IntoIterator<Item = NodeIndex<PackageIx>> + 'a,
-        filter: impl FeatureFilter<'g> + 'a,
-    ) -> impl Iterator<Item = NodeIndex<FeatureIx>> + 'a {
+    pub(super) fn feature_ixs_for_packages(
+        &self,
+        package_ixs: impl IntoIterator<Item = NodeIndex<PackageIx>>,
+        filter: impl FeatureFilter<'g>,
+    ) -> Vec<NodeIndex<FeatureIx>> {
         let mut filter = filter;
-        package_ixs.into_iter().flat_map(move |package_ix| {
-            let package_id = &self.package_graph.dep_graph[package_ix];
-            let metadata = self
-                .package_graph
-                .metadata(package_id)
-                .expect("package ID should have valid metadata");
-            metadata
-                .all_feature_nodes()
-                .filter_map(|feature_node| {
-                    if filter.accept(
-                        self,
-                        FeatureId::from_node(self.package_graph, &feature_node),
-                    ) {
-                        Some(
-                            self.inner
-                                .map
-                                .get(&feature_node)
-                                .expect("feature node should be valid")
-                                .feature_ix,
-                        )
-                    } else {
-                        None
-                    }
-                })
-                // This collect() shouldn't be necessary, but Rust 1.40 complains that "captured
-                // variable cannot escape `FnMut` closure body". Unclear why.
-                .collect::<Vec<_>>()
-        })
+        package_ixs
+            .into_iter()
+            .flat_map(move |package_ix| {
+                let package_id = &self.package_graph.dep_graph[package_ix];
+                let metadata = self
+                    .package_graph
+                    .metadata(package_id)
+                    .expect("package ID should have valid metadata");
+                metadata
+                    .all_feature_nodes()
+                    .filter_map(|feature_node| {
+                        if filter.accept(
+                            self,
+                            FeatureId::from_node(self.package_graph, &feature_node),
+                        ) {
+                            Some(
+                                self.inner
+                                    .map
+                                    .get(&feature_node)
+                                    .expect("feature node should be valid")
+                                    .feature_ix,
+                            )
+                        } else {
+                            None
+                        }
+                    })
+                    // This collect() shouldn't be necessary, but Rust 1.40 complains that "captured
+                    // variable cannot escape `FnMut` closure body". Unclear why.
+                    .collect::<Vec<_>>()
+            })
+            .collect()
     }
 
     #[allow(dead_code)]
