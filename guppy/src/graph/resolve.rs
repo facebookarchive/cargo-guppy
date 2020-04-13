@@ -8,7 +8,7 @@ use crate::graph::{
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::ReverseFlip;
-use cargo_metadata::PackageId;
+use crate::PackageId;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef};
 use std::fmt;

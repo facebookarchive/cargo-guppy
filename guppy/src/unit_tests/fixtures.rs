@@ -472,8 +472,7 @@ impl FixtureDetails {
             .cycles()
             .all_cycles()
             .map(|cycle| {
-                // no implementation of Eq<&PackageId> for PackageId :(
-                let mut cycle: Vec<_> = cycle.into_iter().cloned().collect();
+                let mut cycle: Vec<_> = cycle.into_iter().collect();
                 cycle.sort();
                 cycle
             })
@@ -1487,6 +1486,6 @@ impl PlatformStatus {
 }
 
 /// Helper for creating `PackageId` instances in test code.
-pub(crate) fn package_id(s: impl Into<String>) -> PackageId {
-    PackageId { repr: s.into() }
+pub(crate) fn package_id(s: impl Into<Box<str>>) -> PackageId {
+    PackageId::new(s)
 }

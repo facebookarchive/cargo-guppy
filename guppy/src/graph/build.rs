@@ -24,7 +24,11 @@ impl PackageGraph {
             )
         })?;
 
-        let workspace_members: HashSet<_> = metadata.workspace_members.into_iter().collect();
+        let workspace_members: HashSet<_> = metadata
+            .workspace_members
+            .into_iter()
+            .map(PackageId::from_metadata)
+            .collect();
 
         let mut build_state = GraphBuildState::new(
             &metadata.packages,
@@ -116,9 +120,10 @@ impl<'a> GraphBuildState<'a> {
         let package_data: HashMap<_, _> = packages
             .iter()
             .map(|package| {
-                let package_ix = dep_graph.add_node(package.id.clone());
+                let package_id = PackageId::from_metadata(package.id.clone());
+                let package_ix = dep_graph.add_node(package_id.clone());
                 (
-                    package.id.clone(),
+                    package_id,
                     (package_ix, package.name.clone(), package.version.clone()),
                 )
             })
@@ -127,7 +132,12 @@ impl<'a> GraphBuildState<'a> {
         let resolve_data: HashMap<_, _> = resolve
             .nodes
             .into_iter()
-            .map(|node| (node.id, (node.deps, node.features)))
+            .map(|node| {
+                (
+                    PackageId::from_metadata(node.id),
+                    (node.deps, node.features),
+                )
+            })
             .collect();
 
         Self {
@@ -140,24 +150,25 @@ impl<'a> GraphBuildState<'a> {
     }
 
     fn process_package(&mut self, package: Package) -> Result<(PackageId, PackageMetadata), Error> {
-        let (package_ix, _, _) = self.package_data(&package.id)?;
+        let package_id = PackageId::from_metadata(package.id);
+        let (package_ix, _, _) = self.package_data(&package_id)?;
 
-        let workspace_path = if self.workspace_members.contains(&package.id) {
-            Some(self.workspace_path(&package.id, &package.manifest_path)?)
+        let workspace_path = if self.workspace_members.contains(&package_id) {
+            Some(self.workspace_path(&package_id, &package.manifest_path)?)
         } else {
             None
         };
 
         let (resolved_deps, resolved_features) =
-            self.resolve_data.remove(&package.id).ok_or_else(|| {
+            self.resolve_data.remove(&package_id).ok_or_else(|| {
                 Error::PackageGraphConstructError(format!(
                     "no resolved dependency data found for package '{}'",
-                    package.id
+                    package_id
                 ))
             })?;
 
         let dep_resolver =
-            DependencyResolver::new(&package.id, &self.package_data, &package.dependencies);
+            DependencyResolver::new(&package_id, &self.package_data, &package.dependencies);
 
         for NodeDep {
             name: resolved_name,
@@ -165,9 +176,10 @@ impl<'a> GraphBuildState<'a> {
             ..
         } in &resolved_deps
         {
-            let (name, deps) = dep_resolver.resolve(resolved_name, pkg)?;
-            let (dep_idx, _, _) = self.package_data(pkg)?;
-            let edge = DependencyEdge::new(&package.id, name, resolved_name, deps)?;
+            let dep_id = PackageId::from_metadata(pkg.clone());
+            let (name, deps) = dep_resolver.resolve(resolved_name, &dep_id)?;
+            let (dep_idx, _, _) = self.package_data(&dep_id)?;
+            let edge = DependencyEdge::new(&package_id, name, resolved_name, deps)?;
             // Use update_edge instead of add_edge to prevent multiple edges from being added
             // between these two nodes.
             // XXX maybe check for an existing edge?
@@ -212,9 +224,9 @@ impl<'a> GraphBuildState<'a> {
             .collect();
 
         Ok((
-            package.id.clone(),
+            package_id.clone(),
             PackageMetadata {
-                id: package.id,
+                id: package_id,
                 name: package.name,
                 version: package.version,
                 authors: package.authors,

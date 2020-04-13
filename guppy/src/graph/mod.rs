@@ -6,7 +6,8 @@
 //! The main entry point for analyzing graphs is [`PackageGraph`](struct.PackageGraph.html). See its
 //! documentation for more details.
 
-use cargo_metadata::{DependencyKind, PackageId};
+use crate::PackageId;
+use cargo_metadata::DependencyKind;
 use petgraph::prelude::*;
 use std::fmt;
 

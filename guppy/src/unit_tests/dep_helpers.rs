@@ -149,8 +149,6 @@ pub(crate) fn assert_transitive_deps_internal(
             msg, desc.direction_desc
         )
     });
-    // There's no impl of Eq<&PackageId> for PackageId :(
-    let expected_dep_id_refs: Vec<_> = expected_dep_ids.iter().collect();
 
     let query = graph
         .query_directed(iter::once(known_details.id()), direction)
@@ -175,12 +173,12 @@ pub(crate) fn assert_transitive_deps_internal(
     let ids_from_links: Vec<_> = ids_from_links_set.iter().copied().collect();
 
     assert_eq!(
-        expected_dep_id_refs, actual_dep_ids,
+        expected_dep_ids, actual_dep_ids.as_slice(),
         "{}: expected {} transitive dependency IDs",
         msg, desc.direction_desc
     );
     assert_eq!(
-        expected_dep_id_refs, ids_from_links,
+        expected_dep_ids, ids_from_links.as_slice(),
         "{}: expected {} transitive dependency infos",
         msg, desc.direction_desc
     );
@@ -214,7 +212,7 @@ pub(crate) fn assert_transitive_deps_internal(
         &format!("{}: opposite link order", msg),
     );
 
-    for dep_id in expected_dep_id_refs {
+    for dep_id in expected_dep_ids {
         // depends_on should agree with this.
         graph.assert_depends_on(known_details.id(), dep_id, direction, msg);
 
@@ -224,7 +222,7 @@ pub(crate) fn assert_transitive_deps_internal(
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep id query failed for dependency '{}': {}",
-                    msg, desc.direction_desc, dep_id.repr, err
+                    msg, desc.direction_desc, dep_id, err
                 )
             })
             .resolve()
@@ -237,7 +235,7 @@ pub(crate) fn assert_transitive_deps_internal(
             "{}: unexpected extra {} transitive dependency IDs for dep '{}': {:?}",
             msg,
             desc.direction_desc,
-            dep_id.repr,
+            dep_id,
             difference
         );
 
@@ -246,7 +244,7 @@ pub(crate) fn assert_transitive_deps_internal(
             .unwrap_or_else(|err| {
                 panic!(
                     "{}: {} transitive dep query failed for dependency '{}': {}",
-                    msg, desc.direction_desc, dep_id.repr, err
+                    msg, desc.direction_desc, dep_id, err
                 )
             })
             .resolve()
@@ -260,7 +258,7 @@ pub(crate) fn assert_transitive_deps_internal(
             "{}: unexpected extra {} transitive dependencies for dep '{}': {:?}",
             msg,
             desc.direction_desc,
-            dep_id.repr,
+            dep_id,
             difference
         );
     }
@@ -719,7 +717,7 @@ pub(crate) fn assert_link_order<'g>(
             variable_seen.contains(&known_id),
             "{}: for package '{}': unexpected link {} package seen before any links {} package",
             msg,
-            &known_id.repr,
+            &known_id,
             desc.known_desc,
             desc.variable_desc,
         );

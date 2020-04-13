@@ -8,8 +8,7 @@ use crate::graph::{
     DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageMetadata, TargetPredicate,
 };
 use crate::petgraph_support::scc::Sccs;
-use crate::Error;
-use cargo_metadata::PackageId;
+use crate::{Error, PackageId};
 use once_cell::sync::OnceCell;
 use petgraph::algo::has_path_connecting;
 use petgraph::prelude::*;
