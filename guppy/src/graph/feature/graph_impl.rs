@@ -14,6 +14,7 @@ use petgraph::algo::has_path_connecting;
 use petgraph::prelude::*;
 use std::collections::HashMap;
 use std::iter;
+use std::iter::FromIterator;
 
 // Some general notes about feature graphs:
 //
@@ -180,11 +181,14 @@ impl<'g> FeatureGraph<'g> {
         has_path_connecting(self.dep_graph(), a_ix, b_ix, None)
     }
 
-    pub(super) fn feature_ixs_for_packages(
+    pub(super) fn feature_ixs_for_packages<B>(
         &self,
         package_ixs: impl IntoIterator<Item = NodeIndex<PackageIx>>,
         filter: impl FeatureFilter<'g>,
-    ) -> Vec<NodeIndex<FeatureIx>> {
+    ) -> B
+    where
+        B: FromIterator<NodeIndex<FeatureIx>>,
+    {
         let mut filter = filter;
         package_ixs
             .into_iter()

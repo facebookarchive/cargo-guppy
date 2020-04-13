@@ -39,7 +39,7 @@ impl<G: GraphSpec> ResolveCore<G> {
         }
     }
 
-    pub(super) fn all_packages(graph: &Graph<G::Node, G::Edge, Directed, G::Ix>) -> Self {
+    pub(super) fn all_nodes(graph: &Graph<G::Node, G::Edge, Directed, G::Ix>) -> Self {
         let (included, len) = all_visit_map(graph);
         Self {
             included,
