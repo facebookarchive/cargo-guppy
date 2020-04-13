@@ -3,7 +3,7 @@
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
 use crate::graph::{
-    kind_str, DependencyDirection, DependencyEdge, DependencyMetadata, PackageGraph, PackageLink,
+    kind_str, DependencyDirection, DependencyMetadata, PackageEdge, PackageGraph, PackageLink,
     PackageMetadata, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
@@ -173,14 +173,18 @@ pub(crate) fn assert_transitive_deps_internal(
     let ids_from_links: Vec<_> = ids_from_links_set.iter().copied().collect();
 
     assert_eq!(
-        expected_dep_ids, actual_dep_ids.as_slice(),
+        expected_dep_ids,
+        actual_dep_ids.as_slice(),
         "{}: expected {} transitive dependency IDs",
-        msg, desc.direction_desc
+        msg,
+        desc.direction_desc
     );
     assert_eq!(
-        expected_dep_ids, ids_from_links.as_slice(),
+        expected_dep_ids,
+        ids_from_links.as_slice(),
         "{}: expected {} transitive dependency infos",
-        msg, desc.direction_desc
+        msg,
+        desc.direction_desc
     );
 
     // The order requirements are weaker than topological -- for forward queries, a dep should show
@@ -729,7 +733,7 @@ fn dep_link_ptrs<'g>(
 ) -> Vec<(
     *const PackageMetadata,
     *const PackageMetadata,
-    *const DependencyEdge,
+    *const PackageEdge,
 )> {
     let mut triples: Vec<_> = dep_links
         .into_iter()

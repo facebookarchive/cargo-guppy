@@ -3,7 +3,7 @@
 
 use crate::errors::FeatureBuildStage;
 use crate::graph::{
-    kind_str, DependencyDirection, DependencyEdge, EnabledStatus, PackageGraph, PackageMetadata,
+    kind_str, DependencyDirection, EnabledStatus, PackageEdge, PackageGraph, PackageMetadata,
     UnknownStatus, Workspace,
 };
 use crate::unit_tests::dep_helpers::{
@@ -1409,7 +1409,7 @@ impl LinkDetails {
         map.insert((self.from.clone(), self.to.clone()), self);
     }
 
-    pub(crate) fn assert_metadata(&self, edge: &DependencyEdge, msg: &str) {
+    pub(crate) fn assert_metadata(&self, edge: &PackageEdge, msg: &str) {
         for (dep_kind, platform, status) in &self.platform_statuses {
             let metadata = edge.metadata_for_kind(*dep_kind).unwrap_or_else(|| {
                 panic!(
