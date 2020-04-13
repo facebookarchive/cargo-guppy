@@ -4,7 +4,7 @@
 use crate::debug_ignore::DebugIgnore;
 use crate::graph::query_core::QueryParams;
 use crate::graph::{
-    DependencyDirection, DependencyLink, PackageGraph, PackageIx, PackageResolver, PackageSet,
+    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageResolver, PackageSet,
     ResolverFn,
 };
 use crate::petgraph_support::walk::EdgeDfs;
@@ -96,17 +96,14 @@ impl<'g> PackageQuery<'g> {
 
     /// Resolves this query into a set of known packages, using the provided resolver function
     /// to determine which links are followed.
-    pub fn resolve_with_fn(
-        self,
-        resolver_fn: impl Fn(DependencyLink<'g>) -> bool,
-    ) -> PackageSet<'g> {
+    pub fn resolve_with_fn(self, resolver_fn: impl Fn(PackageLink<'g>) -> bool) -> PackageSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
     }
 }
 
 /// An iterator over dependency links.
 ///
-/// The items returned are of type `DependencyLink<'g>`. Returned by `PackageQuery::into_iter_ids`.
+/// The items returned are of type `PackageLink<'g>`. Returned by `PackageQuery::into_iter_ids`.
 #[derive(Clone, Debug)]
 pub struct IntoIterLinks<'g> {
     package_graph: DebugIgnore<&'g PackageGraph>,
@@ -169,7 +166,7 @@ impl<'g> IntoIterLinks<'g> {
 }
 
 impl<'g> Iterator for IntoIterLinks<'g> {
-    type Item = DependencyLink<'g>;
+    type Item = PackageLink<'g>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_triple = self.next_triple();

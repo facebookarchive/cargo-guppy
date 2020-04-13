@@ -4,7 +4,7 @@
 use super::fixtures::{self, Fixture};
 use crate::graph::feature::{all_filter, none_filter, FeatureId};
 use crate::graph::{
-    DependencyDirection, DependencyLink, DotWrite, PackageDotVisitor, PackageMetadata,
+    DependencyDirection, DotWrite, PackageDotVisitor, PackageLink, PackageMetadata,
 };
 use crate::PackageId;
 use std::fmt;
@@ -242,7 +242,7 @@ impl PackageDotVisitor for NameVisitor {
         write!(f, "{}", package.name())
     }
 
-    fn visit_link(&self, link: DependencyLink<'_>, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_link(&self, link: PackageLink<'_>, mut f: DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", link.edge.dep_name())
     }
 }

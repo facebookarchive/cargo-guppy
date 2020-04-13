@@ -5,9 +5,7 @@
 
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
-use guppy::graph::{
-    DependencyDirection, DependencyLink, EnabledStatus, PackageGraph, PackageQuery,
-};
+use guppy::graph::{DependencyDirection, EnabledStatus, PackageGraph, PackageLink, PackageQuery};
 use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
 use structopt::StructOpt;
@@ -90,7 +88,7 @@ impl FilterOptions {
     pub fn make_resolver<'g>(
         &'g self,
         pkg_graph: &'g PackageGraph,
-    ) -> impl Fn(DependencyLink<'g>) -> bool + 'g {
+    ) -> impl Fn(PackageLink<'g>) -> bool + 'g {
         let omitted_set: HashSet<&str> = self.omit_edges_into.iter().map(|s| s.as_str()).collect();
         let omitted_package_ids: HashSet<_> = names_to_ids(pkg_graph, &omitted_set).collect();
 
@@ -101,7 +99,7 @@ impl FilterOptions {
             None
         };
 
-        move |DependencyLink { from, to, edge }| {
+        move |PackageLink { from, to, edge }| {
             // filter by the kind of dependency (--kind)
             // NOTE: We always retain all workspace deps in the graph, otherwise
             // we'll get a disconnected graph.

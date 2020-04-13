@@ -4,7 +4,7 @@
 use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{Links, ResolveCore, Topo};
 use crate::graph::{
-    DependencyDirection, DependencyEdge, DependencyLink, PackageGraph, PackageIx, PackageMetadata,
+    DependencyDirection, DependencyEdge, PackageGraph, PackageIx, PackageLink, PackageMetadata,
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::ReverseFlip;
@@ -271,32 +271,32 @@ impl<'g> PackageSet<'g> {
 /// Represents whether a particular link within a package graph should be followed during a
 /// resolve operation.
 ///
-/// This trait is implemented for all functions that match `Fn(DependencyLink<'g>) -> bool`.
+/// This trait is implemented for all functions that match `Fn(PackageLink<'g>) -> bool`.
 pub trait PackageResolver<'g> {
     /// Returns true if this link should be followed during a resolve operation.
     ///
     /// Returning false does not prevent the `to` package (or `from` package with `query_reverse`)
     /// from being included if it's reachable through other means.
-    fn accept(&self, link: DependencyLink<'g>) -> bool;
+    fn accept(&self, link: PackageLink<'g>) -> bool;
 }
 
 impl<'g, 'a, T> PackageResolver<'g> for &'a T
 where
     T: PackageResolver<'g>,
 {
-    fn accept(&self, link: DependencyLink<'g>) -> bool {
+    fn accept(&self, link: PackageLink<'g>) -> bool {
         (**self).accept(link)
     }
 }
 
 impl<'g, 'a> PackageResolver<'g> for Box<dyn PackageResolver<'g> + 'a> {
-    fn accept(&self, link: DependencyLink<'g>) -> bool {
+    fn accept(&self, link: PackageLink<'g>) -> bool {
         (**self).accept(link)
     }
 }
 
 impl<'g, 'a> PackageResolver<'g> for &'a dyn PackageResolver<'g> {
-    fn accept(&self, link: DependencyLink<'g>) -> bool {
+    fn accept(&self, link: PackageLink<'g>) -> bool {
         (**self).accept(link)
     }
 }
@@ -305,9 +305,9 @@ pub(super) struct ResolverFn<F>(pub(super) F);
 
 impl<'g, F> PackageResolver<'g> for ResolverFn<F>
 where
-    F: Fn(DependencyLink<'g>) -> bool,
+    F: Fn(PackageLink<'g>) -> bool,
 {
-    fn accept(&self, link: DependencyLink<'g>) -> bool {
+    fn accept(&self, link: PackageLink<'g>) -> bool {
         (self.0)(link)
     }
 }
@@ -347,7 +347,7 @@ impl<'g> ExactSizeIterator for IntoIds<'g> {
 
 /// An iterator over dependency links in topological order.
 ///
-/// The items returned are of type `DependencyLink<'g>`. Returned by `PackageSet::into_links`.
+/// The items returned are of type `PackageLink<'g>`. Returned by `PackageSet::into_links`.
 #[derive(Clone, Debug)]
 pub struct IntoLinks<'g> {
     graph: &'g PackageGraph,
@@ -362,7 +362,7 @@ impl<'g> IntoLinks<'g> {
 }
 
 impl<'g> Iterator for IntoLinks<'g> {
-    type Item = DependencyLink<'g>;
+    type Item = PackageLink<'g>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let (source_ix, target_ix, edge_ix) = self.inner.next_triple()?;
@@ -423,7 +423,7 @@ pub trait PackageDotVisitor {
 
     /// Visits this dependency link. The implementation may output a label for this link to the
     /// given `DotWrite`.
-    fn visit_link(&self, link: DependencyLink<'_>, f: DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_link(&self, link: PackageLink<'_>, f: DotWrite<'_, '_>) -> fmt::Result;
 }
 
 struct VisitorWrap<'g, V> {

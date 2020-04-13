@@ -13,7 +13,7 @@
 //! dot -Tpng graph.dot -o graph.png
 //! ```
 
-use guppy::graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageGraph, PackageMetadata};
+use guppy::graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata};
 use guppy::Error;
 use std::fmt;
 
@@ -29,7 +29,7 @@ impl PackageDotVisitor for PackageNameVisitor {
         write!(f, "{}", package.name())
     }
 
-    fn visit_link(&self, link: DependencyLink<'_>, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_link(&self, link: PackageLink<'_>, mut f: DotWrite<'_, '_>) -> fmt::Result {
         if link.edge.dev_only() {
             write!(f, "dev-only")
         } else {

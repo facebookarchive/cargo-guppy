@@ -9,7 +9,7 @@ pub use crate::core::*;
 use anyhow;
 use guppy::graph::DependencyDirection;
 use guppy::{
-    graph::{DependencyLink, DotWrite, PackageDotVisitor, PackageGraph, PackageMetadata},
+    graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
     MetadataCommand, PackageId,
 };
 use itertools;
@@ -77,7 +77,7 @@ impl PackageDotVisitor for NameVisitor {
         write!(f, "{}", package.name())
     }
 
-    fn visit_link(&self, _link: DependencyLink<'_>, mut f: DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_link(&self, _link: PackageLink<'_>, mut f: DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "")
     }
 }

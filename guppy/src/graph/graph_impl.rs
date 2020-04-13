@@ -204,7 +204,7 @@ impl PackageGraph {
     /// The order edges are visited is not specified.
     pub fn retain_edges<F>(&mut self, visit: F)
     where
-        F: Fn(&PackageGraphData, DependencyLink<'_>) -> bool,
+        F: Fn(&PackageGraphData, PackageLink<'_>) -> bool,
     {
         let data = &self.data;
         self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
@@ -216,7 +216,7 @@ impl PackageGraph {
             let from = &data.packages[&frozen_graph[source]];
             let to = &data.packages[&frozen_graph[target]];
             let edge = &frozen_graph[edge_idx];
-            visit(data, DependencyLink { from, to, edge })
+            visit(data, PackageLink { from, to, edge })
         });
 
         self.invalidate_caches();
@@ -256,7 +256,7 @@ impl PackageGraph {
         &'g self,
         package_id: &PackageId,
         dep_direction: DependencyDirection,
-    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
         self.dep_links_impl(package_id, dep_direction.into())
     }
 
@@ -264,7 +264,7 @@ impl PackageGraph {
     pub fn dep_links<'g>(
         &'g self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
         self.dep_links_impl(package_id, Outgoing)
     }
 
@@ -272,7 +272,7 @@ impl PackageGraph {
     pub fn reverse_dep_links<'g>(
         &'g self,
         package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
         self.dep_links_impl(package_id, Incoming)
     }
 
@@ -280,7 +280,7 @@ impl PackageGraph {
         &'g self,
         package_id: &PackageId,
         dir: Direction,
-    ) -> Option<impl Iterator<Item = DependencyLink<'g>> + 'g> {
+    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
         self.metadata(package_id)
             .map(|metadata| self.dep_links_ixs_directed(metadata.package_ix, dir))
     }
@@ -289,7 +289,7 @@ impl PackageGraph {
         &'g self,
         package_ix: NodeIndex<PackageIx>,
         dir: Direction,
-    ) -> impl Iterator<Item = DependencyLink<'g>> + 'g {
+    ) -> impl Iterator<Item = PackageLink<'g>> + 'g {
         self.dep_graph
             .edges_directed(package_ix, dir)
             .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
@@ -331,7 +331,7 @@ impl PackageGraph {
         source: NodeIndex<PackageIx>,
         target: NodeIndex<PackageIx>,
         edge: &'g DependencyEdge,
-    ) -> DependencyLink<'g> {
+    ) -> PackageLink<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
         //
@@ -343,7 +343,7 @@ impl PackageGraph {
         let to = self
             .metadata(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
-        DependencyLink { from, to, edge }
+        PackageLink { from, to, edge }
     }
 
     /// Maps an iterator of package IDs to their internal graph node indexes.
@@ -478,7 +478,7 @@ impl Workspace {
 
 /// Represents a dependency from one package to another.
 #[derive(Copy, Clone, Debug)]
-pub struct DependencyLink<'g> {
+pub struct PackageLink<'g> {
     /// The package which depends on the `to` package.
     pub from: &'g PackageMetadata,
     /// The package which is depended on by the `from` package.
@@ -730,7 +730,7 @@ impl PackageMetadata {
 
 /// Details about a specific dependency from a package to another package.
 ///
-/// Usually found within the context of a [`DependencyLink`](struct.DependencyLink.html).
+/// Usually found within the context of a [`PackageLink`](struct.PackageLink.html).
 ///
 /// This struct contains information about:
 /// * whether this dependency was renamed in the context of this crate.
@@ -810,7 +810,7 @@ pub struct DependencyMetadata {
 impl DependencyMetadata {
     /// Returns the semver requirements specified for this dependency.
     ///
-    /// To get the resolved version, see the `to` field of the `DependencyLink` this was part of.
+    /// To get the resolved version, see the `to` field of the `PackageLink` this was part of.
     ///
     /// ## Notes
     ///

@@ -6,7 +6,7 @@
 //! Dev-only dependencies are typically not included in release builds, so it's useful to be able
 //! to filter out those links.
 
-use guppy::graph::{DependencyDirection, DependencyLink, PackageGraph};
+use guppy::graph::{DependencyDirection, PackageGraph, PackageLink};
 use guppy::Error;
 use std::iter;
 
@@ -35,7 +35,7 @@ fn main() -> Result<(), Error> {
     // A package resolver allows for fine-grained control over which links are followed. In general,
     // it is anything that implements the `PackageResolver` trait. A function with this signature
     // can be used with the `resolve_with_fn` method.
-    let resolver_fn = |link: DependencyLink<'_>| {
+    let resolver_fn = |link: PackageLink<'_>| {
         if link.edge.dev_only() {
             println!(
                 "*** filtering out dev-only link: {} -> {}",

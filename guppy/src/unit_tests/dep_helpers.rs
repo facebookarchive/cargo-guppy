@@ -3,8 +3,8 @@
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
 use crate::graph::{
-    kind_str, DependencyDirection, DependencyEdge, DependencyLink, DependencyMetadata,
-    PackageGraph, PackageMetadata, PackageSet,
+    kind_str, DependencyDirection, DependencyEdge, DependencyMetadata, PackageGraph, PackageLink,
+    PackageMetadata, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
 use crate::{DependencyKind, Error, PackageId};
@@ -14,13 +14,13 @@ use std::fmt;
 use std::hash::Hash;
 use std::iter;
 
-fn __from_metadata<'a>(dep: &DependencyLink<'a>) -> &'a PackageMetadata {
+fn __from_metadata<'a>(dep: &PackageLink<'a>) -> &'a PackageMetadata {
     dep.from
 }
-fn __to_metadata<'a>(dep: &DependencyLink<'a>) -> &'a PackageMetadata {
+fn __to_metadata<'a>(dep: &PackageLink<'a>) -> &'a PackageMetadata {
     dep.to
 }
-type DepToMetadata<'a> = fn(&DependencyLink<'a>) -> &'a PackageMetadata;
+type DepToMetadata<'a> = fn(&PackageLink<'a>) -> &'a PackageMetadata;
 
 /// Some of the messages are different based on whether we're testing forward deps or reverse
 /// ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
@@ -62,11 +62,11 @@ impl<'a> DirectionDesc<'a> {
         }
     }
 
-    fn known_metadata(&self, dep: &DependencyLink<'a>) -> &'a PackageMetadata {
+    fn known_metadata(&self, dep: &PackageLink<'a>) -> &'a PackageMetadata {
         (self.known_metadata)(dep)
     }
 
-    fn variable_metadata(&self, dep: &DependencyLink<'a>) -> &'a PackageMetadata {
+    fn variable_metadata(&self, dep: &PackageLink<'a>) -> &'a PackageMetadata {
         (self.variable_metadata)(dep)
     }
 }
@@ -308,7 +308,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     );
 
     // The enabled status can't be unknown on the current platform.
-    for DependencyLink { from, to, edge } in &all_links {
+    for PackageLink { from, to, edge } in &all_links {
         for dep_kind in &[
             DependencyKind::Normal,
             DependencyKind::Build,
@@ -700,7 +700,7 @@ impl<'g> GraphSet<'g> for FeatureSet<'g> {
 /// * If direction is Reverse, the package should appear in the `from` of a link at least once
 ///   before it appears in the `to` of a link.
 pub(crate) fn assert_link_order<'g>(
-    links: impl IntoIterator<Item = DependencyLink<'g>>,
+    links: impl IntoIterator<Item = PackageLink<'g>>,
     initial: impl IntoIterator<Item = &'g PackageId>,
     desc: impl Into<DirectionDesc<'g>>,
     msg: &str,
@@ -727,7 +727,7 @@ pub(crate) fn assert_link_order<'g>(
 }
 
 fn dep_link_ptrs<'g>(
-    dep_links: impl IntoIterator<Item = DependencyLink<'g>>,
+    dep_links: impl IntoIterator<Item = PackageLink<'g>>,
 ) -> Vec<(
     *const PackageMetadata,
     *const PackageMetadata,

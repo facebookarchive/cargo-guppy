@@ -6,7 +6,7 @@ use crate::graph::feature::{
     FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{
-    DependencyEdge, DependencyLink, DependencyReqImpl, FeatureIx, PackageGraph, PackageMetadata,
+    DependencyEdge, DependencyReqImpl, FeatureIx, PackageGraph, PackageLink, PackageMetadata,
     TargetPredicate,
 };
 use cargo_metadata::DependencyKind;
@@ -169,8 +169,8 @@ impl<'g> FeatureGraphBuildState<'g> {
         (dep_name, to_feature_name)
     }
 
-    pub(super) fn add_dependency_edges(&mut self, link: DependencyLink<'_>) {
-        let DependencyLink { from, to, edge } = link;
+    pub(super) fn add_dependency_edges(&mut self, link: PackageLink<'_>) {
+        let PackageLink { from, to, edge } = link;
 
         // Sometimes the same package is depended on separately in different sections like so:
         //

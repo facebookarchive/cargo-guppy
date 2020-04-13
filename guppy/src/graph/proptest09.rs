@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{DependencyLink, PackageGraph, PackageResolver};
+use crate::graph::{PackageGraph, PackageLink, PackageResolver};
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
@@ -39,7 +39,7 @@ impl PackageGraph {
     /// ## Panics
     ///
     /// Panics if there are no dependency edges in this `PackageGraph`.
-    pub fn prop09_link_strategy<'g>(&'g self) -> impl Strategy<Value = DependencyLink<'g>> + 'g {
+    pub fn prop09_link_strategy<'g>(&'g self) -> impl Strategy<Value = PackageLink<'g>> + 'g {
         any::<prop::sample::Index>().prop_map(move |index| {
             // Note that this works because PackageGraph uses petgraph::Graph, not StableGraph. If
             // PackageGraph used StableGraph, a retain_edges call would create holes -- invalid
@@ -71,7 +71,7 @@ impl PackageGraph {
 pub struct Prop09Resolver(FixedBitSet);
 
 impl<'a, 'g> PackageResolver<'g> for Prop09Resolver {
-    fn accept(&self, link: DependencyLink<'g>) -> bool {
+    fn accept(&self, link: PackageLink<'g>) -> bool {
         self.0.is_visited(&link.edge.edge_ix)
     }
 }
