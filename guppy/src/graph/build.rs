@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    cargo_version_matches, DependencyEdge, DependencyMetadata, DependencyReq, DependencyReqImpl,
+    cargo_version_matches, DependencyMetadata, DependencyReq, DependencyReqImpl, PackageEdge,
     PackageGraph, PackageGraphData, PackageIx, PackageMetadata, TargetPredicate, Workspace,
 };
 use crate::{Error, Metadata, PackageId, Platform};
@@ -99,7 +99,7 @@ impl Workspace {
 
 /// Helper struct for building up dependency graph.
 struct GraphBuildState<'a> {
-    dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
+    dep_graph: Graph<PackageId, PackageEdge, Directed, PackageIx>,
     // The values of package_data are (package_ix, name, version).
     package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
@@ -179,7 +179,7 @@ impl<'a> GraphBuildState<'a> {
             let dep_id = PackageId::from_metadata(pkg.clone());
             let (name, deps) = dep_resolver.resolve(resolved_name, &dep_id)?;
             let (dep_idx, _, _) = self.package_data(&dep_id)?;
-            let edge = DependencyEdge::new(&package_id, name, resolved_name, deps)?;
+            let edge = PackageEdge::new(&package_id, name, resolved_name, deps)?;
             // Use update_edge instead of add_edge to prevent multiple edges from being added
             // between these two nodes.
             // XXX maybe check for an existing edge?
@@ -284,7 +284,7 @@ impl<'a> GraphBuildState<'a> {
         Ok(workspace_path.to_path_buf().into_boxed_path())
     }
 
-    fn finish(self) -> Graph<PackageId, DependencyEdge, Directed, PackageIx> {
+    fn finish(self) -> Graph<PackageId, PackageEdge, Directed, PackageIx> {
         self.dep_graph
     }
 }
@@ -445,7 +445,7 @@ impl<'g> DependencyReqs<'g> {
     }
 }
 
-impl DependencyEdge {
+impl PackageEdge {
     fn new<'a>(
         from_id: &PackageId,
         name: &str,
@@ -475,7 +475,7 @@ impl DependencyEdge {
             };
         }
 
-        Ok(DependencyEdge {
+        Ok(PackageEdge {
             // edge_ix gets filled out once the edge is added.
             edge_ix: EdgeIndex::end(),
             dep_name: name.into(),

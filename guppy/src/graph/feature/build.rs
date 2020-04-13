@@ -6,7 +6,7 @@ use crate::graph::feature::{
     FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{
-    DependencyEdge, DependencyReqImpl, FeatureIx, PackageGraph, PackageLink, PackageMetadata,
+    DependencyReqImpl, FeatureIx, PackageEdge, PackageGraph, PackageLink, PackageMetadata,
     TargetPredicate,
 };
 use cargo_metadata::DependencyKind;
@@ -327,13 +327,13 @@ impl<'g> FeatureGraphBuildState<'g> {
 struct FeatureReq<'g> {
     from: &'g PackageMetadata,
     to: &'g PackageMetadata,
-    edge: &'g DependencyEdge,
+    edge: &'g PackageEdge,
     to_default_idx: Option<usize>,
     features: HashMap<Option<usize>, DependencyBuildState>,
 }
 
 impl<'g> FeatureReq<'g> {
-    fn new(from: &'g PackageMetadata, to: &'g PackageMetadata, edge: &'g DependencyEdge) -> Self {
+    fn new(from: &'g PackageMetadata, to: &'g PackageMetadata, edge: &'g PackageEdge) -> Self {
         Self {
             from,
             to,

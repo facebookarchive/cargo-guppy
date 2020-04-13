@@ -27,7 +27,7 @@ use target_spec::TargetSpec;
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
-    pub(super) dep_graph: Graph<PackageId, DependencyEdge, Directed, PackageIx>,
+    pub(super) dep_graph: Graph<PackageId, PackageEdge, Directed, PackageIx>,
     // The strongly connected components of the graph, computed on demand.
     pub(super) sccs: OnceCell<Sccs<PackageIx>>,
     // Feature graph, computed on demand.
@@ -321,7 +321,7 @@ impl PackageGraph {
     /// Returns the inner dependency graph.
     ///
     /// Should this be exposed publicly? Not sure.
-    pub(super) fn dep_graph(&self) -> &Graph<PackageId, DependencyEdge, Directed, PackageIx> {
+    pub(super) fn dep_graph(&self) -> &Graph<PackageId, PackageEdge, Directed, PackageIx> {
         &self.dep_graph
     }
 
@@ -330,7 +330,7 @@ impl PackageGraph {
         &'g self,
         source: NodeIndex<PackageIx>,
         target: NodeIndex<PackageIx>,
-        edge: &'g DependencyEdge,
+        edge: &'g PackageEdge,
     ) -> PackageLink<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
@@ -484,7 +484,7 @@ pub struct PackageLink<'g> {
     /// The package which is depended on by the `from` package.
     pub to: &'g PackageMetadata,
     /// Information about the specifics of this dependency.
-    pub edge: &'g DependencyEdge,
+    pub edge: &'g PackageEdge,
 }
 
 /// Information about a specific package in a `PackageGraph`.
@@ -736,7 +736,7 @@ impl PackageMetadata {
 /// * whether this dependency was renamed in the context of this crate.
 /// * if this is a normal, dev or build dependency.
 #[derive(Clone, Debug)]
-pub struct DependencyEdge {
+pub struct PackageEdge {
     pub(super) edge_ix: EdgeIndex<PackageIx>,
     pub(super) dep_name: String,
     pub(super) resolved_name: String,
@@ -745,7 +745,7 @@ pub struct DependencyEdge {
     pub(super) dev: Option<DependencyMetadata>,
 }
 
-impl DependencyEdge {
+impl PackageEdge {
     /// Returns the name for this dependency edge. This can be affected by a crate rename.
     pub fn dep_name(&self) -> &str {
         &self.dep_name
@@ -794,7 +794,7 @@ impl DependencyEdge {
 /// Information about a specific kind of dependency (normal, build or dev) from a package to another
 /// package.
 ///
-/// Usually found within the context of a [`DependencyEdge`](struct.DependencyEdge.html).
+/// Usually found within the context of a [`PackageEdge`](struct.PackageEdge.html).
 #[derive(Clone, Debug)]
 pub struct DependencyMetadata {
     pub(super) version_req: VersionReq,
