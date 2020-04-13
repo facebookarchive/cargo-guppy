@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0] - 2020-04-13
+
+This is a breaking release. There are no new or removed features, but many existing APIs have been cleaned up.
+
+### Changed
+- The `select_` methods have been renamed to `query_`.
+  - `PackageSelect` is now `PackageQuery`.
+- `select_all` is now `resolve_all` and directly produces a `PackageSet`.
+- `DependencyLink` is now `PackageLink`, and `DependencyEdge` is now `PackageEdge`.
+- `into_iter_links` is now `PackageSet::into_links`.
+- `PackageId` is now custom to `guppy` instead of reusing `cargo_metadata::PackageId`.
+- `PackageDotVisitor` now takes a `&mut DotWrite`.
+
+### Removed
+- All previously deprecated methods have been cleaned up.
+
 ## [0.1.8] - 2020-04-08
 ### Added
 - Implemented package resolution using custom resolvers, represented by the `PackageResolver` trait.
