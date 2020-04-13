@@ -805,10 +805,6 @@ pub struct DependencyMetadata {
     pub(super) current_default_features: EnabledStatus,
     pub(super) all_features: Vec<String>,
     pub(super) current_feature_statuses: HashMap<String, EnabledStatus>,
-
-    // single_target is deprecated -- it is only Some if there's exactly one instance of this
-    // dependency.
-    pub(super) single_target: Option<String>,
 }
 
 impl DependencyMetadata {
@@ -910,20 +906,6 @@ impl DependencyMetadata {
     /// See the documentation of `EnabledStatus` for more.
     pub fn feature_enabled_on(&self, feature: &str, platform: &Platform<'_>) -> EnabledStatus {
         self.dependency_req.feature_enabled_on(feature, platform)
-    }
-
-    /// Returns the target string for this dependency, if specified. This is a string like
-    /// `cfg(target_arch = "x86_64")`.
-    ///
-    /// See [Platform specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
-    /// in the Cargo reference for more details.
-    ///
-    /// This will return `None` if this dependency is specified for more than one target
-    /// (including unconditionally, as e.g. `[dependencies]`). Therefore, this is deprecated in
-    /// favor of `enabled_on`.
-    #[deprecated(since = "0.1.7", note = "use `enabled_on` instead")]
-    pub fn target(&self) -> Option<&str> {
-        self.single_target.as_deref()
     }
 }
 

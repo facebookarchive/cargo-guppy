@@ -507,21 +507,12 @@ struct DependencyBuildState {
     // seen.
     version_req: Option<VersionReq>,
     dependency_req: DependencyReq,
-    // Set if there's a single target -- mostly there for backwards compat support.
-    single_target: Option<String>,
 }
 
 impl DependencyBuildState {
     fn add_instance(&mut self, from_id: &PackageId, dep: &Dependency) -> Result<(), Error> {
-        match &self.version_req {
-            Some(_) => {
-                // There's more than one instance, so mark the single target `None`.
-                self.single_target = None;
-            }
-            None => {
-                self.version_req = Some(dep.req.clone());
-                self.single_target = dep.target.as_ref().map(|platform| format!("{}", platform));
-            }
+        if self.version_req.is_none() {
+            self.version_req = Some(dep.req.clone());
         }
         self.dependency_req.add_instance(from_id, dep)?;
 
@@ -569,7 +560,6 @@ impl DependencyBuildState {
             current_default_features,
             all_features,
             current_feature_statuses,
-            single_target: self.single_target,
         }))
     }
 }
