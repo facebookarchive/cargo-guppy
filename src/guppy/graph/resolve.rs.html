@@ -459,6 +459,18 @@
 <span id="459">459</span>
 <span id="460">460</span>
 <span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -471,6 +483,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">dot</span>::{<span class="ident">DotFmt</span>, <span class="ident">DotVisitor</span>, <span class="ident">DotWrite</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">reversed</span>::<span class="ident">ReverseFlip</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PackageId</span>;
+<span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">NodeFiltered</span>, <span class="ident">NodeRef</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
@@ -487,7 +500,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span> {
         <span class="ident">PackageSet</span> {
             <span class="ident">package_graph</span>: <span class="self">self</span>,
-            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_packages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>),
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_nodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>),
         }
     }
 }
@@ -506,6 +519,13 @@
         <span class="self">Self</span> {
             <span class="ident">package_graph</span>,
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">new</span>(<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">params</span>),
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">included</span>: <span class="ident">FixedBitSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">package_graph</span>,
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         }
     }
 
@@ -626,8 +646,12 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_ids</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IntoIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">IntoIds</span> {
             <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(),
-            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
+            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">into_ixs</span>(<span class="ident">direction</span>),
         }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">into_ixs</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Topo</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">PackageGraph</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
     }
 
     <span class="doccomment">/// Iterates over package metadatas, in topological order in the direction specified.</span>

@@ -293,17 +293,56 @@
 <span id="293">293</span>
 <span id="294">294</span>
 <span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureFilter</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">DependencyDirection</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageSet</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">IxBitSet</span>;
+<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graph</span>::<span class="ident">NodeIndex</span>;
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new `FeatureSet` consisting all members of this feature graph.</span>
+    <span class="doccomment">/// Creates a new `FeatureSet` consisting of all members of this feature graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This will include features that aren&#39;t depended on by any workspace packages.</span>
     <span class="doccomment">///</span>
@@ -312,13 +351,32 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">FeatureSet</span> {
             <span class="ident">feature_graph</span>: <span class="kw-2">*</span><span class="self">self</span>,
-            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_packages</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>()),
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_nodes</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>()),
+        }
+    }
+
+    <span class="doccomment">/// Creates a new `FeatureSet` consisting of all packages in this `PackageSet`, subject to the</span>
+    <span class="doccomment">/// provided filter.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_packages</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">packages</span>: <span class="kw-2">&amp;</span><span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+        <span class="ident">filter</span>: <span class="kw">impl</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">included</span>: <span class="ident">IxBitSet</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_ixs_for_packages</span>(
+            <span class="comment">// The direction of iteration doesn&#39;t matter.</span>
+            <span class="ident">packages</span>.<span class="ident">clone</span>().<span class="ident">into_ixs</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>),
+            <span class="ident">filter</span>,
+        );
+        <span class="ident">FeatureSet</span> {
+            <span class="ident">feature_graph</span>: <span class="kw-2">*</span><span class="self">self</span>,
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>.<span class="number">0</span>),
         }
     }
 }
+
 <span class="doccomment">/// A set of resolved feature IDs in a feature graph.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Created by `FeatureQuery::resolve`.</span>
+<span class="doccomment">/// Created by `FeatureQuery::resolve` or the `FeatureGraph::resolve_` methods.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">feature_graph</span>: <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
@@ -359,7 +417,7 @@
     <span class="comment">// Set operations</span>
     <span class="comment">// ---</span>
 
-    <span class="doccomment">/// Returns a `PackageSet` that contains all packages present in at least one of `self`</span>
+    <span class="doccomment">/// Returns a `FeatureSet` that contains all packages present in at least one of `self`</span>
     <span class="doccomment">/// and `other`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ## Panics</span>
@@ -378,7 +436,7 @@
         <span class="ident">res</span>
     }
 
-    <span class="doccomment">/// Returns a `PackageSet` that contains all packages present in both `self` and `other`.</span>
+    <span class="doccomment">/// Returns a `FeatureSet` that contains all packages present in both `self` and `other`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ## Panics</span>
     <span class="doccomment">///</span>
@@ -396,7 +454,7 @@
         <span class="ident">res</span>
     }
 
-    <span class="doccomment">/// Returns a `PackageSet` that contains all packages present in `self` but not `other`.</span>
+    <span class="doccomment">/// Returns a `FeatureSet` that contains all packages present in `self` but not `other`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ## Panics</span>
     <span class="doccomment">///</span>
@@ -415,7 +473,7 @@
         }
     }
 
-    <span class="doccomment">/// Returns a `PackageSet` that contains all packages present in exactly one of `self` and</span>
+    <span class="doccomment">/// Returns a `FeatureSet` that contains all packages present in exactly one of `self` and</span>
     <span class="doccomment">/// `other`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ## Panics</span>
@@ -432,6 +490,22 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
         <span class="ident">res</span>.<span class="ident">core</span>.<span class="ident">symmetric_difference_with</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">core</span>);
         <span class="ident">res</span>
+    }
+
+    <span class="doccomment">/// Converts this `FeatureSet` into a `PackageSet` containing all packages with any selected</span>
+    <span class="doccomment">/// features (including the &quot;base&quot; feature).</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_package_set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">included</span>: <span class="ident">IxBitSet</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">core</span>
+            .<span class="ident">included</span>
+            .<span class="ident">ones</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
+                <span class="kw">let</span> <span class="ident">feature_ix</span> <span class="op">=</span> <span class="ident">NodeIndex</span>::<span class="ident">new</span>(<span class="ident">feature_ix</span>);
+                <span class="kw">let</span> <span class="ident">feature_node</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>()[<span class="ident">feature_ix</span>];
+                <span class="ident">feature_node</span>.<span class="ident">package_ix</span>()
+            })
+            .<span class="ident">collect</span>();
+        <span class="ident">PackageSet</span>::<span class="ident">from_included</span>(<span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>, <span class="ident">included</span>.<span class="number">0</span>)
     }
 
     <span class="comment">// ---</span>
