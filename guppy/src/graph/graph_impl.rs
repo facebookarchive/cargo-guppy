@@ -87,11 +87,12 @@ impl PackageGraph {
                 Some(workspace_path) => {
                     // This package is in the workspace, so the workspace should have information
                     // about it.
-                    let workspace_id = workspace.member_by_path(workspace_path);
-                    if workspace_id != Some(package_id) {
+                    let metadata = workspace.member_by_path(workspace_path);
+                    let metadata_id = metadata.map(|metadata| metadata.id());
+                    if metadata_id != Some(package_id) {
                         return Err(Error::PackageGraphInternalError(format!(
                             "package {} has workspace path {:?} but query by path returned {:?}",
-                            package_id, workspace_path, workspace_id,
+                            package_id, workspace_path, metadata_id,
                         )));
                     }
                 }
@@ -478,8 +479,9 @@ impl<'g> Workspace<'g> {
     }
 
     /// Maps the given path to the corresponding workspace member.
-    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<&'g PackageId> {
-        self.inner.members_by_path.get(path.as_ref())
+    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<&'g PackageMetadata> {
+        let id = self.inner.members_by_path.get(path.as_ref())?;
+        Some(self.data.metadata(id).expect("valid package ID"))
     }
 }
 

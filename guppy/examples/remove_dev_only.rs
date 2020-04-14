@@ -23,6 +23,7 @@ fn main() -> Result<(), Error> {
         .workspace()
         .member_by_path("libra-node")
         .unwrap()
+        .id()
         .clone();
 
     let before_count = package_graph
