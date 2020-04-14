@@ -9,6 +9,14 @@ fn optional_dev_dep() {
     );
 }
 
+#[test]
+fn duplicate_workspace_names() {
+    assert_invalid(
+        include_str!("../../fixtures/invalid/duplicate_workspace_names.json"),
+        "duplicate package name in workspace: 'pkg' is name for",
+    );
+}
+
 fn assert_invalid(json: &str, search_str: &str) {
     let err = PackageGraph::from_json(json).expect_err("expected error for invalid metadata");
     assert_matches!(
