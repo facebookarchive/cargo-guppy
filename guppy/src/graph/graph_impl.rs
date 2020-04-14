@@ -459,12 +459,16 @@ impl<'g> Workspace<'g> {
         &self.inner.root
     }
 
-    /// Returns an iterator over of workspace paths and members, sorted by the path they're in.
-    pub fn members(&self) -> impl Iterator<Item = (&'g Path, &'g PackageId)> + ExactSizeIterator {
+    /// Returns an iterator over of workspace paths and package metadatas, sorted by the path
+    /// they're in.
+    pub fn members(
+        &self,
+    ) -> impl Iterator<Item = (&'g Path, &'g PackageMetadata)> + ExactSizeIterator {
+        let data = self.data;
         self.inner
             .members_by_path
             .iter()
-            .map(|(path, id)| (path.as_path(), id))
+            .map(move |(path, id)| (path.as_path(), data.metadata(id).expect("valid package ID")))
     }
 
     /// Returns an iterator over package IDs for workspace members. The package IDs will be returned
