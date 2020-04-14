@@ -17,16 +17,15 @@ fn main() -> Result<(), Error> {
     let package_graph = PackageGraph::from_json(fixture)?;
 
     // Pick an interesting package to compute dependencies of.
-    let vm_id = package_graph
+    let vm_metadata = package_graph
         .workspace()
         .member_by_path("language/vm/vm-runtime")
         .expect("known workspace path");
-    let vm_metadata = package_graph.metadata(vm_id).expect("known ID");
 
     // Use a BTreeMap to deduplicate dependencies within a level below while keeping package IDs
     // ordered.
     let mut current = BTreeMap::new();
-    current.insert(vm_id, vm_metadata);
+    current.insert(vm_metadata.id(), vm_metadata);
 
     let mut level = 0;
 
