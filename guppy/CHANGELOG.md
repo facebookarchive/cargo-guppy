@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0] - 2020-04-14
+
+This is a breaking release with some minor API changes.
+
+### Added
+- `PackageGraph::directly_depends_on`: returns true if a package directly depends on another.
+- `Workspace` has new `member_by_name` and `members_by_name` methods for workspace lookups by name.
+
+### Fixed
+- `guppy` now checks for duplicate names in workspaces and errors out if it finds any.
+
+### Changed
+- `Workspace::members` and `Workspace::member_by_path` now return `PackageMetadata` instances, not `PackageId`.
+
 ## [0.2.1] - 2020-04-13
 
 ### Fixed
@@ -115,6 +129,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.3.0
 [0.2.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.2.1
 [0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.2.0
 [0.1.8]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.1.8

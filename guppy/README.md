@@ -14,7 +14,7 @@ Add the following to `Cargo.toml`:
 
 ```toml
 [dependencies]
-guppy = "0.2"
+guppy = "0.3"
 ```
 
 ## Examples
