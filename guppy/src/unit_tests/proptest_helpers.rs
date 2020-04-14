@@ -53,6 +53,27 @@ macro_rules! proptest_suite {
             }
 
             #[test]
+            fn proptest_depends_on_same_package_id() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+
+                proptest!(|(query_id in package_graph.prop09_id_strategy())| {
+                    depends_on_same_id(package_graph, query_id);
+                });
+            }
+
+            #[test]
+            fn proptest_depends_on_same_feature_id() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(query_id in feature_graph.prop09_id_strategy())| {
+                    depends_on_same_id(feature_graph, query_id);
+                });
+            }
+
+            #[test]
             fn proptest_query_link_order() {
                 let fixture = Fixture::$name();
                 let graph = fixture.graph();
@@ -217,6 +238,22 @@ pub(super) fn depends_on<'g, G: GraphAssert<'g>>(
         let query_id = index.get(&reachable_ids);
         graph.assert_depends_on_any(ids, *query_id, query_direction, &msg);
     }
+}
+
+/// Test depends_on and directly_depends_on semantics with the same ID.
+pub(super) fn depends_on_same_id<'g, G: GraphAssert<'g>>(graph: G, query_id: G::Id) {
+    graph.assert_depends_on(
+        query_id,
+        query_id,
+        DependencyDirection::Forward,
+        "depends_on for same ID returns true",
+    );
+    assert!(
+        !graph
+            .directly_depends_on(query_id, query_id)
+            .expect("valid ID"),
+        "directly_depends_on for same ID returns false",
+    );
 }
 
 /// Test that all results of an into_iter_links query follow link order.
