@@ -449,6 +449,10 @@ impl FeatureNode {
             feature_idx: Some(n),
         })
     }
+
+    pub(in crate::graph) fn package_ix(&self) -> NodeIndex<PackageIx> {
+        self.package_ix
+    }
 }
 
 /// Information about why a feature depends on another feature.
