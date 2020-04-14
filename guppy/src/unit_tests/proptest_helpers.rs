@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::graph::feature::{all_filter, none_filter, FeatureId};
 use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Resolver};
 use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphSet};
 use crate::PackageId;
@@ -176,6 +177,23 @@ macro_rules! proptest_suite {
                     resolve_tree in ResolveTree::strategy(feature_graph.prop09_id_strategy())
                 )| {
                     resolve_ops(feature_graph, resolve_tree);
+                });
+            }
+
+            #[test]
+            fn proptest_package_feature_set_roundtrip() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(
+                    query_ids in vec(package_graph.prop09_id_strategy(), 1..16),
+                    query_direction in any::<DependencyDirection>(),
+                    resolver in package_graph.prop09_resolver_strategy(),
+                    test_ids in vec(feature_graph.prop09_id_strategy(), 1..16),
+                    test_direction in any::<DependencyDirection>(),
+                )| {
+                    package_feature_set_roundtrip(package_graph, query_ids, query_direction, resolver, test_ids, test_direction);
                 });
             }
         }
@@ -456,4 +474,46 @@ fn resolve_ops_impl<G: GraphAssert<'static>>(
     }
 }
 
-// TODO: Test FeatureFilter implementations.
+pub(super) fn package_feature_set_roundtrip(
+    package_graph: &PackageGraph,
+    query_ids: Vec<&PackageId>,
+    query_direction: DependencyDirection,
+    resolver: Prop09Resolver,
+    test_ids: Vec<FeatureId>,
+    test_direction: DependencyDirection,
+) {
+    let package_set = package_graph
+        .query_directed(query_ids.iter().copied(), query_direction)
+        .expect("valid package IDs")
+        .resolve_with(&resolver);
+    let feature_graph = package_graph.feature_graph();
+    let all_feature_set = feature_graph.resolve_packages(&package_set, all_filter());
+    let no_feature_set = feature_graph.resolve_packages(&package_set, none_filter());
+
+    for test_id in test_ids {
+        assert_eq!(
+            package_set
+                .contains(test_id.package_id())
+                .expect("valid package ID"),
+            all_feature_set.contains(test_id).expect("valid feature ID"),
+            "all_filter => package ID present == feature ID present"
+        );
+
+        assert_eq!(
+            package_set
+                .contains(test_id.package_id())
+                .expect("valid package ID"),
+            no_feature_set
+                .contains((test_id.package_id(), None))
+                .expect("valid feature ID"),
+            "none_filter => package ID present == base feature ID present"
+        );
+    }
+
+    let package_ids: Vec<_> = package_set.into_ids(test_direction).collect();
+    let package_set_2 = all_feature_set.to_package_set();
+    let package_ids_2: Vec<_> = package_set_2.into_ids(test_direction).collect();
+    assert_eq!(package_ids, package_ids_2, "package IDs roundtrip");
+}
+
+// TODO: More tests for FeatureFilter implementations.

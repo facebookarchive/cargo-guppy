@@ -6,6 +6,7 @@ use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{DependencyDirection, PackageSet};
 use crate::petgraph_support::IxBitSet;
+use petgraph::graph::NodeIndex;
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.
@@ -156,6 +157,22 @@ impl<'g> FeatureSet<'g> {
         let mut res = self.clone();
         res.core.symmetric_difference_with(&other.core);
         res
+    }
+
+    /// Converts this `FeatureSet` into a `PackageSet` containing all packages with any selected
+    /// features (including the "base" feature).
+    pub fn to_package_set(&self) -> PackageSet<'g> {
+        let included: IxBitSet = self
+            .core
+            .included
+            .ones()
+            .map(|feature_ix| {
+                let feature_ix = NodeIndex::new(feature_ix);
+                let feature_node = &self.feature_graph.dep_graph()[feature_ix];
+                feature_node.package_ix()
+            })
+            .collect();
+        PackageSet::from_included(self.feature_graph.package_graph, included.0)
     }
 
     // ---

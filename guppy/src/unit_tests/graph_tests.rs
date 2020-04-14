@@ -186,7 +186,8 @@ mod small {
         let package_graph = metadata_targets1.graph();
         let package_set = package_graph.resolve_all();
         let feature_graph = metadata_targets1.graph().feature_graph();
-        // Test resolve_packages.
+
+        // Check that resolve_packages + a feature filter works.
         let feature_set = feature_graph.resolve_packages(
             &package_set,
             feature_filter(default_filter(), ["foo", "bar"].iter().copied()),

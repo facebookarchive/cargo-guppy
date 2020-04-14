@@ -9,6 +9,7 @@ use crate::graph::{
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::ReverseFlip;
 use crate::PackageId;
+use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef};
 use std::fmt;
@@ -44,6 +45,13 @@ impl<'g> PackageSet<'g> {
         Self {
             package_graph,
             core: ResolveCore::new(package_graph.dep_graph(), params),
+        }
+    }
+
+    pub(super) fn from_included(package_graph: &'g PackageGraph, included: FixedBitSet) -> Self {
+        Self {
+            package_graph,
+            core: ResolveCore::from_included(included),
         }
     }
 
