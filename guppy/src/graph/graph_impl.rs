@@ -368,10 +368,7 @@ impl PackageGraph {
     {
         package_ids
             .into_iter()
-            .map(|package_id| {
-                self.package_ix(package_id)
-                    .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))
-            })
+            .map(|package_id| self.package_ix_err(package_id))
             .collect()
     }
 
@@ -379,6 +376,16 @@ impl PackageGraph {
     pub(super) fn package_ix(&self, package_id: &PackageId) -> Option<NodeIndex<PackageIx>> {
         self.metadata(package_id)
             .map(|metadata| metadata.package_ix)
+    }
+
+    /// Maps a package ID to its internal graph node index, and returns an `UnknownPackageId` error
+    /// if the package isn't found.
+    pub(super) fn package_ix_err(
+        &self,
+        package_id: &PackageId,
+    ) -> Result<NodeIndex<PackageIx>, Error> {
+        self.package_ix(package_id)
+            .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))
     }
 }
 
@@ -437,14 +444,8 @@ impl<'g> DependsCache<'g> {
         package_a: &PackageId,
         package_b: &PackageId,
     ) -> Result<bool, Error> {
-        let a_ix = self
-            .package_graph
-            .package_ix(package_a)
-            .ok_or_else(|| Error::UnknownPackageId(package_a.clone()))?;
-        let b_ix = self
-            .package_graph
-            .package_ix(package_b)
-            .ok_or_else(|| Error::UnknownPackageId(package_b.clone()))?;
+        let a_ix = self.package_graph.package_ix_err(package_a)?;
+        let b_ix = self.package_graph.package_ix_err(package_b)?;
         Ok(has_path_connecting(
             self.package_graph.dep_graph(),
             a_ix,

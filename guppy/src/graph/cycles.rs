@@ -29,14 +29,8 @@ impl<'g> Cycles<'g> {
 
     /// Returns true if these two IDs are in the same cycle.
     pub fn is_cyclic(&self, a: &PackageId, b: &PackageId) -> Result<bool, Error> {
-        let a_ix = self
-            .package_graph
-            .package_ix(a)
-            .ok_or_else(|| Error::UnknownPackageId(a.clone()))?;
-        let b_ix = self
-            .package_graph
-            .package_ix(b)
-            .ok_or_else(|| Error::UnknownPackageId(b.clone()))?;
+        let a_ix = self.package_graph.package_ix_err(a)?;
+        let b_ix = self.package_graph.package_ix_err(b)?;
         Ok(self.sccs.is_same_scc(a_ix, b_ix))
     }
 
