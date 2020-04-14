@@ -35,14 +35,8 @@ impl<'g> Cycles<'g> {
     ) -> Result<bool, Error> {
         let a = a.into();
         let b = b.into();
-        let a_ix = self.feature_graph.feature_ix(a).ok_or_else(|| {
-            let (package_id, feature) = a.into();
-            Error::UnknownFeatureId(package_id, feature)
-        })?;
-        let b_ix = self.feature_graph.feature_ix(b).ok_or_else(|| {
-            let (package_id, feature) = b.into();
-            Error::UnknownFeatureId(package_id, feature)
-        })?;
+        let a_ix = self.feature_graph.feature_ix_err(a)?;
+        let b_ix = self.feature_graph.feature_ix_err(b)?;
         Ok(self.sccs.is_same_scc(a_ix, b_ix))
     }
 

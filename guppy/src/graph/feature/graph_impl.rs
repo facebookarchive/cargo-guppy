@@ -125,14 +125,8 @@ impl<'g> FeatureGraph<'g> {
     ) -> Result<bool, Error> {
         let feature_a = feature_a.into();
         let feature_b = feature_b.into();
-        let a_ix = self.feature_ix(feature_a).ok_or_else(|| {
-            let (package_id, feature) = feature_a.into();
-            Error::UnknownFeatureId(package_id, feature)
-        })?;
-        let b_ix = self.feature_ix(feature_b).ok_or_else(|| {
-            let (package_id, feature) = feature_b.into();
-            Error::UnknownFeatureId(package_id, feature)
-        })?;
+        let a_ix = self.feature_ix_err(feature_a)?;
+        let b_ix = self.feature_ix_err(feature_b)?;
         Ok(self.feature_ix_depends_on(a_ix, b_ix))
     }
 
@@ -233,18 +227,23 @@ impl<'g> FeatureGraph<'g> {
     {
         feature_ids
             .into_iter()
-            .map(|feature_id| {
-                self.feature_ix(feature_id).ok_or_else(|| {
-                    let (package_id, feature) = feature_id.into();
-                    Error::UnknownFeatureId(package_id, feature)
-                })
-            })
+            .map(|feature_id| self.feature_ix_err(feature_id))
             .collect()
     }
 
     pub(super) fn feature_ix(&self, feature_id: FeatureId<'g>) -> Option<NodeIndex<FeatureIx>> {
         let metadata = self.metadata_impl(feature_id)?;
         Some(metadata.feature_ix)
+    }
+
+    pub(super) fn feature_ix_err(
+        &self,
+        feature_id: FeatureId<'g>,
+    ) -> Result<NodeIndex<FeatureIx>, Error> {
+        self.feature_ix(feature_id).ok_or_else(|| {
+            let (package_id, feature) = feature_id.into();
+            Error::UnknownFeatureId(package_id, feature)
+        })
     }
 }
 
