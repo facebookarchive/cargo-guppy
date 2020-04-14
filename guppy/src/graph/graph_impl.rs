@@ -41,7 +41,7 @@ pub struct PackageGraph {
 #[derive(Clone, Debug)]
 pub struct PackageGraphData {
     pub(super) packages: HashMap<PackageId, PackageMetadata>,
-    pub(super) workspace: Workspace,
+    pub(super) workspace: WorkspaceImpl,
 }
 
 impl PackageGraph {
@@ -162,8 +162,8 @@ impl PackageGraph {
     }
 
     /// Returns information about the workspace.
-    pub fn workspace(&self) -> &Workspace {
-        &self.data.workspace()
+    pub fn workspace(&self) -> Workspace {
+        self.data.workspace()
     }
 
     /// Returns an iterator over all the package IDs in this graph.
@@ -372,8 +372,11 @@ impl PackageGraph {
 
 impl PackageGraphData {
     /// Returns information about the workspace.
-    pub fn workspace(&self) -> &Workspace {
-        &self.workspace
+    pub fn workspace(&self) -> Workspace {
+        Workspace {
+            data: self,
+            inner: &self.workspace,
+        }
     }
 
     /// Returns an iterator over all the package IDs in this graph.
@@ -445,35 +448,42 @@ impl<'g> DependsCache<'g> {
 /// [Cargo Workspaces](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) in *The Rust
 /// Programming Language*.
 #[derive(Clone, Debug)]
-pub struct Workspace {
-    pub(super) root: PathBuf,
-    // This is a BTreeMap to allow presenting data in sorted order.
-    pub(super) members_by_path: BTreeMap<PathBuf, PackageId>,
+pub struct Workspace<'g> {
+    data: &'g PackageGraphData,
+    inner: &'g WorkspaceImpl,
 }
 
-impl Workspace {
+impl<'g> Workspace<'g> {
     /// Returns the workspace root.
-    pub fn root(&self) -> &Path {
-        &self.root
+    pub fn root(&self) -> &'g Path {
+        &self.inner.root
     }
 
     /// Returns an iterator over of workspace paths and members, sorted by the path they're in.
-    pub fn members(&self) -> impl Iterator<Item = (&Path, &PackageId)> + ExactSizeIterator {
-        self.members_by_path
+    pub fn members(&self) -> impl Iterator<Item = (&'g Path, &'g PackageId)> + ExactSizeIterator {
+        self.inner
+            .members_by_path
             .iter()
             .map(|(path, id)| (path.as_path(), id))
     }
 
     /// Returns an iterator over package IDs for workspace members. The package IDs will be returned
     /// in the same order as `members`, sorted by the path they're in.
-    pub fn member_ids(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
-        self.members_by_path.iter().map(|(_path, id)| id)
+    pub fn member_ids(&self) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator {
+        self.inner.members_by_path.iter().map(|(_path, id)| id)
     }
 
     /// Maps the given path to the corresponding workspace member.
-    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<&PackageId> {
-        self.members_by_path.get(path.as_ref())
+    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<&'g PackageId> {
+        self.inner.members_by_path.get(path.as_ref())
     }
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct WorkspaceImpl {
+    pub(super) root: PathBuf,
+    // This is a BTreeMap to allow presenting data in sorted order.
+    pub(super) members_by_path: BTreeMap<PathBuf, PackageId>,
 }
 
 /// Represents a dependency from one package to another.

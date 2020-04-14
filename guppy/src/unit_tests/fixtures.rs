@@ -310,7 +310,7 @@ impl FixtureDetails {
         self.package_details.keys()
     }
 
-    pub(crate) fn assert_workspace(&self, workspace: &Workspace) {
+    pub(crate) fn assert_workspace(&self, workspace: Workspace) {
         if let Some(expected_members) = &self.workspace_members {
             let members: Vec<_> = workspace.members().into_iter().collect();
             assert_eq!(

@@ -3,7 +3,7 @@
 
 use crate::graph::{
     cargo_version_matches, DependencyMetadata, DependencyReq, DependencyReqImpl, PackageEdge,
-    PackageGraph, PackageGraphData, PackageIx, PackageMetadata, TargetPredicate, Workspace,
+    PackageGraph, PackageGraphData, PackageIx, PackageMetadata, TargetPredicate, WorkspaceImpl,
 };
 use crate::{Error, Metadata, PackageId, Platform};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
@@ -45,7 +45,7 @@ impl PackageGraph {
 
         let dep_graph = build_state.finish();
 
-        let workspace = Workspace::new(metadata.workspace_root, &packages, workspace_members)?;
+        let workspace = WorkspaceImpl::new(metadata.workspace_root, &packages, workspace_members)?;
 
         Ok(Self {
             dep_graph,
@@ -59,7 +59,7 @@ impl PackageGraph {
     }
 }
 
-impl Workspace {
+impl WorkspaceImpl {
     /// Indexes and creates a new workspace.
     fn new(
         workspace_root: impl Into<PathBuf>,
