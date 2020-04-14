@@ -122,6 +122,7 @@ pub(crate) fn assert_deps_internal(
     for (_, _, dep_id) in &actual_dep_ids {
         // depends_on should agree with the dependencies returned.
         graph.assert_depends_on(known_details.id(), dep_id, direction, msg);
+        graph.assert_directly_depends_on(known_details.id(), dep_id, direction, msg);
     }
 
     // Check that the dependency metadata returned is consistent with what we expect.
@@ -374,6 +375,8 @@ pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
 
+    fn directly_depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
+
     fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
 
     fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Set;
@@ -522,6 +525,33 @@ pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
             ),
         }
     }
+
+    fn assert_directly_depends_on(
+        &self,
+        a_id: Self::Id,
+        b_id: Self::Id,
+        direction: DependencyDirection,
+        msg: &str,
+    ) {
+        match direction {
+            DependencyDirection::Forward => assert!(
+                self.directly_depends_on(a_id, b_id).unwrap(),
+                "{}: {} '{:?}' should directly depend on '{:?}'",
+                msg,
+                Self::NAME,
+                a_id,
+                b_id,
+            ),
+            DependencyDirection::Reverse => assert!(
+                self.directly_depends_on(b_id, a_id).unwrap(),
+                "{}: {} '{:?}' should be a direct dependency of '{:?}'",
+                msg,
+                Self::NAME,
+                a_id,
+                b_id,
+            ),
+        }
+    }
 }
 
 pub(super) trait GraphMetadata<'g> {
@@ -554,6 +584,10 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
         PackageGraph::depends_on(self, a_id, b_id)
+    }
+
+    fn directly_depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
+        PackageGraph::directly_depends_on(self, a_id, b_id)
     }
 
     fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
@@ -628,6 +662,10 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
 
     fn depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
         FeatureGraph::depends_on(self, a_id, b_id)
+    }
+
+    fn directly_depends_on(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {
+        FeatureGraph::directly_depends_on(self, a_id, b_id)
     }
 
     fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error> {

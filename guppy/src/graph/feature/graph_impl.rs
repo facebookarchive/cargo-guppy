@@ -118,6 +118,8 @@ impl<'g> FeatureGraph<'g> {
     ///
     /// In other words, this returns true if `feature_b` is a (possibly transitive) dependency of
     /// `feature_a`.
+    ///
+    /// This also returns true if `feature_a` is the same as `feature_b`.
     pub fn depends_on<'a>(
         &self,
         feature_a: impl Into<FeatureId<'a>>,
@@ -128,6 +130,23 @@ impl<'g> FeatureGraph<'g> {
         let a_ix = self.feature_ix_err(feature_a)?;
         let b_ix = self.feature_ix_err(feature_b)?;
         Ok(self.feature_ix_depends_on(a_ix, b_ix))
+    }
+
+    /// Returns true if `feature_a` directly depends on `feature_b`.
+    ///
+    /// In other words, this returns true if `feature_a` is a direct dependency of `feature_b`.
+    ///
+    /// This returns false if `feature_a` is the same as `feature_b`.
+    pub fn directly_depends_on<'a>(
+        &self,
+        feature_a: impl Into<FeatureId<'a>>,
+        feature_b: impl Into<FeatureId<'a>>,
+    ) -> Result<bool, Error> {
+        let feature_a = feature_a.into();
+        let feature_b = feature_b.into();
+        let a_ix = self.feature_ix_err(feature_a)?;
+        let b_ix = self.feature_ix_err(feature_b)?;
+        Ok(self.dep_graph().contains_edge(a_ix, b_ix))
     }
 
     /// Returns information about dependency cycles.

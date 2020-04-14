@@ -246,10 +246,27 @@ impl PackageGraph {
     /// In other words, this returns true if `package_b` is a (possibly transitive) dependency of
     /// `package_a`.
     ///
+    /// This also returns true if `package_a` is the same as `package_b`.
+    ///
     /// For repeated queries, consider using `new_depends_cache` to speed up queries.
     pub fn depends_on(&self, package_a: &PackageId, package_b: &PackageId) -> Result<bool, Error> {
         let mut depends_cache = self.new_depends_cache();
         depends_cache.depends_on(package_a, package_b)
+    }
+
+    /// Returns true if `package_a` directly depends on `package_b`.
+    ///
+    /// In other words, this returns true if `package_b` is a direct dependency of `package_a`.
+    ///
+    /// This returns false if `package_a` is the same as `package_b`.
+    pub fn directly_depends_on(
+        &self,
+        package_a: &PackageId,
+        package_b: &PackageId,
+    ) -> Result<bool, Error> {
+        let a_ix = self.package_ix_err(package_a)?;
+        let b_ix = self.package_ix_err(package_b)?;
+        Ok(self.dep_graph.contains_edge(a_ix, b_ix))
     }
 
     /// Returns information about dependency cycles in this graph.
