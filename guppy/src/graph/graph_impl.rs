@@ -87,12 +87,23 @@ impl PackageGraph {
                 Some(workspace_path) => {
                     // This package is in the workspace, so the workspace should have information
                     // about it.
-                    let metadata = workspace.member_by_path(workspace_path);
-                    let metadata_id = metadata.map(|metadata| metadata.id());
-                    if metadata_id != Some(package_id) {
+                    let metadata2 = workspace.member_by_path(workspace_path);
+                    let metadata2_id = metadata2.map(|metadata| metadata.id());
+                    if metadata2_id != Some(package_id) {
                         return Err(Error::PackageGraphInternalError(format!(
                             "package {} has workspace path {:?} but query by path returned {:?}",
-                            package_id, workspace_path, metadata_id,
+                            package_id, workspace_path, metadata2_id,
+                        )));
+                    }
+
+                    let metadata3 = workspace.member_by_name(metadata.name());
+                    let metadata3_id = metadata3.map(|metadata| metadata.id());
+                    if metadata3_id != Some(package_id) {
+                        return Err(Error::PackageGraphInternalError(format!(
+                            "package {} has name {}, but workspace query by name returned {:?}",
+                            package_id,
+                            metadata.name(),
+                            metadata3_id,
                         )));
                     }
                 }
@@ -460,7 +471,7 @@ impl<'g> Workspace<'g> {
         &self.inner.root
     }
 
-    /// Returns an iterator over of workspace paths and package metadatas, sorted by the path
+    /// Returns an iterator over workspace paths and package metadatas, sorted by the path
     /// they're in.
     pub fn members(
         &self,
@@ -470,6 +481,17 @@ impl<'g> Workspace<'g> {
             .members_by_path
             .iter()
             .map(move |(path, id)| (path.as_path(), data.metadata(id).expect("valid package ID")))
+    }
+
+    /// Returns an iterator over workspace names and package metadatas, sorted by names.
+    pub fn members_by_name(
+        &self,
+    ) -> impl Iterator<Item = (&'g str, &'g PackageMetadata)> + ExactSizeIterator {
+        let data = self.data;
+        self.inner
+            .members_by_name
+            .iter()
+            .map(move |(name, id)| (name.as_ref(), data.metadata(id).expect("valid package ID")))
     }
 
     /// Returns an iterator over package IDs for workspace members. The package IDs will be returned
@@ -483,6 +505,12 @@ impl<'g> Workspace<'g> {
         let id = self.inner.members_by_path.get(path.as_ref())?;
         Some(self.data.metadata(id).expect("valid package ID"))
     }
+
+    /// Maps the given name to the corresponding workspace member.
+    pub fn member_by_name(&self, name: impl AsRef<str>) -> Option<&'g PackageMetadata> {
+        let id = self.inner.members_by_name.get(name.as_ref())?;
+        Some(self.data.metadata(id).expect("valid package ID"))
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -490,6 +518,7 @@ pub(super) struct WorkspaceImpl {
     pub(super) root: PathBuf,
     // This is a BTreeMap to allow presenting data in sorted order.
     pub(super) members_by_path: BTreeMap<PathBuf, PackageId>,
+    pub(super) members_by_name: BTreeMap<Box<str>, PackageId>,
 }
 
 /// Represents a dependency from one package to another.

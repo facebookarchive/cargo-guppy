@@ -66,33 +66,47 @@ impl WorkspaceImpl {
         packages: &HashMap<PackageId, PackageMetadata>,
         members: impl IntoIterator<Item = PackageId>,
     ) -> Result<Self, Error> {
+        use std::collections::btree_map::Entry;
+
         let workspace_root = workspace_root.into();
         // Build up the workspace members by path, since most interesting queries are going to
         // happen by path.
-        let members_by_path = members
-            .into_iter()
-            .map(|id| {
-                // Strip off the workspace path from the manifest path.
-                let package_metadata = packages.get(&id).ok_or_else(|| {
-                    Error::PackageGraphConstructError(format!(
-                        "workspace member '{}' not found",
+        let mut members_by_path = BTreeMap::new();
+        let mut members_by_name = BTreeMap::new();
+        for id in members {
+            // Strip off the workspace path from the manifest path.
+            let package_metadata = packages.get(&id).ok_or_else(|| {
+                Error::PackageGraphConstructError(format!("workspace member '{}' not found", id))
+            })?;
+
+            let workspace_path = package_metadata.workspace_path().ok_or_else(|| {
+                Error::PackageGraphConstructError(format!(
+                    "workspace member '{}' at path {:?} not in workspace",
+                    id,
+                    package_metadata.manifest_path(),
+                ))
+            })?;
+            members_by_path.insert(workspace_path.to_path_buf(), id.clone());
+
+            match members_by_name.entry(package_metadata.name().to_string().into_boxed_str()) {
+                Entry::Vacant(vacant) => {
+                    vacant.insert(id.clone());
+                }
+                Entry::Occupied(occupied) => {
+                    return Err(Error::PackageGraphConstructError(format!(
+                        "duplicate package name in workspace: '{}' is name for '{}' and '{}'",
+                        occupied.key(),
+                        occupied.get(),
                         id
-                    ))
-                })?;
-                let workspace_path = package_metadata.workspace_path().ok_or_else(|| {
-                    Error::PackageGraphConstructError(format!(
-                        "workspace member '{}' at path {:?} not in workspace",
-                        id,
-                        package_metadata.manifest_path(),
-                    ))
-                })?;
-                Ok((workspace_path.to_path_buf(), id))
-            })
-            .collect::<Result<BTreeMap<PathBuf, PackageId>, Error>>()?;
+                    )))
+                }
+            }
+        }
 
         Ok(Self {
             root: workspace_root,
             members_by_path,
+            members_by_name,
         })
     }
 }
