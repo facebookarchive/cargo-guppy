@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] - 2020-04-15
+
+### Added
+- Support for listing and querying build targets (library, binaries, tests, etc) within a package.
+  - `PackageMetadata::build_targets`: iterates over all build targets within a package.
+  - `PackageMetadata::build_target`: retrieves a build target by identifier.
+
 ## [0.3.0] - 2020-04-14
 
 This is a breaking release with some minor API changes.
@@ -129,6 +136,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.3.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.3.1
 [0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.3.0
 [0.2.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.2.1
 [0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.2.0
