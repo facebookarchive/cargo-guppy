@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.3] - 2020-04-15
+
+### Fixed
+- Better handling of unknown flags.
+  - Unknown flags now evaluate to false instead of erroring out.
+  - Added `Platform::add_flags` to allow setting flags that evaluate to true.
+
+These changes were prompted by how [`cargo-web`](https://github.com/koute/cargo-web) sets the `cargo_web` flag to
+true for `cargo web build`.
+
+## 0.2.2
+
+This was mistakenly published and was yanked.
+
 ## [0.2.1] - 2020-04-07
 ### Changed
 - Updated repository links.
@@ -15,6 +29,7 @@
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[0.2.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.3
 [0.2.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.1
 [0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.0
 [0.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.1.0
