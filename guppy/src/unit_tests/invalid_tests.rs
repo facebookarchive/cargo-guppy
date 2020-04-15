@@ -17,6 +17,30 @@ fn duplicate_workspace_names() {
     );
 }
 
+#[test]
+fn build_targets_empty_kinds() {
+    assert_invalid(
+        include_str!("../../fixtures/invalid/build_targets_empty_kinds.json"),
+        "build target 'bench1' has no kinds",
+    );
+}
+
+#[test]
+fn build_targets_non_bin() {
+    assert_invalid(
+        include_str!("../../fixtures/invalid/build_targets_non_bin.json"),
+        "build target 'Binary(\"testcrate\")' has invalid crate types '[\"cdylib\"]'",
+    );
+}
+
+#[test]
+fn build_targets_duplicate_lib() {
+    assert_invalid(
+        include_str!("../../fixtures/invalid/build_targets_duplicate_lib.json"),
+        "duplicate build targets for Library",
+    );
+}
+
 fn assert_invalid(json: &str, search_str: &str) {
     let err = PackageGraph::from_json(json).expect_err("expected error for invalid metadata");
     assert_matches!(

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    cargo_version_matches, DependencyMetadata, DependencyReq, DependencyReqImpl, PackageEdge,
-    PackageGraph, PackageGraphData, PackageIx, PackageMetadata, TargetPredicate, WorkspaceImpl,
+    cargo_version_matches, BuildTargetImpl, BuildTargetKind, DependencyMetadata, DependencyReq,
+    DependencyReqImpl, OwnedBuildTargetId, PackageEdge, PackageGraph, PackageGraphData, PackageIx,
+    PackageMetadata, TargetPredicate, WorkspaceImpl,
 };
 use crate::{Error, Metadata, PackageId, Platform};
-use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve};
+use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve, Target};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
@@ -173,6 +174,12 @@ impl<'a> GraphBuildState<'a> {
             None
         };
 
+        let mut build_targets = BuildTargets::new(&package_id);
+        for build_target in package.targets {
+            build_targets.add(build_target)?;
+        }
+        let build_targets = build_targets.finish();
+
         let (resolved_deps, resolved_features) =
             self.resolve_data.remove(&package_id).ok_or_else(|| {
                 Error::PackageGraphConstructError(format!(
@@ -260,6 +267,7 @@ impl<'a> GraphBuildState<'a> {
 
                 package_ix,
                 workspace_path,
+                build_targets,
                 has_default_feature,
                 resolved_deps,
                 resolved_features,
@@ -300,6 +308,98 @@ impl<'a> GraphBuildState<'a> {
 
     fn finish(self) -> Graph<PackageId, PackageEdge, Directed, PackageIx> {
         self.dep_graph
+    }
+}
+
+struct BuildTargets<'a> {
+    package_id: &'a PackageId,
+    targets: BTreeMap<OwnedBuildTargetId, BuildTargetImpl>,
+}
+
+impl<'a> BuildTargets<'a> {
+    fn new(package_id: &'a PackageId) -> Self {
+        Self {
+            package_id,
+            targets: BTreeMap::new(),
+        }
+    }
+
+    fn add(&mut self, target: Target) -> Result<(), Error> {
+        use std::collections::btree_map::Entry;
+
+        // Figure out the id and kind using target.kind and target.crate_types.
+        let mut target_kinds = target.kind;
+        let target_name = target.name.into_boxed_str();
+
+        let (id, kind, lib_name) = if target_kinds.len() > 1 {
+            // multiple kinds always means a library target.
+            (
+                OwnedBuildTargetId::Library,
+                BuildTargetKind::LibraryOrExample(target.crate_types),
+                Some(target_name),
+            )
+        } else if let Some(target_kind) = target_kinds.pop() {
+            let (id, lib_name) = match target_kind.as_str() {
+                "custom-build" => (OwnedBuildTargetId::BuildScript, Some(target_name)),
+                "bin" => (OwnedBuildTargetId::Binary(target_name), None),
+                "example" => (OwnedBuildTargetId::Example(target_name), None),
+                "test" => (OwnedBuildTargetId::Test(target_name), None),
+                "bench" => (OwnedBuildTargetId::Benchmark(target_name), None),
+                _other => {
+                    // Assume that this is a library crate.
+                    (OwnedBuildTargetId::Library, Some(target_name))
+                }
+            };
+
+            let kind = match &id {
+                OwnedBuildTargetId::Library | OwnedBuildTargetId::Example(_) => {
+                    BuildTargetKind::LibraryOrExample(target.crate_types)
+                }
+                _ => {
+                    // The crate_types must be exactly "bin".
+                    if target.crate_types != ["bin"] {
+                        return Err(Error::PackageGraphConstructError(format!(
+                            "for package ID '{}': build target '{:?}' has invalid crate types '{:?}'",
+                            self.package_id, id, target.crate_types,
+                        )));
+                    }
+                    BuildTargetKind::Binary
+                }
+            };
+
+            (id, kind, lib_name)
+        } else {
+            return Err(Error::PackageGraphConstructError(format!(
+                "for package ID '{}': build target '{}' has no kinds",
+                self.package_id, target_name
+            )));
+        };
+
+        match self.targets.entry(id) {
+            Entry::Occupied(occupied) => {
+                return Err(Error::PackageGraphConstructError(format!(
+                    "for package ID '{}': duplicate build targets for {:?}",
+                    self.package_id,
+                    occupied.key()
+                )));
+            }
+            Entry::Vacant(vacant) => {
+                vacant.insert(BuildTargetImpl {
+                    kind,
+                    lib_name,
+                    required_features: target.required_features,
+                    path: target.src_path.into_boxed_path(),
+                    edition: target.edition.into_boxed_str(),
+                    doc_tests: target.doctest,
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    fn finish(self) -> BTreeMap<OwnedBuildTargetId, BuildTargetImpl> {
+        self.targets
     }
 }
 
