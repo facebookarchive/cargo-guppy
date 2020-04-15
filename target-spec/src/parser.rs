@@ -78,17 +78,11 @@ impl Target {
 
     /// Verify this `cfg()` expression.
     fn verify_expr(expr: Expression) -> Result<Self, ParseError> {
-        // Error out on unknown flags or key-value pairs. Everything else is recognized (though
-        // DebugAssertions/ProcMacro etc always return false.)
+        // Error out on unknown key-value pairs. Everything else is recognized (though
+        // DebugAssertions/ProcMacro etc always returns false, and flags return false by default).
         for pred in expr.predicates() {
-            match pred {
-                Predicate::Flag(flag) => {
-                    return Err(ParseError::UnknownPredicate(flag.to_string()))
-                }
-                Predicate::KeyValue { key, .. } => {
-                    return Err(ParseError::UnknownPredicate(key.to_string()))
-                }
-                _ => {}
+            if let Predicate::KeyValue { key, .. } = pred {
+                return Err(ParseError::UnknownPredicate(key.to_string()));
             }
         }
         Ok(Target::Spec(Arc::new(expr)))
@@ -191,9 +185,22 @@ mod tests {
     }
 
     #[test]
+    fn test_unknown_flag() {
+        let expr = match Target::parse("cfg(foo)").unwrap() {
+            Target::TargetInfo(target_info) => {
+                panic!("expected spec, got target info: {:?}", target_info)
+            }
+            Target::Spec(expr) => expr,
+        };
+
+        assert_eq!(
+            expr.predicates().collect::<Vec<_>>(),
+            vec![Predicate::Flag("foo")],
+        );
+    }
+
+    #[test]
     fn test_unknown_predicate() {
-        let err = Target::parse("cfg(foo)").expect_err("unknown predicate");
-        assert_eq!(err, ParseError::UnknownPredicate("foo".to_string()));
         let err = Target::parse("cfg(bogus_key = \"bogus_value\")").expect_err("unknown predicate");
         assert_eq!(err, ParseError::UnknownPredicate("bogus_key".to_string()));
     }

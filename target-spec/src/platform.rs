@@ -12,6 +12,7 @@ include!(concat!(env!("OUT_DIR"), "/current_platform.rs"));
 pub struct Platform<'a> {
     target_info: &'a TargetInfo,
     target_features: TargetFeatures<'a>,
+    flags: HashSet<&'a str>,
 }
 
 impl<'a> Platform<'a> {
@@ -22,12 +23,29 @@ impl<'a> Platform<'a> {
         Some(Self {
             target_info: get_target_by_triple(triple.as_ref())?,
             target_features,
+            flags: HashSet::new(),
         })
+    }
+
+    /// Adds a set of flags to accept.
+    ///
+    /// A flag is a single token like the `foo` in `cfg(not(foo))`.
+    ///
+    /// A default `cargo build` will always evaluate flags to false, but custom wrappers may cause
+    /// some flags to evaluate to true. For example, as of version 0.6, `cargo web build` will cause
+    /// `cargo_web` to evaluate to true.
+    pub fn add_flags(&mut self, flags: &[&'a str]) {
+        self.flags.extend(flags);
     }
 
     /// Returns the target triple for this platform.
     pub fn triple(&self) -> &'static str {
         self.target_info.triple
+    }
+
+    /// Returns true if this flag was set with `add_flags`.
+    pub fn has_flag(&self, flag: impl AsRef<str>) -> bool {
+        self.flags.contains(flag.as_ref())
     }
 
     /// Returns the underlying `TargetInfo`.
@@ -54,6 +72,7 @@ impl Platform<'static> {
         Some(Self {
             target_info,
             target_features,
+            flags: HashSet::new(),
         })
     }
 }
