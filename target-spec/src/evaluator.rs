@@ -84,7 +84,11 @@ fn eval_expr(spec: &Arc<Expression>, platform: &Platform<'_>) -> Option<bool> {
                 // https://github.com/rust-lang/cargo/issues/7442 for more details.
                 Some(false)
             }
-            Predicate::KeyValue { .. } | Predicate::Flag(_) => {
+            Predicate::Flag(flag) => {
+                // This returns false by default but true in some cases.
+                Some(platform.has_flag(flag))
+            }
+            Predicate::KeyValue { .. } => {
                 unreachable!("these predicates are disallowed at TargetSpec construction time")
             }
         }
@@ -155,21 +159,48 @@ mod tests {
         }
 
         // Unknown bogus families.
-        for family in &["foo", "bar", "nonsense"] {
+        let platform = Platform::new("x86_64-unknown-linux-gnu", TargetFeatures::Unknown).unwrap();
+        let mut platform_with_flags = platform.clone();
+        platform_with_flags.add_flags(&["foo", "bar"]);
+
+        for family in &["foo", "bar"] {
             let cfg = format!("cfg({})", family);
             let cfg_not = format!("cfg(not({}))", family);
-            assert_eq!(
-                eval(&cfg, "x86_64-unknown-linux-gnu"),
-                Err(EvalError::InvalidSpec(ParseError::UnknownPredicate(
-                    family.to_string()
-                )))
-            );
-            assert_eq!(
-                eval(&cfg_not, "x86_64-unknown-linux-gnu"),
-                Err(EvalError::InvalidSpec(ParseError::UnknownPredicate(
-                    family.to_string()
-                )))
-            );
+
+            // eval always means flags are evaluated to false.
+            assert_eq!(eval(&cfg, "x86_64-unknown-linux-gnu"), Ok(Some(false)));
+            assert_eq!(eval(&cfg_not, "x86_64-unknown-linux-gnu"), Ok(Some(true)));
+
+            let spec: TargetSpec = cfg.parse().unwrap();
+            let spec_not: TargetSpec = cfg_not.parse().unwrap();
+
+            // flag missing means false.
+            assert_eq!(spec.eval(&platform), Some(false));
+            assert_eq!(spec_not.eval(&platform), Some(true));
+
+            // flag present means true.
+            assert_eq!(spec.eval(&platform_with_flags), Some(true));
+            assert_eq!(spec_not.eval(&platform_with_flags), Some(false));
+        }
+
+        for family in &["baz", "nonsense"] {
+            let cfg = format!("cfg({})", family);
+            let cfg_not = format!("cfg(not({}))", family);
+
+            // eval always means flags are evaluated to false.
+            assert_eq!(eval(&cfg, "x86_64-unknown-linux-gnu"), Ok(Some(false)));
+            assert_eq!(eval(&cfg_not, "x86_64-unknown-linux-gnu"), Ok(Some(true)));
+
+            let spec: TargetSpec = cfg.parse().unwrap();
+            let spec_not: TargetSpec = cfg_not.parse().unwrap();
+
+            // flag missing means false.
+            assert_eq!(spec.eval(&platform), Some(false));
+            assert_eq!(spec_not.eval(&platform), Some(true));
+
+            // flag still missing means false.
+            assert_eq!(spec.eval(&platform_with_flags), Some(false));
+            assert_eq!(spec_not.eval(&platform_with_flags), Some(true));
         }
     }
 
