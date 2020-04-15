@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
-use crate::graph::{cargo_version_matches, kind_str, Cycles, DependencyDirection, PackageIx};
+use crate::graph::{
+    cargo_version_matches, kind_str, BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind,
+    Cycles, DependencyDirection, OwnedBuildTargetId, PackageIx,
+};
 use crate::petgraph_support::scc::Sccs;
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId, Platform};
 use cargo_metadata::{DependencyKind, NodeDep};
@@ -115,6 +118,53 @@ impl PackageGraph {
                             package_id,
                         )));
                     }
+                }
+            }
+
+            for build_target in metadata.build_targets() {
+                match build_target.id() {
+                    BuildTargetId::Library | BuildTargetId::BuildScript => {
+                        // Ensure that the name is populated (this may panic if it isn't).
+                        build_target.name();
+                    }
+                    BuildTargetId::Binary(name)
+                    | BuildTargetId::Example(name)
+                    | BuildTargetId::Test(name)
+                    | BuildTargetId::Benchmark(name) => {
+                        if name != build_target.name() {
+                            return Err(Error::PackageGraphInternalError(format!(
+                                "package {} has build target name mismatch ({} != {})",
+                                package_id,
+                                name,
+                                build_target.name(),
+                            )));
+                        }
+                    }
+                }
+
+                let id_kind_mismatch = match build_target.id() {
+                    BuildTargetId::Library | BuildTargetId::Example(_) => {
+                        match build_target.kind() {
+                            BuildTargetKind::LibraryOrExample(_) => false,
+                            BuildTargetKind::Binary => true,
+                        }
+                    }
+                    BuildTargetId::BuildScript
+                    | BuildTargetId::Binary(_)
+                    | BuildTargetId::Test(_)
+                    | BuildTargetId::Benchmark(_) => match build_target.kind() {
+                        BuildTargetKind::LibraryOrExample(_) => true,
+                        BuildTargetKind::Binary => false,
+                    },
+                };
+
+                if id_kind_mismatch {
+                    return Err(Error::PackageGraphInternalError(format!(
+                        "package {} has build target id {:?}, which doesn't match kind {:?}",
+                        package_id,
+                        build_target.id(),
+                        build_target.kind(),
+                    )));
                 }
             }
 
@@ -583,6 +633,7 @@ pub struct PackageMetadata {
     // Other information.
     pub(super) package_ix: NodeIndex<PackageIx>,
     pub(super) workspace_path: Option<Box<Path>>,
+    pub(super) build_targets: BTreeMap<OwnedBuildTargetId, BuildTargetImpl>,
     pub(super) has_default_feature: bool,
     pub(super) resolved_deps: Vec<NodeDep>,
     pub(super) resolved_features: Vec<String>,
@@ -718,6 +769,22 @@ impl PackageMetadata {
     /// not in the workspace.
     pub fn workspace_path(&self) -> Option<&Path> {
         self.workspace_path.as_ref().map(|path| path.as_ref())
+    }
+
+    /// Returns all the build targets for this package.
+    ///
+    /// For more, see [Cargo
+    /// Targets](https://doc.rust-lang.org/nightly/cargo/reference/cargo-targets.html#cargo-targets)
+    /// in the Cargo reference.
+    pub fn build_targets(&self) -> impl Iterator<Item = BuildTarget> {
+        self.build_targets.iter().map(BuildTarget::new)
+    }
+
+    /// Looks up a build target by identifier.
+    pub fn build_target(&self, id: &BuildTargetId<'_>) -> Option<BuildTarget> {
+        self.build_targets
+            .get_key_value(id.as_key())
+            .map(BuildTarget::new)
     }
 
     /// Returns true if this package has a named feature named `default`.

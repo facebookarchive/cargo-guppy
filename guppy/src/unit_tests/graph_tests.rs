@@ -208,6 +208,14 @@ mod small {
     }
 
     proptest_suite!(metadata_targets1);
+
+    #[test]
+    fn metadata_build_targets1() {
+        let metadata_build_targets1 = Fixture::metadata_build_targets1();
+        metadata_build_targets1.verify();
+    }
+
+    // No need for proptests because there are no dependencies involved.
 }
 
 mod large {

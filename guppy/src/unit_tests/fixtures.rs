@@ -3,8 +3,8 @@
 
 use crate::errors::FeatureBuildStage;
 use crate::graph::{
-    kind_str, DependencyDirection, EnabledStatus, PackageEdge, PackageGraph, PackageMetadata,
-    UnknownStatus, Workspace,
+    kind_str, BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, PackageEdge,
+    PackageGraph, PackageMetadata, UnknownStatus, Workspace,
 };
 use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
@@ -77,6 +77,11 @@ pub(crate) static METADATA_TARGETS1_BYTES: &str =
     "bytes 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)";
 pub(crate) static METADATA_TARGETS1_DEP_A: &str =
     "dep-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/dep-a)";
+
+pub(crate) static METADATA_BUILD_TARGETS1: &str =
+    include_str!("../../fixtures/small/metadata_build_targets1.json");
+pub(crate) static METADATA_BUILD_TARGETS1_TESTCRATE: &str =
+    "testcrate 0.1.0 (path+file:///Users/fakeuser/local/testcrates/test-build-targets)";
 
 pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/large/metadata_libra.json");
 pub(crate) static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
@@ -181,6 +186,11 @@ impl Fixture {
             let metadata = self.graph.metadata(id).expect(&msg);
             self.details.assert_metadata(id, &metadata, &msg);
 
+            // Check for build targets.
+            if self.details.has_build_targets(id) {
+                self.details.assert_build_targets(metadata, &msg);
+            }
+
             // Check for direct dependency queries.
             if self.details.has_deps(id) {
                 self.details.assert_deps(&self.graph, id, &msg);
@@ -231,6 +241,7 @@ impl Fixture {
     define_fixture!(metadata_cycle1, METADATA_CYCLE1);
     define_fixture!(metadata_cycle2, METADATA_CYCLE2);
     define_fixture!(metadata_targets1, METADATA_TARGETS1);
+    define_fixture!(metadata_build_targets1, METADATA_BUILD_TARGETS1);
     define_fixture!(metadata_libra, METADATA_LIBRA);
     define_fixture!(metadata_libra_f0091a4, METADATA_LIBRA_F0091A4);
     define_fixture!(metadata_libra_9ffd93b, METADATA_LIBRA_9FFD93B);
@@ -356,6 +367,44 @@ impl FixtureDetails {
     pub(crate) fn assert_metadata(&self, id: &PackageId, metadata: &PackageMetadata, msg: &str) {
         let details = &self.package_details[id];
         details.assert_metadata(metadata, msg);
+    }
+
+    // ---
+    // Build targets
+    // ---
+
+    pub(crate) fn has_build_targets(&self, id: &PackageId) -> bool {
+        let details = &self.package_details[id];
+        details.build_targets.is_some()
+    }
+
+    pub(crate) fn assert_build_targets(&self, metadata: &PackageMetadata, msg: &str) {
+        let build_targets = self.package_details[metadata.id()]
+            .build_targets
+            .as_ref()
+            .unwrap();
+
+        let mut actual: Vec<_> = metadata
+            .build_targets()
+            .map(|build_target| {
+                // Strip off the manifest path from the beginning.
+                let path = build_target
+                    .path()
+                    .strip_prefix(
+                        metadata
+                            .manifest_path()
+                            .parent()
+                            .expect("manifest path is a file"),
+                    )
+                    .expect("build target path is inside source dir")
+                    .to_path_buf();
+
+                (build_target.id(), build_target.kind().clone(), path)
+            })
+            .collect();
+        actual.sort();
+
+        assert_eq!(build_targets, &actual, "{}: build targets match", msg,);
     }
 
     // ---
@@ -511,19 +560,17 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_build_targets(vec![(
+            BuildTargetId::Binary("testcrate"),
+            BuildTargetKind::Binary,
+            "src/main.rs",
+        )])
         .with_deps(vec![("datatest", METADATA1_DATATEST)])
         .with_reverse_deps(vec![])
         .insert_into(&mut details);
 
-        PackageDetails::new(
-            METADATA1_DATATEST,
-            "datatest",
-            "0.4.2",
-            vec!["Ivan Dubrov <ivan@commure.com>"],
-            Some("Data-driven tests in Rust\n"),
-            Some("MIT/Apache-2.0"),
-        )
-        .with_deps(
+        #[rustfmt::skip]
+        let datatest_deps =
             vec![
                 ("ctor", "ctor 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)"),
                 ("datatest-derive", "datatest-derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)"),
@@ -536,8 +583,54 @@ impl FixtureDetails {
                 // *replaced* version shows up here, not the regular one.
                 ("walkdir", "walkdir 2.2.9 (git+https://github.com/BurntSushi/walkdir?tag=2.2.9#7c7013259eb9db400b3e5c7bc60330ca08068826)"),
                 ("yaml-rust", "yaml-rust 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)")
-            ],
+            ];
+
+        PackageDetails::new(
+            METADATA1_DATATEST,
+            "datatest",
+            "0.4.2",
+            vec!["Ivan Dubrov <ivan@commure.com>"],
+            Some("Data-driven tests in Rust\n"),
+            Some("MIT/Apache-2.0"),
         )
+        .with_build_targets(vec![
+            (
+                BuildTargetId::Library,
+                BuildTargetKind::LibraryOrExample(vec!["lib".into()]),
+                "src/lib.rs",
+            ),
+            (
+                BuildTargetId::BuildScript,
+                BuildTargetKind::Binary,
+                "build.rs",
+            ),
+            (
+                BuildTargetId::Test("bench"),
+                BuildTargetKind::Binary,
+                "tests/bench.rs",
+            ),
+            (
+                BuildTargetId::Test("datatest"),
+                BuildTargetKind::Binary,
+                "tests/datatest.rs",
+            ),
+            (
+                BuildTargetId::Test("datatest_stable"),
+                BuildTargetKind::Binary,
+                "tests/datatest_stable.rs",
+            ),
+            (
+                BuildTargetId::Test("datatest_stable_unsafe"),
+                BuildTargetKind::Binary,
+                "tests/datatest_stable_unsafe.rs",
+            ),
+            (
+                BuildTargetId::Test("unicode"),
+                BuildTargetKind::Binary,
+                "tests/unicode.rs",
+            ),
+        ])
+        .with_deps(datatest_deps)
         .with_reverse_deps(vec![("datatest", METADATA1_TESTCRATE)])
         .insert_into(&mut details);
 
@@ -1073,6 +1166,78 @@ impl FixtureDetails {
             .with_link_details(link_details)
     }
 
+    pub(crate) fn metadata_build_targets1() -> Self {
+        // [package]
+        // name = "testcrate"
+        // version = "0.1.0"
+        // authors = ["Fake Author <fakeauthor@example.com>"]
+        // edition = "2018"
+        // build = "build.rs"
+        //
+        // [lib]
+        // name = "bench1"
+        // crate-type = ["cdylib", "bin"]
+        //
+        // [[bench]]
+        // name = "bench1"
+        // path = "src/main.rs"
+        //
+        // [[bench]]
+        // name = "bench2"
+        // path = "src/main2.rs"
+        //
+        // [[example]]
+        // name = "example1"
+        // path = "src/lib.rs"
+        // crate-type = ["rlib", "dylib"]
+
+        let mut details = HashMap::new();
+
+        PackageDetails::new(
+            METADATA_BUILD_TARGETS1_TESTCRATE,
+            "testcrate",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_build_targets(vec![
+            (
+                BuildTargetId::Library,
+                BuildTargetKind::LibraryOrExample(vec!["cdylib".into(), "bin".into()]),
+                "src/lib.rs",
+            ),
+            (
+                BuildTargetId::BuildScript,
+                BuildTargetKind::Binary,
+                "build.rs",
+            ),
+            (
+                BuildTargetId::Binary("testcrate"),
+                BuildTargetKind::Binary,
+                "src/main.rs",
+            ),
+            (
+                BuildTargetId::Example("example1"),
+                BuildTargetKind::LibraryOrExample(vec!["rlib".into(), "dylib".into()]),
+                "src/lib.rs",
+            ),
+            (
+                BuildTargetId::Benchmark("bench1"),
+                BuildTargetKind::Binary,
+                "src/main.rs",
+            ),
+            (
+                BuildTargetId::Benchmark("bench2"),
+                BuildTargetKind::Binary,
+                "src/main2.rs",
+            ),
+        ])
+        .insert_into(&mut details);
+
+        Self::new(details)
+    }
+
     pub(crate) fn metadata_libra() -> Self {
         let mut details = HashMap::new();
 
@@ -1249,6 +1414,7 @@ pub(crate) struct PackageDetails {
     description: Option<&'static str>,
     license: Option<&'static str>,
 
+    build_targets: Option<Vec<(BuildTargetId<'static>, BuildTargetKind, PathBuf)>>,
     // The vector items are (name, package id).
     // XXX add more details about dependency edges here?
     deps: Option<Vec<(&'static str, PackageId)>>,
@@ -1274,12 +1440,27 @@ impl PackageDetails {
             authors,
             description,
             license,
+            build_targets: None,
             deps: None,
             reverse_deps: None,
             transitive_deps: None,
             transitive_reverse_deps: None,
             named_features: None,
         }
+    }
+
+    fn with_build_targets(
+        mut self,
+        mut build_targets: Vec<(BuildTargetId<'static>, BuildTargetKind, &'static str)>,
+    ) -> Self {
+        build_targets.sort();
+        self.build_targets = Some(
+            build_targets
+                .into_iter()
+                .map(|(id, kind, path)| (id, kind, path.to_string().into()))
+                .collect(),
+        );
+        self
     }
 
     fn with_deps(mut self, mut deps: Vec<(&'static str, &'static str)>) -> Self {

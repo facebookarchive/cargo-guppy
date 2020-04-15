@@ -12,6 +12,7 @@ use petgraph::prelude::*;
 use std::fmt;
 
 mod build;
+mod build_targets;
 mod cycles;
 #[doc(hidden)]
 pub mod feature;
@@ -24,6 +25,7 @@ mod resolve;
 mod resolve_core;
 
 pub use crate::petgraph_support::dot::DotWrite;
+pub use build_targets::*;
 pub use cycles::*;
 pub use graph_impl::*;
 use once_cell::sync::Lazy;
