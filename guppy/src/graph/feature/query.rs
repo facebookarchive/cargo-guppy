@@ -179,10 +179,10 @@ impl<'g> FeatureGraph<'g> {
     ) -> FeatureQuery<'g> {
         let params = match &packages.params {
             QueryParams::Forward(package_ixs) => QueryParams::Forward(
-                self.feature_ixs_for_packages(package_ixs.iter().copied(), filter),
+                self.feature_ixs_for_package_ixs_filtered(package_ixs.iter().copied(), filter),
             ),
             QueryParams::Reverse(package_ixs) => QueryParams::Reverse(
-                self.feature_ixs_for_packages(package_ixs.iter().copied(), filter),
+                self.feature_ixs_for_package_ixs_filtered(package_ixs.iter().copied(), filter),
             ),
         };
 

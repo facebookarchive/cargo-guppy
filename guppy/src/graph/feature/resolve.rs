@@ -7,6 +7,7 @@ use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{DependencyDirection, PackageSet};
 use crate::petgraph_support::IxBitSet;
 use petgraph::graph::NodeIndex;
+use crate::debug_ignore::DebugIgnore;
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.
@@ -17,7 +18,7 @@ impl<'g> FeatureGraph<'g> {
     /// know you need parts of the graph that aren't accessible from the workspace.
     pub fn resolve_all(&self) -> FeatureSet<'g> {
         FeatureSet {
-            feature_graph: *self,
+            feature_graph: DebugIgnore(*self),
             core: ResolveCore::all_nodes(self.dep_graph()),
         }
     }
@@ -29,13 +30,13 @@ impl<'g> FeatureGraph<'g> {
         packages: &PackageSet<'_>,
         filter: impl FeatureFilter<'g>,
     ) -> FeatureSet<'g> {
-        let included: IxBitSet = self.feature_ixs_for_packages(
+        let included: IxBitSet = self.feature_ixs_for_package_ixs_filtered(
             // The direction of iteration doesn't matter.
             packages.clone().into_ixs(DependencyDirection::Forward),
             filter,
         );
         FeatureSet {
-            feature_graph: *self,
+            feature_graph: DebugIgnore(*self),
             core: ResolveCore::from_included(included.0),
         }
     }
@@ -46,7 +47,7 @@ impl<'g> FeatureGraph<'g> {
 /// Created by `FeatureQuery::resolve` or the `FeatureGraph::resolve_` methods.
 #[derive(Clone, Debug)]
 pub struct FeatureSet<'g> {
-    feature_graph: FeatureGraph<'g>,
+    feature_graph: DebugIgnore<FeatureGraph<'g>>,
     core: ResolveCore<FeatureGraph<'g>>,
 }
 
@@ -56,7 +57,7 @@ impl<'g> FeatureSet<'g> {
         params: QueryParams<FeatureGraph<'g>>,
     ) -> Self {
         Self {
-            feature_graph,
+            feature_graph: DebugIgnore(feature_graph),
             core: ResolveCore::new(feature_graph.dep_graph(), params),
         }
     }
@@ -260,7 +261,7 @@ impl<'g> FeatureSet<'g> {
 ///
 /// The items returned are of type `FeatureId<'g>`. Returned by `PackageResolveSet::into_ids`.
 pub struct IntoIds<'g> {
-    graph: FeatureGraph<'g>,
+    graph: DebugIgnore<FeatureGraph<'g>>,
     inner: Topo<'g, FeatureGraph<'g>>,
 }
 
@@ -298,7 +299,7 @@ impl<'g> ExactSizeIterator for IntoIds<'g> {
 ///
 /// The items returned are of type `FeatureId<'g>`. Returned by `PackageResolveSet::into_ids`.
 pub struct IntoMetadatas<'g> {
-    graph: FeatureGraph<'g>,
+    graph: DebugIgnore<FeatureGraph<'g>>,
     inner: Topo<'g, FeatureGraph<'g>>,
 }
 

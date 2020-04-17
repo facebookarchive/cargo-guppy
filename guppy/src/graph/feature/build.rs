@@ -19,20 +19,23 @@ use target_spec::TargetSpec;
 pub(super) struct FeatureGraphBuildState<'g> {
     package_graph: &'g PackageGraph,
     graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
+    // Map from package ixs to the base (first) feature for each package.
+    base_ixs: Vec<NodeIndex<FeatureIx>>,
     map: HashMap<FeatureNode, FeatureMetadataImpl>,
     warnings: Vec<FeatureGraphWarning>,
 }
 
 impl<'g> FeatureGraphBuildState<'g> {
     pub(super) fn new(package_graph: &'g PackageGraph) -> Self {
+        let package_count = package_graph.package_count();
         Self {
             package_graph,
             // Each package corresponds to at least one feature ID.
-            graph: Graph::with_capacity(
-                package_graph.package_count(),
-                package_graph.package_count(),
-            ),
-            map: HashMap::with_capacity(package_graph.package_count()),
+            graph: Graph::with_capacity(package_count, package_count),
+            // Each package corresponds to exactly one base feature ix, and there's one last ix at
+            // the end.
+            base_ixs: Vec::with_capacity(package_count + 1),
+            map: HashMap::with_capacity(package_count),
             warnings: vec![],
         }
     }
@@ -41,11 +44,12 @@ impl<'g> FeatureGraphBuildState<'g> {
     /// feature to the base package.
     pub(super) fn add_nodes(&mut self, package: &'g PackageMetadata) {
         let base_node = FeatureNode::base(package.package_ix);
-        let base_idx = self.add_node(base_node, FeatureType::BasePackage);
+        let base_ix = self.add_node(base_node, FeatureType::BasePackage);
+        self.base_ixs.push(base_ix);
         FeatureNode::named_features(package).for_each(|feature_node| {
             let feature_ix = self.add_node(feature_node, FeatureType::NamedFeature);
             self.graph
-                .update_edge(feature_ix, base_idx, FeatureEdge::FeatureToBase);
+                .update_edge(feature_ix, base_ix, FeatureEdge::FeatureToBase);
         });
 
         package.optional_deps_full().for_each(|(n, _)| {
@@ -54,8 +58,13 @@ impl<'g> FeatureGraphBuildState<'g> {
                 FeatureType::OptionalDep,
             );
             self.graph
-                .update_edge(dep_idx, base_idx, FeatureEdge::FeatureToBase);
+                .update_edge(dep_idx, base_ix, FeatureEdge::FeatureToBase);
         });
+    }
+
+    /// Mark the end of adding nodes.
+    pub(super) fn end_nodes(&mut self) {
+        self.base_ixs.push(NodeIndex::new(self.graph.node_count()));
     }
 
     pub(super) fn add_named_feature_edges(&mut self, metadata: &PackageMetadata) {
@@ -316,6 +325,7 @@ impl<'g> FeatureGraphBuildState<'g> {
     pub(super) fn build(self) -> FeatureGraphImpl {
         FeatureGraphImpl {
             graph: self.graph,
+            base_ixs: self.base_ixs,
             map: self.map,
             warnings: self.warnings,
             sccs: OnceCell::new(),
