@@ -1118,6 +1118,11 @@ impl<'g> EnabledStatus<'g> {
         self.required.enabled_on(platform)
     }
 
+    /// Returns true if there are any platforms on which this dependency is required.
+    pub fn required_on_any(&self) -> bool {
+        !self.required.is_never()
+    }
+
     /// Evaluates whether this dependency is enabled (required or optional) on the given platform.
     ///
     /// Returns `Unknown` if the result was unknown, which may happen if the platform's target
@@ -1127,6 +1132,13 @@ impl<'g> EnabledStatus<'g> {
         let optional = self.optional.enabled_on(platform);
 
         required.or(optional)
+    }
+
+    /// Returns true if there are any platforms on which this dependency is enabled (required or
+    /// optional).
+    pub fn enabled_on_any(&self) -> bool {
+        // This is the opposite of is_never.
+        !self.required.is_never() || !self.optional.is_never()
     }
 
     /// Returns the `PlatformStatus` corresponding to whether this dependency is required.
@@ -1157,7 +1169,7 @@ pub enum PlatformStatus<'g> {
 }
 
 impl<'g> PlatformStatus<'g> {
-    fn new(specs: &'g PlatformStatusImpl) -> Self {
+    pub(super) fn new(specs: &'g PlatformStatusImpl) -> Self {
         match specs {
             PlatformStatusImpl::Always => PlatformStatus::Always,
             PlatformStatusImpl::Specs(specs) => {
