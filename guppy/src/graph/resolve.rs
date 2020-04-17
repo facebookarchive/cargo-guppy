@@ -282,8 +282,6 @@ impl<'g> PackageSet<'g> {
 
 /// Represents whether a particular link within a package graph should be followed during a
 /// resolve operation.
-///
-/// This trait is implemented for all functions that match `Fn(PackageLink<'g>) -> bool`.
 pub trait PackageResolver<'g> {
     /// Returns true if this link should be followed during a resolve operation.
     ///
