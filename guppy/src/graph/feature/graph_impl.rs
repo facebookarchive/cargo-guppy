@@ -65,7 +65,7 @@ impl PackageGraph {
 /// Constructed through `PackageGraph::feature_graph`.
 #[derive(Clone, Copy, Debug)]
 pub struct FeatureGraph<'g> {
-    pub(super) package_graph: &'g PackageGraph,
+    pub(crate) package_graph: &'g PackageGraph,
     pub(super) inner: &'g FeatureGraphImpl,
 }
 

@@ -25,6 +25,8 @@ pub enum Error {
     UnknownFeatureId(PackageId, Option<String>),
     /// A package specified by name was unknown to this workspace.
     UnknownWorkspaceName(String),
+    /// An error occured while computing a `CargoSet`.
+    CargoSetError(String),
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
 }
@@ -53,6 +55,7 @@ impl fmt::Display for Error {
                 None => write!(f, "Unknown feature ID: '{}' (base)", package_id),
             },
             UnknownWorkspaceName(name) => write!(f, "Unknown workspace package name: {}", name),
+            CargoSetError(msg) => write!(f, "Error while computing Cargo set: {}", msg),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
         }
     }
@@ -67,6 +70,7 @@ impl error::Error for Error {
             UnknownPackageId(_) => None,
             UnknownFeatureId(_, _) => None,
             UnknownWorkspaceName(_) => None,
+            CargoSetError(_) => None,
             PackageGraphInternalError(_) => None,
         }
     }
