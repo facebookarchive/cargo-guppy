@@ -12,6 +12,7 @@ use std::fmt;
 
 mod build;
 mod build_targets;
+pub mod cargo;
 mod cycles;
 pub mod feature;
 mod graph_impl;

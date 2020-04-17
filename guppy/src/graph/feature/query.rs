@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::graph::cargo::{CargoOptions, CargoSet};
 use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureSet};
 use crate::graph::query_core::QueryParams;
 use crate::graph::{DependencyDirection, PackageQuery};
@@ -154,7 +155,7 @@ pub fn feature_id_filter<'g: 'a, 'a>(
 #[derive(Clone, Debug)]
 pub struct FeatureQuery<'g> {
     pub(super) graph: FeatureGraph<'g>,
-    pub(super) params: QueryParams<FeatureGraph<'g>>,
+    pub(in crate::graph) params: QueryParams<FeatureGraph<'g>>,
 }
 
 /// ## Queries
@@ -277,6 +278,14 @@ impl<'g> FeatureQuery<'g> {
         resolver_fn: impl FnMut(&FeatureQuery<'g>, CrossLink<'g>) -> bool,
     ) -> FeatureSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
+    }
+
+    /// Resolves this query, simulating what Cargo would do if asked to build the specified
+    /// features.
+    ///
+    /// There is some flexibility in how packages are built in the end.
+    pub fn resolve_cargo(self, opts: &CargoOptions<'_>) -> Result<CargoSet<'g>, Error> {
+        CargoSet::new(self, opts)
     }
 }
 

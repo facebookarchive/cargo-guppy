@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use cargo_guppy::{CmdSelectOptions, FilterOptions, SubtreeSizeOptions};
+use cargo_guppy::{CmdSelectOptions, FilterOptions, ResolveCargoOptions, SubtreeSizeOptions};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -24,6 +24,9 @@ enum Command {
     #[structopt(name = "dups")]
     /// Print the number of duplicate packages
     Duplicates(FilterOptions),
+    #[structopt(name = "resolve-cargo")]
+    /// Return packages and features that would be built by Cargo
+    ResolveCargo(ResolveCargoOptions),
     #[structopt(name = "select")]
     /// Select packages and their transitive dependencies
     Select(CmdSelectOptions),
@@ -50,6 +53,7 @@ fn main() {
     let result = match args.cmd {
         Command::Diff { json, old, new } => cargo_guppy::cmd_diff(json, &old, &new),
         Command::Duplicates(ref options) => cargo_guppy::cmd_dups(options),
+        Command::ResolveCargo(ref options) => cargo_guppy::cmd_resolve_cargo(options),
         Command::Select(ref options) => cargo_guppy::cmd_select(options),
         Command::SubtreeSize(ref options) => cargo_guppy::cmd_subtree_size(options),
     };

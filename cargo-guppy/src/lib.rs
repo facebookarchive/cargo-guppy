@@ -6,11 +6,13 @@ mod diff;
 
 pub use crate::core::*;
 
+use guppy::graph::cargo::CargoOptions;
 use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
     MetadataCommand, PackageId,
 };
+use guppy_cmdlib::{triple_to_platform, PackagesAndFeatures};
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -63,6 +65,69 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
         let output = itertools::join(dupes.iter().map(|p| p.version()), ", ");
 
         println!("{} ({})", name, output);
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, StructOpt)]
+pub struct ResolveCargoOptions {
+    #[structopt(flatten)]
+    pf: PackagesAndFeatures,
+
+    #[structopt(long = "include-dev")]
+    /// Include dev-dependencies of initial packages (default: false)
+    include_dev: bool,
+
+    #[structopt(long = "target-platform")]
+    /// Evaluate against target platform, "current" or "any" (default: any)
+    target_platform: Option<String>,
+
+    #[structopt(long = "host-platform")]
+    /// Evaluate against host platform, "current" or "any" (default: any)
+    host_platform: Option<String>,
+}
+
+pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error> {
+    let target_platform = triple_to_platform(opts.target_platform.as_deref(), || None)?;
+    let host_platform = triple_to_platform(opts.host_platform.as_deref(), || None)?;
+    let cargo_opts = CargoOptions::new()
+        .with_dev_deps(opts.include_dev)
+        .with_target_platform(target_platform.as_ref())
+        .with_host_platform(host_platform.as_ref());
+
+    // TODO: allow package/feature/omitted selection
+    let mut command = MetadataCommand::new();
+    let pkg_graph = PackageGraph::from_command(&mut command)?;
+    let cargo_set = opts
+        .pf
+        .make_feature_query(&pkg_graph)?
+        .resolve_cargo(&cargo_opts)?;
+
+    println!("** target:");
+    for feature_list in cargo_set
+        .target_features()
+        .packages_with_features(DependencyDirection::Forward)
+    {
+        println!(
+            "{} {}: {}",
+            feature_list.package().name(),
+            feature_list.package().version(),
+            feature_list.display_features()
+        );
+    }
+
+    println!("\n** host:");
+    for feature_list in cargo_set
+        .host_features()
+        .packages_with_features(DependencyDirection::Forward)
+    {
+        println!(
+            "{} {}: {}",
+            feature_list.package().name(),
+            feature_list.package().version(),
+            feature_list.display_features()
+        );
     }
 
     Ok(())

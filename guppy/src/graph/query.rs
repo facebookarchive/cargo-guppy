@@ -3,9 +3,12 @@
 
 use crate::graph::query_core::QueryParams;
 use crate::graph::{
-    DependencyDirection, PackageGraph, PackageLink, PackageResolver, PackageSet, ResolverFn,
+    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageResolver, PackageSet,
+    ResolverFn,
 };
+use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
+use petgraph::prelude::*;
 
 /// A query over a package graph.
 ///
@@ -95,6 +98,21 @@ impl PackageGraph {
             graph: self,
             params: QueryParams::Reverse(self.package_ixs(package_ids)?),
         })
+    }
+
+    pub(super) fn query_from_parts(
+        &self,
+        package_ixs: SortedSet<NodeIndex<PackageIx>>,
+        direction: DependencyDirection,
+    ) -> PackageQuery {
+        let params = match direction {
+            DependencyDirection::Forward => QueryParams::Forward(package_ixs),
+            DependencyDirection::Reverse => QueryParams::Reverse(package_ixs),
+        };
+        PackageQuery {
+            graph: self,
+            params,
+        }
     }
 }
 
