@@ -304,18 +304,26 @@ impl<'g> FeatureId<'g> {
         let metadata = package_graph
             .metadata(package_id)
             .expect("package ID should have valid metadata");
-        let feature = node.feature_idx.as_ref().map(|feature_idx| {
-            metadata
-                .features
-                .get_index(*feature_idx)
-                .expect("feature idx should be valid")
-                .0
-                .as_ref()
-        });
+        let feature = Self::node_to_feature(metadata, node);
         Self {
             package_id,
             feature,
         }
+    }
+
+    pub(super) fn node_to_feature(
+        metadata: &'g PackageMetadata,
+        node: &FeatureNode,
+    ) -> Option<&'g str> {
+        let feature_idx = node.feature_idx?;
+        Some(
+            metadata
+                .features
+                .get_index(feature_idx)
+                .expect("feature idx should be valid")
+                .0
+                .as_ref(),
+        )
     }
 
     /// Returns the package ID.

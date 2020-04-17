@@ -12,6 +12,7 @@ use std::iter;
 mod small {
     use super::*;
     use crate::graph::feature::{default_filter, feature_filter};
+    use crate::unit_tests::feature_helpers::assert_features_for_package;
     use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
@@ -122,9 +123,8 @@ mod small {
         let feature_graph = graph.feature_graph();
         assert_eq!(feature_graph.feature_count(), 492, "feature count");
         assert_eq!(feature_graph.link_count(), 608, "link count");
-        let root_ids: Vec<_> = feature_graph
-            .query_workspace(all_filter())
-            .resolve()
+        let feature_set = feature_graph.query_workspace(all_filter()).resolve();
+        let root_ids: Vec<_> = feature_set
             .into_root_ids(DependencyDirection::Forward)
             .collect();
         let testcrate_id = fixtures::package_id(fixtures::METADATA1_TESTCRATE);
@@ -205,6 +205,25 @@ mod small {
         assert!(!feature_set
             .contains((&dep_a_id, "quux"))
             .expect("valid feature ID"));
+
+        assert_features_for_package(
+            &feature_set,
+            &fixtures::package_id(fixtures::METADATA_TARGETS1_TESTCRATE),
+            &[None],
+            "testcrate",
+        );
+        assert_features_for_package(
+            &feature_set,
+            &dep_a_id,
+            &[None, Some("foo"), Some("bar")],
+            "dep a",
+        );
+        assert_features_for_package(
+            &feature_set,
+            &fixtures::package_id(fixtures::METADATA_TARGETS1_LAZY_STATIC_1),
+            &[None],
+            "lazy_static",
+        );
     }
 
     proptest_suite!(metadata_targets1);

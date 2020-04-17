@@ -1,13 +1,16 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::debug_ignore::DebugIgnore;
 use crate::graph::feature::{FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata};
 use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{ResolveCore, Topo};
-use crate::graph::{DependencyDirection, PackageSet};
+use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
 use crate::petgraph_support::IxBitSet;
+use crate::PackageId;
+use fixedbitset::FixedBitSet;
 use petgraph::graph::NodeIndex;
-use crate::debug_ignore::DebugIgnore;
+use std::iter::FromIterator;
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.
@@ -59,6 +62,14 @@ impl<'g> FeatureSet<'g> {
         Self {
             feature_graph: DebugIgnore(feature_graph),
             core: ResolveCore::new(feature_graph.dep_graph(), params),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn from_included(feature_graph: FeatureGraph<'g>, included: FixedBitSet) -> Self {
+        Self {
+            feature_graph: DebugIgnore(feature_graph),
+            core: ResolveCore::from_included(included),
         }
     }
 
@@ -160,6 +171,22 @@ impl<'g> FeatureSet<'g> {
         res
     }
 
+    // ---
+    // Queries around packages
+    // ---
+
+    /// Returns an iterator over the features present for this package, including the element `None`
+    /// for the "base" feature.
+    ///
+    /// Returns `None` overall if this is an unknown package.
+    pub fn features_for<'a>(
+        &'a self,
+        package_id: &PackageId,
+    ) -> Option<impl Iterator<Item = Option<&'g str>> + 'a> {
+        let metadata = self.feature_graph.package_graph.metadata(package_id)?;
+        Some(self.features_for_package_impl(metadata))
+    }
+
     /// Converts this `FeatureSet` into a `PackageSet` containing all packages with any selected
     /// features (including the "base" feature).
     pub fn to_package_set(&self) -> PackageSet<'g> {
@@ -204,6 +231,44 @@ impl<'g> FeatureSet<'g> {
             graph: self.feature_graph,
             inner: self.core.topo(self.feature_graph.sccs(), direction),
         }
+    }
+
+    /// Iterates over package metadatas and their corresponding features, in topological order in
+    /// the direction specified.
+    ///
+    /// The "base" feature for each package is represented by `None`.
+    ///
+    /// ## Cycles
+    ///
+    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
+    /// topological order will be maintained.
+    pub fn into_packages_with_features<B>(
+        self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = (&'g PackageMetadata, B)> + 'g
+    where
+        B: FromIterator<Option<&'g str>>,
+    {
+        let package_graph = self.feature_graph.package_graph;
+
+        // Use the package graph's SCCs for the topo order guarantee.
+        package_graph
+            .sccs()
+            .node_iter(direction.into())
+            .filter_map(move |package_ix| {
+                let package_id = &package_graph.dep_graph()[package_ix];
+                let metadata = package_graph
+                    .metadata(package_id)
+                    .expect("valid package ID");
+
+                let mut features = self.features_for_package_impl(metadata).peekable();
+                if features.peek().is_some() {
+                    // At least one feature was returned.
+                    Some((metadata, features.collect()))
+                } else {
+                    None
+                }
+            })
     }
 
     /// Returns the set of "root feature" IDs in the specified direction.
@@ -253,6 +318,29 @@ impl<'g> FeatureSet<'g> {
                 feature_graph
                     .metadata_for_node(feature_node)
                     .expect("feature node should be known")
+            })
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    fn features_for_package_impl<'a>(
+        &'a self,
+        metadata: &'g PackageMetadata,
+    ) -> impl Iterator<Item = Option<&'g str>> + 'a {
+        let dep_graph = self.feature_graph.dep_graph();
+        let package_ix = metadata.package_ix;
+        let core = &self.core;
+
+        self.feature_graph
+            .feature_ixs_for_package_ix(package_ix)
+            .filter_map(move |feature_ix| {
+                if core.contains(feature_ix) {
+                    Some(FeatureId::node_to_feature(metadata, &dep_graph[feature_ix]))
+                } else {
+                    None
+                }
             })
     }
 }
