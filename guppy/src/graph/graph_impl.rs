@@ -823,6 +823,7 @@ impl PackageMetadata {
         self.features.get_full(feature).map(|(n, _, _)| n)
     }
 
+    #[allow(dead_code)]
     pub(super) fn all_feature_nodes<'g>(&'g self) -> impl Iterator<Item = FeatureNode> + 'g {
         iter::once(FeatureNode::base(self.package_ix)).chain(
             (0..self.features.len())

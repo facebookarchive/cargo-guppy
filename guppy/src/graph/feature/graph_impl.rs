@@ -195,7 +195,31 @@ impl<'g> FeatureGraph<'g> {
         has_path_connecting(self.dep_graph(), a_ix, b_ix, None)
     }
 
-    pub(super) fn feature_ixs_for_packages<B>(
+    pub(super) fn feature_ixs_for_package_ix(
+        &self,
+        package_ix: NodeIndex<PackageIx>,
+    ) -> impl Iterator<Item = NodeIndex<FeatureIx>> {
+        let package_ix = package_ix.index();
+        let base_ix = self.inner.base_ixs[package_ix].index();
+        // base_ixs has (package count + 1) elements so this access is valid.
+        let next_base_ix = self.inner.base_ixs[package_ix + 1].index();
+
+        (base_ix..next_base_ix).map(NodeIndex::new)
+    }
+
+    pub(super) fn feature_ixs_for_package_ixs(
+        &self,
+        package_ixs: impl IntoIterator<Item = NodeIndex<PackageIx>> + 'g,
+    ) -> impl Iterator<Item = NodeIndex<FeatureIx>> + 'g {
+        // Create a copy of FeatureGraph that will be moved into the closure below.
+        let this = *self;
+
+        package_ixs
+            .into_iter()
+            .flat_map(move |package_ix| this.feature_ixs_for_package_ix(package_ix))
+    }
+
+    pub(super) fn feature_ixs_for_package_ixs_filtered<B>(
         &self,
         package_ixs: impl IntoIterator<Item = NodeIndex<PackageIx>>,
         filter: impl FeatureFilter<'g>,
@@ -204,35 +228,14 @@ impl<'g> FeatureGraph<'g> {
         B: FromIterator<NodeIndex<FeatureIx>>,
     {
         let mut filter = filter;
-        package_ixs
-            .into_iter()
-            .flat_map(move |package_ix| {
-                let package_id = &self.package_graph.dep_graph[package_ix];
-                let metadata = self
-                    .package_graph
-                    .metadata(package_id)
-                    .expect("package ID should have valid metadata");
-                metadata
-                    .all_feature_nodes()
-                    .filter_map(|feature_node| {
-                        if filter.accept(
-                            self,
-                            FeatureId::from_node(self.package_graph, &feature_node),
-                        ) {
-                            Some(
-                                self.inner
-                                    .map
-                                    .get(&feature_node)
-                                    .expect("feature node should be valid")
-                                    .feature_ix,
-                            )
-                        } else {
-                            None
-                        }
-                    })
-                    // This collect() shouldn't be necessary, but Rust 1.40 complains that "captured
-                    // variable cannot escape `FnMut` closure body". Unclear why.
-                    .collect::<Vec<_>>()
+
+        self.feature_ixs_for_package_ixs(package_ixs)
+            .filter(|feature_ix| {
+                let feature_node = &self.dep_graph()[*feature_ix];
+                filter.accept(
+                    &self,
+                    FeatureId::from_node(self.package_graph, feature_node),
+                )
             })
             .collect()
     }
@@ -378,6 +381,8 @@ impl<'g> FeatureMetadata<'g> {
 #[derive(Clone, Debug)]
 pub(in crate::graph) struct FeatureGraphImpl {
     pub(super) graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
+    // base ixs consists of the base (start) feature indexes for each package.
+    pub(super) base_ixs: Vec<NodeIndex<FeatureIx>>,
     pub(super) map: HashMap<FeatureNode, FeatureMetadataImpl>,
     pub(super) warnings: Vec<FeatureGraphWarning>,
     // The strongly connected components of the feature graph. Computed on demand.
@@ -402,6 +407,8 @@ impl FeatureGraphImpl {
                 .expect("valid package ID");
             build_state.add_nodes(metadata);
         }
+
+        build_state.end_nodes();
 
         // The choice of bottom-up for this loop and the next is pretty arbitrary.
         for metadata in package_graph
