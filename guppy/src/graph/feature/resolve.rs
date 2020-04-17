@@ -3,7 +3,8 @@
 
 use crate::debug_ignore::DebugIgnore;
 use crate::graph::feature::{
-    FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery,
+    CrossLink, FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery,
+    FeatureResolver,
 };
 use crate::graph::resolve_core::ResolveCore;
 use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
@@ -61,6 +62,31 @@ impl<'g> FeatureSet<'g> {
         Self {
             graph: DebugIgnore(graph),
             core: ResolveCore::new(graph.dep_graph(), query.params),
+        }
+    }
+
+    pub(super) fn with_resolver(
+        query: FeatureQuery<'g>,
+        mut resolver: impl FeatureResolver<'g>,
+    ) -> Self {
+        let graph = query.graph;
+        let params = query.params.clone();
+        Self {
+            graph: DebugIgnore(graph),
+            core: ResolveCore::with_edge_filter(
+                graph.dep_graph(),
+                params,
+                |source_ix, target_ix, edge_ix| {
+                    let edge = &graph.dep_graph()[edge_ix];
+                    match edge {
+                        FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => true,
+                        FeatureEdge::CrossPackage(inner) => {
+                            let link = CrossLink::new(graph, source_ix, target_ix, edge_ix, &inner);
+                            resolver.accept(&query, link)
+                        }
+                    }
+                },
+            ),
         }
     }
 

@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureSet};
+use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureSet};
 use crate::graph::query_core::QueryParams;
 use crate::graph::{DependencyDirection, PackageQuery};
 use crate::Error;
@@ -257,10 +257,65 @@ impl<'g> FeatureQuery<'g> {
         )
     }
 
-    /// Resolves this selector into a set of known feature IDs.
+    /// Resolves this query into a set of known feature IDs.
     ///
     /// This is the entry point for iterators.
     pub fn resolve(self) -> FeatureSet<'g> {
         FeatureSet::new(self)
+    }
+
+    /// Resolves this query into a set of known feature IDs, using the provided resolver to
+    /// determine which links are followed.
+    pub fn resolve_with(self, resolver: impl FeatureResolver<'g>) -> FeatureSet<'g> {
+        FeatureSet::with_resolver(self, resolver)
+    }
+
+    /// Resolves this query into a set of known feature IDs, using the provided resolver function to
+    /// determine which links are followed.
+    pub fn resolve_with_fn(
+        self,
+        resolver_fn: impl FnMut(&FeatureQuery<'g>, CrossLink<'g>) -> bool,
+    ) -> FeatureSet<'g> {
+        self.resolve_with(ResolverFn(resolver_fn))
+    }
+}
+
+/// Represents whether a particular link within a feature graph should be followed during a
+/// resolve operation.
+pub trait FeatureResolver<'g> {
+    /// Returns true if this cross-package link should be followed during a resolve operation.
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool;
+}
+
+impl<'g, 'a, T> FeatureResolver<'g> for &'a mut T
+where
+    T: FeatureResolver<'g>,
+{
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+        (**self).accept(query, link)
+    }
+}
+
+impl<'g, 'a> FeatureResolver<'g> for Box<dyn FeatureResolver<'g> + 'a> {
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+        (**self).accept(query, link)
+    }
+}
+
+impl<'g, 'a> FeatureResolver<'g> for &'a mut dyn FeatureResolver<'g> {
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+        (**self).accept(query, link)
+    }
+}
+
+#[derive(Clone, Debug)]
+struct ResolverFn<F>(pub F);
+
+impl<'g, F> FeatureResolver<'g> for ResolverFn<F>
+where
+    F: FnMut(&FeatureQuery<'g>, CrossLink<'g>) -> bool,
+{
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+        (self.0)(query, link)
     }
 }
