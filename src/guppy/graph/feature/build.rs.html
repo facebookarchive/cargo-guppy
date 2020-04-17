@@ -447,6 +447,16 @@
 <span id="447">447</span>
 <span id="448">448</span>
 <span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -469,20 +479,23 @@
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">FeatureGraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
     <span class="ident">graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>, <span class="ident">Directed</span>, <span class="ident">FeatureIx</span><span class="op">&gt;</span>,
+    <span class="comment">// Map from package ixs to the base (first) feature for each package.</span>
+    <span class="ident">base_ixs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">FeatureNode</span>, <span class="ident">FeatureMetadataImpl</span><span class="op">&gt;</span>,
     <span class="ident">warnings</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FeatureGraphWarning</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureGraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">package_count</span> <span class="op">=</span> <span class="ident">package_graph</span>.<span class="ident">package_count</span>();
         <span class="self">Self</span> {
             <span class="ident">package_graph</span>,
             <span class="comment">// Each package corresponds to at least one feature ID.</span>
-            <span class="ident">graph</span>: <span class="ident">Graph</span>::<span class="ident">with_capacity</span>(
-                <span class="ident">package_graph</span>.<span class="ident">package_count</span>(),
-                <span class="ident">package_graph</span>.<span class="ident">package_count</span>(),
-            ),
-            <span class="ident">map</span>: <span class="ident">HashMap</span>::<span class="ident">with_capacity</span>(<span class="ident">package_graph</span>.<span class="ident">package_count</span>()),
+            <span class="ident">graph</span>: <span class="ident">Graph</span>::<span class="ident">with_capacity</span>(<span class="ident">package_count</span>, <span class="ident">package_count</span>),
+            <span class="comment">// Each package corresponds to exactly one base feature ix, and there&#39;s one last ix at</span>
+            <span class="comment">// the end.</span>
+            <span class="ident">base_ixs</span>: <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">package_count</span> <span class="op">+</span> <span class="number">1</span>),
+            <span class="ident">map</span>: <span class="ident">HashMap</span>::<span class="ident">with_capacity</span>(<span class="ident">package_count</span>),
             <span class="ident">warnings</span>: <span class="macro">vec</span><span class="macro">!</span>[],
         }
     }
@@ -491,11 +504,12 @@
     <span class="doccomment">/// feature to the base package.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">add_nodes</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">package</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span>) {
         <span class="kw">let</span> <span class="ident">base_node</span> <span class="op">=</span> <span class="ident">FeatureNode</span>::<span class="ident">base</span>(<span class="ident">package</span>.<span class="ident">package_ix</span>);
-        <span class="kw">let</span> <span class="ident">base_idx</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">base_node</span>, <span class="ident">FeatureType</span>::<span class="ident">BasePackage</span>);
+        <span class="kw">let</span> <span class="ident">base_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">base_node</span>, <span class="ident">FeatureType</span>::<span class="ident">BasePackage</span>);
+        <span class="self">self</span>.<span class="ident">base_ixs</span>.<span class="ident">push</span>(<span class="ident">base_ix</span>);
         <span class="ident">FeatureNode</span>::<span class="ident">named_features</span>(<span class="ident">package</span>).<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">feature_node</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">feature_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">feature_node</span>, <span class="ident">FeatureType</span>::<span class="ident">NamedFeature</span>);
             <span class="self">self</span>.<span class="ident">graph</span>
-                .<span class="ident">update_edge</span>(<span class="ident">feature_ix</span>, <span class="ident">base_idx</span>, <span class="ident">FeatureEdge</span>::<span class="ident">FeatureToBase</span>);
+                .<span class="ident">update_edge</span>(<span class="ident">feature_ix</span>, <span class="ident">base_ix</span>, <span class="ident">FeatureEdge</span>::<span class="ident">FeatureToBase</span>);
         });
 
         <span class="ident">package</span>.<span class="ident">optional_deps_full</span>().<span class="ident">for_each</span>(<span class="op">|</span>(<span class="ident">n</span>, <span class="kw">_</span>)<span class="op">|</span> {
@@ -504,8 +518,13 @@
                 <span class="ident">FeatureType</span>::<span class="ident">OptionalDep</span>,
             );
             <span class="self">self</span>.<span class="ident">graph</span>
-                .<span class="ident">update_edge</span>(<span class="ident">dep_idx</span>, <span class="ident">base_idx</span>, <span class="ident">FeatureEdge</span>::<span class="ident">FeatureToBase</span>);
+                .<span class="ident">update_edge</span>(<span class="ident">dep_idx</span>, <span class="ident">base_ix</span>, <span class="ident">FeatureEdge</span>::<span class="ident">FeatureToBase</span>);
         });
+    }
+
+    <span class="doccomment">/// Mark the end of adding nodes.</span>
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">end_nodes</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="self">self</span>.<span class="ident">base_ixs</span>.<span class="ident">push</span>(<span class="ident">NodeIndex</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">node_count</span>()));
     }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">add_named_feature_edges</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">metadata</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span>) {
@@ -766,6 +785,7 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">build</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureGraphImpl</span> {
         <span class="ident">FeatureGraphImpl</span> {
             <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
+            <span class="ident">base_ixs</span>: <span class="self">self</span>.<span class="ident">base_ixs</span>,
             <span class="ident">map</span>: <span class="self">self</span>.<span class="ident">map</span>,
             <span class="ident">warnings</span>: <span class="self">self</span>.<span class="ident">warnings</span>,
             <span class="ident">sccs</span>: <span class="ident">OnceCell</span>::<span class="ident">new</span>(),
