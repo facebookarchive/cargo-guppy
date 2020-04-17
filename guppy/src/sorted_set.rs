@@ -3,9 +3,10 @@
 
 use std::fmt;
 use std::iter::FromIterator;
+use std::mem;
 use std::ops::Deref;
 
-/// An immutable set stored as a sorted vector.
+/// A set stored as a sorted vector.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct SortedSet<T> {
     inner: Box<[T]>,
@@ -23,6 +24,13 @@ where
         Self { inner: v.into() }
     }
 
+    /// Creates a new `SortedSet` with no contents.
+    pub fn empty() -> Self {
+        SortedSet {
+            inner: Self::empty_box(),
+        }
+    }
+
     // TODO: new + sort by/sort by key?
 
     /// Returns true if this sorted vector contains this element.
@@ -35,9 +43,29 @@ where
         &self.inner
     }
 
+    /// Adds the given elements to this vector.
+    pub fn extend(&mut self, iter: impl Iterator<Item = T>) {
+        let mut inner = mem::replace(&mut self.inner, Self::empty_box()).into_vec();
+        inner.extend(iter);
+
+        // Re-sort and dedup since there might be new repeated elements added.
+        inner.sort();
+        inner.dedup();
+
+        mem::replace(&mut self.inner, inner.into());
+    }
+
     /// Returns the inner data.
     pub fn into_inner(self) -> Box<[T]> {
         self.inner
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    fn empty_box() -> Box<[T]> {
+        Box::new([])
     }
 }
 

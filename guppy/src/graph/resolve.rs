@@ -300,7 +300,8 @@ impl<'g, 'a> PackageResolver<'g> for &'a mut dyn PackageResolver<'g> {
     }
 }
 
-pub(super) struct ResolverFn<F>(pub(super) F);
+#[derive(Clone, Debug)]
+pub(super) struct ResolverFn<F>(pub F);
 
 impl<'g, F> PackageResolver<'g> for ResolverFn<F>
 where

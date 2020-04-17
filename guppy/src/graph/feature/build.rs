@@ -3,7 +3,7 @@
 
 use crate::errors::{FeatureBuildStage, FeatureGraphWarning};
 use crate::graph::feature::{
-    FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
+    CrossEdgeImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{
     DepRequiredOrOptional, FeatureIx, PackageEdge, PackageGraph, PackageLink, PackageMetadata,
@@ -413,10 +413,10 @@ impl DependencyBuildState {
     }
 
     fn finish(self) -> FeatureEdge {
-        FeatureEdge::Dependency {
+        FeatureEdge::CrossEdge(CrossEdgeImpl {
             normal: self.normal,
             build: self.build,
             dev: self.dev,
-        }
+        })
     }
 }

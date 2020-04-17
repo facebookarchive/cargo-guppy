@@ -5,9 +5,10 @@
 
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
+use guppy::graph::feature::{CrossEdge, CrossLink, FeatureQuery, FeatureResolver};
 use guppy::graph::{
-    DependencyDirection, DependencyReq, EnabledTernary, PackageEdge, PackageGraph, PackageLink,
-    PackageQuery,
+    DependencyDirection, DependencyReq, EnabledStatus, EnabledTernary, PackageEdge, PackageGraph,
+    PackageLink, PackageQuery, PackageResolver, PlatformStatus,
 };
 use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
@@ -122,6 +123,8 @@ impl FilterOptions {
                 self.eval(edge, |req| req.is_present())
             };
 
+            // --initial-edges=normal,build,dev --dep-edges=normal,build
+
             // filter out provided edge targets (--omit-edges-into)
             let include_edge = !omitted_package_ids.contains(to.id());
 
@@ -135,6 +138,60 @@ impl FilterOptions {
         &self,
         edge: PackageEdge<'_>,
         mut pred_fn: impl FnMut(DependencyReq<'_>) -> bool,
+    ) -> bool {
+        pred_fn(edge.normal())
+            || self.include_dev && pred_fn(edge.dev())
+            || self.include_build && pred_fn(edge.build())
+    }
+
+    /// Construct a feature resolver based on the filter options.
+    pub fn make_feature_resolver<'g>(
+        &'g self,
+        pkg_graph: &'g PackageGraph,
+    ) -> impl Fn(&FeatureQuery<'g>, CrossLink<'g>) -> bool + 'g {
+        let omitted_set: HashSet<&str> = self.omit_edges_into.iter().map(|s| s.as_str()).collect();
+        let omitted_package_ids: HashSet<_> = names_to_ids(pkg_graph, &omitted_set).collect();
+
+        let platform = if let Some(ref target) = self.target {
+            // The features are unknown.
+            Some(Platform::new(target, TargetFeatures::Unknown).unwrap())
+        } else {
+            None
+        };
+
+        move |_, CrossLink { from, to, edge }| {
+            let from_package = from.package();
+            let to_package = to.package();
+
+            // filter by the kind of dependency (--kind)
+            // NOTE: We always retain all workspace deps in the graph, otherwise
+            // we'll get a disconnected graph.
+            let include_kind = match self.kind {
+                Kind::All | Kind::ThirdParty => true,
+                Kind::DirectThirdParty => from_package.in_workspace(),
+                Kind::Workspace => from_package.in_workspace() && to_package.in_workspace(),
+            };
+
+            let include_type = if let Some(platform) = &platform {
+                // filter out irrelevant dependencies for a specific target (--target)
+                self.eval_feature(edge, |status| {
+                    status.enabled_on(platform) != EnabledTernary::Disabled
+                })
+            } else {
+                self.eval_feature(edge, |status| !status.is_never())
+            };
+
+            // filter out provided edge targets (--omit-edges-into)
+            let include_edge = !omitted_package_ids.contains(to.package_id());
+
+            include_kind && include_type && include_edge
+        }
+    }
+
+    fn eval_feature(
+        &self,
+        edge: CrossEdge<'_>,
+        mut pred_fn: impl FnMut(PlatformStatus<'_>) -> bool,
     ) -> bool {
         pred_fn(edge.normal())
             || self.include_dev && pred_fn(edge.dev())
@@ -161,4 +218,16 @@ pub(crate) fn names_to_ids<'g: 'a, 'a>(
             None
         }
     })
+}
+
+pub(crate) fn triple_to_platform(
+    triple: Option<&String>,
+) -> Result<Option<Platform>, anyhow::Error> {
+    match triple {
+        Some(triple) => match Platform::new(triple, TargetFeatures::Unknown) {
+            Some(platform) => Ok(Some(platform)),
+            None => Err(anyhow!("unrecognized triple '{}'", triple)),
+        },
+        None => Ok(None),
+    }
 }

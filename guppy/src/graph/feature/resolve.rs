@@ -3,14 +3,17 @@
 
 use crate::debug_ignore::DebugIgnore;
 use crate::graph::feature::{
-    FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery,
+    CrossLink, FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery,
+    FeatureResolver,
 };
+use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
 use crate::petgraph_support::IxBitSet;
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::NodeIndex;
+use petgraph::prelude::*;
 use std::iter::FromIterator;
 
 impl<'g> FeatureGraph<'g> {
@@ -61,6 +64,32 @@ impl<'g> FeatureSet<'g> {
         Self {
             graph: DebugIgnore(graph),
             core: ResolveCore::new(graph.dep_graph(), query.params),
+        }
+    }
+
+    pub(super) fn with_resolver(
+        query: FeatureQuery<'g>,
+        mut resolver: impl FeatureResolver<'g>,
+    ) -> Self {
+        let graph = query.graph;
+        let params = query.params.clone();
+        Self {
+            graph: DebugIgnore(graph),
+            core: ResolveCore::with_edge_filter(
+                graph.dep_graph(),
+                params,
+                |source_ix, target_ix, edge_ix| {
+                    let edge = &graph.dep_graph()[edge_ix];
+                    match edge {
+                        FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => true,
+                        FeatureEdge::CrossEdge(cross_edge) => {
+                            let link =
+                                CrossLink::new(&graph, source_ix, target_ix, edge_ix, &cross_edge);
+                            resolver.accept(&query, link)
+                        }
+                    }
+                },
+            ),
         }
     }
 
@@ -182,9 +211,8 @@ impl<'g> FeatureSet<'g> {
             .included
             .ones()
             .map(|feature_ix| {
-                let feature_ix = NodeIndex::new(feature_ix);
-                let feature_node = &self.graph.dep_graph()[feature_ix];
-                feature_node.package_ix()
+                self.graph
+                    .package_ix_for_feature_ix(NodeIndex::new(feature_ix))
             })
             .collect();
         PackageSet::from_included(self.graph.package_graph, included.0)

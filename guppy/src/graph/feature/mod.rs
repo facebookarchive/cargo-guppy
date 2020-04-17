@@ -14,8 +14,10 @@ mod graph_impl;
 mod proptest09;
 mod query;
 mod resolve;
+mod resolve_build;
 
 pub use cycles::*;
 pub use graph_impl::*;
 pub use query::*;
 pub use resolve::*;
+pub use resolve_build::*;

@@ -7,10 +7,11 @@ mod diff;
 pub use crate::core::*;
 
 use anyhow;
+use guppy::graph::feature::{all_filter, default_filter, CargoOptions};
 use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
-    MetadataCommand, PackageId,
+    MetadataCommand, PackageId, Platform, TargetFeatures,
 };
 use itertools;
 use std::cmp;
@@ -70,6 +71,62 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[derive(Debug, StructOpt)]
+pub struct ResolveCargoOptions {
+    #[structopt(long = "package", short = "p")]
+    packages: Vec<String>,
+
+    #[structopt(long = "include-dev")]
+    /// Include dev-dependencies of initial packages (default: false)
+    include_dev: bool,
+
+    #[structopt(long = "target-platform")]
+    /// Evaluate against target platform triple (default: any)
+    target_platform: Option<String>,
+
+    #[structopt(long = "host-platform")]
+    /// Evaluate against host platform triple (default: target platform)
+    host_platform: Option<String>,
+}
+
+pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error> {
+    let target_platform = triple_to_platform(opts.target_platform.as_ref())?;
+    let host_platform =
+        triple_to_platform(opts.host_platform.as_ref())?.or_else(|| target_platform.clone());
+    let cargo_opts = CargoOptions::new()
+        .with_dev_deps(opts.include_dev)
+        .with_target_platform(target_platform.as_ref())
+        .with_host_platform(host_platform.as_ref());
+    println!("cargo opts: {:?}", cargo_opts);
+
+    // TODO: allow package/feature/omitted selection
+    let mut command = MetadataCommand::new();
+    let pkg_graph = PackageGraph::from_command(&mut command)?;
+    let feature_graph = pkg_graph.feature_graph();
+
+    let query = if opts.packages.is_empty() {
+        feature_graph.query_workspace(default_filter())
+    } else {
+        let pkg_ids = opts
+            .packages
+            .iter()
+            .map(|name| pkg_graph.workspace().member_by_name(name).unwrap().id());
+        let package_query = pkg_graph.query_forward(pkg_ids).expect("valid package IDs");
+        feature_graph.query_packages(&package_query, default_filter())
+    };
+
+    let cargo_set = query.resolve_cargo(&cargo_opts)?;
+    for (package, features) in cargo_set
+        .target_features()
+        .clone()
+        .into_packages_with_features::<Vec<_>>(DependencyDirection::Forward)
+    {
+        println!("{}: {:?}", package.name(), features);
+    }
+
+    Ok(())
+}
+
 struct NameVisitor;
 
 impl PackageDotVisitor for NameVisitor {
@@ -103,15 +160,21 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let mut command = MetadataCommand::new();
     let pkg_graph = PackageGraph::from_command(&mut command)?;
 
+    // XXX generalize this!
     let query = options.query_opts.apply(&pkg_graph)?;
-    let resolver = options.filter_opts.make_resolver(&pkg_graph);
-    let package_set = query.resolve_with_fn(resolver);
 
-    for package_id in package_set.clone().into_ids(options.output_direction) {
-        let package = pkg_graph.metadata(package_id).unwrap();
+    let feature_graph = pkg_graph.feature_graph();
+    let feature_query = feature_graph.query_packages(&query, default_filter());
+    let resolver = options.filter_opts.make_feature_resolver(&pkg_graph);
+    let feature_set = feature_query.resolve_with_fn(resolver);
+
+    for (package, features) in feature_set
+        .clone()
+        .into_packages_with_features::<Vec<_>>(options.output_direction)
+    {
         let in_workspace = package.in_workspace();
         let direct_dep = pkg_graph
-            .reverse_dep_links(package_id)
+            .reverse_dep_links(package.id())
             .unwrap()
             .any(|l| l.from.in_workspace() && !l.to.in_workspace());
         let show_package = match options.filter_opts.kind {
@@ -121,11 +184,12 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
             Kind::ThirdParty => !in_workspace,
         };
         if show_package {
-            println!("{}", pkg_graph.metadata(package_id).unwrap().id());
+            println!("{}: {:?}", package.name(), features);
         }
     }
 
     if let Some(ref output_file) = options.output_dot {
+        let package_set = feature_set.to_package_set();
         let dot = package_set.into_dot(NameVisitor);
         let mut f = fs::File::create(output_file)?;
         write!(f, "{}", dot)?;

@@ -5,12 +5,14 @@ use crate::errors::FeatureGraphWarning;
 use crate::graph::feature::build::FeatureGraphBuildState;
 use crate::graph::feature::{Cycles, FeatureFilter};
 use crate::graph::{
-    DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageMetadata, PlatformStatusImpl,
+    DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageMetadata, PlatformStatus,
+    PlatformStatusImpl,
 };
 use crate::petgraph_support::scc::Sccs;
 use crate::{Error, PackageId};
 use once_cell::sync::OnceCell;
 use petgraph::algo::has_path_connecting;
+use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
 use petgraph::visit::IntoNodeReferences;
 use std::collections::HashMap;
@@ -96,7 +98,11 @@ impl<'g> FeatureGraph<'g> {
     pub fn metadata(&self, feature_id: impl Into<FeatureId<'g>>) -> Option<FeatureMetadata<'g>> {
         let feature_id = feature_id.into();
         let inner = self.metadata_impl(feature_id)?;
-        Some(FeatureMetadata { feature_id, inner })
+        Some(FeatureMetadata {
+            feature_graph: *self,
+            feature_id,
+            inner,
+        })
     }
 
     /// Returns true if this feature is included in a package's build by default.
@@ -178,6 +184,7 @@ impl<'g> FeatureGraph<'g> {
         let metadata_impl = self.inner.map.get(feature_node)?;
         let feature_id = FeatureId::from_node(self.package_graph, feature_node);
         Some(FeatureMetadata {
+            feature_graph: *self,
             feature_id,
             inner: metadata_impl,
         })
@@ -238,6 +245,14 @@ impl<'g> FeatureGraph<'g> {
                 )
             })
             .collect()
+    }
+
+    pub(super) fn package_ix_for_feature_ix(
+        &self,
+        feature_ix: NodeIndex<FeatureIx>,
+    ) -> NodeIndex<PackageIx> {
+        let feature_node = &self.dep_graph()[feature_ix];
+        feature_node.package_ix()
     }
 
     #[allow(dead_code)]
@@ -367,8 +382,9 @@ impl<'g> From<FeatureId<'g>> for (PackageId, Option<String>) {
 }
 
 /// Metadata for a feature within a package.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 pub struct FeatureMetadata<'g> {
+    feature_graph: FeatureGraph<'g>,
     feature_id: FeatureId<'g>,
     inner: &'g FeatureMetadataImpl,
 }
@@ -377,6 +393,19 @@ impl<'g> FeatureMetadata<'g> {
     /// Returns the feature ID corresponding to this metadata.
     pub fn feature_id(&self) -> FeatureId<'g> {
         self.feature_id
+    }
+
+    /// Returns the package ID corresponding to this metadata.
+    pub fn package_id(&self) -> &'g PackageId {
+        &self.feature_id.package_id
+    }
+
+    /// Returns the package metadata corresponding to this feature metadata.
+    pub fn package(&self) -> &'g PackageMetadata {
+        self.feature_graph
+            .package_graph
+            .metadata(self.feature_id.package_id)
+            .expect("valid package ID")
     }
 
     /// Returns the type of this feature.
@@ -436,6 +465,73 @@ impl FeatureGraphImpl {
         build_state.build()
     }
 }
+
+/// A feature dependency across packages.
+///
+/// This is currently an opaque type -- it will be filled out in the future.
+#[derive(Copy, Clone, Debug)]
+pub struct CrossLink<'g> {
+    pub from: FeatureMetadata<'g>,
+    pub to: FeatureMetadata<'g>,
+    pub edge: CrossEdge<'g>,
+}
+
+impl<'g> CrossLink<'g> {
+    pub(super) fn new(
+        feature_graph: &FeatureGraph<'g>,
+        source_ix: NodeIndex<FeatureIx>,
+        target_ix: NodeIndex<FeatureIx>,
+        edge_ix: EdgeIndex<FeatureIx>,
+        inner: &'g CrossEdgeImpl,
+    ) -> Self {
+        let dep_graph = feature_graph.dep_graph();
+        Self {
+            from: feature_graph
+                .metadata_for_node(&dep_graph[source_ix])
+                .expect("valid source ix"),
+            to: feature_graph
+                .metadata_for_node(&dep_graph[target_ix])
+                .expect("valid target ix"),
+            edge: CrossEdge::new(edge_ix, inner),
+        }
+    }
+}
+
+/// Information about a feature dependency across packages.
+#[derive(Copy, Clone, Debug)]
+pub struct CrossEdge<'g> {
+    edge_ix: EdgeIndex<FeatureIx>,
+    inner: &'g CrossEdgeImpl,
+}
+
+impl<'g> CrossEdge<'g> {
+    pub(super) fn new(edge_ix: EdgeIndex<FeatureIx>, inner: &'g CrossEdgeImpl) -> Self {
+        Self { edge_ix, inner }
+    }
+
+    /// Returns details about this dependency from the `[dependencies]` section.
+    pub fn normal(&self) -> PlatformStatus<'g> {
+        PlatformStatus::new(&self.inner.normal)
+    }
+
+    /// Returns details about this dependency from the `[build-dependencies]` section.
+    pub fn build(&self) -> PlatformStatus<'g> {
+        PlatformStatus::new(&self.inner.build)
+    }
+
+    /// Returns details about this dependency from the `[dev-dependencies]` section.
+    pub fn dev(&self) -> PlatformStatus<'g> {
+        PlatformStatus::new(&self.inner.dev)
+    }
+
+    /// Returns true if this edge is dev-only, i.e. code from this edge will not be included in
+    /// normal builds.
+    pub fn dev_only(&self) -> bool {
+        self.normal().is_never() && self.build().is_never()
+    }
+}
+
+// ---
 
 /// A combination of a package ID and a feature name, forming a node in a `FeatureGraph`.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -509,11 +605,7 @@ pub(crate) enum FeatureEdge {
     /// [dependencies]
     /// foo = { version = "1", features = ["a", "b"] }
     /// ```
-    Dependency {
-        normal: PlatformStatusImpl,
-        build: PlatformStatusImpl,
-        dev: PlatformStatusImpl,
-    },
+    CrossEdge(CrossEdgeImpl),
     /// This edge is from a feature depending on other features:
     ///
     /// ```toml
@@ -521,6 +613,13 @@ pub(crate) enum FeatureEdge {
     /// "a" = ["b", "foo/c"]
     /// ```
     FeatureDependency,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct CrossEdgeImpl {
+    pub(super) normal: PlatformStatusImpl,
+    pub(super) build: PlatformStatusImpl,
+    pub(super) dev: PlatformStatusImpl,
 }
 
 /// Metadata for a particular feature node.

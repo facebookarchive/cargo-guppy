@@ -30,6 +30,13 @@ impl<G: GraphSpec> QueryParams<G> {
             QueryParams::Reverse(v) => v.contains(&initial),
         }
     }
+
+    pub(super) fn initials(&self) -> &[NodeIndex<G::Ix>] {
+        match self {
+            QueryParams::Forward(v) => &v,
+            QueryParams::Reverse(v) => &v,
+        }
+    }
 }
 
 pub(super) fn all_visit_map<G, Ix>(graph: G) -> (FixedBitSet, usize)
