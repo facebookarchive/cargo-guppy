@@ -14,6 +14,7 @@ macro_rules! proptest_suite {
 
 mod dep_helpers;
 mod dot_tests;
+mod feature_helpers;
 mod fixtures;
 mod graph_tests;
 mod invalid_tests;

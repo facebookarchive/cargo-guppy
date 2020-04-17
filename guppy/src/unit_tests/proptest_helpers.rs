@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{all_filter, none_filter, FeatureId};
+use crate::graph::feature::{all_filter, none_filter, FeatureId, FeatureSet};
 use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Resolver};
 use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphSet};
 use crate::PackageId;
@@ -215,6 +215,20 @@ macro_rules! proptest_suite {
                     test_direction in any::<DependencyDirection>(),
                 )| {
                     package_feature_set_roundtrip(package_graph, query_ids, query_direction, resolver, test_ids, test_direction);
+                });
+            }
+
+            #[test]
+            fn proptest_feature_set_props() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(
+                    feature_set in feature_graph.prop09_set_strategy(),
+                    direction in any::<DependencyDirection>(),
+                )| {
+                    feature_set_props(feature_set, direction);
                 });
             }
         }
@@ -551,6 +565,42 @@ pub(super) fn package_feature_set_roundtrip(
     let package_set_2 = all_feature_set.to_package_set();
     let package_ids_2: Vec<_> = package_set_2.into_ids(test_direction).collect();
     assert_eq!(package_ids, package_ids_2, "package IDs roundtrip");
+}
+
+pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: DependencyDirection) {
+    // into_ids and into_packages_with_features match (after sorting).
+    let mut feature_ids: Vec<_> = feature_set.clone().into_ids(direction).collect();
+    let mut feature_ids_2: Vec<_> = feature_set
+        .clone()
+        .into_packages_with_features(direction)
+        .flat_map(|(metadata, features): (_, Vec<_>)| {
+            let package_id = metadata.id();
+            features
+                .into_iter()
+                .map(move |feature| FeatureId::from((package_id, feature)))
+        })
+        .collect();
+    feature_ids.sort();
+    feature_ids_2.sort();
+
+    assert_eq!(
+        feature_ids, feature_ids_2,
+        "into_ids and into_packages_with_features match"
+    );
+
+    // to_package_set and into_packages_with_features match (without sorting).
+    let package_set_ids: Vec<_> = feature_set.to_package_set().into_ids(direction).collect();
+    let feature_set_ids: Vec<_> = feature_set
+        .into_packages_with_features(direction)
+        .map(|(metadata, features): (_, Vec<_>)| {
+            println!("for id {}, features: {:?}", metadata.id(), features);
+            metadata.id()
+        })
+        .collect();
+    assert_eq!(
+        package_set_ids, feature_set_ids,
+        "to_package_set and into_packages_with_features match"
+    );
 }
 
 // TODO: More tests for FeatureFilter implementations.
