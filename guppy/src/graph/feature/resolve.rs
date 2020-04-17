@@ -72,6 +72,11 @@ impl<'g> FeatureSet<'g> {
         }
     }
 
+    /// Returns the `FeatureGraph` that this feature set was computed against.
+    pub fn graph(&self) -> &FeatureGraph<'g> {
+        &self.graph.0
+    }
+
     /// Returns the number of feature IDs in this set.
     pub fn len(&self) -> usize {
         self.core.len()
@@ -182,9 +187,8 @@ impl<'g> FeatureSet<'g> {
             .included
             .ones()
             .map(|feature_ix| {
-                let feature_ix = NodeIndex::new(feature_ix);
-                let feature_node = &self.graph.dep_graph()[feature_ix];
-                feature_node.package_ix()
+                self.graph
+                    .package_ix_for_feature_ix(NodeIndex::new(feature_ix))
             })
             .collect();
         PackageSet::from_included(self.graph.package_graph, included.0)
@@ -227,7 +231,7 @@ impl<'g> FeatureSet<'g> {
             .topo(graph.sccs(), direction)
             .map(move |feature_ix| {
                 graph
-                    .metadata_for_node(&graph.dep_graph()[feature_ix])
+                    .metadata_for_node(graph.dep_graph()[feature_ix])
                     .expect("feature node should be known")
             })
     }
@@ -313,9 +317,8 @@ impl<'g> FeatureSet<'g> {
             .roots(feature_graph.dep_graph(), feature_graph.sccs(), direction)
             .into_iter()
             .map(move |feature_ix| {
-                let feature_node = &feature_graph.dep_graph()[feature_ix];
                 feature_graph
-                    .metadata_for_node(feature_node)
+                    .metadata_for_node(feature_graph.dep_graph()[feature_ix])
                     .expect("feature node should be known")
             })
     }

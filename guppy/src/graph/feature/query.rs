@@ -237,6 +237,11 @@ impl<'g> FeatureGraph<'g> {
 }
 
 impl<'g> FeatureQuery<'g> {
+    /// Returns the feature graph the query is going to be executed on.
+    pub fn graph(&self) -> &FeatureGraph<'g> {
+        &self.graph
+    }
+
     /// Returns the direction the query is happening in.
     pub fn direction(&self) -> DependencyDirection {
         self.params.direction()
