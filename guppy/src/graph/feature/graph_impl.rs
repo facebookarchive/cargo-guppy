@@ -12,6 +12,7 @@ use crate::{Error, PackageId};
 use once_cell::sync::OnceCell;
 use petgraph::algo::has_path_connecting;
 use petgraph::prelude::*;
+use petgraph::visit::IntoNodeReferences;
 use std::collections::HashMap;
 use std::iter;
 use std::iter::FromIterator;
@@ -388,19 +389,28 @@ impl FeatureGraphImpl {
     pub(super) fn new(package_graph: &PackageGraph) -> Self {
         let mut build_state = FeatureGraphBuildState::new(package_graph);
 
-        // The iteration order is bottom-up to allow linking up for "a/foo" style feature specs.
+        // Graph returns its node references in order -- check this in debug builds.
+        let mut prev_ix = None;
+        for (package_ix, package_id) in package_graph.dep_graph.node_references() {
+            if let Some(prev_ix) = prev_ix {
+                debug_assert_eq!(package_ix.index(), prev_ix + 1, "package ixs are in order");
+            }
+            prev_ix = Some(package_ix.index());
+
+            let metadata = package_graph
+                .metadata(package_id)
+                .expect("valid package ID");
+            build_state.add_nodes(metadata);
+        }
+
+        // The choice of bottom-up for this loop and the next is pretty arbitrary.
         for metadata in package_graph
             .resolve_all()
             .into_metadatas(DependencyDirection::Reverse)
         {
-            build_state.add_nodes(metadata);
-            // into_metadatas is in topological order, so all the dependencies of this package would
-            // have been added already. So named feature edges can safely be added.
             build_state.add_named_feature_edges(metadata);
         }
 
-        // The iteration order doesn't matter here, but use bottom-up for symmetry with the previous
-        // loop.
         for link in package_graph
             .resolve_all()
             .into_links(DependencyDirection::Reverse)
