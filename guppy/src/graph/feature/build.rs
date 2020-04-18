@@ -337,13 +337,13 @@ impl<'g> FeatureGraphBuildState<'g> {
 struct FeatureReq<'g> {
     from: &'g PackageMetadata,
     to: &'g PackageMetadata,
-    edge: &'g PackageEdge,
+    edge: PackageEdge<'g>,
     to_default_idx: Option<usize>,
     features: HashMap<Option<usize>, DependencyBuildState>,
 }
 
 impl<'g> FeatureReq<'g> {
-    fn new(from: &'g PackageMetadata, to: &'g PackageMetadata, edge: &'g PackageEdge) -> Self {
+    fn new(from: &'g PackageMetadata, to: &'g PackageMetadata, edge: PackageEdge<'g>) -> Self {
         Self {
             from,
             to,

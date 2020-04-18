@@ -4,7 +4,7 @@
 use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{Links, ResolveCore, Topo};
 use crate::graph::{
-    DependencyDirection, PackageEdge, PackageGraph, PackageIx, PackageLink, PackageMetadata,
+    DependencyDirection, PackageEdgeImpl, PackageGraph, PackageIx, PackageLink, PackageMetadata,
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::ReverseFlip;
@@ -326,7 +326,7 @@ where
 ///
 /// The items returned are of type `&'g PackageId`. Returned by `PackageSet::into_ids`.
 pub struct IntoIds<'g> {
-    graph: &'g Graph<PackageId, PackageEdge, Directed, PackageIx>,
+    graph: &'g Graph<PackageId, PackageEdgeImpl, Directed, PackageIx>,
     inner: Topo<'g, PackageGraph>,
 }
 
@@ -451,7 +451,8 @@ impl<'g, V, NR, ER> DotVisitor<NR, ER> for VisitorWrap<'g, V>
 where
     V: PackageDotVisitor,
     NR: NodeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageId>,
-    ER: EdgeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageEdge> + ReverseFlip,
+
+    ER: EdgeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageEdgeImpl> + ReverseFlip,
 {
     fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         let metadata = self

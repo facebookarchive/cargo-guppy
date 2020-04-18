@@ -30,7 +30,7 @@ use target_spec::TargetSpec;
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
-    pub(super) dep_graph: Graph<PackageId, PackageEdge, Directed, PackageIx>,
+    pub(super) dep_graph: Graph<PackageId, PackageEdgeImpl, Directed, PackageIx>,
     // The strongly connected components of the graph, computed on demand.
     pub(super) sccs: OnceCell<Sccs<PackageIx>>,
     // Feature graph, computed on demand.
@@ -195,15 +195,15 @@ impl PackageGraph {
                 // 1. At least one of the edges should be specified.
                 // 2. The specified package should match the version dependency.
                 let mut edge_set = false;
-                if let Some(dep_metadata) = &dep.edge.normal {
+                if let Some(dep_metadata) = &dep.edge.normal() {
                     edge_set = true;
                     version_check(dep_metadata, DependencyKind::Normal)?;
                 }
-                if let Some(dep_metadata) = &dep.edge.build {
+                if let Some(dep_metadata) = &dep.edge.build() {
                     edge_set = true;
                     version_check(dep_metadata, DependencyKind::Build)?;
                 }
-                if let Some(dep_metadata) = &dep.edge.dev {
+                if let Some(dep_metadata) = &dep.edge.dev() {
                     edge_set = true;
                     version_check(dep_metadata, DependencyKind::Development)?;
                 }
@@ -278,7 +278,14 @@ impl PackageGraph {
             let from = &data.packages[&frozen_graph[source]];
             let to = &data.packages[&frozen_graph[target]];
             let edge = &frozen_graph[edge_idx];
-            visit(data, PackageLink { from, to, edge })
+            visit(
+                data,
+                PackageLink {
+                    from,
+                    to,
+                    edge: PackageEdge { inner: edge },
+                },
+            )
         });
 
         self.invalidate_caches();
@@ -400,7 +407,7 @@ impl PackageGraph {
     /// Returns the inner dependency graph.
     ///
     /// Should this be exposed publicly? Not sure.
-    pub(super) fn dep_graph(&self) -> &Graph<PackageId, PackageEdge, Directed, PackageIx> {
+    pub(super) fn dep_graph(&self) -> &Graph<PackageId, PackageEdgeImpl, Directed, PackageIx> {
         &self.dep_graph
     }
 
@@ -409,7 +416,7 @@ impl PackageGraph {
         &'g self,
         source: NodeIndex<PackageIx>,
         target: NodeIndex<PackageIx>,
-        edge: &'g PackageEdge,
+        edge: &'g PackageEdgeImpl,
     ) -> PackageLink<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
@@ -422,6 +429,7 @@ impl PackageGraph {
         let to = self
             .metadata(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
+        let edge = PackageEdge { inner: edge };
         PackageLink { from, to, edge }
     }
 
@@ -597,7 +605,7 @@ pub struct PackageLink<'g> {
     /// The package which is depended on by the `from` package.
     pub to: &'g PackageMetadata,
     /// Information about the specifics of this dependency.
-    pub edge: &'g PackageEdge,
+    pub edge: PackageEdge<'g>,
 }
 
 /// Information about a specific package in a `PackageGraph`.
@@ -866,47 +874,42 @@ impl PackageMetadata {
 /// This struct contains information about:
 /// * whether this dependency was renamed in the context of this crate.
 /// * if this is a normal, dev or build dependency.
-#[derive(Clone, Debug)]
-pub struct PackageEdge {
-    pub(super) edge_ix: EdgeIndex<PackageIx>,
-    pub(super) dep_name: String,
-    pub(super) resolved_name: String,
-    pub(super) normal: Option<DependencyMetadata>,
-    pub(super) build: Option<DependencyMetadata>,
-    pub(super) dev: Option<DependencyMetadata>,
+#[derive(Copy, Clone, Debug)]
+pub struct PackageEdge<'g> {
+    inner: &'g PackageEdgeImpl,
 }
 
-impl PackageEdge {
+impl<'g> PackageEdge<'g> {
     /// Returns the name for this dependency edge. This can be affected by a crate rename.
-    pub fn dep_name(&self) -> &str {
-        &self.dep_name
+    pub fn dep_name(&self) -> &'g str {
+        &self.inner.dep_name
     }
 
     /// Returns the resolved name for this dependency edge. This may involve renaming the crate and
     /// replacing - with _.
-    pub fn resolved_name(&self) -> &str {
-        &self.resolved_name
+    pub fn resolved_name(&self) -> &'g str {
+        &self.inner.resolved_name
     }
 
     /// Returns details about this dependency from the `[dependencies]` section, if they exist.
-    pub fn normal(&self) -> Option<&DependencyMetadata> {
-        self.normal.as_ref()
+    pub fn normal(&self) -> Option<&'g DependencyMetadata> {
+        self.inner.normal.as_ref()
     }
 
     /// Returns details about this dependency from the `[build-dependencies]` section, if they exist.
-    pub fn build(&self) -> Option<&DependencyMetadata> {
-        self.build.as_ref()
+    pub fn build(&self) -> Option<&'g DependencyMetadata> {
+        self.inner.build.as_ref()
     }
 
     /// Returns details about this dependency from the `[dev-dependencies]` section, if they exist.
-    pub fn dev(&self) -> Option<&DependencyMetadata> {
+    pub fn dev(&self) -> Option<&'g DependencyMetadata> {
         // XXX should dev dependencies fall back to normal if no dev-specific data was found?
-        self.dev.as_ref()
+        self.inner.dev.as_ref()
     }
 
     /// Returns details about this dependency from the section specified by the given dependency
     /// kind.
-    pub fn metadata_for_kind(&self, kind: DependencyKind) -> Option<&DependencyMetadata> {
+    pub fn metadata_for_kind(&self, kind: DependencyKind) -> Option<&'g DependencyMetadata> {
         match kind {
             DependencyKind::Normal => self.normal(),
             DependencyKind::Development => self.dev(),
@@ -918,8 +921,33 @@ impl PackageEdge {
     /// Return true if this edge is dev-only, i.e. code from this edge will not be included in
     /// normal builds.
     pub fn dev_only(&self) -> bool {
-        self.normal().is_none() && self.build.is_none()
+        self.normal().is_none() && self.build().is_none()
     }
+
+    // ---
+    // Helper methods
+    // ---
+
+    /// Returns the edge index.
+    pub(super) fn edge_ix(&self) -> EdgeIndex<PackageIx> {
+        self.inner.edge_ix
+    }
+
+    /// Returns the inner `PackageEdgeImpl` as a pointer. Useful for testing.
+    #[cfg(test)]
+    pub(crate) fn as_inner_ptr(&self) -> *const PackageEdgeImpl {
+        self.inner
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct PackageEdgeImpl {
+    pub(super) edge_ix: EdgeIndex<PackageIx>,
+    pub(super) dep_name: String,
+    pub(super) resolved_name: String,
+    pub(super) normal: Option<DependencyMetadata>,
+    pub(super) build: Option<DependencyMetadata>,
+    pub(super) dev: Option<DependencyMetadata>,
 }
 
 /// Information about a specific kind of dependency (normal, build or dev) from a package to another

@@ -72,7 +72,7 @@ pub struct Prop09Resolver(FixedBitSet);
 
 impl<'a, 'g> PackageResolver<'g> for Prop09Resolver {
     fn accept(&self, link: PackageLink<'g>) -> bool {
-        self.0.is_visited(&link.edge.edge_ix)
+        self.0.is_visited(&link.edge.edge_ix())
     }
 }
 
