@@ -269,21 +269,24 @@ impl PackageGraph {
         F: Fn(&PackageGraphData, PackageLink<'_>) -> bool,
     {
         let data = &self.data;
-        self.dep_graph.retain_edges(|frozen_graph, edge_idx| {
+        self.dep_graph.retain_edges(|frozen_graph, edge_ix| {
             // This could use self.edge_to_dep for part of it but that that isn't compatible with
             // the borrow checker :(
             let (source, target) = frozen_graph
-                .edge_endpoints(edge_idx)
-                .expect("edge_idx should be valid");
+                .edge_endpoints(edge_ix)
+                .expect("edge_ix should be valid");
             let from = &data.packages[&frozen_graph[source]];
             let to = &data.packages[&frozen_graph[target]];
-            let edge = &frozen_graph[edge_idx];
+            let edge = &frozen_graph[edge_ix];
             visit(
                 data,
                 PackageLink {
                     from,
                     to,
-                    edge: PackageEdge { inner: edge },
+                    edge: PackageEdge {
+                        edge_ix,
+                        inner: edge,
+                    },
                 },
             )
         });
@@ -378,7 +381,9 @@ impl PackageGraph {
     ) -> impl Iterator<Item = PackageLink<'g>> + 'g {
         self.dep_graph
             .edges_directed(package_ix, dir)
-            .map(move |edge| self.edge_to_link(edge.source(), edge.target(), edge.weight()))
+            .map(move |edge| {
+                self.edge_to_link(edge.source(), edge.target(), edge.id(), Some(edge.weight()))
+            })
     }
 
     // For more traversals, see query.rs.
@@ -396,12 +401,6 @@ impl PackageGraph {
     pub(super) fn invalidate_caches(&mut self) {
         mem::replace(&mut self.sccs, OnceCell::new());
         mem::replace(&mut self.feature_graph, OnceCell::new());
-
-        // The edge indexes got compacted as well.
-        for edge_ix in 0..self.dep_graph.edge_count() {
-            let edge_ix = EdgeIndex::new(edge_ix);
-            self.dep_graph[edge_ix].edge_ix = edge_ix;
-        }
     }
 
     /// Returns the inner dependency graph.
@@ -416,7 +415,8 @@ impl PackageGraph {
         &'g self,
         source: NodeIndex<PackageIx>,
         target: NodeIndex<PackageIx>,
-        edge: &'g PackageEdgeImpl,
+        edge_ix: EdgeIndex<PackageIx>,
+        edge: Option<&'g PackageEdgeImpl>,
     ) -> PackageLink<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
@@ -429,7 +429,10 @@ impl PackageGraph {
         let to = self
             .metadata(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
-        let edge = PackageEdge { inner: edge };
+        let edge = PackageEdge {
+            edge_ix,
+            inner: edge.unwrap_or_else(|| &self.dep_graph[edge_ix]),
+        };
         PackageLink { from, to, edge }
     }
 
@@ -876,6 +879,7 @@ impl PackageMetadata {
 /// * if this is a normal, dev or build dependency.
 #[derive(Copy, Clone, Debug)]
 pub struct PackageEdge<'g> {
+    edge_ix: EdgeIndex<PackageIx>,
     inner: &'g PackageEdgeImpl,
 }
 
@@ -930,7 +934,7 @@ impl<'g> PackageEdge<'g> {
 
     /// Returns the edge index.
     pub(super) fn edge_ix(&self) -> EdgeIndex<PackageIx> {
-        self.inner.edge_ix
+        self.edge_ix
     }
 
     /// Returns the inner `PackageEdgeImpl` as a pointer. Useful for testing.
@@ -942,7 +946,6 @@ impl<'g> PackageEdge<'g> {
 
 #[derive(Clone, Debug)]
 pub(crate) struct PackageEdgeImpl {
-    pub(super) edge_ix: EdgeIndex<PackageIx>,
     pub(super) dep_name: String,
     pub(super) resolved_name: String,
     pub(super) normal: Option<DependencyMetadata>,

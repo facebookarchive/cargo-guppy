@@ -66,7 +66,8 @@ impl<'g> PackageSet<'g> {
                 let link = package_graph.edge_to_link(
                     edge_ref.source(),
                     edge_ref.target(),
-                    edge_ref.weight(),
+                    edge_ref.id(),
+                    Some(edge_ref.weight()),
                 );
                 resolver.accept(link)
             }),
@@ -376,10 +377,7 @@ impl<'g> Iterator for IntoLinks<'g> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let (source_ix, target_ix, edge_ix) = self.inner.next_triple()?;
-        Some(
-            self.graph
-                .edge_to_link(source_ix, target_ix, &self.graph.dep_graph[edge_ix]),
-        )
+        Some(self.graph.edge_to_link(source_ix, target_ix, edge_ix, None))
     }
 }
 
@@ -451,8 +449,11 @@ impl<'g, V, NR, ER> DotVisitor<NR, ER> for VisitorWrap<'g, V>
 where
     V: PackageDotVisitor,
     NR: NodeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageId>,
-
-    ER: EdgeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageEdgeImpl> + ReverseFlip,
+    ER: EdgeRef<
+            NodeId = NodeIndex<PackageIx>,
+            EdgeId = EdgeIndex<PackageIx>,
+            Weight = PackageEdgeImpl,
+        > + ReverseFlip,
 {
     fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         let metadata = self
@@ -463,10 +464,10 @@ where
     }
 
     fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result {
-        let (source_idx, target_idx) = ER::reverse_flip(edge.source(), edge.target());
+        let (source_ix, target_ix) = ER::reverse_flip(edge.source(), edge.target());
         let link = self
             .graph
-            .edge_to_link(source_idx, target_idx, edge.weight());
+            .edge_to_link(source_ix, target_ix, edge.id(), Some(edge.weight()));
         self.inner.visit_link(link, f)
     }
 }
