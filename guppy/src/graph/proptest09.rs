@@ -45,12 +45,12 @@ impl PackageGraph {
             // PackageGraph used StableGraph, a retain_edges call would create holes -- invalid
             // indexes in the middle of the range. Graph compacts edge indexes so that all
             // indexes from 0 to link_count are valid.
-            let edge_idx = EdgeIndex::new(index.index(self.link_count()));
-            let (source_idx, target_idx) = self
+            let edge_ix = EdgeIndex::new(index.index(self.link_count()));
+            let (source_ix, target_ix) = self
                 .dep_graph
-                .edge_endpoints(edge_idx)
+                .edge_endpoints(edge_ix)
                 .expect("all edge indexes 0..link_count should be valid");
-            self.edge_to_link(source_idx, target_idx, &self.dep_graph[edge_idx])
+            self.edge_to_link(source_ix, target_ix, edge_ix, None)
         })
     }
 
