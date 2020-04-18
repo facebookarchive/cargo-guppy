@@ -3,8 +3,8 @@
 
 use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
 use crate::graph::{
-    cargo_version_matches, kind_str, BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind,
-    Cycles, DependencyDirection, OwnedBuildTargetId, PackageIx,
+    cargo_version_matches, BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind, Cycles,
+    DependencyDirection, OwnedBuildTargetId, PackageIx,
 };
 use crate::petgraph_support::scc::Sccs;
 use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId, Platform};
@@ -172,41 +172,24 @@ impl PackageGraph {
                 let to_id = dep.to.id();
                 let to_version = dep.to.version();
 
-                let version_check = |dep_metadata: &DependencyMetadata, kind: DependencyKind| {
-                    let req = dep_metadata.version_req();
-                    // A requirement of "*" filters out pre-release versions with the semver crate,
-                    // but cargo accepts them.
-                    // See https://github.com/steveklabnik/semver/issues/98.
-                    if cargo_version_matches(req, to_version) {
-                        Ok(())
-                    } else {
-                        Err(Error::PackageGraphInternalError(format!(
-                            "{} -> {} ({}): version ({}) doesn't match requirement ({:?})",
-                            package_id,
-                            to_id,
-                            kind_str(kind),
-                            to_version,
-                            req,
-                        )))
-                    }
-                };
-
                 // Two invariants:
                 // 1. At least one of the edges should be specified.
                 // 2. The specified package should match the version dependency.
-                let mut edge_set = false;
-                if let Some(dep_metadata) = &dep.edge.normal() {
-                    edge_set = true;
-                    version_check(dep_metadata, DependencyKind::Normal)?;
+
+                let req = dep.edge.version_req();
+                // A requirement of "*" filters out pre-release versions with the semver crate,
+                // but cargo accepts them.
+                // See https://github.com/steveklabnik/semver/issues/98.
+                if !cargo_version_matches(req, to_version) {
+                    return Err(Error::PackageGraphInternalError(format!(
+                        "{} -> {}: version ({}) doesn't match requirement ({:?})",
+                        package_id, to_id, to_version, req,
+                    )));
                 }
-                if let Some(dep_metadata) = &dep.edge.build() {
-                    edge_set = true;
-                    version_check(dep_metadata, DependencyKind::Build)?;
-                }
-                if let Some(dep_metadata) = &dep.edge.dev() {
-                    edge_set = true;
-                    version_check(dep_metadata, DependencyKind::Development)?;
-                }
+
+                let edge_set = dep.edge.normal().is_some()
+                    || dep.edge.build().is_some()
+                    || dep.edge.dev().is_some();
 
                 if !edge_set {
                     return Err(Error::PackageGraphInternalError(format!(
@@ -895,6 +878,22 @@ impl<'g> PackageEdge<'g> {
         &self.inner.resolved_name
     }
 
+    /// Returns the semver requirements specified for this dependency.
+    ///
+    /// To get the resolved version, see the `to` field of the `PackageLink` this was part of.
+    ///
+    /// ## Notes
+    ///
+    /// A dependency can be requested multiple times, possibly with different version requirements,
+    /// even if they all end up resolving to the same version. `version_req` will return any of
+    /// those requirements.
+    ///
+    /// See [Specifying Dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies)
+    /// in the Cargo reference for more details.
+    pub fn version_req(&self) -> &'g VersionReq {
+        &self.inner.version_req
+    }
+
     /// Returns details about this dependency from the `[dependencies]` section, if they exist.
     pub fn normal(&self) -> Option<&'g DependencyMetadata> {
         self.inner.normal.as_ref()
@@ -949,6 +948,7 @@ impl<'g> PackageEdge<'g> {
 pub(crate) struct PackageEdgeImpl {
     pub(super) dep_name: String,
     pub(super) resolved_name: String,
+    pub(super) version_req: VersionReq,
     pub(super) normal: Option<DependencyMetadata>,
     pub(super) build: Option<DependencyMetadata>,
     pub(super) dev: Option<DependencyMetadata>,
@@ -960,7 +960,6 @@ pub(crate) struct PackageEdgeImpl {
 /// Usually found within the context of a [`PackageEdge`](struct.PackageEdge.html).
 #[derive(Clone, Debug)]
 pub struct DependencyMetadata {
-    pub(super) version_req: VersionReq,
     pub(super) dependency_req: DependencyReq,
 
     // Results of some queries as evaluated on the current platform.
@@ -971,21 +970,6 @@ pub struct DependencyMetadata {
 }
 
 impl DependencyMetadata {
-    /// Returns the semver requirements specified for this dependency.
-    ///
-    /// To get the resolved version, see the `to` field of the `PackageLink` this was part of.
-    ///
-    /// ## Notes
-    ///
-    /// A dependency can be requested multiple times in the normal, build and dev fields, possibly
-    /// with different version requirements, even if they all end up resolving to the same version.
-    ///
-    /// See [Specifying Dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies)
-    /// in the Cargo reference for more details.
-    pub fn version_req(&self) -> &VersionReq {
-        &self.version_req
-    }
-
     /// Returns true if this is an optional dependency on the platform `guppy` is running on.
     ///
     /// This will also return true if this dependency will never be included on this platform at

@@ -565,6 +565,7 @@ impl PackageEdgeImpl {
         resolved_name: &str,
         deps: impl IntoIterator<Item = &'a Dependency>,
     ) -> Result<Self, Error> {
+        let mut version_req = None;
         let mut normal = DependencyBuildState::default();
         let mut build = DependencyBuildState::default();
         let mut dev = DependencyBuildState::default();
@@ -575,6 +576,11 @@ impl PackageEdgeImpl {
                     "for package '{}': dev-dependency '{}' marked optional",
                     from_id, name,
                 )));
+            }
+
+            // Pick the first version req that this come across.
+            if version_req.is_none() {
+                version_req = Some(dep.req.clone());
             }
 
             match dep.kind {
@@ -591,6 +597,7 @@ impl PackageEdgeImpl {
         Ok(Self {
             dep_name: name.into(),
             resolved_name: resolved_name.into(),
+            version_req: version_req.expect("at least one dependency instance"),
             normal: normal.finish()?,
             build: build.finish()?,
             dev: dev.finish()?,
@@ -628,6 +635,7 @@ impl PackageEdgeImpl {
 struct DependencyBuildState {
     // This is the `req` field from the first instance seen if there are any, or `None` if none are
     // seen.
+    // TODO: eliminate this (in the next commit)
     version_req: Option<VersionReq>,
     dependency_req: DependencyReq,
 }
@@ -643,13 +651,10 @@ impl DependencyBuildState {
     }
 
     fn finish(self) -> Result<Option<DependencyMetadata>, Error> {
-        let version_req = match self.version_req {
-            Some(version_req) => version_req,
-            None => {
-                // No instances seen.
-                return Ok(None);
-            }
-        };
+        if self.version_req.is_none() {
+            // No instances seen.
+            return Ok(None);
+        }
 
         let dependency_req = self.dependency_req;
 
@@ -677,7 +682,6 @@ impl DependencyBuildState {
             .collect();
 
         Ok(Some(DependencyMetadata {
-            version_req,
             dependency_req,
             current_enabled,
             current_default_features,
