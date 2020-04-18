@@ -134,6 +134,7 @@ impl<'g> GraphSpec for feature::FeatureGraph<'g> {
     type Ix = FeatureIx;
 }
 
+#[allow(dead_code)]
 pub(crate) fn kind_str(kind: DependencyKind) -> &'static str {
     match kind {
         DependencyKind::Normal => "normal",
