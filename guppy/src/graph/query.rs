@@ -1,17 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::debug_ignore::DebugIgnore;
 use crate::graph::query_core::QueryParams;
 use crate::graph::{
-    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageResolver, PackageSet,
-    ResolverFn,
+    DependencyDirection, PackageGraph, PackageLink, PackageResolver, PackageSet, ResolverFn,
 };
-use crate::petgraph_support::walk::EdgeDfs;
 use crate::{Error, PackageId};
-use fixedbitset::FixedBitSet;
-use petgraph::prelude::*;
-use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
 
 /// A query over a package graph.
 ///
@@ -98,85 +92,5 @@ impl<'g> PackageQuery<'g> {
     /// to determine which links are followed.
     pub fn resolve_with_fn(self, resolver_fn: impl Fn(PackageLink<'g>) -> bool) -> PackageSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
-    }
-}
-
-/// An iterator over dependency links.
-///
-/// The items returned are of type `PackageLink<'g>`. Returned by `PackageQuery::into_iter_ids`.
-#[derive(Clone, Debug)]
-pub struct IntoIterLinks<'g> {
-    package_graph: DebugIgnore<&'g PackageGraph>,
-    reachable: Option<FixedBitSet>,
-    edge_dfs: EdgeDfs<EdgeIndex<PackageIx>, NodeIndex<PackageIx>, FixedBitSet>,
-    direction: DependencyDirection,
-}
-
-impl<'g> IntoIterLinks<'g> {
-    /// Returns the direction the iteration is happening in.
-    pub fn direction(&self) -> DependencyDirection {
-        self.direction
-    }
-
-    fn next_triple(
-        &mut self,
-    ) -> Option<(
-        NodeIndex<PackageIx>,
-        NodeIndex<PackageIx>,
-        EdgeIndex<PackageIx>,
-    )> {
-        use DependencyDirection::*;
-
-        // This code dynamically switches over all the possible ways to iterate over dependencies.
-        // Alternatives would be to either have separate types for all the different sorts of
-        // queries (won't get unified type that way) and/or to use a trait object/dynamic iterator
-        // (this approach is probably simpler, allocates less, plus there are some lifetime issues
-        // with the way petgraph's traits work).
-        match (&self.reachable, self.direction) {
-            (Some(reachable), Forward) => self.edge_dfs.next(&NodeFiltered::from_fn(
-                self.package_graph.dep_graph(),
-                |ix| reachable.is_visited(&ix),
-            )),
-            (Some(reachable), Reverse) => {
-                // As of petgraph 0.4.13, FilterNode is not implemented for &FixedBitSet, only for
-                // FixedBitSet. This should be fixable upstream, but use a callback for now.
-                // (LLVM should be able to optimize this.)
-                self.edge_dfs
-                    .next(&NodeFiltered::from_fn(
-                        Reversed(self.package_graph.dep_graph()),
-                        |ix| reachable.is_visited(&ix),
-                    ))
-                    .map(|(source_idx, target_idx, edge_idx)| {
-                        // Flip the source and target around if this is a reversed graph, since the
-                        // 'from' and 'to' are always right way up.
-                        (target_idx, source_idx, edge_idx)
-                    })
-            }
-            (None, Forward) => self.edge_dfs.next(self.package_graph.dep_graph()),
-            (None, Reverse) => self
-                .edge_dfs
-                .next(Reversed(self.package_graph.dep_graph()))
-                .map(|(source_idx, target_idx, edge_idx)| {
-                    // Flip the source and target around if this is a reversed graph, since the
-                    // 'from' and 'to' are always right way up.
-                    (target_idx, source_idx, edge_idx)
-                }),
-        }
-    }
-}
-
-impl<'g> Iterator for IntoIterLinks<'g> {
-    type Item = PackageLink<'g>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next_triple = self.next_triple();
-
-        next_triple.map(|(source_idx, target_idx, edge_idx)| {
-            self.package_graph.edge_to_link(
-                source_idx,
-                target_idx,
-                &self.package_graph.dep_graph()[edge_idx],
-            )
-        })
     }
 }
