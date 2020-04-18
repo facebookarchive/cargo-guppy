@@ -478,7 +478,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">Links</span>, <span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
-    <span class="ident">DependencyDirection</span>, <span class="ident">PackageEdge</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>,
+    <span class="ident">DependencyDirection</span>, <span class="ident">PackageEdgeImpl</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">dot</span>::{<span class="ident">DotFmt</span>, <span class="ident">DotVisitor</span>, <span class="ident">DotWrite</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">reversed</span>::<span class="ident">ReverseFlip</span>;
@@ -540,7 +540,8 @@
                 <span class="kw">let</span> <span class="ident">link</span> <span class="op">=</span> <span class="ident">package_graph</span>.<span class="ident">edge_to_link</span>(
                     <span class="ident">edge_ref</span>.<span class="ident">source</span>(),
                     <span class="ident">edge_ref</span>.<span class="ident">target</span>(),
-                    <span class="ident">edge_ref</span>.<span class="ident">weight</span>(),
+                    <span class="ident">edge_ref</span>.<span class="ident">id</span>(),
+                    <span class="prelude-val">Some</span>(<span class="ident">edge_ref</span>.<span class="ident">weight</span>()),
                 );
                 <span class="ident">resolver</span>.<span class="ident">accept</span>(<span class="ident">link</span>)
             }),
@@ -756,8 +757,6 @@
 
 <span class="doccomment">/// Represents whether a particular link within a package graph should be followed during a</span>
 <span class="doccomment">/// resolve operation.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This trait is implemented for all functions that match `Fn(PackageLink&lt;&#39;g&gt;) -&gt; bool`.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns true if this link should be followed during a resolve operation.</span>
     <span class="doccomment">///</span>
@@ -802,7 +801,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// The items returned are of type `&amp;&#39;g PackageId`. Returned by `PackageSet::into_ids`.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IntoIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageEdge</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageEdgeImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="ident">inner</span>: <span class="ident">Topo</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">PackageGraph</span><span class="op">&gt;</span>,
 }
 
@@ -852,10 +851,7 @@
 
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
         <span class="kw">let</span> (<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">next_triple</span>()<span class="question-mark">?</span>;
-        <span class="prelude-val">Some</span>(
-            <span class="self">self</span>.<span class="ident">graph</span>
-                .<span class="ident">edge_to_link</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>[<span class="ident">edge_ix</span>]),
-        )
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">edge_to_link</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge_ix</span>, <span class="prelude-val">None</span>))
     }
 }
 
@@ -927,7 +923,11 @@
 <span class="kw">where</span>
     <span class="ident">V</span>: <span class="ident">PackageDotVisitor</span>,
     <span class="ident">NR</span>: <span class="ident">NodeRef</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
-    <span class="ident">ER</span>: <span class="ident">EdgeRef</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">PackageEdge</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ReverseFlip</span>,
+    <span class="ident">ER</span>: <span class="ident">EdgeRef</span><span class="op">&lt;</span>
+            <span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+            <span class="ident">EdgeId</span> <span class="op">=</span> <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+            <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">PackageEdgeImpl</span>,
+        <span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ReverseFlip</span>,
 {
     <span class="kw">fn</span> <span class="ident">visit_node</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">node</span>: <span class="ident">NR</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="self">self</span>
@@ -938,10 +938,10 @@
     }
 
     <span class="kw">fn</span> <span class="ident">visit_edge</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">edge</span>: <span class="ident">ER</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="kw">let</span> (<span class="ident">source_idx</span>, <span class="ident">target_idx</span>) <span class="op">=</span> <span class="ident">ER</span>::<span class="ident">reverse_flip</span>(<span class="ident">edge</span>.<span class="ident">source</span>(), <span class="ident">edge</span>.<span class="ident">target</span>());
+        <span class="kw">let</span> (<span class="ident">source_ix</span>, <span class="ident">target_ix</span>) <span class="op">=</span> <span class="ident">ER</span>::<span class="ident">reverse_flip</span>(<span class="ident">edge</span>.<span class="ident">source</span>(), <span class="ident">edge</span>.<span class="ident">target</span>());
         <span class="kw">let</span> <span class="ident">link</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">graph</span>
-            .<span class="ident">edge_to_link</span>(<span class="ident">source_idx</span>, <span class="ident">target_idx</span>, <span class="ident">edge</span>.<span class="ident">weight</span>());
+            .<span class="ident">edge_to_link</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge</span>.<span class="ident">id</span>(), <span class="prelude-val">Some</span>(<span class="ident">edge</span>.<span class="ident">weight</span>()));
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">visit_link</span>(<span class="ident">link</span>, <span class="ident">f</span>)
     }
 }
