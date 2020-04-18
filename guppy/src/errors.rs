@@ -25,8 +25,6 @@ pub enum Error {
     UnknownPackageId(PackageId),
     /// A feature ID was unknown to this `FeatureGraph`.
     UnknownFeatureId(PackageId, Option<String>),
-    /// The platform `guppy` is running on is unknown.
-    UnknownCurrentPlatform,
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
 }
@@ -48,7 +46,6 @@ impl fmt::Display for Error {
                 Some(feature) => write!(f, "Unknown feature ID: '{}' '{}'", package_id, feature),
                 None => write!(f, "Unknown feature ID: '{}' (base)", package_id),
             },
-            UnknownCurrentPlatform => write!(f, "Unknown current platform"),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
         }
     }
@@ -62,7 +59,6 @@ impl error::Error for Error {
             PackageGraphConstructError(_) => None,
             UnknownPackageId(_) => None,
             UnknownFeatureId(_, _) => None,
-            UnknownCurrentPlatform => None,
             PackageGraphInternalError(_) => None,
         }
     }

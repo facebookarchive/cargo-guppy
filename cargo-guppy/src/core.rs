@@ -5,7 +5,10 @@
 
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
-use guppy::graph::{DependencyDirection, EnabledStatus, PackageGraph, PackageLink, PackageQuery};
+use guppy::graph::{
+    DependencyDirection, DependencyReq, EnabledTernary, PackageEdge, PackageGraph, PackageLink,
+    PackageQuery,
+};
 use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
 use structopt::StructOpt;
@@ -109,29 +112,33 @@ impl FilterOptions {
                 Kind::Workspace => from.in_workspace() && to.in_workspace(),
             };
 
-            // filter out irrelevant dependencies for a specific target (--target)
-            let include_target = if let Some(platform) = &platform {
-                edge.normal()
-                    .map(|meta| {
-                        // Include this dependency if it's optional or required or if the status is
-                        // unknown.
-                        meta.enabled_on(platform) != EnabledStatus::Never
-                    })
-                    .unwrap_or(true)
+            let include_type = if let Some(platform) = &platform {
+                // filter out irrelevant dependencies for a specific target (--target)
+                self.eval(edge, |req| {
+                    req.status().enabled_on(platform) != EnabledTernary::Disabled
+                })
             } else {
-                true
+                // keep dependencies that are potentially enabled on any platform
+                self.eval(edge, |req| req.is_present())
             };
-
-            // filter normal, dev, and build dependencies (--include-build, --include-dev)
-            let include_type = edge.normal().is_some()
-                || self.include_dev && edge.dev().is_some()
-                || self.include_build && edge.build().is_some();
 
             // filter out provided edge targets (--omit-edges-into)
             let include_edge = !omitted_package_ids.contains(to.id());
 
-            include_kind && include_target && include_type && include_edge
+            include_kind && include_type && include_edge
         }
+    }
+
+    /// Select normal, dev, or build dependencies as requested (--include-build, --include-dev), and
+    /// apply `pred_fn` to whatever's selected.
+    fn eval(
+        &self,
+        edge: PackageEdge<'_>,
+        mut pred_fn: impl FnMut(DependencyReq<'_>) -> bool,
+    ) -> bool {
+        pred_fn(edge.normal())
+            || self.include_dev && pred_fn(edge.dev())
+            || self.include_build && pred_fn(edge.build())
     }
 }
 

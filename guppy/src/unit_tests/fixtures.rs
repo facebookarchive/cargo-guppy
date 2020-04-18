@@ -3,8 +3,8 @@
 
 use crate::errors::FeatureBuildStage;
 use crate::graph::{
-    kind_str, BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, PackageEdge,
-    PackageGraph, PackageMetadata, UnknownStatus, Workspace,
+    kind_str, BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
+    PackageEdge, PackageGraph, PackageMetadata, Workspace,
 };
 use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
@@ -150,6 +150,36 @@ macro_rules! define_fixture {
 pub(crate) struct Fixture {
     graph: PackageGraph,
     details: FixtureDetails,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct PlatformResults {
+    // Each pair stands for (required on, enabled on).
+    status: (EnabledTernary, EnabledTernary),
+    default_features: (EnabledTernary, EnabledTernary),
+    feature_statuses: HashMap<String, (EnabledTernary, EnabledTernary)>,
+}
+
+impl PlatformResults {
+    fn new(
+        status: (EnabledTernary, EnabledTernary),
+        default_features: (EnabledTernary, EnabledTernary),
+    ) -> Self {
+        Self {
+            status,
+            default_features,
+            feature_statuses: HashMap::new(),
+        }
+    }
+
+    fn with_feature_status(
+        mut self,
+        feature: &str,
+        status: (EnabledTernary, EnabledTernary),
+    ) -> Self {
+        self.feature_statuses.insert(feature.to_string(), status);
+        self
+    }
 }
 
 impl Fixture {
@@ -957,6 +987,8 @@ impl FixtureDetails {
 
         let mut link_details = HashMap::new();
 
+        use EnabledTernary::*;
+
         // testcrate -> lazy_static 1.
         LinkDetails::new(
             package_id(METADATA_TARGETS1_TESTCRATE),
@@ -965,12 +997,12 @@ impl FixtureDetails {
         .with_platform_status(
             DependencyKind::Normal,
             x86_64_linux.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+            PlatformResults::new((Enabled, Enabled), (Enabled, Enabled)),
         )
         .with_platform_status(
             DependencyKind::Normal,
             i686_windows.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+            PlatformResults::new((Enabled, Enabled), (Enabled, Enabled)),
         )
         .insert_into(&mut link_details);
 
@@ -983,12 +1015,12 @@ impl FixtureDetails {
         .with_platform_status(
             DependencyKind::Normal,
             x86_64_linux.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+            PlatformResults::new((Enabled, Enabled), (Enabled, Enabled)),
         )
         .with_platform_status(
             DependencyKind::Normal,
             i686_windows.clone(),
-            PlatformStatus::new(EnabledStatus::Never, EnabledStatus::Never),
+            PlatformResults::new((Disabled, Disabled), (Disabled, Disabled)),
         )
         .insert_into(&mut link_details);
 
@@ -1001,12 +1033,12 @@ impl FixtureDetails {
         .with_platform_status(
             DependencyKind::Development,
             x86_64_linux.clone(),
-            PlatformStatus::new(EnabledStatus::Never, EnabledStatus::Never),
+            PlatformResults::new((Disabled, Disabled), (Disabled, Disabled)),
         )
         .with_platform_status(
             DependencyKind::Development,
             i686_windows.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always),
+            PlatformResults::new((Enabled, Enabled), (Enabled, Enabled)),
         )
         .insert_into(&mut link_details);
 
@@ -1020,31 +1052,31 @@ impl FixtureDetails {
         .with_platform_status(
             DependencyKind::Normal,
             x86_64_linux.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Never)
-                .with_feature_status("serde", EnabledStatus::Always)
-                .with_feature_status("std", EnabledStatus::Never),
+            PlatformResults::new((Enabled, Enabled), (Disabled, Disabled))
+                .with_feature_status("serde", (Enabled, Enabled))
+                .with_feature_status("std", (Disabled, Disabled)),
         )
         .with_platform_status(
             DependencyKind::Normal,
             i686_windows.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always)
-                .with_feature_status("serde", EnabledStatus::Always)
-                .with_feature_status("std", EnabledStatus::Never),
+            PlatformResults::new((Enabled, Enabled), (Enabled, Enabled))
+                .with_feature_status("serde", (Enabled, Enabled))
+                .with_feature_status("std", (Disabled, Disabled)),
         )
         .with_features(DependencyKind::Normal, vec!["serde"])
         .with_platform_status(
             DependencyKind::Build,
             x86_64_linux.clone(),
-            PlatformStatus::new(EnabledStatus::Optional, EnabledStatus::Never)
-                .with_feature_status("serde", EnabledStatus::Never)
-                .with_feature_status("std", EnabledStatus::Optional),
+            PlatformResults::new((Disabled, Enabled), (Disabled, Disabled))
+                .with_feature_status("serde", (Disabled, Disabled))
+                .with_feature_status("std", (Disabled, Enabled)),
         )
         .with_platform_status(
             DependencyKind::Build,
             i686_windows.clone(),
-            PlatformStatus::new(EnabledStatus::Never, EnabledStatus::Never)
-                .with_feature_status("serde", EnabledStatus::Never)
-                .with_feature_status("std", EnabledStatus::Never),
+            PlatformResults::new((Disabled, Disabled), (Disabled, Disabled))
+                .with_feature_status("serde", (Disabled, Disabled))
+                .with_feature_status("std", (Disabled, Disabled)),
         )
         .with_features(DependencyKind::Build, vec!["std"])
         .insert_into(&mut link_details);
@@ -1060,104 +1092,89 @@ impl FixtureDetails {
         .with_platform_status(
             DependencyKind::Normal,
             x86_64_linux.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always)
-                .with_feature_status("foo", EnabledStatus::Always)
-                .with_feature_status("bar", EnabledStatus::Never)
-                .with_feature_status("baz", EnabledStatus::Never)
-                .with_feature_status("quux", EnabledStatus::Never),
+            PlatformResults::new((Enabled, Enabled), (Enabled, Enabled))
+                .with_feature_status("foo", (Enabled, Enabled))
+                .with_feature_status("bar", (Disabled, Disabled))
+                .with_feature_status("baz", (Disabled, Disabled))
+                .with_feature_status("quux", (Disabled, Disabled)),
         )
         .with_platform_status(
             DependencyKind::Normal,
             i686_windows.clone(),
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Always)
-                .with_feature_status("foo", EnabledStatus::Never)
-                .with_feature_status("bar", EnabledStatus::Always)
-                .with_feature_status("baz", EnabledStatus::Never)
-                .with_feature_status("quux", EnabledStatus::Never),
+            PlatformResults::new((Enabled, Enabled), (Enabled, Enabled))
+                .with_feature_status("foo", (Disabled, Disabled))
+                .with_feature_status("bar", (Enabled, Enabled))
+                .with_feature_status("baz", (Disabled, Disabled))
+                .with_feature_status("quux", (Disabled, Disabled)),
         )
         .with_platform_status(
             DependencyKind::Normal,
             x86_64_windows.clone(),
-            PlatformStatus::new(EnabledStatus::Optional, EnabledStatus::Optional)
-                .with_feature_status("foo", EnabledStatus::Never)
-                .with_feature_status("bar", EnabledStatus::Never)
-                .with_feature_status("baz", EnabledStatus::Never)
-                .with_feature_status("quux", EnabledStatus::Never),
+            PlatformResults::new((Disabled, Enabled), (Disabled, Enabled))
+                .with_feature_status("foo", (Disabled, Disabled))
+                .with_feature_status("bar", (Disabled, Disabled))
+                .with_feature_status("baz", (Disabled, Disabled))
+                .with_feature_status("quux", (Disabled, Disabled)),
         )
         .with_platform_status(
             DependencyKind::Development,
             x86_64_linux.clone(),
             // x86_64_linux uses TargetFeature::Unknown.
-            PlatformStatus::new(
-                EnabledStatus::Always,
-                EnabledStatus::Unknown(UnknownStatus::Unknown),
-            )
-            .with_feature_status("foo", EnabledStatus::Never)
-            .with_feature_status("bar", EnabledStatus::Never)
-            .with_feature_status("baz", EnabledStatus::Unknown(UnknownStatus::Unknown))
-            .with_feature_status("quux", EnabledStatus::Always),
+            PlatformResults::new((Enabled, Enabled), (Unknown, Unknown))
+                .with_feature_status("foo", (Disabled, Disabled))
+                .with_feature_status("bar", (Disabled, Disabled))
+                .with_feature_status("baz", (Unknown, Unknown))
+                .with_feature_status("quux", (Enabled, Enabled)),
         )
         .with_platform_status(
             DependencyKind::Development,
             i686_windows.clone(),
             // i686_windows turns on sse and sse2.
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Never)
-                .with_feature_status("foo", EnabledStatus::Never)
-                .with_feature_status("bar", EnabledStatus::Never)
-                .with_feature_status("baz", EnabledStatus::Always)
-                .with_feature_status("quux", EnabledStatus::Always),
+            PlatformResults::new((Enabled, Enabled), (Disabled, Disabled))
+                .with_feature_status("foo", (Disabled, Disabled))
+                .with_feature_status("bar", (Disabled, Disabled))
+                .with_feature_status("baz", (Enabled, Enabled))
+                .with_feature_status("quux", (Enabled, Enabled)),
         )
         .with_platform_status(
             DependencyKind::Development,
             x86_64_windows.clone(),
             // x86_64_windows uses TargetFeatures::Unknown.
-            PlatformStatus::new(
-                EnabledStatus::Unknown(UnknownStatus::Unknown),
-                EnabledStatus::Never,
-            )
-            .with_feature_status("foo", EnabledStatus::Never)
-            .with_feature_status("bar", EnabledStatus::Never)
-            .with_feature_status("baz", EnabledStatus::Unknown(UnknownStatus::Unknown))
-            .with_feature_status("quux", EnabledStatus::Unknown(UnknownStatus::Unknown)),
+            PlatformResults::new((Unknown, Unknown), (Disabled, Disabled))
+                .with_feature_status("foo", (Disabled, Disabled))
+                .with_feature_status("bar", (Disabled, Disabled))
+                .with_feature_status("baz", (Unknown, Unknown))
+                .with_feature_status("quux", (Unknown, Unknown)),
         )
         .with_platform_status(
             DependencyKind::Build,
             x86_64_linux.clone(),
             // x86_64_linux uses TargetFeature::Unknown.
-            PlatformStatus::new(
-                EnabledStatus::Unknown(UnknownStatus::OptionalPresent),
-                EnabledStatus::Optional,
-            )
-            .with_feature_status("foo", EnabledStatus::Unknown(UnknownStatus::Unknown))
-            .with_feature_status(
-                "bar",
-                EnabledStatus::Unknown(UnknownStatus::OptionalUnknown),
-            )
-            .with_feature_status("baz", EnabledStatus::Never)
-            .with_feature_status("quux", EnabledStatus::Never),
+            PlatformResults::new((Unknown, Enabled), (Disabled, Enabled))
+                .with_feature_status("foo", (Unknown, Unknown))
+                .with_feature_status("bar", (Disabled, Unknown))
+                .with_feature_status("baz", (Disabled, Disabled))
+                .with_feature_status("quux", (Disabled, Disabled)),
         )
         .with_platform_status(
             DependencyKind::Build,
             i686_windows.clone(),
             // i686_windows turns on sse and sse2.
-            PlatformStatus::new(EnabledStatus::Always, EnabledStatus::Optional)
-                .with_feature_status("foo", EnabledStatus::Always)
-                .with_feature_status("bar", EnabledStatus::Never)
-                .with_feature_status("baz", EnabledStatus::Never)
-                .with_feature_status("quux", EnabledStatus::Never),
+            PlatformResults::new((Enabled, Enabled), (Disabled, Enabled))
+                .with_feature_status("foo", (Enabled, Enabled))
+                .with_feature_status("bar", (Disabled, Disabled))
+                .with_feature_status("baz", (Disabled, Disabled))
+                .with_feature_status("quux", (Disabled, Disabled)),
         )
         .with_platform_status(
             DependencyKind::Build,
             x86_64_windows.clone(),
             // x86_64_windows uses TargetFeatures::Unknown.
-            PlatformStatus::new(
-                EnabledStatus::Unknown(UnknownStatus::Unknown),
-                EnabledStatus::Unknown(UnknownStatus::OptionalUnknown),
-            )
-            .with_feature_status("foo", EnabledStatus::Unknown(UnknownStatus::Unknown))
-            .with_feature_status("bar", EnabledStatus::Never)
-            .with_feature_status("baz", EnabledStatus::Never)
-            .with_feature_status("quux", EnabledStatus::Never),
+            PlatformResults::new((Unknown, Unknown), (Disabled, Unknown))
+                .with_feature_status("foo", (Unknown, Unknown))
+                .with_feature_status("bar", (Disabled, Disabled))
+                .with_feature_status("baz", (Disabled, Disabled))
+                .with_feature_status("quux", (Disabled, Disabled)),
         )
         .insert_into(&mut link_details);
 
@@ -1568,7 +1585,7 @@ impl PackageDetails {
 pub(crate) struct LinkDetails {
     from: PackageId,
     to: PackageId,
-    platform_statuses: Vec<(DependencyKind, Platform<'static>, PlatformStatus)>,
+    platform_results: Vec<(DependencyKind, Platform<'static>, PlatformResults)>,
     features: Vec<(DependencyKind, Vec<&'static str>)>,
 }
 
@@ -1577,7 +1594,7 @@ impl LinkDetails {
         Self {
             from,
             to,
-            platform_statuses: vec![],
+            platform_results: vec![],
             features: vec![],
         }
     }
@@ -1586,9 +1603,9 @@ impl LinkDetails {
         mut self,
         dep_kind: DependencyKind,
         platform: Platform<'static>,
-        status: PlatformStatus,
+        status: PlatformResults,
     ) -> Self {
-        self.platform_statuses.push((dep_kind, platform, status));
+        self.platform_results.push((dep_kind, platform, status));
         self
     }
 
@@ -1607,33 +1624,31 @@ impl LinkDetails {
     }
 
     pub(crate) fn assert_metadata(&self, edge: PackageEdge<'_>, msg: &str) {
-        for (dep_kind, platform, status) in &self.platform_statuses {
-            let metadata = edge.metadata_for_kind(*dep_kind).unwrap_or_else(|| {
-                panic!(
-                    "{}: dependency metadata not found for kind {}",
-                    msg,
-                    kind_str(*dep_kind)
-                )
-            });
+        let required_enabled = |status: EnabledStatus<'_>, platform: &Platform<'_>| {
+            (status.required_on(platform), status.enabled_on(platform))
+        };
+
+        for (dep_kind, platform, results) in &self.platform_results {
+            let req = edge.req_for_kind(*dep_kind);
             assert_eq!(
-                metadata.enabled_on(platform),
-                status.enabled,
-                "{}: for platform '{}', kind {}, enabled is correct",
+                required_enabled(req.status(), platform),
+                results.status,
+                "{}: for platform '{}', kind {}, status is correct",
                 msg,
                 platform.triple(),
                 kind_str(*dep_kind),
             );
             assert_eq!(
-                metadata.default_features_on(platform),
-                status.default_features,
+                required_enabled(req.default_features(), platform),
+                results.default_features,
                 "{}: for platform '{}', kind {}, default features is correct",
                 msg,
                 platform.triple(),
                 kind_str(*dep_kind),
             );
-            for (feature, status) in &status.feature_statuses {
+            for (feature, status) in &results.feature_statuses {
                 assert_eq!(
-                    metadata.feature_enabled_on(feature, platform),
+                    required_enabled(req.feature_status(feature), platform),
                     *status,
                     "{}: for platform '{}', kind {}, feature '{}' has correct status",
                     msg,
@@ -1645,40 +1660,11 @@ impl LinkDetails {
         }
 
         for (dep_kind, features) in &self.features {
-            let metadata = edge.metadata_for_kind(*dep_kind).unwrap_or_else(|| {
-                panic!(
-                    "{}: dependency metadata not found for kind {}",
-                    msg,
-                    kind_str(*dep_kind)
-                )
-            });
-            let mut actual_features: Vec<_> =
-                metadata.features().iter().map(|s| s.as_str()).collect();
+            let metadata = edge.req_for_kind(*dep_kind);
+            let mut actual_features: Vec<_> = metadata.features().collect();
             actual_features.sort();
             assert_eq!(&actual_features, features, "{}: features is correct", msg);
         }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct PlatformStatus {
-    enabled: EnabledStatus,
-    default_features: EnabledStatus,
-    feature_statuses: HashMap<String, EnabledStatus>,
-}
-
-impl PlatformStatus {
-    fn new(enabled: EnabledStatus, default_features: EnabledStatus) -> Self {
-        Self {
-            enabled,
-            default_features,
-            feature_statuses: HashMap::new(),
-        }
-    }
-
-    fn with_feature_status(mut self, feature: &str, status: EnabledStatus) -> Self {
-        self.feature_statuses.insert(feature.to_string(), status);
-        self
     }
 }
 

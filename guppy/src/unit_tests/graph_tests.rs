@@ -30,9 +30,12 @@ mod small {
         assert_eq!(root_deps.len(), 1, "the root crate has one dependency");
         let dep = root_deps.pop().expect("the root crate has one dependency");
         // XXX test for details of dependency edges as well?
-        assert!(dep.edge.normal().is_some(), "normal dependency is defined");
-        assert!(dep.edge.build().is_some(), "build dependency is defined");
-        assert!(dep.edge.dev().is_some(), "dev dependency is defined");
+        assert!(
+            dep.edge.normal().is_present(),
+            "normal dependency is defined"
+        );
+        assert!(dep.edge.build().is_present(), "build dependency is defined");
+        assert!(dep.edge.dev().is_present(), "dev dependency is defined");
 
         // Print out dot graphs for small subgraphs.
         static EXPECTED_DOT: &str = r#"digraph {
@@ -187,24 +190,29 @@ mod small {
         let package_set = package_graph.resolve_all();
         let feature_graph = metadata_targets1.graph().feature_graph();
         assert_eq!(feature_graph.feature_count(), 31, "feature count");
-        for (source, target, edge) in feature_graph
-            .resolve_all()
-            .into_links(DependencyDirection::Forward)
-        {
-            let source_metadata = package_graph.metadata(source.package_id()).unwrap();
-            let target_metadata = package_graph.metadata(target.package_id()).unwrap();
 
-            println!(
-                "feature link: {}:{} {} -> {}:{} {} {:?}",
-                source_metadata.name(),
-                source_metadata.version(),
-                source.feature().unwrap_or("[base]"),
-                target_metadata.name(),
-                target_metadata.version(),
-                target.feature().unwrap_or("[base]"),
-                edge
-            );
+        // Some code that might be useful for debugging.
+        if false {
+            for (source, target, edge) in feature_graph
+                .resolve_all()
+                .into_links(DependencyDirection::Forward)
+            {
+                let source_metadata = package_graph.metadata(source.package_id()).unwrap();
+                let target_metadata = package_graph.metadata(target.package_id()).unwrap();
+
+                println!(
+                    "feature link: {}:{} {} -> {}:{} {} {:?}",
+                    source_metadata.name(),
+                    source_metadata.version(),
+                    source.feature().unwrap_or("[base]"),
+                    target_metadata.name(),
+                    target_metadata.version(),
+                    target.feature().unwrap_or("[base]"),
+                    edge
+                );
+            }
         }
+
         assert_eq!(feature_graph.link_count(), 48, "feature link count");
 
         // Check that resolve_packages + a feature filter works.
