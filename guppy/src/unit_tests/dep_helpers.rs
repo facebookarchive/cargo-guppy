@@ -3,7 +3,7 @@
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
 use crate::graph::{
-    kind_str, DependencyDirection, DependencyMetadata, PackageEdge, PackageGraph, PackageLink,
+    kind_str, DependencyDirection, DependencyMetadata, PackageEdgeImpl, PackageGraph, PackageLink,
     PackageMetadata, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
@@ -771,7 +771,7 @@ fn dep_link_ptrs<'g>(
 ) -> Vec<(
     *const PackageMetadata,
     *const PackageMetadata,
-    *const PackageEdge,
+    *const PackageEdgeImpl,
 )> {
     let mut triples: Vec<_> = dep_links
         .into_iter()
@@ -779,7 +779,7 @@ fn dep_link_ptrs<'g>(
             (
                 link.from as *const _,
                 link.to as *const _,
-                link.edge as *const _,
+                link.edge.as_inner_ptr(),
             )
         })
         .collect();
