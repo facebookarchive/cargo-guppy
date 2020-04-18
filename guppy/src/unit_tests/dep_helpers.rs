@@ -3,7 +3,7 @@
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
 use crate::graph::{
-    kind_str, DependencyDirection, DependencyMetadata, PackageEdgeImpl, PackageGraph, PackageLink,
+    kind_str, DependencyDirection, DependencyReq, PackageEdgeImpl, PackageGraph, PackageLink,
     PackageMetadata, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
@@ -13,6 +13,7 @@ use std::collections::{BTreeSet, HashSet};
 use std::fmt;
 use std::hash::Hash;
 use std::iter;
+use target_spec::Platform;
 
 fn __from_metadata<'a>(dep: &PackageLink<'a>) -> &'a PackageMetadata {
     dep.from
@@ -318,7 +319,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
             DependencyKind::Development,
         ] {
             assert_enabled_status_is_known(
-                edge.metadata_for_kind(*dep_kind),
+                edge.req_for_kind(*dep_kind),
                 &format!(
                     "{}: {} -> {} ({})",
                     msg,
@@ -339,25 +340,25 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     );
 }
 
-fn assert_enabled_status_is_known(metadata: Option<&DependencyMetadata>, msg: &str) {
-    let metadata = match metadata {
-        Some(metadata) => metadata,
-        None => return,
-    };
-
+fn assert_enabled_status_is_known(req: DependencyReq<'_>, msg: &str) {
+    let current_platform = Platform::current().expect("current platform is known");
     assert!(
-        metadata.enabled().is_known(),
+        req.status().enabled_on(&current_platform).is_known(),
         "{}: enabled status known for current platform",
         msg
     );
     assert!(
-        metadata.default_features().is_known(),
+        req.default_features()
+            .enabled_on(&current_platform)
+            .is_known(),
         "{}: default feature status known for current platform",
         msg
     );
-    for feature in metadata.features() {
+    for feature in req.features() {
         assert!(
-            metadata.feature_enabled(feature).is_known(),
+            req.feature_status(feature)
+                .enabled_on(&current_platform)
+                .is_known(),
             "{}: for feature '{}', status known for current platform",
             msg,
             feature

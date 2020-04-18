@@ -3,14 +3,14 @@
 
 use crate::graph::{
     cargo_version_matches, BuildTargetImpl, BuildTargetKind, DepRequiredOrOptional,
-    DependencyMetadata, DependencyReq, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph,
-    PackageGraphData, PackageIx, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
+    DependencyReqImpl, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph, PackageGraphData,
+    PackageIx, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
 };
-use crate::{Error, Metadata, PackageId, Platform};
+use crate::{Error, Metadata, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve, Target};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
-use semver::{Version, VersionReq};
+use semver::Version;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 use std::path::{Path, PathBuf};
@@ -566,9 +566,9 @@ impl PackageEdgeImpl {
         deps: impl IntoIterator<Item = &'a Dependency>,
     ) -> Result<Self, Error> {
         let mut version_req = None;
-        let mut normal = DependencyBuildState::default();
-        let mut build = DependencyBuildState::default();
-        let mut dev = DependencyBuildState::default();
+        let mut normal = DependencyReqImpl::default();
+        let mut build = DependencyReqImpl::default();
+        let mut dev = DependencyReqImpl::default();
         for dep in deps {
             // Dev dependencies cannot be optional.
             if dep.kind == DependencyKind::Development && dep.optional {
@@ -598,9 +598,9 @@ impl PackageEdgeImpl {
             dep_name: name.into(),
             resolved_name: resolved_name.into(),
             version_req: version_req.expect("at least one dependency instance"),
-            normal: normal.finish()?,
-            build: build.finish()?,
-            dev: dev.finish()?,
+            normal,
+            build,
+            dev,
         })
     }
 }
@@ -631,79 +631,13 @@ impl PackageEdgeImpl {
 /// (https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#features)'s `itarget` setting
 /// causes this union-ing to *not* happen, so that's why we store all the features enabled by
 /// each target separately.
-#[derive(Debug, Default)]
-struct DependencyBuildState {
-    // This is the `req` field from the first instance seen if there are any, or `None` if none are
-    // seen.
-    // TODO: eliminate this (in the next commit)
-    version_req: Option<VersionReq>,
-    dependency_req: DependencyReq,
-}
-
-impl DependencyBuildState {
-    fn add_instance(&mut self, from_id: &PackageId, dep: &Dependency) -> Result<(), Error> {
-        if self.version_req.is_none() {
-            self.version_req = Some(dep.req.clone());
-        }
-        self.dependency_req.add_instance(from_id, dep)?;
-
-        Ok(())
-    }
-
-    fn finish(self) -> Result<Option<DependencyMetadata>, Error> {
-        if self.version_req.is_none() {
-            // No instances seen.
-            return Ok(None);
-        }
-
-        let dependency_req = self.dependency_req;
-
-        // Evaluate this dependency against the current platform.
-        let current_platform = Platform::current().ok_or(Error::UnknownCurrentPlatform)?;
-        let current_enabled = dependency_req.enabled_on(&current_platform);
-        let current_default_features = dependency_req.default_features_on(&current_platform);
-
-        // Collect all features from both the optional and required instances.
-        let all_features: HashSet<_> = dependency_req.all_features().collect();
-        let all_features: Vec<_> = all_features
-            .into_iter()
-            .map(|feature| feature.to_string())
-            .collect();
-
-        // Collect the status of every feature on this platform.
-        let current_feature_statuses = all_features
-            .iter()
-            .map(|feature| {
-                (
-                    feature.clone(),
-                    dependency_req.feature_enabled_on(feature, &current_platform),
-                )
-            })
-            .collect();
-
-        Ok(Some(DependencyMetadata {
-            dependency_req,
-            current_enabled,
-            current_default_features,
-            all_features,
-            current_feature_statuses,
-        }))
-    }
-}
-
-impl DependencyReq {
+impl DependencyReqImpl {
     fn add_instance(&mut self, from_id: &PackageId, dep: &Dependency) -> Result<(), Error> {
         if dep.optional {
             self.optional.add_instance(from_id, dep)
         } else {
             self.required.add_instance(from_id, dep)
         }
-    }
-
-    fn all_features(&self) -> impl Iterator<Item = &str> {
-        self.required
-            .all_features()
-            .chain(self.optional.all_features())
     }
 }
 
@@ -729,8 +663,12 @@ impl DepRequiredOrOptional {
         if dep.uses_default_features {
             self.default_features_if.add_spec(target_spec.as_ref());
         }
-        self.target_features
-            .push((target_spec, dep.features.clone()));
+        for feature in &dep.features {
+            self.feature_targets
+                .entry(feature.clone())
+                .or_default()
+                .add_spec(target_spec.as_ref());
+        }
         Ok(())
     }
 }
@@ -766,12 +704,5 @@ impl PlatformStatusImpl {
                 specs.push(spec.clone());
             }
         }
-    }
-}
-
-impl Default for PlatformStatusImpl {
-    fn default() -> Self {
-        // Empty vector means never.
-        PlatformStatusImpl::Specs(vec![])
     }
 }
