@@ -186,6 +186,26 @@ mod small {
         let package_graph = metadata_targets1.graph();
         let package_set = package_graph.resolve_all();
         let feature_graph = metadata_targets1.graph().feature_graph();
+        assert_eq!(feature_graph.feature_count(), 31, "feature count");
+        for (source, target, edge) in feature_graph
+            .resolve_all()
+            .into_links(DependencyDirection::Forward)
+        {
+            let source_metadata = package_graph.metadata(source.package_id()).unwrap();
+            let target_metadata = package_graph.metadata(target.package_id()).unwrap();
+
+            println!(
+                "feature link: {}:{} {} -> {}:{} {} {:?}",
+                source_metadata.name(),
+                source_metadata.version(),
+                source.feature().unwrap_or("[base]"),
+                target_metadata.name(),
+                target_metadata.version(),
+                target.feature().unwrap_or("[base]"),
+                edge
+            );
+        }
+        assert_eq!(feature_graph.link_count(), 48, "feature link count");
 
         // Check that resolve_packages + a feature filter works.
         let feature_set = feature_graph.resolve_packages(

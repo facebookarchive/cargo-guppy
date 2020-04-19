@@ -1243,7 +1243,7 @@ impl DependencyReqImpl {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum TargetPredicate {
+pub(crate) enum TargetPredicate {
     Always,
     // Empty vector means never.
     Specs(Vec<TargetSpec>),
