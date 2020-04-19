@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::debug_ignore::DebugIgnore;
-use crate::graph::feature::{FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata};
+use crate::graph::feature::{FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata};
 use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
@@ -341,6 +341,31 @@ impl<'g> FeatureSet<'g> {
                 } else {
                     None
                 }
+            })
+    }
+
+    // Currently a helper for debugging -- will be made public in the future.
+    #[allow(dead_code)]
+    pub(crate) fn into_links(
+        self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = (FeatureId<'g>, FeatureId<'g>, &'g FeatureEdge)> {
+        let feature_graph = self.feature_graph;
+
+        self.core
+            .links(feature_graph.dep_graph(), feature_graph.sccs(), direction)
+            .map(move |(source_ix, target_ix, edge_ix)| {
+                (
+                    FeatureId::from_node(
+                        feature_graph.package_graph(),
+                        &feature_graph.dep_graph()[source_ix],
+                    ),
+                    FeatureId::from_node(
+                        feature_graph.package_graph(),
+                        &feature_graph.dep_graph()[target_ix],
+                    ),
+                    &feature_graph.dep_graph()[edge_ix],
+                )
             })
     }
 }
