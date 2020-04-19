@@ -256,11 +256,13 @@ impl<'g, G: GraphSpec> Links<'g, G> {
     pub(super) fn direction(&self) -> DependencyDirection {
         self.direction
     }
+}
 
+impl<'g, G: GraphSpec> Iterator for Links<'g, G> {
     #[allow(clippy::type_complexity)]
-    pub(super) fn next_triple(
-        &mut self,
-    ) -> Option<(NodeIndex<G::Ix>, NodeIndex<G::Ix>, EdgeIndex<G::Ix>)> {
+    type Item = (NodeIndex<G::Ix>, NodeIndex<G::Ix>, EdgeIndex<G::Ix>);
+
+    fn next(&mut self) -> Option<Self::Item> {
         match self.direction {
             DependencyDirection::Forward => {
                 // TODO: replace with &self.included once petgraph 0.5.1 is out.
