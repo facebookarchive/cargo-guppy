@@ -933,6 +933,7 @@ impl<'g> PackageEdge<'g> {
     // ---
 
     /// Returns the edge index.
+    #[allow(dead_code)]
     pub(super) fn edge_ix(&self) -> EdgeIndex<PackageIx> {
         self.edge_ix
     }
