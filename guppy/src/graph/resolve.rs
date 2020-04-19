@@ -376,7 +376,7 @@ impl<'g> Iterator for IntoLinks<'g> {
     type Item = PackageLink<'g>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let (source_ix, target_ix, edge_ix) = self.inner.next_triple()?;
+        let (source_ix, target_ix, edge_ix) = self.inner.next()?;
         Some(self.graph.edge_to_link(source_ix, target_ix, edge_ix, None))
     }
 }
