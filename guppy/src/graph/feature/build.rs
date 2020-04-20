@@ -225,8 +225,8 @@ impl<'g> FeatureGraphBuildState<'g> {
         //   features "a" and "b" in both instances.
         //
         // This means that up to two separate edges have to be represented:
-        // * a 'mandatory edge', which will be from the base node for 'from' to the feature nodes
-        //   for each mandatory feature in 'to'.
+        // * a 'required edge', which will be from the base node for 'from' to the feature nodes
+        //   for each required feature in 'to'.
         // * an 'optional edge', which will be from the feature node (from, dep_name) to the
         //   feature nodes for each optional feature in 'to'. This edge is only added if at least
         //   one line is optional.
@@ -246,12 +246,12 @@ impl<'g> FeatureGraphBuildState<'g> {
                 None
             });
 
-        let mut mandatory_req = FeatureReq::new(from, to, edge);
+        let mut required_req = FeatureReq::new(from, to, edge);
         let mut optional_req = FeatureReq::new(from, to, edge);
         for (dep_kind, metadata) in unified_metadata {
-            mandatory_req.add_features(
+            required_req.add_features(
                 dep_kind,
-                &metadata.dependency_req.mandatory,
+                &metadata.dependency_req.required,
                 &mut self.warnings,
             );
             optional_req.add_features(
@@ -261,8 +261,8 @@ impl<'g> FeatureGraphBuildState<'g> {
             );
         }
 
-        // Add the mandatory edges (base -> features).
-        self.add_edges(FeatureNode::base(from.package_ix), mandatory_req.finish());
+        // Add the required edges (base -> features).
+        self.add_edges(FeatureNode::base(from.package_ix), required_req.finish());
 
         if !optional_req.is_empty() {
             // This means that there is at least one instance of this dependency with optional =

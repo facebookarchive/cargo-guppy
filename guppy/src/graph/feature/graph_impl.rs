@@ -23,7 +23,7 @@ use std::iter::FromIterator;
 // optional dependencies.
 //
 // An optional dependency can be either normal or build -- not dev. Note that a dependency can be
-// marked optional in one section and mandatory in another. In this context, a dependency is a
+// marked optional in one section and required in another. In this context, a dependency is a
 // feature if it is marked as optional in any context.
 //
 // Features are *unified*. See the documentation in add_dependency_edges for more.

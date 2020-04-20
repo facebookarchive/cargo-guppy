@@ -113,7 +113,7 @@ impl FilterOptions {
             let include_target = if let Some(platform) = &platform {
                 edge.normal()
                     .map(|meta| {
-                        // Include this dependency if it's optional or mandatory or if the status is
+                        // Include this dependency if it's optional or required or if the status is
                         // unknown.
                         meta.enabled_on(platform) != EnabledStatus::Never
                     })

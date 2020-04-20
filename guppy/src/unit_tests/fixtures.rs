@@ -1051,7 +1051,7 @@ impl FixtureDetails {
 
         // testcrate -> dep-a.
         // As a normal dependency, this is optionally built by default, but on not-Windows or on x86
-        // it is mandatory.
+        // it is required.
         // As a dev dependency, it is present if sse2 or atomics are turned on.
         LinkDetails::new(
             package_id(METADATA_TARGETS1_TESTCRATE),

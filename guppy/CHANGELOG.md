@@ -66,7 +66,7 @@ This is a breaking release. There are no new or removed features, but many exist
 ## [0.1.7] - 2020-04-05
 ### Added
 - Support for [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies), including:
-   - Querying whether a dependency is mandatory or optional on the current platform, or on any other platform.
+   - Querying whether a dependency is required or optional on the current platform, or on any other platform.
    - Evaluating which features are enabled on a platform.
    - Handling situations where the set of [target features](https://github.com/rust-lang/rfcs/blob/master/text/2045-target-feature.md) isn't known.
 

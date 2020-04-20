@@ -1115,13 +1115,13 @@ pub enum EnabledStatus {
 }
 
 impl EnabledStatus {
-    /// Converts a mandatory evaluation result and a thunk returning the optional result into an
+    /// Converts a required evaluation result and a thunk returning the optional result into an
     /// `EnabledStatus`.
     pub(super) fn new(
-        mandatory_res: Option<bool>,
+        required_res: Option<bool>,
         optional_res_fn: impl FnOnce() -> Option<bool>,
     ) -> Self {
-        //    mandatory     optional     |      result
+        //    required     optional      |      result
         //                               |
         //        T            *         |      always
         //        U            T         |  optional present
@@ -1134,7 +1134,7 @@ impl EnabledStatus {
         // [1] note that both these cases are collapsed into "unknown" -- for either of these it's
         //     not known whether the dependency will be included at all.
 
-        match mandatory_res {
+        match required_res {
             Some(true) => EnabledStatus::Always,
             None => match optional_res_fn() {
                 Some(true) => EnabledStatus::Unknown(UnknownStatus::OptionalPresent),
@@ -1176,7 +1176,7 @@ pub enum UnknownStatus {
 /// Information about dependency requirements.
 #[derive(Clone, Debug, Default)]
 pub(super) struct DependencyReq {
-    pub(super) mandatory: DependencyReqImpl,
+    pub(super) required: DependencyReqImpl,
     pub(super) optional: DependencyReqImpl,
 }
 
@@ -1194,8 +1194,8 @@ impl DependencyReq {
         pred_fn: impl Fn(&DependencyReqImpl) -> &TargetPredicate,
         platform: &Platform<'_>,
     ) -> EnabledStatus {
-        let mandatory_res = pred_fn(&self.mandatory).eval(platform);
-        EnabledStatus::new(mandatory_res, || pred_fn(&self.optional).eval(platform))
+        let required_res = pred_fn(&self.required).eval(platform);
+        EnabledStatus::new(required_res, || pred_fn(&self.optional).eval(platform))
     }
 
     pub(super) fn feature_enabled_on(
@@ -1222,7 +1222,7 @@ impl DependencyReq {
             res
         };
 
-        EnabledStatus::new(matches(&self.mandatory), || matches(&self.optional))
+        EnabledStatus::new(matches(&self.required), || matches(&self.optional))
     }
 }
 

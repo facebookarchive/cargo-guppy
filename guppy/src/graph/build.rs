@@ -625,7 +625,7 @@ impl PackageEdgeImpl {
 /// 1. Whether the dependency is included at all. This is a union of all instances, conditional on
 ///    the specifics of the `[target]` lines.
 /// 2. What features are enabled. As of cargo 1.42, this is unified across all instances but
-///    separately for mandatory/optional instances.
+///    separately for required/optional instances.
 ///
 /// Note that the new feature resolver
 /// (https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#features)'s `itarget` setting
@@ -663,7 +663,7 @@ impl DependencyBuildState {
         let current_enabled = dependency_req.enabled_on(&current_platform);
         let current_default_features = dependency_req.default_features_on(&current_platform);
 
-        // Collect all features from both the optional and mandatory instances.
+        // Collect all features from both the optional and required instances.
         let all_features: HashSet<_> = dependency_req.all_features().collect();
         let all_features: Vec<_> = all_features
             .into_iter()
@@ -696,12 +696,12 @@ impl DependencyReq {
         if dep.optional {
             self.optional.add_instance(from_id, dep)
         } else {
-            self.mandatory.add_instance(from_id, dep)
+            self.required.add_instance(from_id, dep)
         }
     }
 
     fn all_features(&self) -> impl Iterator<Item = &str> {
-        self.mandatory
+        self.required
             .all_features()
             .chain(self.optional.all_features())
     }
