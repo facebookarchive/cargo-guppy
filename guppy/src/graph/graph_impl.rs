@@ -1176,8 +1176,8 @@ pub enum UnknownStatus {
 /// Information about dependency requirements.
 #[derive(Clone, Debug, Default)]
 pub(super) struct DependencyReq {
-    pub(super) required: DependencyReqImpl,
-    pub(super) optional: DependencyReqImpl,
+    pub(super) required: DepRequiredOrOptional,
+    pub(super) optional: DepRequiredOrOptional,
 }
 
 impl DependencyReq {
@@ -1191,7 +1191,7 @@ impl DependencyReq {
 
     fn eval(
         &self,
-        pred_fn: impl Fn(&DependencyReqImpl) -> &TargetPredicate,
+        pred_fn: impl Fn(&DepRequiredOrOptional) -> &TargetPredicate,
         platform: &Platform<'_>,
     ) -> EnabledStatus {
         let required_res = pred_fn(&self.required).eval(platform);
@@ -1203,7 +1203,7 @@ impl DependencyReq {
         feature: &str,
         platform: &Platform<'_>,
     ) -> EnabledStatus {
-        let matches = move |req: &DependencyReqImpl| {
+        let matches = move |req: &DepRequiredOrOptional| {
             let mut res = Some(false);
             for (target, features) in &req.target_features {
                 if !features.iter().any(|f| f == feature) {
@@ -1226,14 +1226,16 @@ impl DependencyReq {
     }
 }
 
+/// Information about dependency requirements, scoped to either the dependency being required or
+/// optional.
 #[derive(Clone, Debug, Default)]
-pub(super) struct DependencyReqImpl {
+pub(super) struct DepRequiredOrOptional {
     pub(super) build_if: TargetPredicate,
     pub(super) default_features_if: TargetPredicate,
     pub(super) target_features: Vec<(Option<TargetSpec>, Vec<String>)>,
 }
 
-impl DependencyReqImpl {
+impl DepRequiredOrOptional {
     pub(super) fn all_features(&self) -> impl Iterator<Item = &str> {
         self.target_features
             .iter()

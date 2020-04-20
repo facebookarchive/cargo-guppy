@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    cargo_version_matches, BuildTargetImpl, BuildTargetKind, DependencyMetadata, DependencyReq,
-    DependencyReqImpl, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph, PackageGraphData,
-    PackageIx, PackageMetadata, TargetPredicate, WorkspaceImpl,
+    cargo_version_matches, BuildTargetImpl, BuildTargetKind, DepRequiredOrOptional,
+    DependencyMetadata, DependencyReq, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph,
+    PackageGraphData, PackageIx, PackageMetadata, TargetPredicate, WorkspaceImpl,
 };
 use crate::{Error, Metadata, PackageId, Platform};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve, Target};
@@ -707,7 +707,7 @@ impl DependencyReq {
     }
 }
 
-impl DependencyReqImpl {
+impl DepRequiredOrOptional {
     fn add_instance(&mut self, from_id: &PackageId, dep: &Dependency) -> Result<(), Error> {
         // target_spec is None if this is not a platform-specific dependency.
         let target_spec = match dep.target.as_ref() {
