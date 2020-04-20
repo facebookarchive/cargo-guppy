@@ -4,7 +4,7 @@
 use crate::graph::{
     cargo_version_matches, BuildTargetImpl, BuildTargetKind, DepRequiredOrOptional,
     DependencyMetadata, DependencyReq, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph,
-    PackageGraphData, PackageIx, PackageMetadata, TargetPredicate, WorkspaceImpl,
+    PackageGraphData, PackageIx, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
 };
 use crate::{Error, Metadata, PackageId, Platform};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve, Target};
@@ -735,18 +735,18 @@ impl DepRequiredOrOptional {
     }
 }
 
-impl TargetPredicate {
-    pub(super) fn extend(&mut self, other: &TargetPredicate) {
+impl PlatformStatusImpl {
+    pub(super) fn extend(&mut self, other: &PlatformStatusImpl) {
         // &mut *self is a reborrow to allow mem::replace to work below.
         match (&mut *self, other) {
-            (TargetPredicate::Always, _) => {
+            (PlatformStatusImpl::Always, _) => {
                 // Always stays the same since it means all specs are included.
             }
-            (TargetPredicate::Specs(_), TargetPredicate::Always) => {
+            (PlatformStatusImpl::Specs(_), PlatformStatusImpl::Always) => {
                 // Mark self as Always.
-                mem::replace(self, TargetPredicate::Always);
+                mem::replace(self, PlatformStatusImpl::Always);
             }
-            (TargetPredicate::Specs(specs), TargetPredicate::Specs(other)) => {
+            (PlatformStatusImpl::Specs(specs), PlatformStatusImpl::Specs(other)) => {
                 specs.extend_from_slice(other.as_slice());
             }
         }
@@ -755,23 +755,23 @@ impl TargetPredicate {
     pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec>) {
         // &mut *self is a reborrow to allow mem::replace to work below.
         match (&mut *self, spec) {
-            (TargetPredicate::Always, _) => {
+            (PlatformStatusImpl::Always, _) => {
                 // Always stays the same since it means all specs are included.
             }
-            (TargetPredicate::Specs(_), None) => {
+            (PlatformStatusImpl::Specs(_), None) => {
                 // Mark self as Always.
-                mem::replace(self, TargetPredicate::Always);
+                mem::replace(self, PlatformStatusImpl::Always);
             }
-            (TargetPredicate::Specs(specs), Some(spec)) => {
+            (PlatformStatusImpl::Specs(specs), Some(spec)) => {
                 specs.push(spec.clone());
             }
         }
     }
 }
 
-impl Default for TargetPredicate {
+impl Default for PlatformStatusImpl {
     fn default() -> Self {
         // Empty vector means never.
-        TargetPredicate::Specs(vec![])
+        PlatformStatusImpl::Specs(vec![])
     }
 }

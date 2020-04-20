@@ -5,7 +5,7 @@ use crate::errors::FeatureGraphWarning;
 use crate::graph::feature::build::FeatureGraphBuildState;
 use crate::graph::feature::{Cycles, FeatureFilter};
 use crate::graph::{
-    DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageMetadata, TargetPredicate,
+    DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageMetadata, PlatformStatusImpl,
 };
 use crate::petgraph_support::scc::Sccs;
 use crate::{Error, PackageId};
@@ -510,9 +510,9 @@ pub(crate) enum FeatureEdge {
     /// foo = { version = "1", features = ["a", "b"] }
     /// ```
     Dependency {
-        normal: TargetPredicate,
-        build: TargetPredicate,
-        dev: TargetPredicate,
+        normal: PlatformStatusImpl,
+        build: PlatformStatusImpl,
+        dev: PlatformStatusImpl,
     },
     /// This edge is from a feature depending on other features:
     ///
