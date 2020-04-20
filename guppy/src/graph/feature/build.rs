@@ -6,7 +6,7 @@ use crate::graph::feature::{
     FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{
-    DependencyReqImpl, FeatureIx, PackageEdge, PackageGraph, PackageLink, PackageMetadata,
+    DepRequiredOrOptional, FeatureIx, PackageEdge, PackageGraph, PackageLink, PackageMetadata,
     TargetPredicate,
 };
 use cargo_metadata::DependencyKind;
@@ -362,7 +362,7 @@ impl<'g> FeatureReq<'g> {
     fn add_features(
         &mut self,
         dep_kind: DependencyKind,
-        req: &DependencyReqImpl,
+        req: &DepRequiredOrOptional,
         warnings: &mut Vec<FeatureGraphWarning>,
     ) {
         if let (Some(default_idx), false) =
