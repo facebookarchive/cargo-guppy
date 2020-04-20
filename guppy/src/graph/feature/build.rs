@@ -7,7 +7,7 @@ use crate::graph::feature::{
 };
 use crate::graph::{
     DepRequiredOrOptional, FeatureIx, PackageEdge, PackageGraph, PackageLink, PackageMetadata,
-    TargetPredicate,
+    PlatformStatusImpl,
 };
 use cargo_metadata::DependencyKind;
 use once_cell::sync::OnceCell;
@@ -425,13 +425,13 @@ impl<'g> FeatureReq<'g> {
 
 #[derive(Debug, Default)]
 struct DependencyBuildState {
-    normal: TargetPredicate,
-    build: TargetPredicate,
-    dev: TargetPredicate,
+    normal: PlatformStatusImpl,
+    build: PlatformStatusImpl,
+    dev: PlatformStatusImpl,
 }
 
 impl DependencyBuildState {
-    fn add_predicate(&mut self, dep_kind: DependencyKind, pred: &TargetPredicate) {
+    fn add_predicate(&mut self, dep_kind: DependencyKind, pred: &PlatformStatusImpl) {
         match dep_kind {
             DependencyKind::Normal => self.normal.extend(pred),
             DependencyKind::Build => self.build.extend(pred),

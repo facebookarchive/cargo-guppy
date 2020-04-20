@@ -1191,7 +1191,7 @@ impl DependencyReq {
 
     fn eval(
         &self,
-        pred_fn: impl Fn(&DepRequiredOrOptional) -> &TargetPredicate,
+        pred_fn: impl Fn(&DepRequiredOrOptional) -> &PlatformStatusImpl,
         platform: &Platform<'_>,
     ) -> EnabledStatus {
         let required_res = pred_fn(&self.required).eval(platform);
@@ -1230,8 +1230,8 @@ impl DependencyReq {
 /// optional.
 #[derive(Clone, Debug, Default)]
 pub(super) struct DepRequiredOrOptional {
-    pub(super) build_if: TargetPredicate,
-    pub(super) default_features_if: TargetPredicate,
+    pub(super) build_if: PlatformStatusImpl,
+    pub(super) default_features_if: PlatformStatusImpl,
     pub(super) target_features: Vec<(Option<TargetSpec>, Vec<String>)>,
 }
 
@@ -1245,26 +1245,26 @@ impl DepRequiredOrOptional {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum TargetPredicate {
+pub(crate) enum PlatformStatusImpl {
     Always,
     // Empty vector means never.
     Specs(Vec<TargetSpec>),
 }
 
-impl TargetPredicate {
+impl PlatformStatusImpl {
     /// Returns true if this is an empty predicate (i.e. will never match).
     pub(super) fn is_never(&self) -> bool {
         match self {
-            TargetPredicate::Always => false,
-            TargetPredicate::Specs(specs) => specs.is_empty(),
+            PlatformStatusImpl::Always => false,
+            PlatformStatusImpl::Specs(specs) => specs.is_empty(),
         }
     }
 
     /// Evaluates this target against the given platform triple.
     pub(super) fn eval(&self, platform: &Platform<'_>) -> Option<bool> {
         match self {
-            TargetPredicate::Always => Some(true),
-            TargetPredicate::Specs(specs) => {
+            PlatformStatusImpl::Always => Some(true),
+            PlatformStatusImpl::Specs(specs) => {
                 let mut res = Some(false);
                 for spec in specs.iter() {
                     let matches = spec.eval(platform);
