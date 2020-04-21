@@ -29,8 +29,8 @@ impl<G: GraphSpec> ResolveCore<G> {
         params: QueryParams<G>,
     ) -> Self {
         let (included, len) = match params {
-            QueryParams::Forward(initials) => reachable_map(graph, initials),
-            QueryParams::Reverse(initials) => reachable_map(Reversed(graph), initials),
+            QueryParams::Forward(initials) => reachable_map(graph, initials.into_inner()),
+            QueryParams::Reverse(initials) => reachable_map(Reversed(graph), initials.into_inner()),
         };
         Self {
             included,
@@ -55,11 +55,12 @@ impl<G: GraphSpec> ResolveCore<G> {
     ) -> Self {
         let (included, len) = match params {
             QueryParams::Forward(initials) => {
-                reachable_map(&EdgeFiltered::from_fn(graph, filter), initials)
+                reachable_map(&EdgeFiltered::from_fn(graph, filter), initials.into_inner())
             }
-            QueryParams::Reverse(initials) => {
-                reachable_map(Reversed(&EdgeFiltered::from_fn(graph, filter)), initials)
-            }
+            QueryParams::Reverse(initials) => reachable_map(
+                Reversed(&EdgeFiltered::from_fn(graph, filter)),
+                initials.into_inner(),
+            ),
         };
         Self {
             included,

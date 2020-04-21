@@ -50,6 +50,7 @@ pub mod errors;
 pub mod graph;
 mod package_id;
 pub(crate) mod petgraph_support;
+pub(crate) mod sorted_vec;
 #[cfg(test)]
 mod unit_tests;
 

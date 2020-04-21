@@ -1,10 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
+use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet};
 use crate::graph::{
     kind_str, DependencyDirection, DependencyReq, PackageEdgeImpl, PackageGraph, PackageLink,
-    PackageMetadata, PackageSet,
+    PackageMetadata, PackageQuery, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
 use crate::{DependencyKind, Error, PackageId};
@@ -369,6 +369,7 @@ fn assert_enabled_status_is_known(req: DependencyReq<'_>, msg: &str) {
 pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Metadata: GraphMetadata<'g, Id = Self::Id>;
+    type Query: GraphQuery<'g, Id = Self::Id, Set = Self::Set>;
     type Set: GraphSet<'g, Id = Self::Id, Metadata = Self::Metadata>;
     const NAME: &'static str;
 
@@ -380,7 +381,15 @@ pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
 
     fn is_cyclic(&self, a_id: Self::Id, b_id: Self::Id) -> Result<bool, Error>;
 
-    fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Set;
+    fn query(
+        &self,
+        initials: impl IntoIterator<Item = Self::Id>,
+        direction: DependencyDirection,
+    ) -> Self::Query;
+
+    fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Set {
+        self.query(initials.iter().copied(), direction).resolve()
+    }
 
     fn ids(
         &self,
@@ -560,6 +569,17 @@ pub(super) trait GraphMetadata<'g> {
     fn id(&self) -> Self::Id;
 }
 
+pub(super) trait GraphQuery<'g> {
+    type Id: Copy + Eq + Hash + fmt::Debug;
+    type Set: GraphSet<'g, Id = Self::Id>;
+
+    fn direction(&self) -> DependencyDirection;
+
+    fn starts_from(&self, id: Self::Id) -> bool;
+
+    fn resolve(self) -> Self::Set;
+}
+
 pub(super) trait GraphSet<'g>: Clone + fmt::Debug {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Metadata: GraphMetadata<'g, Id = Self::Id>;
@@ -580,6 +600,7 @@ pub(super) trait GraphSet<'g>: Clone + fmt::Debug {
 impl<'g> GraphAssert<'g> for &'g PackageGraph {
     type Id = &'g PackageId;
     type Metadata = &'g PackageMetadata;
+    type Query = PackageQuery<'g>;
     type Set = PackageSet<'g>;
     const NAME: &'static str = "package";
 
@@ -596,10 +617,13 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
         cycles.is_cyclic(a_id, b_id)
     }
 
-    fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Set {
-        self.query_directed(initials.iter().copied(), direction)
-            .unwrap()
-            .resolve()
+    fn query(
+        &self,
+        initials: impl IntoIterator<Item = Self::Id>,
+        direction: DependencyDirection,
+    ) -> Self::Query {
+        self.query_directed(initials, direction)
+            .expect("valid initials")
     }
 }
 
@@ -607,6 +631,23 @@ impl<'g> GraphMetadata<'g> for &'g PackageMetadata {
     type Id = &'g PackageId;
     fn id(&self) -> Self::Id {
         PackageMetadata::id(self)
+    }
+}
+
+impl<'g> GraphQuery<'g> for PackageQuery<'g> {
+    type Id = &'g PackageId;
+    type Set = PackageSet<'g>;
+
+    fn direction(&self) -> DependencyDirection {
+        self.direction()
+    }
+
+    fn starts_from(&self, id: Self::Id) -> bool {
+        self.starts_from(id).expect("valid ID")
+    }
+
+    fn resolve(self) -> Self::Set {
+        self.resolve()
     }
 }
 
@@ -658,6 +699,7 @@ impl<'g> GraphSet<'g> for PackageSet<'g> {
 impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
     type Id = FeatureId<'g>;
     type Metadata = FeatureMetadata<'g>;
+    type Query = FeatureQuery<'g>;
     type Set = FeatureSet<'g>;
     const NAME: &'static str = "feature";
 
@@ -674,10 +716,13 @@ impl<'g> GraphAssert<'g> for FeatureGraph<'g> {
         cycles.is_cyclic(a_id, b_id)
     }
 
-    fn resolve(&self, initials: &[Self::Id], direction: DependencyDirection) -> Self::Set {
-        self.query_directed(initials.iter().copied(), direction)
-            .unwrap()
-            .resolve()
+    fn query(
+        &self,
+        initials: impl IntoIterator<Item = Self::Id>,
+        direction: DependencyDirection,
+    ) -> Self::Query {
+        self.query_directed(initials, direction)
+            .expect("valid initials")
     }
 }
 
@@ -685,6 +730,23 @@ impl<'g> GraphMetadata<'g> for FeatureMetadata<'g> {
     type Id = FeatureId<'g>;
     fn id(&self) -> Self::Id {
         self.feature_id()
+    }
+}
+
+impl<'g> GraphQuery<'g> for FeatureQuery<'g> {
+    type Id = FeatureId<'g>;
+    type Set = FeatureSet<'g>;
+
+    fn direction(&self) -> DependencyDirection {
+        self.direction()
+    }
+
+    fn starts_from(&self, id: Self::Id) -> bool {
+        self.starts_from(id).expect("valid feature ID")
+    }
+
+    fn resolve(self) -> Self::Set {
+        self.resolve()
     }
 }
 

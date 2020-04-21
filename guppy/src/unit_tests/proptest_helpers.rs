@@ -3,7 +3,9 @@
 
 use crate::graph::feature::{all_filter, none_filter, FeatureId, FeatureSet};
 use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Resolver};
-use crate::unit_tests::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphSet};
+use crate::unit_tests::dep_helpers::{
+    assert_link_order, GraphAssert, GraphMetadata, GraphQuery, GraphSet,
+};
 use crate::PackageId;
 use pretty_assertions::assert_eq;
 use proptest::collection::vec;
@@ -17,7 +19,7 @@ macro_rules! proptest_suite {
             use crate::graph::DependencyDirection;
             use crate::unit_tests::fixtures::Fixture;
             use crate::unit_tests::proptest_helpers::*;
-            use proptest::collection::vec;
+            use proptest::collection::{hash_set, vec};
             use proptest::prelude::*;
             use proptest::sample::Index;
 
@@ -229,6 +231,35 @@ macro_rules! proptest_suite {
                     direction in any::<DependencyDirection>(),
                 )| {
                     feature_set_props(feature_set, direction);
+                });
+            }
+
+            #[test]
+            fn proptest_query_starts_from() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+
+                proptest!(|(
+                    query_ids in hash_set(package_graph.prop09_id_strategy(), 0..16),
+                    direction in any::<DependencyDirection>(),
+                    test_ids in vec(package_graph.prop09_id_strategy(), 0..16)
+                )| {
+                    query_starts_from(package_graph, query_ids, direction, test_ids);
+                });
+            }
+
+            #[test]
+            fn proptest_feature_query_starts_from() {
+                let fixture = Fixture::$name();
+                let package_graph = fixture.graph();
+                let feature_graph = package_graph.feature_graph();
+
+                proptest!(|(
+                    query_ids in hash_set(feature_graph.prop09_id_strategy(), 0..16),
+                    direction in any::<DependencyDirection>(),
+                    test_ids in vec(feature_graph.prop09_id_strategy(), 0..16)
+                )| {
+                    query_starts_from(feature_graph, query_ids, direction, test_ids);
                 });
             }
         }
@@ -601,6 +632,26 @@ pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: Dependen
         package_set_ids, feature_set_ids,
         "to_package_set and into_packages_with_features match"
     );
+}
+
+pub(super) fn query_starts_from<'g, G: GraphAssert<'g>>(
+    graph: G,
+    query_ids: HashSet<G::Id>,
+    direction: DependencyDirection,
+    test_ids: Vec<G::Id>,
+) {
+    let query = graph.query(query_ids.iter().copied(), direction);
+    assert_eq!(query.direction(), direction, "query direction");
+
+    for query_id in &query_ids {
+        assert!(query.starts_from(*query_id), "starts from");
+    }
+
+    for test_id in test_ids {
+        if !query_ids.contains(&test_id) {
+            assert!(!query.starts_from(test_id), "does not start from");
+        }
+    }
 }
 
 // TODO: More tests for FeatureFilter implementations.
