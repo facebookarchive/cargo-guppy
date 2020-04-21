@@ -237,6 +237,21 @@ impl<'g> FeatureGraph<'g> {
 }
 
 impl<'g> FeatureQuery<'g> {
+    /// Returns the direction the query is happening in.
+    pub fn direction(&self) -> DependencyDirection {
+        self.params.direction()
+    }
+
+    /// Returns true if the query starts from the given feature ID.
+    ///
+    /// Returns `None` if this package ID is unknown.
+    pub fn starts_from<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Option<bool> {
+        Some(
+            self.params
+                .has_initial(self.graph.feature_ix(feature_id.into())?),
+        )
+    }
+
     /// Resolves this selector into a set of known feature IDs.
     ///
     /// This is the entry point for iterators.

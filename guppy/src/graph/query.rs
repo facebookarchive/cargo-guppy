@@ -74,6 +74,21 @@ impl PackageGraph {
 }
 
 impl<'g> PackageQuery<'g> {
+    /// Returns the direction the query is happening in.
+    pub fn direction(&self) -> DependencyDirection {
+        self.params.direction()
+    }
+
+    /// Returns true if the query starts from the given package ID.
+    ///
+    /// Returns `None` if this package ID is unknown.
+    pub fn starts_from(&self, package_id: &PackageId) -> Option<bool> {
+        Some(
+            self.params
+                .has_initial(self.package_graph.package_ix(package_id)?),
+        )
+    }
+
     /// Resolves this query into a set of known packages, following every link found along the
     /// way.
     ///
