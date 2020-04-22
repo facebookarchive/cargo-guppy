@@ -419,12 +419,37 @@
 <span id="419">419</span>
 <span id="420">420</span>
 <span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">debug_ignore</span>::<span class="ident">DebugIgnore</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureFilter</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureEdge</span>, <span class="ident">FeatureFilter</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>};
@@ -763,6 +788,31 @@
                 } <span class="kw">else</span> {
                     <span class="prelude-val">None</span>
                 }
+            })
+    }
+
+    <span class="comment">// Currently a helper for debugging -- will be made public in the future.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">into_links</span>(
+        <span class="self">self</span>,
+        <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">FeatureEdge</span>)<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">feature_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>;
+
+        <span class="self">self</span>.<span class="ident">core</span>
+            .<span class="ident">links</span>(<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">feature_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
+            .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge_ix</span>)<span class="op">|</span> {
+                (
+                    <span class="ident">FeatureId</span>::<span class="ident">from_node</span>(
+                        <span class="ident">feature_graph</span>.<span class="ident">package_graph</span>(),
+                        <span class="kw-2">&amp;</span><span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>()[<span class="ident">source_ix</span>],
+                    ),
+                    <span class="ident">FeatureId</span>::<span class="ident">from_node</span>(
+                        <span class="ident">feature_graph</span>.<span class="ident">package_graph</span>(),
+                        <span class="kw-2">&amp;</span><span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>()[<span class="ident">target_ix</span>],
+                    ),
+                    <span class="kw-2">&amp;</span><span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>()[<span class="ident">edge_ix</span>],
+                )
             })
     }
 }
