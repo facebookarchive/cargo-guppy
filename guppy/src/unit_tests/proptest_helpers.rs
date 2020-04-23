@@ -143,8 +143,9 @@ macro_rules! proptest_suite {
                 proptest!(ProptestConfig::with_cases(64), |(
                     ids in vec(package_graph.prop09_id_strategy(), 1..16),
                     direction in any::<DependencyDirection>(),
-                    resolver in package_graph.prop09_resolver_strategy(),
+                    mut resolver in package_graph.prop09_resolver_strategy(),
                 )| {
+                    resolver.check_depends_on(true);
                     resolver_retain_equivalence(&mut package_graph.clone(), &ids, direction, resolver);
                 });
             }
@@ -212,10 +213,11 @@ macro_rules! proptest_suite {
                 proptest!(|(
                     query_ids in vec(package_graph.prop09_id_strategy(), 1..16),
                     query_direction in any::<DependencyDirection>(),
-                    resolver in package_graph.prop09_resolver_strategy(),
+                    mut resolver in package_graph.prop09_resolver_strategy(),
                     test_ids in vec(feature_graph.prop09_id_strategy(), 1..16),
                     test_direction in any::<DependencyDirection>(),
                 )| {
+                    resolver.check_depends_on(true);
                     package_feature_set_roundtrip(package_graph, query_ids, query_direction, resolver, test_ids, test_direction);
                 });
             }
