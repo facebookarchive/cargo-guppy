@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyDirection, GraphSpec};
-use crate::sorted_vec::SortedVec;
+use crate::sorted_set::SortedSet;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
@@ -10,8 +10,8 @@ use petgraph::visit::{IntoNeighbors, Visitable};
 
 #[derive(Clone, Debug)]
 pub(super) enum QueryParams<G: GraphSpec> {
-    Forward(SortedVec<NodeIndex<G::Ix>>),
-    Reverse(SortedVec<NodeIndex<G::Ix>>),
+    Forward(SortedSet<NodeIndex<G::Ix>>),
+    Reverse(SortedSet<NodeIndex<G::Ix>>),
 }
 
 impl<G: GraphSpec> QueryParams<G> {

@@ -4,21 +4,22 @@
 use std::iter::FromIterator;
 use std::ops::Deref;
 
+/// An immutable set stored as a sorted vector.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-/// A sorted, immutable vector.
-pub struct SortedVec<T> {
+pub struct SortedSet<T> {
     inner: Box<[T]>,
 }
 
-impl<T> SortedVec<T>
+impl<T> SortedSet<T>
 where
     T: Ord,
 {
-    /// Creates a new `SortedVec` from a vector or other slice container.
-    pub fn new(v: impl Into<Box<[T]>>) -> Self {
+    /// Creates a new `SortedSet` from a vector or other slice container.
+    pub fn new(v: impl Into<Vec<T>>) -> Self {
         let mut v = v.into();
         v.sort();
-        Self { inner: v }
+        v.dedup();
+        Self { inner: v.into() }
     }
 
     // TODO: new + sort by/sort by key?
@@ -34,17 +35,17 @@ where
     }
 }
 
-impl<T> FromIterator<T> for SortedVec<T>
+impl<T> FromIterator<T> for SortedSet<T>
 where
     T: Ord,
 {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        let v: Box<[T]> = iter.into_iter().collect();
+        let v: Vec<T> = iter.into_iter().collect();
         Self::new(v)
     }
 }
 
-impl<T> Deref for SortedVec<T> {
+impl<T> Deref for SortedSet<T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
