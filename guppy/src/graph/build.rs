@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{
-    cargo_version_matches, BuildTargetImpl, BuildTargetKind, DepRequiredOrOptional,
+    cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
     DependencyReqImpl, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph, PackageGraphData,
     PackageIx, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
 };
@@ -349,7 +349,7 @@ impl<'a> BuildTargets<'a> {
             // multiple kinds always means a library target.
             (
                 OwnedBuildTargetId::Library,
-                BuildTargetKind::LibraryOrExample(crate_types),
+                BuildTargetKindImpl::LibraryOrExample(crate_types),
                 Some(target_name),
             )
         } else if let Some(target_kind) = target_kinds.pop() {
@@ -368,12 +368,14 @@ impl<'a> BuildTargets<'a> {
             let kind = match &id {
                 OwnedBuildTargetId::Library => {
                     if crate_types == ["proc-macro"] {
-                        BuildTargetKind::ProcMacro
+                        BuildTargetKindImpl::ProcMacro
                     } else {
-                        BuildTargetKind::LibraryOrExample(crate_types)
+                        BuildTargetKindImpl::LibraryOrExample(crate_types)
                     }
                 }
-                OwnedBuildTargetId::Example(_) => BuildTargetKind::LibraryOrExample(crate_types),
+                OwnedBuildTargetId::Example(_) => {
+                    BuildTargetKindImpl::LibraryOrExample(crate_types)
+                }
                 _ => {
                     // The crate_types must be exactly "bin".
                     if crate_types != ["bin"] {
@@ -382,7 +384,7 @@ impl<'a> BuildTargets<'a> {
                             self.package_id, id, crate_types,
                         )));
                     }
-                    BuildTargetKind::Binary
+                    BuildTargetKindImpl::Binary
                 }
             };
 

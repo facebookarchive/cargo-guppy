@@ -44,8 +44,8 @@ impl<'g> BuildTarget<'g> {
     }
 
     /// Returns the kind of this build target.
-    pub fn kind(&self) -> &'g BuildTargetKind {
-        &self.inner.kind
+    pub fn kind(&self) -> BuildTargetKind<'g> {
+        BuildTargetKind::new(&self.inner.kind)
     }
 
     /// Returns the features required for this build target.
@@ -142,7 +142,7 @@ impl<'g> BuildTargetId<'g> {
 /// Obtained through `BuildTarget::kind`.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[non_exhaustive]
-pub enum BuildTargetKind {
+pub enum BuildTargetKind<'g> {
     /// This build target is a library or example, with the specified crate types.
     ///
     /// Note that examples are typically binaries, but they may be libraries as well. Binary
@@ -151,7 +151,7 @@ pub enum BuildTargetKind {
     /// For more about crate types, see [The `crate-type`
     /// field](https://doc.rust-lang.org/nightly/cargo/reference/cargo-targets.html#the-crate-type-field)
     /// in the Cargo reference.
-    LibraryOrExample(Vec<String>),
+    LibraryOrExample(&'g [String]),
     /// This build target is a procedural macro.
     ///
     /// This may only be returned for `BuildTargetId::Library`. This is expressed in a `Cargo.toml`
@@ -171,10 +171,22 @@ pub enum BuildTargetKind {
     Binary,
 }
 
+impl<'g> BuildTargetKind<'g> {
+    fn new(inner: &'g BuildTargetKindImpl) -> Self {
+        match inner {
+            BuildTargetKindImpl::LibraryOrExample(crate_types) => {
+                BuildTargetKind::LibraryOrExample(crate_types.as_slice())
+            }
+            BuildTargetKindImpl::ProcMacro => BuildTargetKind::ProcMacro,
+            BuildTargetKindImpl::Binary => BuildTargetKind::Binary,
+        }
+    }
+}
+
 /// Stored data in a `BuildTarget`.
 #[derive(Clone, Debug)]
 pub(super) struct BuildTargetImpl {
-    pub(super) kind: BuildTargetKind,
+    pub(super) kind: BuildTargetKindImpl,
     // This is only set if the id is BuildTargetId::Library.
     pub(super) lib_name: Option<Box<str>>,
     pub(super) required_features: Vec<String>,
@@ -206,6 +218,14 @@ impl OwnedBuildTargetId {
             OwnedBuildTargetId::Benchmark(name) => BuildTargetId::Benchmark(name.as_ref()),
         }
     }
+}
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
+pub(super) enum BuildTargetKindImpl {
+    LibraryOrExample(Vec<String>),
+    ProcMacro,
+    Binary,
 }
 
 // Allow Borrow usage for complex keys. Adapted from
