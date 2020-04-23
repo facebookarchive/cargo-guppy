@@ -61,16 +61,17 @@ impl<'g> PackageSet<'g> {
         resolver: impl PackageResolver<'g>,
     ) -> Self {
         let graph = query.graph;
+        let params = query.params.clone();
         Self {
             graph,
-            core: ResolveCore::with_edge_filter(graph.dep_graph(), query.params, |edge_ref| {
+            core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge_ref| {
                 let link = graph.edge_to_link(
                     edge_ref.source(),
                     edge_ref.target(),
                     edge_ref.id(),
                     Some(edge_ref.weight()),
                 );
-                resolver.accept(link)
+                resolver.accept(&query, link)
             }),
         }
     }
@@ -276,27 +277,27 @@ pub trait PackageResolver<'g> {
     ///
     /// Returning false does not prevent the `to` package (or `from` package with `query_reverse`)
     /// from being included if it's reachable through other means.
-    fn accept(&self, link: PackageLink<'g>) -> bool;
+    fn accept(&self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool;
 }
 
 impl<'g, 'a, T> PackageResolver<'g> for &'a T
 where
     T: PackageResolver<'g>,
 {
-    fn accept(&self, link: PackageLink<'g>) -> bool {
-        (**self).accept(link)
+    fn accept(&self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+        (**self).accept(query, link)
     }
 }
 
 impl<'g, 'a> PackageResolver<'g> for Box<dyn PackageResolver<'g> + 'a> {
-    fn accept(&self, link: PackageLink<'g>) -> bool {
-        (**self).accept(link)
+    fn accept(&self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+        (**self).accept(query, link)
     }
 }
 
 impl<'g, 'a> PackageResolver<'g> for &'a dyn PackageResolver<'g> {
-    fn accept(&self, link: PackageLink<'g>) -> bool {
-        (**self).accept(link)
+    fn accept(&self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+        (**self).accept(query, link)
     }
 }
 
@@ -304,10 +305,10 @@ pub(super) struct ResolverFn<F>(pub(super) F);
 
 impl<'g, F> PackageResolver<'g> for ResolverFn<F>
 where
-    F: Fn(PackageLink<'g>) -> bool,
+    F: Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool,
 {
-    fn accept(&self, link: PackageLink<'g>) -> bool {
-        (self.0)(link)
+    fn accept(&self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+        (self.0)(query, link)
     }
 }
 
