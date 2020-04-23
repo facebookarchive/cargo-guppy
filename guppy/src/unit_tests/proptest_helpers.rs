@@ -390,12 +390,12 @@ pub(super) fn resolver_retain_equivalence(
     graph: &mut PackageGraph,
     ids: &[&PackageId],
     direction: DependencyDirection,
-    resolver: Prop09Resolver,
+    mut resolver: Prop09Resolver,
 ) {
     let mut resolver_ids: Vec<_> = graph
         .query_directed(ids.iter().copied(), direction)
         .unwrap()
-        .resolve_with(&resolver)
+        .resolve_with(&mut resolver)
         .into_ids(direction)
         // Clone to release borrow on the graph.
         .cloned()
@@ -562,14 +562,14 @@ pub(super) fn package_feature_set_roundtrip(
     package_graph: &PackageGraph,
     query_ids: Vec<&PackageId>,
     query_direction: DependencyDirection,
-    resolver: Prop09Resolver,
+    mut resolver: Prop09Resolver,
     test_ids: Vec<FeatureId>,
     test_direction: DependencyDirection,
 ) {
     let package_set = package_graph
         .query_directed(query_ids.iter().copied(), query_direction)
         .expect("valid package IDs")
-        .resolve_with(&resolver);
+        .resolve_with(&mut resolver);
     let feature_graph = package_graph.feature_graph();
     let all_feature_set = feature_graph.resolve_packages(&package_set, all_filter());
     let no_feature_set = feature_graph.resolve_packages(&package_set, none_filter());

@@ -53,8 +53,8 @@ fn main() -> Result<(), Error> {
             // A package resolver allows for fine-grained control over which links are followed. In general,
             // it is anything that implements the `PackageResolver` trait.
             //
-            // Functions with signature Fn(&PackageQuery<'_>, PackageLink<'_>) -> bool can be used
-            // with `resolve_with_fn`.
+            // Functions with signature FnMut(&PackageQuery<'_>, PackageLink<'_>) -> bool can be
+            // used with `resolve_with_fn`.
             resolver_fn(link)
         })
         .into_ids(DependencyDirection::Forward)
