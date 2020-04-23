@@ -1,10 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::query_core::QueryParams;
 use crate::graph::resolve_core::{Links, ResolveCore, Topo};
 use crate::graph::{
     DependencyDirection, PackageEdgeImpl, PackageGraph, PackageIx, PackageLink, PackageMetadata,
+    PackageQuery,
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::MaybeReversedEdge;
@@ -41,10 +41,11 @@ pub struct PackageSet<'g> {
 }
 
 impl<'g> PackageSet<'g> {
-    pub(super) fn new(graph: &'g PackageGraph, params: QueryParams<PackageGraph>) -> Self {
+    pub(super) fn new(query: PackageQuery<'g>) -> Self {
+        let graph = query.graph;
         Self {
             graph,
-            core: ResolveCore::new(graph.dep_graph(), params),
+            core: ResolveCore::new(graph.dep_graph(), query.params),
         }
     }
 
@@ -56,13 +57,13 @@ impl<'g> PackageSet<'g> {
     }
 
     pub(super) fn with_resolver(
-        graph: &'g PackageGraph,
-        params: QueryParams<PackageGraph>,
+        query: PackageQuery<'g>,
         resolver: impl PackageResolver<'g>,
     ) -> Self {
+        let graph = query.graph;
         Self {
             graph,
-            core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge_ref| {
+            core: ResolveCore::with_edge_filter(graph.dep_graph(), query.params, |edge_ref| {
                 let link = graph.edge_to_link(
                     edge_ref.source(),
                     edge_ref.target(),

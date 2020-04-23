@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::debug_ignore::DebugIgnore;
-use crate::graph::feature::{FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata};
-use crate::graph::query_core::QueryParams;
+use crate::graph::feature::{
+    FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery,
+};
 use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
 use crate::petgraph_support::IxBitSet;
@@ -55,10 +56,11 @@ pub struct FeatureSet<'g> {
 }
 
 impl<'g> FeatureSet<'g> {
-    pub(super) fn new(graph: FeatureGraph<'g>, params: QueryParams<FeatureGraph<'g>>) -> Self {
+    pub(super) fn new(query: FeatureQuery<'g>) -> Self {
+        let graph = query.graph;
         Self {
             graph: DebugIgnore(graph),
-            core: ResolveCore::new(graph.dep_graph(), params),
+            core: ResolveCore::new(graph.dep_graph(), query.params),
         }
     }
 
