@@ -59,7 +59,7 @@ impl PackageGraph {
     /// Requires the `proptest09` feature to be enabled.
     pub fn prop09_resolver_strategy<'g>(&'g self) -> impl Strategy<Value = Prop09Resolver> + 'g {
         // Generate a FixedBitSet to filter based off of.
-        fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop09Resolver)
+        fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop09Resolver::new)
     }
 }
 
@@ -68,17 +68,48 @@ impl PackageGraph {
 /// Created by `PackageGraph::prop09_resolver_strategy`. Requires the `proptest09` feature to be
 /// enabled.
 #[derive(Clone, Debug)]
-pub struct Prop09Resolver(FixedBitSet);
+pub struct Prop09Resolver {
+    included_edges: FixedBitSet,
+    check_depends_on: bool,
+}
 
 impl Prop09Resolver {
+    fn new(included_edges: FixedBitSet) -> Self {
+        Self {
+            included_edges,
+            check_depends_on: false,
+        }
+    }
+
+    /// If called with true, this resolver will then verify that any links passed in are in the
+    /// correct direction.
+    ///
+    /// Used for internal testing.
+    #[cfg(test)]
+    pub(crate) fn check_depends_on(&mut self, check: bool) {
+        self.check_depends_on = check;
+    }
+
     /// Returns true if the given link is accepted by this resolver.
     pub fn accept_link(&self, link: PackageLink<'_>) -> bool {
-        self.0.is_visited(&link.edge.edge_ix())
+        self.included_edges.is_visited(&link.edge.edge_ix())
     }
 }
 
 impl<'g> PackageResolver<'g> for Prop09Resolver {
-    fn accept(&self, _query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+    fn accept(&self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+        if self.check_depends_on {
+            assert!(
+                query
+                    .graph()
+                    .depends_on(link.from.id(), link.to.id())
+                    .expect("valid package IDs"),
+                "package '{}' should depend on '{}'",
+                link.from.id(),
+                link.to.id()
+            );
+        }
+
         self.accept_link(link)
     }
 }

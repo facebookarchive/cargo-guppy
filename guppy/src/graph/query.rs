@@ -74,6 +74,11 @@ impl PackageGraph {
 }
 
 impl<'g> PackageQuery<'g> {
+    /// Returns the package graph on which the query is going to be executed.
+    pub fn graph(&self) -> &'g PackageGraph {
+        self.graph
+    }
+
     /// Returns the direction the query is happening in.
     pub fn direction(&self) -> DependencyDirection {
         self.params.direction()
