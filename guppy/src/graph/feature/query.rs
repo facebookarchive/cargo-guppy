@@ -153,7 +153,7 @@ pub fn feature_id_filter<'g: 'a, 'a>(
 /// A `FeatureQuery` is constructed through the `query_` methods on `FeatureGraph`.
 #[derive(Clone, Debug)]
 pub struct FeatureQuery<'g> {
-    graph: FeatureGraph<'g>,
+    pub(super) graph: FeatureGraph<'g>,
     pub(super) params: QueryParams<FeatureGraph<'g>>,
 }
 
@@ -256,6 +256,6 @@ impl<'g> FeatureQuery<'g> {
     ///
     /// This is the entry point for iterators.
     pub fn resolve(self) -> FeatureSet<'g> {
-        FeatureSet::new(self.graph, self.params)
+        FeatureSet::new(self)
     }
 }

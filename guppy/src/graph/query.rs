@@ -91,13 +91,13 @@ impl<'g> PackageQuery<'g> {
     ///
     /// This is the entry point for iterators.
     pub fn resolve(self) -> PackageSet<'g> {
-        PackageSet::new(self.graph, self.params)
+        PackageSet::new(self)
     }
 
     /// Resolves this query into a set of known packages, using the provided resolver to
     /// determine which links are followed.
     pub fn resolve_with(self, resolver: impl PackageResolver<'g>) -> PackageSet<'g> {
-        PackageSet::with_resolver(self.graph, self.params, resolver)
+        PackageSet::with_resolver(self, resolver)
     }
 
     /// Resolves this query into a set of known packages, using the provided resolver function
