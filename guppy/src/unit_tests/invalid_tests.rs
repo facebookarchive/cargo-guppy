@@ -30,7 +30,7 @@ fn build_targets_empty_kinds() {
 fn build_targets_non_bin() {
     assert_invalid(
         include_str!("../../fixtures/invalid/build_targets_non_bin.json"),
-        "build target 'Binary(\"testcrate\")' has invalid crate types '[\"cdylib\"]'",
+        "build target 'Binary(\"testcrate\")' has invalid crate types '{cdylib}'",
     );
 }
 

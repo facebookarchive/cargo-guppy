@@ -1224,10 +1224,10 @@ impl FixtureDetails {
 
         let mut details = HashMap::new();
 
-        static CDYLIB_BIN_TYPES: Lazy<Vec<String>> =
-            Lazy::new(|| vec!["cdylib".into(), "bin".into()]);
-        static RLIB_DYLIB_TYPES: Lazy<Vec<String>> =
-            Lazy::new(|| vec!["rlib".into(), "dylib".into()]);
+        static BIN_CDYLIB_TYPES: Lazy<Vec<String>> =
+            Lazy::new(|| vec!["bin".into(), "cdylib".into()]);
+        static DYLIB_RLIB_TYPES: Lazy<Vec<String>> =
+            Lazy::new(|| vec!["dylib".into(), "rlib".into()]);
 
         PackageDetails::new(
             METADATA_BUILD_TARGETS1_TESTCRATE,
@@ -1240,7 +1240,7 @@ impl FixtureDetails {
         .with_build_targets(vec![
             (
                 BuildTargetId::Library,
-                BuildTargetKind::LibraryOrExample(&CDYLIB_BIN_TYPES),
+                BuildTargetKind::LibraryOrExample(&BIN_CDYLIB_TYPES),
                 "src/lib.rs",
             ),
             (
@@ -1255,7 +1255,7 @@ impl FixtureDetails {
             ),
             (
                 BuildTargetId::Example("example1"),
-                BuildTargetKind::LibraryOrExample(&RLIB_DYLIB_TYPES),
+                BuildTargetKind::LibraryOrExample(&DYLIB_RLIB_TYPES),
                 "src/lib.rs",
             ),
             (

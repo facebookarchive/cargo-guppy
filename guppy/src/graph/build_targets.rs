@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::sorted_set::SortedSet;
 use std::borrow::Borrow;
 use std::cmp::Ordering;
 use std::path::Path;
@@ -145,6 +146,8 @@ impl<'g> BuildTargetId<'g> {
 pub enum BuildTargetKind<'g> {
     /// This build target is a library or example, with the specified crate types.
     ///
+    /// The crate types are sorted and unique, and can therefore be treated like a set.
+    ///
     /// Note that examples are typically binaries, but they may be libraries as well. Binary
     /// examples will have the crate type `"bin"`.
     ///
@@ -223,7 +226,7 @@ impl OwnedBuildTargetId {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[non_exhaustive]
 pub(super) enum BuildTargetKindImpl {
-    LibraryOrExample(Vec<String>),
+    LibraryOrExample(SortedSet<String>),
     ProcMacro,
     Binary,
 }
