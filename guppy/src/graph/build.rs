@@ -6,6 +6,7 @@ use crate::graph::{
     DependencyReqImpl, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph, PackageGraphData,
     PackageIx, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
 };
+use crate::sorted_set::SortedSet;
 use crate::{Error, Metadata, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve, Target};
 use once_cell::sync::OnceCell;
@@ -329,7 +330,7 @@ impl<'a> BuildTargets<'a> {
         // Figure out the id and kind using target.kind and target.crate_types.
         let mut target_kinds = target.kind;
         let target_name = target.name.into_boxed_str();
-        let crate_types = target.crate_types;
+        let crate_types = SortedSet::new(target.crate_types);
 
         // The "proc-macro" crate type cannot mix with any other types or kinds.
         if target_kinds.len() > 1 && Self::is_proc_macro(&target_kinds) {
@@ -340,7 +341,7 @@ impl<'a> BuildTargets<'a> {
         }
         if crate_types.len() > 1 && Self::is_proc_macro(&crate_types) {
             return Err(Error::PackageGraphConstructError(format!(
-                "for package {}, proc-macro mixed with other crate types ({:?})",
+                "for package {}, proc-macro mixed with other crate types ({})",
                 self.package_id, crate_types
             )));
         }
@@ -367,7 +368,7 @@ impl<'a> BuildTargets<'a> {
 
             let kind = match &id {
                 OwnedBuildTargetId::Library => {
-                    if crate_types == ["proc-macro"] {
+                    if crate_types.as_slice() == ["proc-macro"] {
                         BuildTargetKindImpl::ProcMacro
                     } else {
                         BuildTargetKindImpl::LibraryOrExample(crate_types)
@@ -378,9 +379,9 @@ impl<'a> BuildTargets<'a> {
                 }
                 _ => {
                     // The crate_types must be exactly "bin".
-                    if crate_types != ["bin"] {
+                    if crate_types.as_slice() != ["bin"] {
                         return Err(Error::PackageGraphConstructError(format!(
-                            "for package {}: build target '{:?}' has invalid crate types '{:?}'",
+                            "for package {}: build target '{:?}' has invalid crate types '{}'",
                             self.package_id, id, crate_types,
                         )));
                     }

@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use std::fmt;
 use std::iter::FromIterator;
 use std::ops::Deref;
 
@@ -29,6 +30,11 @@ where
         self.binary_search(item).is_ok()
     }
 
+    /// Returns the data as a slice.
+    pub fn as_slice(&self) -> &[T] {
+        &self.inner
+    }
+
     /// Returns the inner data.
     pub fn into_inner(self) -> Box<[T]> {
         self.inner
@@ -50,5 +56,11 @@ impl<T> Deref for SortedSet<T> {
 
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+
+impl fmt::Display for SortedSet<String> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{{{}}}", self.as_slice().join(", "))
     }
 }
