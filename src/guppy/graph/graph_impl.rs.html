@@ -1320,6 +1320,22 @@
 <span id="1320">1320</span>
 <span id="1321">1321</span>
 <span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
+<span id="1337">1337</span>
+<span id="1338">1338</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1382,7 +1398,7 @@
         <span class="self">Self</span>::<span class="ident">new</span>(<span class="ident">metadata</span>)
     }
 
-    <span class="doccomment">/// Constructs a package graph from the given metadata.</span>
+    <span class="doccomment">/// Constructs a package graph from the given Cargo metadata, represented as a `Metadata`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">metadata</span>: <span class="ident">Metadata</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">Self</span>::<span class="ident">build</span>(<span class="ident">metadata</span>)
     }
@@ -1466,17 +1482,19 @@
                 }
 
                 <span class="kw">let</span> <span class="ident">id_kind_mismatch</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">id</span>() {
-                    <span class="ident">BuildTargetId</span>::<span class="ident">Library</span> <span class="op">|</span> <span class="ident">BuildTargetId</span>::<span class="ident">Example</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                        <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
-                            <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-                            <span class="ident">BuildTargetKind</span>::<span class="ident">Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-                        }
-                    }
+                    <span class="ident">BuildTargetId</span>::<span class="ident">Library</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
+                        <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">BuildTargetKind</span>::<span class="ident">ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+                        <span class="ident">BuildTargetKind</span>::<span class="ident">Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+                    },
+                    <span class="ident">BuildTargetId</span>::<span class="ident">Example</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
+                        <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+                        <span class="ident">BuildTargetKind</span>::<span class="ident">ProcMacro</span> <span class="op">|</span> <span class="ident">BuildTargetKind</span>::<span class="ident">Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+                    },
                     <span class="ident">BuildTargetId</span>::<span class="ident">BuildScript</span>
                     <span class="op">|</span> <span class="ident">BuildTargetId</span>::<span class="ident">Binary</span>(<span class="kw">_</span>)
                     <span class="op">|</span> <span class="ident">BuildTargetId</span>::<span class="ident">Test</span>(<span class="kw">_</span>)
                     <span class="op">|</span> <span class="ident">BuildTargetId</span>::<span class="ident">Benchmark</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
-                        <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+                        <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">BuildTargetKind</span>::<span class="ident">ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
                         <span class="ident">BuildTargetKind</span>::<span class="ident">Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
                     },
                 };
@@ -2102,6 +2120,20 @@
         <span class="self">self</span>.<span class="ident">build_targets</span>
             .<span class="ident">get_key_value</span>(<span class="ident">id</span>.<span class="ident">as_key</span>())
             .<span class="ident">map</span>(<span class="ident">BuildTarget</span>::<span class="ident">new</span>)
+    }
+
+    <span class="doccomment">/// Returns true if this package is a procedural macro.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// For more about procedural macros, see [Procedural</span>
+    <span class="doccomment">/// Macros](https://doc.rust-lang.org/reference/procedural-macros.html) in the Rust reference.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_proc_macro</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">build_target</span>(<span class="kw-2">&amp;</span><span class="ident">BuildTargetId</span>::<span class="ident">Library</span>) {
+            <span class="prelude-val">Some</span>(<span class="ident">build_target</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
+                <span class="ident">BuildTargetKind</span>::<span class="ident">ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+            },
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+        }
     }
 
     <span class="doccomment">/// Returns true if this package has a named feature named `default`.</span>

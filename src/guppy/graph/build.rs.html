@@ -706,6 +706,30 @@
 <span id="706">706</span>
 <span id="707">707</span>
 <span id="708">708</span>
+<span id="709">709</span>
+<span id="710">710</span>
+<span id="711">711</span>
+<span id="712">712</span>
+<span id="713">713</span>
+<span id="714">714</span>
+<span id="715">715</span>
+<span id="716">716</span>
+<span id="717">717</span>
+<span id="718">718</span>
+<span id="719">719</span>
+<span id="720">720</span>
+<span id="721">721</span>
+<span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
+<span id="727">727</span>
+<span id="728">728</span>
+<span id="729">729</span>
+<span id="730">730</span>
+<span id="731">731</span>
+<span id="732">732</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1038,12 +1062,27 @@
         <span class="comment">// Figure out the id and kind using target.kind and target.crate_types.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">target_kinds</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">kind</span>;
         <span class="kw">let</span> <span class="ident">target_name</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">name</span>.<span class="ident">into_boxed_str</span>();
+        <span class="kw">let</span> <span class="ident">crate_types</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">crate_types</span>;
+
+        <span class="comment">// The &quot;proc-macro&quot; crate type cannot mix with any other types or kinds.</span>
+        <span class="kw">if</span> <span class="ident">target_kinds</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="self">Self</span>::<span class="ident">is_proc_macro</span>(<span class="kw-2">&amp;</span><span class="ident">target_kinds</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;for package {}, proc-macro mixed with other kinds ({:?})&quot;</span>,
+                <span class="self">self</span>.<span class="ident">package_id</span>, <span class="ident">target_kinds</span>
+            )));
+        }
+        <span class="kw">if</span> <span class="ident">crate_types</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="self">Self</span>::<span class="ident">is_proc_macro</span>(<span class="kw-2">&amp;</span><span class="ident">crate_types</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;for package {}, proc-macro mixed with other crate types ({:?})&quot;</span>,
+                <span class="self">self</span>.<span class="ident">package_id</span>, <span class="ident">crate_types</span>
+            )));
+        }
 
         <span class="kw">let</span> (<span class="ident">id</span>, <span class="ident">kind</span>, <span class="ident">lib_name</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">target_kinds</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
             <span class="comment">// multiple kinds always means a library target.</span>
             (
                 <span class="ident">OwnedBuildTargetId</span>::<span class="ident">Library</span>,
-                <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="ident">target</span>.<span class="ident">crate_types</span>),
+                <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="ident">crate_types</span>),
                 <span class="prelude-val">Some</span>(<span class="ident">target_name</span>),
             )
         } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">target_kind</span>) <span class="op">=</span> <span class="ident">target_kinds</span>.<span class="ident">pop</span>() {
@@ -1060,15 +1099,20 @@
             };
 
             <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">id</span> {
-                <span class="ident">OwnedBuildTargetId</span>::<span class="ident">Library</span> <span class="op">|</span> <span class="ident">OwnedBuildTargetId</span>::<span class="ident">Example</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="ident">target</span>.<span class="ident">crate_types</span>)
+                <span class="ident">OwnedBuildTargetId</span>::<span class="ident">Library</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">if</span> <span class="ident">crate_types</span> <span class="op">=</span><span class="op">=</span> [<span class="string">&quot;proc-macro&quot;</span>] {
+                        <span class="ident">BuildTargetKind</span>::<span class="ident">ProcMacro</span>
+                    } <span class="kw">else</span> {
+                        <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="ident">crate_types</span>)
+                    }
                 }
+                <span class="ident">OwnedBuildTargetId</span>::<span class="ident">Example</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="ident">crate_types</span>),
                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="comment">// The crate_types must be exactly &quot;bin&quot;.</span>
-                    <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">crate_types</span> <span class="op">!</span><span class="op">=</span> [<span class="string">&quot;bin&quot;</span>] {
+                    <span class="kw">if</span> <span class="ident">crate_types</span> <span class="op">!</span><span class="op">=</span> [<span class="string">&quot;bin&quot;</span>] {
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
-                            <span class="string">&quot;for package ID &#39;{}&#39;: build target &#39;{:?}&#39; has invalid crate types &#39;{:?}&#39;&quot;</span>,
-                            <span class="self">self</span>.<span class="ident">package_id</span>, <span class="ident">id</span>, <span class="ident">target</span>.<span class="ident">crate_types</span>,
+                            <span class="string">&quot;for package {}: build target &#39;{:?}&#39; has invalid crate types &#39;{:?}&#39;&quot;</span>,
+                            <span class="self">self</span>.<span class="ident">package_id</span>, <span class="ident">id</span>, <span class="ident">crate_types</span>,
                         )));
                     }
                     <span class="ident">BuildTargetKind</span>::<span class="ident">Binary</span>
@@ -1104,6 +1148,10 @@
         }
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn</span> <span class="ident">is_proc_macro</span>(<span class="ident">list</span>: <span class="kw-2">&amp;</span>[<span class="ident">String</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="ident">list</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">kind</span><span class="op">|</span> <span class="ident">kind</span>.<span class="ident">as_str</span>() <span class="op">=</span><span class="op">=</span> <span class="string">&quot;proc-macro&quot;</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">OwnedBuildTargetId</span>, <span class="ident">BuildTargetImpl</span><span class="op">&gt;</span> {
