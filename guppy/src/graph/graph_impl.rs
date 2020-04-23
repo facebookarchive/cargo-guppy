@@ -59,7 +59,7 @@ impl PackageGraph {
         Self::new(metadata)
     }
 
-    /// Constructs a package graph from the given metadata.
+    /// Constructs a package graph from the given Cargo metadata, represented as a `Metadata`.
     pub fn new(metadata: Metadata) -> Result<Self, Error> {
         Self::build(metadata)
     }
@@ -143,17 +143,19 @@ impl PackageGraph {
                 }
 
                 let id_kind_mismatch = match build_target.id() {
-                    BuildTargetId::Library | BuildTargetId::Example(_) => {
-                        match build_target.kind() {
-                            BuildTargetKind::LibraryOrExample(_) => false,
-                            BuildTargetKind::Binary => true,
-                        }
-                    }
+                    BuildTargetId::Library => match build_target.kind() {
+                        BuildTargetKind::LibraryOrExample(_) | BuildTargetKind::ProcMacro => false,
+                        BuildTargetKind::Binary => true,
+                    },
+                    BuildTargetId::Example(_) => match build_target.kind() {
+                        BuildTargetKind::LibraryOrExample(_) => false,
+                        BuildTargetKind::ProcMacro | BuildTargetKind::Binary => true,
+                    },
                     BuildTargetId::BuildScript
                     | BuildTargetId::Binary(_)
                     | BuildTargetId::Test(_)
                     | BuildTargetId::Benchmark(_) => match build_target.kind() {
-                        BuildTargetKind::LibraryOrExample(_) => true,
+                        BuildTargetKind::LibraryOrExample(_) | BuildTargetKind::ProcMacro => true,
                         BuildTargetKind::Binary => false,
                     },
                 };
@@ -779,6 +781,20 @@ impl PackageMetadata {
         self.build_targets
             .get_key_value(id.as_key())
             .map(BuildTarget::new)
+    }
+
+    /// Returns true if this package is a procedural macro.
+    ///
+    /// For more about procedural macros, see [Procedural
+    /// Macros](https://doc.rust-lang.org/reference/procedural-macros.html) in the Rust reference.
+    pub fn is_proc_macro(&self) -> bool {
+        match self.build_target(&BuildTargetId::Library) {
+            Some(build_target) => match build_target.kind() {
+                BuildTargetKind::ProcMacro => true,
+                _ => false,
+            },
+            None => false,
+        }
     }
 
     /// Returns true if this package has a named feature named `default`.

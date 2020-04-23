@@ -329,12 +329,27 @@ impl<'a> BuildTargets<'a> {
         // Figure out the id and kind using target.kind and target.crate_types.
         let mut target_kinds = target.kind;
         let target_name = target.name.into_boxed_str();
+        let crate_types = target.crate_types;
+
+        // The "proc-macro" crate type cannot mix with any other types or kinds.
+        if target_kinds.len() > 1 && Self::is_proc_macro(&target_kinds) {
+            return Err(Error::PackageGraphConstructError(format!(
+                "for package {}, proc-macro mixed with other kinds ({:?})",
+                self.package_id, target_kinds
+            )));
+        }
+        if crate_types.len() > 1 && Self::is_proc_macro(&crate_types) {
+            return Err(Error::PackageGraphConstructError(format!(
+                "for package {}, proc-macro mixed with other crate types ({:?})",
+                self.package_id, crate_types
+            )));
+        }
 
         let (id, kind, lib_name) = if target_kinds.len() > 1 {
             // multiple kinds always means a library target.
             (
                 OwnedBuildTargetId::Library,
-                BuildTargetKind::LibraryOrExample(target.crate_types),
+                BuildTargetKind::LibraryOrExample(crate_types),
                 Some(target_name),
             )
         } else if let Some(target_kind) = target_kinds.pop() {
@@ -351,15 +366,20 @@ impl<'a> BuildTargets<'a> {
             };
 
             let kind = match &id {
-                OwnedBuildTargetId::Library | OwnedBuildTargetId::Example(_) => {
-                    BuildTargetKind::LibraryOrExample(target.crate_types)
+                OwnedBuildTargetId::Library => {
+                    if crate_types == ["proc-macro"] {
+                        BuildTargetKind::ProcMacro
+                    } else {
+                        BuildTargetKind::LibraryOrExample(crate_types)
+                    }
                 }
+                OwnedBuildTargetId::Example(_) => BuildTargetKind::LibraryOrExample(crate_types),
                 _ => {
                     // The crate_types must be exactly "bin".
-                    if target.crate_types != ["bin"] {
+                    if crate_types != ["bin"] {
                         return Err(Error::PackageGraphConstructError(format!(
-                            "for package ID '{}': build target '{:?}' has invalid crate types '{:?}'",
-                            self.package_id, id, target.crate_types,
+                            "for package {}: build target '{:?}' has invalid crate types '{:?}'",
+                            self.package_id, id, crate_types,
                         )));
                     }
                     BuildTargetKind::Binary
@@ -395,6 +415,10 @@ impl<'a> BuildTargets<'a> {
         }
 
         Ok(())
+    }
+
+    fn is_proc_macro(list: &[String]) -> bool {
+        list.iter().any(|kind| kind.as_str() == "proc-macro")
     }
 
     fn finish(self) -> BTreeMap<OwnedBuildTargetId, BuildTargetImpl> {

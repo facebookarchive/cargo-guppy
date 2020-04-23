@@ -1,5 +1,6 @@
-use crate::{graph::PackageGraph, Error};
+use crate::{graph::PackageGraph, unit_tests::fixtures, Error};
 use assert_matches::assert_matches;
+use cargo_metadata::{Metadata, Target};
 
 #[test]
 fn optional_dev_dep() {
@@ -39,6 +40,44 @@ fn build_targets_duplicate_lib() {
         include_str!("../../fixtures/invalid/build_targets_duplicate_lib.json"),
         "duplicate build targets for Library",
     );
+}
+
+#[test]
+fn proc_macro_mixed_kinds() {
+    fn macro_target(metadata: &mut Metadata) -> &mut Target {
+        let package = metadata
+            .packages
+            .iter_mut()
+            .find(|p| p.name == "macro")
+            .expect("valid package");
+        package
+            .targets
+            .iter_mut()
+            .find(|t| t.name == "macro")
+            .expect("valid target")
+    }
+
+    let mut metadata: Metadata = serde_json::from_str(fixtures::METADATA_PROC_MACRO1)
+        .expect("parsing metadata JSON should succeed");
+    {
+        let target = macro_target(&mut metadata);
+        target.kind = vec!["lib".to_string(), "proc-macro".to_string()];
+    }
+
+    let json = serde_json::to_string(&metadata).expect("serializing worked");
+    assert_invalid(&json, "proc-macro mixed with other kinds");
+
+    {
+        let target = macro_target(&mut metadata);
+
+        // Reset target.kind to its old value.
+        target.kind = vec!["proc-macro".to_string()];
+
+        target.crate_types = vec!["lib".to_string(), "proc-macro".to_string()];
+    }
+
+    let json = serde_json::to_string(&metadata).expect("serializing worked");
+    assert_invalid(&json, "proc-macro mixed with other crate types");
 }
 
 fn assert_invalid(json: &str, search_str: &str) {

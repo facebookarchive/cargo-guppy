@@ -83,6 +83,17 @@ pub(crate) static METADATA_BUILD_TARGETS1: &str =
 pub(crate) static METADATA_BUILD_TARGETS1_TESTCRATE: &str =
     "testcrate 0.1.0 (path+file:///Users/fakeuser/local/testcrates/test-build-targets)";
 
+pub(crate) static METADATA_PROC_MACRO1: &str =
+    include_str!("../../fixtures/small/metadata_proc_macro1.json");
+pub(crate) static METADATA_PROC_MACRO1_MACRO: &str =
+    "macro 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/macro)";
+pub(crate) static METADATA_PROC_MACRO1_NORMAL_USER: &str =
+    "normal-user 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/normal-user)";
+pub(crate) static METADATA_PROC_MACRO1_BUILD_USER: &str =
+    "build-user 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/build-user)";
+pub(crate) static METADATA_PROC_MACRO1_DEV_USER: &str =
+    "dev-user 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/dev-user)";
+
 pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/large/metadata_libra.json");
 pub(crate) static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
     "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)";
@@ -272,6 +283,7 @@ impl Fixture {
     define_fixture!(metadata_cycle2, METADATA_CYCLE2);
     define_fixture!(metadata_targets1, METADATA_TARGETS1);
     define_fixture!(metadata_build_targets1, METADATA_BUILD_TARGETS1);
+    define_fixture!(metadata_proc_macro1, METADATA_PROC_MACRO1);
     define_fixture!(metadata_libra, METADATA_LIBRA);
     define_fixture!(metadata_libra_f0091a4, METADATA_LIBRA_F0091A4);
     define_fixture!(metadata_libra_9ffd93b, METADATA_LIBRA_9FFD93B);
@@ -1249,6 +1261,27 @@ impl FixtureDetails {
                 BuildTargetKind::Binary,
                 "src/main2.rs",
             ),
+        ])
+        .insert_into(&mut details);
+
+        Self::new(details)
+    }
+
+    pub(crate) fn metadata_proc_macro1() -> Self {
+        let mut details = HashMap::new();
+
+        PackageDetails::new(
+            METADATA_PROC_MACRO1_MACRO,
+            "macro",
+            "0.1.0",
+            vec![FAKE_AUTHOR],
+            None,
+            None,
+        )
+        .with_reverse_deps(vec![
+            ("macro", METADATA_PROC_MACRO1_NORMAL_USER),
+            ("macro", METADATA_PROC_MACRO1_BUILD_USER),
+            ("macro", METADATA_PROC_MACRO1_DEV_USER),
         ])
         .insert_into(&mut details);
 
