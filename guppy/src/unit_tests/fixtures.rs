@@ -627,6 +627,8 @@ impl FixtureDetails {
                 ("yaml-rust", "yaml-rust 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)")
             ];
 
+        static LIB_TYPE: Lazy<Vec<String>> = Lazy::new(|| vec!["lib".into()]);
+
         PackageDetails::new(
             METADATA1_DATATEST,
             "datatest",
@@ -638,7 +640,7 @@ impl FixtureDetails {
         .with_build_targets(vec![
             (
                 BuildTargetId::Library,
-                BuildTargetKind::LibraryOrExample(vec!["lib".into()]),
+                BuildTargetKind::LibraryOrExample(&LIB_TYPE),
                 "src/lib.rs",
             ),
             (
@@ -1222,6 +1224,11 @@ impl FixtureDetails {
 
         let mut details = HashMap::new();
 
+        static CDYLIB_BIN_TYPES: Lazy<Vec<String>> =
+            Lazy::new(|| vec!["cdylib".into(), "bin".into()]);
+        static RLIB_DYLIB_TYPES: Lazy<Vec<String>> =
+            Lazy::new(|| vec!["rlib".into(), "dylib".into()]);
+
         PackageDetails::new(
             METADATA_BUILD_TARGETS1_TESTCRATE,
             "testcrate",
@@ -1233,7 +1240,7 @@ impl FixtureDetails {
         .with_build_targets(vec![
             (
                 BuildTargetId::Library,
-                BuildTargetKind::LibraryOrExample(vec!["cdylib".into(), "bin".into()]),
+                BuildTargetKind::LibraryOrExample(&CDYLIB_BIN_TYPES),
                 "src/lib.rs",
             ),
             (
@@ -1248,7 +1255,7 @@ impl FixtureDetails {
             ),
             (
                 BuildTargetId::Example("example1"),
-                BuildTargetKind::LibraryOrExample(vec!["rlib".into(), "dylib".into()]),
+                BuildTargetKind::LibraryOrExample(&RLIB_DYLIB_TYPES),
                 "src/lib.rs",
             ),
             (
@@ -1464,7 +1471,7 @@ pub(crate) struct PackageDetails {
     description: Option<&'static str>,
     license: Option<&'static str>,
 
-    build_targets: Option<Vec<(BuildTargetId<'static>, BuildTargetKind, PathBuf)>>,
+    build_targets: Option<Vec<(BuildTargetId<'static>, BuildTargetKind<'static>, PathBuf)>>,
     // The vector items are (name, package id).
     // XXX add more details about dependency edges here?
     deps: Option<Vec<(&'static str, PackageId)>>,
@@ -1501,7 +1508,12 @@ impl PackageDetails {
 
     fn with_build_targets(
         mut self,
-        mut build_targets: Vec<(BuildTargetId<'static>, BuildTargetKind, &'static str)>,
+
+        mut build_targets: Vec<(
+            BuildTargetId<'static>,
+            BuildTargetKind<'static>,
+            &'static str,
+        )>,
     ) -> Self {
         build_targets.sort();
         self.build_targets = Some(
