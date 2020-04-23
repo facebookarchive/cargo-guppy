@@ -25,7 +25,7 @@ impl PackageGraph {
     /// parts of the graph that aren't accessible from the workspace.
     pub fn resolve_all(&self) -> PackageSet {
         PackageSet {
-            package_graph: self,
+            graph: self,
             core: ResolveCore::all_nodes(&self.dep_graph),
         }
     }
@@ -36,34 +36,34 @@ impl PackageGraph {
 /// Created by `PackageQuery::resolve`.
 #[derive(Clone, Debug)]
 pub struct PackageSet<'g> {
-    package_graph: &'g PackageGraph,
+    graph: &'g PackageGraph,
     core: ResolveCore<PackageGraph>,
 }
 
 impl<'g> PackageSet<'g> {
-    pub(super) fn new(package_graph: &'g PackageGraph, params: QueryParams<PackageGraph>) -> Self {
+    pub(super) fn new(graph: &'g PackageGraph, params: QueryParams<PackageGraph>) -> Self {
         Self {
-            package_graph,
-            core: ResolveCore::new(package_graph.dep_graph(), params),
+            graph,
+            core: ResolveCore::new(graph.dep_graph(), params),
         }
     }
 
-    pub(super) fn from_included(package_graph: &'g PackageGraph, included: FixedBitSet) -> Self {
+    pub(super) fn from_included(graph: &'g PackageGraph, included: FixedBitSet) -> Self {
         Self {
-            package_graph,
+            graph,
             core: ResolveCore::from_included(included),
         }
     }
 
     pub(super) fn with_resolver(
-        package_graph: &'g PackageGraph,
+        graph: &'g PackageGraph,
         params: QueryParams<PackageGraph>,
         resolver: impl PackageResolver<'g>,
     ) -> Self {
         Self {
-            package_graph,
-            core: ResolveCore::with_edge_filter(package_graph.dep_graph(), params, |edge_ref| {
-                let link = package_graph.edge_to_link(
+            graph,
+            core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge_ref| {
+                let link = graph.edge_to_link(
                     edge_ref.source(),
                     edge_ref.target(),
                     edge_ref.id(),
@@ -87,10 +87,7 @@ impl<'g> PackageSet<'g> {
     /// Returns true if this package ID is contained in this resolve set, false if it isn't, and
     /// None if the package ID wasn't found.
     pub fn contains(&self, package_id: &PackageId) -> Option<bool> {
-        Some(
-            self.core
-                .contains(self.package_graph.package_ix(package_id)?),
-        )
+        Some(self.core.contains(self.graph.package_ix(package_id)?))
     }
 
     // ---
@@ -105,7 +102,7 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn union(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.package_graph, other.package_graph),
+            ::std::ptr::eq(self.graph, other.graph),
             "package graphs passed into union() match"
         );
         let mut res = self.clone();
@@ -120,7 +117,7 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn intersection(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.package_graph, other.package_graph),
+            ::std::ptr::eq(self.graph, other.graph),
             "package graphs passed into intersection() match"
         );
         let mut res = self.clone();
@@ -135,11 +132,11 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn difference(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.package_graph, other.package_graph),
+            ::std::ptr::eq(self.graph, other.graph),
             "package graphs passed into difference() match"
         );
         Self {
-            package_graph: self.package_graph,
+            graph: self.graph,
             core: self.core.difference(&other.core),
         }
     }
@@ -152,7 +149,7 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn symmetric_difference(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.package_graph, other.package_graph),
+            ::std::ptr::eq(self.graph, other.graph),
             "package graphs passed into symmetric_difference() match"
         );
         let mut res = self.clone();
@@ -172,13 +169,13 @@ impl<'g> PackageSet<'g> {
     /// topological order will be maintained.
     pub fn into_ids(self, direction: DependencyDirection) -> IntoIds<'g> {
         IntoIds {
-            graph: self.package_graph.dep_graph(),
+            graph: self.graph.dep_graph(),
             inner: self.into_ixs(direction),
         }
     }
 
     pub(super) fn into_ixs(self, direction: DependencyDirection) -> Topo<'g, PackageGraph> {
-        self.core.topo(self.package_graph.sccs(), direction)
+        self.core.topo(self.graph.sccs(), direction)
     }
 
     /// Iterates over package metadatas, in topological order in the direction specified.
@@ -189,8 +186,8 @@ impl<'g> PackageSet<'g> {
     /// topological order will be maintained.
     pub fn into_metadatas(self, direction: DependencyDirection) -> IntoMetadatas<'g> {
         IntoMetadatas {
-            graph: self.package_graph,
-            inner: self.core.topo(self.package_graph.sccs(), direction),
+            graph: self.graph,
+            inner: self.core.topo(self.graph.sccs(), direction),
         }
     }
 
@@ -209,13 +206,9 @@ impl<'g> PackageSet<'g> {
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
-        let dep_graph = &self.package_graph.dep_graph;
+        let dep_graph = &self.graph.dep_graph;
         self.core
-            .roots(
-                self.package_graph.dep_graph(),
-                self.package_graph.sccs(),
-                direction,
-            )
+            .roots(self.graph.dep_graph(), self.graph.sccs(), direction)
             .into_iter()
             .map(move |package_ix| &dep_graph[package_ix])
     }
@@ -235,13 +228,9 @@ impl<'g> PackageSet<'g> {
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
-        let package_graph = self.package_graph;
+        let package_graph = self.graph;
         self.core
-            .roots(
-                self.package_graph.dep_graph(),
-                self.package_graph.sccs(),
-                direction,
-            )
+            .roots(self.graph.dep_graph(), self.graph.sccs(), direction)
             .into_iter()
             .map(move |package_ix| {
                 package_graph
@@ -265,19 +254,17 @@ impl<'g> PackageSet<'g> {
     /// The links in a dependency cycle may be returned in arbitrary order.
     pub fn into_links(self, direction: DependencyDirection) -> IntoLinks<'g> {
         IntoLinks {
-            graph: self.package_graph,
-            inner: self.core.links(
-                self.package_graph.dep_graph(),
-                self.package_graph.sccs(),
-                direction,
-            ),
+            graph: self.graph,
+            inner: self
+                .core
+                .links(self.graph.dep_graph(), self.graph.sccs(), direction),
         }
     }
 
     /// Constructs a representation of the selected packages in `dot` format.
     pub fn into_dot<V: PackageDotVisitor + 'g>(self, visitor: V) -> impl fmt::Display + 'g {
-        let node_filtered = NodeFiltered(self.package_graph.dep_graph(), self.core.included);
-        DotFmt::new(node_filtered, VisitorWrap::new(self.package_graph, visitor))
+        let node_filtered = NodeFiltered(self.graph.dep_graph(), self.core.included);
+        DotFmt::new(node_filtered, VisitorWrap::new(self.graph, visitor))
     }
 }
 
