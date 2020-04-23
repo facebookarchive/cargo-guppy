@@ -91,7 +91,7 @@ impl FilterOptions {
     pub fn make_resolver<'g>(
         &'g self,
         pkg_graph: &'g PackageGraph,
-    ) -> impl Fn(PackageLink<'g>) -> bool + 'g {
+    ) -> impl Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool + 'g {
         let omitted_set: HashSet<&str> = self.omit_edges_into.iter().map(|s| s.as_str()).collect();
         let omitted_package_ids: HashSet<_> = names_to_ids(pkg_graph, &omitted_set).collect();
 
@@ -102,7 +102,7 @@ impl FilterOptions {
             None
         };
 
-        move |PackageLink { from, to, edge }| {
+        move |_, PackageLink { from, to, edge }| {
             // filter by the kind of dependency (--kind)
             // NOTE: We always retain all workspace deps in the graph, otherwise
             // we'll get a disconnected graph.

@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{PackageGraph, PackageLink, PackageResolver};
+use crate::graph::{PackageGraph, PackageLink, PackageQuery, PackageResolver};
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
@@ -70,9 +70,16 @@ impl PackageGraph {
 #[derive(Clone, Debug)]
 pub struct Prop09Resolver(FixedBitSet);
 
-impl<'a, 'g> PackageResolver<'g> for Prop09Resolver {
-    fn accept(&self, link: PackageLink<'g>) -> bool {
+impl Prop09Resolver {
+    /// Returns true if the given link is accepted by this resolver.
+    pub fn accept_link(&self, link: PackageLink<'_>) -> bool {
         self.0.is_visited(&link.edge.edge_ix())
+    }
+}
+
+impl<'g> PackageResolver<'g> for Prop09Resolver {
+    fn accept(&self, _query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+        self.accept_link(link)
     }
 }
 

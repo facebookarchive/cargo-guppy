@@ -102,7 +102,10 @@ impl<'g> PackageQuery<'g> {
 
     /// Resolves this query into a set of known packages, using the provided resolver function
     /// to determine which links are followed.
-    pub fn resolve_with_fn(self, resolver_fn: impl Fn(PackageLink<'g>) -> bool) -> PackageSet<'g> {
+    pub fn resolve_with_fn(
+        self,
+        resolver_fn: impl Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool,
+    ) -> PackageSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
     }
 }

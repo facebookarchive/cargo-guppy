@@ -33,9 +33,6 @@ fn main() -> Result<(), Error> {
         .count();
     println!("number of packages before: {}", before_count);
 
-    // A package resolver allows for fine-grained control over which links are followed. In general,
-    // it is anything that implements the `PackageResolver` trait. A function with this signature
-    // can be used with the `resolve_with_fn` method.
     let resolver_fn = |link: PackageLink<'_>| {
         if link.edge.dev_only() {
             println!(
@@ -48,10 +45,18 @@ fn main() -> Result<(), Error> {
         true
     };
 
+    let query = package_graph.query_forward(iter::once(&libra_node_id))?;
     // Use `resolve_with` to filter out dev-only links.
-    let resolve_with_len = package_graph
-        .query_forward(iter::once(&libra_node_id))?
-        .resolve_with_fn(resolver_fn)
+    let resolve_with_len = query
+        .clone()
+        .resolve_with_fn(|_query, link| {
+            // A package resolver allows for fine-grained control over which links are followed. In general,
+            // it is anything that implements the `PackageResolver` trait.
+            //
+            // Functions with signature Fn(&PackageQuery<'_>, PackageLink<'_>) -> bool can be used
+            // with `resolve_with_fn`.
+            resolver_fn(link)
+        })
         .into_ids(DependencyDirection::Forward)
         .len();
     println!("number of packages with resolve_with: {}", resolve_with_len);

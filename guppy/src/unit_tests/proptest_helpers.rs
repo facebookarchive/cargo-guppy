@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::feature::{all_filter, none_filter, FeatureId, FeatureSet};
-use crate::graph::{DependencyDirection, PackageGraph, PackageResolver, Prop09Resolver};
+use crate::graph::{DependencyDirection, PackageGraph, Prop09Resolver};
 use crate::unit_tests::dep_helpers::{
     assert_link_order, GraphAssert, GraphMetadata, GraphQuery, GraphSet,
 };
@@ -404,7 +404,7 @@ pub(super) fn resolver_retain_equivalence(
     resolver_ids.sort();
 
     // Now do the filtering through retain_edges.
-    graph.retain_edges(|_data, link| resolver.accept(link));
+    graph.retain_edges(|_data, link| resolver.accept_link(link));
     let mut retain_ids: Vec<_> = graph
         .query_directed(ids.iter().copied(), direction)
         .unwrap()

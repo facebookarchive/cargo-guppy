@@ -115,7 +115,7 @@ mod small {
                 fixtures::METADATA1_REGION,
             )))
             .unwrap()
-            .resolve_with_fn(|link| link.to.name() != "libc")
+            .resolve_with_fn(|_, link| link.to.name() != "libc")
             .into_dot(NameVisitor);
         assert_eq!(
             EXPECTED_DOT_NO_LIBC,
