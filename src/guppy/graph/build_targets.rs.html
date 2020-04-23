@@ -291,10 +291,34 @@
 <span id="291">291</span>
 <span id="292">292</span>
 <span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">borrow</span>::<span class="ident">Borrow</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>::<span class="ident">Ordering</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
@@ -338,8 +362,8 @@
     }
 
     <span class="doccomment">/// Returns the kind of this build target.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kind</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">BuildTargetKind</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">kind</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kind</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BuildTargetKind</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="ident">BuildTargetKind</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">kind</span>)
     }
 
     <span class="doccomment">/// Returns the features required for this build target.</span>
@@ -436,8 +460,10 @@
 <span class="doccomment">/// Obtained through `BuildTarget::kind`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>)]</span>
 <span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">BuildTargetKind</span> {
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">BuildTargetKind</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// This build target is a library or example, with the specified crate types.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The crate types are sorted and unique, and can therefore be treated like a set.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Note that examples are typically binaries, but they may be libraries as well. Binary</span>
     <span class="doccomment">/// examples will have the crate type `&quot;bin&quot;`.</span>
@@ -445,7 +471,7 @@
     <span class="doccomment">/// For more about crate types, see [The `crate-type`</span>
     <span class="doccomment">/// field](https://doc.rust-lang.org/nightly/cargo/reference/cargo-targets.html#the-crate-type-field)</span>
     <span class="doccomment">/// in the Cargo reference.</span>
-    <span class="ident">LibraryOrExample</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>),
+    <span class="ident">LibraryOrExample</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>]),
     <span class="doccomment">/// This build target is a procedural macro.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This may only be returned for `BuildTargetId::Library`. This is expressed in a `Cargo.toml`</span>
@@ -465,10 +491,22 @@
     <span class="ident">Binary</span>,
 }
 
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">BuildTargetKind</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">BuildTargetKindImpl</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">match</span> <span class="ident">inner</span> {
+            <span class="ident">BuildTargetKindImpl</span>::<span class="ident">LibraryOrExample</span>(<span class="ident">crate_types</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">BuildTargetKind</span>::<span class="ident">LibraryOrExample</span>(<span class="ident">crate_types</span>.<span class="ident">as_slice</span>())
+            }
+            <span class="ident">BuildTargetKindImpl</span>::<span class="ident">ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BuildTargetKind</span>::<span class="ident">ProcMacro</span>,
+            <span class="ident">BuildTargetKindImpl</span>::<span class="ident">Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BuildTargetKind</span>::<span class="ident">Binary</span>,
+        }
+    }
+}
+
 <span class="doccomment">/// Stored data in a `BuildTarget`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">BuildTargetImpl</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">kind</span>: <span class="ident">BuildTargetKind</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">kind</span>: <span class="ident">BuildTargetKindImpl</span>,
     <span class="comment">// This is only set if the id is BuildTargetId::Library.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">lib_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">required_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -500,6 +538,14 @@
             <span class="ident">OwnedBuildTargetId</span>::<span class="ident">Benchmark</span>(<span class="ident">name</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BuildTargetId</span>::<span class="ident">Benchmark</span>(<span class="ident">name</span>.<span class="ident">as_ref</span>()),
         }
     }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>)]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">enum</span> <span class="ident">BuildTargetKindImpl</span> {
+    <span class="ident">LibraryOrExample</span>(<span class="ident">SortedSet</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>),
+    <span class="ident">ProcMacro</span>,
+    <span class="ident">Binary</span>,
 }
 
 <span class="comment">// Allow Borrow usage for complex keys. Adapted from</span>

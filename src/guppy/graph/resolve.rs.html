@@ -459,29 +459,17 @@
 <span id="459">459</span>
 <span id="460">460</span>
 <span id="461">461</span>
-<span id="462">462</span>
-<span id="463">463</span>
-<span id="464">464</span>
-<span id="465">465</span>
-<span id="466">466</span>
-<span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">Links</span>, <span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
     <span class="ident">DependencyDirection</span>, <span class="ident">PackageEdgeImpl</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>,
+    <span class="ident">PackageQuery</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">dot</span>::{<span class="ident">DotFmt</span>, <span class="ident">DotVisitor</span>, <span class="ident">DotWrite</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">reversed</span>::<span class="ident">ReverseFlip</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">reversed</span>::<span class="ident">MaybeReversedEdge</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PackageId</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
@@ -499,7 +487,7 @@
     <span class="doccomment">/// parts of the graph that aren&#39;t accessible from the workspace.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span> {
         <span class="ident">PackageSet</span> {
-            <span class="ident">package_graph</span>: <span class="self">self</span>,
+            <span class="ident">graph</span>: <span class="self">self</span>,
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_nodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>),
         }
     }
@@ -510,41 +498,42 @@
 <span class="doccomment">/// Created by `PackageQuery::resolve`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
+    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
     <span class="ident">core</span>: <span class="ident">ResolveCore</span><span class="op">&lt;</span><span class="ident">PackageGraph</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">params</span>: <span class="ident">QueryParams</span><span class="op">&lt;</span><span class="ident">PackageGraph</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">query</span>: <span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">graph</span>;
         <span class="self">Self</span> {
-            <span class="ident">package_graph</span>,
-            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">new</span>(<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">params</span>),
+            <span class="ident">graph</span>,
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">new</span>(<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">query</span>.<span class="ident">params</span>),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">included</span>: <span class="ident">FixedBitSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">included</span>: <span class="ident">FixedBitSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">package_graph</span>,
+            <span class="ident">graph</span>,
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         }
     }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">with_resolver</span>(
-        <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
-        <span class="ident">params</span>: <span class="ident">QueryParams</span><span class="op">&lt;</span><span class="ident">PackageGraph</span><span class="op">&gt;</span>,
-        <span class="ident">resolver</span>: <span class="kw">impl</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">query</span>: <span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="kw-2">mut</span> <span class="ident">resolver</span>: <span class="kw">impl</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">graph</span>;
+        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">params</span>.<span class="ident">clone</span>();
         <span class="self">Self</span> {
-            <span class="ident">package_graph</span>,
-            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">with_edge_filter</span>(<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">params</span>, <span class="op">|</span><span class="ident">edge_ref</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">link</span> <span class="op">=</span> <span class="ident">package_graph</span>.<span class="ident">edge_to_link</span>(
-                    <span class="ident">edge_ref</span>.<span class="ident">source</span>(),
-                    <span class="ident">edge_ref</span>.<span class="ident">target</span>(),
-                    <span class="ident">edge_ref</span>.<span class="ident">id</span>(),
-                    <span class="prelude-val">Some</span>(<span class="ident">edge_ref</span>.<span class="ident">weight</span>()),
-                );
-                <span class="ident">resolver</span>.<span class="ident">accept</span>(<span class="ident">link</span>)
-            }),
+            <span class="ident">graph</span>,
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">with_edge_filter</span>(
+                <span class="ident">graph</span>.<span class="ident">dep_graph</span>(),
+                <span class="ident">params</span>,
+                <span class="op">|</span><span class="ident">source</span>, <span class="ident">target</span>, <span class="ident">edge_ix</span><span class="op">|</span> {
+                    <span class="kw">let</span> <span class="ident">link</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">edge_to_link</span>(<span class="ident">source</span>, <span class="ident">target</span>, <span class="ident">edge_ix</span>, <span class="prelude-val">None</span>);
+                    <span class="ident">resolver</span>.<span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="ident">query</span>, <span class="ident">link</span>)
+                },
+            ),
         }
     }
 
@@ -561,10 +550,7 @@
     <span class="doccomment">/// Returns true if this package ID is contained in this resolve set, false if it isn&#39;t, and</span>
     <span class="doccomment">/// None if the package ID wasn&#39;t found.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(
-            <span class="self">self</span>.<span class="ident">core</span>
-                .<span class="ident">contains</span>(<span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">package_ix</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>),
-        )
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">core</span>.<span class="ident">contains</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_ix</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>))
     }
 
     <span class="comment">// ---</span>
@@ -579,7 +565,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">union</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="ident">other</span>.<span class="ident">package_graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
             <span class="string">&quot;package graphs passed into union() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -594,7 +580,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">intersection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="ident">other</span>.<span class="ident">package_graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
             <span class="string">&quot;package graphs passed into intersection() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -609,11 +595,11 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="ident">other</span>.<span class="ident">package_graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
             <span class="string">&quot;package graphs passed into difference() match&quot;</span>
         );
         <span class="self">Self</span> {
-            <span class="ident">package_graph</span>: <span class="self">self</span>.<span class="ident">package_graph</span>,
+            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
             <span class="ident">core</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">core</span>),
         }
     }
@@ -626,7 +612,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symmetric_difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="ident">other</span>.<span class="ident">package_graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
             <span class="string">&quot;package graphs passed into symmetric_difference() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -646,13 +632,13 @@
     <span class="doccomment">/// topological order will be maintained.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_ids</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IntoIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">IntoIds</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(),
+            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>(),
             <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">into_ixs</span>(<span class="ident">direction</span>),
         }
     }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">into_ixs</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Topo</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">PackageGraph</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
+        <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
     }
 
     <span class="doccomment">/// Iterates over package metadatas, in topological order in the direction specified.</span>
@@ -663,8 +649,8 @@
     <span class="doccomment">/// topological order will be maintained.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_metadatas</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IntoMetadatas</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">IntoMetadatas</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">package_graph</span>,
-            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
+            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
+            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
         }
     }
 
@@ -683,13 +669,9 @@
         <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
-        <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>;
+        <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>;
         <span class="self">self</span>.<span class="ident">core</span>
-            .<span class="ident">roots</span>(
-                <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(),
-                <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(),
-                <span class="ident">direction</span>,
-            )
+            .<span class="ident">roots</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">package_ix</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">dep_graph</span>[<span class="ident">package_ix</span>])
     }
@@ -709,13 +691,9 @@
         <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
-        <span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>;
+        <span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
         <span class="self">self</span>.<span class="ident">core</span>
-            .<span class="ident">roots</span>(
-                <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(),
-                <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(),
-                <span class="ident">direction</span>,
-            )
+            .<span class="ident">roots</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">package_ix</span><span class="op">|</span> {
                 <span class="ident">package_graph</span>
@@ -739,19 +717,17 @@
     <span class="doccomment">/// The links in a dependency cycle may be returned in arbitrary order.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_links</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IntoLinks</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">IntoLinks</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">package_graph</span>,
-            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">links</span>(
-                <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(),
-                <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">sccs</span>(),
-                <span class="ident">direction</span>,
-            ),
+            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
+            <span class="ident">inner</span>: <span class="self">self</span>
+                .<span class="ident">core</span>
+                .<span class="ident">links</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
         }
     }
 
     <span class="doccomment">/// Constructs a representation of the selected packages in `dot` format.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_dot</span><span class="op">&lt;</span><span class="ident">V</span>: <span class="ident">PackageDotVisitor</span> <span class="op">+</span> <span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">visitor</span>: <span class="ident">V</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
-        <span class="kw">let</span> <span class="ident">node_filtered</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">dep_graph</span>(), <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">included</span>);
-        <span class="ident">DotFmt</span>::<span class="ident">new</span>(<span class="ident">node_filtered</span>, <span class="ident">VisitorWrap</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">package_graph</span>, <span class="ident">visitor</span>))
+        <span class="kw">let</span> <span class="ident">node_filtered</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">included</span>);
+        <span class="ident">DotFmt</span>::<span class="ident">new</span>(<span class="ident">node_filtered</span>, <span class="ident">VisitorWrap</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">visitor</span>))
     }
 }
 
@@ -762,27 +738,27 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returning false does not prevent the `to` package (or `from` package with `query_reverse`)</span>
     <span class="doccomment">/// from being included if it&#39;s reachable through other means.</span>
-    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">query</span>: <span class="kw-2">&amp;</span><span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span>
 <span class="kw">where</span>
     <span class="ident">T</span>: <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 {
-    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">accept</span>(<span class="ident">link</span>)
+    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">query</span>: <span class="kw-2">&amp;</span><span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">accept</span>(<span class="ident">query</span>, <span class="ident">link</span>)
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">accept</span>(<span class="ident">link</span>)
+    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">query</span>: <span class="kw-2">&amp;</span><span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">accept</span>(<span class="ident">query</span>, <span class="ident">link</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw">dyn</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">accept</span>(<span class="ident">link</span>)
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="kw">dyn</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">query</span>: <span class="kw-2">&amp;</span><span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">accept</span>(<span class="ident">query</span>, <span class="ident">link</span>)
     }
 }
 
@@ -790,10 +766,10 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">F</span><span class="op">&gt;</span> <span class="ident">PackageResolver</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ResolverFn</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
+    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
 {
-    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        (<span class="self">self</span>.<span class="number">0</span>)(<span class="ident">link</span>)
+    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">query</span>: <span class="kw-2">&amp;</span><span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        (<span class="self">self</span>.<span class="number">0</span>)(<span class="ident">query</span>, <span class="ident">link</span>)
     }
 }
 
@@ -923,11 +899,11 @@
 <span class="kw">where</span>
     <span class="ident">V</span>: <span class="ident">PackageDotVisitor</span>,
     <span class="ident">NR</span>: <span class="ident">NodeRef</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
-    <span class="ident">ER</span>: <span class="ident">EdgeRef</span><span class="op">&lt;</span>
-            <span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
-            <span class="ident">EdgeId</span> <span class="op">=</span> <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
-            <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">PackageEdgeImpl</span>,
-        <span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ReverseFlip</span>,
+    <span class="ident">ER</span>: <span class="ident">MaybeReversedEdge</span><span class="op">&lt;</span>
+        <span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+        <span class="ident">EdgeId</span> <span class="op">=</span> <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
+        <span class="ident">Weight</span> <span class="op">=</span> <span class="ident">PackageEdgeImpl</span>,
+    <span class="op">&gt;</span>,
 {
     <span class="kw">fn</span> <span class="ident">visit_node</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">node</span>: <span class="ident">NR</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="self">self</span>
@@ -938,7 +914,7 @@
     }
 
     <span class="kw">fn</span> <span class="ident">visit_edge</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">edge</span>: <span class="ident">ER</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DotWrite</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="kw">let</span> (<span class="ident">source_ix</span>, <span class="ident">target_ix</span>) <span class="op">=</span> <span class="ident">ER</span>::<span class="ident">reverse_flip</span>(<span class="ident">edge</span>.<span class="ident">source</span>(), <span class="ident">edge</span>.<span class="ident">target</span>());
+        <span class="kw">let</span> (<span class="ident">source_ix</span>, <span class="ident">target_ix</span>) <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">original_endpoints</span>();
         <span class="kw">let</span> <span class="ident">link</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">graph</span>
             .<span class="ident">edge_to_link</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge</span>.<span class="ident">id</span>(), <span class="prelude-val">Some</span>(<span class="ident">edge</span>.<span class="ident">weight</span>()));

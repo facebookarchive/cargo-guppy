@@ -431,26 +431,14 @@
 <span id="431">431</span>
 <span id="432">432</span>
 <span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">debug_ignore</span>::<span class="ident">DebugIgnore</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureEdge</span>, <span class="ident">FeatureFilter</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{
+    <span class="ident">FeatureEdge</span>, <span class="ident">FeatureFilter</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>, <span class="ident">FeatureQuery</span>,
+};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">IxBitSet</span>;
@@ -468,7 +456,7 @@
     <span class="doccomment">/// know you need parts of the graph that aren&#39;t accessible from the workspace.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">FeatureSet</span> {
-            <span class="ident">feature_graph</span>: <span class="ident">DebugIgnore</span>(<span class="kw-2">*</span><span class="self">self</span>),
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="kw-2">*</span><span class="self">self</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_nodes</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>()),
         }
     }
@@ -486,7 +474,7 @@
             <span class="ident">filter</span>,
         );
         <span class="ident">FeatureSet</span> {
-            <span class="ident">feature_graph</span>: <span class="ident">DebugIgnore</span>(<span class="kw-2">*</span><span class="self">self</span>),
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="kw-2">*</span><span class="self">self</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>.<span class="number">0</span>),
         }
     }
@@ -497,25 +485,23 @@
 <span class="doccomment">/// Created by `FeatureQuery::resolve` or the `FeatureGraph::resolve_` methods.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">feature_graph</span>: <span class="ident">DebugIgnore</span><span class="op">&lt;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">graph</span>: <span class="ident">DebugIgnore</span><span class="op">&lt;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">core</span>: <span class="ident">ResolveCore</span><span class="op">&lt;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">feature_graph</span>: <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">params</span>: <span class="ident">QueryParams</span><span class="op">&lt;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">graph</span>;
         <span class="self">Self</span> {
-            <span class="ident">feature_graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">feature_graph</span>),
-            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">new</span>(<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">params</span>),
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">graph</span>),
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">new</span>(<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">query</span>.<span class="ident">params</span>),
         }
     }
 
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">feature_graph</span>: <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">included</span>: <span class="ident">FixedBitSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">graph</span>: <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">included</span>: <span class="ident">FixedBitSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">feature_graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">feature_graph</span>),
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">graph</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         }
     }
@@ -535,7 +521,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature_id</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(
             <span class="self">self</span>.<span class="ident">core</span>
-                .<span class="ident">contains</span>(<span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">feature_ix</span>(<span class="ident">feature_id</span>.<span class="ident">into</span>())<span class="question-mark">?</span>),
+                .<span class="ident">contains</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">feature_ix</span>(<span class="ident">feature_id</span>.<span class="ident">into</span>())<span class="question-mark">?</span>),
         )
     }
 
@@ -551,10 +537,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">union</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>,
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>
-            ),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>),
             <span class="string">&quot;package graphs passed into union() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -569,10 +552,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">intersection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>,
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>
-            ),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>),
             <span class="string">&quot;package graphs passed into intersection() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -587,14 +567,11 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>,
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>
-            ),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>),
             <span class="string">&quot;package graphs passed into difference() match&quot;</span>
         );
         <span class="self">Self</span> {
-            <span class="ident">feature_graph</span>: <span class="self">self</span>.<span class="ident">feature_graph</span>,
+            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
             <span class="ident">core</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">core</span>),
         }
     }
@@ -607,10 +584,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symmetric_difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>,
-                <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>
-            ),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>),
             <span class="string">&quot;package graphs passed into symmetric_difference() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -630,7 +604,7 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">features_for_package_impl</span>(<span class="ident">metadata</span>))
     }
 
@@ -643,11 +617,11 @@
             .<span class="ident">ones</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">feature_ix</span> <span class="op">=</span> <span class="ident">NodeIndex</span>::<span class="ident">new</span>(<span class="ident">feature_ix</span>);
-                <span class="kw">let</span> <span class="ident">feature_node</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>()[<span class="ident">feature_ix</span>];
+                <span class="kw">let</span> <span class="ident">feature_node</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>()[<span class="ident">feature_ix</span>];
                 <span class="ident">feature_node</span>.<span class="ident">package_ix</span>()
             })
             .<span class="ident">collect</span>();
-        <span class="ident">PackageSet</span>::<span class="ident">from_included</span>(<span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>, <span class="ident">included</span>.<span class="number">0</span>)
+        <span class="ident">PackageSet</span>::<span class="ident">from_included</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>, <span class="ident">included</span>.<span class="number">0</span>)
     }
 
     <span class="comment">// ---</span>
@@ -662,8 +636,8 @@
     <span class="doccomment">/// topological order will be maintained.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_ids</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IntoIds</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">IntoIds</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">feature_graph</span>,
-            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
+            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
+            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
         }
     }
 
@@ -675,8 +649,8 @@
     <span class="doccomment">/// topological order will be maintained.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_metadatas</span>(<span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IntoMetadatas</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">IntoMetadatas</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">feature_graph</span>,
-            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
+            <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
+            <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">topo</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>),
         }
     }
 
@@ -696,7 +670,7 @@
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">FromIterator</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>;
+        <span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>;
 
         <span class="comment">// Use the package graph&#39;s SCCs for the topo order guarantee.</span>
         <span class="ident">package_graph</span>
@@ -733,10 +707,10 @@
         <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
-        <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>();
-        <span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">package_graph</span>;
+        <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>();
+        <span class="kw">let</span> <span class="ident">package_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_graph</span>;
         <span class="self">self</span>.<span class="ident">core</span>
-            .<span class="ident">roots</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
+            .<span class="ident">roots</span>(<span class="ident">dep_graph</span>, <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> <span class="ident">FeatureId</span>::<span class="ident">from_node</span>(<span class="ident">package_graph</span>, <span class="kw-2">&amp;</span><span class="ident">dep_graph</span>[<span class="ident">feature_ix</span>]))
     }
@@ -756,7 +730,7 @@
         <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">FeatureMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
-        <span class="kw">let</span> <span class="ident">feature_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>;
+        <span class="kw">let</span> <span class="ident">feature_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
         <span class="self">self</span>.<span class="ident">core</span>
             .<span class="ident">roots</span>(<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">feature_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">into_iter</span>()
@@ -776,11 +750,11 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
         <span class="ident">metadata</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadata</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>();
+        <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>();
         <span class="kw">let</span> <span class="ident">package_ix</span> <span class="op">=</span> <span class="ident">metadata</span>.<span class="ident">package_ix</span>;
         <span class="kw">let</span> <span class="ident">core</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">core</span>;
 
-        <span class="self">self</span>.<span class="ident">feature_graph</span>
+        <span class="self">self</span>.<span class="ident">graph</span>
             .<span class="ident">feature_ixs_for_package_ix</span>(<span class="ident">package_ix</span>)
             .<span class="ident">filter_map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
                 <span class="kw">if</span> <span class="ident">core</span>.<span class="ident">contains</span>(<span class="ident">feature_ix</span>) {
@@ -797,7 +771,7 @@
         <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">FeatureEdge</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">feature_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">feature_graph</span>;
+        <span class="kw">let</span> <span class="ident">feature_graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
 
         <span class="self">self</span>.<span class="ident">core</span>
             .<span class="ident">links</span>(<span class="ident">feature_graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">feature_graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)

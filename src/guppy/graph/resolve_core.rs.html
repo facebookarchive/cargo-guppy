@@ -290,19 +290,21 @@
 <span id="290">290</span>
 <span id="291">291</span>
 <span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">debug_ignore</span>::<span class="ident">DebugIgnore</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::{<span class="ident">all_visit_map</span>, <span class="ident">reachable_map</span>, <span class="ident">QueryParams</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::{<span class="ident">all_visit_map</span>, <span class="ident">reachable_map</span>, <span class="ident">reachable_map_filtered</span>, <span class="ident">QueryParams</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">GraphSpec</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">scc</span>::{<span class="ident">NodeIter</span>, <span class="ident">Sccs</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">walk</span>::<span class="ident">EdgeDfs</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graph</span>::<span class="ident">EdgeReference</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">EdgeFiltered</span>, <span class="ident">NodeFiltered</span>, <span class="ident">Reversed</span>, <span class="ident">VisitMap</span>};
+<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">NodeFiltered</span>, <span class="ident">Reversed</span>, <span class="ident">VisitMap</span>};
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">export</span>::<span class="ident">PhantomData</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
 
@@ -341,17 +343,21 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">with_edge_filter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
-        <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Node</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">Directed</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The arguments to the edge filter are the (source, target, edge ix), unreversed.</span>
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">with_edge_filter</span>(
+        <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Node</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">Directed</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>,
         <span class="ident">params</span>: <span class="ident">QueryParams</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
-        <span class="ident">filter</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span>::<span class="ident">Edge</span>, <span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
+        <span class="kw-2">mut</span> <span class="ident">edge_filter</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>, <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">Ix</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">included</span>, <span class="ident">len</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">params</span> {
-            <span class="ident">QueryParams</span>::<span class="ident">Forward</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">reachable_map</span>(<span class="kw-2">&amp;</span><span class="ident">EdgeFiltered</span>::<span class="ident">from_fn</span>(<span class="ident">graph</span>, <span class="ident">filter</span>), <span class="ident">initials</span>.<span class="ident">into_inner</span>())
-            }
-            <span class="ident">QueryParams</span>::<span class="ident">Reverse</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map</span>(
-                <span class="ident">Reversed</span>(<span class="kw-2">&amp;</span><span class="ident">EdgeFiltered</span>::<span class="ident">from_fn</span>(<span class="ident">graph</span>, <span class="ident">filter</span>)),
+            <span class="ident">QueryParams</span>::<span class="ident">Forward</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map_filtered</span>(
+                <span class="ident">graph</span>,
+                <span class="op">|</span><span class="ident">edge_ref</span><span class="op">|</span> <span class="ident">edge_filter</span>(<span class="ident">edge_ref</span>.<span class="ident">source</span>(), <span class="ident">edge_ref</span>.<span class="ident">target</span>(), <span class="ident">edge_ref</span>.<span class="ident">id</span>()),
+                <span class="ident">initials</span>.<span class="ident">into_inner</span>(),
+            ),
+            <span class="ident">QueryParams</span>::<span class="ident">Reverse</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map_filtered</span>(
+                <span class="ident">Reversed</span>(<span class="ident">graph</span>),
+                <span class="op">|</span><span class="ident">edge_ref</span><span class="op">|</span> <span class="ident">edge_filter</span>(<span class="ident">edge_ref</span>.<span class="ident">target</span>(), <span class="ident">edge_ref</span>.<span class="ident">source</span>(), <span class="ident">edge_ref</span>.<span class="ident">id</span>()),
                 <span class="ident">initials</span>.<span class="ident">into_inner</span>(),
             ),
         };
