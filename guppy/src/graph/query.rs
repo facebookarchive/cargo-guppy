@@ -14,7 +14,7 @@ use crate::{Error, PackageId};
 #[derive(Clone, Debug)]
 pub struct PackageQuery<'g> {
     // The fields are pub(super) for access within the graph module.
-    pub(super) package_graph: &'g PackageGraph,
+    pub(super) graph: &'g PackageGraph,
     pub(super) params: QueryParams<PackageGraph>,
 }
 
@@ -54,7 +54,7 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<PackageQuery<'g>, Error> {
         Ok(PackageQuery {
-            package_graph: self,
+            graph: self,
             params: QueryParams::Forward(self.package_ixs(package_ids)?),
         })
     }
@@ -67,7 +67,7 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<PackageQuery<'g>, Error> {
         Ok(PackageQuery {
-            package_graph: self,
+            graph: self,
             params: QueryParams::Reverse(self.package_ixs(package_ids)?),
         })
     }
@@ -83,10 +83,7 @@ impl<'g> PackageQuery<'g> {
     ///
     /// Returns `None` if this package ID is unknown.
     pub fn starts_from(&self, package_id: &PackageId) -> Option<bool> {
-        Some(
-            self.params
-                .has_initial(self.package_graph.package_ix(package_id)?),
-        )
+        Some(self.params.has_initial(self.graph.package_ix(package_id)?))
     }
 
     /// Resolves this query into a set of known packages, following every link found along the
@@ -94,13 +91,13 @@ impl<'g> PackageQuery<'g> {
     ///
     /// This is the entry point for iterators.
     pub fn resolve(self) -> PackageSet<'g> {
-        PackageSet::new(self.package_graph, self.params)
+        PackageSet::new(self.graph, self.params)
     }
 
     /// Resolves this query into a set of known packages, using the provided resolver to
     /// determine which links are followed.
     pub fn resolve_with(self, resolver: impl PackageResolver<'g>) -> PackageSet<'g> {
-        PackageSet::with_resolver(self.package_graph, self.params, resolver)
+        PackageSet::with_resolver(self.graph, self.params, resolver)
     }
 
     /// Resolves this query into a set of known packages, using the provided resolver function

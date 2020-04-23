@@ -21,7 +21,7 @@ impl<'g> FeatureGraph<'g> {
     /// know you need parts of the graph that aren't accessible from the workspace.
     pub fn resolve_all(&self) -> FeatureSet<'g> {
         FeatureSet {
-            feature_graph: DebugIgnore(*self),
+            graph: DebugIgnore(*self),
             core: ResolveCore::all_nodes(self.dep_graph()),
         }
     }
@@ -39,7 +39,7 @@ impl<'g> FeatureGraph<'g> {
             filter,
         );
         FeatureSet {
-            feature_graph: DebugIgnore(*self),
+            graph: DebugIgnore(*self),
             core: ResolveCore::from_included(included.0),
         }
     }
@@ -50,25 +50,22 @@ impl<'g> FeatureGraph<'g> {
 /// Created by `FeatureQuery::resolve` or the `FeatureGraph::resolve_` methods.
 #[derive(Clone, Debug)]
 pub struct FeatureSet<'g> {
-    feature_graph: DebugIgnore<FeatureGraph<'g>>,
+    graph: DebugIgnore<FeatureGraph<'g>>,
     core: ResolveCore<FeatureGraph<'g>>,
 }
 
 impl<'g> FeatureSet<'g> {
-    pub(super) fn new(
-        feature_graph: FeatureGraph<'g>,
-        params: QueryParams<FeatureGraph<'g>>,
-    ) -> Self {
+    pub(super) fn new(graph: FeatureGraph<'g>, params: QueryParams<FeatureGraph<'g>>) -> Self {
         Self {
-            feature_graph: DebugIgnore(feature_graph),
-            core: ResolveCore::new(feature_graph.dep_graph(), params),
+            graph: DebugIgnore(graph),
+            core: ResolveCore::new(graph.dep_graph(), params),
         }
     }
 
     #[allow(dead_code)]
-    pub(super) fn from_included(feature_graph: FeatureGraph<'g>, included: FixedBitSet) -> Self {
+    pub(super) fn from_included(graph: FeatureGraph<'g>, included: FixedBitSet) -> Self {
         Self {
-            feature_graph: DebugIgnore(feature_graph),
+            graph: DebugIgnore(graph),
             core: ResolveCore::from_included(included),
         }
     }
@@ -88,7 +85,7 @@ impl<'g> FeatureSet<'g> {
     pub fn contains<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Option<bool> {
         Some(
             self.core
-                .contains(self.feature_graph.feature_ix(feature_id.into())?),
+                .contains(self.graph.feature_ix(feature_id.into())?),
         )
     }
 
@@ -104,10 +101,7 @@ impl<'g> FeatureSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn union(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(
-                self.feature_graph.package_graph,
-                self.feature_graph.package_graph
-            ),
+            ::std::ptr::eq(self.graph.package_graph, self.graph.package_graph),
             "package graphs passed into union() match"
         );
         let mut res = self.clone();
@@ -122,10 +116,7 @@ impl<'g> FeatureSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn intersection(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(
-                self.feature_graph.package_graph,
-                self.feature_graph.package_graph
-            ),
+            ::std::ptr::eq(self.graph.package_graph, self.graph.package_graph),
             "package graphs passed into intersection() match"
         );
         let mut res = self.clone();
@@ -140,14 +131,11 @@ impl<'g> FeatureSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn difference(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(
-                self.feature_graph.package_graph,
-                self.feature_graph.package_graph
-            ),
+            ::std::ptr::eq(self.graph.package_graph, self.graph.package_graph),
             "package graphs passed into difference() match"
         );
         Self {
-            feature_graph: self.feature_graph,
+            graph: self.graph,
             core: self.core.difference(&other.core),
         }
     }
@@ -160,10 +148,7 @@ impl<'g> FeatureSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn symmetric_difference(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(
-                self.feature_graph.package_graph,
-                self.feature_graph.package_graph
-            ),
+            ::std::ptr::eq(self.graph.package_graph, self.graph.package_graph),
             "package graphs passed into symmetric_difference() match"
         );
         let mut res = self.clone();
@@ -183,7 +168,7 @@ impl<'g> FeatureSet<'g> {
         &'a self,
         package_id: &PackageId,
     ) -> Option<impl Iterator<Item = Option<&'g str>> + 'a> {
-        let metadata = self.feature_graph.package_graph.metadata(package_id)?;
+        let metadata = self.graph.package_graph.metadata(package_id)?;
         Some(self.features_for_package_impl(metadata))
     }
 
@@ -196,11 +181,11 @@ impl<'g> FeatureSet<'g> {
             .ones()
             .map(|feature_ix| {
                 let feature_ix = NodeIndex::new(feature_ix);
-                let feature_node = &self.feature_graph.dep_graph()[feature_ix];
+                let feature_node = &self.graph.dep_graph()[feature_ix];
                 feature_node.package_ix()
             })
             .collect();
-        PackageSet::from_included(self.feature_graph.package_graph, included.0)
+        PackageSet::from_included(self.graph.package_graph, included.0)
     }
 
     // ---
@@ -215,8 +200,8 @@ impl<'g> FeatureSet<'g> {
     /// topological order will be maintained.
     pub fn into_ids(self, direction: DependencyDirection) -> IntoIds<'g> {
         IntoIds {
-            graph: self.feature_graph,
-            inner: self.core.topo(self.feature_graph.sccs(), direction),
+            graph: self.graph,
+            inner: self.core.topo(self.graph.sccs(), direction),
         }
     }
 
@@ -228,8 +213,8 @@ impl<'g> FeatureSet<'g> {
     /// topological order will be maintained.
     pub fn into_metadatas(self, direction: DependencyDirection) -> IntoMetadatas<'g> {
         IntoMetadatas {
-            graph: self.feature_graph,
-            inner: self.core.topo(self.feature_graph.sccs(), direction),
+            graph: self.graph,
+            inner: self.core.topo(self.graph.sccs(), direction),
         }
     }
 
@@ -249,7 +234,7 @@ impl<'g> FeatureSet<'g> {
     where
         B: FromIterator<Option<&'g str>>,
     {
-        let package_graph = self.feature_graph.package_graph;
+        let package_graph = self.graph.package_graph;
 
         // Use the package graph's SCCs for the topo order guarantee.
         package_graph
@@ -286,10 +271,10 @@ impl<'g> FeatureSet<'g> {
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = FeatureId<'g>> + 'g {
-        let dep_graph = self.feature_graph.dep_graph();
-        let package_graph = self.feature_graph.package_graph;
+        let dep_graph = self.graph.dep_graph();
+        let package_graph = self.graph.package_graph;
         self.core
-            .roots(dep_graph, self.feature_graph.sccs(), direction)
+            .roots(dep_graph, self.graph.sccs(), direction)
             .into_iter()
             .map(move |feature_ix| FeatureId::from_node(package_graph, &dep_graph[feature_ix]))
     }
@@ -309,7 +294,7 @@ impl<'g> FeatureSet<'g> {
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = FeatureMetadata<'g>> + 'g {
-        let feature_graph = self.feature_graph;
+        let feature_graph = self.graph;
         self.core
             .roots(feature_graph.dep_graph(), feature_graph.sccs(), direction)
             .into_iter()
@@ -329,11 +314,11 @@ impl<'g> FeatureSet<'g> {
         &'a self,
         metadata: &'g PackageMetadata,
     ) -> impl Iterator<Item = Option<&'g str>> + 'a {
-        let dep_graph = self.feature_graph.dep_graph();
+        let dep_graph = self.graph.dep_graph();
         let package_ix = metadata.package_ix;
         let core = &self.core;
 
-        self.feature_graph
+        self.graph
             .feature_ixs_for_package_ix(package_ix)
             .filter_map(move |feature_ix| {
                 if core.contains(feature_ix) {
@@ -350,7 +335,7 @@ impl<'g> FeatureSet<'g> {
         self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = (FeatureId<'g>, FeatureId<'g>, &'g FeatureEdge)> {
-        let feature_graph = self.feature_graph;
+        let feature_graph = self.graph;
 
         self.core
             .links(feature_graph.dep_graph(), feature_graph.sccs(), direction)
