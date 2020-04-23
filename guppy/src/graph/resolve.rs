@@ -7,7 +7,7 @@ use crate::graph::{
     DependencyDirection, PackageEdgeImpl, PackageGraph, PackageIx, PackageLink, PackageMetadata,
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
-use crate::petgraph_support::reversed::ReverseFlip;
+use crate::petgraph_support::reversed::MaybeReversedEdge;
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
@@ -449,11 +449,11 @@ impl<'g, V, NR, ER> DotVisitor<NR, ER> for VisitorWrap<'g, V>
 where
     V: PackageDotVisitor,
     NR: NodeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageId>,
-    ER: EdgeRef<
-            NodeId = NodeIndex<PackageIx>,
-            EdgeId = EdgeIndex<PackageIx>,
-            Weight = PackageEdgeImpl,
-        > + ReverseFlip,
+    ER: MaybeReversedEdge<
+        NodeId = NodeIndex<PackageIx>,
+        EdgeId = EdgeIndex<PackageIx>,
+        Weight = PackageEdgeImpl,
+    >,
 {
     fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         let metadata = self
@@ -464,7 +464,7 @@ where
     }
 
     fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result {
-        let (source_ix, target_ix) = ER::reverse_flip(edge.source(), edge.target());
+        let (source_ix, target_ix) = edge.original_endpoints();
         let link = self
             .graph
             .edge_to_link(source_ix, target_ix, edge.id(), Some(edge.weight()));
