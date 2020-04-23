@@ -11,6 +11,7 @@ use petgraph::graph::IndexType;
 use petgraph::prelude::*;
 use std::iter::FromIterator;
 
+pub mod dfs;
 pub mod dot;
 pub mod reversed;
 pub mod scc;

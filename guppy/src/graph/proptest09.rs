@@ -97,7 +97,7 @@ impl Prop09Resolver {
 }
 
 impl<'g> PackageResolver<'g> for Prop09Resolver {
-    fn accept(&self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
+    fn accept(&mut self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
         if self.check_depends_on {
             assert!(
                 query

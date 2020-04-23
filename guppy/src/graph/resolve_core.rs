@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::debug_ignore::DebugIgnore;
-use crate::graph::query_core::{all_visit_map, reachable_map, QueryParams};
+use crate::graph::query_core::{all_visit_map, reachable_map, reachable_map_filtered, QueryParams};
 use crate::graph::{DependencyDirection, GraphSpec};
 use crate::petgraph_support::scc::{NodeIter, Sccs};
 use crate::petgraph_support::walk::EdgeDfs;
 use fixedbitset::FixedBitSet;
-use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
-use petgraph::visit::{EdgeFiltered, NodeFiltered, Reversed, VisitMap};
+use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
 use serde::export::PhantomData;
 use std::mem;
 
@@ -48,17 +47,21 @@ impl<G: GraphSpec> ResolveCore<G> {
         }
     }
 
-    pub(super) fn with_edge_filter<'g>(
-        graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
+    /// The arguments to the edge filter are the (source, target, edge ix), unreversed.
+    pub(super) fn with_edge_filter(
+        graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
         params: QueryParams<G>,
-        filter: impl Fn(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
+        mut edge_filter: impl FnMut(NodeIndex<G::Ix>, NodeIndex<G::Ix>, EdgeIndex<G::Ix>) -> bool,
     ) -> Self {
         let (included, len) = match params {
-            QueryParams::Forward(initials) => {
-                reachable_map(&EdgeFiltered::from_fn(graph, filter), initials.into_inner())
-            }
-            QueryParams::Reverse(initials) => reachable_map(
-                Reversed(&EdgeFiltered::from_fn(graph, filter)),
+            QueryParams::Forward(initials) => reachable_map_filtered(
+                graph,
+                |edge_ref| edge_filter(edge_ref.source(), edge_ref.target(), edge_ref.id()),
+                initials.into_inner(),
+            ),
+            QueryParams::Reverse(initials) => reachable_map_filtered(
+                Reversed(graph),
+                |edge_ref| edge_filter(edge_ref.target(), edge_ref.source(), edge_ref.id()),
                 initials.into_inner(),
             ),
         };

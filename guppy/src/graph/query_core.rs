@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::{DependencyDirection, GraphSpec};
+use crate::petgraph_support::dfs::dfs_next_filtered;
 use crate::sorted_set::SortedSet;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighbors, Visitable};
+use petgraph::visit::{IntoEdges, IntoNeighbors, Visitable};
 
 #[derive(Clone, Debug)]
 pub(super) enum QueryParams<G: GraphSpec> {
@@ -56,6 +57,31 @@ where
     let mut dfs = DfsPostOrder::empty(graph);
     dfs.stack = roots.into();
     while let Some(_) = dfs.next(graph) {}
+
+    // Once the DFS is done, the discovered map (or the finished map) is what's reachable.
+    debug_assert_eq!(
+        dfs.discovered, dfs.finished,
+        "discovered and finished maps match at the end"
+    );
+    let reachable = dfs.discovered;
+    let len = reachable.count_ones(..);
+    (reachable, len)
+}
+
+pub(super) fn reachable_map_filtered<G, Ix>(
+    graph: G,
+    mut edge_filter: impl FnMut(G::EdgeRef) -> bool,
+    roots: impl Into<Vec<G::NodeId>>,
+) -> (FixedBitSet, usize)
+where
+    G: Visitable<NodeId = NodeIndex<Ix>, Map = FixedBitSet> + IntoEdges,
+    Ix: IndexType,
+{
+    // To figure out what nodes are reachable, run a DFS starting from the roots.
+    // This is DfsPostOrder since that handles cycles while a regular DFS doesn't.
+    let mut dfs = DfsPostOrder::empty(graph);
+    dfs.stack = roots.into();
+    while let Some(_) = dfs_next_filtered(&mut dfs, graph, &mut edge_filter) {}
 
     // Once the DFS is done, the discovered map (or the finished map) is what's reachable.
     debug_assert_eq!(
