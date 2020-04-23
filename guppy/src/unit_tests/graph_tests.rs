@@ -4,7 +4,8 @@
 use super::fixtures::{self, Fixture};
 use crate::graph::feature::{all_filter, none_filter, FeatureId};
 use crate::graph::{
-    DependencyDirection, DotWrite, PackageDotVisitor, PackageLink, PackageMetadata,
+    BuildTargetId, BuildTargetKind, DependencyDirection, DotWrite, PackageDotVisitor, PackageLink,
+    PackageMetadata,
 };
 use std::fmt;
 use std::iter;
@@ -13,6 +14,7 @@ mod small {
     use super::*;
     use crate::graph::feature::{default_filter, feature_filter};
     use crate::unit_tests::feature_helpers::assert_features_for_package;
+    use crate::unit_tests::fixtures::{package_id, METADATA_PROC_MACRO1_MACRO};
     use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
@@ -263,6 +265,27 @@ mod small {
     }
 
     // No need for proptests because there are no dependencies involved.
+
+    #[test]
+    fn metadata_proc_macro1() {
+        let metadata = Fixture::metadata_proc_macro1();
+        metadata.verify();
+        let graph = metadata.graph();
+
+        let package = graph
+            .metadata(&package_id(METADATA_PROC_MACRO1_MACRO))
+            .expect("valid package ID");
+        assert!(package.is_proc_macro(), "is proc macro");
+        assert!(matches!(
+            package
+                .build_target(&BuildTargetId::Library)
+                .expect("library package is present")
+                .kind(),
+            BuildTargetKind::ProcMacro
+        ));
+    }
+
+    // No need for proptests because this is a really simple test.
 }
 
 mod large {

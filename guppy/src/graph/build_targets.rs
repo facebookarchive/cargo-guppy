@@ -152,6 +152,19 @@ pub enum BuildTargetKind {
     /// field](https://doc.rust-lang.org/nightly/cargo/reference/cargo-targets.html#the-crate-type-field)
     /// in the Cargo reference.
     LibraryOrExample(Vec<String>),
+    /// This build target is a procedural macro.
+    ///
+    /// This may only be returned for `BuildTargetId::Library`. This is expressed in a `Cargo.toml`
+    /// file as:
+    ///
+    /// ```toml
+    /// [lib]
+    /// proc-macro = true
+    /// ```
+    ///
+    /// For more about procedural macros, see [Procedural
+    /// Macros](https://doc.rust-lang.org/reference/procedural-macros.html) in the Rust reference.
+    ProcMacro,
     /// This build target is a binary target.
     ///
     /// This kind is returned for build script, binary, test, and benchmark targets.
