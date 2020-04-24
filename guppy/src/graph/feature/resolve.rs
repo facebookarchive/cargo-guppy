@@ -345,10 +345,10 @@ impl<'g> FeatureSet<'g> {
 
     // Currently a helper for debugging -- will be made public in the future.
     #[allow(dead_code)]
-    pub(crate) fn into_links(
-        self,
+    pub(crate) fn links<'a>(
+        &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = (FeatureId<'g>, FeatureId<'g>, &'g FeatureEdge)> {
+    ) -> impl Iterator<Item = (FeatureId<'g>, FeatureId<'g>, &'g FeatureEdge)> + 'a {
         let feature_graph = self.graph;
 
         self.core

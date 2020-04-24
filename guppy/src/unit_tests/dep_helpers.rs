@@ -166,7 +166,7 @@ pub(crate) fn assert_transitive_deps_internal(
     let mut actual_dep_ids: Vec<_> = package_ids.collect();
     actual_dep_ids.sort();
 
-    let actual_deps: Vec<_> = package_set.clone().into_links(direction).collect();
+    let actual_deps: Vec<_> = package_set.links(direction).collect();
     let actual_ptrs = dep_link_ptrs(actual_deps.iter().copied());
 
     // Use a BTreeSet for unique identifiers. This is also used later for set operations.
@@ -203,7 +203,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // Do a query in the opposite direction as well to test link order.
     let opposite = direction.opposite();
     let opposite_desc = DirectionDesc::new(opposite);
-    let opposite_deps: Vec<_> = package_set.clone().into_links(opposite).collect();
+    let opposite_deps: Vec<_> = package_set.links(opposite).collect();
     let opposite_ptrs = dep_link_ptrs(opposite_deps.iter().copied());
 
     // Checking for pointer equivalence is enough since they both use the same graph as a base.
@@ -256,7 +256,7 @@ pub(crate) fn assert_transitive_deps_internal(
                 )
             })
             .resolve()
-            .into_links(direction)
+            .links(direction)
             .flat_map(|dep| vec![dep.from.id(), dep.to.id()])
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
@@ -307,7 +307,7 @@ pub(crate) fn assert_topo_metadatas(
 
 pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
     let desc = DirectionDesc::new(direction);
-    let all_links: Vec<_> = graph.resolve_all().into_links(direction).collect();
+    let all_links: Vec<_> = graph.resolve_all().links(direction).collect();
     assert_eq!(
         all_links.len(),
         graph.link_count(),
