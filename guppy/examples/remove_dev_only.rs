@@ -29,7 +29,7 @@ fn main() -> Result<(), Error> {
     let before_count = package_graph
         .query_forward(iter::once(&libra_node_id))?
         .resolve()
-        .into_ids(DependencyDirection::Forward)
+        .package_ids(DependencyDirection::Forward)
         .count();
     println!("number of packages before: {}", before_count);
 
@@ -57,7 +57,7 @@ fn main() -> Result<(), Error> {
             // used with `resolve_with_fn`.
             resolver_fn(link)
         })
-        .into_ids(DependencyDirection::Forward)
+        .package_ids(DependencyDirection::Forward)
         .len();
     println!("number of packages with resolve_with: {}", resolve_with_len);
 
@@ -80,7 +80,7 @@ fn main() -> Result<(), Error> {
     let after_count = package_graph
         .query_forward(iter::once(&libra_node_id))?
         .resolve()
-        .into_ids(DependencyDirection::Forward)
+        .package_ids(DependencyDirection::Forward)
         .count();
     println!("number of packages after retain_edges: {}", after_count);
 

@@ -396,7 +396,7 @@ pub(super) fn resolver_retain_equivalence(
         .query_directed(ids.iter().copied(), direction)
         .unwrap()
         .resolve_with(&mut resolver)
-        .into_ids(direction)
+        .package_ids(direction)
         // Clone to release borrow on the graph.
         .cloned()
         .collect();
@@ -411,7 +411,7 @@ pub(super) fn resolver_retain_equivalence(
         .query_directed(ids.iter().copied(), direction)
         .unwrap()
         .resolve()
-        .into_ids(direction)
+        .package_ids(direction)
         // Clone because PartialEq isn't implemented for &PackageId and PackageId :/ sigh.
         .cloned()
         .collect();
@@ -517,7 +517,7 @@ fn resolve_ops_impl<G: GraphAssert<'static>>(
             direction,
         } => {
             let resolve_set = graph.resolve(&initials, *direction);
-            let ids = resolve_set.clone().ids(*direction).into_iter().collect();
+            let ids = resolve_set.ids(*direction).into_iter().collect();
             (resolve_set, ids)
         }
         ResolveTree::Union(a, b) => {
@@ -594,15 +594,15 @@ pub(super) fn package_feature_set_roundtrip(
         );
     }
 
-    let package_ids: Vec<_> = package_set.into_ids(test_direction).collect();
+    let package_ids: Vec<_> = package_set.package_ids(test_direction).collect();
     let package_set_2 = all_feature_set.to_package_set();
-    let package_ids_2: Vec<_> = package_set_2.into_ids(test_direction).collect();
+    let package_ids_2: Vec<_> = package_set_2.package_ids(test_direction).collect();
     assert_eq!(package_ids, package_ids_2, "package IDs roundtrip");
 }
 
 pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: DependencyDirection) {
     // into_ids and into_packages_with_features match (after sorting).
-    let mut feature_ids: Vec<_> = feature_set.clone().into_ids(direction).collect();
+    let mut feature_ids: Vec<_> = feature_set.feature_ids(direction).collect();
     let mut feature_ids_2: Vec<_> = feature_set
         .clone()
         .into_packages_with_features(direction)
@@ -622,7 +622,10 @@ pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: Dependen
     );
 
     // to_package_set and into_packages_with_features match (without sorting).
-    let package_set_ids: Vec<_> = feature_set.to_package_set().into_ids(direction).collect();
+    let package_set_ids: Vec<_> = feature_set
+        .to_package_set()
+        .package_ids(direction)
+        .collect();
     let feature_set_ids: Vec<_> = feature_set
         .into_packages_with_features(direction)
         .map(|(metadata, features): (_, Vec<_>)| {
