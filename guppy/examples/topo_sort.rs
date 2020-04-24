@@ -20,7 +20,7 @@ fn main() -> Result<(), Error> {
     let package_set = query.resolve();
 
     // Iterate over packages in forward topo order.
-    for package in package_set.into_metadatas(DependencyDirection::Forward) {
+    for package in package_set.packages(DependencyDirection::Forward) {
         // All selected packages are in the workspace.
         let workspace_path = package
             .workspace_path()

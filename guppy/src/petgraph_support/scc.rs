@@ -122,6 +122,7 @@ pub(crate) struct NodeIter<'a, Ix> {
 
 impl<'a, Ix> NodeIter<'a, Ix> {
     /// Returns the direction this iteration is happening in.
+    #[allow(dead_code)]
     pub fn direction(&self) -> Direction {
         self.direction
     }

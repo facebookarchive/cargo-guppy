@@ -168,14 +168,17 @@ impl<'g> PackageSet<'g> {
     ///
     /// The packages within a dependency cycle will be returned in arbitrary order, but overall
     /// topological order will be maintained.
-    pub fn into_ids(self, direction: DependencyDirection) -> IntoIds<'g> {
-        IntoIds {
-            graph: self.graph.dep_graph(),
-            inner: self.into_ixs(direction),
-        }
+    pub fn package_ids<'a>(
+        &'a self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'a {
+        let graph = self.graph;
+        self.core
+            .topo(self.graph.sccs(), direction)
+            .map(move |package_ix| &graph.dep_graph[package_ix])
     }
 
-    pub(super) fn into_ixs(self, direction: DependencyDirection) -> Topo<'g, PackageGraph> {
+    pub(super) fn ixs(&'g self, direction: DependencyDirection) -> Topo<'g, PackageGraph> {
         self.core.topo(self.graph.sccs(), direction)
     }
 
@@ -185,11 +188,19 @@ impl<'g> PackageSet<'g> {
     ///
     /// The packages within a dependency cycle will be returned in arbitrary order, but overall
     /// topological order will be maintained.
-    pub fn into_metadatas(self, direction: DependencyDirection) -> IntoMetadatas<'g> {
-        IntoMetadatas {
-            graph: self.graph,
-            inner: self.core.topo(self.graph.sccs(), direction),
-        }
+    pub fn packages<'a>(
+        &'a self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'a {
+        let graph = self.graph;
+        self.package_ids(direction).map(move |package_id| {
+            graph.metadata(package_id).unwrap_or_else(|| {
+                panic!(
+                    "known package ID '{}' not found in metadata map",
+                    package_id
+                )
+            })
+        })
     }
 
     /// Returns the set of "root package" IDs in the specified direction.
@@ -311,39 +322,6 @@ where
     }
 }
 
-/// An iterator over package IDs in topological order.
-///
-/// The items returned are of type `&'g PackageId`. Returned by `PackageSet::into_ids`.
-pub struct IntoIds<'g> {
-    graph: &'g Graph<PackageId, PackageEdgeImpl, Directed, PackageIx>,
-    inner: Topo<'g, PackageGraph>,
-}
-
-impl<'g> IntoIds<'g> {
-    /// Returns the direction the iteration is happening in.
-    pub fn direction(&self) -> DependencyDirection {
-        self.inner.direction()
-    }
-}
-
-impl<'g> Iterator for IntoIds<'g> {
-    type Item = &'g PackageId;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|package_ix| &self.graph[package_ix])
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
-    }
-}
-
-impl<'g> ExactSizeIterator for IntoIds<'g> {
-    fn len(&self) -> usize {
-        self.inner.len()
-    }
-}
-
 /// An iterator over dependency links in topological order.
 ///
 /// The items returned are of type `PackageLink<'g>`. Returned by `PackageSet::into_links`.
@@ -366,48 +344,6 @@ impl<'g> Iterator for IntoLinks<'g> {
     fn next(&mut self) -> Option<Self::Item> {
         let (source_ix, target_ix, edge_ix) = self.inner.next()?;
         Some(self.graph.edge_to_link(source_ix, target_ix, edge_ix, None))
-    }
-}
-
-/// An iterator over package metadata in topological order.
-///
-/// The items returned are of type `&'g PackageMetadata`. Returned by
-/// `PackageSet::into_metadatas`.
-#[derive(Clone, Debug)]
-pub struct IntoMetadatas<'g> {
-    graph: &'g PackageGraph,
-    inner: Topo<'g, PackageGraph>,
-}
-
-impl<'g> IntoMetadatas<'g> {
-    /// Returns the direction the iteration is happening in.
-    pub fn direction(&self) -> DependencyDirection {
-        self.inner.direction()
-    }
-}
-
-impl<'g> Iterator for IntoMetadatas<'g> {
-    type Item = &'g PackageMetadata;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next_ix = self.inner.next()?;
-        let package_id = &self.graph.dep_graph[next_ix];
-        Some(self.graph.metadata(package_id).unwrap_or_else(|| {
-            panic!(
-                "known package ID '{}' not found in metadata map",
-                package_id
-            )
-        }))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
-    }
-}
-
-impl<'g> ExactSizeIterator for IntoMetadatas<'g> {
-    fn len(&self) -> usize {
-        self.inner.len()
     }
 }
 

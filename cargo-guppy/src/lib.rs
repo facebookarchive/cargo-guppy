@@ -52,7 +52,7 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
     for package in selection
         .resolve_with_fn(resolver)
-        .into_metadatas(DependencyDirection::Forward)
+        .packages(DependencyDirection::Forward)
     {
         dupe_map.entry(package.name()).or_default().push(package);
     }
@@ -107,7 +107,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
     let package_set = query.resolve_with_fn(resolver);
 
-    for package_id in package_set.clone().into_ids(options.output_direction) {
+    for package_id in package_set.package_ids(options.output_direction) {
         let package = pkg_graph.metadata(package_id).unwrap();
         let in_workspace = package.in_workspace();
         let direct_dep = pkg_graph
@@ -171,12 +171,12 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     let mut unique_deps: HashMap<&PackageId, HashSet<&PackageId>> = HashMap::new();
     for package_id in selection
         .resolve_with_fn(&resolver)
-        .into_ids(DependencyDirection::Forward)
+        .package_ids(DependencyDirection::Forward)
     {
         let subtree_package_set: HashSet<&PackageId> = pkg_graph
             .query_forward(iter::once(package_id))?
             .resolve_with_fn(&resolver)
-            .into_ids(DependencyDirection::Forward)
+            .package_ids(DependencyDirection::Forward)
             .collect();
         let mut nonunique_deps_set: HashSet<&PackageId> = HashSet::new();
         for dep_package_id in &subtree_package_set {

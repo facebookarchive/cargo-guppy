@@ -148,7 +148,11 @@ impl<G: GraphSpec> ResolveCore<G> {
         }
     }
 
-    pub(super) fn topo(self, sccs: &Sccs<G::Ix>, direction: DependencyDirection) -> Topo<G> {
+    pub(super) fn topo<'g>(
+        &'g self,
+        sccs: &'g Sccs<G::Ix>,
+        direction: DependencyDirection,
+    ) -> Topo<'g, G> {
         // ---
         // IMPORTANT
         // ---
@@ -170,7 +174,7 @@ impl<G: GraphSpec> ResolveCore<G> {
 
         Topo {
             node_iter,
-            included: self.included,
+            included: &self.included,
             remaining: self.len,
         }
     }
@@ -209,15 +213,8 @@ impl<G: GraphSpec> ResolveCore<G> {
 #[derive(Clone, Debug)]
 pub(super) struct Topo<'g, G: GraphSpec> {
     node_iter: NodeIter<'g, G::Ix>,
-    included: FixedBitSet,
+    included: &'g FixedBitSet,
     remaining: usize,
-}
-
-impl<'g, G: GraphSpec> Topo<'g, G> {
-    /// Returns the direction the iteration is happening in.
-    pub fn direction(&self) -> DependencyDirection {
-        self.node_iter.direction().into()
-    }
 }
 
 impl<'g, G: GraphSpec> Iterator for Topo<'g, G> {

@@ -47,7 +47,7 @@ pub fn benchmarks(c: &mut Criterion) {
                         let query = package_graph
                             .query_directed(package_ids.iter().copied(), *query_direction)
                             .unwrap();
-                        let _: Vec<_> = query.resolve().into_ids(*iter_direction).collect();
+                        let _: Vec<_> = query.resolve().package_ids(*iter_direction).collect();
                     })
             },
             BatchSize::SmallInput,

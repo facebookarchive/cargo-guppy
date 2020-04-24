@@ -421,7 +421,7 @@ impl FeatureGraphImpl {
         // The choice of bottom-up for this loop and the next is pretty arbitrary.
         for metadata in package_graph
             .resolve_all()
-            .into_metadatas(DependencyDirection::Reverse)
+            .packages(DependencyDirection::Reverse)
         {
             build_state.add_named_feature_edges(metadata);
         }

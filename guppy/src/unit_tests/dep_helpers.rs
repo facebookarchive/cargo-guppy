@@ -160,11 +160,13 @@ pub(crate) fn assert_transitive_deps_internal(
                 msg, desc.direction_desc, err
             )
         });
-    let package_ids = query.clone().resolve().into_ids(direction);
+    let package_set = query.resolve();
+
+    let package_ids = package_set.package_ids(direction);
     let mut actual_dep_ids: Vec<_> = package_ids.collect();
     actual_dep_ids.sort();
 
-    let actual_deps: Vec<_> = query.clone().resolve().into_links(direction).collect();
+    let actual_deps: Vec<_> = package_set.clone().into_links(direction).collect();
     let actual_ptrs = dep_link_ptrs(actual_deps.iter().copied());
 
     // Use a BTreeSet for unique identifiers. This is also used later for set operations.
@@ -193,7 +195,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // up at least once in 'to' before it ever shows up in 'from'.
     assert_link_order(
         actual_deps,
-        query.clone().resolve().into_root_ids(direction),
+        package_set.clone().into_root_ids(direction),
         desc,
         &format!("{}: actual link order", msg),
     );
@@ -201,7 +203,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // Do a query in the opposite direction as well to test link order.
     let opposite = direction.opposite();
     let opposite_desc = DirectionDesc::new(opposite);
-    let opposite_deps: Vec<_> = query.clone().resolve().into_links(opposite).collect();
+    let opposite_deps: Vec<_> = package_set.clone().into_links(opposite).collect();
     let opposite_ptrs = dep_link_ptrs(opposite_deps.iter().copied());
 
     // Checking for pointer equivalence is enough since they both use the same graph as a base.
@@ -213,7 +215,7 @@ pub(crate) fn assert_transitive_deps_internal(
 
     assert_link_order(
         opposite_deps,
-        query.resolve().into_root_ids(opposite),
+        package_set.clone().into_root_ids(opposite),
         opposite_desc,
         &format!("{}: opposite link order", msg),
     );
@@ -232,7 +234,7 @@ pub(crate) fn assert_transitive_deps_internal(
                 )
             })
             .resolve()
-            .into_ids(direction)
+            .package_ids(direction)
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
         let difference: Vec<_> = dep_actual_dep_ids.difference(&ids_from_links_set).collect();
@@ -271,7 +273,8 @@ pub(crate) fn assert_transitive_deps_internal(
 }
 
 pub(crate) fn assert_topo_ids(graph: &PackageGraph, direction: DependencyDirection, msg: &str) {
-    let topo_ids = graph.resolve_all().into_ids(direction);
+    let all_set = graph.resolve_all();
+    let topo_ids = all_set.package_ids(direction);
     assert_eq!(
         topo_ids.len(),
         graph.package_count(),
@@ -288,7 +291,8 @@ pub(crate) fn assert_topo_metadatas(
     direction: DependencyDirection,
     msg: &str,
 ) {
-    let topo_metadatas = graph.resolve_all().into_metadatas(direction);
+    let all_set = graph.resolve_all();
+    let topo_metadatas = all_set.packages(direction);
     assert_eq!(
         topo_metadatas.len(),
         graph.package_count(),
@@ -591,8 +595,8 @@ pub(super) trait GraphSet<'g>: Clone + fmt::Debug {
     fn difference(&self, other: &Self) -> Self;
     fn symmetric_difference(&self, other: &Self) -> Self;
 
-    fn ids(self, direction: DependencyDirection) -> Vec<Self::Id>;
-    fn metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata>;
+    fn ids(&self, direction: DependencyDirection) -> Vec<Self::Id>;
+    fn metadatas(&self, direction: DependencyDirection) -> Vec<Self::Metadata>;
     fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id>;
     fn root_metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata>;
 }
@@ -679,12 +683,12 @@ impl<'g> GraphSet<'g> for PackageSet<'g> {
         self.symmetric_difference(other)
     }
 
-    fn ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
-        self.into_ids(direction).collect()
+    fn ids(&self, direction: DependencyDirection) -> Vec<Self::Id> {
+        self.package_ids(direction).collect()
     }
 
-    fn metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
-        self.into_metadatas(direction).collect()
+    fn metadatas(&self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        self.packages(direction).collect()
     }
 
     fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
@@ -778,12 +782,12 @@ impl<'g> GraphSet<'g> for FeatureSet<'g> {
         self.symmetric_difference(other)
     }
 
-    fn ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
-        self.into_ids(direction).collect()
+    fn ids(&self, direction: DependencyDirection) -> Vec<Self::Id> {
+        self.feature_ids(direction).collect()
     }
 
-    fn metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
-        self.into_metadatas(direction).collect()
+    fn metadatas(&self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        self.features(direction).collect()
     }
 
     fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
