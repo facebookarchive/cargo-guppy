@@ -319,11 +319,7 @@ pub(super) fn link_order(
     // well. Compute the root IDs from the graph in that case.
     let has_cycles = graph.cycles().all_cycles().count() > 0;
     let initials = if has_cycles || query_direction != iter_direction {
-        query
-            .clone()
-            .resolve()
-            .into_root_ids(iter_direction)
-            .collect()
+        query.clone().resolve().root_ids(iter_direction).collect()
     } else {
         ids.to_vec()
     };

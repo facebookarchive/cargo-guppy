@@ -281,10 +281,10 @@ impl<'g> FeatureSet<'g> {
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
     /// arbitrary order.
-    pub fn into_root_ids(
-        self,
+    pub fn root_ids<'a>(
+        &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = FeatureId<'g>> + 'g {
+    ) -> impl Iterator<Item = FeatureId<'g>> + ExactSizeIterator + 'a {
         let dep_graph = self.graph.dep_graph();
         let package_graph = self.graph.package_graph;
         self.core
@@ -304,10 +304,10 @@ impl<'g> FeatureSet<'g> {
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
     /// arbitrary order.}
-    pub fn into_root_metadatas(
-        self,
+    pub fn root_features<'a>(
+        &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = FeatureMetadata<'g>> + 'g {
+    ) -> impl Iterator<Item = FeatureMetadata<'g>> + 'a {
         let feature_graph = self.graph;
         self.core
             .roots(feature_graph.dep_graph(), feature_graph.sccs(), direction)

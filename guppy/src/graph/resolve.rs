@@ -214,10 +214,10 @@ impl<'g> PackageSet<'g> {
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
     /// arbitrary order.
-    pub fn into_root_ids(
-        self,
+    pub fn root_ids<'a>(
+        &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'g {
+    ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'a {
         let dep_graph = &self.graph.dep_graph;
         self.core
             .roots(self.graph.dep_graph(), self.graph.sccs(), direction)
@@ -236,10 +236,10 @@ impl<'g> PackageSet<'g> {
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
     /// arbitrary order.
-    pub fn into_root_metadatas(
-        self,
+    pub fn root_packages<'a>(
+        &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'g {
+    ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'a {
         let package_graph = self.graph;
         self.core
             .roots(self.graph.dep_graph(), self.graph.sccs(), direction)
