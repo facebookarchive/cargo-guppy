@@ -129,9 +129,7 @@ mod small {
         assert_eq!(feature_graph.feature_count(), 492, "feature count");
         assert_eq!(feature_graph.link_count(), 609, "link count");
         let feature_set = feature_graph.query_workspace(all_filter()).resolve();
-        let root_ids: Vec<_> = feature_set
-            .into_root_ids(DependencyDirection::Forward)
-            .collect();
+        let root_ids: Vec<_> = feature_set.root_ids(DependencyDirection::Forward).collect();
         let testcrate_id = fixtures::package_id(fixtures::METADATA1_TESTCRATE);
         let expected = vec![FeatureId::new(&testcrate_id, "datatest")];
         assert_eq!(root_ids, expected, "feature graph root IDs match");
@@ -150,7 +148,7 @@ mod small {
         let root_ids: Vec<_> = feature_graph
             .query_workspace(none_filter())
             .resolve()
-            .into_root_ids(DependencyDirection::Forward)
+            .root_ids(DependencyDirection::Forward)
             .collect();
         let testcrate_id = fixtures::package_id(fixtures::METADATA2_TESTCRATE);
         let expected = vec![FeatureId::base(&testcrate_id)];

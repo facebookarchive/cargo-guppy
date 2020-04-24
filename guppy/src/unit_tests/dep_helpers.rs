@@ -195,7 +195,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // up at least once in 'to' before it ever shows up in 'from'.
     assert_link_order(
         actual_deps,
-        package_set.clone().into_root_ids(direction),
+        package_set.root_ids(direction),
         desc,
         &format!("{}: actual link order", msg),
     );
@@ -215,7 +215,7 @@ pub(crate) fn assert_transitive_deps_internal(
 
     assert_link_order(
         opposite_deps,
-        package_set.clone().into_root_ids(opposite),
+        package_set.root_ids(opposite),
         opposite_desc,
         &format!("{}: opposite link order", msg),
     );
@@ -338,7 +338,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     // all_links should be in the correct order.
     assert_link_order(
         all_links,
-        graph.resolve_all().into_root_ids(direction),
+        graph.resolve_all().root_ids(direction),
         desc,
         msg,
     );
@@ -597,8 +597,8 @@ pub(super) trait GraphSet<'g>: Clone + fmt::Debug {
 
     fn ids(&self, direction: DependencyDirection) -> Vec<Self::Id>;
     fn metadatas(&self, direction: DependencyDirection) -> Vec<Self::Metadata>;
-    fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id>;
-    fn root_metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata>;
+    fn root_ids(&self, direction: DependencyDirection) -> Vec<Self::Id>;
+    fn root_metadatas(&self, direction: DependencyDirection) -> Vec<Self::Metadata>;
 }
 
 impl<'g> GraphAssert<'g> for &'g PackageGraph {
@@ -691,12 +691,12 @@ impl<'g> GraphSet<'g> for PackageSet<'g> {
         self.packages(direction).collect()
     }
 
-    fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
-        self.into_root_ids(direction).collect()
+    fn root_ids(&self, direction: DependencyDirection) -> Vec<Self::Id> {
+        Self::root_ids(self, direction).collect()
     }
 
-    fn root_metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
-        self.into_root_metadatas(direction).collect()
+    fn root_metadatas(&self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        Self::root_packages(self, direction).collect()
     }
 }
 
@@ -790,12 +790,12 @@ impl<'g> GraphSet<'g> for FeatureSet<'g> {
         self.features(direction).collect()
     }
 
-    fn root_ids(self, direction: DependencyDirection) -> Vec<Self::Id> {
-        self.into_root_ids(direction).collect()
+    fn root_ids(&self, direction: DependencyDirection) -> Vec<Self::Id> {
+        Self::root_ids(self, direction).collect()
     }
 
-    fn root_metadatas(self, direction: DependencyDirection) -> Vec<Self::Metadata> {
-        self.into_root_metadatas(direction).collect()
+    fn root_metadatas(&self, direction: DependencyDirection) -> Vec<Self::Metadata> {
+        Self::root_features(self, direction).collect()
     }
 }
 
