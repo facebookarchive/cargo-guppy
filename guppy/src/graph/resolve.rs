@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::resolve_core::{Links, ResolveCore, Topo};
+use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{
     DependencyDirection, PackageEdgeImpl, PackageGraph, PackageIx, PackageLink, PackageMetadata,
     PackageQuery,
@@ -251,7 +251,7 @@ impl<'g> PackageSet<'g> {
             })
     }
 
-    /// Creates an iterator over dependency links.
+    /// Creates an iterator over `PackageLink` instances.
     ///
     /// If the iteration is in forward order, for any given package, at least one link where the
     /// package is on the `to` end is returned before any links where the package is on the
@@ -264,13 +264,16 @@ impl<'g> PackageSet<'g> {
     /// ## Cycles
     ///
     /// The links in a dependency cycle may be returned in arbitrary order.
-    pub fn into_links(self, direction: DependencyDirection) -> IntoLinks<'g> {
-        IntoLinks {
-            graph: self.graph,
-            inner: self
-                .core
-                .links(self.graph.dep_graph(), self.graph.sccs(), direction),
-        }
+    pub fn links<'a>(
+        &'a self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = PackageLink<'g>> + 'a {
+        let graph = self.graph;
+        self.core
+            .links(graph.dep_graph(), graph.sccs(), direction)
+            .map(move |(source_ix, target_ix, edge_ix)| {
+                graph.edge_to_link(source_ix, target_ix, edge_ix, None)
+            })
     }
 
     /// Constructs a representation of the selected packages in `dot` format.
@@ -319,31 +322,6 @@ where
 {
     fn accept(&mut self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
         (self.0)(query, link)
-    }
-}
-
-/// An iterator over dependency links in topological order.
-///
-/// The items returned are of type `PackageLink<'g>`. Returned by `PackageSet::into_links`.
-#[derive(Clone, Debug)]
-pub struct IntoLinks<'g> {
-    graph: &'g PackageGraph,
-    inner: Links<'g, PackageGraph>,
-}
-
-impl<'g> IntoLinks<'g> {
-    /// Returns the direction the iteration is happening in.
-    pub fn direction(&self) -> DependencyDirection {
-        self.inner.direction()
-    }
-}
-
-impl<'g> Iterator for IntoLinks<'g> {
-    type Item = PackageLink<'g>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let (source_ix, target_ix, edge_ix) = self.inner.next()?;
-        Some(self.graph.edge_to_link(source_ix, target_ix, edge_ix, None))
     }
 }
 

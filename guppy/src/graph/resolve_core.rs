@@ -10,7 +10,6 @@ use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
 use serde::export::PhantomData;
-use std::mem;
 
 /// Core logic for queries that have been resolved into a known set of packages.
 ///
@@ -180,7 +179,7 @@ impl<G: GraphSpec> ResolveCore<G> {
     }
 
     pub(super) fn links<'g>(
-        self,
+        &'g self,
         graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
         sccs: &Sccs<G::Ix>,
         direction: DependencyDirection,
@@ -202,7 +201,7 @@ impl<G: GraphSpec> ResolveCore<G> {
 
         Links {
             graph: DebugIgnore(graph),
-            included: self.included,
+            included: &self.included,
             edge_dfs,
             direction,
         }
@@ -247,16 +246,9 @@ impl<'g, G: GraphSpec> ExactSizeIterator for Topo<'g, G> {
 #[allow(clippy::type_complexity)]
 pub(super) struct Links<'g, G: GraphSpec> {
     graph: DebugIgnore<&'g Graph<G::Node, G::Edge, Directed, G::Ix>>,
-    included: FixedBitSet,
+    included: &'g FixedBitSet,
     edge_dfs: EdgeDfs<EdgeIndex<G::Ix>, NodeIndex<G::Ix>, FixedBitSet>,
     direction: DependencyDirection,
-}
-
-impl<'g, G: GraphSpec> Links<'g, G> {
-    /// Returns the direction the iteration is happening in.
-    pub(super) fn direction(&self) -> DependencyDirection {
-        self.direction
-    }
 }
 
 impl<'g, G: GraphSpec> Iterator for Links<'g, G> {
@@ -266,26 +258,24 @@ impl<'g, G: GraphSpec> Iterator for Links<'g, G> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.direction {
             DependencyDirection::Forward => {
-                // TODO: replace with &self.included once petgraph 0.5.1 is out.
-                let included = mem::replace(&mut self.included, FixedBitSet::with_capacity(0));
-                let filtered = NodeFiltered(self.graph.0, included);
-                let res = self.edge_dfs.next(&filtered);
-                mem::replace(&mut self.included, filtered.1);
-                res
+                let included = self.included;
+                let filtered =
+                    NodeFiltered::from_fn(self.graph.0, |node_ix| included.is_visited(&node_ix));
+                self.edge_dfs.next(&filtered)
             }
             DependencyDirection::Reverse => {
+                let included = self.included;
                 // TODO: replace with &self.included once petgraph 0.5.1 is out.
-                let included = mem::replace(&mut self.included, FixedBitSet::with_capacity(0));
-                let filtered_reversed = NodeFiltered(Reversed(self.graph.0), included);
-                let res = self.edge_dfs.next(&filtered_reversed).map(
-                    |(source_ix, target_ix, edge_ix)| {
+                let filtered_reversed = NodeFiltered::from_fn(Reversed(self.graph.0), |node_ix| {
+                    included.is_visited(&node_ix)
+                });
+                self.edge_dfs
+                    .next(&filtered_reversed)
+                    .map(|(source_ix, target_ix, edge_ix)| {
                         // Flip the source and target around since this is a reversed graph, since the
                         // 'from' and 'to' are always right way up.
                         (target_ix, source_ix, edge_ix)
-                    },
-                );
-                mem::replace(&mut self.included, filtered_reversed.1);
-                res
+                    })
             }
         }
     }

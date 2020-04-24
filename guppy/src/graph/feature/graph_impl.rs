@@ -428,7 +428,7 @@ impl FeatureGraphImpl {
 
         for link in package_graph
             .resolve_all()
-            .into_links(DependencyDirection::Reverse)
+            .links(DependencyDirection::Reverse)
         {
             build_state.add_dependency_edges(link);
         }

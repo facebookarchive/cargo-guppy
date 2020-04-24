@@ -71,7 +71,7 @@ fn main() -> Result<(), Error> {
     // Iterate over all links and assert that there are no dev-only links.
     for link in package_graph
         .resolve_all()
-        .into_links(DependencyDirection::Forward)
+        .links(DependencyDirection::Forward)
     {
         assert!(!link.edge.dev_only());
     }

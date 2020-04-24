@@ -29,7 +29,7 @@ fn main() -> Result<(), Error> {
     let query = package_graph.query_forward(iter::once(&package_id))?;
     let package_set = query.resolve();
     for dep_id in package_set.package_ids(DependencyDirection::Forward) {
-        // PackageSet also has an `into_links()` method which returns links instead of IDs.
+        // PackageSet also has an `links()` method which returns links instead of package IDs.
         println!("transitive: {}", dep_id);
     }
     Ok(())

@@ -311,19 +311,20 @@ pub(super) fn link_order(
     iter_direction: DependencyDirection,
     msg: &str,
 ) {
-    let query = graph
+    let package_set = graph
         .query_directed(ids.iter().copied(), query_direction)
-        .unwrap();
+        .unwrap()
+        .resolve();
     // If the query and iter directions are the same, the set of initial IDs may be expanded
     // in case of cycles. If they are the opposite, the set of initial IDs will be different as
     // well. Compute the root IDs from the graph in that case.
     let has_cycles = graph.cycles().all_cycles().count() > 0;
     let initials = if has_cycles || query_direction != iter_direction {
-        query.clone().resolve().root_ids(iter_direction).collect()
+        package_set.root_ids(iter_direction).collect()
     } else {
         ids.to_vec()
     };
-    let links = query.resolve().into_links(iter_direction);
+    let links = package_set.links(iter_direction);
     assert_link_order(
         links,
         initials,
@@ -332,7 +333,7 @@ pub(super) fn link_order(
     );
 }
 
-/// Test that the results of an `into_root_ids` query don't depend on any other root.
+/// Test that the results of an `root_ids` query don't depend on any other root.
 pub(super) fn roots<'g, G: GraphAssert<'g>>(
     graph: G,
     ids: &[G::Id],

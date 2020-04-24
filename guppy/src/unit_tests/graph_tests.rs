@@ -195,7 +195,7 @@ mod small {
         if false {
             for (source, target, edge) in feature_graph
                 .resolve_all()
-                .into_links(DependencyDirection::Forward)
+                .links(DependencyDirection::Forward)
             {
                 let source_metadata = package_graph.metadata(source.package_id()).unwrap();
                 let target_metadata = package_graph.metadata(target.package_id()).unwrap();
@@ -372,7 +372,7 @@ mod large {
 
         let mut build_dep_but_no_build_script: Vec<_> = graph
             .resolve_all()
-            .into_links(DependencyDirection::Forward)
+            .links(DependencyDirection::Forward)
             .filter_map(|link| {
                 if link.edge.build().is_present() && !link.from.has_build_script() {
                     Some(link.from.name())
