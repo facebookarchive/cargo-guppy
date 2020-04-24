@@ -241,10 +241,10 @@ impl<'g> FeatureSet<'g> {
     ///
     /// The packages within a dependency cycle will be returned in arbitrary order, but overall
     /// topological order will be maintained.
-    pub fn into_packages_with_features<B>(
-        self,
+    pub fn packages_with_features<'a, B>(
+        &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = (&'g PackageMetadata, B)> + 'g
+    ) -> impl Iterator<Item = (&'g PackageMetadata, B)> + 'a
     where
         B: FromIterator<Option<&'g str>>,
     {
