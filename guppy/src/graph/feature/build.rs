@@ -200,16 +200,6 @@ impl<'g> FeatureGraphBuildState<'g> {
         // be built with "a", but as it turns out Cargo actually *unifies* the features, such
         // that foo is built with both "a" and "b".
         //
-        // Nuances
-        // -------
-        //
-        // Cargo doesn't consider dev-dependencies of non-workspace packages. So if 'from' is a
-        // workspace package, look at normal, dev and build dependencies. If it isn't, look at
-        // normal and build dependencies.
-        //
-        // XXX double check the assertion that Cargo doesn't consider dev-dependencies of
-        // non-workspace crates.
-        //
         // Also, feature unification is impacted by whether the dependency is optional.
         //
         // [dependencies]
@@ -233,11 +223,7 @@ impl<'g> FeatureGraphBuildState<'g> {
 
         let unified_metadata = iter::once((DependencyKind::Normal, edge.normal()))
             .chain(iter::once((DependencyKind::Build, edge.build())))
-            .chain(if from.in_workspace() {
-                Some((DependencyKind::Development, edge.dev()))
-            } else {
-                None
-            });
+            .chain(iter::once((DependencyKind::Development, edge.dev())));
 
         let mut required_req = FeatureReq::new(from, to, edge);
         let mut optional_req = FeatureReq::new(from, to, edge);
