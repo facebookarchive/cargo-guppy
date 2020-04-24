@@ -600,8 +600,7 @@ pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: Dependen
     // into_ids and into_packages_with_features match (after sorting).
     let mut feature_ids: Vec<_> = feature_set.feature_ids(direction).collect();
     let mut feature_ids_2: Vec<_> = feature_set
-        .clone()
-        .into_packages_with_features(direction)
+        .packages_with_features(direction)
         .flat_map(|(metadata, features): (_, Vec<_>)| {
             let package_id = metadata.id();
             features
@@ -623,7 +622,7 @@ pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: Dependen
         .package_ids(direction)
         .collect();
     let feature_set_ids: Vec<_> = feature_set
-        .into_packages_with_features(direction)
+        .packages_with_features(direction)
         .map(|(metadata, features): (_, Vec<_>)| {
             println!("for id {}, features: {:?}", metadata.id(), features);
             metadata.id()
