@@ -49,8 +49,8 @@ fn main() -> Result<(), Error> {
     let query = package_graph.query_reverse(package_graph.workspace().member_ids())?;
     let package_set = query.resolve();
 
-    // resolve.into_dot() implements `std::fmt::Display`, so it can be written out to a file, a
+    // resolve.display_dot() implements `std::fmt::Display`, so it can be written out to a file, a
     // string, stdout, etc.
-    println!("{}", package_set.into_dot(PackageNameVisitor));
+    println!("{}", package_set.display_dot(PackageNameVisitor));
     Ok(())
 }
