@@ -797,6 +797,17 @@ impl PackageMetadata {
         }
     }
 
+    /// Returns true if this package has a build script.
+    ///
+    /// Cargo only follows build dependencies if a build script is set.
+    ///
+    /// For more about build scripts, see [Build
+    /// Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html) in the Cargo
+    /// reference.
+    pub fn has_build_script(&self) -> bool {
+        self.build_target(&BuildTargetId::BuildScript).is_some()
+    }
+
     /// Returns true if this package has a named feature named `default`.
     ///
     /// For more about default features, see [The `[features]`
