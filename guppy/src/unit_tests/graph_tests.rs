@@ -329,6 +329,66 @@ mod large {
             DependencyDirection::Forward,
             "executor-utils should not depend on admission-control-service",
         );
+
+        let proc_macro_packages: Vec<_> = graph
+            .workspace()
+            .members()
+            .filter_map(|(_, metadata)| {
+                if metadata.is_proc_macro() {
+                    Some(metadata.name())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        assert_eq!(
+            proc_macro_packages,
+            ["num-variants", "libra-crypto-derive"],
+            "proc macro packages"
+        );
+
+        let build_script_packages: Vec<_> = graph
+            .workspace()
+            .members()
+            .filter_map(|(_, metadata)| {
+                if metadata.has_build_script() {
+                    Some(metadata.name())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        assert_eq!(
+            build_script_packages,
+            [
+                "admission-control-proto",
+                "libra-dev",
+                "debug-interface",
+                "libra-metrics",
+                "storage-proto",
+                "libra_fuzzer_fuzz",
+                "libra-types"
+            ],
+            "build script packages"
+        );
+
+        let mut build_dep_but_no_build_script: Vec<_> = graph
+            .resolve_all()
+            .into_links(DependencyDirection::Forward)
+            .filter_map(|link| {
+                if link.edge.build().is_present() && !link.from.has_build_script() {
+                    Some(link.from.name())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        build_dep_but_no_build_script.sort();
+        assert_eq!(
+            build_dep_but_no_build_script,
+            ["libra-mempool", "rusoto_signature"],
+            "packages with build deps but no build scripts"
+        );
     }
 
     proptest_suite!(metadata_libra_9ffd93b);
