@@ -57,16 +57,15 @@ mod small {
     26 -> 13 [label="winapi"]
 }
 "#;
-        let actual_dot = graph
+        let package_set = graph
             .query_forward(iter::once(&fixtures::package_id(
                 fixtures::METADATA1_REGION,
             )))
             .unwrap()
-            .resolve()
-            .into_dot(NameVisitor);
+            .resolve();
         assert_eq!(
             EXPECTED_DOT,
-            format!("{}", actual_dot),
+            format!("{}", package_set.display_dot(NameVisitor)),
             "dot output matches"
         );
 
@@ -81,15 +80,14 @@ mod small {
     18 -> 1 [label="datatest"]
 }
 "#;
-        let actual_dot_reversed = graph
+        let package_set = graph
             .query_reverse(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
             .unwrap()
-            .resolve()
-            .into_dot(NameVisitor);
+            .resolve();
 
         assert_eq!(
             EXPECTED_DOT_REVERSED,
-            format!("{}", actual_dot_reversed),
+            format!("{}", package_set.display_dot(NameVisitor)),
             "reversed dot output matches"
         );
 
@@ -110,16 +108,15 @@ mod small {
     26 -> 13 [label="winapi"]
 }
 "#;
-        let actual_dot = graph
+        let package_set = graph
             .query_forward(iter::once(&fixtures::package_id(
                 fixtures::METADATA1_REGION,
             )))
             .unwrap()
-            .resolve_with_fn(|_, link| link.to.name() != "libc")
-            .into_dot(NameVisitor);
+            .resolve_with_fn(|_, link| link.to.name() != "libc");
         assert_eq!(
             EXPECTED_DOT_NO_LIBC,
-            format!("{}", actual_dot),
+            format!("{}", package_set.display_dot(NameVisitor)),
             "dot output matches"
         );
 

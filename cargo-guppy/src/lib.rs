@@ -126,7 +126,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     }
 
     if let Some(ref output_file) = options.output_dot {
-        let dot = package_set.into_dot(NameVisitor);
+        let dot = package_set.display_dot(NameVisitor);
         let mut f = fs::File::create(output_file)?;
         write!(f, "{}", dot)?;
     }

@@ -11,7 +11,7 @@ use crate::petgraph_support::reversed::MaybeReversedEdge;
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
-use petgraph::visit::{NodeFiltered, NodeRef};
+use petgraph::visit::{NodeFiltered, NodeRef, VisitMap};
 use std::fmt;
 
 impl PackageGraph {
@@ -277,8 +277,14 @@ impl<'g> PackageSet<'g> {
     }
 
     /// Constructs a representation of the selected packages in `dot` format.
-    pub fn into_dot<V: PackageDotVisitor + 'g>(self, visitor: V) -> impl fmt::Display + 'g {
-        let node_filtered = NodeFiltered(self.graph.dep_graph(), self.core.included);
+    pub fn display_dot<'a, V: PackageDotVisitor + 'g>(
+        &'a self,
+        visitor: V,
+    ) -> impl fmt::Display + 'a {
+        let included = &self.core.included;
+        let node_filtered = NodeFiltered::from_fn(self.graph.dep_graph(), move |package_ix| {
+            included.is_visited(&package_ix)
+        });
         DotFmt::new(node_filtered, VisitorWrap::new(self.graph, visitor))
     }
 }
