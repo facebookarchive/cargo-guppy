@@ -739,8 +739,8 @@
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
     <span class="ident">cargo_version_matches</span>, <span class="ident">BuildTargetImpl</span>, <span class="ident">BuildTargetKindImpl</span>, <span class="ident">DepRequiredOrOptional</span>,
-    <span class="ident">DependencyReqImpl</span>, <span class="ident">OwnedBuildTargetId</span>, <span class="ident">PackageEdgeImpl</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageGraphData</span>,
-    <span class="ident">PackageIx</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PlatformStatusImpl</span>, <span class="ident">WorkspaceImpl</span>,
+    <span class="ident">DependencyReqImpl</span>, <span class="ident">OwnedBuildTargetId</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageGraphData</span>, <span class="ident">PackageIx</span>,
+    <span class="ident">PackageLinkImpl</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PlatformStatusImpl</span>, <span class="ident">WorkspaceImpl</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">Metadata</span>, <span class="ident">PackageId</span>};
@@ -851,7 +851,7 @@
 
 <span class="doccomment">/// Helper struct for building up dependency graph.</span>
 <span class="kw">struct</span> <span class="ident">GraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageEdgeImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
+    <span class="ident">dep_graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
     <span class="comment">// The values of package_data are (package_ix, name, version).</span>
     <span class="ident">package_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Version</span>)<span class="op">&gt;</span>,
     <span class="ident">resolve_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeDep</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
@@ -937,7 +937,7 @@
             <span class="kw">let</span> <span class="ident">dep_id</span> <span class="op">=</span> <span class="ident">PackageId</span>::<span class="ident">from_metadata</span>(<span class="ident">pkg</span>.<span class="ident">clone</span>());
             <span class="kw">let</span> (<span class="ident">name</span>, <span class="ident">deps</span>) <span class="op">=</span> <span class="ident">dep_resolver</span>.<span class="ident">resolve</span>(<span class="ident">resolved_name</span>, <span class="kw-2">&amp;</span><span class="ident">dep_id</span>)<span class="question-mark">?</span>;
             <span class="kw">let</span> (<span class="ident">dep_idx</span>, <span class="kw">_</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_data</span>(<span class="kw-2">&amp;</span><span class="ident">dep_id</span>)<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">edge</span> <span class="op">=</span> <span class="ident">PackageEdgeImpl</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>, <span class="ident">name</span>, <span class="ident">resolved_name</span>, <span class="ident">deps</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">edge</span> <span class="op">=</span> <span class="ident">PackageLinkImpl</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>, <span class="ident">name</span>, <span class="ident">resolved_name</span>, <span class="ident">deps</span>)<span class="question-mark">?</span>;
             <span class="comment">// Use update_edge instead of add_edge to prevent multiple edges from being added</span>
             <span class="comment">// between these two nodes.</span>
             <span class="comment">// XXX maybe check for an existing edge?</span>
@@ -1042,7 +1042,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">workspace_path</span>.<span class="ident">to_path_buf</span>().<span class="ident">into_boxed_path</span>())
     }
 
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageEdgeImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
     }
 }
@@ -1321,7 +1321,7 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PackageEdgeImpl</span> {
+<span class="kw">impl</span> <span class="ident">PackageLinkImpl</span> {
     <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
         <span class="ident">from_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
