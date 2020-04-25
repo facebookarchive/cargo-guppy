@@ -6,8 +6,7 @@
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
 use guppy::graph::{
-    DependencyDirection, DependencyReq, EnabledTernary, PackageEdge, PackageGraph, PackageLink,
-    PackageQuery,
+    DependencyDirection, DependencyReq, EnabledTernary, PackageGraph, PackageLink, PackageQuery,
 };
 use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
@@ -102,7 +101,8 @@ impl FilterOptions {
             None
         };
 
-        move |_, PackageLink { from, to, edge }| {
+        move |_, link| {
+            let (from, to) = link.endpoints();
             // filter by the kind of dependency (--kind)
             // NOTE: We always retain all workspace deps in the graph, otherwise
             // we'll get a disconnected graph.
@@ -114,12 +114,12 @@ impl FilterOptions {
 
             let include_type = if let Some(platform) = &platform {
                 // filter out irrelevant dependencies for a specific target (--target)
-                self.eval(edge, |req| {
+                self.eval(link, |req| {
                     req.status().enabled_on(platform) != EnabledTernary::Disabled
                 })
             } else {
                 // keep dependencies that are potentially enabled on any platform
-                self.eval(edge, |req| req.is_present())
+                self.eval(link, |req| req.is_present())
             };
 
             // filter out provided edge targets (--omit-edges-into)
@@ -133,12 +133,12 @@ impl FilterOptions {
     /// apply `pred_fn` to whatever's selected.
     fn eval(
         &self,
-        edge: PackageEdge<'_>,
+        link: PackageLink<'_>,
         mut pred_fn: impl FnMut(DependencyReq<'_>) -> bool,
     ) -> bool {
-        pred_fn(edge.normal())
-            || self.include_dev && pred_fn(edge.dev())
-            || self.include_build && pred_fn(edge.build())
+        pred_fn(link.normal())
+            || self.include_dev && pred_fn(link.dev())
+            || self.include_build && pred_fn(link.build())
     }
 }
 

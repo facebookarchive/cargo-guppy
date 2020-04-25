@@ -30,7 +30,7 @@ impl PackageDotVisitor for PackageNameVisitor {
     }
 
     fn visit_link(&self, link: PackageLink<'_>, f: &mut DotWrite<'_, '_>) -> fmt::Result {
-        if link.edge.dev_only() {
+        if link.dev_only() {
             write!(f, "dev-only")
         } else {
             // Don't print out anything if this isn't a dev-only link.

@@ -124,7 +124,7 @@ trait GraphSpec {
 
 impl GraphSpec for PackageGraph {
     type Node = PackageId;
-    type Edge = PackageEdgeImpl;
+    type Edge = PackageLinkImpl;
     type Ix = PackageIx;
 }
 

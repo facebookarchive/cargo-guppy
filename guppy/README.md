@@ -35,9 +35,9 @@ let package_id = PackageId::new("testcrate 0.1.0 (path+file:///fakepath/testcrat
 // dep_links returns all direct dependencies of a package, and it returns `None` if the package
 // ID isn't recognized.
 for link in package_graph.dep_links(&package_id).unwrap() {
-    // A dependency link contains `from`, `to` and `edge`. The edge has information about e.g.
-    // whether this is a build dependency.
-    println!("direct dependency: {}", link.to.id());
+    // A dependency link contains `from()`, `to()` and information about the specifics of the
+    // dependency.
+    println!("direct dependency: {}", link.to().id());
 }
 ```
 

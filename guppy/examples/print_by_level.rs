@@ -52,9 +52,10 @@ fn main() -> Result<(), Error> {
                 // we want to collect all of them together.
                 let links = package_graph.dep_links(id).expect("ID is");
                 links.map(|link| {
+                    let to = link.to();
                     // Since we're iterating over transitive dependencies, we use the 'to' ID here.
                     // If we were iterating over transitive reverse deps, we'd use the 'from' ID.
-                    (link.to.id(), link.to)
+                    (to.id(), to)
                 })
             })
             .collect();
