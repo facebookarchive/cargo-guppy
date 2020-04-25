@@ -113,7 +113,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
         let direct_dep = pkg_graph
             .reverse_dep_links(package_id)
             .unwrap()
-            .any(|l| l.from.in_workspace() && !l.to.in_workspace());
+            .any(|link| link.from().in_workspace() && !link.to().in_workspace());
         let show_package = match options.filter_opts.kind {
             Kind::All => true,
             Kind::Workspace => in_workspace,
@@ -186,18 +186,17 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
             }
 
             let mut unique = true;
-            for reverse_dep_link in pkg_graph.reverse_dep_links(dep_package_id).unwrap() {
+            for link in pkg_graph.reverse_dep_links(dep_package_id).unwrap() {
                 // skip build and dev dependencies
-                if reverse_dep_link.edge.dev_only() {
+                if link.dev_only() {
                     continue;
                 }
+                let from_id = link.from().id();
 
-                if !subtree_package_set.contains(reverse_dep_link.from.id())
-                    || nonunique_deps_set.contains(reverse_dep_link.from.id())
-                {
+                if !subtree_package_set.contains(from_id) || nonunique_deps_set.contains(from_id) {
                     // if the from is from outside the subtree rooted at root_id, we ignore it
                     if let Some(root_id) = root_id {
-                        if !dep_cache.depends_on(root_id, reverse_dep_link.from.id())? {
+                        if !dep_cache.depends_on(root_id, from_id)? {
                             continue;
                         }
                     }

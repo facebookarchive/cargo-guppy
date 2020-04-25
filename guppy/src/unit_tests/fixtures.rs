@@ -4,7 +4,7 @@
 use crate::errors::FeatureBuildStage;
 use crate::graph::{
     kind_str, BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
-    PackageEdge, PackageGraph, PackageMetadata, Workspace,
+    PackageGraph, PackageLink, PackageMetadata, Workspace,
 };
 use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
@@ -528,7 +528,7 @@ impl FixtureDetails {
             let mut links: Vec<_> = graph
                 .dep_links(from)
                 .unwrap_or_else(|| panic!("{}: known package ID '{}' should be valid", msg, from))
-                .filter(|link| link.to.id() == to)
+                .filter(|link| link.to().id() == to)
                 .collect();
             assert_eq!(
                 links.len(),
@@ -541,7 +541,7 @@ impl FixtureDetails {
 
             let link = links.pop().unwrap();
             let msg = format!("{}: {} -> {}", msg, from, to);
-            details.assert_metadata(link.edge, &msg);
+            details.assert_metadata(link, &msg);
         }
     }
 
@@ -1668,13 +1668,13 @@ impl LinkDetails {
         map.insert((self.from.clone(), self.to.clone()), self);
     }
 
-    pub(crate) fn assert_metadata(&self, edge: PackageEdge<'_>, msg: &str) {
+    pub(crate) fn assert_metadata(&self, link: PackageLink<'_>, msg: &str) {
         let required_enabled = |status: EnabledStatus<'_>, platform: &Platform<'_>| {
             (status.required_on(platform), status.enabled_on(platform))
         };
 
         for (dep_kind, platform, results) in &self.platform_results {
-            let req = edge.req_for_kind(*dep_kind);
+            let req = link.req_for_kind(*dep_kind);
             assert_eq!(
                 required_enabled(req.status(), platform),
                 results.status,
@@ -1705,7 +1705,7 @@ impl LinkDetails {
         }
 
         for (dep_kind, features) in &self.features {
-            let metadata = edge.req_for_kind(*dep_kind);
+            let metadata = link.req_for_kind(*dep_kind);
             let mut actual_features: Vec<_> = metadata.features().collect();
             actual_features.sort();
             assert_eq!(&actual_features, features, "{}: features is correct", msg);

@@ -3,8 +3,8 @@
 
 use crate::graph::{
     cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
-    DependencyReqImpl, OwnedBuildTargetId, PackageEdgeImpl, PackageGraph, PackageGraphData,
-    PackageIx, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
+    DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
+    PackageLinkImpl, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
 };
 use crate::sorted_set::SortedSet;
 use crate::{Error, Metadata, PackageId};
@@ -115,7 +115,7 @@ impl WorkspaceImpl {
 
 /// Helper struct for building up dependency graph.
 struct GraphBuildState<'a> {
-    dep_graph: Graph<PackageId, PackageEdgeImpl, Directed, PackageIx>,
+    dep_graph: Graph<PackageId, PackageLinkImpl, Directed, PackageIx>,
     // The values of package_data are (package_ix, name, version).
     package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
@@ -201,7 +201,7 @@ impl<'a> GraphBuildState<'a> {
             let dep_id = PackageId::from_metadata(pkg.clone());
             let (name, deps) = dep_resolver.resolve(resolved_name, &dep_id)?;
             let (dep_idx, _, _) = self.package_data(&dep_id)?;
-            let edge = PackageEdgeImpl::new(&package_id, name, resolved_name, deps)?;
+            let edge = PackageLinkImpl::new(&package_id, name, resolved_name, deps)?;
             // Use update_edge instead of add_edge to prevent multiple edges from being added
             // between these two nodes.
             // XXX maybe check for an existing edge?
@@ -306,7 +306,7 @@ impl<'a> GraphBuildState<'a> {
         Ok(workspace_path.to_path_buf().into_boxed_path())
     }
 
-    fn finish(self) -> Graph<PackageId, PackageEdgeImpl, Directed, PackageIx> {
+    fn finish(self) -> Graph<PackageId, PackageLinkImpl, Directed, PackageIx> {
         self.dep_graph
     }
 }
@@ -585,7 +585,7 @@ impl<'g> DependencyReqs<'g> {
     }
 }
 
-impl PackageEdgeImpl {
+impl PackageLinkImpl {
     fn new<'a>(
         from_id: &PackageId,
         name: &str,

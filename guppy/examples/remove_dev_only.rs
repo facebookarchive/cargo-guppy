@@ -34,11 +34,11 @@ fn main() -> Result<(), Error> {
     println!("number of packages before: {}", before_count);
 
     let resolver_fn = |link: PackageLink<'_>| {
-        if link.edge.dev_only() {
+        if link.dev_only() {
             println!(
                 "*** filtering out dev-only link: {} -> {}",
-                link.from.name(),
-                link.to.name()
+                link.from().name(),
+                link.to().name()
             );
             return false;
         }
@@ -73,7 +73,7 @@ fn main() -> Result<(), Error> {
         .resolve_all()
         .links(DependencyDirection::Forward)
     {
-        assert!(!link.edge.dev_only());
+        assert!(!link.dev_only());
     }
 
     // Count the number of packages after.

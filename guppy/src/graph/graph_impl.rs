@@ -30,7 +30,7 @@ use target_spec::TargetSpec;
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
     // Source of truth data.
-    pub(super) dep_graph: Graph<PackageId, PackageEdgeImpl, Directed, PackageIx>,
+    pub(super) dep_graph: Graph<PackageId, PackageLinkImpl, Directed, PackageIx>,
     // The strongly connected components of the graph, computed on demand.
     pub(super) sccs: OnceCell<Sccs<PackageIx>>,
     // Feature graph, computed on demand.
@@ -170,15 +170,16 @@ impl PackageGraph {
                 }
             }
 
-            for dep in self.dep_links_ixs_directed(metadata.package_ix, Outgoing) {
-                let to_id = dep.to.id();
-                let to_version = dep.to.version();
+            for link in self.dep_links_ixs_directed(metadata.package_ix, Outgoing) {
+                let to = link.to();
+                let to_id = to.id();
+                let to_version = to.version();
 
                 // Two invariants:
                 // 1. At least one of the edges should be specified.
                 // 2. The specified package should match the version dependency.
 
-                let req = dep.edge.version_req();
+                let req = link.version_req();
                 // A requirement of "*" filters out pre-release versions with the semver crate,
                 // but cargo accepts them.
                 // See https://github.com/steveklabnik/semver/issues/98.
@@ -189,9 +190,9 @@ impl PackageGraph {
                     )));
                 }
 
-                let is_any = dep.edge.normal().is_present()
-                    || dep.edge.build().is_present()
-                    || dep.edge.dev().is_present();
+                let is_any = link.normal().is_present()
+                    || link.build().is_present()
+                    || link.dev().is_present();
 
                 if !is_any {
                     return Err(Error::PackageGraphInternalError(format!(
@@ -262,16 +263,13 @@ impl PackageGraph {
                 .expect("edge_ix should be valid");
             let from = &data.packages[&frozen_graph[source]];
             let to = &data.packages[&frozen_graph[target]];
-            let edge = &frozen_graph[edge_ix];
             visit(
                 data,
                 PackageLink {
                     from,
                     to,
-                    edge: PackageEdge {
-                        edge_ix,
-                        inner: edge,
-                    },
+                    edge_ix,
+                    inner: &frozen_graph[edge_ix],
                 },
             )
         });
@@ -391,7 +389,7 @@ impl PackageGraph {
     /// Returns the inner dependency graph.
     ///
     /// Should this be exposed publicly? Not sure.
-    pub(super) fn dep_graph(&self) -> &Graph<PackageId, PackageEdgeImpl, Directed, PackageIx> {
+    pub(super) fn dep_graph(&self) -> &Graph<PackageId, PackageLinkImpl, Directed, PackageIx> {
         &self.dep_graph
     }
 
@@ -401,7 +399,7 @@ impl PackageGraph {
         source: NodeIndex<PackageIx>,
         target: NodeIndex<PackageIx>,
         edge_ix: EdgeIndex<PackageIx>,
-        edge: Option<&'g PackageEdgeImpl>,
+        edge: Option<&'g PackageLinkImpl>,
     ) -> PackageLink<'g> {
         // Note: It would be really lovely if this could just take in any EdgeRef with the right
         // parameters, but 'weight' wouldn't live long enough unfortunately.
@@ -414,11 +412,12 @@ impl PackageGraph {
         let to = self
             .metadata(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
-        let edge = PackageEdge {
+        PackageLink {
+            from,
+            to,
             edge_ix,
             inner: edge.unwrap_or_else(|| &self.dep_graph[edge_ix]),
-        };
-        PackageLink { from, to, edge }
+        }
     }
 
     /// Maps an iterator of package IDs to their internal graph node indexes.
@@ -583,17 +582,6 @@ pub(super) struct WorkspaceImpl {
     // This is a BTreeMap to allow presenting data in sorted order.
     pub(super) members_by_path: BTreeMap<PathBuf, PackageId>,
     pub(super) members_by_name: BTreeMap<Box<str>, PackageId>,
-}
-
-/// Represents a dependency from one package to another.
-#[derive(Copy, Clone, Debug)]
-pub struct PackageLink<'g> {
-    /// The package which depends on the `to` package.
-    pub from: &'g PackageMetadata,
-    /// The package which is depended on by the `from` package.
-    pub to: &'g PackageMetadata,
-    /// Information about the specifics of this dependency.
-    pub edge: PackageEdge<'g>,
 }
 
 /// Information about a specific package in a `PackageGraph`.
@@ -880,20 +868,36 @@ impl PackageMetadata {
     }
 }
 
-/// Details about a specific dependency from a package to another package.
-///
-/// Usually found within the context of a [`PackageLink`](struct.PackageLink.html).
+/// Represents a dependency from one package to another.
 ///
 /// This struct contains information about:
 /// * whether this dependency was renamed in the context of this crate.
-/// * if this is a normal, dev or build dependency.
+/// * if this is a normal, dev and/or build dependency.
+/// * platform-specific information about required, optional and status
 #[derive(Copy, Clone, Debug)]
-pub struct PackageEdge<'g> {
+pub struct PackageLink<'g> {
+    from: &'g PackageMetadata,
+    to: &'g PackageMetadata,
     edge_ix: EdgeIndex<PackageIx>,
-    inner: &'g PackageEdgeImpl,
+    inner: &'g PackageLinkImpl,
 }
 
-impl<'g> PackageEdge<'g> {
+impl<'g> PackageLink<'g> {
+    /// Returns the package which depends on the `to` package.
+    pub fn from(&self) -> &'g PackageMetadata {
+        self.from
+    }
+
+    /// Returns the package which is depended on by the `from` package.
+    pub fn to(&self) -> &'g PackageMetadata {
+        self.to
+    }
+
+    /// Returns the endpoints as a pair of packages `(from, to)`.
+    pub fn endpoints(&self) -> (&'g PackageMetadata, &'g PackageMetadata) {
+        (self.from(), self.to())
+    }
+
     /// Returns the name for this dependency edge. This can be affected by a crate rename.
     pub fn dep_name(&self) -> &'g str {
         &self.inner.dep_name
@@ -969,15 +973,21 @@ impl<'g> PackageEdge<'g> {
         self.edge_ix
     }
 
-    /// Returns the inner `PackageEdgeImpl` as a pointer. Useful for testing.
+    /// Returns (source, target, edge) as a triple of pointers. Useful for testing.
     #[cfg(test)]
-    pub(crate) fn as_inner_ptr(&self) -> *const PackageEdgeImpl {
-        self.inner
+    pub(crate) fn as_inner_ptrs(
+        &self,
+    ) -> (
+        *const PackageMetadata,
+        *const PackageMetadata,
+        *const PackageLinkImpl,
+    ) {
+        (self.from, self.to, self.inner)
     }
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct PackageEdgeImpl {
+pub(crate) struct PackageLinkImpl {
     pub(super) dep_name: String,
     pub(super) resolved_name: String,
     pub(super) version_req: VersionReq,
@@ -989,7 +999,7 @@ pub(crate) struct PackageEdgeImpl {
 /// Information about a specific kind of dependency (normal, build or dev) from a package to another
 /// package.
 ///
-/// Usually found within the context of a [`PackageEdge`](struct.PackageEdge.html).
+/// Usually found within the context of a [`PackageLink`](struct.PackageLink.html).
 #[derive(Clone, Debug)]
 pub struct DependencyReq<'g> {
     pub(super) inner: &'g DependencyReqImpl,

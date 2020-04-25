@@ -6,7 +6,7 @@ use crate::graph::feature::{
     FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{
-    DepRequiredOrOptional, FeatureIx, PackageEdge, PackageGraph, PackageLink, PackageMetadata,
+    DepRequiredOrOptional, FeatureIx, PackageGraph, PackageLink, PackageMetadata,
     PlatformStatusImpl,
 };
 use cargo_metadata::DependencyKind;
@@ -72,7 +72,7 @@ impl<'g> FeatureGraphBuildState<'g> {
             .package_graph
             .dep_links(metadata.id())
             .expect("valid metadata")
-            .map(|link| (link.edge.dep_name(), link.to))
+            .map(|link| (link.dep_name(), link.to()))
             .collect();
 
         metadata
@@ -179,7 +179,7 @@ impl<'g> FeatureGraphBuildState<'g> {
     }
 
     pub(super) fn add_dependency_edges(&mut self, link: PackageLink<'_>) {
-        let PackageLink { from, to, edge } = link;
+        let from = link.from();
 
         // Sometimes the same package is depended on separately in different sections like so:
         //
@@ -221,12 +221,12 @@ impl<'g> FeatureGraphBuildState<'g> {
         //   feature nodes for each optional feature in 'to'. This edge is only added if at least
         //   one line is optional.
 
-        let unified_metadata = iter::once((DependencyKind::Normal, edge.normal()))
-            .chain(iter::once((DependencyKind::Build, edge.build())))
-            .chain(iter::once((DependencyKind::Development, edge.dev())));
+        let unified_metadata = iter::once((DependencyKind::Normal, link.normal()))
+            .chain(iter::once((DependencyKind::Build, link.build())))
+            .chain(iter::once((DependencyKind::Development, link.dev())));
 
-        let mut required_req = FeatureReq::new(from, to, edge);
-        let mut optional_req = FeatureReq::new(from, to, edge);
+        let mut required_req = FeatureReq::new(link);
+        let mut optional_req = FeatureReq::new(link);
         for (kind, dependency_req) in unified_metadata {
             required_req.add_features(kind, &dependency_req.inner.required, &mut self.warnings);
             optional_req.add_features(kind, &dependency_req.inner.optional, &mut self.warnings);
@@ -241,11 +241,11 @@ impl<'g> FeatureGraphBuildState<'g> {
             // package metadata.
             let from_node = FeatureNode::new(
                 from.package_ix,
-                from.get_feature_idx(edge.dep_name()).unwrap_or_else(|| {
+                from.get_feature_idx(link.dep_name()).unwrap_or_else(|| {
                     panic!(
                         "while adding feature edges, for package '{}', optional dep '{}' missing",
                         from.id(),
-                        edge.dep_name(),
+                        link.dep_name(),
                     );
                 }),
             );
@@ -306,20 +306,19 @@ impl<'g> FeatureGraphBuildState<'g> {
 
 #[derive(Debug)]
 struct FeatureReq<'g> {
-    from: &'g PackageMetadata,
+    link: PackageLink<'g>,
     to: &'g PackageMetadata,
-    edge: PackageEdge<'g>,
     to_default_idx: Option<usize>,
     // This will contain any build states that aren't empty.
     features: HashMap<Option<usize>, DependencyBuildState>,
 }
 
 impl<'g> FeatureReq<'g> {
-    fn new(from: &'g PackageMetadata, to: &'g PackageMetadata, edge: PackageEdge<'g>) -> Self {
+    fn new(link: PackageLink<'g>) -> Self {
+        let to = link.to();
         Self {
-            from,
+            link,
             to,
-            edge,
             to_default_idx: to.get_feature_idx("default"),
             features: HashMap::new(),
         }
@@ -351,8 +350,8 @@ impl<'g> FeatureReq<'g> {
                     // in some circumstances, so use a warning rather than an error.
                     warnings.push(FeatureGraphWarning::MissingFeature {
                         stage: FeatureBuildStage::AddDependencyEdges {
-                            package_id: self.from.id().clone(),
-                            dep_name: self.edge.dep_name().to_string(),
+                            package_id: self.link.from().id().clone(),
+                            dep_name: self.link.dep_name().to_string(),
                         },
                         package_id: self.to.id().clone(),
                         feature_name: feature.to_string(),

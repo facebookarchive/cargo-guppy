@@ -3,7 +3,7 @@
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet};
 use crate::graph::{
-    kind_str, DependencyDirection, DependencyReq, PackageEdgeImpl, PackageGraph, PackageLink,
+    kind_str, DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkImpl,
     PackageMetadata, PackageQuery, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
@@ -15,13 +15,13 @@ use std::hash::Hash;
 use std::iter;
 use target_spec::Platform;
 
-fn __from_metadata<'a>(dep: &PackageLink<'a>) -> &'a PackageMetadata {
-    dep.from
+fn __from_metadata<'a>(link: &PackageLink<'a>) -> &'a PackageMetadata {
+    link.from()
 }
-fn __to_metadata<'a>(dep: &PackageLink<'a>) -> &'a PackageMetadata {
-    dep.to
+fn __to_metadata<'a>(link: &PackageLink<'a>) -> &'a PackageMetadata {
+    link.to()
 }
-type DepToMetadata<'a> = fn(&PackageLink<'a>) -> &'a PackageMetadata;
+type LinkToMetadata<'a> = fn(&PackageLink<'a>) -> &'a PackageMetadata;
 
 /// Some of the messages are different based on whether we're testing forward deps or reverse
 /// ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
@@ -31,8 +31,8 @@ pub(crate) struct DirectionDesc<'a> {
     direction_desc: &'static str,
     known_desc: &'static str,
     variable_desc: &'static str,
-    known_metadata: DepToMetadata<'a>,
-    variable_metadata: DepToMetadata<'a>,
+    known_metadata: LinkToMetadata<'a>,
+    variable_metadata: LinkToMetadata<'a>,
 }
 
 impl<'a> DirectionDesc<'a> {
@@ -48,8 +48,8 @@ impl<'a> DirectionDesc<'a> {
             direction_desc: "forward",
             known_desc: "from",
             variable_desc: "to",
-            known_metadata: __from_metadata as DepToMetadata<'a>,
-            variable_metadata: __to_metadata as DepToMetadata<'a>,
+            known_metadata: __from_metadata as LinkToMetadata<'a>,
+            variable_metadata: __to_metadata as LinkToMetadata<'a>,
         }
     }
 
@@ -58,8 +58,8 @@ impl<'a> DirectionDesc<'a> {
             direction_desc: "reverse",
             known_desc: "to",
             variable_desc: "from",
-            known_metadata: __to_metadata as DepToMetadata<'a>,
-            variable_metadata: __from_metadata as DepToMetadata<'a>,
+            known_metadata: __to_metadata as LinkToMetadata<'a>,
+            variable_metadata: __from_metadata as LinkToMetadata<'a>,
         }
     }
 
@@ -105,11 +105,11 @@ pub(crate) fn assert_deps_internal(
         .collect();
     let mut actual_dep_ids: Vec<_> = actual_deps
         .iter()
-        .map(|dep| {
+        .map(|link| {
             (
-                dep.edge.dep_name(),
-                dep.edge.resolved_name().to_string(),
-                desc.variable_metadata(&dep).id(),
+                link.dep_name(),
+                link.resolved_name().to_string(),
+                desc.variable_metadata(&link).id(),
             )
         })
         .collect();
@@ -172,7 +172,7 @@ pub(crate) fn assert_transitive_deps_internal(
     // Use a BTreeSet for unique identifiers. This is also used later for set operations.
     let ids_from_links_set: BTreeSet<_> = actual_deps
         .iter()
-        .flat_map(|dep| vec![dep.from.id(), dep.to.id()])
+        .flat_map(|link| vec![link.from().id(), link.to().id()])
         .collect();
     let ids_from_links: Vec<_> = ids_from_links_set.iter().copied().collect();
 
@@ -257,7 +257,7 @@ pub(crate) fn assert_transitive_deps_internal(
             })
             .resolve()
             .links(direction)
-            .flat_map(|dep| vec![dep.from.id(), dep.to.id()])
+            .flat_map(|dep| vec![dep.from().id(), dep.to().id()])
             .collect();
         // Use difference instead of is_subset/is_superset for better error messages.
         let difference: Vec<_> = dep_ids_from_links.difference(&ids_from_links_set).collect();
@@ -316,19 +316,19 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
     );
 
     // The enabled status can't be unknown on the current platform.
-    for PackageLink { from, to, edge } in &all_links {
+    for link in &all_links {
         for dep_kind in &[
             DependencyKind::Normal,
             DependencyKind::Build,
             DependencyKind::Development,
         ] {
             assert_enabled_status_is_known(
-                edge.req_for_kind(*dep_kind),
+                link.req_for_kind(*dep_kind),
                 &format!(
                     "{}: {} -> {} ({})",
                     msg,
-                    from.id(),
-                    to.id(),
+                    link.from().id(),
+                    link.to().id(),
                     kind_str(*dep_kind)
                 ),
             );
@@ -838,17 +838,11 @@ fn dep_link_ptrs<'g>(
 ) -> Vec<(
     *const PackageMetadata,
     *const PackageMetadata,
-    *const PackageEdgeImpl,
+    *const PackageLinkImpl,
 )> {
     let mut triples: Vec<_> = dep_links
         .into_iter()
-        .map(|link| {
-            (
-                link.from as *const _,
-                link.to as *const _,
-                link.edge.as_inner_ptr(),
-            )
-        })
+        .map(|link| link.as_inner_ptrs())
         .collect();
     triples.sort();
     triples

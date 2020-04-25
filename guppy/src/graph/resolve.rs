@@ -3,7 +3,7 @@
 
 use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{
-    DependencyDirection, PackageEdgeImpl, PackageGraph, PackageIx, PackageLink, PackageMetadata,
+    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageLinkImpl, PackageMetadata,
     PackageQuery,
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
@@ -360,7 +360,7 @@ where
     ER: MaybeReversedEdge<
         NodeId = NodeIndex<PackageIx>,
         EdgeId = EdgeIndex<PackageIx>,
-        Weight = PackageEdgeImpl,
+        Weight = PackageLinkImpl,
     >,
 {
     fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {

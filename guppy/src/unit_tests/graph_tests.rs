@@ -30,14 +30,11 @@ mod small {
             .collect();
 
         assert_eq!(root_deps.len(), 1, "the root crate has one dependency");
-        let dep = root_deps.pop().expect("the root crate has one dependency");
+        let link = root_deps.pop().expect("the root crate has one dependency");
         // XXX test for details of dependency edges as well?
-        assert!(
-            dep.edge.normal().is_present(),
-            "normal dependency is defined"
-        );
-        assert!(dep.edge.build().is_present(), "build dependency is defined");
-        assert!(dep.edge.dev().is_present(), "dev dependency is defined");
+        assert!(link.normal().is_present(), "normal dependency is defined");
+        assert!(link.build().is_present(), "build dependency is defined");
+        assert!(link.dev().is_present(), "dev dependency is defined");
 
         // Print out dot graphs for small subgraphs.
         static EXPECTED_DOT: &str = r#"digraph {
@@ -113,7 +110,7 @@ mod small {
                 fixtures::METADATA1_REGION,
             )))
             .unwrap()
-            .resolve_with_fn(|_, link| link.to.name() != "libc");
+            .resolve_with_fn(|_, link| link.to().name() != "libc");
         assert_eq!(
             EXPECTED_DOT_NO_LIBC,
             format!("{}", package_set.display_dot(NameVisitor)),
@@ -371,8 +368,8 @@ mod large {
             .resolve_all()
             .links(DependencyDirection::Forward)
             .filter_map(|link| {
-                if link.edge.build().is_present() && !link.from.has_build_script() {
-                    Some(link.from.name())
+                if link.build().is_present() && !link.from().has_build_script() {
+                    Some(link.from().name())
                 } else {
                     None
                 }
@@ -397,6 +394,6 @@ impl PackageDotVisitor for NameVisitor {
     }
 
     fn visit_link(&self, link: PackageLink<'_>, f: &mut DotWrite<'_, '_>) -> fmt::Result {
-        write!(f, "{}", link.edge.dep_name())
+        write!(f, "{}", link.dep_name())
     }
 }
