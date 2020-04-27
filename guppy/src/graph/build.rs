@@ -247,9 +247,8 @@ impl<'a> GraphBuildState<'a> {
             .collect();
 
         Ok((
-            package_id.clone(),
+            package_id,
             PackageMetadataImpl {
-                id: package_id,
                 name: package.name,
                 version: package.version,
                 authors: package.authors,
