@@ -14,7 +14,6 @@ use std::fmt;
 mod build;
 mod build_targets;
 mod cycles;
-#[doc(hidden)]
 pub mod feature;
 mod graph_impl;
 #[cfg(feature = "proptest09")]
