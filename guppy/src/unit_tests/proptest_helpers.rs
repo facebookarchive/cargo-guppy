@@ -135,22 +135,6 @@ macro_rules! proptest_suite {
             }
 
             #[test]
-            fn proptest_resolver_retain_equivalence() {
-                let fixture = Fixture::$name();
-                let package_graph = fixture.graph();
-
-                // Reduce the number of tests because each run is kind of expensive.
-                proptest!(ProptestConfig::with_cases(64), |(
-                    ids in vec(package_graph.prop09_id_strategy(), 1..16),
-                    direction in any::<DependencyDirection>(),
-                    mut resolver in package_graph.prop09_resolver_strategy(),
-                )| {
-                    resolver.check_depends_on(true);
-                    resolver_retain_equivalence(&mut package_graph.clone(), &ids, direction, resolver);
-                });
-            }
-
-            #[test]
             fn proptest_resolve_contains() {
                 let fixture = Fixture::$name();
                 let package_graph = fixture.graph();
@@ -380,46 +364,6 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
         }
     }
     Ok(())
-}
-
-/// Test that using a custom resolver and using retain_edges produce the same results.
-pub(super) fn resolver_retain_equivalence(
-    graph: &mut PackageGraph,
-    ids: &[&PackageId],
-    direction: DependencyDirection,
-    mut resolver: Prop09Resolver,
-) {
-    let mut resolver_ids: Vec<_> = graph
-        .query_directed(ids.iter().copied(), direction)
-        .unwrap()
-        .resolve_with(&mut resolver)
-        .package_ids(direction)
-        // Clone to release borrow on the graph.
-        .cloned()
-        .collect();
-    // While we're here, might as well check topological order.
-    (&*graph).assert_topo_order(&resolver_ids, direction, "topo order for resolver IDs");
-    // Sort because the topological order may be different from above.
-    resolver_ids.sort();
-
-    // Now do the filtering through retain_edges.
-    graph.retain_edges(|_data, link| resolver.accept_link(link));
-    let mut retain_ids: Vec<_> = graph
-        .query_directed(ids.iter().copied(), direction)
-        .unwrap()
-        .resolve()
-        .package_ids(direction)
-        // Clone because PartialEq isn't implemented for &PackageId and PackageId :/ sigh.
-        .cloned()
-        .collect();
-    (&*graph).assert_topo_order(&retain_ids, direction, "topo order for retain IDs");
-    // Sort because the topological order may be different from above.
-    retain_ids.sort();
-
-    assert_eq!(
-        resolver_ids, retain_ids,
-        "ids through resolver and retain_edges should be the same"
-    );
 }
 
 pub(super) fn resolve_contains<'g, G: GraphAssert<'g>>(

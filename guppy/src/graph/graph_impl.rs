@@ -244,39 +244,6 @@ impl PackageGraph {
         self.data.metadata(package_id)
     }
 
-    /// Keeps all edges that return true from the visit closure, and removes the others.
-    ///
-    /// For an equivalent operation which doesn't mutate the graph, see
-    /// `PackageQuery::resolve_with` and `PackageQuery::resolve_with_fn`.
-    ///
-    /// The order edges are visited is not specified.
-    pub fn retain_edges<F>(&mut self, visit: F)
-    where
-        F: Fn(&PackageGraphData, PackageLink<'_>) -> bool,
-    {
-        let data = &self.data;
-        self.dep_graph.retain_edges(|frozen_graph, edge_ix| {
-            // This could use self.edge_to_dep for part of it but that that isn't compatible with
-            // the borrow checker :(
-            let (source, target) = frozen_graph
-                .edge_endpoints(edge_ix)
-                .expect("edge_ix should be valid");
-            let from = &data.packages[&frozen_graph[source]];
-            let to = &data.packages[&frozen_graph[target]];
-            visit(
-                data,
-                PackageLink {
-                    from,
-                    to,
-                    edge_ix,
-                    inner: &frozen_graph[edge_ix],
-                },
-            )
-        });
-
-        self.invalidate_caches();
-    }
-
     /// Creates a new cache for `depends_on` queries.
     ///
     /// The cache is optional but can speed up some queries.
@@ -380,8 +347,9 @@ impl PackageGraph {
         self.sccs.get_or_init(|| Sccs::new(&self.dep_graph))
     }
 
-    /// Invalidates internal caches. Meant to be called whenever the graph is mutated.
-    pub(super) fn invalidate_caches(&mut self) {
+    /// Invalidates internal caches. Primarily for testing.
+    #[doc(hidden)]
+    pub fn invalidate_caches(&mut self) {
         mem::replace(&mut self.sccs, OnceCell::new());
         mem::replace(&mut self.feature_graph, OnceCell::new());
     }
