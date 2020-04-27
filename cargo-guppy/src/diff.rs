@@ -12,8 +12,8 @@ pub struct DiffOptions;
 impl DiffOptions {
     pub fn diff<'a>(
         &self,
-        old_packages: &[&'a PackageMetadata],
-        new_packages: &[&'a PackageMetadata],
+        old_packages: &'a [PackageMetadata<'a>],
+        new_packages: &'a [PackageMetadata<'a>],
     ) -> Diff<'a> {
         let mut new: HashMap<&PackageId, Package> =
             new_packages.iter().map(|p| (p.id(), Package(p))).collect();
@@ -114,10 +114,10 @@ impl DiffOptions {
 }
 
 #[derive(Clone, Debug)]
-struct Package<'a>(pub &'a PackageMetadata);
+struct Package<'a>(pub &'a PackageMetadata<'a>);
 
 impl<'a> Deref for Package<'a> {
-    type Target = PackageMetadata;
+    type Target = PackageMetadata<'a>;
 
     fn deref(&self) -> &Self::Target {
         self.0

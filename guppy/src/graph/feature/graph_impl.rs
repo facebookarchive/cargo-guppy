@@ -312,18 +312,11 @@ impl<'g> FeatureId<'g> {
     }
 
     pub(super) fn node_to_feature(
-        metadata: &'g PackageMetadata,
+        metadata: PackageMetadata<'g>,
         node: &FeatureNode,
     ) -> Option<&'g str> {
         let feature_idx = node.feature_idx?;
-        Some(
-            metadata
-                .features
-                .get_index(feature_idx)
-                .expect("feature idx should be valid")
-                .0
-                .as_ref(),
-        )
+        metadata.feature_idx_to_name(feature_idx)
     }
 
     /// Returns the package ID.
@@ -476,17 +469,17 @@ impl FeatureNode {
         let metadata = feature_graph.package_graph.metadata(id.package_id())?;
         match id.feature() {
             Some(feature_name) => Some(FeatureNode::new(
-                metadata.package_ix,
+                metadata.package_ix(),
                 metadata.get_feature_idx(feature_name)?,
             )),
-            None => Some(FeatureNode::base(metadata.package_ix)),
+            None => Some(FeatureNode::base(metadata.package_ix())),
         }
     }
 
     pub(super) fn named_features<'g>(
-        package: &'g PackageMetadata,
+        package: PackageMetadata<'g>,
     ) -> impl Iterator<Item = Self> + 'g {
-        let package_ix = package.package_ix;
+        let package_ix = package.package_ix();
         package.named_features_full().map(move |(n, _, _)| Self {
             package_ix,
             feature_idx: Some(n),

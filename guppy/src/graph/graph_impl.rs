@@ -43,7 +43,7 @@ pub struct PackageGraph {
 /// Per-package data for a PackageGraph instance.
 #[derive(Clone, Debug)]
 pub struct PackageGraphData {
-    pub(super) packages: HashMap<PackageId, PackageMetadata>,
+    pub(super) packages: HashMap<PackageId, PackageMetadataImpl>,
     pub(super) workspace: WorkspaceImpl,
 }
 
@@ -170,7 +170,7 @@ impl PackageGraph {
                 }
             }
 
-            for link in self.dep_links_ixs_directed(metadata.package_ix, Outgoing) {
+            for link in self.dep_links_ixs_directed(metadata.package_ix(), Outgoing) {
                 let to = link.to();
                 let to_id = to.id();
                 let to_version = to.version();
@@ -220,7 +220,7 @@ impl PackageGraph {
     }
 
     /// Returns an iterator over all the packages in this graph.
-    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> + ExactSizeIterator {
+    pub fn packages(&self) -> impl Iterator<Item = PackageMetadata> + ExactSizeIterator {
         self.data.packages()
     }
 
@@ -240,7 +240,7 @@ impl PackageGraph {
     }
 
     /// Returns the metadata for the given package ID.
-    pub fn metadata(&self, package_id: &PackageId) -> Option<&PackageMetadata> {
+    pub fn metadata(&self, package_id: &PackageId) -> Option<PackageMetadata> {
         self.data.metadata(package_id)
     }
 
@@ -321,7 +321,7 @@ impl PackageGraph {
         dir: Direction,
     ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
         self.metadata(package_id)
-            .map(|metadata| self.dep_links_ixs_directed(metadata.package_ix, dir))
+            .map(|metadata| self.dep_links_ixs_directed(metadata.package_ix(), dir))
     }
 
     fn dep_links_ixs_directed<'g>(
@@ -375,10 +375,12 @@ impl PackageGraph {
         // https://docs.rs/petgraph/0.4.13/petgraph/graph/struct.EdgeReference.html#method.weight
         // is defined separately for the same reason.
         let from = self
-            .metadata(&self.dep_graph[source])
+            .data
+            .metadata_impl(&self.dep_graph[source])
             .expect("'from' should have associated metadata");
         let to = self
-            .metadata(&self.dep_graph[target])
+            .data
+            .metadata_impl(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
         PackageLink {
             from,
@@ -405,7 +407,7 @@ impl PackageGraph {
     /// Maps a package ID to its internal graph node index.
     pub(super) fn package_ix(&self, package_id: &PackageId) -> Option<NodeIndex<PackageIx>> {
         self.metadata(package_id)
-            .map(|metadata| metadata.package_ix)
+            .map(|metadata| metadata.package_ix())
     }
 
     /// Maps a package ID to its internal graph node index, and returns an `UnknownPackageId` error
@@ -434,12 +436,21 @@ impl PackageGraphData {
     }
 
     /// Returns an iterator over all the packages in this graph.
-    pub fn packages(&self) -> impl Iterator<Item = &PackageMetadata> + ExactSizeIterator {
-        self.packages.values()
+    pub fn packages(&self) -> impl Iterator<Item = PackageMetadata> + ExactSizeIterator {
+        self.packages.values().map(PackageMetadata::new)
     }
 
     /// Returns the metadata for the given package ID.
-    pub fn metadata(&self, package_id: &PackageId) -> Option<&PackageMetadata> {
+    pub fn metadata(&self, package_id: &PackageId) -> Option<PackageMetadata> {
+        self.metadata_impl(package_id).map(PackageMetadata::new)
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    #[inline]
+    pub(super) fn metadata_impl(&self, package_id: &PackageId) -> Option<&PackageMetadataImpl> {
         self.packages.get(package_id)
     }
 }
@@ -506,7 +517,7 @@ impl<'g> Workspace<'g> {
     /// they're in.
     pub fn members(
         &self,
-    ) -> impl Iterator<Item = (&'g Path, &'g PackageMetadata)> + ExactSizeIterator {
+    ) -> impl Iterator<Item = (&'g Path, PackageMetadata<'g>)> + ExactSizeIterator {
         let data = self.data;
         self.inner
             .members_by_path
@@ -517,7 +528,7 @@ impl<'g> Workspace<'g> {
     /// Returns an iterator over workspace names and package metadatas, sorted by names.
     pub fn members_by_name(
         &self,
-    ) -> impl Iterator<Item = (&'g str, &'g PackageMetadata)> + ExactSizeIterator {
+    ) -> impl Iterator<Item = (&'g str, PackageMetadata<'g>)> + ExactSizeIterator {
         let data = self.data;
         self.inner
             .members_by_name
@@ -532,13 +543,13 @@ impl<'g> Workspace<'g> {
     }
 
     /// Maps the given path to the corresponding workspace member.
-    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<&'g PackageMetadata> {
+    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<PackageMetadata<'g>> {
         let id = self.inner.members_by_path.get(path.as_ref())?;
         Some(self.data.metadata(id).expect("valid package ID"))
     }
 
     /// Maps the given name to the corresponding workspace member.
-    pub fn member_by_name(&self, name: impl AsRef<str>) -> Option<&'g PackageMetadata> {
+    pub fn member_by_name(&self, name: impl AsRef<str>) -> Option<PackageMetadata<'g>> {
         let id = self.inner.members_by_name.get(name.as_ref())?;
         Some(self.data.metadata(id).expect("valid package ID"))
     }
@@ -557,95 +568,70 @@ pub(super) struct WorkspaceImpl {
 /// Most of the metadata is extracted from `Cargo.toml` files. See
 /// [the `Cargo.toml` reference](https://doc.rust-lang.org/cargo/reference/manifest.html) for more
 /// details.
-#[derive(Clone, Debug)]
-pub struct PackageMetadata {
-    // Implementation note: we use Box<str> and Box<Path> to save on memory use when possible.
-
-    // Fields extracted from the package.
-    pub(super) id: PackageId,
-    pub(super) name: String,
-    pub(super) version: Version,
-    pub(super) authors: Vec<String>,
-    pub(super) description: Option<Box<str>>,
-    pub(super) license: Option<Box<str>>,
-    pub(super) license_file: Option<Box<Path>>,
-    pub(super) manifest_path: Box<Path>,
-    pub(super) categories: Vec<String>,
-    pub(super) keywords: Vec<String>,
-    pub(super) readme: Option<Box<Path>>,
-    pub(super) repository: Option<Box<str>>,
-    pub(super) edition: Box<str>,
-    pub(super) metadata_table: JsonValue,
-    pub(super) links: Option<Box<str>>,
-    pub(super) publish: Option<Vec<String>>,
-    // Some(...) means named feature with listed dependencies.
-    // None means an optional dependency.
-    pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
-
-    // Other information.
-    pub(super) package_ix: NodeIndex<PackageIx>,
-    pub(super) workspace_path: Option<Box<Path>>,
-    pub(super) build_targets: BTreeMap<OwnedBuildTargetId, BuildTargetImpl>,
-    pub(super) has_default_feature: bool,
-    pub(super) resolved_deps: Vec<NodeDep>,
-    pub(super) resolved_features: Vec<String>,
+#[derive(Copy, Clone, Debug)]
+pub struct PackageMetadata<'g> {
+    inner: &'g PackageMetadataImpl,
 }
 
-impl PackageMetadata {
+impl<'g> PackageMetadata<'g> {
+    pub(super) fn new(inner: &'g PackageMetadataImpl) -> Self {
+        Self { inner }
+    }
+
     /// Returns the unique identifier for this package.
-    pub fn id(&self) -> &PackageId {
-        &self.id
+    pub fn id(&self) -> &'g PackageId {
+        &self.inner.id
     }
 
     /// Returns the name of this package.
     ///
     /// This is the same as the `name` field of `Cargo.toml`.
-    pub fn name(&self) -> &str {
-        &self.name
+    pub fn name(&self) -> &'g str {
+        &self.inner.name
     }
 
     /// Returns the version of this package as resolved by Cargo.
     ///
     /// This is the same as the `version` field of `Cargo.toml`.
-    pub fn version(&self) -> &Version {
-        &self.version
+    pub fn version(&self) -> &'g Version {
+        &self.inner.version
     }
 
     /// Returns the authors of this package.
     ///
     /// This is the same as the `authors` field of `Cargo.toml`.
-    pub fn authors(&self) -> &[String] {
-        &self.authors
+    pub fn authors(&self) -> &'g [String] {
+        &self.inner.authors
     }
 
     /// Returns a short description for this package.
     ///
     /// This is the same as the `description` field of `Cargo.toml`.
-    pub fn description(&self) -> Option<&str> {
-        self.description.as_ref().map(|x| x.as_ref())
+    pub fn description(&self) -> Option<&'g str> {
+        self.inner.description.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns an SPDX 2.1 license expression for this package, if specified.
     ///
     /// This is the same as the `license` field of `Cargo.toml`. Note that `guppy` does not perform
     /// any validation on this, though `crates.io` does if a crate is uploaded there.
-    pub fn license(&self) -> Option<&str> {
-        self.license.as_ref().map(|x| x.as_ref())
+    pub fn license(&self) -> Option<&'g str> {
+        self.inner.license.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns the path to a license file for this package, if specified.
     ///
     /// This is the same as the `license_file` field of `Cargo.toml`. It is typically only specified
     /// for nonstandard licenses.
-    pub fn license_file(&self) -> Option<&Path> {
-        self.license_file.as_ref().map(|path| path.as_ref())
+    pub fn license_file(&self) -> Option<&'g Path> {
+        self.inner.license_file.as_ref().map(|path| path.as_ref())
     }
 
     /// Returns the full path to the `Cargo.toml` for this package.
     ///
     /// This is specific to the system that `cargo metadata` was run on.
-    pub fn manifest_path(&self) -> &Path {
-        &self.manifest_path
+    pub fn manifest_path(&self) -> &'g Path {
+        &self.inner.manifest_path
     }
 
     /// Returns categories for this package.
@@ -653,45 +639,45 @@ impl PackageMetadata {
     /// This is the same as the `categories` field of `Cargo.toml`. For packages on `crates.io`,
     /// returned values are guaranteed to be
     /// [valid category slugs](https://crates.io/category_slugs).
-    pub fn categories(&self) -> &[String] {
-        &self.categories
+    pub fn categories(&self) -> &'g [String] {
+        &self.inner.categories
     }
 
     /// Returns keywords for this package.
     ///
     /// This is the same as the `keywords` field of `Cargo.toml`.
-    pub fn keywords(&self) -> &[String] {
-        &self.keywords
+    pub fn keywords(&self) -> &'g [String] {
+        &self.inner.keywords
     }
 
     /// Returns a path to the README for this package, if specified.
     ///
     /// This is the same as the `readme` field of `Cargo.toml`. The path returned is relative to the
     /// directory the `Cargo.toml` is in (i.e. relative to the parent of `self.manifest_path()`).
-    pub fn readme(&self) -> Option<&Path> {
-        self.readme.as_ref().map(|path| path.as_ref())
+    pub fn readme(&self) -> Option<&'g Path> {
+        self.inner.readme.as_ref().map(|path| path.as_ref())
     }
 
     /// Returns the source code repository for this package, if specified.
     ///
     /// This is the same as the `repository` field of `Cargo.toml`.
-    pub fn repository(&self) -> Option<&str> {
-        self.repository.as_ref().map(|x| x.as_ref())
+    pub fn repository(&self) -> Option<&'g str> {
+        self.inner.repository.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns the Rust edition this package is written against.
     ///
     /// This is the same as the `edition` field of `Cargo.toml`. It is `"2015"` by default.
-    pub fn edition(&self) -> &str {
-        &self.edition
+    pub fn edition(&self) -> &'g str {
+        &self.inner.edition
     }
 
     /// Returns the freeform metadata table for this package.
     ///
     /// This is the same as the `package.metadata` section of `Cargo.toml`. This section is
     /// typically used by tools which would like to store package configuration in `Cargo.toml`.
-    pub fn metadata_table(&self) -> &JsonValue {
-        &self.metadata_table
+    pub fn metadata_table(&self) -> &'g JsonValue {
+        &self.inner.metadata_table
     }
 
     /// Returns the name of a native library this package links to, if specified.
@@ -699,8 +685,8 @@ impl PackageMetadata {
     /// This is the same as the `links` field of `Cargo.toml`. See [The `links` Manifest
     /// Key](https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key) in
     /// the Cargo book for more details.
-    pub fn links(&self) -> Option<&str> {
-        self.links.as_ref().map(|x| x.as_ref())
+    pub fn links(&self) -> Option<&'g str> {
+        self.inner.links.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns the list of registries to which this package may be published.
@@ -708,19 +694,19 @@ impl PackageMetadata {
     /// Returns `None` if publishing is unrestricted, and `Some(&[])` if publishing is forbidden.
     ///
     /// This is the same as the `publish` field of `Cargo.toml`.
-    pub fn publish(&self) -> Option<&[String]> {
-        self.publish.as_deref()
+    pub fn publish(&self) -> Option<&'g [String]> {
+        self.inner.publish.as_deref()
     }
 
     /// Returns true if this package is in the workspace.
     pub fn in_workspace(&self) -> bool {
-        self.workspace_path.is_some()
+        self.inner.workspace_path.is_some()
     }
 
     /// Returns the relative path to this package in the workspace, or `None` if this package is
     /// not in the workspace.
-    pub fn workspace_path(&self) -> Option<&Path> {
-        self.workspace_path.as_ref().map(|path| path.as_ref())
+    pub fn workspace_path(&self) -> Option<&'g Path> {
+        self.inner.workspace_path.as_ref().map(|path| path.as_ref())
     }
 
     /// Returns all the build targets for this package.
@@ -728,13 +714,14 @@ impl PackageMetadata {
     /// For more, see [Cargo
     /// Targets](https://doc.rust-lang.org/nightly/cargo/reference/cargo-targets.html#cargo-targets)
     /// in the Cargo reference.
-    pub fn build_targets(&self) -> impl Iterator<Item = BuildTarget> {
-        self.build_targets.iter().map(BuildTarget::new)
+    pub fn build_targets(&self) -> impl Iterator<Item = BuildTarget<'g>> {
+        self.inner.build_targets.iter().map(BuildTarget::new)
     }
 
     /// Looks up a build target by identifier.
-    pub fn build_target(&self, id: &BuildTargetId<'_>) -> Option<BuildTarget> {
-        self.build_targets
+    pub fn build_target(&self, id: &BuildTargetId<'_>) -> Option<BuildTarget<'g>> {
+        self.inner
+            .build_targets
             .get_key_value(id.as_key())
             .map(BuildTarget::new)
     }
@@ -770,12 +757,12 @@ impl PackageMetadata {
     /// section](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section) in
     /// the Cargo reference.
     pub fn has_default_feature(&self) -> bool {
-        self.has_default_feature
+        self.inner.has_default_feature
     }
 
     /// Returns the `FeatureId` corresponding to the default feature.
-    pub fn default_feature_id(&self) -> FeatureId {
-        if self.has_default_feature {
+    pub fn default_feature_id(&self) -> FeatureId<'g> {
+        if self.inner.has_default_feature {
             FeatureId::new(self.id(), "default")
         } else {
             FeatureId::base(self.id())
@@ -787,7 +774,7 @@ impl PackageMetadata {
     ///
     /// A named feature is listed in the `[features]` section of `Cargo.toml`. For more, see
     /// [the reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).
-    pub fn named_features(&self) -> impl Iterator<Item = &str> {
+    pub fn named_features(&self) -> impl Iterator<Item = &'g str> + 'g {
         self.named_features_full()
             .map(|(_, named_feature, _)| named_feature)
     }
@@ -796,20 +783,40 @@ impl PackageMetadata {
     // Helper methods
     // --
 
-    pub(super) fn get_feature_idx(&self, feature: &str) -> Option<usize> {
-        self.features.get_full(feature).map(|(n, _, _)| n)
+    #[inline]
+    pub(super) fn package_ix(&self) -> NodeIndex<PackageIx> {
+        self.inner.package_ix
     }
 
-    #[allow(dead_code)]
-    pub(super) fn all_feature_nodes<'g>(&'g self) -> impl Iterator<Item = FeatureNode> + 'g {
-        iter::once(FeatureNode::base(self.package_ix)).chain(
-            (0..self.features.len())
-                .map(move |feature_idx| FeatureNode::new(self.package_ix, feature_idx)),
+    pub(super) fn get_feature_idx(&self, feature: &str) -> Option<usize> {
+        self.inner.features.get_full(feature).map(|(n, _, _)| n)
+    }
+
+    pub(super) fn feature_idx_to_name(&self, idx: usize) -> Option<&'g str> {
+        Some(
+            self.inner
+                .features
+                .get_index(idx)
+                .expect("feature idx should be valid")
+                .0
+                .as_ref(),
         )
     }
 
-    pub(super) fn named_features_full(&self) -> impl Iterator<Item = (usize, &str, &[String])> {
-        self.features
+    #[allow(dead_code)]
+    pub(super) fn all_feature_nodes(&self) -> impl Iterator<Item = FeatureNode> + 'g {
+        let package_ix = self.package_ix();
+        iter::once(FeatureNode::base(self.package_ix())).chain(
+            (0..self.inner.features.len())
+                .map(move |feature_idx| FeatureNode::new(package_ix, feature_idx)),
+        )
+    }
+
+    pub(super) fn named_features_full(
+        &self,
+    ) -> impl Iterator<Item = (usize, &'g str, &'g [String])> + 'g {
+        self.inner
+            .features
             .iter()
             // IndexMap is documented to use indexes 0..n without holes, so this enumerate()
             // is correct.
@@ -821,7 +828,8 @@ impl PackageMetadata {
     }
 
     pub(super) fn optional_deps_full(&self) -> impl Iterator<Item = (usize, &str)> {
-        self.features
+        self.inner
+            .features
             .iter()
             // IndexMap is documented to use indexes 0..n without holes, so this enumerate()
             // is correct.
@@ -836,6 +844,40 @@ impl PackageMetadata {
     }
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct PackageMetadataImpl {
+    // Implementation note: we use Box<str> and Box<Path> to save on memory use when possible.
+
+    // Fields extracted from the package.
+    pub(super) id: PackageId,
+    pub(super) name: String,
+    pub(super) version: Version,
+    pub(super) authors: Vec<String>,
+    pub(super) description: Option<Box<str>>,
+    pub(super) license: Option<Box<str>>,
+    pub(super) license_file: Option<Box<Path>>,
+    pub(super) manifest_path: Box<Path>,
+    pub(super) categories: Vec<String>,
+    pub(super) keywords: Vec<String>,
+    pub(super) readme: Option<Box<Path>>,
+    pub(super) repository: Option<Box<str>>,
+    pub(super) edition: Box<str>,
+    pub(super) metadata_table: JsonValue,
+    pub(super) links: Option<Box<str>>,
+    pub(super) publish: Option<Vec<String>>,
+    // Some(...) means named feature with listed dependencies.
+    // None means an optional dependency.
+    pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
+
+    // Other information.
+    pub(super) package_ix: NodeIndex<PackageIx>,
+    pub(super) workspace_path: Option<Box<Path>>,
+    pub(super) build_targets: BTreeMap<OwnedBuildTargetId, BuildTargetImpl>,
+    pub(super) has_default_feature: bool,
+    pub(super) resolved_deps: Vec<NodeDep>,
+    pub(super) resolved_features: Vec<String>,
+}
+
 /// Represents a dependency from one package to another.
 ///
 /// This struct contains information about:
@@ -844,25 +886,25 @@ impl PackageMetadata {
 /// * platform-specific information about required, optional and status
 #[derive(Copy, Clone, Debug)]
 pub struct PackageLink<'g> {
-    from: &'g PackageMetadata,
-    to: &'g PackageMetadata,
+    from: &'g PackageMetadataImpl,
+    to: &'g PackageMetadataImpl,
     edge_ix: EdgeIndex<PackageIx>,
     inner: &'g PackageLinkImpl,
 }
 
 impl<'g> PackageLink<'g> {
     /// Returns the package which depends on the `to` package.
-    pub fn from(&self) -> &'g PackageMetadata {
-        self.from
+    pub fn from(&self) -> PackageMetadata<'g> {
+        PackageMetadata::new(self.from)
     }
 
     /// Returns the package which is depended on by the `from` package.
-    pub fn to(&self) -> &'g PackageMetadata {
-        self.to
+    pub fn to(&self) -> PackageMetadata<'g> {
+        PackageMetadata::new(self.to)
     }
 
     /// Returns the endpoints as a pair of packages `(from, to)`.
-    pub fn endpoints(&self) -> (&'g PackageMetadata, &'g PackageMetadata) {
+    pub fn endpoints(&self) -> (PackageMetadata<'g>, PackageMetadata<'g>) {
         (self.from(), self.to())
     }
 
@@ -946,8 +988,8 @@ impl<'g> PackageLink<'g> {
     pub(crate) fn as_inner_ptrs(
         &self,
     ) -> (
-        *const PackageMetadata,
-        *const PackageMetadata,
+        *const PackageMetadataImpl,
+        *const PackageMetadataImpl,
         *const PackageLinkImpl,
     ) {
         (self.from, self.to, self.inner)

@@ -21,7 +21,7 @@ use std::fmt;
 struct PackageNameVisitor;
 
 impl PackageDotVisitor for PackageNameVisitor {
-    fn visit_package(&self, package: &PackageMetadata, f: &mut DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_package(&self, package: PackageMetadata<'_>, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         // Print out the name of the package. Other metadata can also be printed out.
         //
         // If you need to look at data for other packages, store a reference to the PackageGraph in

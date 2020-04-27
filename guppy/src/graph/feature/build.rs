@@ -42,8 +42,8 @@ impl<'g> FeatureGraphBuildState<'g> {
 
     /// Add nodes for every feature in this package + the base package, and add edges from every
     /// feature to the base package.
-    pub(super) fn add_nodes(&mut self, package: &'g PackageMetadata) {
-        let base_node = FeatureNode::base(package.package_ix);
+    pub(super) fn add_nodes(&mut self, package: PackageMetadata<'g>) {
+        let base_node = FeatureNode::base(package.package_ix());
         let base_ix = self.add_node(base_node, FeatureType::BasePackage);
         self.base_ixs.push(base_ix);
         FeatureNode::named_features(package).for_each(|feature_node| {
@@ -54,7 +54,7 @@ impl<'g> FeatureGraphBuildState<'g> {
 
         package.optional_deps_full().for_each(|(n, _)| {
             let dep_idx = self.add_node(
-                FeatureNode::new(package.package_ix, n),
+                FeatureNode::new(package.package_ix(), n),
                 FeatureType::OptionalDep,
             );
             self.graph
@@ -67,7 +67,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         self.base_ixs.push(NodeIndex::new(self.graph.node_count()));
     }
 
-    pub(super) fn add_named_feature_edges(&mut self, metadata: &PackageMetadata) {
+    pub(super) fn add_named_feature_edges(&mut self, metadata: PackageMetadata<'_>) {
         let dep_name_to_metadata: HashMap<_, _> = self
             .package_graph
             .dep_links(metadata.id())
@@ -78,7 +78,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         metadata
             .named_features_full()
             .for_each(|(n, named_feature, feature_deps)| {
-                let from_node = FeatureNode::new(metadata.package_ix, n);
+                let from_node = FeatureNode::new(metadata.package_ix(), n);
                 let to_nodes: Vec<_> = feature_deps
                     .iter()
                     .filter_map(|feature_dep| {
@@ -89,7 +89,7 @@ impl<'g> FeatureGraphBuildState<'g> {
                                     Some(to_metadata) => {
                                         match to_metadata.get_feature_idx(to_feature_name) {
                                             Some(to_feature_idx) => Some(FeatureNode::new(
-                                                to_metadata.package_ix,
+                                                to_metadata.package_ix(),
                                                 to_feature_idx,
                                             )),
                                             None => {
@@ -129,9 +129,10 @@ impl<'g> FeatureGraphBuildState<'g> {
                             }
                             None => {
                                 match metadata.get_feature_idx(to_feature_name) {
-                                    Some(to_feature_idx) => {
-                                        Some(FeatureNode::new(metadata.package_ix, to_feature_idx))
-                                    }
+                                    Some(to_feature_idx) => Some(FeatureNode::new(
+                                        metadata.package_ix(),
+                                        to_feature_idx,
+                                    )),
                                     None => {
                                         // See blurb above, though maybe this should be tightened a
                                         // bit (errors and not warning?)
@@ -233,14 +234,14 @@ impl<'g> FeatureGraphBuildState<'g> {
         }
 
         // Add the required edges (base -> features).
-        self.add_edges(FeatureNode::base(from.package_ix), required_req.finish());
+        self.add_edges(FeatureNode::base(from.package_ix()), required_req.finish());
 
         if !optional_req.is_empty() {
             // This means that there is at least one instance of this dependency with optional =
             // true. The dep name should have been added as an optional dependency node to the
             // package metadata.
             let from_node = FeatureNode::new(
-                from.package_ix,
+                from.package_ix(),
                 from.get_feature_idx(link.dep_name()).unwrap_or_else(|| {
                     panic!(
                         "while adding feature edges, for package '{}', optional dep '{}' missing",
@@ -307,7 +308,7 @@ impl<'g> FeatureGraphBuildState<'g> {
 #[derive(Debug)]
 struct FeatureReq<'g> {
     link: PackageLink<'g>,
-    to: &'g PackageMetadata,
+    to: PackageMetadata<'g>,
     to_default_idx: Option<usize>,
     // This will contain any build states that aren't empty.
     features: HashMap<Option<usize>, DependencyBuildState>,
@@ -376,7 +377,7 @@ impl<'g> FeatureReq<'g> {
     }
 
     fn finish(self) -> impl Iterator<Item = (FeatureNode, FeatureEdge)> {
-        let package_ix = self.to.package_ix;
+        let package_ix = self.to.package_ix();
         self.features
             .into_iter()
             .map(move |(feature_idx, build_state)| {

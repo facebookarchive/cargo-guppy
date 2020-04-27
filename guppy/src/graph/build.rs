@@ -4,7 +4,7 @@
 use crate::graph::{
     cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
     DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
-    PackageLinkImpl, PackageMetadata, PlatformStatusImpl, WorkspaceImpl,
+    PackageLinkImpl, PackageMetadataImpl, PlatformStatusImpl, WorkspaceImpl,
 };
 use crate::sorted_set::SortedSet;
 use crate::{Error, Metadata, PackageId};
@@ -65,7 +65,7 @@ impl WorkspaceImpl {
     /// Indexes and creates a new workspace.
     fn new(
         workspace_root: impl Into<PathBuf>,
-        packages: &HashMap<PackageId, PackageMetadata>,
+        packages: &HashMap<PackageId, PackageMetadataImpl>,
         members: impl IntoIterator<Item = PackageId>,
     ) -> Result<Self, Error> {
         use std::collections::btree_map::Entry;
@@ -81,16 +81,15 @@ impl WorkspaceImpl {
                 Error::PackageGraphConstructError(format!("workspace member '{}' not found", id))
             })?;
 
-            let workspace_path = package_metadata.workspace_path().ok_or_else(|| {
+            let workspace_path = package_metadata.workspace_path.clone().ok_or_else(|| {
                 Error::PackageGraphConstructError(format!(
                     "workspace member '{}' at path {:?} not in workspace",
-                    id,
-                    package_metadata.manifest_path(),
+                    id, package_metadata.manifest_path,
                 ))
             })?;
             members_by_path.insert(workspace_path.to_path_buf(), id.clone());
 
-            match members_by_name.entry(package_metadata.name().to_string().into_boxed_str()) {
+            match members_by_name.entry(package_metadata.name.clone().into_boxed_str()) {
                 Entry::Vacant(vacant) => {
                     vacant.insert(id.clone());
                 }
@@ -165,7 +164,10 @@ impl<'a> GraphBuildState<'a> {
         }
     }
 
-    fn process_package(&mut self, package: Package) -> Result<(PackageId, PackageMetadata), Error> {
+    fn process_package(
+        &mut self,
+        package: Package,
+    ) -> Result<(PackageId, PackageMetadataImpl), Error> {
         let package_id = PackageId::from_metadata(package.id);
         let (package_ix, _, _) = self.package_data(&package_id)?;
 
@@ -246,7 +248,7 @@ impl<'a> GraphBuildState<'a> {
 
         Ok((
             package_id.clone(),
-            PackageMetadata {
+            PackageMetadataImpl {
                 id: package_id,
                 name: package.name,
                 version: package.version,

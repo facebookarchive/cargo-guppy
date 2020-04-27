@@ -73,7 +73,7 @@ pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
 struct NameVisitor;
 
 impl PackageDotVisitor for NameVisitor {
-    fn visit_package(&self, package: &PackageMetadata, f: &mut DotWrite<'_, '_>) -> fmt::Result {
+    fn visit_package(&self, package: PackageMetadata<'_>, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         write!(f, "{}", package.name())
     }
 
