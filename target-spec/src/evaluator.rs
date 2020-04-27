@@ -226,7 +226,7 @@ mod tests {
             Ok(None),
         );
 
-        fn eval_ext(spec: &str, platform: &str) -> Option<bool> {
+        fn eval_unknown(spec: &str, platform: &str) -> Option<bool> {
             let platform = Platform::new(platform, TargetFeatures::features(&["sse", "sse2"]))
                 .expect("platform should be found");
             let spec: TargetSpec = spec.parse().unwrap();
@@ -234,26 +234,56 @@ mod tests {
         }
 
         assert_eq!(
-            eval_ext("cfg(target_feature = \"sse\")", "x86_64-unknown-linux-gnu"),
+            eval_unknown("cfg(target_feature = \"sse\")", "x86_64-unknown-linux-gnu"),
             Some(true),
         );
         assert_eq!(
-            eval_ext(
+            eval_unknown(
                 "cfg(not(target_feature = \"sse\"))",
                 "x86_64-unknown-linux-gnu",
             ),
             Some(false),
         );
         assert_eq!(
-            eval_ext("cfg(target_feature = \"fxsr\")", "x86_64-unknown-linux-gnu"),
+            eval_unknown("cfg(target_feature = \"fxsr\")", "x86_64-unknown-linux-gnu"),
             Some(false),
         );
         assert_eq!(
-            eval_ext(
+            eval_unknown(
                 "cfg(not(target_feature = \"fxsr\"))",
                 "x86_64-unknown-linux-gnu",
             ),
             Some(true),
+        );
+
+        fn eval_all(spec: &str, platform: &str) -> Option<bool> {
+            let platform =
+                Platform::new(platform, TargetFeatures::All).expect("platform should be found");
+            let spec: TargetSpec = spec.parse().unwrap();
+            spec.eval(&platform)
+        }
+
+        assert_eq!(
+            eval_all("cfg(target_feature = \"sse\")", "x86_64-unknown-linux-gnu"),
+            Some(true),
+        );
+        assert_eq!(
+            eval_all(
+                "cfg(not(target_feature = \"sse\"))",
+                "x86_64-unknown-linux-gnu",
+            ),
+            Some(false),
+        );
+        assert_eq!(
+            eval_all("cfg(target_feature = \"fxsr\")", "x86_64-unknown-linux-gnu"),
+            Some(true),
+        );
+        assert_eq!(
+            eval_all(
+                "cfg(not(target_feature = \"fxsr\"))",
+                "x86_64-unknown-linux-gnu",
+            ),
+            Some(false),
         );
     }
 }

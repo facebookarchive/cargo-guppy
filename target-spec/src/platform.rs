@@ -89,6 +89,8 @@ pub enum TargetFeatures<'a> {
     Unknown,
     /// Only match the specified features.
     Features(HashSet<&'a str>),
+    /// Match all features.
+    All,
 }
 
 impl<'a> TargetFeatures<'a> {
@@ -108,6 +110,7 @@ impl<'a> TargetFeatures<'a> {
         match self {
             TargetFeatures::Unknown => None,
             TargetFeatures::Features(features) => Some(features.contains(feature)),
+            TargetFeatures::All => Some(true),
         }
     }
 }
