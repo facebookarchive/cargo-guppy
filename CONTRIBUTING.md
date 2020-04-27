@@ -32,5 +32,5 @@ cases, please go through the process outlined on that page and do not file a pub
 ## License
 
 By contributing to `cargo-guppy`, you agree that your contributions will be dual-licensed under the terms of the
-[`LICENSE-MIT`](../LICENSE-MIT) and [`LICENSE-APACHE`](../LICENSE-APACHE) files in the root directory of this source
+[`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE) files in the root directory of this source
 tree.
