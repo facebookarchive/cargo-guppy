@@ -525,9 +525,11 @@ impl FixtureDetails {
 
     pub(crate) fn assert_link_details(&self, graph: &PackageGraph, msg: &str) {
         for ((from, to), details) in &self.link_details {
-            let mut links: Vec<_> = graph
-                .dep_links(from)
-                .unwrap_or_else(|| panic!("{}: known package ID '{}' should be valid", msg, from))
+            let metadata = graph
+                .metadata(from)
+                .unwrap_or_else(|| panic!("{}: known package ID '{}' should be valid", msg, from));
+            let mut links: Vec<_> = metadata
+                .direct_links()
                 .filter(|link| link.to().id() == to)
                 .collect();
             assert_eq!(

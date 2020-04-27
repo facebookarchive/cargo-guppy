@@ -32,9 +32,13 @@ let package_graph = PackageGraph::from_json(fixture).unwrap();
 // `guppy` provides several ways to get hold of package IDs. Use a pre-defined one for this
 // example.
 let package_id = PackageId::new("testcrate 0.1.0 (path+file:///fakepath/testcrate)");
-// dep_links returns all direct dependencies of a package, and it returns `None` if the package
-// ID isn't recognized.
-for link in package_graph.dep_links(&package_id).unwrap() {
+
+// The `metadata` method returns information about the package, or `None` if the package ID
+// wasn't recognized.
+let package = package_graph.metadata(&package_id).unwrap();
+
+// `direct_links` returns all direct dependencies of a package.
+for link in package.direct_links() {
     // A dependency link contains `from()`, `to()` and information about the specifics of the
     // dependency.
     println!("direct dependency: {}", link.to().id());

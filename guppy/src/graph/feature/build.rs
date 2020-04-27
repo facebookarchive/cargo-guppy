@@ -68,10 +68,8 @@ impl<'g> FeatureGraphBuildState<'g> {
     }
 
     pub(super) fn add_named_feature_edges(&mut self, metadata: PackageMetadata<'_>) {
-        let dep_name_to_metadata: HashMap<_, _> = self
-            .package_graph
-            .dep_links(metadata.id())
-            .expect("valid metadata")
+        let dep_name_to_metadata: HashMap<_, _> = metadata
+            .direct_links()
             .map(|link| (link.dep_name(), link.to()))
             .collect();
 

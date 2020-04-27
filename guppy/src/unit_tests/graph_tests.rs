@@ -24,10 +24,10 @@ mod small {
         metadata1.verify();
 
         let graph = metadata1.graph();
-        let mut root_deps: Vec<_> = graph
-            .dep_links(&fixtures::package_id(fixtures::METADATA1_TESTCRATE))
-            .expect("root crate deps should exist")
-            .collect();
+        let testcrate = graph
+            .metadata(&fixtures::package_id(fixtures::METADATA1_TESTCRATE))
+            .expect("root crate should exist");
+        let mut root_deps: Vec<_> = testcrate.direct_links().collect();
 
         assert_eq!(root_deps.len(), 1, "the root crate has one dependency");
         let link = root_deps.pop().expect("the root crate has one dependency");
