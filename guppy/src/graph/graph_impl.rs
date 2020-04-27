@@ -536,7 +536,7 @@ impl<'g> PackageMetadata<'g> {
 
     /// Returns the unique identifier for this package.
     pub fn id(&self) -> &'g PackageId {
-        &self.inner.id
+        &self.graph.dep_graph[self.inner.package_ix]
     }
 
     // ---
@@ -837,7 +837,6 @@ pub(crate) struct PackageMetadataImpl {
     // Implementation note: we use Box<str> and Box<Path> to save on memory use when possible.
 
     // Fields extracted from the package.
-    pub(super) id: PackageId,
     pub(super) name: String,
     pub(super) version: Version,
     pub(super) authors: Vec<String>,
