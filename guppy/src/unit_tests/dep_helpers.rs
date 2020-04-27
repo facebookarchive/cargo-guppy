@@ -4,7 +4,7 @@
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet};
 use crate::graph::{
     kind_str, DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkImpl,
-    PackageMetadata, PackageQuery, PackageSet,
+    PackageMetadata, PackageMetadataImpl, PackageQuery, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
 use crate::{DependencyKind, Error, PackageId};
@@ -15,13 +15,13 @@ use std::hash::Hash;
 use std::iter;
 use target_spec::Platform;
 
-fn __from_metadata<'a>(link: &PackageLink<'a>) -> &'a PackageMetadata {
+fn __from_metadata<'a>(link: &PackageLink<'a>) -> PackageMetadata<'a> {
     link.from()
 }
-fn __to_metadata<'a>(link: &PackageLink<'a>) -> &'a PackageMetadata {
+fn __to_metadata<'a>(link: &PackageLink<'a>) -> PackageMetadata<'a> {
     link.to()
 }
-type LinkToMetadata<'a> = fn(&PackageLink<'a>) -> &'a PackageMetadata;
+type LinkToMetadata<'a> = fn(&PackageLink<'a>) -> PackageMetadata<'a>;
 
 /// Some of the messages are different based on whether we're testing forward deps or reverse
 /// ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
@@ -63,11 +63,11 @@ impl<'a> DirectionDesc<'a> {
         }
     }
 
-    fn known_metadata(&self, dep: &PackageLink<'a>) -> &'a PackageMetadata {
+    fn known_metadata(&self, dep: &PackageLink<'a>) -> PackageMetadata<'a> {
         (self.known_metadata)(dep)
     }
 
-    fn variable_metadata(&self, dep: &PackageLink<'a>) -> &'a PackageMetadata {
+    fn variable_metadata(&self, dep: &PackageLink<'a>) -> PackageMetadata<'a> {
         (self.variable_metadata)(dep)
     }
 }
@@ -603,7 +603,7 @@ pub(super) trait GraphSet<'g>: Clone + fmt::Debug {
 
 impl<'g> GraphAssert<'g> for &'g PackageGraph {
     type Id = &'g PackageId;
-    type Metadata = &'g PackageMetadata;
+    type Metadata = PackageMetadata<'g>;
     type Query = PackageQuery<'g>;
     type Set = PackageSet<'g>;
     const NAME: &'static str = "package";
@@ -631,7 +631,7 @@ impl<'g> GraphAssert<'g> for &'g PackageGraph {
     }
 }
 
-impl<'g> GraphMetadata<'g> for &'g PackageMetadata {
+impl<'g> GraphMetadata<'g> for PackageMetadata<'g> {
     type Id = &'g PackageId;
     fn id(&self) -> Self::Id {
         PackageMetadata::id(self)
@@ -657,7 +657,7 @@ impl<'g> GraphQuery<'g> for PackageQuery<'g> {
 
 impl<'g> GraphSet<'g> for PackageSet<'g> {
     type Id = &'g PackageId;
-    type Metadata = &'g PackageMetadata;
+    type Metadata = PackageMetadata<'g>;
 
     fn len(&self) -> usize {
         self.len()
@@ -836,8 +836,8 @@ pub(crate) fn assert_link_order<'g>(
 fn dep_link_ptrs<'g>(
     dep_links: impl IntoIterator<Item = PackageLink<'g>>,
 ) -> Vec<(
-    *const PackageMetadata,
-    *const PackageMetadata,
+    *const PackageMetadataImpl,
+    *const PackageMetadataImpl,
     *const PackageLinkImpl,
 )> {
     let mut triples: Vec<_> = dep_links

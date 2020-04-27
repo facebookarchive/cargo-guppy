@@ -225,7 +225,7 @@ impl Fixture {
         for id in self.details.known_ids() {
             let msg = format!("error while verifying package '{}'", id);
             let metadata = self.graph.metadata(id).expect(&msg);
-            self.details.assert_metadata(id, &metadata, &msg);
+            self.details.assert_metadata(id, metadata, &msg);
 
             // Check for build targets.
             if self.details.has_build_targets(id) {
@@ -406,7 +406,7 @@ impl FixtureDetails {
         assert_all_links(graph, DependencyDirection::Reverse, "all links reversed");
     }
 
-    pub(crate) fn assert_metadata(&self, id: &PackageId, metadata: &PackageMetadata, msg: &str) {
+    pub(crate) fn assert_metadata(&self, id: &PackageId, metadata: PackageMetadata<'_>, msg: &str) {
         let details = &self.package_details[id];
         details.assert_metadata(metadata, msg);
     }
@@ -420,7 +420,7 @@ impl FixtureDetails {
         details.build_targets.is_some()
     }
 
-    pub(crate) fn assert_build_targets(&self, metadata: &PackageMetadata, msg: &str) {
+    pub(crate) fn assert_build_targets(&self, metadata: PackageMetadata<'_>, msg: &str) {
         let build_targets = self.package_details[metadata.id()]
             .build_targets
             .as_ref()
@@ -1602,7 +1602,7 @@ impl PackageDetails {
         }
     }
 
-    pub(crate) fn assert_metadata(&self, metadata: &PackageMetadata, msg: &str) {
+    pub(crate) fn assert_metadata(&self, metadata: PackageMetadata<'_>, msg: &str) {
         assert_eq!(&self.id, metadata.id(), "{}: same package ID", msg);
         assert_eq!(self.name, metadata.name(), "{}: same name", msg);
         assert_eq!(&self.version, metadata.version(), "{}: same version", msg);

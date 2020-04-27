@@ -244,7 +244,7 @@ impl<'g> FeatureSet<'g> {
     pub fn packages_with_features<'a, B>(
         &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = (&'g PackageMetadata, B)> + 'a
+    ) -> impl Iterator<Item = (PackageMetadata<'g>, B)> + 'a
     where
         B: FromIterator<Option<&'g str>>,
     {
@@ -326,10 +326,10 @@ impl<'g> FeatureSet<'g> {
 
     fn features_for_package_impl<'a>(
         &'a self,
-        metadata: &'g PackageMetadata,
+        metadata: PackageMetadata<'g>,
     ) -> impl Iterator<Item = Option<&'g str>> + 'a {
         let dep_graph = self.graph.dep_graph();
-        let package_ix = metadata.package_ix;
+        let package_ix = metadata.package_ix();
         let core = &self.core;
 
         self.graph

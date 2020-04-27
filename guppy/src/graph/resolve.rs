@@ -191,7 +191,7 @@ impl<'g> PackageSet<'g> {
     pub fn packages<'a>(
         &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'a {
+    ) -> impl Iterator<Item = PackageMetadata<'g>> + ExactSizeIterator + 'a {
         let graph = self.graph;
         self.package_ids(direction).map(move |package_id| {
             graph.metadata(package_id).unwrap_or_else(|| {
@@ -239,7 +239,7 @@ impl<'g> PackageSet<'g> {
     pub fn root_packages<'a>(
         &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = &'g PackageMetadata> + ExactSizeIterator + 'a {
+    ) -> impl Iterator<Item = PackageMetadata<'g>> + ExactSizeIterator + 'a {
         let package_graph = self.graph;
         self.core
             .roots(self.graph.dep_graph(), self.graph.sccs(), direction)
@@ -335,7 +335,7 @@ where
 pub trait PackageDotVisitor {
     /// Visits this package. The implementation may output a label for this package to the given
     /// `DotWrite`.
-    fn visit_package(&self, package: &PackageMetadata, f: &mut DotWrite<'_, '_>) -> fmt::Result;
+    fn visit_package(&self, package: PackageMetadata<'_>, f: &mut DotWrite<'_, '_>) -> fmt::Result;
 
     /// Visits this dependency link. The implementation may output a label for this link to the
     /// given `DotWrite`.
