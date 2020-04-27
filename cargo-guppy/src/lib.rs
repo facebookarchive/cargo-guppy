@@ -110,9 +110,8 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     for package_id in package_set.package_ids(options.output_direction) {
         let package = pkg_graph.metadata(package_id).unwrap();
         let in_workspace = package.in_workspace();
-        let direct_dep = pkg_graph
-            .reverse_dep_links(package_id)
-            .unwrap()
+        let direct_dep = package
+            .reverse_direct_links()
             .any(|link| link.from().in_workspace() && !link.to().in_workspace());
         let show_package = match options.filter_opts.kind {
             Kind::All => true,
@@ -121,7 +120,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
             Kind::ThirdParty => !in_workspace,
         };
         if show_package {
-            println!("{}", pkg_graph.metadata(package_id).unwrap().id());
+            println!("{}", package_id);
         }
     }
 
@@ -186,7 +185,8 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
             }
 
             let mut unique = true;
-            for link in pkg_graph.reverse_dep_links(dep_package_id).unwrap() {
+            let dep_package = pkg_graph.metadata(dep_package_id).unwrap();
+            for link in dep_package.reverse_direct_links() {
                 // skip build and dev dependencies
                 if link.dev_only() {
                     continue;

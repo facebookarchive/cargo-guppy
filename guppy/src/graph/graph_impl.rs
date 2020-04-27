@@ -42,7 +42,7 @@ pub struct PackageGraph {
 
 /// Per-package data for a PackageGraph instance.
 #[derive(Clone, Debug)]
-pub struct PackageGraphData {
+pub(super) struct PackageGraphData {
     pub(super) packages: HashMap<PackageId, PackageMetadataImpl>,
     pub(super) workspace: WorkspaceImpl,
 }
@@ -211,7 +211,10 @@ impl PackageGraph {
 
     /// Returns information about the workspace.
     pub fn workspace(&self) -> Workspace {
-        self.data.workspace()
+        Workspace {
+            graph: self,
+            inner: &self.data.workspace,
+        }
     }
 
     /// Returns an iterator over all the package IDs in this graph.
@@ -221,7 +224,17 @@ impl PackageGraph {
 
     /// Returns an iterator over all the packages in this graph.
     pub fn packages(&self) -> impl Iterator<Item = PackageMetadata> + ExactSizeIterator {
-        self.data.packages()
+        self.data
+            .packages
+            .values()
+            .map(move |inner| PackageMetadata::new(self, inner))
+    }
+
+    /// Returns the metadata for the given package ID.
+    pub fn metadata(&self, package_id: &PackageId) -> Option<PackageMetadata> {
+        self.data
+            .metadata_impl(package_id)
+            .map(move |inner| PackageMetadata::new(self, inner))
     }
 
     /// Returns the number of packages in this graph.
@@ -237,11 +250,6 @@ impl PackageGraph {
     /// Returns the number of links in this graph.
     pub fn link_count(&self) -> usize {
         self.dep_graph.edge_count()
-    }
-
-    /// Returns the metadata for the given package ID.
-    pub fn metadata(&self, package_id: &PackageId) -> Option<PackageMetadata> {
-        self.data.metadata(package_id)
     }
 
     /// Creates a new cache for `depends_on` queries.
@@ -286,43 +294,11 @@ impl PackageGraph {
         Cycles::new(self)
     }
 
+    // For more traversals, see query.rs.
+
     // ---
-    // Dependency traversals
+    // Helper methods
     // ---
-
-    /// Returns the direct dependencies for the given package ID in the specified direction.
-    pub fn dep_links_directed<'g>(
-        &'g self,
-        package_id: &PackageId,
-        dep_direction: DependencyDirection,
-    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
-        self.dep_links_impl(package_id, dep_direction.into())
-    }
-
-    /// Returns the direct dependencies for the given package ID.
-    pub fn dep_links<'g>(
-        &'g self,
-        package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
-        self.dep_links_impl(package_id, Outgoing)
-    }
-
-    /// Returns the direct reverse dependencies for the given package ID.
-    pub fn reverse_dep_links<'g>(
-        &'g self,
-        package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
-        self.dep_links_impl(package_id, Incoming)
-    }
-
-    fn dep_links_impl<'g>(
-        &'g self,
-        package_id: &PackageId,
-        dir: Direction,
-    ) -> Option<impl Iterator<Item = PackageLink<'g>> + 'g> {
-        self.metadata(package_id)
-            .map(|metadata| self.dep_links_ixs_directed(metadata.package_ix(), dir))
-    }
 
     fn dep_links_ixs_directed<'g>(
         &'g self,
@@ -335,12 +311,6 @@ impl PackageGraph {
                 self.edge_to_link(edge.source(), edge.target(), edge.id(), Some(edge.weight()))
             })
     }
-
-    // For more traversals, see query.rs.
-
-    // ---
-    // Helper methods
-    // ---
 
     /// Constructs a map of strongly connected components for this graph.
     pub(super) fn sccs(&self) -> &Sccs<PackageIx> {
@@ -383,6 +353,7 @@ impl PackageGraph {
             .metadata_impl(&self.dep_graph[target])
             .expect("'to' should have associated metadata");
         PackageLink {
+            graph: self,
             from,
             to,
             edge_ix,
@@ -422,27 +393,9 @@ impl PackageGraph {
 }
 
 impl PackageGraphData {
-    /// Returns information about the workspace.
-    pub fn workspace(&self) -> Workspace {
-        Workspace {
-            data: self,
-            inner: &self.workspace,
-        }
-    }
-
     /// Returns an iterator over all the package IDs in this graph.
     pub fn package_ids(&self) -> impl Iterator<Item = &PackageId> + ExactSizeIterator {
         self.packages.keys()
-    }
-
-    /// Returns an iterator over all the packages in this graph.
-    pub fn packages(&self) -> impl Iterator<Item = PackageMetadata> + ExactSizeIterator {
-        self.packages.values().map(PackageMetadata::new)
-    }
-
-    /// Returns the metadata for the given package ID.
-    pub fn metadata(&self, package_id: &PackageId) -> Option<PackageMetadata> {
-        self.metadata_impl(package_id).map(PackageMetadata::new)
     }
 
     // ---
@@ -503,7 +456,7 @@ impl<'g> DependsCache<'g> {
 /// Programming Language*.
 #[derive(Clone, Debug)]
 pub struct Workspace<'g> {
-    data: &'g PackageGraphData,
+    graph: &'g PackageGraph,
     inner: &'g WorkspaceImpl,
 }
 
@@ -518,22 +471,24 @@ impl<'g> Workspace<'g> {
     pub fn members(
         &self,
     ) -> impl Iterator<Item = (&'g Path, PackageMetadata<'g>)> + ExactSizeIterator {
-        let data = self.data;
-        self.inner
-            .members_by_path
-            .iter()
-            .map(move |(path, id)| (path.as_path(), data.metadata(id).expect("valid package ID")))
+        let graph = self.graph;
+        self.inner.members_by_path.iter().map(move |(path, id)| {
+            (
+                path.as_path(),
+                graph.metadata(id).expect("valid package ID"),
+            )
+        })
     }
 
     /// Returns an iterator over workspace names and package metadatas, sorted by names.
     pub fn members_by_name(
         &self,
     ) -> impl Iterator<Item = (&'g str, PackageMetadata<'g>)> + ExactSizeIterator {
-        let data = self.data;
+        let graph = self.graph;
         self.inner
             .members_by_name
             .iter()
-            .map(move |(name, id)| (name.as_ref(), data.metadata(id).expect("valid package ID")))
+            .map(move |(name, id)| (name.as_ref(), graph.metadata(id).expect("valid package ID")))
     }
 
     /// Returns an iterator over package IDs for workspace members. The package IDs will be returned
@@ -545,13 +500,13 @@ impl<'g> Workspace<'g> {
     /// Maps the given path to the corresponding workspace member.
     pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<PackageMetadata<'g>> {
         let id = self.inner.members_by_path.get(path.as_ref())?;
-        Some(self.data.metadata(id).expect("valid package ID"))
+        Some(self.graph.metadata(id).expect("valid package ID"))
     }
 
     /// Maps the given name to the corresponding workspace member.
     pub fn member_by_name(&self, name: impl AsRef<str>) -> Option<PackageMetadata<'g>> {
         let id = self.inner.members_by_name.get(name.as_ref())?;
-        Some(self.data.metadata(id).expect("valid package ID"))
+        Some(self.graph.metadata(id).expect("valid package ID"))
     }
 }
 
@@ -570,18 +525,47 @@ pub(super) struct WorkspaceImpl {
 /// details.
 #[derive(Copy, Clone, Debug)]
 pub struct PackageMetadata<'g> {
+    graph: &'g PackageGraph,
     inner: &'g PackageMetadataImpl,
 }
 
 impl<'g> PackageMetadata<'g> {
-    pub(super) fn new(inner: &'g PackageMetadataImpl) -> Self {
-        Self { inner }
+    pub(super) fn new(graph: &'g PackageGraph, inner: &'g PackageMetadataImpl) -> Self {
+        Self { graph, inner }
     }
 
     /// Returns the unique identifier for this package.
     pub fn id(&self) -> &'g PackageId {
         &self.inner.id
     }
+
+    // ---
+    // Dependency traversals
+    // ---
+
+    /// Returns `PackageLink` instances corresponding to the direct dependencies for this package in
+    /// the specified direction.
+    pub fn direct_links_directed(
+        &self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = PackageLink<'g>> + 'g {
+        self.direct_links_impl(direction.into())
+    }
+
+    /// Returns `PackageLink` instances corresponding to the direct dependencies for this package.
+    pub fn direct_links(&self) -> impl Iterator<Item = PackageLink<'g>> + 'g {
+        self.direct_links_impl(Outgoing)
+    }
+
+    /// Returns `PackageLink` instances corresponding to the packages that directly depend on this
+    /// one.
+    pub fn reverse_direct_links(&self) -> impl Iterator<Item = PackageLink<'g>> + 'g {
+        self.direct_links_impl(Incoming)
+    }
+
+    // ---
+    // Package fields
+    // ---
 
     /// Returns the name of this package.
     ///
@@ -788,6 +772,10 @@ impl<'g> PackageMetadata<'g> {
         self.inner.package_ix
     }
 
+    fn direct_links_impl(&self, dir: Direction) -> impl Iterator<Item = PackageLink<'g>> + 'g {
+        self.graph.dep_links_ixs_directed(self.package_ix(), dir)
+    }
+
     pub(super) fn get_feature_idx(&self, feature: &str) -> Option<usize> {
         self.inner.features.get_full(feature).map(|(n, _, _)| n)
     }
@@ -886,6 +874,7 @@ pub(crate) struct PackageMetadataImpl {
 /// * platform-specific information about required, optional and status
 #[derive(Copy, Clone, Debug)]
 pub struct PackageLink<'g> {
+    graph: &'g PackageGraph,
     from: &'g PackageMetadataImpl,
     to: &'g PackageMetadataImpl,
     edge_ix: EdgeIndex<PackageIx>,
@@ -895,12 +884,12 @@ pub struct PackageLink<'g> {
 impl<'g> PackageLink<'g> {
     /// Returns the package which depends on the `to` package.
     pub fn from(&self) -> PackageMetadata<'g> {
-        PackageMetadata::new(self.from)
+        PackageMetadata::new(self.graph, self.from)
     }
 
     /// Returns the package which is depended on by the `from` package.
     pub fn to(&self) -> PackageMetadata<'g> {
-        PackageMetadata::new(self.to)
+        PackageMetadata::new(self.graph, self.to)
     }
 
     /// Returns the endpoints as a pair of packages `(from, to)`.
