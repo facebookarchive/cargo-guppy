@@ -1189,7 +1189,7 @@ impl<'g> PlatformStatus<'g> {
     }
 
     /// Evaluates whether this dependency is enabled on the given platform.
-    pub fn enabled_on(&self, platform: &Platform<'g>) -> EnabledTernary {
+    pub fn enabled_on(&self, platform: &Platform<'_>) -> EnabledTernary {
         match self {
             PlatformStatus::Never => EnabledTernary::Disabled,
             PlatformStatus::Always => EnabledTernary::Enabled,
