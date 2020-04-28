@@ -75,47 +75,21 @@ impl<'g> FeatureGraphBuildState<'g> {
 
         metadata
             .named_features_full()
-            .for_each(|(n, named_feature, feature_deps)| {
+            .for_each(|(n, from_feature, feature_deps)| {
                 let from_node = FeatureNode::new(metadata.package_ix(), n);
                 let to_nodes: Vec<_> = feature_deps
                     .iter()
                     .filter_map(|feature_dep| {
-                        let (dep_name, to_feature_name) = Self::split_feature_dep(feature_dep);
+                        let (dep_name, to_feature) = Self::split_feature_dep(feature_dep);
                         match dep_name {
                             Some(dep_name) => {
                                 match dep_name_to_metadata.get(dep_name) {
-                                    Some(to_metadata) => {
-                                        match to_metadata.get_feature_idx(to_feature_name) {
-                                            Some(to_feature_idx) => Some(FeatureNode::new(
-                                                to_metadata.package_ix(),
-                                                to_feature_idx,
-                                            )),
-                                            None => {
-                                                // It is possible to specify a feature that doesn't
-                                                // actually exist, and cargo will accept that if the
-                                                // feature isn't resolved. One example is the cfg-if
-                                                // crate, where version 0.1.9 has the
-                                                // `rustc-dep-of-std` feature commented out, and
-                                                // several crates try to enable that feature:
-                                                // https://github.com/alexcrichton/cfg-if/issues/22
-                                                //
-                                                // Since these aren't fatal errors, it seems like
-                                                // the best we can do is to store such issues as
-                                                // warnings.
-                                                self.warnings
-                                                    .push(FeatureGraphWarning::MissingFeature {
-                                                    stage:
-                                                        FeatureBuildStage::AddNamedFeatureEdges {
-                                                            package_id: metadata.id().clone(),
-                                                            from_feature: named_feature.to_string(),
-                                                        },
-                                                    package_id: to_metadata.id().clone(),
-                                                    feature_name: to_feature_name.to_string(),
-                                                });
-                                                None
-                                            }
-                                        }
-                                    }
+                                    Some(to_package) => self.make_named_feature_node(
+                                        &metadata,
+                                        from_feature,
+                                        to_package,
+                                        to_feature,
+                                    ),
                                     None => {
                                         // This is an unresolved feature -- it won't be included as
                                         // a dependency.
@@ -125,27 +99,12 @@ impl<'g> FeatureGraphBuildState<'g> {
                                     }
                                 }
                             }
-                            None => {
-                                match metadata.get_feature_idx(to_feature_name) {
-                                    Some(to_feature_idx) => Some(FeatureNode::new(
-                                        metadata.package_ix(),
-                                        to_feature_idx,
-                                    )),
-                                    None => {
-                                        // See blurb above, though maybe this should be tightened a
-                                        // bit (errors and not warning?)
-                                        self.warnings.push(FeatureGraphWarning::MissingFeature {
-                                            stage: FeatureBuildStage::AddNamedFeatureEdges {
-                                                package_id: metadata.id().clone(),
-                                                from_feature: named_feature.to_string(),
-                                            },
-                                            package_id: metadata.id().clone(),
-                                            feature_name: to_feature_name.to_string(),
-                                        });
-                                        None
-                                    }
-                                }
-                            }
+                            None => self.make_named_feature_node(
+                                &metadata,
+                                from_feature,
+                                &metadata,
+                                to_feature,
+                            ),
                         }
                     })
                     // The filter_map above holds an &mut reference to self, which is why it needs to be
@@ -175,6 +134,37 @@ impl<'g> FeatureGraphBuildState<'g> {
         let dep_name = rsplit.next();
 
         (dep_name, to_feature_name)
+    }
+
+    fn make_named_feature_node(
+        &mut self,
+        from_package: &PackageMetadata<'_>,
+        from_feature: &str,
+        to_package: &PackageMetadata<'_>,
+        to_feature: &str,
+    ) -> Option<FeatureNode> {
+        match to_package.get_feature_idx(to_feature) {
+            Some(idx) => Some(FeatureNode::new(to_package.package_ix(), idx)),
+            None => {
+                // It is possible to specify a feature that doesn't actually exist, and cargo will
+                // accept that if the feature isn't resolved. One example is the cfg-if crate, where
+                // version 0.1.9 has the `rustc-dep-of-std` feature commented out, and several
+                // crates try to enable that feature:
+                // https://github.com/alexcrichton/cfg-if/issues/22
+                //
+                // Since these aren't fatal errors, it seems like the best we can do is to store
+                // such issues as warnings.
+                self.warnings.push(FeatureGraphWarning::MissingFeature {
+                    stage: FeatureBuildStage::AddNamedFeatureEdges {
+                        package_id: from_package.id().clone(),
+                        from_feature: from_feature.to_string(),
+                    },
+                    package_id: to_package.id().clone(),
+                    feature_name: to_feature.to_string(),
+                });
+                None
+            }
+        }
     }
 
     pub(super) fn add_dependency_edges(&mut self, link: PackageLink<'_>) {
