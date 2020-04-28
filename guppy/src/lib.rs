@@ -52,6 +52,7 @@
 mod debug_ignore;
 pub mod errors;
 pub mod graph;
+mod metadata_command;
 mod package_id;
 pub(crate) mod petgraph_support;
 pub(crate) mod sorted_set;
@@ -59,12 +60,13 @@ pub(crate) mod sorted_set;
 mod unit_tests;
 
 pub use errors::Error;
+pub use metadata_command::*;
 pub use package_id::PackageId;
 
 // Public re-exports for upstream crates used in APIs. The no_inline ensures that they show up as
 // re-exports in documentation.
 #[doc(no_inline)]
-pub use cargo_metadata::{DependencyKind, Metadata, MetadataCommand};
+pub use cargo_metadata::DependencyKind;
 #[doc(no_inline)]
 pub use semver::Version;
 #[doc(no_inline)]

@@ -48,20 +48,24 @@ pub(super) struct PackageGraphData {
 }
 
 impl PackageGraph {
-    /// Constructs a package graph from the given command.
+    /// Executes the given `MetadataCommand` and constructs a `PackageGraph` from it.
     pub fn from_command(command: &mut MetadataCommand) -> Result<Self, Error> {
-        Self::new(command.exec().map_err(Error::CommandError)?)
+        command.build_graph()
+    }
+
+    /// Parses the given `Metadata` and constructs a `PackageGraph` from it.
+    pub fn from_metadata(metadata: Metadata) -> Result<Self, Error> {
+        Self::build(metadata.0)
     }
 
     /// Constructs a package graph from the given JSON output of `cargo metadata`.
+    ///
+    /// Generally, `guppy` expects the `cargo metadata` command to be run:
+    /// * with `--all-features`, so that `guppy` has a full view of the dependency graph.
+    /// * without `--no-deps`, so that `guppy` knows about non-workspace dependencies.
     pub fn from_json(json: impl AsRef<str>) -> Result<Self, Error> {
-        let metadata = serde_json::from_str(json.as_ref()).map_err(Error::MetadataParseError)?;
-        Self::new(metadata)
-    }
-
-    /// Constructs a package graph from the given Cargo metadata, represented as a `Metadata`.
-    pub fn new(metadata: Metadata) -> Result<Self, Error> {
-        Self::build(metadata)
+        let metadata = Metadata::parse_json(json)?;
+        Self::from_metadata(metadata)
     }
 
     /// Verifies internal invariants on this graph. Not part of the documented API.
