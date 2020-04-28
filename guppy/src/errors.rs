@@ -5,7 +5,6 @@
 
 use crate::PackageId;
 use cargo_metadata::Error as MetadataError;
-use serde_json;
 use std::error;
 use std::fmt;
 

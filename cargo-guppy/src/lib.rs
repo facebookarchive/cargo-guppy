@@ -6,13 +6,11 @@ mod diff;
 
 pub use crate::core::*;
 
-use anyhow;
 use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
     MetadataCommand, PackageId,
 };
-use itertools;
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
