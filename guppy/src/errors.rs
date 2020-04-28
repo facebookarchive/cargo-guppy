@@ -4,7 +4,6 @@
 //! Contains types that describe errors and warnings that `guppy` methods can return.
 
 use crate::PackageId;
-use cargo_metadata::Error as MetadataError;
 use std::error;
 use std::fmt;
 
@@ -15,7 +14,7 @@ use Error::*;
 #[non_exhaustive]
 pub enum Error {
     /// An error occurred while executing `cargo metadata`.
-    CommandError(MetadataError),
+    CommandError(Box<dyn error::Error + Send + Sync>),
     /// An error occurred while parsing cargo metadata JSON.
     MetadataParseError(serde_json::Error),
     /// An error occurred while constructing a `PackageGraph` from parsed metadata.
@@ -26,6 +25,12 @@ pub enum Error {
     UnknownFeatureId(PackageId, Option<String>),
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
+}
+
+impl Error {
+    pub(crate) fn command_error(err: cargo_metadata::Error) -> Self {
+        Error::CommandError(Box::new(err))
+    }
 }
 
 impl fmt::Display for Error {
@@ -54,7 +59,7 @@ impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             MetadataParseError(err) => Some(err),
-            CommandError(_) => None,
+            CommandError(err) => Some(err.as_ref()),
             PackageGraphConstructError(_) => None,
             UnknownPackageId(_) => None,
             UnknownFeatureId(_, _) => None,
