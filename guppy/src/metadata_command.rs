@@ -79,7 +79,7 @@ impl MetadataCommand {
 
     /// Runs the configured `cargo metadata` and returns a parsed `Metadata`.
     pub fn exec(&mut self) -> Result<Metadata, Error> {
-        let inner = self.inner.exec().map_err(Error::CommandError)?;
+        let inner = self.inner.exec().map_err(Error::command_error)?;
         Ok(Metadata(inner))
     }
 
