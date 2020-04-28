@@ -121,7 +121,7 @@ mod small {
 
         let feature_graph = graph.feature_graph();
         assert_eq!(feature_graph.feature_count(), 492, "feature count");
-        assert_eq!(feature_graph.link_count(), 609, "link count");
+        assert_eq!(feature_graph.link_count(), 610, "link count");
         let feature_set = feature_graph.query_workspace(all_filter()).resolve();
         let root_ids: Vec<_> = feature_set.root_ids(DependencyDirection::Forward).collect();
         let testcrate_id = fixtures::package_id(fixtures::METADATA1_TESTCRATE);
@@ -138,7 +138,7 @@ mod small {
 
         let feature_graph = metadata2.graph().feature_graph();
         assert_eq!(feature_graph.feature_count(), 472, "feature count");
-        assert_eq!(feature_graph.link_count(), 571, "link count");
+        assert_eq!(feature_graph.link_count(), 572, "link count");
         let root_ids: Vec<_> = feature_graph
             .query_workspace(none_filter())
             .resolve()
