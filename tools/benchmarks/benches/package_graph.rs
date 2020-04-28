@@ -58,7 +58,7 @@ pub fn benchmarks(c: &mut Criterion) {
 fn make_package_graph() -> PackageGraph {
     // Use this package graph as a large and representative one.
     PackageGraph::from_json(include_str!(
-        "../../guppy/fixtures/large/metadata_libra.json"
+        "../../../guppy/fixtures/large/metadata_libra.json"
     ))
     .unwrap()
 }
