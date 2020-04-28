@@ -3,7 +3,7 @@
 
 use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet};
 use crate::graph::{
-    kind_str, DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkImpl,
+    DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkImpl,
     PackageMetadata, PackageMetadataImpl, PackageQuery, PackageSet,
 };
 use crate::unit_tests::fixtures::PackageDetails;
@@ -330,7 +330,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
                     msg,
                     link.from().id(),
                     link.to().id(),
-                    kind_str(*dep_kind)
+                    dep_kind,
                 ),
             );
         }

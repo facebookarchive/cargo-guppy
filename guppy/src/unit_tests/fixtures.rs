@@ -3,7 +3,7 @@
 
 use crate::errors::FeatureBuildStage;
 use crate::graph::{
-    kind_str, BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
+    BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
     PackageGraph, PackageLink, PackageMetadata, Workspace,
 };
 use crate::unit_tests::dep_helpers::{
@@ -1683,7 +1683,7 @@ impl LinkDetails {
                 "{}: for platform '{}', kind {}, status is correct",
                 msg,
                 platform.triple(),
-                kind_str(*dep_kind),
+                dep_kind,
             );
             assert_eq!(
                 required_enabled(req.default_features(), platform),
@@ -1691,7 +1691,7 @@ impl LinkDetails {
                 "{}: for platform '{}', kind {}, default features is correct",
                 msg,
                 platform.triple(),
-                kind_str(*dep_kind),
+                dep_kind,
             );
             for (feature, status) in &results.feature_statuses {
                 assert_eq!(
@@ -1700,7 +1700,7 @@ impl LinkDetails {
                     "{}: for platform '{}', kind {}, feature '{}' has correct status",
                     msg,
                     platform.triple(),
-                    kind_str(*dep_kind),
+                    dep_kind,
                     feature
                 );
             }
