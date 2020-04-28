@@ -79,16 +79,17 @@ impl<'g> FeatureGraphBuildState<'g> {
                 let from_node = FeatureNode::new(metadata.package_ix(), n);
                 let to_nodes: Vec<_> = feature_deps
                     .iter()
-                    .filter_map(|feature_dep| {
+                    .flat_map(|feature_dep| {
                         let (dep_name, to_feature) = Self::split_feature_dep(feature_dep);
-                        match dep_name {
+                        let (cross_node, same_node) = match dep_name {
                             Some(dep_name) => {
-                                match dep_name_to_metadata.get(dep_name) {
+                                let cross_node = match dep_name_to_metadata.get(dep_name) {
                                     Some(to_package) => self.make_named_feature_node(
                                         &metadata,
                                         from_feature,
                                         to_package,
                                         to_feature,
+                                        true,
                                     ),
                                     None => {
                                         // This is an unresolved feature -- it won't be included as
@@ -97,18 +98,35 @@ impl<'g> FeatureGraphBuildState<'g> {
                                         // dependencies.
                                         None
                                     }
-                                }
+                                };
+                                // If the package is present as an optional dependency, it is
+                                // implicitly activated by the feature.
+                                let same_node = self.make_named_feature_node(
+                                    &metadata,
+                                    from_feature,
+                                    &metadata,
+                                    dep_name,
+                                    // Don't warn if this dep isn't optional.
+                                    false,
+                                );
+                                (cross_node, same_node)
                             }
-                            None => self.make_named_feature_node(
-                                &metadata,
-                                from_feature,
-                                &metadata,
-                                to_feature,
-                            ),
-                        }
+                            None => {
+                                let same_node = self.make_named_feature_node(
+                                    &metadata,
+                                    from_feature,
+                                    &metadata,
+                                    to_feature,
+                                    true,
+                                );
+                                (None, same_node)
+                            }
+                        };
+
+                        cross_node.into_iter().chain(same_node)
                     })
-                    // The filter_map above holds an &mut reference to self, which is why it needs to be
-                    // collected.
+                    // The flat_map above holds an &mut reference to self, which is why it needs to
+                    // be collected.
                     .collect();
 
                 // Don't create a map to the base 'from' node since it is already created in
@@ -142,6 +160,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         from_feature: &str,
         to_package: &PackageMetadata<'_>,
         to_feature: &str,
+        warn: bool,
     ) -> Option<FeatureNode> {
         match to_package.get_feature_idx(to_feature) {
             Some(idx) => Some(FeatureNode::new(to_package.package_ix(), idx)),
@@ -154,14 +173,16 @@ impl<'g> FeatureGraphBuildState<'g> {
                 //
                 // Since these aren't fatal errors, it seems like the best we can do is to store
                 // such issues as warnings.
-                self.warnings.push(FeatureGraphWarning::MissingFeature {
-                    stage: FeatureBuildStage::AddNamedFeatureEdges {
-                        package_id: from_package.id().clone(),
-                        from_feature: from_feature.to_string(),
-                    },
-                    package_id: to_package.id().clone(),
-                    feature_name: to_feature.to_string(),
-                });
+                if warn {
+                    self.warnings.push(FeatureGraphWarning::MissingFeature {
+                        stage: FeatureBuildStage::AddNamedFeatureEdges {
+                            package_id: from_package.id().clone(),
+                            from_feature: from_feature.to_string(),
+                        },
+                        package_id: to_package.id().clone(),
+                        feature_name: to_feature.to_string(),
+                    });
+                }
                 None
             }
         }
