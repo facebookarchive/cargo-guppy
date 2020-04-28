@@ -7,8 +7,8 @@ use crate::graph::{
     PackageLinkImpl, PackageMetadataImpl, PlatformStatusImpl, WorkspaceImpl,
 };
 use crate::sorted_set::SortedSet;
-use crate::{Error, Metadata, PackageId};
-use cargo_metadata::{Dependency, DependencyKind, NodeDep, Package, Resolve, Target};
+use crate::{Error, PackageId};
+use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, Resolve, Target};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
