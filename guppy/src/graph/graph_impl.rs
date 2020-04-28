@@ -7,8 +7,8 @@ use crate::graph::{
     DependencyDirection, OwnedBuildTargetId, PackageIx,
 };
 use crate::petgraph_support::scc::Sccs;
-use crate::{Error, JsonValue, Metadata, MetadataCommand, PackageId, Platform};
-use cargo_metadata::{DependencyKind, NodeDep};
+use crate::{DependencyKind, Error, JsonValue, Metadata, MetadataCommand, PackageId, Platform};
+use cargo_metadata::NodeDep;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
@@ -955,7 +955,6 @@ impl<'g> PackageLink<'g> {
             DependencyKind::Normal => self.normal(),
             DependencyKind::Development => self.dev(),
             DependencyKind::Build => self.build(),
-            _ => panic!("dependency metadata requested for unknown kind: {:?}", kind),
         }
     }
 

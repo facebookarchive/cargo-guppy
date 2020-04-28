@@ -7,7 +7,6 @@
 //! documentation for more details.
 
 use crate::PackageId;
-use cargo_metadata::DependencyKind;
 use petgraph::prelude::*;
 use std::fmt;
 
@@ -131,16 +130,6 @@ impl<'g> GraphSpec for feature::FeatureGraph<'g> {
     type Node = feature::FeatureNode;
     type Edge = feature::FeatureEdge;
     type Ix = FeatureIx;
-}
-
-#[allow(dead_code)]
-pub(crate) fn kind_str(kind: DependencyKind) -> &'static str {
-    match kind {
-        DependencyKind::Normal => "normal",
-        DependencyKind::Build => "build",
-        DependencyKind::Development => "dev",
-        _ => "unknown",
-    }
 }
 
 // A requirement of "*" filters out pre-release versions with the semver crate,

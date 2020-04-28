@@ -542,7 +542,6 @@ impl<'g> CrossLink<'g> {
             DependencyKind::Normal => self.normal(),
             DependencyKind::Build => self.build(),
             DependencyKind::Development => self.dev(),
-            _ => panic!("status requested for unknown kind: {:?}", kind),
         }
     }
 
