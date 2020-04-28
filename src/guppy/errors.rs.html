@@ -138,6 +138,11 @@
 <span id="138">138</span>
 <span id="139">139</span>
 <span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -145,7 +150,6 @@
 <span class="doccomment">//! Contains types that describe errors and warnings that `guppy` methods can return.</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PackageId</span>;
-<span class="kw">use</span> <span class="ident">cargo_metadata</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">MetadataError</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">error</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 
@@ -156,7 +160,7 @@
 <span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Error</span> {
     <span class="doccomment">/// An error occurred while executing `cargo metadata`.</span>
-    <span class="ident">CommandError</span>(<span class="ident">MetadataError</span>),
+    <span class="ident">CommandError</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">error</span>::<span class="ident">Error</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>),
     <span class="doccomment">/// An error occurred while parsing cargo metadata JSON.</span>
     <span class="ident">MetadataParseError</span>(<span class="ident">serde_json</span>::<span class="ident">Error</span>),
     <span class="doccomment">/// An error occurred while constructing a `PackageGraph` from parsed metadata.</span>
@@ -167,6 +171,12 @@
     <span class="ident">UnknownFeatureId</span>(<span class="ident">PackageId</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>),
     <span class="doccomment">/// An internal error occurred within this `PackageGraph`.</span>
     <span class="ident">PackageGraphInternalError</span>(<span class="ident">String</span>),
+}
+
+<span class="kw">impl</span> <span class="ident">Error</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">command_error</span>(<span class="ident">err</span>: <span class="ident">cargo_metadata</span>::<span class="ident">Error</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident">Error</span>::<span class="ident">CommandError</span>(<span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">err</span>))
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">Error</span> {
@@ -195,7 +205,7 @@
     <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">error</span>::<span class="ident">Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="ident">MetadataParseError</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>),
-            <span class="ident">CommandError</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">CommandError</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>.<span class="ident">as_ref</span>()),
             <span class="ident">PackageGraphConstructError</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
             <span class="ident">UnknownPackageId</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
             <span class="ident">UnknownFeatureId</span>(<span class="kw">_</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,

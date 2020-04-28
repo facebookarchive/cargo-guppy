@@ -1367,6 +1367,9 @@
 <span id="1367">1367</span>
 <span id="1368">1368</span>
 <span id="1369">1369</span>
+<span id="1370">1370</span>
+<span id="1371">1371</span>
+<span id="1372">1372</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1377,8 +1380,8 @@
     <span class="ident">DependencyDirection</span>, <span class="ident">OwnedBuildTargetId</span>, <span class="ident">PackageIx</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">scc</span>::<span class="ident">Sccs</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">JsonValue</span>, <span class="ident">Metadata</span>, <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>, <span class="ident">Platform</span>};
-<span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">DependencyKind</span>, <span class="ident">NodeDep</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">DependencyKind</span>, <span class="ident">Error</span>, <span class="ident">JsonValue</span>, <span class="ident">Metadata</span>, <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>, <span class="ident">Platform</span>};
+<span class="kw">use</span> <span class="ident">cargo_metadata</span>::<span class="ident">NodeDep</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">indexmap</span>::<span class="ident">IndexMap</span>;
 <span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
@@ -1418,20 +1421,24 @@
 }
 
 <span class="kw">impl</span> <span class="ident">PackageGraph</span> {
-    <span class="doccomment">/// Constructs a package graph from the given command.</span>
+    <span class="doccomment">/// Executes the given `MetadataCommand` and constructs a `PackageGraph` from it.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_command</span>(<span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">MetadataCommand</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">Self</span>::<span class="ident">new</span>(<span class="ident">command</span>.<span class="ident">exec</span>().<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">CommandError</span>)<span class="question-mark">?</span>)
+        <span class="ident">command</span>.<span class="ident">build_graph</span>()
+    }
+
+    <span class="doccomment">/// Parses the given `Metadata` and constructs a `PackageGraph` from it.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_metadata</span>(<span class="ident">metadata</span>: <span class="ident">Metadata</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">Self</span>::<span class="ident">build</span>(<span class="ident">metadata</span>.<span class="number">0</span>)
     }
 
     <span class="doccomment">/// Constructs a package graph from the given JSON output of `cargo metadata`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Generally, `guppy` expects the `cargo metadata` command to be run:</span>
+    <span class="doccomment">/// * with `--all-features`, so that `guppy` has a full view of the dependency graph.</span>
+    <span class="doccomment">/// * without `--no-deps`, so that `guppy` knows about non-workspace dependencies.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_json</span>(<span class="ident">json</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">serde_json</span>::<span class="ident">from_str</span>(<span class="ident">json</span>.<span class="ident">as_ref</span>()).<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">MetadataParseError</span>)<span class="question-mark">?</span>;
-        <span class="self">Self</span>::<span class="ident">new</span>(<span class="ident">metadata</span>)
-    }
-
-    <span class="doccomment">/// Constructs a package graph from the given Cargo metadata, represented as a `Metadata`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">metadata</span>: <span class="ident">Metadata</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">Self</span>::<span class="ident">build</span>(<span class="ident">metadata</span>)
+        <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">Metadata</span>::<span class="ident">parse_json</span>(<span class="ident">json</span>)<span class="question-mark">?</span>;
+        <span class="self">Self</span>::<span class="ident">from_metadata</span>(<span class="ident">metadata</span>)
     }
 
     <span class="doccomment">/// Verifies internal invariants on this graph. Not part of the documented API.</span>
@@ -2321,7 +2328,6 @@
             <span class="ident">DependencyKind</span>::<span class="ident">Normal</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">normal</span>(),
             <span class="ident">DependencyKind</span>::<span class="ident">Development</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">dev</span>(),
             <span class="ident">DependencyKind</span>::<span class="ident">Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">build</span>(),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;dependency metadata requested for unknown kind: {:?}&quot;</span>, <span class="ident">kind</span>),
         }
     }
 
