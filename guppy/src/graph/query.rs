@@ -31,6 +31,31 @@ impl PackageGraph {
             .expect("workspace packages should all be known")
     }
 
+    /// Creates a new forward query over the specified workspace packages by name.
+    ///
+    /// This is similar to `cargo`'s `--package` option.
+    ///
+    /// Returns an error if any package names were unknown.
+    pub fn query_workspace_names<'a>(
+        &self,
+        names: impl IntoIterator<Item = &'a str>,
+    ) -> Result<PackageQuery, Error> {
+        let workspace = self.workspace();
+        let package_ids: Vec<_> = names
+            .into_iter()
+            .map(|name| {
+                workspace
+                    .member_by_name(name)
+                    .map(|package| package.id())
+                    .ok_or_else(|| Error::UnknownWorkspaceName(name.to_string()))
+            })
+            .collect::<Result<_, Error>>()?;
+
+        Ok(self
+            .query_forward(package_ids)
+            .expect("workspace packages should all be known"))
+    }
+
     /// Creates a new query that returns transitive dependencies of the given packages in the
     /// specified direction.
     ///
