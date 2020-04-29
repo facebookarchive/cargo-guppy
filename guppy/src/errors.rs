@@ -23,6 +23,8 @@ pub enum Error {
     UnknownPackageId(PackageId),
     /// A feature ID was unknown to this `FeatureGraph`.
     UnknownFeatureId(PackageId, Option<String>),
+    /// A package specified by name was unknown to this workspace.
+    UnknownWorkspaceName(String),
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
 }
@@ -50,6 +52,7 @@ impl fmt::Display for Error {
                 Some(feature) => write!(f, "Unknown feature ID: '{}' '{}'", package_id, feature),
                 None => write!(f, "Unknown feature ID: '{}' (base)", package_id),
             },
+            UnknownWorkspaceName(name) => write!(f, "Unknown workspace package name: {}", name),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
         }
     }
@@ -63,6 +66,7 @@ impl error::Error for Error {
             PackageGraphConstructError(_) => None,
             UnknownPackageId(_) => None,
             UnknownFeatureId(_, _) => None,
+            UnknownWorkspaceName(_) => None,
             PackageGraphInternalError(_) => None,
         }
     }
