@@ -6,7 +6,7 @@
 //! Cargo comes with a set of algorithms to figure out what packages or features are built. This
 //! module reimplements those algorithms using `guppy`'s data structures.
 
-use crate::graph::feature::{all_filter, FeatureQuery, FeatureSet};
+use crate::graph::feature::{all_filter, CrossLink, FeatureQuery, FeatureSet};
 use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink};
 use crate::sorted_set::SortedSet;
 use crate::{DependencyKind, Error, PackageId};
@@ -191,17 +191,18 @@ impl<'a> CargoSetBuildState<'a> {
         })
     }
 
-    fn build(self, query: FeatureQuery) -> CargoSet {
+    fn build(self, query: FeatureQuery<'_>) -> CargoSet {
         match self.opts.version {
             CargoResolverVersion::V1 => self.new_v1(query, false),
             CargoResolverVersion::V1Install => {
                 let avoid_dev_deps = !self.opts.include_dev;
                 self.new_v1(query, avoid_dev_deps)
             }
+            CargoResolverVersion::V2 => self.new_v2(query),
         }
     }
 
-    fn new_v1(self, query: FeatureQuery, avoid_dev_deps: bool) -> CargoSet {
+    fn new_v1(self, query: FeatureQuery<'_>, avoid_dev_deps: bool) -> CargoSet {
         // Prepare a package query for step 2.
         let graph = *query.graph();
         let package_ixs: SortedSet<_> = query
@@ -300,7 +301,6 @@ impl<'a> CargoSetBuildState<'a> {
             // instead.
             if follow_target && to.is_proc_macro() {
                 host_ixs.push(to.package_ix());
-                // It's possible to have proc macros as build dependencies.
                 proc_macro_edge_ixs.push(link.edge_ix());
                 follow_target = false;
             }
@@ -351,6 +351,98 @@ impl<'a> CargoSetBuildState<'a> {
         }
     }
 
+    fn new_v2(self, query: FeatureQuery<'_>) -> CargoSet {
+        let graph = *query.graph();
+
+        let is_enabled = |link: CrossLink<'_>,
+                          kind: DependencyKind,
+                          platform: Option<&Platform<'_>>| {
+            let platform_status = link.status_for_kind(kind);
+
+            match platform {
+                Some(platform) => platform_status.enabled_on(platform) != EnabledTernary::Disabled,
+                None => !platform_status.is_never(),
+            }
+        };
+
+        // State to maintain between steps 1 and 2.
+        let mut host_ixs = Vec::new();
+        let mut proc_macro_edge_ixs = Vec::new();
+
+        // 1. Perform a feature query for the target.
+        let target_features = query.clone().resolve_with_fn(|query, link| {
+            let (from, to) = link.endpoints();
+
+            if self.is_omitted(to.package_ix()) {
+                // Pretend that the omitted set doesn't exist.
+                return false;
+            }
+
+            let consider_dev =
+                self.opts.include_dev && query.starts_from(from.feature_id()).expect("valid ID");
+            // The V2 resolver behaves differently from the V1 resolver -- it doesn't appear to
+            // check for whether this package has a build script.
+            // XXX is this broken in upstream cargo?
+
+            let mut follow_target =
+                is_enabled(link, DependencyKind::Normal, self.opts.target_platform)
+                    || (consider_dev
+                        && is_enabled(
+                            link,
+                            DependencyKind::Development,
+                            self.opts.target_platform,
+                        ));
+
+            // Proc macros build on the host, so for normal/dev dependencies redirect it to the host
+            // instead.
+            if follow_target && to.package().is_proc_macro() {
+                host_ixs.push(to.feature_ix());
+                proc_macro_edge_ixs.push(link.package_edge_ix());
+                follow_target = false;
+            }
+
+            // Build dependencies are evaluated against the host platform.
+            if is_enabled(link, DependencyKind::Build, self.opts.host_platform) {
+                host_ixs.push(to.feature_ix());
+            }
+
+            follow_target
+        });
+
+        // 2. Perform a feature query for the host.
+        let host_features = graph
+            .query_from_parts(SortedSet::new(host_ixs), DependencyDirection::Forward)
+            .resolve_with_fn(|_, link| {
+                let (from, to) = link.endpoints();
+                if self.is_omitted(to.package_ix()) {
+                    // Pretend that the omitted set doesn't exist.
+                    return false;
+                }
+                // The V2 resolver behaves differently from the V1 resolver -- it doesn't appear to
+                // check for whether this package has a build script. It also unifies dev
+                // dependencies of initials, even on the host platform.
+                // XXX is this a bug in upstream cargo?
+                let consider_dev = self.opts.include_dev
+                    && query.starts_from(from.feature_id()).expect("valid ID");
+
+                // Interestingly, dev-dependencies of initials may also be followed on the host
+                // platform.
+                // XXX is this a bug in upstream cargo?
+                is_enabled(link, DependencyKind::Normal, self.opts.host_platform)
+                    || is_enabled(link, DependencyKind::Build, self.opts.host_platform)
+                    || (consider_dev
+                        && is_enabled(link, DependencyKind::Development, self.opts.host_platform))
+            });
+
+        let proc_macro_edge_ixs = SortedSet::new(proc_macro_edge_ixs);
+
+        CargoSet {
+            target_features,
+            host_features,
+            proc_macro_edge_ixs,
+        }
+    }
+
     // ---
     // Helper methods
     // ---
@@ -379,4 +471,13 @@ pub enum CargoResolverVersion {
     /// [avoid-dev-deps](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#avoid-dev-deps)
     /// in the Cargo reference.
     V1Install,
+    /// The new feature resolver.
+    ///
+    /// This is currently available as `-Zfeatures=all`, and is expected to be released in a future
+    /// version of Cargo.
+    ///
+    /// For more, see
+    /// [Features](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#features) in the
+    /// Cargo reference.
+    V2,
 }

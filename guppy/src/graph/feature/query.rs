@@ -4,8 +4,10 @@
 use crate::graph::cargo::{CargoOptions, CargoSet};
 use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureSet};
 use crate::graph::query_core::QueryParams;
-use crate::graph::{DependencyDirection, PackageQuery};
+use crate::graph::{DependencyDirection, FeatureIx, PackageQuery};
+use crate::sorted_set::SortedSet;
 use crate::Error;
+use petgraph::graph::NodeIndex;
 use std::collections::HashSet;
 
 /// Trait representing whether a feature within a package should be selected.
@@ -234,6 +236,21 @@ impl<'g> FeatureGraph<'g> {
             graph: *self,
             params: QueryParams::Reverse(self.feature_ixs(feature_ids)?),
         })
+    }
+
+    pub(in crate::graph) fn query_from_parts(
+        &self,
+        feature_ixs: SortedSet<NodeIndex<FeatureIx>>,
+        direction: DependencyDirection,
+    ) -> FeatureQuery<'g> {
+        let params = match direction {
+            DependencyDirection::Forward => QueryParams::Forward(feature_ixs),
+            DependencyDirection::Reverse => QueryParams::Reverse(feature_ixs),
+        };
+        FeatureQuery {
+            graph: *self,
+            params,
+        }
     }
 }
 
