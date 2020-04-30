@@ -13,8 +13,8 @@
 //! dot -Tpng graph.dot -o graph.png
 //! ```
 
-use guppy::graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata};
-use guppy::Error;
+use guppy::graph::{DotWrite, PackageDotVisitor, PackageLink, PackageMetadata};
+use guppy::{CargoMetadata, Error};
 use std::fmt;
 
 // Define a visitor, which specifies what strings to print out for the graph.
@@ -41,8 +41,9 @@ impl PackageDotVisitor for PackageNameVisitor {
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-    let fixture = include_str!("../fixtures/large/metadata_libra.json");
-    let package_graph = PackageGraph::from_json(fixture)?;
+    let metadata =
+        CargoMetadata::parse_json(include_str!("../fixtures/large/metadata_libra.json"))?;
+    let package_graph = metadata.build_graph()?;
 
     // Non-workspace packages cannot depend on packages within the workspace, so the reverse
     // transitive deps of workspace packages are exactly the set of workspace packages.

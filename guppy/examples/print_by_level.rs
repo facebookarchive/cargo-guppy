@@ -6,15 +6,15 @@
 //! This example will print out duplicate dependencies if they show up at multiple levels. If you
 //! don't want that, you can maintain a 'seen' set.
 
-use guppy::graph::PackageGraph;
-use guppy::Error;
+use guppy::{CargoMetadata, Error};
 use std::collections::BTreeMap;
 use std::io::{stdout, Write};
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-    let fixture = include_str!("../fixtures/large/metadata_libra.json");
-    let package_graph = PackageGraph::from_json(fixture)?;
+    let metadata =
+        CargoMetadata::parse_json(include_str!("../fixtures/large/metadata_libra.json"))?;
+    let package_graph = metadata.build_graph()?;
 
     // Pick an interesting package to compute dependencies of.
     let vm_metadata = package_graph

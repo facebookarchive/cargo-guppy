@@ -7,7 +7,9 @@ use crate::graph::{
     DependencyDirection, OwnedBuildTargetId, PackageIx,
 };
 use crate::petgraph_support::scc::Sccs;
-use crate::{DependencyKind, Error, JsonValue, Metadata, MetadataCommand, PackageId, Platform};
+use crate::{
+    CargoMetadata, DependencyKind, Error, JsonValue, MetadataCommand, PackageId, Platform,
+};
 use cargo_metadata::NodeDep;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
@@ -54,7 +56,7 @@ impl PackageGraph {
     }
 
     /// Parses the given `Metadata` and constructs a `PackageGraph` from it.
-    pub fn from_metadata(metadata: Metadata) -> Result<Self, Error> {
+    pub fn from_metadata(metadata: CargoMetadata) -> Result<Self, Error> {
         Self::build(metadata.0)
     }
 
@@ -64,7 +66,7 @@ impl PackageGraph {
     /// * with `--all-features`, so that `guppy` has a full view of the dependency graph.
     /// * without `--no-deps`, so that `guppy` knows about non-workspace dependencies.
     pub fn from_json(json: impl AsRef<str>) -> Result<Self, Error> {
-        let metadata = Metadata::parse_json(json)?;
+        let metadata = CargoMetadata::parse_json(json)?;
         Self::from_metadata(metadata)
     }
 
