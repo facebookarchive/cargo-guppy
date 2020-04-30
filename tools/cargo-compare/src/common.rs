@@ -6,7 +6,7 @@ use anyhow::Result;
 use cargo::core::compiler::{CompileKind, CompileTarget, RustcTargetData};
 use cargo::core::resolver::features::FeaturesFor;
 use cargo::core::resolver::{HasDevUnits, ResolveOpts};
-use cargo::core::{PackageIdSpec, Workspace};
+use cargo::core::{enable_nightly_features, PackageIdSpec, Workspace};
 use cargo::ops::resolve_ws_with_opts;
 use cargo::Config;
 use guppy::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
@@ -30,6 +30,10 @@ pub struct GuppyCargoCommon {
     #[structopt(long = "include-dev")]
     pub include_dev: bool,
 
+    /// Use new feature resolver
+    #[structopt(long = "v2")]
+    pub v2: bool,
+
     /// Evaluate for the target triple (default: current platform)
     #[structopt(long = "target")]
     pub target_platform: Option<String>,
@@ -46,7 +50,7 @@ impl GuppyCargoCommon {
             Some(platform) => CompileKind::Target(CompileTarget::new(platform)?),
             None => CompileKind::Host,
         };
-        let target_data = RustcTargetData::new(&workspace, compile_kind)?;
+        let target_data = RustcTargetData::new(&workspace, &[compile_kind])?;
 
         let resolve_opts = ResolveOpts::new(
             self.include_dev,
@@ -71,7 +75,7 @@ impl GuppyCargoCommon {
         let ws_resolve = resolve_ws_with_opts(
             &workspace,
             &target_data,
-            compile_kind,
+            &[compile_kind],
             &resolve_opts,
             &specs,
             if self.include_dev {
@@ -89,10 +93,13 @@ impl GuppyCargoCommon {
         for pkg_id in targeted_resolve.iter() {
             // Note that for the V1 resolver the maps are going to be identical, since
             // platform-specific filtering happens much later in the process.
+            // Also, use activated_features_unverified since it's possible for a particular (package
+            // ID, features for) combination to be missing.
             let target_features =
-                resolved_features.activated_features(pkg_id, FeaturesFor::NormalOrDev);
+                resolved_features.activated_features_unverified(pkg_id, FeaturesFor::NormalOrDev);
             target_map.insert(pkg_id.to_guppy(), target_features.to_guppy());
-            let host_features = resolved_features.activated_features(pkg_id, FeaturesFor::BuildDep);
+            let host_features =
+                resolved_features.activated_features_unverified(pkg_id, FeaturesFor::HostDep);
             host_map.insert(pkg_id.to_guppy(), host_features.to_guppy());
         }
 
@@ -118,25 +125,39 @@ impl GuppyCargoCommon {
         //
         // guppy can do all 3, but because of cargo's API limitations we restrict ourselves to 1
         // and 2 for now.
-        let version = if self.include_dev {
-            // Case 1 above.
-            CargoResolverVersion::V1
-        } else {
-            // Case 2 above.
-            CargoResolverVersion::V1Install
+        let version = match (self.v2, self.include_dev) {
+            (true, _) => CargoResolverVersion::V2,
+            (false, true) => {
+                // Case 1 above.
+                CargoResolverVersion::V1
+            }
+            (false, false) => {
+                // Case 2 above.
+                CargoResolverVersion::V1Install
+            }
+        };
+        let (target_platform, host_platform, merge_maps) = match version {
+            CargoResolverVersion::V2 => (
+                Some(self.make_target_platform()?),
+                Some(self.guppy_current_platform()?),
+                false,
+            ),
+            CargoResolverVersion::V1 | CargoResolverVersion::V1Install => {
+                // Cargo's V1 resolver does platform-specific filtering after resolution. It also
+                // merges the host and target maps.
+                (None, None, true)
+            }
+            _ => panic!("unknown resolver version {:?}", version),
         };
 
         let cargo_opts = CargoOptions::new()
             .with_version(version)
             .with_dev_deps(self.include_dev)
-            // Cargo's V1 resolver does filtering after considering the platform.
-            // XXX change this for the V2 resolver.
-            .with_host_platform(None)
-            .with_target_platform(None);
+            .with_target_platform(target_platform.as_ref())
+            .with_host_platform(host_platform.as_ref());
         let cargo_set = feature_query.resolve_cargo(&cargo_opts)?;
 
-        // XXX V1 resolver requires merging maps.
-        Ok(FeatureMap::from_guppy(&cargo_set, true))
+        Ok(FeatureMap::from_guppy(&cargo_set, merge_maps))
     }
 
     /// Returns a `Platform` corresponding to the target platform.
@@ -144,7 +165,7 @@ impl GuppyCargoCommon {
         match &self.target_platform {
             Some(triple) => Platform::new(triple, TargetFeatures::Unknown)
                 .ok_or_else(|| anyhow::anyhow!("unknown triple: {}", triple)),
-            None => Platform::current().ok_or_else(|| anyhow::anyhow!("unknown current platform")),
+            None => self.guppy_current_platform(),
         }
     }
 
@@ -160,8 +181,12 @@ impl GuppyCargoCommon {
         let locked = true;
         let offline = true;
 
-        // TODO: set unstable flag for V2 resolver
-        let unstable_flags = &[];
+        let unstable_flags: Vec<String> = if self.v2 {
+            enable_nightly_features();
+            vec!["features=all".into()]
+        } else {
+            vec![]
+        };
 
         config.configure(
             2,
@@ -171,7 +196,7 @@ impl GuppyCargoCommon {
             locked,
             offline,
             &None,
-            unstable_flags,
+            &unstable_flags,
             &[],
         )?;
 
@@ -196,6 +221,10 @@ impl GuppyCargoCommon {
     ) -> Result<Workspace<'cfg>> {
         // Now create another workspace with the root that was found.
         Workspace::new(root_manifest, config)
+    }
+
+    fn guppy_current_platform(&self) -> Result<Platform<'static>> {
+        Platform::current().ok_or_else(|| anyhow::anyhow!("unknown current platform"))
     }
 }
 

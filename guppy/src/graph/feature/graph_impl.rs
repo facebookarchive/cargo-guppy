@@ -474,6 +474,11 @@ impl<'g> FeatureMetadata<'g> {
     pub(in crate::graph) fn package_ix(&self) -> NodeIndex<PackageIx> {
         self.node.package_ix
     }
+
+    #[inline]
+    pub(in crate::graph) fn feature_ix(&self) -> NodeIndex<FeatureIx> {
+        self.inner.feature_ix
+    }
 }
 
 /// A graph representing every possible feature of every package, and the connections between them.
@@ -627,6 +632,14 @@ impl<'g> CrossLink<'g> {
             self.inner.package_edge_ix,
             None,
         )
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    pub(in crate::graph) fn package_edge_ix(&self) -> EdgeIndex<PackageIx> {
+        self.inner.package_edge_ix
     }
 }
 
