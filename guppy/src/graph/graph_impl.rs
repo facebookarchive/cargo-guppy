@@ -836,6 +836,17 @@ impl<'g> PackageMetadata<'g> {
     }
 }
 
+/// `PackageMetadata`'s `PartialEq` implementation uses pointer equality for the `PackageGraph`.
+impl<'g> PartialEq for PackageMetadata<'g> {
+    fn eq(&self, other: &Self) -> bool {
+        // Checking for the same package ix is enough as each package is guaranteed to be a 1:1 map
+        // with ixs.
+        std::ptr::eq(self.graph, other.graph) && self.package_ix() == other.package_ix()
+    }
+}
+
+impl<'g> Eq for PackageMetadata<'g> {}
+
 #[derive(Clone, Debug)]
 pub(crate) struct PackageMetadataImpl {
     // Implementation note: we use Box<str> and Box<Path> to save on memory use when possible.

@@ -3,8 +3,8 @@
 
 use crate::debug_ignore::DebugIgnore;
 use crate::graph::feature::{
-    CrossLink, FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery,
-    FeatureResolver,
+    CrossLink, FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureList, FeatureMetadata,
+    FeatureQuery, FeatureResolver,
 };
 use crate::graph::resolve_core::ResolveCore;
 use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
@@ -12,7 +12,6 @@ use crate::petgraph_support::IxBitSet;
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::NodeIndex;
-use std::iter::FromIterator;
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.
@@ -193,16 +192,12 @@ impl<'g> FeatureSet<'g> {
     // Queries around packages
     // ---
 
-    /// Returns an iterator over the features present for this package, including the element `None`
-    /// for the "base" feature.
+    /// Returns a list of features present for this package.
     ///
-    /// Returns `None` overall if this is an unknown package.
-    pub fn features_for<'a>(
-        &'a self,
-        package_id: &PackageId,
-    ) -> Option<impl Iterator<Item = Option<&'g str>> + 'a> {
-        let metadata = self.graph.package_graph.metadata(package_id)?;
-        Some(self.features_for_package_impl(metadata))
+    /// Returns `None` if this is an unknown package.
+    pub fn features_for(&self, package_id: &PackageId) -> Option<FeatureList<'g>> {
+        let package = self.graph.package_graph.metadata(package_id)?;
+        self.features_for_package_impl(package)
     }
 
     /// Converts this `FeatureSet` into a `PackageSet` containing all packages with any selected
@@ -265,19 +260,14 @@ impl<'g> FeatureSet<'g> {
     /// Iterates over package metadatas and their corresponding features, in topological order in
     /// the direction specified.
     ///
-    /// The "base" feature for each package is represented by `None`.
-    ///
     /// ## Cycles
     ///
     /// The packages within a dependency cycle will be returned in arbitrary order, but overall
     /// topological order will be maintained.
-    pub fn packages_with_features<'a, B>(
+    pub fn packages_with_features<'a>(
         &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = (PackageMetadata<'g>, B)> + 'a
-    where
-        B: FromIterator<Option<&'g str>>,
-    {
+    ) -> impl Iterator<Item = FeatureList<'g>> + 'a {
         let package_graph = self.graph.package_graph;
 
         // Use the package graph's SCCs for the topo order guarantee.
@@ -286,17 +276,10 @@ impl<'g> FeatureSet<'g> {
             .node_iter(direction.into())
             .filter_map(move |package_ix| {
                 let package_id = &package_graph.dep_graph()[package_ix];
-                let metadata = package_graph
+                let package = package_graph
                     .metadata(package_id)
                     .expect("valid package ID");
-
-                let mut features = self.features_for_package_impl(metadata).peekable();
-                if features.peek().is_some() {
-                    // At least one feature was returned.
-                    Some((metadata, features.collect()))
-                } else {
-                    None
-                }
+                self.features_for_package_impl(package)
             })
     }
 
@@ -355,21 +338,28 @@ impl<'g> FeatureSet<'g> {
 
     fn features_for_package_impl<'a>(
         &'a self,
-        metadata: PackageMetadata<'g>,
-    ) -> impl Iterator<Item = Option<&'g str>> + 'a {
+        package: PackageMetadata<'g>,
+    ) -> Option<FeatureList<'g>> {
         let dep_graph = self.graph.dep_graph();
-        let package_ix = metadata.package_ix();
         let core = &self.core;
 
-        self.graph
-            .feature_ixs_for_package_ix(package_ix)
-            .filter_map(move |feature_ix| {
+        let mut features = self
+            .graph
+            .feature_ixs_for_package_ix(package.package_ix())
+            .filter_map(|feature_ix| {
                 if core.contains(feature_ix) {
-                    Some(FeatureId::node_to_feature(metadata, &dep_graph[feature_ix]))
+                    Some(FeatureId::node_to_feature(package, &dep_graph[feature_ix]))
                 } else {
                     None
                 }
             })
+            .peekable();
+        if features.peek().is_some() {
+            // At least one feature was returned.
+            Some(FeatureList::new(package, features))
+        } else {
+            None
+        }
     }
 
     // Currently a helper for debugging -- will be made public in the future.

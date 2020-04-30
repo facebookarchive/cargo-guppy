@@ -546,12 +546,7 @@ pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: Dependen
     let mut feature_ids: Vec<_> = feature_set.feature_ids(direction).collect();
     let mut feature_ids_2: Vec<_> = feature_set
         .packages_with_features(direction)
-        .flat_map(|(metadata, features): (_, Vec<_>)| {
-            let package_id = metadata.id();
-            features
-                .into_iter()
-                .map(move |feature| FeatureId::from((package_id, feature)))
-        })
+        .flat_map(|feature_list| feature_list.into_iter())
         .collect();
     feature_ids.sort();
     feature_ids_2.sort();
@@ -568,9 +563,13 @@ pub(super) fn feature_set_props(feature_set: FeatureSet<'_>, direction: Dependen
         .collect();
     let feature_set_ids: Vec<_> = feature_set
         .packages_with_features(direction)
-        .map(|(metadata, features): (_, Vec<_>)| {
-            println!("for id {}, features: {:?}", metadata.id(), features);
-            metadata.id()
+        .map(|feature_list| {
+            println!(
+                "for id {}, features: {}",
+                feature_list.package().id(),
+                feature_list.display_features(),
+            );
+            feature_list.package().id()
         })
         .collect();
     assert_eq!(
