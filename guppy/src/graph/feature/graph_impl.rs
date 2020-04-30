@@ -5,8 +5,8 @@ use crate::errors::FeatureGraphWarning;
 use crate::graph::feature::build::FeatureGraphBuildState;
 use crate::graph::feature::{Cycles, FeatureFilter};
 use crate::graph::{
-    DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageMetadata, PlatformStatus,
-    PlatformStatusImpl,
+    DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
+    PlatformStatus, PlatformStatusImpl,
 };
 use crate::petgraph_support::scc::Sccs;
 use crate::{DependencyKind, Error, PackageId};
@@ -550,6 +550,18 @@ impl<'g> CrossLink<'g> {
     pub fn dev_only(&self) -> bool {
         self.normal().is_never() && self.build().is_never()
     }
+
+    /// Returns the `PackageLink` from which this `CrossLink` was derived.
+    pub fn package_link(&self) -> PackageLink<'g> {
+        let from_node = self.graph.dep_graph()[self.from.feature_ix];
+        let to_node = self.graph.dep_graph()[self.to.feature_ix];
+        self.graph.package_graph.edge_to_link(
+            from_node.package_ix,
+            to_node.package_ix,
+            self.inner.package_edge_ix,
+            None,
+        )
+    }
 }
 
 // ---
@@ -638,6 +650,7 @@ pub(crate) enum FeatureEdge {
 
 #[derive(Clone, Debug)]
 pub(crate) struct CrossLinkImpl {
+    pub(super) package_edge_ix: EdgeIndex<PackageIx>,
     pub(super) normal: PlatformStatusImpl,
     pub(super) build: PlatformStatusImpl,
     pub(super) dev: PlatformStatusImpl,
