@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["GitReference","Information to find a specific commit in a Git repository."],["MaybePackage",""]],"struct":[["SourceId","Unique identifier for a source of packages."],["SourceMap","A `HashMap` of `SourceId` -> `Box<Source>`."]],"trait":[["Source","Something that finds and downloads remote packages based on names and versions."]]});

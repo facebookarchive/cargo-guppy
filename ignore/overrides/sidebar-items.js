@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Glob","Glob represents a single glob in an override matcher."],["Override","Manages a set of overrides provided explicitly by the end user."],["OverrideBuilder","Builds a matcher for a set of glob overrides."]]});

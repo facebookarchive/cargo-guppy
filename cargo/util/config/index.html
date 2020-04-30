@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `config` mod in crate `cargo`."><meta name="keywords" content="rust, rustlang, rust-lang, config"><title>cargo::util::config - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a><p class='location'>Module config</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'><a href='../../index.html'>cargo</a>::<wbr><a href='../index.html'>util</a></p><script>window.sidebarCurrent = {name: 'config', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../../src/cargo/util/config/mod.rs.html#1-1739' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../../index.html'>cargo</a>::<wbr><a href='../index.html'>util</a>::<wbr><a class="mod" href=''>config</a></span></h1><div class='docblock'><p>Cargo's config system.</p>
+<p>The <code>Config</code> object contains general information about the environment,
+and provides access to Cargo's configuration files.</p>
+<h2 id="config-value-api" class="section-header"><a href="#config-value-api">Config value API</a></h2>
+<p>The primary API for fetching user-defined config values is the
+<code>Config::get</code> method. It uses <code>serde</code> to translate config values to a
+target type.</p>
+<p>There are a variety of helper types for deserializing some common formats:</p>
+<ul>
+<li><code>value::Value</code>: This type provides access to the location where the
+config value was defined.</li>
+<li><code>ConfigRelativePath</code>: For a path that is relative to where it is
+defined.</li>
+<li><code>PathAndArgs</code>: Similar to <code>ConfigRelativePath</code>, but also supports a list
+of arguments, useful for programs to execute.</li>
+<li><code>StringList</code>: Get a value that is either a list or a whitespace split
+string.</li>
+</ul>
+<h2 id="map-key-recommendations" class="section-header"><a href="#map-key-recommendations">Map key recommendations</a></h2>
+<p>Handling tables that have arbitrary keys can be tricky, particularly if it
+should support environment variables. In general, if possible, the caller
+should pass the full key path into the <code>get()</code> method so that the config
+deserializer can properly handle environment variables (which need to be
+uppercased, and dashes converted to underscores).</p>
+<p>A good example is the <code>[target]</code> table. The code will request
+<code>target.$TRIPLE</code> and the config system can then appropriately fetch
+environment variables like <code>CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER</code>.
+Conversely, it is not possible do the same thing for the <code>cfg()</code> target
+tables (because Cargo must fetch all of them), so those do not support
+environment variables.</p>
+<p>Try to avoid keys that are a prefix of another with a dash/underscore. For
+example <code>build.target</code> and <code>build.target-dir</code>. This is OK if these are not
+structs/maps, but if it is a struct or map, then it will not be able to
+read the environment variable due to ambiguity. (See <code>ConfigMapAccess</code> for
+more details.)</p>
+<h2 id="internal-api" class="section-header"><a href="#internal-api">Internal API</a></h2>
+<p>Internally config values are stored with the <code>ConfigValue</code> type after they
+have been loaded from disk. This is similar to the <code>toml::Value</code> type, but
+includes the definition location. The <code>get()</code> method uses serde to
+translate from <code>ConfigValue</code> and environment variables to the caller's
+desired type.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.CargoBuildConfig.html" title='cargo::util::config::CargoBuildConfig struct'>CargoBuildConfig</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="struct" href="struct.CargoHttpConfig.html" title='cargo::util::config::CargoHttpConfig struct'>CargoHttpConfig</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="struct" href="struct.CargoNetConfig.html" title='cargo::util::config::CargoNetConfig struct'>CargoNetConfig</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="struct" href="struct.Config.html" title='cargo::util::config::Config struct'>Config</a></td><td class='docblock-short'><p>Configuration information for cargo. This is not specific to a build, it is information
+relating to cargo itself.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.ConfigError.html" title='cargo::util::config::ConfigError struct'>ConfigError</a></td><td class='docblock-short'><p>Internal error for serde errors.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.ConfigRelativePath.html" title='cargo::util::config::ConfigRelativePath struct'>ConfigRelativePath</a></td><td class='docblock-short'><p>Use with the <code>get</code> API to fetch a string that will be converted to a
+<code>PathBuf</code>. Relative paths are converted to absolute paths based on the
+location of the config file.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.PackageCacheLock.html" title='cargo::util::config::PackageCacheLock struct'>PackageCacheLock</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="struct" href="struct.PathAndArgs.html" title='cargo::util::config::PathAndArgs struct'>PathAndArgs</a></td><td class='docblock-short'><p>A config type that is a program to run.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.SslVersionConfigRange.html" title='cargo::util::config::SslVersionConfigRange struct'>SslVersionConfigRange</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="struct" href="struct.StringList.html" title='cargo::util::config::StringList struct'>StringList</a></td><td class='docblock-short'><p>A type to deserialize a list of strings from a toml file.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.TargetCfgConfig.html" title='cargo::util::config::TargetCfgConfig struct'>TargetCfgConfig</a></td><td class='docblock-short'><p>Config definition of a [target.'cfg(…)'] table.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.TargetConfig.html" title='cargo::util::config::TargetConfig struct'>TargetConfig</a></td><td class='docblock-short'><p>Config definition of a [target] table.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Value.html" title='cargo::util::config::Value struct'>Value</a></td><td class='docblock-short'><p>A type which can be deserialized as a configuration value which records
+where it was deserialized from.</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.ConfigValue.html" title='cargo::util::config::ConfigValue enum'>ConfigValue</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="enum" href="enum.Definition.html" title='cargo::util::config::Definition enum'>Definition</a></td><td class='docblock-short'><p>Location where a config value is defined.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.SslVersionConfig.html" title='cargo::util::config::SslVersionConfig enum'>SslVersionConfig</a></td><td class='docblock-short'><p>Configuration for <code>ssl-version</code> in <code>http</code> section
+There are two ways to configure:</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.clippy_driver.html" title='cargo::util::config::clippy_driver fn'>clippy_driver</a></td><td class='docblock-short'><p>returns path to clippy-driver binary</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.homedir.html" title='cargo::util::config::homedir fn'>homedir</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="fn" href="fn.save_credentials.html" title='cargo::util::config::save_credentials fn'>save_credentials</a></td><td class='docblock-short'></td></tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table><tr class='module-item'><td><a class="type" href="type.OptValue.html" title='cargo::util::config::OptValue type'>OptValue</a></td><td class='docblock-short'></td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["register","Register the libcurl backend for HTTP requests made by libgit2."]]});

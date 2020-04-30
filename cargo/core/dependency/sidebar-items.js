@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["DepKind",""]],"struct":[["Dependency","Information about a dependency requested by a Cargo manifest. Cheap to copy."]]});

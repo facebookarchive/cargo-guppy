@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Kind",""]],"fn":[["cmd_diff",""],["cmd_dups",""],["cmd_select",""],["cmd_subtree_size",""]],"struct":[["CmdSelectOptions",""],["FilterOptions",""],["QueryOptions",""],["SubtreeSizeOptions",""]]});
+initSidebarItems({"enum":[["Kind",""]],"fn":[["cmd_diff",""],["cmd_dups",""],["cmd_resolve_cargo",""],["cmd_select",""],["cmd_subtree_size",""]],"struct":[["CmdSelectOptions",""],["FilterOptions",""],["QueryOptions",""],["ResolveCargoOptions",""],["SubtreeSizeOptions",""]]});

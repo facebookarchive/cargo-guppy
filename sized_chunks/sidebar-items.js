@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["inline_array","A fixed capacity array sized to match some other type `T`."],["ring_buffer","A fixed capacity ring buffer."],["sized_chunk","A fixed capacity smart array."],["sparse_chunk","A fixed capacity sparse array."],["types","Helper types for chunks."]]});

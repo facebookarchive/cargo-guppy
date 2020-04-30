@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["escape","Escape for the windows cmd.exe shell."]]});

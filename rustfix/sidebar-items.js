@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Filter",""]],"fn":[["apply_suggestions",""],["collect_suggestions",""],["get_suggestions_from_json",""]],"mod":[["diagnostics","Rustc Diagnostic JSON Output"]],"struct":[["CodeFix",""],["LinePosition",""],["LineRange",""],["Replacement",""],["Snippet",""],["Solution",""],["Suggestion","An error/warning and possible solutions for fixing it"]]});

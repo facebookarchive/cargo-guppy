@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Message",""]],"struct":[["DiagnosticPrinter",""],["RustfixDiagnosticServer",""],["StartedServer",""]]});

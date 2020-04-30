@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Artifact",""],["ArtifactProfile","This is different from the regular `Profile` to maintain backwards compatibility (in particular, `test` is no longer in `Profile`, but we still want it to be included here)."],["BuildScript",""],["FromCompiler",""],["TimingInfo",""]],"trait":[["Message",""]]});

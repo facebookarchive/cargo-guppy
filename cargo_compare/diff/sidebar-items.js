@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["DiffOpts","Options for cargo/guppy comparisons."]]});

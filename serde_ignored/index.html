@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `serde_ignored` crate."><meta name="keywords" content="rust, rustlang, rust-lang, serde_ignored"><title>serde_ignored - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../serde_ignored/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate serde_ignored</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all serde_ignored's items</p></a><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'serde_ignored', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/serde_ignored/lib.rs.html#1-1352' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>serde_ignored</a></span></h1><div class='docblock'><p>Find out about keys that are ignored when deserializing data. This crate
+provides a wrapper that works with any existing Serde <code>Deserializer</code> and
+invokes a callback on every ignored field.</p>
+<p>You can use this to warn users about extraneous keys in a config file, for
+example.</p>
+<p>Note that if you want unrecognized fields to be an error, consider using the
+<code>#[serde(deny_unknown_fields)]</code> <a href="https://serde.rs/attributes.html">attribute</a> instead.</p>
+<h1 id="example" class="section-header"><a href="#example">Example</a></h1>
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Deserialize</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeSet</span> <span class="kw">as</span> <span class="ident">Set</span>, <span class="ident">BTreeMap</span> <span class="kw">as</span> <span class="ident">Map</span>};
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">struct</span> <span class="ident">Package</span> {
+    <span class="ident">name</span>: <span class="ident">String</span>,
+    <span class="ident">dependencies</span>: <span class="ident">Map</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Dependency</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">struct</span> <span class="ident">Dependency</span> {
+    <span class="ident">version</span>: <span class="ident">String</span>,
+}
+
+<span class="kw">let</span> <span class="ident">j</span> <span class="op">=</span> <span class="string">r#&quot;{
+    &quot;name&quot;: &quot;demo&quot;,
+    &quot;dependencies&quot;: {
+        &quot;serde&quot;: {
+            &quot;version&quot;: &quot;1.0&quot;,
+            &quot;typo1&quot;: &quot;&quot;
+        }
+    },
+    &quot;typo2&quot;: {
+        &quot;inner&quot;: &quot;&quot;
+    },
+    &quot;typo3&quot;: {}
+}&quot;#</span>;
+
+<span class="comment">// Some Deserializer.</span>
+<span class="kw">let</span> <span class="ident">jd</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">serde_json</span>::<span class="ident">Deserializer</span>::<span class="ident">from_str</span>(<span class="ident">j</span>);
+
+<span class="comment">// We will build a set of paths to the unused elements.</span>
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unused</span> <span class="op">=</span> <span class="ident">Set</span>::<span class="ident">new</span>();
+
+<span class="kw">let</span> <span class="ident">p</span>: <span class="ident">Package</span> <span class="op">=</span> <span class="ident">serde_ignored</span>::<span class="ident">deserialize</span>(<span class="ident">jd</span>, <span class="op">|</span><span class="ident">path</span><span class="op">|</span> {
+    <span class="ident">unused</span>.<span class="ident">insert</span>(<span class="ident">path</span>.<span class="ident">to_string</span>());
+})<span class="question-mark">?</span>;
+
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">p</span>, <span class="ident">Package</span> {
+    <span class="ident">name</span>: <span class="string">&quot;demo&quot;</span>.<span class="ident">to_owned</span>(),
+    <span class="ident">dependencies</span>: {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">Map</span>::<span class="ident">new</span>();
+        <span class="ident">map</span>.<span class="ident">insert</span>(<span class="string">&quot;serde&quot;</span>.<span class="ident">to_owned</span>(), <span class="ident">Dependency</span> {
+            <span class="ident">version</span>: <span class="string">&quot;1.0&quot;</span>.<span class="ident">to_owned</span>(),
+        });
+        <span class="ident">map</span>
+    },
+});
+
+<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">unused</span>, {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">Set</span>::<span class="ident">new</span>();
+    <span class="ident">expected</span>.<span class="ident">insert</span>(<span class="string">&quot;dependencies.serde.typo1&quot;</span>.<span class="ident">to_owned</span>());
+    <span class="ident">expected</span>.<span class="ident">insert</span>(<span class="string">&quot;typo2&quot;</span>.<span class="ident">to_owned</span>());
+    <span class="ident">expected</span>.<span class="ident">insert</span>(<span class="string">&quot;typo3&quot;</span>.<span class="ident">to_owned</span>());
+    <span class="ident">expected</span>
+});
+</pre></div>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.Deserializer.html" title='serde_ignored::Deserializer struct'>Deserializer</a></td><td class='docblock-short'><p>Deserializer adapter that invokes a callback with the path to every unused
+field of the input.</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.Path.html" title='serde_ignored::Path enum'>Path</a></td><td class='docblock-short'><p>Path to the current value in the input, like <code>dependencies.serde.typo1</code>.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.deserialize.html" title='serde_ignored::deserialize fn'>deserialize</a></td><td class='docblock-short'><p>Entry point. See crate documentation for an example.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "serde_ignored";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

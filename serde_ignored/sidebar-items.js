@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Path","Path to the current value in the input, like `dependencies.serde.typo1`."]],"fn":[["deserialize","Entry point. See crate documentation for an example."]],"struct":[["Deserializer","Deserializer adapter that invokes a callback with the path to every unused field of the input."]]});

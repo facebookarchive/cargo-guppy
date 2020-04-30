@@ -1,0 +1,1003 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/jobserver-0.1.21/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../jobserver/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+</pre><div class="example-wrap"><pre class="rust ">
+<span class="doccomment">//! An implementation of the GNU make jobserver.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This crate is an implementation, in Rust, of the GNU `make` jobserver for</span>
+<span class="doccomment">//! CLI tools that are interoperating with make or otherwise require some form</span>
+<span class="doccomment">//! of parallelism limiting across process boundaries. This was originally</span>
+<span class="doccomment">//! written for usage in Cargo to both (a) work when `cargo` is invoked from</span>
+<span class="doccomment">//! `make` (using `make`&#39;s jobserver) and (b) work when `cargo` invokes build</span>
+<span class="doccomment">//! scripts, exporting a jobserver implementation for `make` processes to</span>
+<span class="doccomment">//! transitively use.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The jobserver implementation can be found in [detail online][docs] but</span>
+<span class="doccomment">//! basically boils down to a cross-process semaphore. On Unix this is</span>
+<span class="doccomment">//! implemented with the `pipe` syscall and read/write ends of a pipe and on</span>
+<span class="doccomment">//! Windows this is implemented literally with IPC semaphores.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The jobserver protocol in `make` also dictates when tokens are acquired to</span>
+<span class="doccomment">//! run child work, and clients using this crate should take care to implement</span>
+<span class="doccomment">//! such details to ensure correct interoperation with `make` itself.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Examples</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Connect to a jobserver that was set up by `make` or a different process:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```no_run</span>
+<span class="doccomment">//! use jobserver::Client;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // See API documentation for why this is `unsafe`</span>
+<span class="doccomment">//! let client = match unsafe { Client::from_env() } {</span>
+<span class="doccomment">//!     Some(client) =&gt; client,</span>
+<span class="doccomment">//!     None =&gt; panic!(&quot;client not configured&quot;),</span>
+<span class="doccomment">//! };</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Acquire and release token from a jobserver:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```no_run</span>
+<span class="doccomment">//! use jobserver::Client;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let client = unsafe { Client::from_env().unwrap() };</span>
+<span class="doccomment">//! let token = client.acquire().unwrap(); // blocks until it is available</span>
+<span class="doccomment">//! drop(token); // releases the token when the work is done</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Create a new jobserver and configure a child process to have access:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! use std::process::Command;</span>
+<span class="doccomment">//! use jobserver::Client;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let client = Client::new(4).expect(&quot;failed to create jobserver&quot;);</span>
+<span class="doccomment">//! let mut cmd = Command::new(&quot;make&quot;);</span>
+<span class="doccomment">//! client.configure(&amp;mut cmd);</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Caveats</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This crate makes no attempt to release tokens back to a jobserver on</span>
+<span class="doccomment">//! abnormal exit of a process. If a process which acquires a token is killed</span>
+<span class="doccomment">//! with ctrl-c or some similar signal then tokens will not be released and the</span>
+<span class="doccomment">//! jobserver may be in a corrupt state.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Note that this is typically ok as ctrl-c means that an entire build process</span>
+<span class="doccomment">//! is being torn down, but it&#39;s worth being aware of at least!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Windows caveats</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! There appear to be two implementations of `make` on Windows. On MSYS2 one</span>
+<span class="doccomment">//! typically comes as `mingw32-make` and the other as `make` itself. I&#39;m not</span>
+<span class="doccomment">//! personally too familiar with what&#39;s going on here, but for jobserver-related</span>
+<span class="doccomment">//! information the `mingw32-make` implementation uses Windows semaphores</span>
+<span class="doccomment">//! whereas the `make` program does not. The `make` program appears to use file</span>
+<span class="doccomment">//! descriptors and I&#39;m not really sure how it works, so this crate is not</span>
+<span class="doccomment">//! compatible with `make` on Windows. It is, however, compatible with</span>
+<span class="doccomment">//! `mingw32-make`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [docs]: http://make.mad-scientist.net/papers/jobserver-implementation/</span>
+
+<span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>, <span class="ident">missing_debug_implementations</span>)]</span>
+<span class="attribute">#![<span class="ident">doc</span>(<span class="ident">html_root_url</span> <span class="op">=</span> <span class="string">&quot;https://docs.rs/jobserver/0.1&quot;</span>)]</span>
+
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">env</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">process</span>::<span class="ident">Command</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Condvar</span>, <span class="ident">Mutex</span>, <span class="ident">MutexGuard</span>};
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
+<span class="attribute">#[<span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;unix.rs&quot;</span>]</span>
+<span class="kw">mod</span> <span class="ident">imp</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
+<span class="attribute">#[<span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;windows.rs&quot;</span>]</span>
+<span class="kw">mod</span> <span class="ident">imp</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">unix</span>, <span class="ident">windows</span>)))]</span>
+<span class="attribute">#[<span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;wasm.rs&quot;</span>]</span>
+<span class="kw">mod</span> <span class="ident">imp</span>;
+
+<span class="doccomment">/// A client of a jobserver</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This structure is the main type exposed by this library, and is where</span>
+<span class="doccomment">/// interaction to a jobserver is configured through. Clients are either created</span>
+<span class="doccomment">/// from scratch in which case the internal semphore is initialied on the spot,</span>
+<span class="doccomment">/// or a client is created from the environment to connect to a jobserver</span>
+<span class="doccomment">/// already created.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Some usage examples can be found in the crate documentation for using a</span>
+<span class="doccomment">/// client.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Note that a `Client` implements the `Clone` trait, and all instances of a</span>
+<span class="doccomment">/// `Client` refer to the same jobserver instance.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Client</span> {
+    <span class="ident">inner</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">imp</span>::<span class="ident">Client</span><span class="op">&gt;</span>,
+}
+
+<span class="doccomment">/// An acquired token from a jobserver.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This token will be released back to the jobserver when it is dropped and</span>
+<span class="doccomment">/// otherwise represents the ability to spawn off another thread of work.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Acquired</span> {
+    <span class="ident">client</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">imp</span>::<span class="ident">Client</span><span class="op">&gt;</span>,
+    <span class="ident">data</span>: <span class="ident">imp</span>::<span class="ident">Acquired</span>,
+    <span class="ident">disabled</span>: <span class="ident">bool</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Acquired</span> {
+    <span class="doccomment">/// This drops the `Acquired` token without releasing the associated token.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is not generally useful, but can be helpful if you do not have the</span>
+    <span class="doccomment">/// ability to store an Acquired token but need to not yet release it.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// You&#39;ll typically want to follow this up with a call to `release_raw` or</span>
+    <span class="doccomment">/// similar to actually release the token later on.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">drop_without_releasing</span>(<span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="self">self</span>.<span class="ident">disabled</span> <span class="op">=</span> <span class="bool-val">true</span>;
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">struct</span> <span class="ident">HelperState</span> {
+    <span class="ident">lock</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">HelperInner</span><span class="op">&gt;</span>,
+    <span class="ident">cvar</span>: <span class="ident">Condvar</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">struct</span> <span class="ident">HelperInner</span> {
+    <span class="ident">requests</span>: <span class="ident">usize</span>,
+    <span class="ident">producer_done</span>: <span class="ident">bool</span>,
+    <span class="ident">consumer_done</span>: <span class="ident">bool</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Client</span> {
+    <span class="doccomment">/// Creates a new jobserver initialized with the given parallelism limit.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// A client to the jobserver created will be returned. This client will</span>
+    <span class="doccomment">/// allow at most `limit` tokens to be acquired from it in parallel. More</span>
+    <span class="doccomment">/// calls to `acquire` will cause the calling thread to block.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note that the created `Client` is not automatically inherited into</span>
+    <span class="doccomment">/// spawned child processes from this program. Manual usage of the</span>
+    <span class="doccomment">/// `configure` function is required for a child process to have access to a</span>
+    <span class="doccomment">/// job server.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use jobserver::Client;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let client = Client::new(4).expect(&quot;failed to create jobserver&quot;);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Errors</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns an error if any I/O error happens when attempting to create the</span>
+    <span class="doccomment">/// jobserver client.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">limit</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">Client</span> {
+            <span class="ident">inner</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">imp</span>::<span class="ident">Client</span>::<span class="ident">new</span>(<span class="ident">limit</span>)<span class="question-mark">?</span>),
+        })
+    }
+
+    <span class="doccomment">/// Attempts to connect to the jobserver specified in this process&#39;s</span>
+    <span class="doccomment">/// environment.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// When the a `make` executable calls a child process it will configure the</span>
+    <span class="doccomment">/// environment of the child to ensure that it has handles to the jobserver</span>
+    <span class="doccomment">/// it&#39;s passing down. This function will attempt to look for these details</span>
+    <span class="doccomment">/// and connect to the jobserver.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note that the created `Client` is not automatically inherited into</span>
+    <span class="doccomment">/// spawned child processes from this program. Manual usage of the</span>
+    <span class="doccomment">/// `configure` function is required for a child process to have access to a</span>
+    <span class="doccomment">/// job server.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Return value</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If a jobserver was found in the environment and it looks correct then</span>
+    <span class="doccomment">/// `Some` of the connected client will be returned. If no jobserver was</span>
+    <span class="doccomment">/// found then `None` will be returned.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note that on Unix the `Client` returned **takes ownership of the file</span>
+    <span class="doccomment">/// descriptors specified in the environment**. Jobservers on Unix are</span>
+    <span class="doccomment">/// implemented with `pipe` file descriptors, and they&#39;re inherited from</span>
+    <span class="doccomment">/// parent processes. This `Client` returned takes ownership of the file</span>
+    <span class="doccomment">/// descriptors for this process and will close the file descriptors after</span>
+    <span class="doccomment">/// this value is dropped.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Additionally on Unix this function will configure the file descriptors</span>
+    <span class="doccomment">/// with `CLOEXEC` so they&#39;re not automatically inherited by spawned</span>
+    <span class="doccomment">/// children.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Unsafety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function is `unsafe` to call on Unix specifically as it</span>
+    <span class="doccomment">/// transitively requires usage of the `from_raw_fd` function, which is</span>
+    <span class="doccomment">/// itself unsafe in some circumstances.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// It&#39;s recommended to call this function very early in the lifetime of a</span>
+    <span class="doccomment">/// program before any other file descriptors are opened. That way you can</span>
+    <span class="doccomment">/// make sure to take ownership properly of the file descriptors passed</span>
+    <span class="doccomment">/// down, if any.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// It&#39;s generally unsafe to call this function twice in a program if the</span>
+    <span class="doccomment">/// previous invocation returned `Some`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note, though, that on Windows it should be safe to call this function</span>
+    <span class="doccomment">/// any number of times.</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_env</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">var</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">env</span>::<span class="ident">var</span>(<span class="string">&quot;CARGO_MAKEFLAGS&quot;</span>)
+            .<span class="ident">or</span>(<span class="ident">env</span>::<span class="ident">var</span>(<span class="string">&quot;MAKEFLAGS&quot;</span>))
+            .<span class="ident">or</span>(<span class="ident">env</span>::<span class="ident">var</span>(<span class="string">&quot;MFLAGS&quot;</span>))
+        {
+            <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
+        };
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">arg</span> <span class="op">=</span> <span class="string">&quot;--jobserver-fds=&quot;</span>;
+        <span class="kw">let</span> <span class="ident">pos</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">var</span>.<span class="ident">find</span>(<span class="ident">arg</span>) {
+            <span class="prelude-val">Some</span>(<span class="ident">i</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">i</span>,
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">arg</span> <span class="op">=</span> <span class="string">&quot;--jobserver-auth=&quot;</span>;
+                <span class="kw">match</span> <span class="ident">var</span>.<span class="ident">find</span>(<span class="ident">arg</span>) {
+                    <span class="prelude-val">Some</span>(<span class="ident">i</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">i</span>,
+                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
+                }
+            }
+        };
+
+        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">var</span>[<span class="ident">pos</span> <span class="op">+</span> <span class="ident">arg</span>.<span class="ident">len</span>()..].<span class="ident">split</span>(<span class="string">&#39; &#39;</span>).<span class="ident">next</span>().<span class="ident">unwrap</span>();
+        <span class="ident">imp</span>::<span class="ident">Client</span>::<span class="ident">open</span>(<span class="ident">s</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">Client</span> { <span class="ident">inner</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">c</span>) })
+    }
+
+    <span class="doccomment">/// Acquires a token from this jobserver client.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function will block the calling thread until a new token can be</span>
+    <span class="doccomment">/// acquired from the jobserver.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Return value</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// On successful acquisition of a token an instance of `Acquired` is</span>
+    <span class="doccomment">/// returned. This structure, when dropped, will release the token back to</span>
+    <span class="doccomment">/// the jobserver. It&#39;s recommended to avoid leaking this value.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Errors</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If an I/O error happens while acquiring a token then this function will</span>
+    <span class="doccomment">/// return immediately with the error. If an error is returned then a token</span>
+    <span class="doccomment">/// was not acquired.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">acquire</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Acquired</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">acquire</span>()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="ident">Acquired</span> {
+            <span class="ident">client</span>: <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>(),
+            <span class="ident">data</span>: <span class="ident">data</span>,
+            <span class="ident">disabled</span>: <span class="bool-val">false</span>,
+        })
+    }
+
+    <span class="doccomment">/// Configures a child process to have access to this client&#39;s jobserver as</span>
+    <span class="doccomment">/// well.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function is required to be called to ensure that a jobserver is</span>
+    <span class="doccomment">/// properly inherited to a child process. If this function is *not* called</span>
+    <span class="doccomment">/// then this `Client` will not be accessible in the child process. In other</span>
+    <span class="doccomment">/// words, if not called, then `Client::from_env` will return `None` in the</span>
+    <span class="doccomment">/// child process (or the equivalent of `Child::from_env` that `make` uses).</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Platform-specific behavior</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// On Unix and Windows this will clobber the `CARGO_MAKEFLAGS` environment</span>
+    <span class="doccomment">/// variables for the child process, and on Unix this will also allow the</span>
+    <span class="doccomment">/// two file descriptors for this client to be inherited to the child.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// On platforms other than Unix and Windows this panics.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">cmd</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Command</span>) {
+        <span class="kw">let</span> <span class="ident">arg</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">string_arg</span>();
+        <span class="comment">// Older implementations of make use `--jobserver-fds` and newer</span>
+        <span class="comment">// implementations use `--jobserver-auth`, pass both to try to catch</span>
+        <span class="comment">// both implementations.</span>
+        <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;--jobserver-fds={0} --jobserver-auth={0}&quot;</span>, <span class="ident">arg</span>);
+        <span class="ident">cmd</span>.<span class="ident">env</span>(<span class="string">&quot;CARGO_MAKEFLAGS&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">value</span>);
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">configure</span>(<span class="ident">cmd</span>);
+    }
+
+    <span class="doccomment">/// Converts this `Client` into a helper thread to deal with a blocking</span>
+    <span class="doccomment">/// `acquire` function a little more easily.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The fact that the `acquire` function on `Client` blocks isn&#39;t always</span>
+    <span class="doccomment">/// the easiest to work with. Typically you&#39;re using a jobserver to</span>
+    <span class="doccomment">/// manage running other events in parallel! This means that you need to</span>
+    <span class="doccomment">/// either (a) wait for an existing job to finish or (b) wait for a</span>
+    <span class="doccomment">/// new token to become available.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Unfortunately the blocking in `acquire` happens at the implementation</span>
+    <span class="doccomment">/// layer of jobservers. On Unix this requires a blocking call to `read`</span>
+    <span class="doccomment">/// and on Windows this requires one of the `WaitFor*` functions. Both</span>
+    <span class="doccomment">/// of these situations aren&#39;t the easiest to deal with:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * On Unix there&#39;s basically only one way to wake up a `read` early, and</span>
+    <span class="doccomment">///   that&#39;s through a signal. This is what the `make` implementation</span>
+    <span class="doccomment">///   itself uses, relying on `SIGCHLD` to wake up a blocking acquisition</span>
+    <span class="doccomment">///   of a new job token. Unfortunately nonblocking I/O is not an option</span>
+    <span class="doccomment">///   here, so it means that &quot;waiting for one of two events&quot; means that</span>
+    <span class="doccomment">///   the latter event must generate a signal! This is not always the case</span>
+    <span class="doccomment">///   on unix for all jobservers.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * On Windows you&#39;d have to basically use the `WaitForMultipleObjects`</span>
+    <span class="doccomment">///   which means that you&#39;ve got to canonicalize all your event sources</span>
+    <span class="doccomment">///   into a `HANDLE` which also isn&#39;t the easiest thing to do</span>
+    <span class="doccomment">///   unfortunately.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function essentially attempts to ease these limitations by</span>
+    <span class="doccomment">/// converting this `Client` into a helper thread spawned into this</span>
+    <span class="doccomment">/// process. The application can then request that the helper thread</span>
+    <span class="doccomment">/// acquires tokens and the provided closure will be invoked for each token</span>
+    <span class="doccomment">/// acquired.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The intention is that this function can be used to translate the event</span>
+    <span class="doccomment">/// of a token acquisition into an arbitrary user-defined event.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Arguments</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function will consume the `Client` provided to be transferred to</span>
+    <span class="doccomment">/// the helper thread that is spawned. Additionally a closure `f` is</span>
+    <span class="doccomment">/// provided to be invoked whenever a token is acquired.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This closure is only invoked after calls to</span>
+    <span class="doccomment">/// `HelperThread::request_token` have been made and a token itself has</span>
+    <span class="doccomment">/// been acquired. If an error happens while acquiring the token then</span>
+    <span class="doccomment">/// an error will be yielded to the closure as well.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Return Value</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function will return an instance of the `HelperThread` structure</span>
+    <span class="doccomment">/// which is used to manage the helper thread associated with this client.</span>
+    <span class="doccomment">/// Through the `HelperThread` you&#39;ll request that tokens are acquired.</span>
+    <span class="doccomment">/// When acquired, the closure provided here is invoked.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// When the `HelperThread` structure is returned it will be gracefully</span>
+    <span class="doccomment">/// torn down, and the calling thread will be blocked until the thread is</span>
+    <span class="doccomment">/// torn down (which should be prompt).</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Errors</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function may fail due to creation of the helper thread or</span>
+    <span class="doccomment">/// auxiliary I/O objects to manage the helper thread. In any of these</span>
+    <span class="doccomment">/// situations the error is propagated upwards.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Platform-specific behavior</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// On Windows this function behaves pretty normally as expected, but on</span>
+    <span class="doccomment">/// Unix the implementation is... a little heinous. As mentioned above</span>
+    <span class="doccomment">/// we&#39;re forced into blocking I/O for token acquisition, namely a blocking</span>
+    <span class="doccomment">/// call to `read`. We must be able to unblock this, however, to tear down</span>
+    <span class="doccomment">/// the helper thread gracefully!</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Essentially what happens is that we&#39;ll send a signal to the helper</span>
+    <span class="doccomment">/// thread spawned and rely on `EINTR` being returned to wake up the helper</span>
+    <span class="doccomment">/// thread. This involves installing a global `SIGUSR1` handler that does</span>
+    <span class="doccomment">/// nothing along with sending signals to that thread. This may cause</span>
+    <span class="doccomment">/// odd behavior in some applications, so it&#39;s recommended to review and</span>
+    <span class="doccomment">/// test thoroughly before using this.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_helper_thread</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HelperThread</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Acquired</span><span class="op">&gt;</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+    {
+        <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">HelperState</span>::<span class="ident">default</span>());
+        <span class="prelude-val">Ok</span>(<span class="ident">HelperThread</span> {
+            <span class="ident">inner</span>: <span class="prelude-val">Some</span>(<span class="ident">imp</span>::<span class="ident">spawn_helper</span>(<span class="self">self</span>, <span class="ident">state</span>.<span class="ident">clone</span>(), <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">f</span>))<span class="question-mark">?</span>),
+            <span class="ident">state</span>,
+        })
+    }
+
+    <span class="doccomment">/// Blocks the current thread until a token is acquired.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is the same as `acquire`, except that it doesn&#39;t return an RAII</span>
+    <span class="doccomment">/// helper. If successful the process will need to guarantee that</span>
+    <span class="doccomment">/// `release_raw` is called in the future.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">acquire_raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">acquire</span>()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Releases a jobserver token back to the original jobserver.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is intended to be paired with `acquire_raw` if it was called, but</span>
+    <span class="doccomment">/// in some situations it could also be called to relinquish a process&#39;s</span>
+    <span class="doccomment">/// implicit token temporarily which is then re-acquired later.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">release_raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">release</span>(<span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Acquired</span> {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">disabled</span> {
+            <span class="ident">drop</span>(<span class="self">self</span>.<span class="ident">client</span>.<span class="ident">release</span>(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>)));
+        }
+    }
+}
+
+<span class="doccomment">/// Structure returned from `Client::into_helper_thread` to manage the lifetime</span>
+<span class="doccomment">/// of the helper thread returned, see those associated docs for more info.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HelperThread</span> {
+    <span class="ident">inner</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">imp</span>::<span class="ident">Helper</span><span class="op">&gt;</span>,
+    <span class="ident">state</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">HelperState</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">HelperThread</span> {
+    <span class="doccomment">/// Request that the helper thread acquires a token, eventually calling the</span>
+    <span class="doccomment">/// original closure with a token when it&#39;s available.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// For more information, see the docs on that function.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">request_token</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="comment">// Indicate that there&#39;s one more request for a token and then wake up</span>
+        <span class="comment">// the helper thread if it&#39;s sleeping.</span>
+        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>().<span class="ident">requests</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">cvar</span>.<span class="ident">notify_one</span>();
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">HelperThread</span> {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="comment">// Flag that the producer half is done so the helper thread should exit</span>
+        <span class="comment">// quickly if it&#39;s waiting. Wake it up if it&#39;s actually waiting</span>
+        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>().<span class="ident">producer_done</span> <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">cvar</span>.<span class="ident">notify_one</span>();
+
+        <span class="comment">// ... and afterwards perform any thread cleanup logic</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">take</span>().<span class="ident">unwrap</span>().<span class="ident">join</span>();
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">HelperState</span> {
+    <span class="kw">fn</span> <span class="ident">lock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">HelperInner</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">lock</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into_inner</span>())
+    }
+
+    <span class="doccomment">/// Executes `f` for each request for a token, where `f` is expected to</span>
+    <span class="doccomment">/// block and then provide the original closure with a token once it&#39;s</span>
+    <span class="doccomment">/// acquired.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is an infinite loop until the helper thread is dropped, at which</span>
+    <span class="doccomment">/// point everything should get interrupted.</span>
+    <span class="kw">fn</span> <span class="ident">for_each_request</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">HelperState</span>)) {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">lock</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>();
+
+        <span class="comment">// We only execute while we could receive requests, but as soon as</span>
+        <span class="comment">// that&#39;s `false` we&#39;re out of here.</span>
+        <span class="kw">while</span> <span class="op">!</span><span class="ident">lock</span>.<span class="ident">producer_done</span> {
+            <span class="comment">// If no one&#39;s requested a token then we wait for someone to</span>
+            <span class="comment">// request a token.</span>
+            <span class="kw">if</span> <span class="ident">lock</span>.<span class="ident">requests</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+                <span class="ident">lock</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cvar</span>.<span class="ident">wait</span>(<span class="ident">lock</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into_inner</span>());
+                <span class="kw">continue</span>;
+            }
+
+            <span class="comment">// Consume the request for a token, and then actually acquire a</span>
+            <span class="comment">// token after unlocking our lock (not that acquisition happens in</span>
+            <span class="comment">// `f`). This ensures that we don&#39;t actually hold the lock if we</span>
+            <span class="comment">// wait for a long time for a token.</span>
+            <span class="ident">lock</span>.<span class="ident">requests</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="ident">drop</span>(<span class="ident">lock</span>);
+            <span class="ident">f</span>(<span class="self">self</span>);
+            <span class="ident">lock</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>();
+        }
+        <span class="ident">lock</span>.<span class="ident">consumer_done</span> <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="self">self</span>.<span class="ident">cvar</span>.<span class="ident">notify_one</span>();
+    }
+
+    <span class="kw">fn</span> <span class="ident">producer_done</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">lock</span>().<span class="ident">producer_done</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">test</span>]</span>
+<span class="kw">fn</span> <span class="ident">no_helper_deadlock</span>() {
+    <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">Client</span>::<span class="ident">new</span>(<span class="number">32</span>).<span class="ident">unwrap</span>();
+    <span class="kw">let</span> <span class="ident">_y</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">clone</span>();
+    <span class="ident">std</span>::<span class="ident">mem</span>::<span class="ident">drop</span>(<span class="ident">x</span>.<span class="ident">into_helper_thread</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {}).<span class="ident">unwrap</span>());
+}
+</pre></div>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "jobserver";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
