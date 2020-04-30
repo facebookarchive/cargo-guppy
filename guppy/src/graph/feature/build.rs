@@ -6,7 +6,7 @@ use crate::graph::feature::{
     CrossLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{
-    DepRequiredOrOptional, FeatureIx, PackageGraph, PackageLink, PackageMetadata,
+    DepRequiredOrOptional, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
     PlatformStatusImpl,
 };
 use cargo_metadata::DependencyKind;
@@ -318,6 +318,7 @@ impl<'g> FeatureGraphBuildState<'g> {
 struct FeatureReq<'g> {
     link: PackageLink<'g>,
     to: PackageMetadata<'g>,
+    edge_ix: EdgeIndex<PackageIx>,
     to_default_idx: Option<usize>,
     // This will contain any build states that aren't empty.
     features: HashMap<Option<usize>, DependencyBuildState>,
@@ -329,6 +330,7 @@ impl<'g> FeatureReq<'g> {
         Self {
             link,
             to,
+            edge_ix: link.edge_ix(),
             to_default_idx: to.get_feature_idx("default"),
             features: HashMap::new(),
         }
@@ -377,10 +379,11 @@ impl<'g> FeatureReq<'g> {
         dep_kind: DependencyKind,
         status: &PlatformStatusImpl,
     ) {
+        let package_edge_ix = self.edge_ix;
         if !status.is_never() {
             self.features
                 .entry(feature_idx)
-                .or_default()
+                .or_insert_with(|| DependencyBuildState::new(package_edge_ix))
                 .extend(dep_kind, status);
         }
     }
@@ -400,14 +403,24 @@ impl<'g> FeatureReq<'g> {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct DependencyBuildState {
+    package_edge_ix: EdgeIndex<PackageIx>,
     normal: PlatformStatusImpl,
     build: PlatformStatusImpl,
     dev: PlatformStatusImpl,
 }
 
 impl DependencyBuildState {
+    fn new(package_edge_ix: EdgeIndex<PackageIx>) -> Self {
+        Self {
+            package_edge_ix,
+            normal: PlatformStatusImpl::default(),
+            build: PlatformStatusImpl::default(),
+            dev: PlatformStatusImpl::default(),
+        }
+    }
+
     fn extend(&mut self, dep_kind: DependencyKind, status: &PlatformStatusImpl) {
         match dep_kind {
             DependencyKind::Normal => self.normal.extend(status),
@@ -423,6 +436,7 @@ impl DependencyBuildState {
 
     fn finish(self) -> FeatureEdge {
         FeatureEdge::CrossPackage(CrossLinkImpl {
+            package_edge_ix: self.package_edge_ix,
             normal: self.normal,
             build: self.build,
             dev: self.dev,
