@@ -10,7 +10,7 @@ use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
     assert_transitive_deps_internal,
 };
-use crate::{errors::FeatureGraphWarning, DependencyKind, Metadata, PackageId, Platform};
+use crate::{errors::FeatureGraphWarning, CargoMetadata, DependencyKind, PackageId, Platform};
 use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 use semver::Version;
@@ -289,7 +289,8 @@ impl Fixture {
     define_fixture!(metadata_libra_9ffd93b, METADATA_LIBRA_9FFD93B);
 
     fn parse_graph(json: &str) -> PackageGraph {
-        let metadata = Metadata::parse_json(json).expect("parsing metadata JSON should succeed");
+        let metadata =
+            CargoMetadata::parse_json(json).expect("parsing metadata JSON should succeed");
         PackageGraph::from_metadata(metadata).expect("constructing package graph should succeed")
     }
 }

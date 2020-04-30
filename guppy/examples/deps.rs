@@ -3,14 +3,14 @@
 
 //! Print out direct and transitive dependencies of a package.
 
-use guppy::graph::{DependencyDirection, PackageGraph};
-use guppy::{Error, PackageId};
+use guppy::graph::DependencyDirection;
+use guppy::{CargoMetadata, Error, PackageId};
 use std::iter;
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-    let fixture = include_str!("../fixtures/small/metadata1.json");
-    let package_graph = PackageGraph::from_json(fixture)?;
+    let metadata = CargoMetadata::parse_json(include_str!("../fixtures/small/metadata1.json"))?;
+    let package_graph = metadata.build_graph()?;
 
     // `guppy` provides several ways to get hold of package IDs. Use a pre-defined one for this
     // example.

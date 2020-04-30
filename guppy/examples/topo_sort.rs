@@ -6,13 +6,14 @@
 //! The into_iter_ids and into_iter_metadatas iterators return packages in topological order. Note
 //! that into_iter_links returns links in "link order" -- see its documentation for more.
 
-use guppy::graph::{DependencyDirection, PackageGraph};
-use guppy::Error;
+use guppy::graph::DependencyDirection;
+use guppy::{CargoMetadata, Error};
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-    let fixture = include_str!("../fixtures/large/metadata_libra.json");
-    let package_graph = PackageGraph::from_json(fixture)?;
+    let metadata =
+        CargoMetadata::parse_json(include_str!("../fixtures/large/metadata_libra.json"))?;
+    let package_graph = metadata.build_graph()?;
 
     // Non-workspace packages cannot depend on packages within the workspace, so the reverse
     // transitive deps of workspace packages are exactly the set of workspace packages.

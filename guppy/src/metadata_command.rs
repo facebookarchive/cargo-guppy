@@ -77,16 +77,16 @@ impl MetadataCommand {
         self
     }
 
-    /// Runs the configured `cargo metadata` and returns a parsed `Metadata`.
-    pub fn exec(&mut self) -> Result<Metadata, Error> {
+    /// Runs the configured `cargo metadata` and returns a parsed `CargoMetadata`.
+    pub fn exec(&mut self) -> Result<CargoMetadata, Error> {
         let inner = self.inner.exec().map_err(Error::command_error)?;
-        Ok(Metadata(inner))
+        Ok(CargoMetadata(inner))
     }
 
     /// Runs the configured `cargo metadata` and returns a parsed `PackageGraph`.
     pub fn build_graph(&mut self) -> Result<PackageGraph, Error> {
         let metadata = self.exec()?;
-        metadata.into_package_graph()
+        metadata.build_graph()
     }
 }
 
@@ -97,9 +97,9 @@ impl MetadataCommand {
 /// analyze Cargo metadata by building a `PackageGraph`
 /// from it, call the `into_package_graph` method.
 #[derive(Clone, Debug)]
-pub struct Metadata(pub(crate) cargo_metadata::Metadata);
+pub struct CargoMetadata(pub(crate) cargo_metadata::Metadata);
 
-impl Metadata {
+impl CargoMetadata {
     /// Parses this JSON blob into a `Metadata`.
     pub fn parse_json(json: impl AsRef<str>) -> Result<Self, Error> {
         let inner = serde_json::from_str(json.as_ref()).map_err(Error::MetadataParseError)?;
@@ -107,7 +107,7 @@ impl Metadata {
     }
 
     /// Builds a `PackageGraph` out of this `Metadata`.
-    pub fn into_package_graph(self) -> Result<PackageGraph, Error> {
+    pub fn build_graph(self) -> Result<PackageGraph, Error> {
         PackageGraph::from_metadata(self)
     }
 }

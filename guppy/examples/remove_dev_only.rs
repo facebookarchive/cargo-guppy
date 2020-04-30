@@ -6,14 +6,15 @@
 //! Dev-only dependencies are typically not included in release builds, so it's useful to be able
 //! to filter out those links.
 
-use guppy::graph::{DependencyDirection, PackageGraph, PackageLink};
-use guppy::Error;
+use guppy::graph::{DependencyDirection, PackageLink};
+use guppy::{CargoMetadata, Error};
 use std::iter;
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-    let fixture = include_str!("../fixtures/large/metadata_libra.json");
-    let package_graph = PackageGraph::from_json(fixture)?;
+    let metadata =
+        CargoMetadata::parse_json(include_str!("../fixtures/large/metadata_libra.json"))?;
+    let package_graph = metadata.build_graph()?;
 
     // Pick an important binary package and compute the number of dependencies.
     //
