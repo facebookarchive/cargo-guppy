@@ -29,6 +29,8 @@ pub enum Error {
     CargoSetError(String),
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
+    /// An internal error occurred within this `FeatureGraph`.
+    FeatureGraphInternalError(String),
 }
 
 impl Error {
@@ -57,6 +59,7 @@ impl fmt::Display for Error {
             UnknownWorkspaceName(name) => write!(f, "Unknown workspace package name: {}", name),
             CargoSetError(msg) => write!(f, "Error while computing Cargo set: {}", msg),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
+            FeatureGraphInternalError(msg) => write!(f, "Internal error in feature graph: {}", msg),
         }
     }
 }
@@ -72,6 +75,7 @@ impl error::Error for Error {
             UnknownWorkspaceName(_) => None,
             CargoSetError(_) => None,
             PackageGraphInternalError(_) => None,
+            FeatureGraphInternalError(_) => None,
         }
     }
 }

@@ -76,12 +76,11 @@ impl<'g> FeatureSet<'g> {
                 graph.dep_graph(),
                 params,
                 |source_ix, target_ix, edge_ix| {
-                    let edge = &graph.dep_graph()[edge_ix];
-                    match edge {
-                        FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => true,
-                        FeatureEdge::CrossPackage(inner) => {
-                            let link = CrossLink::new(graph, source_ix, target_ix, edge_ix, &inner);
-                            resolver.accept(&query, link)
+                    match graph.edge_to_cross_link(source_ix, target_ix, edge_ix, None) {
+                        Some(cross_link) => resolver.accept(&query, cross_link),
+                        None => {
+                            // Feature links within the same package are always followed.
+                            true
                         }
                     }
                 },
@@ -329,6 +328,23 @@ impl<'g> FeatureSet<'g> {
                 feature_graph
                     .metadata_for_node(feature_graph.dep_graph()[feature_ix])
                     .expect("feature node should be known")
+            })
+    }
+
+    /// Creates an iterator over `CrossLink` instances in the direction specified.
+    ///
+    /// ## Cycles
+    ///
+    /// The links in a dependency cycle may be returned in arbitrary order.
+    pub fn cross_links<'a>(
+        &'a self,
+        direction: DependencyDirection,
+    ) -> impl Iterator<Item = CrossLink<'g>> + 'a {
+        let graph = self.graph;
+        self.core
+            .links(graph.dep_graph(), graph.sccs(), direction)
+            .filter_map(move |(source_ix, target_ix, edge_ix)| {
+                graph.edge_to_cross_link(source_ix, target_ix, edge_ix, None)
             })
     }
 

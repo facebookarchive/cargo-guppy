@@ -15,6 +15,7 @@ use petgraph::algo::has_path_connecting;
 use petgraph::prelude::*;
 use petgraph::visit::IntoNodeReferences;
 use std::collections::HashMap;
+use std::fmt;
 use std::iter;
 use std::iter::FromIterator;
 
@@ -160,6 +161,28 @@ impl<'g> FeatureGraph<'g> {
     // Helper methods
     // ---
 
+    /// Verify basic properties of the feature graph.
+    #[doc(hidden)]
+    pub fn verify(&self) -> Result<(), Error> {
+        let feature_set = self.resolve_all();
+        for cross_link in feature_set.cross_links(DependencyDirection::Forward) {
+            let (from, to) = cross_link.endpoints();
+            let is_any = cross_link.normal().is_present()
+                || cross_link.build().is_present()
+                || cross_link.dev().is_present();
+
+            if !is_any {
+                return Err(Error::FeatureGraphInternalError(format!(
+                    "{} -> {}: no edge info found",
+                    from.feature_id(),
+                    to.feature_id()
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
     /// Returns the strongly connected components for this feature graph.
     pub(super) fn sccs(&self) -> &'g Sccs<FeatureIx> {
         self.inner.sccs.get_or_init(|| Sccs::new(&self.inner.graph))
@@ -186,6 +209,22 @@ impl<'g> FeatureGraph<'g> {
 
     pub(super) fn dep_graph(&self) -> &'g Graph<FeatureNode, FeatureEdge, Directed, FeatureIx> {
         &self.inner.graph
+    }
+
+    /// If this is a cross edge, return the cross link. Otherwise, return None.
+    pub(super) fn edge_to_cross_link(
+        &self,
+        source_ix: NodeIndex<FeatureIx>,
+        target_ix: NodeIndex<FeatureIx>,
+        edge_ix: EdgeIndex<FeatureIx>,
+        edge: Option<&'g FeatureEdge>,
+    ) -> Option<CrossLink<'g>> {
+        match edge.unwrap_or_else(|| &self.dep_graph()[edge_ix]) {
+            FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => None,
+            FeatureEdge::CrossPackage(inner) => {
+                Some(CrossLink::new(*self, source_ix, target_ix, edge_ix, &inner))
+            }
+        }
     }
 
     fn feature_ix_depends_on(
@@ -365,6 +404,33 @@ impl<'g> From<FeatureId<'g>> for (PackageId, Option<String>) {
             feature_id.package_id().clone(),
             feature_id.feature().map(|feature| feature.to_string()),
         )
+    }
+}
+
+/// The `Display` impl prints out `{package id}/feature`, or `{package id}/[base]`.
+///
+/// ## Examples
+///
+/// ```
+/// use guppy::PackageId;
+/// use guppy::graph::feature::FeatureId;
+///
+/// let package_id = PackageId::new("region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)");
+///
+/// assert_eq!(
+///     format!("{}", FeatureId::new(&package_id, "foo")),
+///     "region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)/foo"
+/// );
+///
+/// assert_eq!(
+///     format!("{}", FeatureId::base(&package_id)),
+///     "region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)/[base]"
+/// );
+/// ```
+impl<'g> fmt::Display for FeatureId<'g> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let feature_name = self.feature.unwrap_or("[base]");
+        write!(f, "{}/{}", self.package_id, feature_name)
     }
 }
 
