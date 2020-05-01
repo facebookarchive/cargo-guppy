@@ -209,8 +209,8 @@ impl PackageGraph {
             }
         }
 
-        // Constructing the feature graph may cause panics to happen.
-        self.feature_graph();
+        // Construct and check the feature graph for internal consistency.
+        self.feature_graph().verify()?;
 
         Ok(())
     }
@@ -1214,6 +1214,11 @@ impl<'g> PlatformStatus<'g> {
             PlatformStatus::Never => true,
             PlatformStatus::PlatformDependent { .. } | PlatformStatus::Always => false,
         }
+    }
+
+    /// Returns true if this dependency is possibly enabled on any platform.
+    pub fn is_present(&self) -> bool {
+        !self.is_never()
     }
 
     /// Evaluates whether this dependency is enabled on the given platform.
