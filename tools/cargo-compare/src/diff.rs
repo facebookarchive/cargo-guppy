@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::common::GuppyCargoCommon;
+use crate::GlobalContext;
 use anyhow::Result;
 use diffus::{edit, Diffable};
-use guppy::{MetadataCommand, PackageId};
+use guppy::PackageId;
 use std::collections::{BTreeMap, BTreeSet};
 use structopt::StructOpt;
 
@@ -17,10 +18,10 @@ pub struct DiffOpts {
 
 impl DiffOpts {
     /// Executes this command.
-    pub fn exec(self) -> Result<()> {
-        let cargo_map = self.common.resolve_cargo()?;
-        let graph = MetadataCommand::new().build_graph()?;
-        let guppy_map = self.common.resolve_guppy(&graph)?;
+    pub fn exec(self, ctx: &GlobalContext) -> Result<()> {
+        let cargo_map = self.common.resolve_cargo(ctx)?;
+        let graph = self.common.metadata_opts.make_command().build_graph()?;
+        let guppy_map = self.common.resolve_guppy(ctx, &graph)?;
 
         // As of 2020-04-30, Cargo's APIs don't let users tell the difference between the package
         // being missing entirely, and the package being present but with no features.

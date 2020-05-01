@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::type_conversions::ToGuppy;
+use crate::GlobalContext;
 use anyhow::Result;
 use cargo::core::compiler::{CompileKind, CompileTarget, RustcTargetData};
 use cargo::core::resolver::features::FeaturesFor;
@@ -13,7 +14,7 @@ use guppy::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
 use guppy::graph::feature::FeatureSet;
 use guppy::graph::{DependencyDirection, PackageGraph};
 use guppy::{PackageId, Platform, TargetFeatures};
-use guppy_cmdlib::PackagesAndFeatures;
+use guppy_cmdlib::{CargoMetadataOptions, PackagesAndFeatures};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -37,12 +38,15 @@ pub struct GuppyCargoCommon {
     /// Evaluate for the target triple (default: current platform)
     #[structopt(long = "target")]
     pub target_platform: Option<String>,
+
+    #[structopt(flatten)]
+    pub metadata_opts: CargoMetadataOptions,
 }
 
 impl GuppyCargoCommon {
     /// Resolves data for this query using Cargo.
-    pub fn resolve_cargo(&self) -> Result<FeatureMap> {
-        let config = self.cargo_make_config()?;
+    pub fn resolve_cargo(&self, ctx: &GlobalContext) -> Result<FeatureMap> {
+        let config = self.cargo_make_config(ctx)?;
         let root_manifest = self.cargo_discover_root(&config)?;
         let workspace = self.cargo_make_workspace(&config, &root_manifest)?;
 
@@ -110,7 +114,7 @@ impl GuppyCargoCommon {
     }
 
     /// Resolves data for this query using Guppy.
-    pub fn resolve_guppy(&self, graph: &PackageGraph) -> Result<FeatureMap> {
+    pub fn resolve_guppy(&self, _ctx: &GlobalContext, graph: &PackageGraph) -> Result<FeatureMap> {
         let feature_query = self.pf.make_feature_query(graph)?;
 
         // Note that guppy is more flexible than cargo here -- with the v1 feature resolver, it can
@@ -173,7 +177,9 @@ impl GuppyCargoCommon {
     // Helper methods
     // ---
 
-    fn cargo_make_config(&self) -> Result<Config> {
+    fn cargo_make_config(&self, _ctx: &GlobalContext) -> Result<Config> {
+        // XXX This should use the home dir from ctx, but that appears to cause caching to break???
+        // XXX Use default() for now, figure this out at some point.
         let mut config = Config::default()?;
 
         // Prevent cargo from accessing the network.
@@ -204,9 +210,7 @@ impl GuppyCargoCommon {
     }
 
     fn cargo_discover_root(&self, config: &Config) -> Result<PathBuf> {
-        let cwd = config.cwd();
-        let manifest_path = cwd.join("Cargo.toml");
-
+        let manifest_path = self.metadata_opts.abs_manifest_path()?;
         // Create a workspace to discover the root manifest.
         let workspace = Workspace::new(&manifest_path, config)?;
 

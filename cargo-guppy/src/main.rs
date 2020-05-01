@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use cargo_guppy::{CmdSelectOptions, FilterOptions, ResolveCargoOptions, SubtreeSizeOptions};
+use cargo_guppy::{CmdSelectOptions, DupsOptions, ResolveCargoOptions, SubtreeSizeOptions};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -23,7 +23,7 @@ enum Command {
     },
     #[structopt(name = "dups")]
     /// Print the number of duplicate packages
-    Duplicates(FilterOptions),
+    Duplicates(DupsOptions),
     #[structopt(name = "resolve-cargo")]
     /// Return packages and features that would be built by Cargo
     ResolveCargo(ResolveCargoOptions),
