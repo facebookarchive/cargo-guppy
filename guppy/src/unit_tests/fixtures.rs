@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use target_spec::TargetFeatures;
 
 // Metadata along with interesting crate names.
-pub(crate) static METADATA1: &str = include_str!("../../fixtures/small/metadata1.json");
+pub(crate) static METADATA1: &str = include_str!("../../../fixtures/small/metadata1.json");
 pub(crate) static METADATA1_TESTCRATE: &str = "testcrate 0.1.0 (path+file:///fakepath/testcrate)";
 pub(crate) static METADATA1_DATATEST: &str =
     "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)";
@@ -28,14 +28,14 @@ pub(crate) static METADATA1_REGION: &str =
 pub(crate) static METADATA1_DTOA: &str =
     "dtoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub(crate) static METADATA2: &str = include_str!("../../fixtures/small/metadata2.json");
+pub(crate) static METADATA2: &str = include_str!("../../../fixtures/small/metadata2.json");
 pub(crate) static METADATA2_TESTCRATE: &str =
     "testworkspace-crate 0.1.0 (path+file:///Users/fakeuser/local/testworkspace/testcrate)";
 pub(crate) static METADATA2_WALKDIR: &str =
     "walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)";
 pub(crate) static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
 
-pub(crate) static METADATA_DUPS: &str = include_str!("../../fixtures/small/metadata_dups.json");
+pub(crate) static METADATA_DUPS: &str = include_str!("../../../fixtures/small/metadata_dups.json");
 pub(crate) static METADATA_DUPS_TESTCRATE: &str =
     "testcrate-dups 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-dups)";
 pub(crate) static METADATA_DUPS_LAZY_STATIC_1: &str =
@@ -47,13 +47,15 @@ pub(crate) static METADATA_DUPS_BYTES_03: &str =
 pub(crate) static METADATA_DUPS_BYTES_05: &str =
     "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub(crate) static METADATA_CYCLE1: &str = include_str!("../../fixtures/small/metadata_cycle1.json");
+pub(crate) static METADATA_CYCLE1: &str =
+    include_str!("../../../fixtures/small/metadata_cycle1.json");
 pub(crate) static METADATA_CYCLE1_BASE: &str =
     "testcycles-base 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-base)";
 pub(crate) static METADATA_CYCLE1_HELPER: &str =
     "testcycles-helper 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-helper)";
 
-pub(crate) static METADATA_CYCLE2: &str = include_str!("../../fixtures/small/metadata_cycle2.json");
+pub(crate) static METADATA_CYCLE2: &str =
+    include_str!("../../../fixtures/small/metadata_cycle2.json");
 pub(crate) static METADATA_CYCLE2_UPPER_A: &str =
     "upper-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/upper-a)";
 pub(crate) static METADATA_CYCLE2_UPPER_B: &str =
@@ -64,7 +66,7 @@ pub(crate) static METADATA_CYCLE2_LOWER_B: &str =
     "lower-b 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-b)";
 
 pub(crate) static METADATA_TARGETS1: &str =
-    include_str!("../../fixtures/small/metadata_targets1.json");
+    include_str!("../../../fixtures/small/metadata_targets1.json");
 pub(crate) static METADATA_TARGETS1_TESTCRATE: &str =
     "testcrate-targets 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-targets)";
 pub(crate) static METADATA_TARGETS1_LAZY_STATIC_1: &str =
@@ -79,12 +81,12 @@ pub(crate) static METADATA_TARGETS1_DEP_A: &str =
     "dep-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/dep-a)";
 
 pub(crate) static METADATA_BUILD_TARGETS1: &str =
-    include_str!("../../fixtures/small/metadata_build_targets1.json");
+    include_str!("../../../fixtures/small/metadata_build_targets1.json");
 pub(crate) static METADATA_BUILD_TARGETS1_TESTCRATE: &str =
     "testcrate 0.1.0 (path+file:///Users/fakeuser/local/testcrates/test-build-targets)";
 
 pub(crate) static METADATA_PROC_MACRO1: &str =
-    include_str!("../../fixtures/small/metadata_proc_macro1.json");
+    include_str!("../../../fixtures/small/metadata_proc_macro1.json");
 pub(crate) static METADATA_PROC_MACRO1_MACRO: &str =
     "macro 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/macro)";
 pub(crate) static METADATA_PROC_MACRO1_NORMAL_USER: &str =
@@ -94,7 +96,8 @@ pub(crate) static METADATA_PROC_MACRO1_BUILD_USER: &str =
 pub(crate) static METADATA_PROC_MACRO1_DEV_USER: &str =
     "dev-user 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/dev-user)";
 
-pub(crate) static METADATA_LIBRA: &str = include_str!("../../fixtures/large/metadata_libra.json");
+pub(crate) static METADATA_LIBRA: &str =
+    include_str!("../../../fixtures/large/metadata_libra.json");
 pub(crate) static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
     "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)";
 pub(crate) static METADATA_LIBRA_COMPILER: &str =
@@ -139,10 +142,10 @@ pub(crate) static METADATA_LIBRA_CFG_IF: &str =
     "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)";
 
 pub(crate) static METADATA_LIBRA_F0091A4: &str =
-    include_str!("../../fixtures/large/metadata_libra_f0091a4.json");
+    include_str!("../../../fixtures/large/metadata_libra_f0091a4.json");
 
 pub(crate) static METADATA_LIBRA_9FFD93B: &str =
-    include_str!("../../fixtures/large/metadata_libra_9ffd93b.json");
+    include_str!("../../../fixtures/large/metadata_libra_9ffd93b.json");
 
 pub(crate) static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 

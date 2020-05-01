@@ -5,7 +5,7 @@ use cargo_metadata::{Metadata, Target};
 #[test]
 fn optional_dev_dep() {
     assert_invalid(
-        include_str!("../../fixtures/invalid/optional_dev_dep.json"),
+        include_str!("../../../fixtures/invalid/optional_dev_dep.json"),
         "dependency 'lazy_static' marked optional",
     );
 }
@@ -13,7 +13,7 @@ fn optional_dev_dep() {
 #[test]
 fn duplicate_workspace_names() {
     assert_invalid(
-        include_str!("../../fixtures/invalid/duplicate_workspace_names.json"),
+        include_str!("../../../fixtures/invalid/duplicate_workspace_names.json"),
         "duplicate package name in workspace: 'pkg' is name for",
     );
 }
@@ -21,7 +21,7 @@ fn duplicate_workspace_names() {
 #[test]
 fn build_targets_empty_kinds() {
     assert_invalid(
-        include_str!("../../fixtures/invalid/build_targets_empty_kinds.json"),
+        include_str!("../../../fixtures/invalid/build_targets_empty_kinds.json"),
         "build target 'bench1' has no kinds",
     );
 }
@@ -29,7 +29,7 @@ fn build_targets_empty_kinds() {
 #[test]
 fn build_targets_non_bin() {
     assert_invalid(
-        include_str!("../../fixtures/invalid/build_targets_non_bin.json"),
+        include_str!("../../../fixtures/invalid/build_targets_non_bin.json"),
         "build target 'Binary(\"testcrate\")' has invalid crate types '{cdylib}'",
     );
 }
@@ -37,7 +37,7 @@ fn build_targets_non_bin() {
 #[test]
 fn build_targets_duplicate_lib() {
     assert_invalid(
-        include_str!("../../fixtures/invalid/build_targets_duplicate_lib.json"),
+        include_str!("../../../fixtures/invalid/build_targets_duplicate_lib.json"),
         "duplicate build targets for Library",
     );
 }

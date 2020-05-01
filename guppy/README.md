@@ -25,7 +25,7 @@ Print out all direct dependencies of a package:
 use guppy::{PackageId, CargoMetadata};
 
 // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
-let metadata = CargoMetadata::parse_json(include_str!("../fixtures/small/metadata1.json")).unwrap();
+let metadata = CargoMetadata::parse_json(include_str!("../../fixtures/small/metadata1.json")).unwrap();
 let package_graph = metadata.build_graph().unwrap();
 
 // `guppy` provides several ways to get hold of package IDs. Use a pre-defined one for this
