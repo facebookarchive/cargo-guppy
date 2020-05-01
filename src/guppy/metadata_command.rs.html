@@ -191,16 +191,16 @@
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Runs the configured `cargo metadata` and returns a parsed `Metadata`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Metadata</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Runs the configured `cargo metadata` and returns a parsed `CargoMetadata`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CargoMetadata</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">exec</span>().<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">command_error</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">Metadata</span>(<span class="ident">inner</span>))
+        <span class="prelude-val">Ok</span>(<span class="ident">CargoMetadata</span>(<span class="ident">inner</span>))
     }
 
     <span class="doccomment">/// Runs the configured `cargo metadata` and returns a parsed `PackageGraph`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_graph</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageGraph</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">exec</span>()<span class="question-mark">?</span>;
-        <span class="ident">metadata</span>.<span class="ident">into_package_graph</span>()
+        <span class="ident">metadata</span>.<span class="ident">build_graph</span>()
     }
 }
 
@@ -211,9 +211,9 @@
 <span class="doccomment">/// analyze Cargo metadata by building a `PackageGraph`</span>
 <span class="doccomment">/// from it, call the `into_package_graph` method.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Metadata</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">cargo_metadata</span>::<span class="ident">Metadata</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CargoMetadata</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">cargo_metadata</span>::<span class="ident">Metadata</span>);
 
-<span class="kw">impl</span> <span class="ident">Metadata</span> {
+<span class="kw">impl</span> <span class="ident">CargoMetadata</span> {
     <span class="doccomment">/// Parses this JSON blob into a `Metadata`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_json</span>(<span class="ident">json</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">serde_json</span>::<span class="ident">from_str</span>(<span class="ident">json</span>.<span class="ident">as_ref</span>()).<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">MetadataParseError</span>)<span class="question-mark">?</span>;
@@ -221,7 +221,7 @@
     }
 
     <span class="doccomment">/// Builds a `PackageGraph` out of this `Metadata`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_package_graph</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageGraph</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_graph</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageGraph</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident">PackageGraph</span>::<span class="ident">from_metadata</span>(<span class="self">self</span>)
     }
 }
