@@ -13,7 +13,7 @@ use std::iter;
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
     let metadata =
-        CargoMetadata::parse_json(include_str!("../fixtures/large/metadata_libra.json"))?;
+        CargoMetadata::parse_json(include_str!("../../fixtures/large/metadata_libra.json"))?;
     let package_graph = metadata.build_graph()?;
 
     // Pick an important binary package and compute the number of dependencies.
