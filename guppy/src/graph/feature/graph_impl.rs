@@ -698,18 +698,25 @@ impl FeatureNode {
 pub(crate) enum FeatureEdge {
     /// This edge is from a feature to its base package.
     FeatureToBase,
-    /// This edge is present because a feature is enabled in a dependency, e.g. through:
+    /// This is a cross-package edge, e.g. through:
     ///
     /// ```toml
     /// [dependencies]
     /// foo = { version = "1", features = ["a", "b"] }
     /// ```
-    CrossPackage(CrossLinkImpl),
-    /// This edge is from a feature depending on other features:
+    ///
+    /// or through
     ///
     /// ```toml
     /// [features]
-    /// "a" = ["b", "foo/c"]
+    /// "a" = ["foo/b"]
+    /// ```
+    CrossPackage(CrossLinkImpl),
+    /// This edge is from a feature depending on other features within the same package:
+    ///
+    /// ```toml
+    /// [features]
+    /// "a" = ["b"]
     /// ```
     FeatureDependency,
 }

@@ -6,8 +6,8 @@ use crate::graph::feature::{
     CrossLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
 };
 use crate::graph::{
-    DepRequiredOrOptional, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
-    PlatformStatusImpl,
+    DepRequiredOrOptional, DependencyReq, FeatureIx, PackageGraph, PackageIx, PackageLink,
+    PackageMetadata, PlatformStatusImpl,
 };
 use cargo_metadata::DependencyKind;
 use once_cell::sync::OnceCell;
@@ -68,62 +68,72 @@ impl<'g> FeatureGraphBuildState<'g> {
     }
 
     pub(super) fn add_named_feature_edges(&mut self, metadata: PackageMetadata<'_>) {
-        let dep_name_to_metadata: HashMap<_, _> = metadata
+        let dep_name_to_link: HashMap<_, _> = metadata
             .direct_links()
-            .map(|link| (link.dep_name(), link.to()))
+            .map(|link| (link.dep_name(), link))
             .collect();
 
         metadata
             .named_features_full()
             .for_each(|(n, from_feature, feature_deps)| {
                 let from_node = FeatureNode::new(metadata.package_ix(), n);
-                let to_nodes: Vec<_> = feature_deps
+                let to_nodes_edges: Vec<_> = feature_deps
                     .iter()
                     .flat_map(|feature_dep| {
                         let (dep_name, to_feature) = Self::split_feature_dep(feature_dep);
-                        let (cross_node, same_node) = match dep_name {
+                        let (cross_node_edge, same_node_edge) = match dep_name {
                             Some(dep_name) => {
-                                let cross_node = match dep_name_to_metadata.get(dep_name) {
-                                    Some(to_package) => self.make_named_feature_node(
+                                let cross_node_edge = if let Some(link) =
+                                    dep_name_to_link.get(dep_name)
+                                {
+                                    self.make_named_feature_node(
                                         &metadata,
                                         from_feature,
-                                        to_package,
+                                        &link.to(),
                                         to_feature,
                                         true,
-                                    ),
-                                    None => {
-                                        // This is an unresolved feature -- it won't be included as
-                                        // a dependency.
-                                        // XXX revisit this if we start modeling unresolved
-                                        // dependencies.
-                                        None
-                                    }
+                                    )
+                                    .map(|cross_node| {
+                                        // This is a cross-package link. The platform-specific
+                                        // requirements still apply, so grab them from the
+                                        // PackageLink.
+                                        (cross_node, Self::make_named_feature_cross_edge(link))
+                                    })
+                                } else {
+                                    // The destination package was unknown to the graph.
+                                    // XXX may need to be revisited if we start modeling unresolved
+                                    // dependencies.
+                                    None
                                 };
                                 // If the package is present as an optional dependency, it is
                                 // implicitly activated by the feature.
-                                let same_node = self.make_named_feature_node(
-                                    &metadata,
-                                    from_feature,
-                                    &metadata,
-                                    dep_name,
-                                    // Don't warn if this dep isn't optional.
-                                    false,
-                                );
-                                (cross_node, same_node)
+                                let same_node_edge = self
+                                    .make_named_feature_node(
+                                        &metadata,
+                                        from_feature,
+                                        &metadata,
+                                        dep_name,
+                                        // Don't warn if this dep isn't optional.
+                                        false,
+                                    )
+                                    .map(|same_node| (same_node, FeatureEdge::FeatureDependency));
+                                (cross_node_edge, same_node_edge)
                             }
                             None => {
-                                let same_node = self.make_named_feature_node(
-                                    &metadata,
-                                    from_feature,
-                                    &metadata,
-                                    to_feature,
-                                    true,
-                                );
-                                (None, same_node)
+                                let same_node_edge = self
+                                    .make_named_feature_node(
+                                        &metadata,
+                                        from_feature,
+                                        &metadata,
+                                        to_feature,
+                                        true,
+                                    )
+                                    .map(|same_node| (same_node, FeatureEdge::FeatureDependency));
+                                (None, same_node_edge)
                             }
                         };
 
-                        cross_node.into_iter().chain(same_node)
+                        cross_node_edge.into_iter().chain(same_node_edge)
                     })
                     // The flat_map above holds an &mut reference to self, which is why it needs to
                     // be collected.
@@ -131,12 +141,7 @@ impl<'g> FeatureGraphBuildState<'g> {
 
                 // Don't create a map to the base 'from' node since it is already created in
                 // add_nodes.
-                self.add_edges(
-                    from_node,
-                    to_nodes
-                        .into_iter()
-                        .map(|to_node| (to_node, FeatureEdge::FeatureDependency)),
-                );
+                self.add_edges(from_node, to_nodes_edges);
             })
     }
 
@@ -186,6 +191,31 @@ impl<'g> FeatureGraphBuildState<'g> {
                 None
             }
         }
+    }
+
+    /// Creates the cross link for situations like:
+    ///
+    /// ```toml
+    /// [features]
+    /// a = ["dep/foo"]
+    /// ```
+    ///
+    /// (a link (`from`, `a`) to (`dep`, `foo`) is created.
+    fn make_named_feature_cross_edge(link: &PackageLink<'_>) -> FeatureEdge {
+        // This edge is enabled if the feature is enabled, which means the union of (required,
+        // optional) build conditions.
+        fn combine_req_opt(req: DependencyReq<'_>) -> PlatformStatusImpl {
+            let mut required = req.inner.required.build_if.clone();
+            required.extend(&req.inner.optional.build_if);
+            required
+        }
+
+        FeatureEdge::CrossPackage(CrossLinkImpl {
+            package_edge_ix: link.edge_ix(),
+            normal: combine_req_opt(link.normal()),
+            build: combine_req_opt(link.build()),
+            dev: combine_req_opt(link.dev()),
+        })
     }
 
     pub(super) fn add_dependency_edges(&mut self, link: PackageLink<'_>) {
