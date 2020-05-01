@@ -10,9 +10,9 @@ use guppy::graph::cargo::CargoOptions;
 use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
-    MetadataCommand, PackageId,
+    PackageId,
 };
-use guppy_cmdlib::{triple_to_platform, PackagesAndFeatures};
+use guppy_cmdlib::{triple_to_platform, CargoMetadataOptions, PackagesAndFeatures};
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -42,11 +42,20 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub fn cmd_dups(filter_opts: &FilterOptions) -> Result<(), anyhow::Error> {
-    let mut command = MetadataCommand::new();
-    let pkg_graph = PackageGraph::from_command(&mut command)?;
+#[derive(Debug, StructOpt)]
+pub struct DupsOptions {
+    #[structopt(flatten)]
+    filter_opts: FilterOptions,
 
-    let resolver = filter_opts.make_resolver(&pkg_graph);
+    #[structopt(flatten)]
+    metadata_opts: CargoMetadataOptions,
+}
+
+pub fn cmd_dups(opts: &DupsOptions) -> Result<(), anyhow::Error> {
+    let mut command = opts.metadata_opts.make_command();
+    let pkg_graph = command.build_graph()?;
+
+    let resolver = opts.filter_opts.make_resolver(&pkg_graph);
     let selection = pkg_graph.query_workspace();
 
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
@@ -86,6 +95,9 @@ pub struct ResolveCargoOptions {
     #[structopt(long = "host-platform")]
     /// Evaluate against host platform, "current" or "any" (default: any)
     host_platform: Option<String>,
+
+    #[structopt(flatten)]
+    metadata_opts: CargoMetadataOptions,
 }
 
 pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error> {
@@ -97,8 +109,8 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
         .with_host_platform(host_platform.as_ref());
 
     // TODO: allow package/feature/omitted selection
-    let mut command = MetadataCommand::new();
-    let pkg_graph = PackageGraph::from_command(&mut command)?;
+    let mut command = opts.metadata_opts.make_command();
+    let pkg_graph = command.build_graph()?;
     let cargo_set = opts
         .pf
         .make_feature_query(&pkg_graph)?
@@ -160,11 +172,14 @@ pub struct CmdSelectOptions {
 
     #[structopt(flatten)]
     query_opts: QueryOptions,
+
+    #[structopt(flatten)]
+    metadata_opts: CargoMetadataOptions,
 }
 
 pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
-    let mut command = MetadataCommand::new();
-    let pkg_graph = PackageGraph::from_command(&mut command)?;
+    let mut command = options.metadata_opts.make_command();
+    let pkg_graph = command.build_graph()?;
 
     let query = options.query_opts.apply(&pkg_graph)?;
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
@@ -205,11 +220,14 @@ pub struct SubtreeSizeOptions {
     #[structopt(rename_all = "screaming_snake_case")]
     /// The root packages to start the selection from
     root: Option<String>,
+
+    #[structopt(flatten)]
+    metadata_opts: CargoMetadataOptions,
 }
 
 pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Error> {
-    let mut command = MetadataCommand::new();
-    let pkg_graph = PackageGraph::from_command(&mut command)?;
+    let mut command = options.metadata_opts.make_command();
+    let pkg_graph = command.build_graph()?;
 
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
 

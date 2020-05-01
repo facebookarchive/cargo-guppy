@@ -10,7 +10,9 @@ use guppy::graph::feature::{
     all_filter, default_filter, feature_filter, none_filter, FeatureFilter, FeatureQuery,
 };
 use guppy::graph::PackageGraph;
-use guppy::{Platform, TargetFeatures};
+use guppy::{MetadataCommand, Platform, TargetFeatures};
+use std::env;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 /// Support for packages and features.
@@ -58,6 +60,42 @@ impl PackagesAndFeatures {
         Ok(graph
             .feature_graph()
             .query_packages(&package_query, feature_filter))
+    }
+}
+
+/// Context for invoking the `cargo metadata` command.
+///
+/// The options mirror Cargo's.
+#[derive(Debug, StructOpt)]
+pub struct CargoMetadataOptions {
+    /// Path to Cargo.toml
+    #[structopt(long = "manifest-path")]
+    manifest_path: Option<PathBuf>,
+}
+
+impl CargoMetadataOptions {
+    /// Returns the current directory.
+    pub fn current_dir(&self) -> Result<PathBuf> {
+        Ok(env::current_dir()?)
+    }
+
+    /// Returns the absolute canonical manifest path.
+    pub fn abs_manifest_path(&self) -> Result<PathBuf> {
+        let cwd = self.current_dir()?;
+        let path = match &self.manifest_path {
+            Some(path) => cwd.join(path),
+            None => cwd.join("Cargo.toml"),
+        };
+        Ok(path.canonicalize()?)
+    }
+
+    /// Evaluates this struct and creates a `MetadataCommand`.
+    pub fn make_command(&self) -> MetadataCommand {
+        let mut command = MetadataCommand::new();
+        if let Some(manifest_path) = &self.manifest_path {
+            command.manifest_path(manifest_path);
+        }
+        command
     }
 }
 
