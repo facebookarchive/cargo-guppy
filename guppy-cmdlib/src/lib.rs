@@ -5,6 +5,9 @@
 //!
 //! This library allows translating command-line arguments into guppy's data structures.
 
+#[cfg(feature = "proptest09")]
+pub mod proptest;
+
 use anyhow::Result;
 use guppy::graph::feature::{
     all_filter, default_filter, feature_filter, none_filter, FeatureFilter, FeatureQuery,
@@ -66,11 +69,11 @@ impl PackagesAndFeatures {
 /// Context for invoking the `cargo metadata` command.
 ///
 /// The options mirror Cargo's.
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub struct CargoMetadataOptions {
     /// Path to Cargo.toml
     #[structopt(long = "manifest-path")]
-    manifest_path: Option<PathBuf>,
+    pub manifest_path: Option<PathBuf>,
 }
 
 impl CargoMetadataOptions {

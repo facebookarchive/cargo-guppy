@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{PackageGraph, PackageLink, PackageQuery, PackageResolver};
+use crate::graph::{PackageGraph, PackageLink, PackageQuery, PackageResolver, Workspace};
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
@@ -60,6 +60,46 @@ impl PackageGraph {
     pub fn prop09_resolver_strategy<'g>(&'g self) -> impl Strategy<Value = Prop09Resolver> + 'g {
         // Generate a FixedBitSet to filter based off of.
         fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop09Resolver::new)
+    }
+}
+
+/// ## Helpers for property testing
+///
+/// The methods in this section allow a `Workspace` to be used in property-based testing
+/// scenarios.
+///
+/// Currently, [proptest 0.9](https://docs.rs/proptest/0.9) is supported if the `proptest09` feature
+/// is enabled.
+impl<'g> Workspace<'g> {
+    /// Returns a `Strategy` that generates random package names from this workspace.
+    ///
+    /// Requires the `proptest09` feature to be enabled.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if there are no packages in this `Workspace`.
+    pub fn prop09_name_strategy(&self) -> impl Strategy<Value = &'g str> + 'g {
+        let name_list = self.name_list();
+        (0..name_list.len()).prop_map(move |idx| name_list[idx].as_ref())
+    }
+
+    /// Returns a `Strategy` that generates random package IDs from this workspace.
+    ///
+    /// Requires the `proptest09` feature to be enabled.
+    ///
+    /// ## Panics
+    ///
+    /// Panics if there are no packages in this `Workspace`.
+    pub fn prop09_id_strategy(&self) -> impl Strategy<Value = &'g PackageId> + 'g {
+        let members_by_name = &self.inner.members_by_name;
+        self.prop09_name_strategy()
+            .prop_map(move |name| &members_by_name[name])
+    }
+
+    fn name_list(&self) -> &'g [Box<str>] {
+        self.inner
+            .name_list
+            .get_or_init(|| self.inner.members_by_name.keys().cloned().collect())
     }
 }
 

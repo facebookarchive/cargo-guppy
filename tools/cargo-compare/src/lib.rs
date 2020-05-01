@@ -6,6 +6,7 @@
 use crate::diff::DiffOpts;
 use anyhow::Result;
 use either::Either;
+use guppy::graph::PackageGraph;
 use std::env;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -13,6 +14,8 @@ use tempfile::TempDir;
 
 pub mod common;
 pub mod diff;
+#[cfg(test)]
+mod tests;
 pub mod type_conversions;
 
 #[derive(Debug, StructOpt)]
@@ -24,11 +27,13 @@ pub struct CargoCompare {
 
 impl CargoCompare {
     pub fn exec(self) -> Result<()> {
-        // Don't use the temporary home here so that Cargo caches can be reused.
-        let ctx = GlobalContext::new(false)?;
-
         match self.cmd {
-            Command::Diff(opts) => opts.exec(&ctx),
+            Command::Diff(opts) => {
+                // Don't use the temporary home here so that Cargo caches can be reused.
+                let graph = opts.common.metadata_opts.make_command().build_graph()?;
+                let ctx = GlobalContext::new(false, &graph)?;
+                opts.exec(&ctx)
+            }
         }
     }
 }
@@ -42,18 +47,22 @@ enum Command {
 
 /// Global context for Cargo comparisons.
 #[derive(Debug)]
-pub struct GlobalContext {
+pub struct GlobalContext<'g> {
     home_dir: Either<TempDir, PathBuf>,
+    graph: &'g PackageGraph,
 }
 
-impl GlobalContext {
-    pub fn new(temp_home: bool) -> Result<Self> {
+impl<'g> GlobalContext<'g> {
+    pub fn new(temp_home: bool, graph: &'g PackageGraph) -> Result<Self> {
         let home = if temp_home {
             Either::Left(TempDir::new()?)
         } else {
             Either::Right(env::current_dir()?)
         };
-        Ok(Self { home_dir: home })
+        Ok(Self {
+            home_dir: home,
+            graph,
+        })
     }
 
     pub fn home_dir(&self) -> &Path {
@@ -61,5 +70,9 @@ impl GlobalContext {
             Either::Left(temp_home) => temp_home.path(),
             Either::Right(home_dir) => home_dir.as_path(),
         }
+    }
+
+    pub fn graph(&self) -> &'g PackageGraph {
+        self.graph
     }
 }

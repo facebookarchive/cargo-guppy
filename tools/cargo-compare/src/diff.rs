@@ -13,30 +13,20 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 pub struct DiffOpts {
     #[structopt(flatten)]
-    common: GuppyCargoCommon,
+    pub common: GuppyCargoCommon,
 }
 
 impl DiffOpts {
     /// Executes this command.
     pub fn exec(self, ctx: &GlobalContext) -> Result<()> {
         let cargo_map = self.common.resolve_cargo(ctx)?;
-        let graph = self.common.metadata_opts.make_command().build_graph()?;
-        let guppy_map = self.common.resolve_guppy(ctx, &graph)?;
-
-        // As of 2020-04-30, Cargo's APIs don't let users tell the difference between the package
-        // being missing entirely, and the package being present but with no features.
-        //
-        // Note that this is only a problem for the v2 resolver -- the v1 resolver unifies
-        // everything across the target and host anyway so this issue is moot there.
-        //
-        // XXX fix this upstream.
-        let ignore_inserts = self.common.v2;
+        let guppy_map = self.common.resolve_guppy(ctx)?;
 
         println!("** target diff (guppy -> cargo):");
-        print_diff(&guppy_map.target_map, &cargo_map.target_map, ignore_inserts);
+        print_diff(&guppy_map.target_map, &cargo_map.target_map);
 
         println!("\n** host diff (guppy -> cargo):");
-        print_diff(&guppy_map.host_map, &cargo_map.host_map, ignore_inserts);
+        print_diff(&guppy_map.host_map, &cargo_map.host_map);
 
         Ok(())
     }
@@ -45,12 +35,10 @@ impl DiffOpts {
 fn print_diff(
     a: &BTreeMap<PackageId, BTreeSet<String>>,
     b: &BTreeMap<PackageId, BTreeSet<String>>,
-    ignore_inserts: bool,
 ) {
     if let edit::Edit::Change(diff) = a.diff(&b) {
         for (pkg_id, diff) in diff {
-            let ignore = diff.is_copy() || (ignore_inserts && diff.is_insert());
-            if !ignore {
+            if !diff.is_copy() {
                 println!("{}: {:?}", pkg_id, diff);
             }
         }

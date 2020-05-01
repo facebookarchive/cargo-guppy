@@ -463,13 +463,18 @@ impl<'g> DependsCache<'g> {
 #[derive(Clone, Debug)]
 pub struct Workspace<'g> {
     graph: &'g PackageGraph,
-    inner: &'g WorkspaceImpl,
+    pub(super) inner: &'g WorkspaceImpl,
 }
 
 impl<'g> Workspace<'g> {
     /// Returns the workspace root.
     pub fn root(&self) -> &'g Path {
         &self.inner.root
+    }
+
+    /// Returns the number of packages in this workspace.
+    pub fn member_count(&self) -> usize {
+        self.inner.members_by_path.len()
     }
 
     /// Returns an iterator over workspace paths and package metadatas, sorted by the path
@@ -522,6 +527,9 @@ pub(super) struct WorkspaceImpl {
     // This is a BTreeMap to allow presenting data in sorted order.
     pub(super) members_by_path: BTreeMap<PathBuf, PackageId>,
     pub(super) members_by_name: BTreeMap<Box<str>, PackageId>,
+    // Cache for members by name (only used for proptests)
+    #[cfg(feature = "proptest09")]
+    pub(super) name_list: OnceCell<Vec<Box<str>>>,
 }
 
 /// Information about a specific package in a `PackageGraph`.

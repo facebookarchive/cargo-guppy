@@ -12,7 +12,7 @@ use cargo::ops::resolve_ws_with_opts;
 use cargo::Config;
 use guppy::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
 use guppy::graph::feature::FeatureSet;
-use guppy::graph::{DependencyDirection, PackageGraph};
+use guppy::graph::DependencyDirection;
 use guppy::{PackageId, Platform, TargetFeatures};
 use guppy_cmdlib::{CargoMetadataOptions, PackagesAndFeatures};
 use std::collections::{BTreeMap, BTreeSet};
@@ -45,7 +45,7 @@ pub struct GuppyCargoCommon {
 
 impl GuppyCargoCommon {
     /// Resolves data for this query using Cargo.
-    pub fn resolve_cargo(&self, ctx: &GlobalContext) -> Result<FeatureMap> {
+    pub fn resolve_cargo(&self, ctx: &GlobalContext<'_>) -> Result<FeatureMap> {
         let config = self.cargo_make_config(ctx)?;
         let root_manifest = self.cargo_discover_root(&config)?;
         let workspace = self.cargo_make_workspace(&config, &root_manifest)?;
@@ -99,12 +99,16 @@ impl GuppyCargoCommon {
             // platform-specific filtering happens much later in the process.
             // Also, use activated_features_unverified since it's possible for a particular (package
             // ID, features for) combination to be missing.
-            let target_features =
-                resolved_features.activated_features_unverified(pkg_id, FeaturesFor::NormalOrDev);
-            target_map.insert(pkg_id.to_guppy(), target_features.to_guppy());
-            let host_features =
-                resolved_features.activated_features_unverified(pkg_id, FeaturesFor::HostDep);
-            host_map.insert(pkg_id.to_guppy(), host_features.to_guppy());
+            if let Some(target_features) =
+                resolved_features.activated_features_unverified(pkg_id, FeaturesFor::NormalOrDev)
+            {
+                target_map.insert(pkg_id.to_guppy(), target_features.to_guppy());
+            }
+            if let Some(host_features) =
+                resolved_features.activated_features_unverified(pkg_id, FeaturesFor::HostDep)
+            {
+                host_map.insert(pkg_id.to_guppy(), host_features.to_guppy());
+            }
         }
 
         Ok(FeatureMap {
@@ -114,8 +118,8 @@ impl GuppyCargoCommon {
     }
 
     /// Resolves data for this query using Guppy.
-    pub fn resolve_guppy(&self, _ctx: &GlobalContext, graph: &PackageGraph) -> Result<FeatureMap> {
-        let feature_query = self.pf.make_feature_query(graph)?;
+    pub fn resolve_guppy(&self, ctx: &GlobalContext<'_>) -> Result<FeatureMap> {
+        let feature_query = self.pf.make_feature_query(ctx.graph())?;
 
         // Note that guppy is more flexible than cargo here -- with the v1 feature resolver, it can
         // evaluate dependencies one of three ways:
