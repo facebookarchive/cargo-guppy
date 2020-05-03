@@ -6,6 +6,7 @@ use guppy::graph::PackageGraph;
 use guppy_cmdlib::{CargoMetadataOptions, PackagesAndFeatures};
 use once_cell::sync::Lazy;
 use proptest::prelude::*;
+use std::env;
 use std::path::Path;
 
 // ---
@@ -72,12 +73,19 @@ impl Fixture {
     /// Returns the number of proptest iterations that should be run for this fixture.
     pub fn num_proptests(&self) -> u32 {
         // Large graphs (like cargo-guppy's) can only really do a tiny number of proptests
-        // reasonably. It would be cool to figure out a way to speed it up (maybe through
-        // parallelization?)
+        // reasonably in debug mode. It would be cool to figure out a way to speed it up (release
+        // mode works -- also maybe through parallelization?)
+        static PROPTEST_MULTIPLIER: Lazy<u32> =
+            Lazy::new(|| match env::var("PROPTEST_MULTIPLIER") {
+                Ok(multiplier) => multiplier
+                    .parse()
+                    .expect("PROPTEST_MULTIPLIER is a valid u32"),
+                Err(_) => 2,
+            });
         if self.graph.package_count() > 100 {
-            2
+            *PROPTEST_MULTIPLIER
         } else {
-            16
+            *PROPTEST_MULTIPLIER * 4
         }
     }
 
