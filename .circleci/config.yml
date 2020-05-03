@@ -64,6 +64,25 @@ jobs:
             cargo build --all-targets --all-features
             cargo test --all-features
 
+  test-extended:
+    docker:
+      - image: circleci/rust:stretch
+    steps:
+      - checkout
+      - run:
+          name: Version Information
+          command: rustc --version; cargo --version; rustup --version
+      - run:
+          name: Setup Env
+          command: |
+            echo 'export RUSTFLAGS="-D warnings"' >> $BASH_ENV
+      - run:
+          name: cargo-compare extended tests
+          # extended tests for cargo-compare are too slow to run in anything but release mode
+          command: |
+            cd tools/cargo-compare
+            PROPTEST_MULTIPLIER=64 cargo test --release
+
   # docs-build and docs-deploy are adapted from
   # https://circleci.com/blog/deploying-documentation-to-github-pages-with-continuous-integration/.
   docs-build:
@@ -113,12 +132,14 @@ workflows:
       - lint
       - build
       - build-all-features
+      - test-extended
       - docs-build
       - docs-deploy:
           requires:
             - lint
             - build
             - build-all-features
+            - test-extended
             - docs-build
           filters:
             branches:
