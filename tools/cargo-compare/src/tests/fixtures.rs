@@ -3,6 +3,7 @@
 
 use crate::common::GuppyCargoCommon;
 use guppy::graph::PackageGraph;
+use guppy_cmdlib::proptest::triple_strategy;
 use guppy_cmdlib::{CargoMetadataOptions, PackagesAndFeatures};
 use once_cell::sync::Lazy;
 use proptest::prelude::*;
@@ -95,14 +96,16 @@ impl Fixture {
             PackagesAndFeatures::strategy(self.graph()),
             any::<bool>(),
             any::<bool>(),
-            // TODO: random target_platform generation
+            triple_strategy(),
         )
-            .prop_map(move |(pf, include_dev, v2)| GuppyCargoCommon {
-                pf,
-                include_dev,
-                v2,
-                target_platform: None,
-                metadata_opts: metadata_opts.clone(),
-            })
+            .prop_map(
+                move |(pf, include_dev, v2, target_platform)| GuppyCargoCommon {
+                    pf,
+                    include_dev,
+                    v2,
+                    target_platform: target_platform.map(|s| s.to_string()),
+                    metadata_opts: metadata_opts.clone(),
+                },
+            )
     }
 }

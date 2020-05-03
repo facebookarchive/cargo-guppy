@@ -5,6 +5,7 @@
 
 use crate::PackagesAndFeatures;
 use guppy::graph::PackageGraph;
+use guppy::{Platform, TargetFeatures};
 use proptest::collection::hash_set;
 use proptest::prelude::*;
 
@@ -30,4 +31,19 @@ impl PackagesAndFeatures {
                 }
             })
     }
+}
+
+/// Generates a random, known target triple that can be understood by both cargo and guppy, or
+/// `None`.
+pub fn triple_strategy() -> impl Strategy<Value = Option<&'static str>> {
+    // Filter out Apple platforms because rustc requires the Apple SDKs to be set up for them.
+    let platform_strategy = Platform::filtered_strategy(
+        |triple| !triple.contains("-apple-"),
+        Just(TargetFeatures::Unknown),
+    );
+    prop_oneof![
+        // 25% chance to generate None, 75% to generate a particular platform
+        1 => Just(None),
+        3 => platform_strategy.prop_map(|platform| Some(platform.triple())),
+    ]
 }

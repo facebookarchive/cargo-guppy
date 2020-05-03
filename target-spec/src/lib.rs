@@ -40,6 +40,8 @@
 mod evaluator;
 mod parser;
 mod platform;
+#[cfg(feature = "proptest09")]
+mod proptest;
 
 pub use evaluator::*;
 pub use parser::*;

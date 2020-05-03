@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.4] - Unreleased
+
+### Added
+- New feature `proptest09` to generate random platforms for property testing.
+
 ## [0.2.3] - 2020-04-15
 
 ### Fixed
