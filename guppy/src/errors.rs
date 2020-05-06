@@ -15,8 +15,10 @@ use Error::*;
 pub enum Error {
     /// An error occurred while executing `cargo metadata`.
     CommandError(Box<dyn error::Error + Send + Sync>),
-    /// An error occurred while parsing cargo metadata JSON.
+    /// An error occurred while parsing `cargo metadata` JSON.
     MetadataParseError(serde_json::Error),
+    /// An error occurred while serializing `cargo metadata` JSON.
+    MetadataSerializeError(serde_json::Error),
     /// An error occurred while constructing a `PackageGraph` from parsed metadata.
     PackageGraphConstructError(String),
     /// A package ID was unknown to this `PackageGraph`.
@@ -48,6 +50,11 @@ impl fmt::Display for Error {
                 "Error while parsing 'cargo metadata' JSON output: {}",
                 err
             ),
+            MetadataSerializeError(err) => write!(
+                f,
+                "Error while serializing 'cargo metadata' JSON output: {}",
+                err
+            ),
             PackageGraphConstructError(msg) => {
                 write!(f, "Error while computing package graph: {}", msg)
             }
@@ -68,6 +75,7 @@ impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             MetadataParseError(err) => Some(err),
+            MetadataSerializeError(err) => Some(err),
             CommandError(err) => Some(err.as_ref()),
             PackageGraphConstructError(_) => None,
             UnknownPackageId(_) => None,

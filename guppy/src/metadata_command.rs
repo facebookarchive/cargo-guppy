@@ -4,9 +4,13 @@
 use crate::graph::PackageGraph;
 use crate::Error;
 use cargo_metadata::CargoOpt;
+use serde::{Deserialize, Serialize};
+use std::io;
 use std::path::Path;
 
 /// A builder for configuring `cargo metadata` invocations.
+///
+/// This is the most common entry point for constructing a `PackageGraph`.
 ///
 /// ## Examples
 ///
@@ -68,6 +72,7 @@ impl MetadataCommand {
     /// command invocation.
     ///
     /// Note that `guppy` internally:
+    /// * uses `--format-version 1` as its metadata format.
     /// * passes in `--all-features`, so that `guppy` has a full view of the dependency graph.
     /// * does not pass in `--no-deps`, so that `guppy` knows about non-workspace dependencies.
     ///
@@ -77,7 +82,7 @@ impl MetadataCommand {
         self
     }
 
-    /// Runs the configured `cargo metadata` and returns a parsed `CargoMetadata`.
+    /// Runs the configured `cargo metadata` and returns a deserialized `CargoMetadata`.
     pub fn exec(&mut self) -> Result<CargoMetadata, Error> {
         let inner = self.inner.exec().map_err(Error::command_error)?;
         Ok(CargoMetadata(inner))
@@ -90,23 +95,29 @@ impl MetadataCommand {
     }
 }
 
-/// A parsed `Cargo` metadata returned by a `MetadataCommand`.
+/// A deserialized Cargo metadata returned by a `MetadataCommand`.
 ///
-/// This is an intermediate, opaque struct which may be generated either through
-/// `MetadataCommand::to_metadata` or through deserializing JSON representing `cargo metadata`. To
-/// analyze Cargo metadata by building a `PackageGraph`
-/// from it, call the `into_package_graph` method.
-#[derive(Clone, Debug)]
+/// This is an alternative entry point for constructing a `PackageGraph`, to be used if the JSON
+/// output of `cargo metadata` is already available.
+///
+/// This struct implements `serde::Serialize` and `Deserialize`.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(transparent)]
 pub struct CargoMetadata(pub(crate) cargo_metadata::Metadata);
 
 impl CargoMetadata {
-    /// Parses this JSON blob into a `Metadata`.
+    /// Deserializes this JSON blob into a `CargoMetadata`.
     pub fn parse_json(json: impl AsRef<str>) -> Result<Self, Error> {
         let inner = serde_json::from_str(json.as_ref()).map_err(Error::MetadataParseError)?;
         Ok(Self(inner))
     }
 
-    /// Builds a `PackageGraph` out of this `Metadata`.
+    /// Serializes this metadata into the given writer.
+    pub fn serialize(&self, writer: &mut impl io::Write) -> Result<(), Error> {
+        serde_json::to_writer(writer, &self.0).map_err(Error::MetadataSerializeError)
+    }
+
+    /// Parses this metadata and builds a `PackageGraph` from it.
     pub fn build_graph(self) -> Result<PackageGraph, Error> {
         PackageGraph::from_metadata(self)
     }
