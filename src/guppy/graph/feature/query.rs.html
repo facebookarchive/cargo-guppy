@@ -328,6 +328,23 @@
 <span id="328">328</span>
 <span id="329">329</span>
 <span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -335,8 +352,10 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">CrossLink</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageQuery</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">FeatureIx</span>, <span class="ident">PackageQuery</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
+<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graph</span>::<span class="ident">NodeIndex</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span>;
 
 <span class="doccomment">/// Trait representing whether a feature within a package should be selected.</span>
@@ -565,6 +584,21 @@
             <span class="ident">graph</span>: <span class="kw-2">*</span><span class="self">self</span>,
             <span class="ident">params</span>: <span class="ident">QueryParams</span>::<span class="ident">Reverse</span>(<span class="self">self</span>.<span class="ident">feature_ixs</span>(<span class="ident">feature_ids</span>)<span class="question-mark">?</span>),
         })
+    }
+
+    <span class="kw">pub</span>(<span class="kw">in</span> <span class="kw">crate</span>::<span class="ident">graph</span>) <span class="kw">fn</span> <span class="ident">query_from_parts</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">feature_ixs</span>: <span class="ident">SortedSet</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">direction</span> {
+            <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">QueryParams</span>::<span class="ident">Forward</span>(<span class="ident">feature_ixs</span>),
+            <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">QueryParams</span>::<span class="ident">Reverse</span>(<span class="ident">feature_ixs</span>),
+        };
+        <span class="ident">FeatureQuery</span> {
+            <span class="ident">graph</span>: <span class="kw-2">*</span><span class="self">self</span>,
+            <span class="ident">params</span>,
+        }
     }
 }
 

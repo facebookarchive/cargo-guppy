@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/core/compiler/compilation.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compilation.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/compiler/compilation.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>compilation.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -330,6 +330,28 @@
 <span id="330">330</span>
 <span id="331">331</span>
 <span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeSet</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">env</span>;
@@ -341,15 +363,14 @@
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">BuildContext</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">CompileKind</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Edition</span>, <span class="ident">Package</span>, <span class="ident">PackageId</span>, <span class="ident">Target</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">Unit</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Edition</span>, <span class="ident">Package</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="self">self</span>, <span class="ident">config</span>, <span class="ident">join_paths</span>, <span class="ident">process</span>, <span class="ident">CargoResult</span>, <span class="ident">Config</span>, <span class="ident">ProcessBuilder</span>};
 
 <span class="doccomment">/// Structure with enough information to run `rustdoc --test`.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Doctest</span> {
-    <span class="doccomment">/// The package being doc-tested.</span>
-    <span class="kw">pub</span> <span class="ident">package</span>: <span class="ident">Package</span>,
-    <span class="doccomment">/// The target being tested (currently always the package&#39;s lib).</span>
-    <span class="kw">pub</span> <span class="ident">target</span>: <span class="ident">Target</span>,
+    <span class="doccomment">/// What&#39;s being doctested</span>
+    <span class="kw">pub</span> <span class="ident">unit</span>: <span class="ident">Unit</span>,
     <span class="doccomment">/// Arguments needed to pass to rustdoc to run this test.</span>
     <span class="kw">pub</span> <span class="ident">args</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Whether or not -Zunstable-options is needed.</span>
@@ -359,11 +380,12 @@
 <span class="doccomment">/// A structure returning the result of a compilation.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> {
     <span class="doccomment">/// An array of all tests created during this compilation.</span>
-    <span class="doccomment">/// `(package, target, path_to_test_exe)`</span>
-    <span class="kw">pub</span> <span class="ident">tests</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Package</span>, <span class="ident">Target</span>, <span class="ident">PathBuf</span>)<span class="op">&gt;</span>,
+    <span class="doccomment">/// `(unit, path_to_test_exe)` where `unit` contains information such as the</span>
+    <span class="doccomment">/// package, compile target, etc.</span>
+    <span class="kw">pub</span> <span class="ident">tests</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Unit</span>, <span class="ident">PathBuf</span>)<span class="op">&gt;</span>,
 
     <span class="doccomment">/// An array of all binaries created.</span>
-    <span class="kw">pub</span> <span class="ident">binaries</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">binaries</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Unit</span>, <span class="ident">PathBuf</span>)<span class="op">&gt;</span>,
 
     <span class="doccomment">/// All directories for the output of native build commands.</span>
     <span class="doccomment">///</span>
@@ -374,20 +396,17 @@
     <span class="kw">pub</span> <span class="ident">native_dirs</span>: <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Root output directory (for the local package&#39;s artifacts)</span>
-    <span class="kw">pub</span> <span class="ident">root_output</span>: <span class="ident">PathBuf</span>,
+    <span class="kw">pub</span> <span class="ident">root_output</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">CompileKind</span>, <span class="ident">PathBuf</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Output directory for rust dependencies.</span>
     <span class="doccomment">/// May be for the host or for a specific target.</span>
-    <span class="kw">pub</span> <span class="ident">deps_output</span>: <span class="ident">PathBuf</span>,
+    <span class="kw">pub</span> <span class="ident">deps_output</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">CompileKind</span>, <span class="ident">PathBuf</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Output directory for the rust host dependencies.</span>
-    <span class="kw">pub</span> <span class="ident">host_deps_output</span>: <span class="ident">PathBuf</span>,
+    <span class="doccomment">/// The path to the host libdir for the compiler used</span>
+    <span class="ident">sysroot_host_libdir</span>: <span class="ident">PathBuf</span>,
 
-    <span class="doccomment">/// The path to rustc&#39;s own libstd</span>
-    <span class="kw">pub</span> <span class="ident">host_dylib_path</span>: <span class="ident">PathBuf</span>,
-
-    <span class="doccomment">/// The path to libstd for the target</span>
-    <span class="kw">pub</span> <span class="ident">target_dylib_path</span>: <span class="ident">PathBuf</span>,
+    <span class="doccomment">/// The path to libstd for each target</span>
+    <span class="ident">sysroot_target_libdir</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">CompileKind</span>, <span class="ident">PathBuf</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Extra environment variables that were passed to compilations and should</span>
     <span class="doccomment">/// be passed to future invocations of programs.</span>
@@ -402,29 +421,30 @@
     <span class="doccomment">/// Flags to pass to rustdoc when invoked from cargo test, per package.</span>
     <span class="kw">pub</span> <span class="ident">rustdocflags</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
-    <span class="kw">pub</span> <span class="ident">host</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">target</span>: <span class="ident">String</span>,
-
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;cfg</span> <span class="ident">Config</span>,
-    <span class="ident">rustc_process</span>: <span class="ident">ProcessBuilder</span>,
-    <span class="ident">primary_unit_rustc_process</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span>,
 
-    <span class="ident">target_runner</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">PathBuf</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+    <span class="doccomment">/// Rustc process to be used by default</span>
+    <span class="ident">rustc_process</span>: <span class="ident">ProcessBuilder</span>,
+    <span class="doccomment">/// Rustc process to be used for workspace crates instead of rustc_process</span>
+    <span class="ident">rustc_workspace_wrapper_process</span>: <span class="ident">ProcessBuilder</span>,
+    <span class="doccomment">/// Optional rustc process to be used for primary crates instead of either rustc_process or</span>
+    <span class="doccomment">/// rustc_workspace_wrapper_process</span>
+    <span class="ident">primary_rustc_process</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span>,
+
+    <span class="ident">target_runners</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">CompileKind</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">PathBuf</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> <span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-        <span class="ident">bcx</span>: <span class="kw-2">&amp;</span><span class="ident">BuildContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-        <span class="ident">default_kind</span>: <span class="ident">CompileKind</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">bcx</span>: <span class="kw-2">&amp;</span><span class="ident">BuildContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rustc</span> <span class="op">=</span> <span class="ident">bcx</span>.<span class="ident">rustc</span>().<span class="ident">process</span>();
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">primary_unit_rustc_process</span> <span class="op">=</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">primary_unit_rustc</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">primary_rustc_process</span> <span class="op">=</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">primary_unit_rustc</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rustc_workspace_wrapper_process</span> <span class="op">=</span> <span class="ident">bcx</span>.<span class="ident">rustc</span>().<span class="ident">workspace_process</span>();
 
         <span class="kw">if</span> <span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">extra_verbose</span>() {
             <span class="ident">rustc</span>.<span class="ident">display_env_vars</span>();
+            <span class="ident">rustc_workspace_wrapper_process</span>.<span class="ident">display_env_vars</span>();
 
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rustc</span>) <span class="op">=</span> <span class="ident">primary_unit_rustc_process</span>.<span class="ident">as_mut</span>() {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rustc</span>) <span class="op">=</span> <span class="ident">primary_rustc_process</span>.<span class="ident">as_mut</span>() {
                 <span class="ident">rustc</span>.<span class="ident">display_env_vars</span>();
             }
         }
@@ -432,19 +452,25 @@
         <span class="prelude-val">Ok</span>(<span class="ident">Compilation</span> {
             <span class="comment">// TODO: deprecated; remove.</span>
             <span class="ident">native_dirs</span>: <span class="ident">BTreeSet</span>::<span class="ident">new</span>(),
-            <span class="ident">root_output</span>: <span class="ident">PathBuf</span>::<span class="ident">from</span>(<span class="string">&quot;/&quot;</span>),
-            <span class="ident">deps_output</span>: <span class="ident">PathBuf</span>::<span class="ident">from</span>(<span class="string">&quot;/&quot;</span>),
-            <span class="ident">host_deps_output</span>: <span class="ident">PathBuf</span>::<span class="ident">from</span>(<span class="string">&quot;/&quot;</span>),
-            <span class="ident">host_dylib_path</span>: <span class="ident">bcx</span>
+            <span class="ident">root_output</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
+            <span class="ident">deps_output</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
+            <span class="ident">sysroot_host_libdir</span>: <span class="ident">bcx</span>
                 .<span class="ident">target_data</span>
                 .<span class="ident">info</span>(<span class="ident">CompileKind</span>::<span class="ident">Host</span>)
                 .<span class="ident">sysroot_host_libdir</span>
                 .<span class="ident">clone</span>(),
-            <span class="ident">target_dylib_path</span>: <span class="ident">bcx</span>
-                .<span class="ident">target_data</span>
-                .<span class="ident">info</span>(<span class="ident">default_kind</span>)
-                .<span class="ident">sysroot_target_libdir</span>
-                .<span class="ident">clone</span>(),
+            <span class="ident">sysroot_target_libdir</span>: <span class="ident">bcx</span>
+                .<span class="ident">build_config</span>
+                .<span class="ident">requested_kinds</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">chain</span>(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">CompileKind</span>::<span class="ident">Host</span>))
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">kind</span><span class="op">|</span> {
+                    (
+                        <span class="kw-2">*</span><span class="ident">kind</span>,
+                        <span class="ident">bcx</span>.<span class="ident">target_data</span>.<span class="ident">info</span>(<span class="kw-2">*</span><span class="ident">kind</span>).<span class="ident">sysroot_target_libdir</span>.<span class="ident">clone</span>(),
+                    )
+                })
+                .<span class="ident">collect</span>(),
             <span class="ident">tests</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
             <span class="ident">binaries</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
             <span class="ident">extra_env</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
@@ -453,34 +479,49 @@
             <span class="ident">rustdocflags</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
             <span class="ident">config</span>: <span class="ident">bcx</span>.<span class="ident">config</span>,
             <span class="ident">rustc_process</span>: <span class="ident">rustc</span>,
-            <span class="ident">primary_unit_rustc_process</span>,
-            <span class="ident">host</span>: <span class="ident">bcx</span>.<span class="ident">host_triple</span>().<span class="ident">to_string</span>(),
-            <span class="ident">target</span>: <span class="ident">bcx</span>.<span class="ident">target_data</span>.<span class="ident">short_name</span>(<span class="kw-2">&amp;</span><span class="ident">default_kind</span>).<span class="ident">to_string</span>(),
-            <span class="ident">target_runner</span>: <span class="ident">target_runner</span>(<span class="ident">bcx</span>, <span class="ident">default_kind</span>)<span class="question-mark">?</span>,
+            <span class="ident">rustc_workspace_wrapper_process</span>,
+            <span class="ident">primary_rustc_process</span>,
+            <span class="ident">target_runners</span>: <span class="ident">bcx</span>
+                .<span class="ident">build_config</span>
+                .<span class="ident">requested_kinds</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">chain</span>(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">CompileKind</span>::<span class="ident">Host</span>))
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">kind</span><span class="op">|</span> <span class="prelude-val">Ok</span>((<span class="kw-2">*</span><span class="ident">kind</span>, <span class="ident">target_runner</span>(<span class="ident">bcx</span>, <span class="kw-2">*</span><span class="ident">kind</span>)<span class="question-mark">?</span>)))
+                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>,
         })
     }
 
     <span class="doccomment">/// See `process`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rustc_process</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>, <span class="ident">is_primary</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">rustc</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_primary</span> {
-            <span class="self">self</span>.<span class="ident">primary_unit_rustc_process</span>
-                .<span class="ident">clone</span>()
-                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">rustc_process</span>.<span class="ident">clone</span>())
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rustc_process</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
+        <span class="ident">is_primary</span>: <span class="ident">bool</span>,
+        <span class="ident">is_workspace</span>: <span class="ident">bool</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">rustc</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_primary</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="self">self</span>.<span class="ident">primary_rustc_process</span>.<span class="ident">is_some</span>() {
+            <span class="self">self</span>.<span class="ident">primary_rustc_process</span>.<span class="ident">clone</span>().<span class="ident">unwrap</span>()
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">is_workspace</span> {
+            <span class="self">self</span>.<span class="ident">rustc_workspace_wrapper_process</span>.<span class="ident">clone</span>()
         } <span class="kw">else</span> {
             <span class="self">self</span>.<span class="ident">rustc_process</span>.<span class="ident">clone</span>()
         };
 
-        <span class="self">self</span>.<span class="ident">fill_env</span>(<span class="ident">rustc</span>, <span class="ident">pkg</span>, <span class="bool-val">true</span>)
+        <span class="self">self</span>.<span class="ident">fill_env</span>(<span class="ident">rustc</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>, <span class="ident">unit</span>.<span class="ident">kind</span>, <span class="bool-val">true</span>)
     }
 
     <span class="doccomment">/// See `process`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rustdoc_process</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>, <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="ident">Target</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">p</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fill_env</span>(<span class="ident">process</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">rustdoc</span>()<span class="question-mark">?</span>), <span class="ident">pkg</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">edition</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">Edition</span>::<span class="ident">Edition2015</span> {
-            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;--edition={}&quot;</span>, <span class="ident">target</span>.<span class="ident">edition</span>()));
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rustdoc_process</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">p</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fill_env</span>(
+            <span class="ident">process</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">rustdoc</span>()<span class="question-mark">?</span>),
+            <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>,
+            <span class="ident">unit</span>.<span class="ident">kind</span>,
+            <span class="bool-val">true</span>,
+        )<span class="question-mark">?</span>;
+        <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">edition</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">Edition</span>::<span class="ident">Edition2015</span> {
+            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;--edition={}&quot;</span>, <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">edition</span>()));
         }
 
-        <span class="kw">for</span> <span class="ident">crate_type</span> <span class="kw">in</span> <span class="ident">target</span>.<span class="ident">rustc_crate_types</span>() {
+        <span class="kw">for</span> <span class="ident">crate_type</span> <span class="kw">in</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">rustc_crate_types</span>() {
             <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--crate-type&quot;</span>).<span class="ident">arg</span>(<span class="ident">crate_type</span>);
         }
 
@@ -493,20 +534,21 @@
         <span class="ident">cmd</span>: <span class="ident">T</span>,
         <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">fill_env</span>(<span class="ident">process</span>(<span class="ident">cmd</span>), <span class="ident">pkg</span>, <span class="bool-val">true</span>)
+        <span class="self">self</span>.<span class="ident">fill_env</span>(<span class="ident">process</span>(<span class="ident">cmd</span>), <span class="ident">pkg</span>, <span class="ident">CompileKind</span>::<span class="ident">Host</span>, <span class="bool-val">false</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target_runner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">PathBuf</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_runner</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target_runner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">kind</span>: <span class="ident">CompileKind</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="ident">PathBuf</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">target_runners</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">kind</span>).<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_ref</span>())
     }
 
     <span class="doccomment">/// See `process`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target_process</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">OsStr</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">cmd</span>: <span class="ident">T</span>,
+        <span class="ident">kind</span>: <span class="ident">CompileKind</span>,
         <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw-2">ref</span> <span class="ident">runner</span>, <span class="kw-2">ref</span> <span class="ident">args</span>)) <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">target_runner</span>() {
+        <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">runner</span>, <span class="ident">args</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">target_runner</span>(<span class="ident">kind</span>) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">process</span>(<span class="ident">runner</span>);
             <span class="ident">builder</span>.<span class="ident">args</span>(<span class="ident">args</span>);
             <span class="ident">builder</span>.<span class="ident">arg</span>(<span class="ident">cmd</span>);
@@ -514,7 +556,7 @@
         } <span class="kw">else</span> {
             <span class="ident">process</span>(<span class="ident">cmd</span>)
         };
-        <span class="self">self</span>.<span class="ident">fill_env</span>(<span class="ident">builder</span>, <span class="ident">pkg</span>, <span class="bool-val">false</span>)
+        <span class="self">self</span>.<span class="ident">fill_env</span>(<span class="ident">builder</span>, <span class="ident">pkg</span>, <span class="ident">kind</span>, <span class="bool-val">false</span>)
     }
 
     <span class="doccomment">/// Prepares a new process with an appropriate environment to run against</span>
@@ -526,26 +568,28 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="kw-2">mut</span> <span class="ident">cmd</span>: <span class="ident">ProcessBuilder</span>,
         <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>,
-        <span class="ident">is_host</span>: <span class="ident">bool</span>,
+        <span class="ident">kind</span>: <span class="ident">CompileKind</span>,
+        <span class="ident">is_rustc_tool</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">search_path</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_host</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">search_path</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="self">self</span>.<span class="ident">host_deps_output</span>.<span class="ident">clone</span>()];
-            <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">host_dylib_path</span>.<span class="ident">clone</span>());
-            <span class="ident">search_path</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">search_path</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+        <span class="kw">if</span> <span class="ident">is_rustc_tool</span> {
+            <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">deps_output</span>[<span class="kw-2">&amp;</span><span class="ident">CompileKind</span>::<span class="ident">Host</span>].<span class="ident">clone</span>());
+            <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">sysroot_host_libdir</span>.<span class="ident">clone</span>());
         } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">search_path</span> <span class="op">=</span>
-                <span class="kw">super</span>::<span class="ident">filter_dynamic_search_path</span>(<span class="self">self</span>.<span class="ident">native_dirs</span>.<span class="ident">iter</span>(), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">root_output</span>);
-            <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">deps_output</span>.<span class="ident">clone</span>());
-            <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">root_output</span>.<span class="ident">clone</span>());
+            <span class="ident">search_path</span>.<span class="ident">extend</span>(<span class="kw">super</span>::<span class="ident">filter_dynamic_search_path</span>(
+                <span class="self">self</span>.<span class="ident">native_dirs</span>.<span class="ident">iter</span>(),
+                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">root_output</span>[<span class="kw-2">&amp;</span><span class="ident">kind</span>],
+            ));
+            <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">deps_output</span>[<span class="kw-2">&amp;</span><span class="ident">kind</span>].<span class="ident">clone</span>());
+            <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">root_output</span>[<span class="kw-2">&amp;</span><span class="ident">kind</span>].<span class="ident">clone</span>());
             <span class="comment">// For build-std, we don&#39;t want to accidentally pull in any shared</span>
             <span class="comment">// libs from the sysroot that ships with rustc. This may not be</span>
             <span class="comment">// required (at least I cannot craft a situation where it</span>
             <span class="comment">// matters), but is here to be safe.</span>
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">cli_unstable</span>().<span class="ident">build_std</span>.<span class="ident">is_none</span>() {
-                <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">target_dylib_path</span>.<span class="ident">clone</span>());
+                <span class="ident">search_path</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">sysroot_target_libdir</span>[<span class="kw-2">&amp;</span><span class="ident">kind</span>].<span class="ident">clone</span>());
             }
-            <span class="ident">search_path</span>
-        };
+        }
 
         <span class="kw">let</span> <span class="ident">dylib_path</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">dylib_path</span>();
         <span class="kw">let</span> <span class="ident">dylib_path_is_empty</span> <span class="op">=</span> <span class="ident">dylib_path</span>.<span class="ident">is_empty</span>();

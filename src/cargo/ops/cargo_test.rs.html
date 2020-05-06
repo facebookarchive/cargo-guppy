@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/ops/cargo_test.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_test.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/ops/cargo_test.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_test.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -219,34 +219,25 @@
 <span id="219">219</span>
 <span id="220">220</span>
 <span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
-<span id="229">229</span>
-<span id="230">230</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::<span class="ident">OsString</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">Compilation</span>, <span class="ident">Doctest</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">Compilation</span>, <span class="ident">CompileKind</span>, <span class="ident">Doctest</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">shell</span>::<span class="ident">Verbosity</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">Workspace</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ops</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::<span class="ident">CargoResult</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">CargoTestError</span>, <span class="ident">ProcessError</span>, <span class="ident">Test</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">CargoTestError</span>, <span class="ident">Config</span>, <span class="ident">ProcessError</span>, <span class="ident">Test</span>};
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TestOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="ident">compile_opts</span>: <span class="ident">ops</span>::<span class="ident">CompileOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TestOptions</span> {
+    <span class="kw">pub</span> <span class="ident">compile_opts</span>: <span class="ident">ops</span>::<span class="ident">CompileOptions</span>,
     <span class="kw">pub</span> <span class="ident">no_run</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">no_fail_fast</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">run_tests</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span>,
     <span class="ident">test_args</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>],
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CargoTestError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">compilation</span> <span class="op">=</span> <span class="ident">compile_tests</span>(<span class="ident">ws</span>, <span class="ident">options</span>)<span class="question-mark">?</span>;
@@ -254,14 +245,14 @@
     <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">no_run</span> {
         <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
     }
-    <span class="kw">let</span> (<span class="ident">test</span>, <span class="kw-2">mut</span> <span class="ident">errors</span>) <span class="op">=</span> <span class="ident">run_unit_tests</span>(<span class="ident">options</span>, <span class="ident">test_args</span>, <span class="kw-2">&amp;</span><span class="ident">compilation</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">test</span>, <span class="kw-2">mut</span> <span class="ident">errors</span>) <span class="op">=</span> <span class="ident">run_unit_tests</span>(<span class="ident">ws</span>.<span class="ident">config</span>(), <span class="ident">options</span>, <span class="ident">test_args</span>, <span class="kw-2">&amp;</span><span class="ident">compilation</span>)<span class="question-mark">?</span>;
 
     <span class="comment">// If we have an error and want to fail fast, then return.</span>
     <span class="kw">if</span> <span class="op">!</span><span class="ident">errors</span>.<span class="ident">is_empty</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">options</span>.<span class="ident">no_fail_fast</span> {
         <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">CargoTestError</span>::<span class="ident">new</span>(<span class="ident">test</span>, <span class="ident">errors</span>)));
     }
 
-    <span class="kw">let</span> (<span class="ident">doctest</span>, <span class="ident">docerrors</span>) <span class="op">=</span> <span class="ident">run_doc_tests</span>(<span class="ident">options</span>, <span class="ident">test_args</span>, <span class="kw-2">&amp;</span><span class="ident">compilation</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">doctest</span>, <span class="ident">docerrors</span>) <span class="op">=</span> <span class="ident">run_doc_tests</span>(<span class="ident">ws</span>.<span class="ident">config</span>(), <span class="ident">options</span>, <span class="ident">test_args</span>, <span class="kw-2">&amp;</span><span class="ident">compilation</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">test</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">docerrors</span>.<span class="ident">is_empty</span>() { <span class="ident">test</span> } <span class="kw">else</span> { <span class="ident">doctest</span> };
     <span class="ident">errors</span>.<span class="ident">extend</span>(<span class="ident">docerrors</span>);
     <span class="kw">if</span> <span class="ident">errors</span>.<span class="ident">is_empty</span>() {
@@ -273,7 +264,7 @@
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">run_benches</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span>,
     <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>],
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CargoTestError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">compilation</span> <span class="op">=</span> <span class="ident">compile_tests</span>(<span class="ident">ws</span>, <span class="ident">options</span>)<span class="question-mark">?</span>;
@@ -285,7 +276,7 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">args</span>.<span class="ident">to_vec</span>();
     <span class="ident">args</span>.<span class="ident">push</span>(<span class="string">&quot;--bench&quot;</span>);
 
-    <span class="kw">let</span> (<span class="ident">test</span>, <span class="ident">errors</span>) <span class="op">=</span> <span class="ident">run_unit_tests</span>(<span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="ident">args</span>, <span class="kw-2">&amp;</span><span class="ident">compilation</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">test</span>, <span class="ident">errors</span>) <span class="op">=</span> <span class="ident">run_unit_tests</span>(<span class="ident">ws</span>.<span class="ident">config</span>(), <span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="ident">args</span>, <span class="kw-2">&amp;</span><span class="ident">compilation</span>)<span class="question-mark">?</span>;
 
     <span class="kw">match</span> <span class="ident">errors</span>.<span class="ident">len</span>() {
         <span class="number">0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
@@ -293,35 +284,28 @@
     }
 }
 
-<span class="kw">fn</span> <span class="ident">compile_tests</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-    <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">compile_tests</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">compilation</span> <span class="op">=</span> <span class="ident">ops</span>::<span class="ident">compile</span>(<span class="ident">ws</span>, <span class="kw-2">&amp;</span><span class="ident">options</span>.<span class="ident">compile_opts</span>)<span class="question-mark">?</span>;
-    <span class="ident">compilation</span>
-        .<span class="ident">tests</span>
-        .<span class="ident">sort_by</span>(<span class="op">|</span><span class="ident">a</span>, <span class="ident">b</span><span class="op">|</span> (<span class="ident">a</span>.<span class="number">0</span>.<span class="ident">package_id</span>(), <span class="kw-2">&amp;</span><span class="ident">a</span>.<span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">a</span>.<span class="number">2</span>).<span class="ident">cmp</span>(<span class="kw-2">&amp;</span>(<span class="ident">b</span>.<span class="number">0</span>.<span class="ident">package_id</span>(), <span class="kw-2">&amp;</span><span class="ident">b</span>.<span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">b</span>.<span class="number">2</span>)));
+    <span class="ident">compilation</span>.<span class="ident">tests</span>.<span class="ident">sort</span>();
     <span class="prelude-val">Ok</span>(<span class="ident">compilation</span>)
 }
 
 <span class="doccomment">/// Runs the unit and integration tests of a package.</span>
 <span class="kw">fn</span> <span class="ident">run_unit_tests</span>(
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span>,
     <span class="ident">test_args</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>],
     <span class="ident">compilation</span>: <span class="kw-2">&amp;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">Test</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ProcessError</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">compile_opts</span>.<span class="ident">config</span>;
-    <span class="kw">let</span> <span class="ident">cwd</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">compile_opts</span>.<span class="ident">config</span>.<span class="ident">cwd</span>();
-
+    <span class="kw">let</span> <span class="ident">cwd</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">cwd</span>();
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">errors</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
 
-    <span class="kw">for</span> <span class="kw-2">&amp;</span>(<span class="kw-2">ref</span> <span class="ident">pkg</span>, <span class="kw-2">ref</span> <span class="ident">target</span>, <span class="kw-2">ref</span> <span class="ident">exe</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">compilation</span>.<span class="ident">tests</span> {
-        <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">kind</span>();
-        <span class="kw">let</span> <span class="ident">test</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">name</span>().<span class="ident">to_string</span>();
+    <span class="kw">for</span> (<span class="ident">unit</span>, <span class="ident">exe</span>) <span class="kw">in</span> <span class="ident">compilation</span>.<span class="ident">tests</span>.<span class="ident">iter</span>() {
+        <span class="kw">let</span> <span class="ident">test</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">name</span>().<span class="ident">to_string</span>();
         <span class="kw">let</span> <span class="ident">exe_display</span> <span class="op">=</span> <span class="ident">exe</span>.<span class="ident">strip_prefix</span>(<span class="ident">cwd</span>).<span class="ident">unwrap_or</span>(<span class="ident">exe</span>).<span class="ident">display</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">target_process</span>(<span class="ident">exe</span>, <span class="ident">pkg</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">target_process</span>(<span class="ident">exe</span>, <span class="ident">unit</span>.<span class="ident">kind</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>)<span class="question-mark">?</span>;
         <span class="ident">cmd</span>.<span class="ident">args</span>(<span class="ident">test_args</span>);
-        <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">harness</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">verbosity</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">Verbosity</span>::<span class="ident">Quiet</span> {
+        <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">harness</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">verbosity</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">Verbosity</span>::<span class="ident">Quiet</span> {
             <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;--quiet&quot;</span>);
         }
         <span class="ident">config</span>
@@ -336,7 +320,12 @@
         <span class="kw">match</span> <span class="ident">result</span> {
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">downcast</span>::<span class="op">&lt;</span><span class="ident">ProcessError</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
-                <span class="ident">errors</span>.<span class="ident">push</span>((<span class="ident">kind</span>.<span class="ident">clone</span>(), <span class="ident">test</span>.<span class="ident">clone</span>(), <span class="ident">pkg</span>.<span class="ident">name</span>().<span class="ident">to_string</span>(), <span class="ident">e</span>));
+                <span class="ident">errors</span>.<span class="ident">push</span>((
+                    <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">kind</span>().<span class="ident">clone</span>(),
+                    <span class="ident">test</span>.<span class="ident">clone</span>(),
+                    <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">name</span>().<span class="ident">to_string</span>(),
+                    <span class="ident">e</span>,
+                ));
                 <span class="kw">if</span> <span class="op">!</span><span class="ident">options</span>.<span class="ident">no_fail_fast</span> {
                     <span class="kw">break</span>;
                 }
@@ -364,52 +353,51 @@
 }
 
 <span class="kw">fn</span> <span class="ident">run_doc_tests</span>(
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TestOptions</span>,
     <span class="ident">test_args</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>],
     <span class="ident">compilation</span>: <span class="kw-2">&amp;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">Test</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ProcessError</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">errors</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">compile_opts</span>.<span class="ident">config</span>;
-
-    <span class="comment">// The unstable doctest-xcompile feature enables both per-target-ignores and</span>
-    <span class="comment">// cross-compiling doctests. As a side effect, this feature also gates running</span>
-    <span class="comment">// doctests with runtools when target == host.</span>
-    <span class="kw">let</span> <span class="ident">doctest_xcompile</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">cli_unstable</span>().<span class="ident">doctest_xcompile</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runtool</span>: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="prelude-val">None</span>;
-    <span class="kw">if</span> <span class="ident">doctest_xcompile</span> {
-        <span class="ident">runtool</span> <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">target_runner</span>();
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">compilation</span>.<span class="ident">host</span> <span class="op">!</span><span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">target</span> {
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="ident">Test</span>::<span class="ident">Doc</span>, <span class="ident">errors</span>));
-    }
 
     <span class="kw">for</span> <span class="ident">doctest_info</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">compilation</span>.<span class="ident">to_doc_test</span> {
         <span class="kw">let</span> <span class="ident">Doctest</span> {
-            <span class="ident">package</span>,
-            <span class="ident">target</span>,
             <span class="ident">args</span>,
             <span class="ident">unstable_opts</span>,
+            <span class="ident">unit</span>,
         } <span class="op">=</span> <span class="ident">doctest_info</span>;
-        <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">status</span>(<span class="string">&quot;Doc-tests&quot;</span>, <span class="ident">target</span>.<span class="ident">name</span>())<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">rustdoc_process</span>(<span class="ident">package</span>, <span class="ident">target</span>)<span class="question-mark">?</span>;
-        <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--test&quot;</span>)
-            .<span class="ident">arg</span>(<span class="ident">target</span>.<span class="ident">src_path</span>().<span class="ident">path</span>().<span class="ident">unwrap</span>())
-            .<span class="ident">arg</span>(<span class="string">&quot;--crate-name&quot;</span>)
-            .<span class="ident">arg</span>(<span class="kw-2">&amp;</span><span class="ident">target</span>.<span class="ident">crate_name</span>());
 
-        <span class="kw">if</span> <span class="ident">doctest_xcompile</span> {
-            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--target&quot;</span>).<span class="ident">arg</span>(<span class="kw-2">&amp;</span><span class="ident">compilation</span>.<span class="ident">target</span>);
-            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;-Zunstable-options&quot;</span>);
-            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--enable-per-target-ignores&quot;</span>);
+        <span class="comment">// Skip any `--target` tests unless `doctest-xcompile` is specified.</span>
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">config</span>.<span class="ident">cli_unstable</span>().<span class="ident">doctest_xcompile</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">unit</span>.<span class="ident">kind</span>.<span class="ident">is_host</span>() {
+            <span class="kw">continue</span>;
         }
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">runtool</span>, <span class="ident">runtool_args</span>)) <span class="op">=</span> <span class="ident">runtool</span> {
-            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--runtool&quot;</span>).<span class="ident">arg</span>(<span class="ident">runtool</span>);
-            <span class="kw">for</span> <span class="ident">arg</span> <span class="kw">in</span> <span class="ident">runtool_args</span> {
-                <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--runtool-arg&quot;</span>).<span class="ident">arg</span>(<span class="ident">arg</span>);
+        <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">status</span>(<span class="string">&quot;Doc-tests&quot;</span>, <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">name</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">rustdoc_process</span>(<span class="ident">unit</span>)<span class="question-mark">?</span>;
+        <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--test&quot;</span>)
+            .<span class="ident">arg</span>(<span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">src_path</span>().<span class="ident">path</span>().<span class="ident">unwrap</span>())
+            .<span class="ident">arg</span>(<span class="string">&quot;--crate-name&quot;</span>)
+            .<span class="ident">arg</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">crate_name</span>());
+
+        <span class="kw">if</span> <span class="ident">config</span>.<span class="ident">cli_unstable</span>().<span class="ident">doctest_xcompile</span> {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="ident">CompileKind</span>::<span class="ident">Target</span>(<span class="ident">target</span>) <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">kind</span> {
+                <span class="comment">// use `rustc_target()` to properly handle JSON target paths</span>
+                <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--target&quot;</span>).<span class="ident">arg</span>(<span class="ident">target</span>.<span class="ident">rustc_target</span>());
+            }
+            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;-Zunstable-options&quot;</span>);
+            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--enable-per-target-ignores&quot;</span>);
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">runtool</span>, <span class="ident">runtool_args</span>)) <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">target_runner</span>(<span class="ident">unit</span>.<span class="ident">kind</span>) {
+                <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--runtool&quot;</span>).<span class="ident">arg</span>(<span class="ident">runtool</span>);
+                <span class="kw">for</span> <span class="ident">arg</span> <span class="kw">in</span> <span class="ident">runtool_args</span> {
+                    <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--runtool-arg&quot;</span>).<span class="ident">arg</span>(<span class="ident">arg</span>);
+                }
             }
         }
 
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">rust_dep</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">compilation</span>.<span class="ident">deps_output</span>] {
+        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">rust_dep</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[
+            <span class="kw-2">&amp;</span><span class="ident">compilation</span>.<span class="ident">deps_output</span>[<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">kind</span>],
+            <span class="kw-2">&amp;</span><span class="ident">compilation</span>.<span class="ident">deps_output</span>[<span class="kw-2">&amp;</span><span class="ident">CompileKind</span>::<span class="ident">Host</span>],
+        ] {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">arg</span> <span class="op">=</span> <span class="ident">OsString</span>::<span class="ident">from</span>(<span class="string">&quot;dependency=&quot;</span>);
             <span class="ident">arg</span>.<span class="ident">push</span>(<span class="ident">rust_dep</span>);
             <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;-L&quot;</span>).<span class="ident">arg</span>(<span class="ident">arg</span>);
@@ -419,17 +407,11 @@
             <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;-L&quot;</span>).<span class="ident">arg</span>(<span class="ident">native_dep</span>);
         }
 
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">host_rust_dep</span> <span class="kw">in</span> <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">compilation</span>.<span class="ident">host_deps_output</span>] {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">arg</span> <span class="op">=</span> <span class="ident">OsString</span>::<span class="ident">from</span>(<span class="string">&quot;dependency=&quot;</span>);
-            <span class="ident">arg</span>.<span class="ident">push</span>(<span class="ident">host_rust_dep</span>);
-            <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;-L&quot;</span>).<span class="ident">arg</span>(<span class="ident">arg</span>);
-        }
-
         <span class="kw">for</span> <span class="ident">arg</span> <span class="kw">in</span> <span class="ident">test_args</span> {
             <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--test-args&quot;</span>).<span class="ident">arg</span>(<span class="ident">arg</span>);
         }
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cfgs</span>) <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">cfgs</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>.<span class="ident">package_id</span>()) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cfgs</span>) <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">cfgs</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()) {
             <span class="kw">for</span> <span class="ident">cfg</span> <span class="kw">in</span> <span class="ident">cfgs</span>.<span class="ident">iter</span>() {
                 <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;--cfg&quot;</span>).<span class="ident">arg</span>(<span class="ident">cfg</span>);
             }
@@ -443,7 +425,7 @@
             <span class="ident">p</span>.<span class="ident">arg</span>(<span class="string">&quot;-Zunstable-options&quot;</span>);
         }
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">flags</span>) <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">rustdocflags</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>.<span class="ident">package_id</span>()) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">flags</span>) <span class="op">=</span> <span class="ident">compilation</span>.<span class="ident">rustdocflags</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()) {
             <span class="ident">p</span>.<span class="ident">args</span>(<span class="ident">flags</span>);
         }
         <span class="ident">config</span>

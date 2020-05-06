@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/core/compiler/custom_build.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>custom_build.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/compiler/custom_build.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>custom_build.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -807,6 +807,28 @@
 <span id="807">807</span>
 <span id="808">808</span>
 <span id="809">809</span>
+<span id="810">810</span>
+<span id="811">811</span>
+<span id="812">812</span>
+<span id="813">813</span>
+<span id="814">814</span>
+<span id="815">815</span>
+<span id="816">816</span>
+<span id="817">817</span>
+<span id="818">818</span>
+<span id="819">819</span>
+<span id="820">820</span>
+<span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
+<span id="831">831</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">job</span>::{<span class="ident">Freshness</span>, <span class="ident">Job</span>, <span class="ident">Work</span>};
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">fingerprint</span>, <span class="ident">Context</span>, <span class="ident">Unit</span>};
@@ -821,7 +843,9 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeSet</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>};
+
+<span class="kw">const</span> <span class="ident">CARGO_WARNING</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;cargo:warning=&quot;</span>;
 
 <span class="doccomment">/// Contains the parsed output of a custom build script.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Hash</span>, <span class="ident">Default</span>)]</span>
@@ -910,7 +934,7 @@
 }
 
 <span class="doccomment">/// Prepares a `Work` that executes the target as a custom build script.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepare</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Job</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepare</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Job</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">_p</span> <span class="op">=</span> <span class="ident">profile</span>::<span class="ident">start</span>(<span class="macro">format</span><span class="macro">!</span>(
         <span class="string">&quot;build script prepare: {}/{}&quot;</span>,
         <span class="ident">unit</span>.<span class="ident">pkg</span>,
@@ -955,7 +979,7 @@
     <span class="ident">state</span>.<span class="ident">stdout</span>(<span class="ident">msg</span>);
 }
 
-<span class="kw">fn</span> <span class="ident">build_work</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Job</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">build_work</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Job</span><span class="op">&gt;</span> {
     <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_run_custom_build</span>());
     <span class="kw">let</span> <span class="ident">bcx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">cx</span>.<span class="ident">bcx</span>;
     <span class="kw">let</span> <span class="ident">dependencies</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">unit_deps</span>(<span class="ident">unit</span>);
@@ -985,7 +1009,7 @@
     <span class="comment">// `Profiles::get_profile_run_custom_build` so that those flags get</span>
     <span class="comment">// carried over.</span>
     <span class="kw">let</span> <span class="ident">to_exec</span> <span class="op">=</span> <span class="ident">to_exec</span>.<span class="ident">into_os_string</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">compilation</span>.<span class="ident">host_process</span>(<span class="ident">to_exec</span>, <span class="ident">unit</span>.<span class="ident">pkg</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">compilation</span>.<span class="ident">host_process</span>(<span class="ident">to_exec</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">debug</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">profile</span>.<span class="ident">debuginfo</span>.<span class="ident">unwrap_or</span>(<span class="number">0</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>;
     <span class="ident">cmd</span>.<span class="ident">env</span>(<span class="string">&quot;OUT_DIR&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">script_out_dir</span>)
         .<span class="ident">env</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>, <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">root</span>())
@@ -1153,9 +1177,13 @@
         <span class="ident">state</span>.<span class="ident">running</span>(<span class="kw-2">&amp;</span><span class="ident">cmd</span>);
         <span class="kw">let</span> <span class="ident">timestamp</span> <span class="op">=</span> <span class="ident">paths</span>::<span class="ident">set_invocation_time</span>(<span class="kw-2">&amp;</span><span class="ident">script_run_dir</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">prefix</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;[{} {}] &quot;</span>, <span class="ident">id</span>.<span class="ident">name</span>(), <span class="ident">id</span>.<span class="ident">version</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">warnings_in_case_of_panic</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
         <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">cmd</span>
             .<span class="ident">exec_with_streaming</span>(
                 <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="op">|</span><span class="ident">stdout</span><span class="op">|</span> {
+                    <span class="kw">if</span> <span class="ident">stdout</span>.<span class="ident">starts_with</span>(<span class="ident">CARGO_WARNING</span>) {
+                        <span class="ident">warnings_in_case_of_panic</span>.<span class="ident">push</span>(<span class="ident">stdout</span>[<span class="ident">CARGO_WARNING</span>.<span class="ident">len</span>()..].<span class="ident">to_owned</span>());
+                    }
                     <span class="kw">if</span> <span class="ident">extra_verbose</span> {
                         <span class="ident">state</span>.<span class="ident">stdout</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}{}&quot;</span>, <span class="ident">prefix</span>, <span class="ident">stdout</span>));
                     }
@@ -1169,7 +1197,19 @@
                 },
                 <span class="bool-val">true</span>,
             )
-            .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;failed to run custom build command for `{}`&quot;</span>, <span class="ident">pkg_name</span>))<span class="question-mark">?</span>;
+            .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;failed to run custom build command for `{}`&quot;</span>, <span class="ident">pkg_name</span>));
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>) <span class="op">=</span> <span class="ident">output</span> {
+            <span class="ident">insert_warnings_in_build_outputs</span>(
+                <span class="ident">build_script_outputs</span>,
+                <span class="ident">id</span>,
+                <span class="ident">metadata_hash</span>,
+                <span class="ident">warnings_in_case_of_panic</span>,
+            );
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>);
+        }
+
+        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">output</span>.<span class="ident">unwrap</span>();
 
         <span class="comment">// After the build command has finished running, we need to be sure to</span>
         <span class="comment">// remember all of its output so we can later discover precisely what it</span>
@@ -1179,12 +1219,9 @@
         <span class="comment">// state informing what variables were discovered via our script as</span>
         <span class="comment">// well.</span>
         <span class="ident">paths</span>::<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="ident">output_file</span>, <span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stdout</span>)<span class="question-mark">?</span>;
-        <span class="ident">log</span>::<span class="macro">debug</span><span class="macro">!</span>(
-            <span class="string">&quot;rewinding custom script output mtime {:?} to {}&quot;</span>,
-            <span class="ident">output_file</span>,
-            <span class="ident">timestamp</span>
-        );
-        <span class="ident">filetime</span>::<span class="ident">set_file_times</span>(<span class="ident">output_file</span>, <span class="ident">timestamp</span>, <span class="ident">timestamp</span>)<span class="question-mark">?</span>;
+        <span class="comment">// This mtime shift allows Cargo to detect if a source file was</span>
+        <span class="comment">// modified in the middle of the build.</span>
+        <span class="ident">paths</span>::<span class="ident">set_file_time_no_err</span>(<span class="ident">output_file</span>, <span class="ident">timestamp</span>);
         <span class="ident">paths</span>::<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="ident">err_file</span>, <span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stderr</span>)<span class="question-mark">?</span>;
         <span class="ident">paths</span>::<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="ident">root_output_file</span>, <span class="ident">util</span>::<span class="ident">path2bytes</span>(<span class="kw-2">&amp;</span><span class="ident">script_out_dir</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">parsed_output</span> <span class="op">=</span>
@@ -1237,6 +1274,22 @@
         <span class="ident">job</span>.<span class="ident">before</span>(<span class="ident">fresh</span>);
     }
     <span class="prelude-val">Ok</span>(<span class="ident">job</span>)
+}
+
+<span class="kw">fn</span> <span class="ident">insert_warnings_in_build_outputs</span>(
+    <span class="ident">build_script_outputs</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">BuildScriptOutputs</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">id</span>: <span class="ident">PackageId</span>,
+    <span class="ident">metadata_hash</span>: <span class="ident">Metadata</span>,
+    <span class="ident">warnings</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+) {
+    <span class="kw">let</span> <span class="ident">build_output_with_only_warnings</span> <span class="op">=</span> <span class="ident">BuildOutput</span> {
+        <span class="ident">warnings</span>,
+        ..<span class="ident">BuildOutput</span>::<span class="ident">default</span>()
+    };
+    <span class="ident">build_script_outputs</span>
+        .<span class="ident">lock</span>()
+        .<span class="ident">unwrap</span>()
+        .<span class="ident">insert</span>(<span class="ident">id</span>, <span class="ident">metadata_hash</span>, <span class="ident">build_output_with_only_warnings</span>);
 }
 
 <span class="kw">impl</span> <span class="ident">BuildOutput</span> {
@@ -1393,11 +1446,7 @@
     }
 }
 
-<span class="kw">fn</span> <span class="ident">prepare_metabuild</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">deps</span>: <span class="kw-2">&amp;</span>[<span class="ident">String</span>],
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">prepare_metabuild</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>, <span class="ident">deps</span>: <span class="kw-2">&amp;</span>[<span class="ident">String</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
     <span class="kw">let</span> <span class="ident">available_deps</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">unit_deps</span>(<span class="ident">unit</span>);
     <span class="comment">// Filter out optional dependencies, and look up the actual lib name.</span>
@@ -1457,9 +1506,9 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// The given set of units to this function is the initial set of</span>
 <span class="doccomment">/// targets/profiles which are being built.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_map</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">units</span>: <span class="kw-2">&amp;</span>[<span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_map</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
-    <span class="kw">for</span> <span class="ident">unit</span> <span class="kw">in</span> <span class="ident">units</span> {
+    <span class="kw">for</span> <span class="ident">unit</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">roots</span> {
         <span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ret</span>, <span class="ident">cx</span>, <span class="ident">unit</span>)<span class="question-mark">?</span>;
     }
     <span class="ident">cx</span>.<span class="ident">build_scripts</span>
@@ -1468,10 +1517,10 @@
 
     <span class="comment">// Recursive function to build up the map we&#39;re constructing. This function</span>
     <span class="comment">// memoizes all of its return values as it goes along.</span>
-    <span class="kw">fn</span> <span class="ident">build</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-        <span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>, <span class="ident">BuildScripts</span><span class="op">&gt;</span>,
-        <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-        <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>,
+    <span class="kw">fn</span> <span class="ident">build</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+        <span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Unit</span>, <span class="ident">BuildScripts</span><span class="op">&gt;</span>,
+        <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+        <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BuildScripts</span><span class="op">&gt;</span> {
         <span class="comment">// Do a quick pre-flight check to see if we&#39;ve already calculated the</span>
         <span class="comment">// set of dependencies.</span>
@@ -1482,7 +1531,7 @@
         <span class="comment">// If there is a build script override, pre-fill the build output.</span>
         <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_run_custom_build</span>() {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">links</span>) <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">manifest</span>().<span class="ident">links</span>() {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">output</span>) <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">script_override</span>(<span class="ident">links</span>, <span class="ident">unit</span>.<span class="ident">kind</span>) {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">output</span>) <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">target_data</span>.<span class="ident">script_override</span>(<span class="ident">links</span>, <span class="ident">unit</span>.<span class="ident">kind</span>) {
                     <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">get_run_build_script_metadata</span>(<span class="ident">unit</span>);
                     <span class="ident">cx</span>.<span class="ident">build_script_outputs</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">insert</span>(
                         <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>(),
@@ -1498,7 +1547,7 @@
         <span class="comment">// If a package has a build script, add itself as something to inspect for linking.</span>
         <span class="kw">if</span> <span class="op">!</span><span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">is_custom_build</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">has_custom_build</span>() {
             <span class="kw">let</span> <span class="ident">script_meta</span> <span class="op">=</span> <span class="ident">cx</span>
-                .<span class="ident">find_build_script_metadata</span>(<span class="kw-2">*</span><span class="ident">unit</span>)
+                .<span class="ident">find_build_script_metadata</span>(<span class="ident">unit</span>.<span class="ident">clone</span>())
                 .<span class="ident">expect</span>(<span class="string">&quot;has_custom_build should have RunCustomBuild&quot;</span>);
             <span class="ident">add_to_link</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ret</span>, <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>(), <span class="ident">script_meta</span>);
         }
@@ -1512,7 +1561,8 @@
         <span class="comment">// to rustc invocation caching schemes, so be sure to generate the same</span>
         <span class="comment">// set of build script dependency orderings via sorting the targets that</span>
         <span class="comment">// come out of the `Context`.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependencies</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">unit_deps</span>(<span class="ident">unit</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> <span class="ident">d</span>.<span class="ident">unit</span>).<span class="ident">collect</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependencies</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Unit</span><span class="op">&gt;</span> <span class="op">=</span>
+            <span class="ident">cx</span>.<span class="ident">unit_deps</span>(<span class="ident">unit</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> <span class="ident">d</span>.<span class="ident">unit</span>.<span class="ident">clone</span>()).<span class="ident">collect</span>();
         <span class="ident">dependencies</span>.<span class="ident">sort_by_key</span>(<span class="op">|</span><span class="ident">u</span><span class="op">|</span> <span class="ident">u</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>());
 
         <span class="kw">for</span> <span class="ident">dep_unit</span> <span class="kw">in</span> <span class="ident">dependencies</span>.<span class="ident">iter</span>() {
@@ -1527,7 +1577,7 @@
             }
         }
 
-        <span class="kw">match</span> <span class="ident">out</span>.<span class="ident">entry</span>(<span class="kw-2">*</span><span class="ident">unit</span>) {
+        <span class="kw">match</span> <span class="ident">out</span>.<span class="ident">entry</span>(<span class="ident">unit</span>.<span class="ident">clone</span>()) {
             <span class="ident">Entry</span>::<span class="ident">Vacant</span>(<span class="ident">entry</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">entry</span>.<span class="ident">insert</span>(<span class="ident">ret</span>)),
             <span class="ident">Entry</span>::<span class="ident">Occupied</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;cyclic dependencies in `build_map`&quot;</span>),
         }
@@ -1541,15 +1591,12 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">parse_previous_explicit_deps</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-        <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-        <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">parse_previous_explicit_deps</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">script_run_dir</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">build_script_run_dir</span>(<span class="ident">unit</span>);
         <span class="kw">let</span> <span class="ident">output_file</span> <span class="op">=</span> <span class="ident">script_run_dir</span>.<span class="ident">join</span>(<span class="string">&quot;output&quot;</span>);
         <span class="kw">let</span> (<span class="ident">prev_output</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">prev_build_output</span>(<span class="ident">cx</span>, <span class="ident">unit</span>);
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">BuildDeps</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">output_file</span>, <span class="ident">prev_output</span>.<span class="ident">as_ref</span>());
-        <span class="ident">cx</span>.<span class="ident">build_explicit_deps</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">unit</span>, <span class="ident">deps</span>);
+        <span class="ident">cx</span>.<span class="ident">build_explicit_deps</span>.<span class="ident">insert</span>(<span class="ident">unit</span>.<span class="ident">clone</span>(), <span class="ident">deps</span>);
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -1559,10 +1606,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Also returns the directory containing the output, typically used later in</span>
 <span class="doccomment">/// processing.</span>
-<span class="kw">fn</span> <span class="ident">prev_build_output</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BuildOutput</span><span class="op">&gt;</span>, <span class="ident">PathBuf</span>) {
+<span class="kw">fn</span> <span class="ident">prev_build_output</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BuildOutput</span><span class="op">&gt;</span>, <span class="ident">PathBuf</span>) {
     <span class="kw">let</span> <span class="ident">script_out_dir</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">build_script_out_dir</span>(<span class="ident">unit</span>);
     <span class="kw">let</span> <span class="ident">script_run_dir</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">build_script_run_dir</span>(<span class="ident">unit</span>);
     <span class="kw">let</span> <span class="ident">root_output_file</span> <span class="op">=</span> <span class="ident">script_run_dir</span>.<span class="ident">join</span>(<span class="string">&quot;root-output&quot;</span>);

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/core/compiler/unit.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unit.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/compiler/unit.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unit.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -191,15 +191,34 @@
 <span id="191">191</span>
 <span id="192">192</span>
 <span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">CompileKind</span>, <span class="ident">CompileMode</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">profiles</span>::<span class="ident">Profile</span>, <span class="ident">InternedString</span>, <span class="ident">Package</span>, <span class="ident">Target</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">manifest</span>::{<span class="ident">LibKind</span>, <span class="ident">Target</span>, <span class="ident">TargetKind</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">profiles</span>::<span class="ident">Profile</span>, <span class="ident">InternedString</span>, <span class="ident">Package</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">hex</span>::<span class="ident">short_hash</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">Config</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cell</span>::<span class="ident">RefCell</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::<span class="ident">Deref</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">rc</span>::<span class="ident">Rc</span>;
 
 <span class="doccomment">/// All information needed to define a unit.</span>
 <span class="doccomment">///</span>
@@ -215,21 +234,21 @@
 <span class="doccomment">/// example, it needs to know the target architecture (OS, chip arch etc.) and it needs to know</span>
 <span class="doccomment">/// whether you want a debug or release build. There is enough information in this struct to figure</span>
 <span class="doccomment">/// all that out.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Unit</span> {
+    <span class="ident">inner</span>: <span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">UnitInner</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Internal fields of `Unit` which `Unit` will dereference to.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnitInner</span> {
     <span class="doccomment">/// Information about available targets, which files to include/exclude, etc. Basically stuff in</span>
     <span class="doccomment">/// `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Package</span>,
+    <span class="kw">pub</span> <span class="ident">pkg</span>: <span class="ident">Package</span>,
     <span class="doccomment">/// Information about the specific target to build, out of the possible targets in `pkg`. Not</span>
     <span class="doccomment">/// to be confused with *target-triple* (or *target architecture* ...), the target arch for a</span>
     <span class="doccomment">/// build.</span>
-    <span class="kw">pub</span> <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Target</span>,
+    <span class="kw">pub</span> <span class="ident">target</span>: <span class="ident">Target</span>,
     <span class="doccomment">/// The profile contains information about *how* the build should be run, including debug</span>
     <span class="doccomment">/// level, etc.</span>
     <span class="kw">pub</span> <span class="ident">profile</span>: <span class="ident">Profile</span>,
@@ -249,7 +268,7 @@
     <span class="kw">pub</span> <span class="ident">is_std</span>: <span class="ident">bool</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">UnitInner</span> {
     <span class="doccomment">/// Returns whether compilation of this unit requires all upstream artifacts</span>
     <span class="doccomment">/// to be available.</span>
     <span class="doccomment">///</span>
@@ -259,39 +278,52 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">requires_upstream_objects</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">mode</span>.<span class="ident">is_any_test</span>() <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">target</span>.<span class="ident">kind</span>().<span class="ident">requires_upstream_objects</span>()
     }
+
+    <span class="doccomment">/// Returns whether or not this is a &quot;local&quot; package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// A &quot;local&quot; package is one that the user can likely edit, or otherwise</span>
+    <span class="doccomment">/// wants warnings, etc.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_local</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>().<span class="ident">source_id</span>().<span class="ident">is_path</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_std</span>
+    }
+
+    <span class="doccomment">/// Returns whether or not warnings should be displayed for this unit.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">show_warnings</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">is_local</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">config</span>.<span class="ident">extra_verbose</span>()
+    }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">Unit</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">buildkey</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}-{}&quot;</span>, <span class="self">self</span>.<span class="ident">pkg</span>.<span class="ident">name</span>(), <span class="ident">short_hash</span>(<span class="self">self</span>))
     }
 }
 
 <span class="comment">// Just hash the pointer for fast hashing</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">Unit</span> {
     <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hasher</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">H</span>) {
-        (<span class="self">self</span>.<span class="ident">inner</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>).<span class="ident">hash</span>(<span class="ident">hasher</span>)
+        <span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">hash</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>, <span class="ident">hasher</span>)
     }
 }
 
 <span class="comment">// Just equate the pointer since these are interned</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">inner</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span><span class="op">=</span> <span class="ident">other</span>.<span class="ident">inner</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>
+<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">Unit</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">other</span>.<span class="ident">inner</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {}
+<span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">Unit</span> {}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
+<span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">Unit</span> {
+    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">UnitInner</span>;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>
+    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">UnitInner</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Unit</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Unit&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;pkg&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pkg</span>)
@@ -311,17 +343,17 @@
 <span class="doccomment">/// efficient hash/equality implementation for `Unit`. All units are</span>
 <span class="doccomment">/// manufactured through an interner which guarantees that each equivalent value</span>
 <span class="doccomment">/// is only produced once.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnitInterner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">state</span>: <span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">InternerState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UnitInterner</span> {
+    <span class="ident">state</span>: <span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">InternerState</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">struct</span> <span class="ident">InternerState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">cache</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">struct</span> <span class="ident">InternerState</span> {
+    <span class="ident">cache</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">UnitInner</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">UnitInterner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">UnitInterner</span> {
     <span class="doccomment">/// Creates a new blank interner</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UnitInterner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UnitInterner</span> {
         <span class="ident">UnitInterner</span> {
             <span class="ident">state</span>: <span class="ident">RefCell</span>::<span class="ident">new</span>(<span class="ident">InternerState</span> {
                 <span class="ident">cache</span>: <span class="ident">HashSet</span>::<span class="ident">new</span>(),
@@ -333,17 +365,38 @@
     <span class="doccomment">/// will all be equivalent to the provided arguments, although they may not</span>
     <span class="doccomment">/// be the exact same instance.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">intern</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
-        <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Package</span>,
-        <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Target</span>,
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>,
+        <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="ident">Target</span>,
         <span class="ident">profile</span>: <span class="ident">Profile</span>,
         <span class="ident">kind</span>: <span class="ident">CompileKind</span>,
         <span class="ident">mode</span>: <span class="ident">CompileMode</span>,
         <span class="ident">features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span>,
         <span class="ident">is_std</span>: <span class="ident">bool</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Unit</span> {
+        <span class="kw">let</span> <span class="ident">target</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">is_std</span>, <span class="ident">target</span>.<span class="ident">kind</span>()) {
+            <span class="comment">// This is a horrible hack to support build-std. `libstd` declares</span>
+            <span class="comment">// itself with both rlib and dylib. We don&#39;t want the dylib for a</span>
+            <span class="comment">// few reasons:</span>
+            <span class="comment">//</span>
+            <span class="comment">// - dylibs don&#39;t have a hash in the filename. If you do something</span>
+            <span class="comment">//   (like switch rustc versions), it will stomp on the dylib</span>
+            <span class="comment">//   file, invalidating the entire cache (because std is a dep of</span>
+            <span class="comment">//   everything).</span>
+            <span class="comment">// - We don&#39;t want to publicize the presence of dylib for the</span>
+            <span class="comment">//   standard library.</span>
+            <span class="comment">//</span>
+            <span class="comment">// At some point in the future, it would be nice to have a</span>
+            <span class="comment">// first-class way of overriding or specifying crate-types.</span>
+            (<span class="bool-val">true</span>, <span class="ident">TargetKind</span>::<span class="ident">Lib</span>(<span class="ident">crate_types</span>)) <span class="kw">if</span> <span class="ident">crate_types</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">LibKind</span>::<span class="ident">Dylib</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_target</span> <span class="op">=</span> <span class="ident">Target</span>::<span class="ident">clone</span>(<span class="ident">target</span>);
+                <span class="ident">new_target</span>.<span class="ident">set_kind</span>(<span class="ident">TargetKind</span>::<span class="ident">Lib</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="ident">LibKind</span>::<span class="ident">Rlib</span>]));
+                <span class="ident">new_target</span>
+            }
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">target</span>.<span class="ident">clone</span>(),
+        };
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">intern_inner</span>(<span class="kw-2">&amp;</span><span class="ident">UnitInner</span> {
-            <span class="ident">pkg</span>,
+            <span class="ident">pkg</span>: <span class="ident">pkg</span>.<span class="ident">clone</span>(),
             <span class="ident">target</span>,
             <span class="ident">profile</span>,
             <span class="ident">kind</span>,
@@ -354,35 +407,14 @@
         <span class="ident">Unit</span> { <span class="ident">inner</span> }
     }
 
-    <span class="comment">// Ok so interning here is a little unsafe, hence the usage of `unsafe`</span>
-    <span class="comment">// internally. The primary issue here is that we&#39;ve got an internal cache of</span>
-    <span class="comment">// `UnitInner` instances added so far, but we may need to mutate it to add</span>
-    <span class="comment">// it, and the mutation for an interner happens behind a shared borrow.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Our goal though is to escape the lifetime `borrow_mut` to the same</span>
-    <span class="comment">// lifetime as the borrowed passed into this function. That&#39;s where `unsafe`</span>
-    <span class="comment">// comes into play. What we&#39;re subverting here is resizing internally in the</span>
-    <span class="comment">// `HashSet` as well as overwriting previous keys in the `HashSet`.</span>
-    <span class="comment">//</span>
-    <span class="comment">// As a result we store `Box&lt;UnitInner&gt;` internally to have an extra layer</span>
-    <span class="comment">// of indirection. That way `*const UnitInner` is a stable address that</span>
-    <span class="comment">// doesn&#39;t change with `HashSet` resizing. Furthermore we&#39;re careful to</span>
-    <span class="comment">// never overwrite an entry once inserted.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Ideally we&#39;d use an off-the-shelf interner from crates.io which avoids a</span>
-    <span class="comment">// small amount of unsafety here, but at the time this was written one</span>
-    <span class="comment">// wasn&#39;t obviously available.</span>
-    <span class="kw">fn</span> <span class="ident">intern_inner</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">item</span>: <span class="kw-2">&amp;</span><span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">intern_inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">item</span>: <span class="kw-2">&amp;</span><span class="ident">UnitInner</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">UnitInner</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">me</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">borrow_mut</span>();
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">item</span>) <span class="op">=</span> <span class="ident">me</span>.<span class="ident">cache</span>.<span class="ident">get</span>(<span class="ident">item</span>) {
-            <span class="comment">// note that `item` has type `&amp;Box&lt;UnitInner&lt;&#39;a&gt;`. Use `&amp;**` to</span>
-            <span class="comment">// convert that to `&amp;UnitInner&lt;&#39;a&gt;`, then do some trickery to extend</span>
-            <span class="comment">// the lifetime to the `&#39;a` on the function here.</span>
-            <span class="kw">return</span> <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">item</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) };
+            <span class="kw">return</span> <span class="ident">item</span>.<span class="ident">clone</span>();
         }
-        <span class="ident">me</span>.<span class="ident">cache</span>.<span class="ident">insert</span>(<span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">item</span>.<span class="ident">clone</span>()));
-        <span class="kw">let</span> <span class="ident">item</span> <span class="op">=</span> <span class="ident">me</span>.<span class="ident">cache</span>.<span class="ident">get</span>(<span class="ident">item</span>).<span class="ident">unwrap</span>();
-        <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">item</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">UnitInner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) }
+        <span class="kw">let</span> <span class="ident">item</span> <span class="op">=</span> <span class="ident">Rc</span>::<span class="ident">new</span>(<span class="ident">item</span>.<span class="ident">clone</span>());
+        <span class="ident">me</span>.<span class="ident">cache</span>.<span class="ident">insert</span>(<span class="ident">item</span>.<span class="ident">clone</span>());
+        <span class="ident">item</span>
     }
 }
 </pre></div>

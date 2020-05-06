@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/ops/registry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>registry.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/ops/registry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>registry.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -828,9 +828,75 @@
 <span id="828">828</span>
 <span id="829">829</span>
 <span id="830">830</span>
+<span id="831">831</span>
+<span id="832">832</span>
+<span id="833">833</span>
+<span id="834">834</span>
+<span id="835">835</span>
+<span id="836">836</span>
+<span id="837">837</span>
+<span id="838">838</span>
+<span id="839">839</span>
+<span id="840">840</span>
+<span id="841">841</span>
+<span id="842">842</span>
+<span id="843">843</span>
+<span id="844">844</span>
+<span id="845">845</span>
+<span id="846">846</span>
+<span id="847">847</span>
+<span id="848">848</span>
+<span id="849">849</span>
+<span id="850">850</span>
+<span id="851">851</span>
+<span id="852">852</span>
+<span id="853">853</span>
+<span id="854">854</span>
+<span id="855">855</span>
+<span id="856">856</span>
+<span id="857">857</span>
+<span id="858">858</span>
+<span id="859">859</span>
+<span id="860">860</span>
+<span id="861">861</span>
+<span id="862">862</span>
+<span id="863">863</span>
+<span id="864">864</span>
+<span id="865">865</span>
+<span id="866">866</span>
+<span id="867">867</span>
+<span id="868">868</span>
+<span id="869">869</span>
+<span id="870">870</span>
+<span id="871">871</span>
+<span id="872">872</span>
+<span id="873">873</span>
+<span id="874">874</span>
+<span id="875">875</span>
+<span id="876">876</span>
+<span id="877">877</span>
+<span id="878">878</span>
+<span id="879">879</span>
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashSet</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>::{<span class="self">self</span>, <span class="ident">File</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>::<span class="ident">File</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>::{<span class="self">self</span>, <span class="ident">BufRead</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::<span class="ident">repeat</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>;
@@ -838,7 +904,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">cmp</span>, <span class="ident">env</span>};
 
 <span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">bail</span>, <span class="ident">format_err</span>};
-<span class="kw">use</span> <span class="ident">crates_io</span>::{<span class="ident">NewCrate</span>, <span class="ident">NewCrateDependency</span>, <span class="ident">Registry</span>};
+<span class="kw">use</span> <span class="ident">crates_io</span>::{<span class="self">self</span>, <span class="ident">NewCrate</span>, <span class="ident">NewCrateDependency</span>, <span class="ident">Registry</span>};
 <span class="kw">use</span> <span class="ident">curl</span>::<span class="ident">easy</span>::{<span class="ident">Easy</span>, <span class="ident">InfoType</span>, <span class="ident">SslOpt</span>, <span class="ident">SslVersion</span>};
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">log</span>, <span class="ident">Level</span>};
 <span class="kw">use</span> <span class="ident">percent_encoding</span>::{<span class="ident">percent_encode</span>, <span class="ident">NON_ALPHANUMERIC</span>};
@@ -856,8 +922,13 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">paths</span>, <span class="ident">validate_package_name</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">version</span>;
 
+<span class="doccomment">/// Registry settings loaded from config files.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This is loaded based on the `--registry` flag and the config settings.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RegistryConfig</span> {
+    <span class="doccomment">/// The index URL. If `None`, use crates.io.</span>
     <span class="kw">pub</span> <span class="ident">index</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The authentication token.</span>
     <span class="kw">pub</span> <span class="ident">token</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
@@ -868,7 +939,7 @@
     <span class="kw">pub</span> <span class="ident">verify</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">allow_dirty</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">jobs</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">target</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">targets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">dry_run</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">registry</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -914,7 +985,7 @@
             <span class="ident">list</span>: <span class="bool-val">false</span>,
             <span class="ident">check_metadata</span>: <span class="bool-val">true</span>,
             <span class="ident">allow_dirty</span>: <span class="ident">opts</span>.<span class="ident">allow_dirty</span>,
-            <span class="ident">target</span>: <span class="ident">opts</span>.<span class="ident">target</span>.<span class="ident">clone</span>(),
+            <span class="ident">targets</span>: <span class="ident">opts</span>.<span class="ident">targets</span>.<span class="ident">clone</span>(),
             <span class="ident">jobs</span>: <span class="ident">opts</span>.<span class="ident">jobs</span>,
             <span class="ident">features</span>: <span class="ident">opts</span>.<span class="ident">features</span>.<span class="ident">clone</span>(),
             <span class="ident">all_features</span>: <span class="ident">opts</span>.<span class="ident">all_features</span>,
@@ -1064,7 +1135,7 @@
         <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
     };
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">file</span>) <span class="op">=</span> <span class="kw-2">*</span><span class="ident">license_file</span> {
-        <span class="kw">if</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">pkg</span>.<span class="ident">root</span>().<span class="ident">join</span>(<span class="ident">file</span>)).<span class="ident">is_err</span>() {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">pkg</span>.<span class="ident">root</span>().<span class="ident">join</span>(<span class="ident">file</span>).<span class="ident">exists</span>() {
             <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;the license file `{}` does not exist&quot;</span>, <span class="ident">file</span>)
         }
     }
@@ -1147,10 +1218,15 @@
     }
 }
 
+<span class="doccomment">/// Returns the index and token from the config file for the given registry.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `registry` is typically the registry specified on the command-line. If</span>
+<span class="doccomment">/// `None`, `index` is set to `None` to indicate it should use crates.io.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">registry_configuration</span>(
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
     <span class="ident">registry</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">RegistryConfig</span><span class="op">&gt;</span> {
+    <span class="comment">// `registry.default` is handled in command-line parsing.</span>
     <span class="kw">let</span> (<span class="ident">index</span>, <span class="ident">token</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">registry</span> {
         <span class="prelude-val">Some</span>(<span class="ident">registry</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">validate_package_name</span>(<span class="kw-2">&amp;</span><span class="ident">registry</span>, <span class="string">&quot;registry name&quot;</span>, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
@@ -1162,19 +1238,26 @@
             )
         }
         <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="comment">// Checking for default index and token</span>
-            (
-                <span class="ident">config</span>
-                    .<span class="ident">get_default_registry_index</span>()<span class="question-mark">?</span>
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">url</span><span class="op">|</span> <span class="ident">url</span>.<span class="ident">to_string</span>()),
-                <span class="ident">config</span>.<span class="ident">get_string</span>(<span class="string">&quot;registry.token&quot;</span>)<span class="question-mark">?</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">val</span>),
-            )
+            <span class="comment">// Use crates.io default.</span>
+            <span class="ident">config</span>.<span class="ident">check_registry_index_not_set</span>()<span class="question-mark">?</span>;
+            (<span class="prelude-val">None</span>, <span class="ident">config</span>.<span class="ident">get_string</span>(<span class="string">&quot;registry.token&quot;</span>)<span class="question-mark">?</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">val</span>))
         }
     };
 
     <span class="prelude-val">Ok</span>(<span class="ident">RegistryConfig</span> { <span class="ident">index</span>, <span class="ident">token</span> })
 }
 
+<span class="doccomment">/// Returns the `Registry` and `Source` based on command-line and config settings.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// * `token`: The token from the command-line. If not set, uses the token</span>
+<span class="doccomment">///   from the config.</span>
+<span class="doccomment">/// * `index`: The index URL from the command-line. This is ignored if</span>
+<span class="doccomment">///   `registry` is set.</span>
+<span class="doccomment">/// * `registry`: The registry name from the command-line. If neither</span>
+<span class="doccomment">///   `registry`, or `index` are set, then uses `crates-io`, honoring</span>
+<span class="doccomment">///   `[source]` replacement if defined.</span>
+<span class="doccomment">/// * `force_update`: If `true`, forces the index to be updated.</span>
+<span class="doccomment">/// * `validate_token`: If `true`, the token must be set.</span>
 <span class="kw">fn</span> <span class="ident">registry</span>(
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
     <span class="ident">token</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -1183,13 +1266,17 @@
     <span class="ident">force_update</span>: <span class="ident">bool</span>,
     <span class="ident">validate_token</span>: <span class="ident">bool</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">Registry</span>, <span class="ident">SourceId</span>)<span class="op">&gt;</span> {
+    <span class="kw">if</span> <span class="ident">index</span>.<span class="ident">is_some</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">registry</span>.<span class="ident">is_some</span>() {
+        <span class="comment">// Otherwise we would silently ignore one or the other.</span>
+        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;both `--index` and `--registry` should not be set at the same time&quot;</span>);
+    }
     <span class="comment">// Parse all configuration options</span>
     <span class="kw">let</span> <span class="ident">RegistryConfig</span> {
         <span class="ident">token</span>: <span class="ident">token_config</span>,
         <span class="ident">index</span>: <span class="ident">index_config</span>,
     } <span class="op">=</span> <span class="ident">registry_configuration</span>(<span class="ident">config</span>, <span class="ident">registry</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">token</span> <span class="op">=</span> <span class="ident">token</span>.<span class="ident">or</span>(<span class="ident">token_config</span>);
-    <span class="kw">let</span> <span class="ident">sid</span> <span class="op">=</span> <span class="ident">get_source_id</span>(<span class="ident">config</span>, <span class="ident">index_config</span>.<span class="ident">or</span>(<span class="ident">index</span>), <span class="ident">registry</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">opt_index</span> <span class="op">=</span> <span class="ident">index_config</span>.<span class="ident">as_ref</span>().<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">index</span>.<span class="ident">as_ref</span>());
+    <span class="kw">let</span> <span class="ident">sid</span> <span class="op">=</span> <span class="ident">get_source_id</span>(<span class="ident">config</span>, <span class="ident">opt_index</span>, <span class="ident">registry</span>.<span class="ident">as_ref</span>())<span class="question-mark">?</span>;
     <span class="kw">if</span> <span class="op">!</span><span class="ident">sid</span>.<span class="ident">is_remote_registry</span>() {
         <span class="macro">bail</span><span class="macro">!</span>(
             <span class="string">&quot;{} does not support API commands.\n\
@@ -1217,10 +1304,51 @@
         <span class="ident">cfg</span>.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">cfg</span><span class="op">|</span> <span class="ident">cfg</span>.<span class="ident">api</span>)
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format_err</span><span class="macro">!</span>(<span class="string">&quot;{} does not support API commands&quot;</span>, <span class="ident">sid</span>))<span class="question-mark">?</span>
     };
-    <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">http_handle</span>(<span class="ident">config</span>)<span class="question-mark">?</span>;
-    <span class="kw">if</span> <span class="ident">validate_token</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">token</span>.<span class="ident">is_none</span>() {
-        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;no upload token found, please run `cargo login`&quot;</span>);
+    <span class="kw">let</span> <span class="ident">token</span> <span class="op">=</span> <span class="kw">match</span> (<span class="kw-2">&amp;</span><span class="ident">index</span>, <span class="kw-2">&amp;</span><span class="ident">token</span>, <span class="kw-2">&amp;</span><span class="ident">token_config</span>) {
+        <span class="comment">// No token.</span>
+        (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">if</span> <span class="ident">validate_token</span> {
+                <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;no upload token found, please run `cargo login` or pass `--token`&quot;</span>);
+            }
+            <span class="prelude-val">None</span>
+        }
+        <span class="comment">// Token on command-line.</span>
+        (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">token</span>,
+        <span class="comment">// Token in config, no --index, loading from config is OK for crates.io.</span>
+        (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw">_</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="comment">// Check `is_default_registry` so that the crates.io index can</span>
+            <span class="comment">// change config.json&#39;s &quot;api&quot; value, and this won&#39;t affect most</span>
+            <span class="comment">// people. It will affect those using source replacement, but</span>
+            <span class="comment">// hopefully that&#39;s a relatively small set of users.</span>
+            <span class="kw">if</span> <span class="ident">registry</span>.<span class="ident">is_none</span>()
+                <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">sid</span>.<span class="ident">is_default_registry</span>()
+                <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">crates_io</span>::<span class="ident">is_url_crates_io</span>(<span class="kw-2">&amp;</span><span class="ident">api_host</span>)
+            {
+                <span class="kw">if</span> <span class="ident">validate_token</span> {
+                    <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">warn</span>(
+                        <span class="string">&quot;using `registry.token` config value with source \
+                        replacement is deprecated\n\
+                        This may become a hard error in the future; \
+                        see &lt;https://github.com/rust-lang/cargo/issues/xxx&gt;.\n\
+                        Use the --token command-line flag to remove this warning.&quot;</span>,
+                    )<span class="question-mark">?</span>;
+                    <span class="ident">token_config</span>
+                } <span class="kw">else</span> {
+                    <span class="prelude-val">None</span>
+                }
+            } <span class="kw">else</span> {
+                <span class="ident">token_config</span>
+            }
+        }
+        <span class="comment">// --index, no --token</span>
+        (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">None</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">if</span> <span class="ident">validate_token</span> {
+                <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;command-line argument --index requires --token to be specified&quot;</span>)
+            }
+            <span class="prelude-val">None</span>
+        }
     };
+    <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">http_handle</span>(<span class="ident">config</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((<span class="ident">Registry</span>::<span class="ident">new_handle</span>(<span class="ident">api_host</span>, <span class="ident">token</span>, <span class="ident">handle</span>), <span class="ident">sid</span>))
 }
 
@@ -1570,13 +1698,17 @@
     <span class="prelude-val">Ok</span>(())
 }
 
+<span class="doccomment">/// Gets the SourceId for an index or registry setting.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The `index` and `reg` values are from the command-line or config settings.</span>
+<span class="doccomment">/// If both are None, returns the source for crates.io.</span>
 <span class="kw">fn</span> <span class="ident">get_source_id</span>(
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">index</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-    <span class="ident">reg</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">index</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">reg</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">String</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">SourceId</span><span class="op">&gt;</span> {
     <span class="kw">match</span> (<span class="ident">reg</span>, <span class="ident">index</span>) {
-        (<span class="prelude-val">Some</span>(<span class="ident">r</span>), <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">SourceId</span>::<span class="ident">alt_registry</span>(<span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">r</span>),
+        (<span class="prelude-val">Some</span>(<span class="ident">r</span>), <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">SourceId</span>::<span class="ident">alt_registry</span>(<span class="ident">config</span>, <span class="ident">r</span>),
         (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="ident">i</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">SourceId</span>::<span class="ident">for_registry</span>(<span class="kw-2">&amp;</span><span class="ident">i</span>.<span class="ident">into_url</span>()<span class="question-mark">?</span>),
         <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">SourceConfigMap</span>::<span class="ident">new</span>(<span class="ident">config</span>)<span class="question-mark">?</span>;

@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Auth",""]],"struct":[["Crate",""],["NewCrate",""],["NewCrateDependency",""],["Registry",""],["User",""],["Warnings",""]]});
+initSidebarItems({"enum":[["Auth",""]],"fn":[["is_url_crates_io","Returns `true` if the host of the given URL is \"crates.io\"."]],"struct":[["Crate",""],["NewCrate",""],["NewCrateDependency",""],["Registry",""],["User",""],["Warnings",""]]});

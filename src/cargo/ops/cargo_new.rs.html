@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/ops/cargo_new.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_new.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/ops/cargo_new.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_new.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -819,11 +819,42 @@
 <span id="819">819</span>
 <span id="820">820</span>
 <span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
+<span id="831">831</span>
+<span id="832">832</span>
+<span id="833">833</span>
+<span id="834">834</span>
+<span id="835">835</span>
+<span id="836">836</span>
+<span id="837">837</span>
+<span id="838">838</span>
+<span id="839">839</span>
+<span id="840">840</span>
+<span id="841">841</span>
+<span id="842">842</span>
+<span id="843">843</span>
+<span id="844">844</span>
+<span id="845">845</span>
+<span id="846">846</span>
+<span id="847">847</span>
+<span id="848">848</span>
+<span id="849">849</span>
+<span id="850">850</span>
+<span id="851">851</span>
+<span id="852">852</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">compiler</span>, <span class="ident">Workspace</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Shell</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">existing_vcs_repo</span>, <span class="ident">FossilRepo</span>, <span class="ident">GitRepo</span>, <span class="ident">HgRepo</span>, <span class="ident">PijulRepo</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">paths</span>, <span class="ident">validate_package_name</span>, <span class="ident">Config</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">paths</span>, <span class="ident">restricted_names</span>, <span class="ident">Config</span>};
 <span class="kw">use</span> <span class="ident">git2</span>::<span class="ident">Config</span> <span class="kw">as</span> <span class="ident">GitConfig</span>;
 <span class="kw">use</span> <span class="ident">git2</span>::<span class="ident">Repository</span> <span class="kw">as</span> <span class="ident">GitRepository</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">de</span>;
@@ -977,41 +1008,71 @@
     })
 }
 
-<span class="kw">fn</span> <span class="ident">check_name</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">NewOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="comment">// If --name is already used to override, no point in suggesting it</span>
-    <span class="comment">// again as a fix.</span>
-    <span class="kw">let</span> <span class="ident">name_help</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">opts</span>.<span class="ident">name</span> {
-        <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;&quot;</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;\nuse --name to override crate name&quot;</span>,
-    };
+<span class="kw">fn</span> <span class="ident">check_name</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">name_help</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">has_bin</span>: <span class="ident">bool</span>, <span class="ident">shell</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Shell</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="ident">restricted_names</span>::<span class="ident">validate_package_name</span>(<span class="ident">name</span>, <span class="string">&quot;crate name&quot;</span>, <span class="ident">name_help</span>)<span class="question-mark">?</span>;
 
-    <span class="comment">// Ban keywords + test list found at</span>
-    <span class="comment">// https://doc.rust-lang.org/reference/keywords.html</span>
-    <span class="kw">let</span> <span class="ident">blacklist</span> <span class="op">=</span> [
-        <span class="string">&quot;abstract&quot;</span>, <span class="string">&quot;alignof&quot;</span>, <span class="string">&quot;as&quot;</span>, <span class="string">&quot;become&quot;</span>, <span class="string">&quot;box&quot;</span>, <span class="string">&quot;break&quot;</span>, <span class="string">&quot;const&quot;</span>, <span class="string">&quot;continue&quot;</span>, <span class="string">&quot;crate&quot;</span>, <span class="string">&quot;do&quot;</span>,
-        <span class="string">&quot;else&quot;</span>, <span class="string">&quot;enum&quot;</span>, <span class="string">&quot;extern&quot;</span>, <span class="string">&quot;false&quot;</span>, <span class="string">&quot;final&quot;</span>, <span class="string">&quot;fn&quot;</span>, <span class="string">&quot;for&quot;</span>, <span class="string">&quot;if&quot;</span>, <span class="string">&quot;impl&quot;</span>, <span class="string">&quot;in&quot;</span>, <span class="string">&quot;let&quot;</span>, <span class="string">&quot;loop&quot;</span>,
-        <span class="string">&quot;macro&quot;</span>, <span class="string">&quot;match&quot;</span>, <span class="string">&quot;mod&quot;</span>, <span class="string">&quot;move&quot;</span>, <span class="string">&quot;mut&quot;</span>, <span class="string">&quot;offsetof&quot;</span>, <span class="string">&quot;override&quot;</span>, <span class="string">&quot;priv&quot;</span>, <span class="string">&quot;proc&quot;</span>, <span class="string">&quot;pub&quot;</span>,
-        <span class="string">&quot;pure&quot;</span>, <span class="string">&quot;ref&quot;</span>, <span class="string">&quot;return&quot;</span>, <span class="string">&quot;self&quot;</span>, <span class="string">&quot;sizeof&quot;</span>, <span class="string">&quot;static&quot;</span>, <span class="string">&quot;struct&quot;</span>, <span class="string">&quot;super&quot;</span>, <span class="string">&quot;test&quot;</span>, <span class="string">&quot;trait&quot;</span>,
-        <span class="string">&quot;true&quot;</span>, <span class="string">&quot;type&quot;</span>, <span class="string">&quot;typeof&quot;</span>, <span class="string">&quot;unsafe&quot;</span>, <span class="string">&quot;unsized&quot;</span>, <span class="string">&quot;use&quot;</span>, <span class="string">&quot;virtual&quot;</span>, <span class="string">&quot;where&quot;</span>, <span class="string">&quot;while&quot;</span>, <span class="string">&quot;yield&quot;</span>,
-    ];
-    <span class="kw">if</span> <span class="ident">blacklist</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) <span class="op">|</span><span class="op">|</span> (<span class="ident">opts</span>.<span class="ident">kind</span>.<span class="ident">is_bin</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">compiler</span>::<span class="ident">is_bad_artifact_name</span>(<span class="ident">name</span>)) {
+    <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_keyword</span>(<span class="ident">name</span>) {
         <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-            <span class="string">&quot;The name `{}` cannot be used as a crate name{}&quot;</span>,
+            <span class="string">&quot;the name `{}` cannot be used as a crate name, it is a Rust keyword{}&quot;</span>,
             <span class="ident">name</span>,
             <span class="ident">name_help</span>
-        )
+        );
     }
-
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">c</span>) <span class="op">=</span> <span class="ident">name</span>.<span class="ident">chars</span>().<span class="ident">next</span>() {
-        <span class="kw">if</span> <span class="ident">c</span>.<span class="ident">is_digit</span>(<span class="number">10</span>) {
+    <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_conflicting_artifact_name</span>(<span class="ident">name</span>) {
+        <span class="kw">if</span> <span class="ident">has_bin</span> {
             <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                <span class="string">&quot;Package names starting with a digit cannot be used as a crate name{}&quot;</span>,
+                <span class="string">&quot;the name `{}` cannot be used as a crate name, \
+                it conflicts with cargo&#39;s build directory names{}&quot;</span>,
+                <span class="ident">name</span>,
                 <span class="ident">name_help</span>
-            )
+            );
+        } <span class="kw">else</span> {
+            <span class="ident">shell</span>.<span class="ident">warn</span>(<span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;the name `{}` will not support binary \
+                executables with that name, \
+                it conflicts with cargo&#39;s build directory names&quot;</span>,
+                <span class="ident">name</span>
+            ))<span class="question-mark">?</span>;
         }
     }
+    <span class="kw">if</span> <span class="ident">name</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;test&quot;</span> {
+        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
+            <span class="string">&quot;the name `test` cannot be used as a crate name, \
+            it conflicts with Rust&#39;s built-in test library{}&quot;</span>,
+            <span class="ident">name_help</span>
+        );
+    }
+    <span class="kw">if</span> [<span class="string">&quot;core&quot;</span>, <span class="string">&quot;std&quot;</span>, <span class="string">&quot;alloc&quot;</span>, <span class="string">&quot;proc_macro&quot;</span>, <span class="string">&quot;proc-macro&quot;</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
+        <span class="ident">shell</span>.<span class="ident">warn</span>(<span class="macro">format</span><span class="macro">!</span>(
+            <span class="string">&quot;the name `{}` is part of Rust&#39;s standard library\n\
+            It is recommended to use a different name to avoid problems.&quot;</span>,
+            <span class="ident">name</span>
+        ))<span class="question-mark">?</span>;
+    }
+    <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_windows_reserved</span>(<span class="ident">name</span>) {
+        <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">windows</span>) {
+            <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
+                <span class="string">&quot;cannot use name `{}`, it is a reserved Windows filename{}&quot;</span>,
+                <span class="ident">name</span>,
+                <span class="ident">name_help</span>
+            );
+        } <span class="kw">else</span> {
+            <span class="ident">shell</span>.<span class="ident">warn</span>(<span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;the name `{}` is a reserved Windows filename\n\
+                This package will not work on Windows platforms.&quot;</span>,
+                <span class="ident">name</span>
+            ))<span class="question-mark">?</span>;
+        }
+    }
+    <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_non_ascii_name</span>(<span class="ident">name</span>) {
+        <span class="ident">shell</span>.<span class="ident">warn</span>(<span class="macro">format</span><span class="macro">!</span>(
+            <span class="string">&quot;the name `{}` contains non-ASCII characters\n\
+            Support for non-ASCII crate names is experimental and only valid \
+            on the nightly toolchain.&quot;</span>,
+            <span class="ident">name</span>
+        ))<span class="question-mark">?</span>;
+    }
 
-    <span class="ident">validate_package_name</span>(<span class="ident">name</span>, <span class="string">&quot;crate name&quot;</span>, <span class="ident">name_help</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }
 
@@ -1065,10 +1126,7 @@
         <span class="kw">let</span> <span class="ident">pp</span> <span class="op">=</span> <span class="ident">i</span>.<span class="ident">proposed_path</span>;
 
         <span class="comment">// path/pp does not exist or is not a file</span>
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="ident">pp</span>))
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">is_file</span>())
-            .<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>)
-        {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="ident">pp</span>).<span class="ident">is_file</span>() {
             <span class="kw">continue</span>;
         }
 
@@ -1150,7 +1208,7 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">NewOptions</span>, <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">path</span>;
-    <span class="kw">if</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="ident">path</span>).<span class="ident">is_ok</span>() {
+    <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">exists</span>() {
         <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
             <span class="string">&quot;destination `{}` already exists\n\n\
              Use `cargo init` to initialize the directory&quot;</span>,
@@ -1159,7 +1217,7 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
     }
 
     <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">get_name</span>(<span class="ident">path</span>, <span class="ident">opts</span>)<span class="question-mark">?</span>;
-    <span class="ident">check_name</span>(<span class="ident">name</span>, <span class="ident">opts</span>)<span class="question-mark">?</span>;
+    <span class="ident">check_name</span>(<span class="ident">name</span>, <span class="string">&quot;&quot;</span>, <span class="ident">opts</span>.<span class="ident">kind</span>.<span class="ident">is_bin</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>())<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">mkopts</span> <span class="op">=</span> <span class="ident">MkOptions</span> {
         <span class="ident">version_control</span>: <span class="ident">opts</span>.<span class="ident">version_control</span>,
@@ -1167,8 +1225,8 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
         <span class="ident">name</span>,
         <span class="ident">source_files</span>: <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">plan_new_source_file</span>(<span class="ident">opts</span>.<span class="ident">kind</span>.<span class="ident">is_bin</span>(), <span class="ident">name</span>.<span class="ident">to_string</span>())],
         <span class="ident">bin</span>: <span class="ident">opts</span>.<span class="ident">kind</span>.<span class="ident">is_bin</span>(),
-        <span class="ident">edition</span>: <span class="ident">opts</span>.<span class="ident">edition</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">s</span>),
-        <span class="ident">registry</span>: <span class="ident">opts</span>.<span class="ident">registry</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">s</span>),
+        <span class="ident">edition</span>: <span class="ident">opts</span>.<span class="ident">edition</span>.<span class="ident">as_deref</span>(),
+        <span class="ident">registry</span>: <span class="ident">opts</span>.<span class="ident">registry</span>.<span class="ident">as_deref</span>(),
     };
 
     <span class="ident">mk</span>(<span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">mkopts</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
@@ -1189,12 +1247,11 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
 
     <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">path</span>;
 
-    <span class="kw">if</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;Cargo.toml&quot;</span>)).<span class="ident">is_ok</span>() {
+    <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;Cargo.toml&quot;</span>).<span class="ident">exists</span>() {
         <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;`cargo init` cannot be run on existing Cargo packages&quot;</span>)
     }
 
     <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">get_name</span>(<span class="ident">path</span>, <span class="ident">opts</span>)<span class="question-mark">?</span>;
-    <span class="ident">check_name</span>(<span class="ident">name</span>, <span class="ident">opts</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">src_paths_types</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[];
 
@@ -1207,28 +1264,36 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
         <span class="comment">// Maybe when doing `cargo init --bin` inside a library package stub,</span>
         <span class="comment">// user may mean &quot;initialize for library, but also add binary target&quot;</span>
     }
+    <span class="kw">let</span> <span class="ident">has_bin</span> <span class="op">=</span> <span class="ident">src_paths_types</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">bin</span>);
+    <span class="comment">// If --name is already used to override, no point in suggesting it</span>
+    <span class="comment">// again as a fix.</span>
+    <span class="kw">let</span> <span class="ident">name_help</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">opts</span>.<span class="ident">name</span> {
+        <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;&quot;</span>,
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;\nuse --name to override crate name&quot;</span>,
+    };
+    <span class="ident">check_name</span>(<span class="ident">name</span>, <span class="ident">name_help</span>, <span class="ident">has_bin</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>())<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">version_control</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">version_control</span>;
 
     <span class="kw">if</span> <span class="ident">version_control</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">None</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">num_detected_vsces</span> <span class="op">=</span> <span class="number">0</span>;
 
-        <span class="kw">if</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.git&quot;</span>)).<span class="ident">is_ok</span>() {
+        <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.git&quot;</span>).<span class="ident">exists</span>() {
             <span class="ident">version_control</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">VersionControl</span>::<span class="ident">Git</span>);
             <span class="ident">num_detected_vsces</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         }
 
-        <span class="kw">if</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.hg&quot;</span>)).<span class="ident">is_ok</span>() {
+        <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.hg&quot;</span>).<span class="ident">exists</span>() {
             <span class="ident">version_control</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">VersionControl</span>::<span class="ident">Hg</span>);
             <span class="ident">num_detected_vsces</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         }
 
-        <span class="kw">if</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.pijul&quot;</span>)).<span class="ident">is_ok</span>() {
+        <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.pijul&quot;</span>).<span class="ident">exists</span>() {
             <span class="ident">version_control</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">VersionControl</span>::<span class="ident">Pijul</span>);
             <span class="ident">num_detected_vsces</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         }
 
-        <span class="kw">if</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.fossil&quot;</span>)).<span class="ident">is_ok</span>() {
+        <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;.fossil&quot;</span>).<span class="ident">exists</span>() {
             <span class="ident">version_control</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">VersionControl</span>::<span class="ident">Fossil</span>);
             <span class="ident">num_detected_vsces</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         }
@@ -1248,10 +1313,10 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
         <span class="ident">version_control</span>,
         <span class="ident">path</span>,
         <span class="ident">name</span>,
-        <span class="ident">bin</span>: <span class="ident">src_paths_types</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">bin</span>),
+        <span class="ident">bin</span>: <span class="ident">has_bin</span>,
         <span class="ident">source_files</span>: <span class="ident">src_paths_types</span>,
-        <span class="ident">edition</span>: <span class="ident">opts</span>.<span class="ident">edition</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">s</span>),
-        <span class="ident">registry</span>: <span class="ident">opts</span>.<span class="ident">registry</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">s</span>),
+        <span class="ident">edition</span>: <span class="ident">opts</span>.<span class="ident">edition</span>.<span class="ident">as_deref</span>(),
+        <span class="ident">registry</span>: <span class="ident">opts</span>.<span class="ident">registry</span>.<span class="ident">as_deref</span>(),
     };
 
     <span class="ident">mk</span>(<span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">mkopts</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
@@ -1528,10 +1593,7 @@ mod tests {
 &quot;</span>
         };
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="ident">path_of_source_file</span>)
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">is_file</span>())
-            .<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>)
-        {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">path_of_source_file</span>.<span class="ident">is_file</span>() {
             <span class="ident">paths</span>::<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="ident">path_of_source_file</span>, <span class="ident">default_file_content</span>)<span class="question-mark">?</span>;
 
             <span class="comment">// Format the newly created source file</span>
@@ -1547,12 +1609,12 @@ mod tests {
     }
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">Workspace</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;Cargo.toml&quot;</span>), <span class="ident">config</span>) {
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(
+        <span class="kw">crate</span>::<span class="ident">display_warning_with_error</span>(
             <span class="string">&quot;compiling this new crate may not work due to invalid \
-             workspace configuration\n\n{:?}&quot;</span>,
-            <span class="ident">e</span>,
+             workspace configuration&quot;</span>,
+            <span class="kw-2">&amp;</span><span class="ident">e</span>,
+            <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>(),
         );
-        <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">warn</span>(<span class="ident">msg</span>)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())

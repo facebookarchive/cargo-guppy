@@ -1388,6 +1388,14 @@
 <span id="1388">1388</span>
 <span id="1389">1389</span>
 <span id="1390">1390</span>
+<span id="1391">1391</span>
+<span id="1392">1392</span>
+<span id="1393">1393</span>
+<span id="1394">1394</span>
+<span id="1395">1395</span>
+<span id="1396">1396</span>
+<span id="1397">1397</span>
+<span id="1398">1398</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1854,13 +1862,18 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
-    <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">WorkspaceImpl</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">WorkspaceImpl</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns the workspace root.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">root</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Path</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">root</span>
+    }
+
+    <span class="doccomment">/// Returns the number of packages in this workspace.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_path</span>.<span class="ident">len</span>()
     }
 
     <span class="doccomment">/// Returns an iterator over workspace paths and package metadatas, sorted by the path</span>
@@ -1913,6 +1926,9 @@
     <span class="comment">// This is a BTreeMap to allow presenting data in sorted order.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">members_by_path</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">PathBuf</span>, <span class="ident">PackageId</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">members_by_name</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="ident">PackageId</span><span class="op">&gt;</span>,
+    <span class="comment">// Cache for members by name (only used for proptests)</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;proptest09&quot;</span>)]</span>
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">name_list</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Information about a specific package in a `PackageGraph`.</span>

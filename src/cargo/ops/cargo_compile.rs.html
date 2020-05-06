@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/ops/cargo_compile.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_compile.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/ops/cargo_compile.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_compile.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1092,13 +1092,6 @@
 <span id="1092">1092</span>
 <span id="1093">1093</span>
 <span id="1094">1094</span>
-<span id="1095">1095</span>
-<span id="1096">1096</span>
-<span id="1097">1097</span>
-<span id="1098">1098</span>
-<span id="1099">1099</span>
-<span id="1100">1100</span>
-<span id="1101">1101</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! The Cargo &quot;compile&quot; operation.</span>
 <span class="doccomment">//!</span>
@@ -1109,14 +1102,13 @@
 <span class="doccomment">//! rough outline is:</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! - Resolve the dependency graph (see `ops::resolve`).</span>
-<span class="doccomment">//! - Download any packages needed (see `PackageSet`). Note that dependency</span>
-<span class="doccomment">//!   downloads are deferred until `build_unit_dependencies`.</span>
+<span class="doccomment">//! - Download any packages needed (see `PackageSet`).</span>
 <span class="doccomment">//! - Generate a list of top-level &quot;units&quot; of work for the targets the user</span>
 <span class="doccomment">//!   requested on the command-line. Each `Unit` corresponds to a compiler</span>
 <span class="doccomment">//!   invocation. This is done in this module (`generate_targets`).</span>
+<span class="doccomment">//! - Build the graph of `Unit` dependencies (see</span>
+<span class="doccomment">//!   `core::compiler::context::unit_dependencies`).</span>
 <span class="doccomment">//! - Create a `Context` which will perform the following steps:</span>
-<span class="doccomment">//!     - Build the graph of `Unit` dependencies (see</span>
-<span class="doccomment">//!       `core::compiler::context::unit_dependencies`).</span>
 <span class="doccomment">//!     - Prepare the `target` directory (see `Layout`).</span>
 <span class="doccomment">//!     - Create a job queue (see `JobQueue`). The queue checks the</span>
 <span class="doccomment">//!       fingerprint of each `Unit` to determine if it should run or be</span>
@@ -1127,18 +1119,17 @@
 
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeSet</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::<span class="ident">FromIterator</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">standard_lib</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">unit_dependencies</span>::<span class="ident">build_unit_dependencies</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">standard_lib</span>, <span class="ident">unit_graph</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">BuildConfig</span>, <span class="ident">BuildContext</span>, <span class="ident">Compilation</span>, <span class="ident">Context</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">CompileKind</span>, <span class="ident">CompileMode</span>, <span class="ident">RustcTargetData</span>, <span class="ident">Unit</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">DefaultExecutor</span>, <span class="ident">Executor</span>, <span class="ident">UnitInterner</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">profiles</span>::{<span class="ident">Profiles</span>, <span class="ident">UnitFor</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::<span class="ident">features</span>::{<span class="self">self</span>, <span class="ident">FeaturesFor</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::{<span class="ident">HasDevUnits</span>, <span class="ident">Resolve</span>, <span class="ident">ResolveOpts</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">LibKind</span>, <span class="ident">Package</span>, <span class="ident">PackageSet</span>, <span class="ident">Target</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Package</span>, <span class="ident">PackageSet</span>, <span class="ident">Target</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">PackageId</span>, <span class="ident">PackageIdSpec</span>, <span class="ident">TargetKind</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ops</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ops</span>::<span class="ident">resolve</span>::<span class="ident">WorkspaceResolve</span>;
@@ -1146,9 +1137,15 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">closest_msg</span>, <span class="ident">profile</span>, <span class="ident">CargoResult</span>};
 
 <span class="doccomment">/// Contains information about how a package should be compiled.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Note on distinction between `CompileOptions` and `BuildConfig`:</span>
+<span class="doccomment">/// `BuildConfig` contains values that need to be retained after</span>
+<span class="doccomment">/// `BuildContext` is created. The other fields are no longer necessary. Think</span>
+<span class="doccomment">/// of it as `CompileOptions` are high-level settings requested on the</span>
+<span class="doccomment">/// command-line, and `BuildConfig` are low-level settings for actually</span>
+<span class="doccomment">/// driving `rustc`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CompileOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Config</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CompileOptions</span> {
     <span class="doccomment">/// Configuration information for a rustc build</span>
     <span class="kw">pub</span> <span class="ident">build_config</span>: <span class="ident">BuildConfig</span>,
     <span class="doccomment">/// Extra features to build for the root package</span>
@@ -1172,19 +1169,12 @@
     <span class="doccomment">/// Whether the `--document-private-items` flags was specified and should</span>
     <span class="doccomment">/// be forwarded to `rustdoc`.</span>
     <span class="kw">pub</span> <span class="ident">rustdoc_document_private_items</span>: <span class="ident">bool</span>,
-    <span class="doccomment">/// The directory to copy final artifacts to. Note that even if `out_dir` is</span>
-    <span class="doccomment">/// set, a copy of artifacts still could be found a `target/(debug\release)`</span>
-    <span class="doccomment">/// as usual.</span>
-    <span class="comment">// Note that, although the cmd-line flag name is `out-dir`, in code we use</span>
-    <span class="comment">// `export_dir`, to avoid confusion with out dir at `target/debug/deps`.</span>
-    <span class="kw">pub</span> <span class="ident">export_dir</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">CompileOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Config</span>, <span class="ident">mode</span>: <span class="ident">CompileMode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">CompileOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">CompileOptions</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>, <span class="ident">mode</span>: <span class="ident">CompileMode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">CompileOptions</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">CompileOptions</span> {
-            <span class="ident">config</span>,
-            <span class="ident">build_config</span>: <span class="ident">BuildConfig</span>::<span class="ident">new</span>(<span class="ident">config</span>, <span class="prelude-val">None</span>, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>, <span class="ident">mode</span>)<span class="question-mark">?</span>,
+            <span class="ident">build_config</span>: <span class="ident">BuildConfig</span>::<span class="ident">new</span>(<span class="ident">config</span>, <span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>[], <span class="ident">mode</span>)<span class="question-mark">?</span>,
             <span class="ident">features</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
             <span class="ident">all_features</span>: <span class="bool-val">false</span>,
             <span class="ident">no_default_features</span>: <span class="bool-val">false</span>,
@@ -1196,7 +1186,6 @@
             <span class="ident">target_rustc_args</span>: <span class="prelude-val">None</span>,
             <span class="ident">local_rustdoc_args</span>: <span class="prelude-val">None</span>,
             <span class="ident">rustdoc_document_private_items</span>: <span class="bool-val">false</span>,
-            <span class="ident">export_dir</span>: <span class="prelude-val">None</span>,
         })
     }
 }
@@ -1343,10 +1332,7 @@
     },
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compile</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-    <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CompileOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compile</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CompileOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">exec</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Executor</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">DefaultExecutor</span>);
     <span class="ident">compile_with_exec</span>(<span class="ident">ws</span>, <span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="ident">exec</span>)
 }
@@ -1355,7 +1341,7 @@
 <span class="doccomment">/// calls and add custom logic. `compile` uses `DefaultExecutor` which just passes calls through.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compile_with_exec</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CompileOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CompileOptions</span>,
     <span class="ident">exec</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Executor</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="ident">ws</span>.<span class="ident">emit_warnings</span>()<span class="question-mark">?</span>;
@@ -1364,11 +1350,27 @@
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compile_ws</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CompileOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CompileOptions</span>,
     <span class="ident">exec</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Executor</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Compilation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">interner</span> <span class="op">=</span> <span class="ident">UnitInterner</span>::<span class="ident">new</span>();
+    <span class="kw">let</span> <span class="ident">bcx</span> <span class="op">=</span> <span class="ident">create_bcx</span>(<span class="ident">ws</span>, <span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="ident">interner</span>)<span class="question-mark">?</span>;
+    <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">build_config</span>.<span class="ident">unit_graph</span> {
+        <span class="ident">unit_graph</span>::<span class="ident">emit_serialized_unit_graph</span>(<span class="kw-2">&amp;</span><span class="ident">bcx</span>.<span class="ident">roots</span>, <span class="kw-2">&amp;</span><span class="ident">bcx</span>.<span class="ident">unit_graph</span>)<span class="question-mark">?</span>;
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Compilation</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">bcx</span>)<span class="question-mark">?</span>);
+    }
+
+    <span class="kw">let</span> <span class="ident">_p</span> <span class="op">=</span> <span class="ident">profile</span>::<span class="ident">start</span>(<span class="string">&quot;compiling&quot;</span>);
+    <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">bcx</span>)<span class="question-mark">?</span>;
+    <span class="ident">cx</span>.<span class="ident">compile</span>(<span class="ident">exec</span>)
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_bcx</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
+    <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">CompileOptions</span>,
+    <span class="ident">interner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">UnitInterner</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">BuildContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">CompileOptions</span> {
-        <span class="ident">config</span>,
         <span class="kw-2">ref</span> <span class="ident">build_config</span>,
         <span class="kw-2">ref</span> <span class="ident">spec</span>,
         <span class="kw-2">ref</span> <span class="ident">features</span>,
@@ -1379,8 +1381,8 @@
         <span class="kw-2">ref</span> <span class="ident">target_rustc_args</span>,
         <span class="kw-2">ref</span> <span class="ident">local_rustdoc_args</span>,
         <span class="ident">rustdoc_document_private_items</span>,
-        <span class="kw-2">ref</span> <span class="ident">export_dir</span>,
     } <span class="op">=</span> <span class="kw-2">*</span><span class="ident">options</span>;
+    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>();
 
     <span class="kw">match</span> <span class="ident">build_config</span>.<span class="ident">mode</span> {
         <span class="ident">CompileMode</span>::<span class="ident">Test</span>
@@ -1403,13 +1405,7 @@
         }
     }
 
-    <span class="kw">let</span> <span class="ident">profiles</span> <span class="op">=</span> <span class="ident">Profiles</span>::<span class="ident">new</span>(
-        <span class="ident">ws</span>.<span class="ident">profiles</span>(),
-        <span class="ident">config</span>,
-        <span class="ident">build_config</span>.<span class="ident">requested_profile</span>,
-        <span class="ident">ws</span>.<span class="ident">features</span>(),
-    )<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">target_data</span> <span class="op">=</span> <span class="ident">RustcTargetData</span>::<span class="ident">new</span>(<span class="ident">ws</span>, <span class="ident">build_config</span>.<span class="ident">requested_kind</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">target_data</span> <span class="op">=</span> <span class="ident">RustcTargetData</span>::<span class="ident">new</span>(<span class="ident">ws</span>, <span class="kw-2">&amp;</span><span class="ident">build_config</span>.<span class="ident">requested_kinds</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">specs</span> <span class="op">=</span> <span class="ident">spec</span>.<span class="ident">to_package_id_specs</span>(<span class="ident">ws</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">dev_deps</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">require_optional_deps</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">filter</span>.<span class="ident">need_dev_deps</span>(<span class="ident">build_config</span>.<span class="ident">mode</span>);
@@ -1422,7 +1418,7 @@
     <span class="kw">let</span> <span class="ident">resolve</span> <span class="op">=</span> <span class="ident">ops</span>::<span class="ident">resolve_ws_with_opts</span>(
         <span class="ident">ws</span>,
         <span class="kw-2">&amp;</span><span class="ident">target_data</span>,
-        <span class="ident">build_config</span>.<span class="ident">requested_kind</span>,
+        <span class="kw-2">&amp;</span><span class="ident">build_config</span>.<span class="ident">requested_kinds</span>,
         <span class="kw-2">&amp;</span><span class="ident">opts</span>,
         <span class="kw-2">&amp;</span><span class="ident">specs</span>,
         <span class="ident">has_dev_units</span>,
@@ -1440,15 +1436,14 @@
                 .<span class="ident">shell</span>()
                 .<span class="ident">warn</span>(<span class="string">&quot;-Zbuild-std does not currently fully support --build-plan&quot;</span>)<span class="question-mark">?</span>;
         }
-        <span class="kw">if</span> <span class="ident">build_config</span>.<span class="ident">requested_kind</span>.<span class="ident">is_host</span>() {
+        <span class="kw">if</span> <span class="ident">build_config</span>.<span class="ident">requested_kinds</span>[<span class="number">0</span>].<span class="ident">is_host</span>() {
             <span class="comment">// TODO: This should eventually be fixed. Unfortunately it is not</span>
             <span class="comment">// easy to get the host triple in BuildConfig. Consider changing</span>
             <span class="comment">// requested_target to an enum, or some other approach.</span>
             <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;-Zbuild-std requires --target&quot;</span>);
         }
-        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">std_package_set</span>, <span class="ident">std_resolve</span>, <span class="ident">std_features</span>) <span class="op">=</span>
-            <span class="ident">standard_lib</span>::<span class="ident">resolve_std</span>(<span class="ident">ws</span>, <span class="kw-2">&amp;</span><span class="ident">target_data</span>, <span class="ident">build_config</span>.<span class="ident">requested_kind</span>, <span class="ident">crates</span>)<span class="question-mark">?</span>;
-        <span class="ident">remove_dylib_crate_type</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">std_package_set</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> (<span class="ident">std_package_set</span>, <span class="ident">std_resolve</span>, <span class="ident">std_features</span>) <span class="op">=</span>
+            <span class="ident">standard_lib</span>::<span class="ident">resolve_std</span>(<span class="ident">ws</span>, <span class="kw-2">&amp;</span><span class="ident">target_data</span>, <span class="kw-2">&amp;</span><span class="ident">build_config</span>.<span class="ident">requested_kinds</span>, <span class="ident">crates</span>)<span class="question-mark">?</span>;
         <span class="ident">pkg_set</span>.<span class="ident">add_set</span>(<span class="ident">std_package_set</span>);
         <span class="prelude-val">Some</span>((<span class="ident">std_resolve</span>, <span class="ident">std_features</span>))
     } <span class="kw">else</span> {
@@ -1457,11 +1452,8 @@
 
     <span class="comment">// Find the packages in the resolver that the user wants to build (those</span>
     <span class="comment">// passed in with `-p` or the defaults from the workspace), and convert</span>
-    <span class="comment">// Vec&lt;PackageIdSpec&gt; to a Vec&lt;&amp;PackageId&gt;.</span>
-    <span class="kw">let</span> <span class="ident">to_build_ids</span> <span class="op">=</span> <span class="ident">specs</span>
-        .<span class="ident">iter</span>()
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">query</span>(<span class="ident">resolve</span>.<span class="ident">iter</span>()))
-        .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+    <span class="comment">// Vec&lt;PackageIdSpec&gt; to a Vec&lt;PackageId&gt;.</span>
+    <span class="kw">let</span> <span class="ident">to_build_ids</span> <span class="op">=</span> <span class="ident">resolve</span>.<span class="ident">specs_to_ids</span>(<span class="kw-2">&amp;</span><span class="ident">specs</span>)<span class="question-mark">?</span>;
     <span class="comment">// Now get the `Package` for each `PackageId`. This may trigger a download</span>
     <span class="comment">// if the user specified `-p` for a dependency that is not downloaded.</span>
     <span class="comment">// Dependencies will be downloaded during build_unit_dependencies.</span>
@@ -1500,32 +1492,29 @@
         );
     }
 
+    <span class="kw">let</span> <span class="ident">profiles</span> <span class="op">=</span> <span class="ident">Profiles</span>::<span class="ident">new</span>(
+        <span class="ident">ws</span>.<span class="ident">profiles</span>(),
+        <span class="ident">config</span>,
+        <span class="ident">build_config</span>.<span class="ident">requested_profile</span>,
+        <span class="ident">ws</span>.<span class="ident">features</span>(),
+    )<span class="question-mark">?</span>;
     <span class="ident">profiles</span>.<span class="ident">validate_packages</span>(
         <span class="ident">ws</span>.<span class="ident">profiles</span>(),
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>(),
         <span class="ident">workspace_resolve</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="ident">resolve</span>),
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">interner</span> <span class="op">=</span> <span class="ident">UnitInterner</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bcx</span> <span class="op">=</span> <span class="ident">BuildContext</span>::<span class="ident">new</span>(
-        <span class="ident">ws</span>,
-        <span class="kw-2">&amp;</span><span class="ident">pkg_set</span>,
-        <span class="ident">config</span>,
-        <span class="ident">build_config</span>,
-        <span class="ident">profiles</span>,
-        <span class="kw-2">&amp;</span><span class="ident">interner</span>,
-        <span class="ident">HashMap</span>::<span class="ident">new</span>(),
-        <span class="ident">target_data</span>,
-    )<span class="question-mark">?</span>;
-
     <span class="kw">let</span> <span class="ident">units</span> <span class="op">=</span> <span class="ident">generate_targets</span>(
         <span class="ident">ws</span>,
         <span class="kw-2">&amp;</span><span class="ident">to_builds</span>,
         <span class="ident">filter</span>,
-        <span class="ident">build_config</span>.<span class="ident">requested_kind</span>,
+        <span class="kw-2">&amp;</span><span class="ident">build_config</span>.<span class="ident">requested_kinds</span>,
+        <span class="ident">build_config</span>.<span class="ident">mode</span>,
         <span class="kw-2">&amp;</span><span class="ident">resolve</span>,
         <span class="kw-2">&amp;</span><span class="ident">resolved_features</span>,
-        <span class="kw-2">&amp;</span><span class="ident">bcx</span>,
+        <span class="kw-2">&amp;</span><span class="ident">pkg_set</span>,
+        <span class="kw-2">&amp;</span><span class="ident">profiles</span>,
+        <span class="ident">interner</span>,
     )<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">std_roots</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">crates</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">cli_unstable</span>().<span class="ident">build_std</span> {
@@ -1543,16 +1532,19 @@
         }
         <span class="kw">let</span> (<span class="ident">std_resolve</span>, <span class="ident">std_features</span>) <span class="op">=</span> <span class="ident">std_resolve_features</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>();
         <span class="ident">standard_lib</span>::<span class="ident">generate_std_roots</span>(
-            <span class="kw-2">&amp;</span><span class="ident">bcx</span>,
             <span class="kw-2">&amp;</span><span class="ident">crates</span>,
             <span class="ident">std_resolve</span>,
             <span class="ident">std_features</span>,
-            <span class="ident">build_config</span>.<span class="ident">requested_kind</span>,
+            <span class="kw-2">&amp;</span><span class="ident">build_config</span>.<span class="ident">requested_kinds</span>,
+            <span class="kw-2">&amp;</span><span class="ident">pkg_set</span>,
+            <span class="ident">interner</span>,
+            <span class="kw-2">&amp;</span><span class="ident">profiles</span>,
         )<span class="question-mark">?</span>
     } <span class="kw">else</span> {
-        <span class="ident">Vec</span>::<span class="ident">new</span>()
+        <span class="ident">Default</span>::<span class="ident">default</span>()
     };
 
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">extra_compiler_args</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">args</span>) <span class="op">=</span> <span class="ident">extra_args</span> {
         <span class="kw">if</span> <span class="ident">units</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
             <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
@@ -1562,7 +1554,7 @@
                 <span class="ident">extra_args_name</span>
             );
         }
-        <span class="ident">bcx</span>.<span class="ident">extra_compiler_args</span>.<span class="ident">insert</span>(<span class="ident">units</span>[<span class="number">0</span>], <span class="ident">args</span>);
+        <span class="ident">extra_compiler_args</span>.<span class="ident">insert</span>(<span class="ident">units</span>[<span class="number">0</span>].<span class="ident">clone</span>(), <span class="ident">args</span>);
     }
     <span class="kw">for</span> <span class="ident">unit</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">units</span> {
         <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc_test</span>() {
@@ -1578,27 +1570,37 @@
             }
 
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">args</span>) <span class="op">=</span> <span class="ident">extra_args</span> {
-                <span class="ident">bcx</span>.<span class="ident">extra_compiler_args</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">unit</span>, <span class="ident">args</span>.<span class="ident">clone</span>());
+                <span class="ident">extra_compiler_args</span>.<span class="ident">insert</span>(<span class="ident">unit</span>.<span class="ident">clone</span>(), <span class="ident">args</span>.<span class="ident">clone</span>());
             }
         }
     }
 
-    <span class="kw">let</span> <span class="ident">unit_dependencies</span> <span class="op">=</span> <span class="ident">build_unit_dependencies</span>(
-        <span class="kw-2">&amp;</span><span class="ident">bcx</span>,
+    <span class="kw">let</span> <span class="ident">unit_graph</span> <span class="op">=</span> <span class="ident">build_unit_dependencies</span>(
+        <span class="ident">ws</span>,
+        <span class="kw-2">&amp;</span><span class="ident">pkg_set</span>,
         <span class="kw-2">&amp;</span><span class="ident">resolve</span>,
         <span class="kw-2">&amp;</span><span class="ident">resolved_features</span>,
         <span class="ident">std_resolve_features</span>.<span class="ident">as_ref</span>(),
         <span class="kw-2">&amp;</span><span class="ident">units</span>,
         <span class="kw-2">&amp;</span><span class="ident">std_roots</span>,
+        <span class="ident">build_config</span>.<span class="ident">mode</span>,
+        <span class="kw-2">&amp;</span><span class="ident">target_data</span>,
+        <span class="kw-2">&amp;</span><span class="ident">profiles</span>,
+        <span class="ident">interner</span>,
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> {
-        <span class="kw">let</span> <span class="ident">_p</span> <span class="op">=</span> <span class="ident">profile</span>::<span class="ident">start</span>(<span class="string">&quot;compiling&quot;</span>);
-        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context</span>::<span class="ident">new</span>(<span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">bcx</span>, <span class="ident">unit_dependencies</span>, <span class="ident">build_config</span>.<span class="ident">requested_kind</span>)<span class="question-mark">?</span>;
-        <span class="ident">cx</span>.<span class="ident">compile</span>(<span class="kw-2">&amp;</span><span class="ident">units</span>, <span class="ident">export_dir</span>.<span class="ident">clone</span>(), <span class="ident">exec</span>)<span class="question-mark">?</span>
-    };
+    <span class="kw">let</span> <span class="ident">bcx</span> <span class="op">=</span> <span class="ident">BuildContext</span>::<span class="ident">new</span>(
+        <span class="ident">ws</span>,
+        <span class="ident">pkg_set</span>,
+        <span class="ident">build_config</span>,
+        <span class="ident">profiles</span>,
+        <span class="ident">extra_compiler_args</span>,
+        <span class="ident">target_data</span>,
+        <span class="ident">units</span>,
+        <span class="ident">unit_graph</span>,
+    )<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(<span class="ident">ret</span>)
+    <span class="prelude-val">Ok</span>(<span class="ident">bcx</span>)
 }
 
 <span class="kw">impl</span> <span class="ident">FilterRule</span> {
@@ -1709,16 +1711,18 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">need_dev_deps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mode</span>: <span class="ident">CompileMode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="ident">mode</span> {
             <span class="ident">CompileMode</span>::<span class="ident">Test</span> <span class="op">|</span> <span class="ident">CompileMode</span>::<span class="ident">Doctest</span> <span class="op">|</span> <span class="ident">CompileMode</span>::<span class="ident">Bench</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="ident">CompileMode</span>::<span class="ident">Build</span> <span class="op">|</span> <span class="ident">CompileMode</span>::<span class="ident">Doc</span> { .. } <span class="op">|</span> <span class="ident">CompileMode</span>::<span class="ident">Check</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span>
-            {
-                <span class="ident">CompileFilter</span>::<span class="ident">Default</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-                <span class="ident">CompileFilter</span>::<span class="ident">Only</span> {
-                    <span class="kw-2">ref</span> <span class="ident">examples</span>,
-                    <span class="kw-2">ref</span> <span class="ident">tests</span>,
-                    <span class="kw-2">ref</span> <span class="ident">benches</span>,
-                    ..
-                } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">examples</span>.<span class="ident">is_specific</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">tests</span>.<span class="ident">is_specific</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">benches</span>.<span class="ident">is_specific</span>(),
-            },
+            <span class="ident">CompileMode</span>::<span class="ident">Check</span> { <span class="ident">test</span>: <span class="bool-val">true</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="ident">CompileMode</span>::<span class="ident">Build</span> <span class="op">|</span> <span class="ident">CompileMode</span>::<span class="ident">Doc</span> { .. } <span class="op">|</span> <span class="ident">CompileMode</span>::<span class="ident">Check</span> { <span class="ident">test</span>: <span class="bool-val">false</span> } <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
+                    <span class="ident">CompileFilter</span>::<span class="ident">Default</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+                    <span class="ident">CompileFilter</span>::<span class="ident">Only</span> {
+                        <span class="kw-2">ref</span> <span class="ident">examples</span>,
+                        <span class="kw-2">ref</span> <span class="ident">tests</span>,
+                        <span class="kw-2">ref</span> <span class="ident">benches</span>,
+                        ..
+                    } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">examples</span>.<span class="ident">is_specific</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">tests</span>.<span class="ident">is_specific</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">benches</span>.<span class="ident">is_specific</span>(),
+                }
+            }
             <span class="ident">CompileMode</span>::<span class="ident">RunCustomBuild</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Invalid mode&quot;</span>),
         }
     }
@@ -1781,90 +1785,103 @@
 
 <span class="doccomment">/// Generates all the base targets for the packages the user has requested to</span>
 <span class="doccomment">/// compile. Dependencies for these targets are computed later in `unit_dependencies`.</span>
-<span class="kw">fn</span> <span class="ident">generate_targets</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+<span class="kw">fn</span> <span class="ident">generate_targets</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">packages</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Package</span>],
+    <span class="ident">packages</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">Package</span>],
     <span class="ident">filter</span>: <span class="kw-2">&amp;</span><span class="ident">CompileFilter</span>,
-    <span class="ident">default_arch_kind</span>: <span class="ident">CompileKind</span>,
-    <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Resolve</span>,
+    <span class="ident">requested_kinds</span>: <span class="kw-2">&amp;</span>[<span class="ident">CompileKind</span>],
+    <span class="ident">mode</span>: <span class="ident">CompileMode</span>,
+    <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="ident">Resolve</span>,
     <span class="ident">resolved_features</span>: <span class="kw-2">&amp;</span><span class="ident">features</span>::<span class="ident">ResolvedFeatures</span>,
-    <span class="ident">bcx</span>: <span class="kw-2">&amp;</span><span class="ident">BuildContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="comment">// Helper for creating a `Unit` struct.</span>
-    <span class="kw">let</span> <span class="ident">new_unit</span> <span class="op">=</span> <span class="op">|</span><span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Package</span>, <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Target</span>, <span class="ident">target_mode</span>: <span class="ident">CompileMode</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">unit_for</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">target_mode</span>.<span class="ident">is_any_test</span>() {
-            <span class="comment">// NOTE: the `UnitFor` here is subtle. If you have a profile</span>
-            <span class="comment">// with `panic` set, the `panic` flag is cleared for</span>
-            <span class="comment">// tests/benchmarks and their dependencies. If this</span>
-            <span class="comment">// was `normal`, then the lib would get compiled three</span>
-            <span class="comment">// times (once with panic, once without, and once with</span>
-            <span class="comment">// `--test`).</span>
-            <span class="comment">//</span>
-            <span class="comment">// This would cause a problem for doc tests, which would fail</span>
-            <span class="comment">// because `rustdoc` would attempt to link with both libraries</span>
-            <span class="comment">// at the same time. Also, it&#39;s probably not important (or</span>
-            <span class="comment">// even desirable?) for rustdoc to link with a lib with</span>
-            <span class="comment">// `panic` set.</span>
-            <span class="comment">//</span>
-            <span class="comment">// As a consequence, Examples and Binaries get compiled</span>
-            <span class="comment">// without `panic` set. This probably isn&#39;t a bad deal.</span>
-            <span class="comment">//</span>
-            <span class="comment">// Forcing the lib to be compiled three times during `cargo</span>
-            <span class="comment">// test` is probably also not desirable.</span>
-            <span class="ident">UnitFor</span>::<span class="ident">new_test</span>(<span class="ident">bcx</span>.<span class="ident">config</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">for_host</span>() {
-            <span class="comment">// Proc macro / plugin should not have `panic` set.</span>
-            <span class="ident">UnitFor</span>::<span class="ident">new_compiler</span>()
-        } <span class="kw">else</span> {
-            <span class="ident">UnitFor</span>::<span class="ident">new_normal</span>()
-        };
-        <span class="comment">// Custom build units are added in `build_unit_dependencies`.</span>
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">target</span>.<span class="ident">is_custom_build</span>());
-        <span class="kw">let</span> <span class="ident">target_mode</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">target_mode</span> {
-            <span class="ident">CompileMode</span>::<span class="ident">Test</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">is_example</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">filter</span>.<span class="ident">is_specific</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">target</span>.<span class="ident">tested</span>() {
-                    <span class="comment">// Examples are included as regular binaries to verify</span>
-                    <span class="comment">// that they compile.</span>
-                    <span class="ident">CompileMode</span>::<span class="ident">Build</span>
-                } <span class="kw">else</span> {
-                    <span class="ident">CompileMode</span>::<span class="ident">Test</span>
+    <span class="ident">package_set</span>: <span class="kw-2">&amp;</span><span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">profiles</span>: <span class="kw-2">&amp;</span><span class="ident">Profiles</span>,
+    <span class="ident">interner</span>: <span class="kw-2">&amp;</span><span class="ident">UnitInterner</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Unit</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>();
+    <span class="comment">// Helper for creating a list of `Unit` structures</span>
+    <span class="kw">let</span> <span class="ident">new_unit</span> <span class="op">=</span>
+        <span class="op">|</span><span class="ident">units</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">Unit</span><span class="op">&gt;</span>, <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>, <span class="ident">target</span>: <span class="kw-2">&amp;</span><span class="ident">Target</span>, <span class="ident">target_mode</span>: <span class="ident">CompileMode</span><span class="op">|</span> {
+            <span class="kw">let</span> <span class="ident">unit_for</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">target_mode</span>.<span class="ident">is_any_test</span>() {
+                <span class="comment">// NOTE: the `UnitFor` here is subtle. If you have a profile</span>
+                <span class="comment">// with `panic` set, the `panic` flag is cleared for</span>
+                <span class="comment">// tests/benchmarks and their dependencies. If this</span>
+                <span class="comment">// was `normal`, then the lib would get compiled three</span>
+                <span class="comment">// times (once with panic, once without, and once with</span>
+                <span class="comment">// `--test`).</span>
+                <span class="comment">//</span>
+                <span class="comment">// This would cause a problem for doc tests, which would fail</span>
+                <span class="comment">// because `rustdoc` would attempt to link with both libraries</span>
+                <span class="comment">// at the same time. Also, it&#39;s probably not important (or</span>
+                <span class="comment">// even desirable?) for rustdoc to link with a lib with</span>
+                <span class="comment">// `panic` set.</span>
+                <span class="comment">//</span>
+                <span class="comment">// As a consequence, Examples and Binaries get compiled</span>
+                <span class="comment">// without `panic` set. This probably isn&#39;t a bad deal.</span>
+                <span class="comment">//</span>
+                <span class="comment">// Forcing the lib to be compiled three times during `cargo</span>
+                <span class="comment">// test` is probably also not desirable.</span>
+                <span class="ident">UnitFor</span>::<span class="ident">new_test</span>(<span class="ident">config</span>)
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">for_host</span>() {
+                <span class="comment">// Proc macro / plugin should not have `panic` set.</span>
+                <span class="ident">UnitFor</span>::<span class="ident">new_compiler</span>()
+            } <span class="kw">else</span> {
+                <span class="ident">UnitFor</span>::<span class="ident">new_normal</span>()
+            };
+            <span class="comment">// Custom build units are added in `build_unit_dependencies`.</span>
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">target</span>.<span class="ident">is_custom_build</span>());
+            <span class="kw">let</span> <span class="ident">target_mode</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">target_mode</span> {
+                <span class="ident">CompileMode</span>::<span class="ident">Test</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">is_example</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">filter</span>.<span class="ident">is_specific</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">target</span>.<span class="ident">tested</span>() {
+                        <span class="comment">// Examples are included as regular binaries to verify</span>
+                        <span class="comment">// that they compile.</span>
+                        <span class="ident">CompileMode</span>::<span class="ident">Build</span>
+                    } <span class="kw">else</span> {
+                        <span class="ident">CompileMode</span>::<span class="ident">Test</span>
+                    }
                 }
-            }
-            <span class="ident">CompileMode</span>::<span class="ident">Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">target</span>.<span class="ident">kind</span>() {
-                <span class="ident">TargetKind</span>::<span class="ident">Test</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Test</span>,
-                <span class="ident">TargetKind</span>::<span class="ident">Bench</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Bench</span>,
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Build</span>,
-            },
-            <span class="comment">// `CompileMode::Bench` is only used to inform `filter_default_targets`</span>
-            <span class="comment">// which command is being used (`cargo bench`). Afterwards, tests</span>
-            <span class="comment">// and benches are treated identically. Switching the mode allows</span>
-            <span class="comment">// de-duplication of units that are essentially identical. For</span>
-            <span class="comment">// example, `cargo build --all-targets --release` creates the units</span>
-            <span class="comment">// (lib profile:bench, mode:test) and (lib profile:bench, mode:bench)</span>
-            <span class="comment">// and since these are the same, we want them to be de-duplicated in</span>
-            <span class="comment">// `unit_dependencies`.</span>
-            <span class="ident">CompileMode</span>::<span class="ident">Bench</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Test</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">target_mode</span>,
-        };
-        <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="ident">default_arch_kind</span>.<span class="ident">for_target</span>(<span class="ident">target</span>);
-        <span class="kw">let</span> <span class="ident">profile</span> <span class="op">=</span>
-            <span class="ident">bcx</span>.<span class="ident">profiles</span>
-                .<span class="ident">get_profile</span>(<span class="ident">pkg</span>.<span class="ident">package_id</span>(), <span class="ident">ws</span>.<span class="ident">is_member</span>(<span class="ident">pkg</span>), <span class="ident">unit_for</span>, <span class="ident">target_mode</span>);
+                <span class="ident">CompileMode</span>::<span class="ident">Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">target</span>.<span class="ident">kind</span>() {
+                    <span class="ident">TargetKind</span>::<span class="ident">Test</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Test</span>,
+                    <span class="ident">TargetKind</span>::<span class="ident">Bench</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Bench</span>,
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Build</span>,
+                },
+                <span class="comment">// `CompileMode::Bench` is only used to inform `filter_default_targets`</span>
+                <span class="comment">// which command is being used (`cargo bench`). Afterwards, tests</span>
+                <span class="comment">// and benches are treated identically. Switching the mode allows</span>
+                <span class="comment">// de-duplication of units that are essentially identical. For</span>
+                <span class="comment">// example, `cargo build --all-targets --release` creates the units</span>
+                <span class="comment">// (lib profile:bench, mode:test) and (lib profile:bench, mode:bench)</span>
+                <span class="comment">// and since these are the same, we want them to be de-duplicated in</span>
+                <span class="comment">// `unit_dependencies`.</span>
+                <span class="ident">CompileMode</span>::<span class="ident">Bench</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Test</span>,
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">target_mode</span>,
+            };
 
-        <span class="kw">let</span> <span class="ident">features</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">from</span>(<span class="ident">resolved_features</span>.<span class="ident">activated_features</span>(
-            <span class="ident">pkg</span>.<span class="ident">package_id</span>(),
-            <span class="ident">FeaturesFor</span>::<span class="ident">NormalOrDev</span>, <span class="comment">// Root units are never build dependencies.</span>
-        ));
-        <span class="ident">bcx</span>.<span class="ident">units</span>.<span class="ident">intern</span>(
-            <span class="ident">pkg</span>,
-            <span class="ident">target</span>,
-            <span class="ident">profile</span>,
-            <span class="ident">kind</span>,
-            <span class="ident">target_mode</span>,
-            <span class="ident">features</span>,
-            <span class="comment">/*is_std*/</span> <span class="bool-val">false</span>,
-        )
-    };
+            <span class="kw">let</span> <span class="ident">is_local</span> <span class="op">=</span> <span class="ident">pkg</span>.<span class="ident">package_id</span>().<span class="ident">source_id</span>().<span class="ident">is_path</span>();
+            <span class="kw">let</span> <span class="ident">profile</span> <span class="op">=</span> <span class="ident">profiles</span>.<span class="ident">get_profile</span>(
+                <span class="ident">pkg</span>.<span class="ident">package_id</span>(),
+                <span class="ident">ws</span>.<span class="ident">is_member</span>(<span class="ident">pkg</span>),
+                <span class="ident">is_local</span>,
+                <span class="ident">unit_for</span>,
+                <span class="ident">target_mode</span>,
+            );
+
+            <span class="comment">// No need to worry about build-dependencies, roots are never build dependencies.</span>
+            <span class="kw">let</span> <span class="ident">features_for</span> <span class="op">=</span> <span class="ident">FeaturesFor</span>::<span class="ident">from_for_host</span>(<span class="ident">target</span>.<span class="ident">proc_macro</span>());
+            <span class="kw">let</span> <span class="ident">features</span> <span class="op">=</span> <span class="ident">resolved_features</span>.<span class="ident">activated_features</span>(<span class="ident">pkg</span>.<span class="ident">package_id</span>(), <span class="ident">features_for</span>);
+
+            <span class="kw">for</span> <span class="ident">kind</span> <span class="kw">in</span> <span class="ident">requested_kinds</span> {
+                <span class="kw">let</span> <span class="ident">unit</span> <span class="op">=</span> <span class="ident">interner</span>.<span class="ident">intern</span>(
+                    <span class="ident">pkg</span>,
+                    <span class="ident">target</span>,
+                    <span class="ident">profile</span>,
+                    <span class="ident">kind</span>.<span class="ident">for_target</span>(<span class="ident">target</span>),
+                    <span class="ident">target_mode</span>,
+                    <span class="ident">features</span>.<span class="ident">clone</span>(),
+                    <span class="comment">/*is_std*/</span> <span class="bool-val">false</span>,
+                );
+                <span class="ident">units</span>.<span class="ident">insert</span>(<span class="ident">unit</span>);
+            }
+        };
 
     <span class="comment">// Create a list of proposed targets.</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">proposals</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Proposal</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
@@ -1874,14 +1891,14 @@
             <span class="ident">required_features_filterable</span>,
         } <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">for</span> <span class="ident">pkg</span> <span class="kw">in</span> <span class="ident">packages</span> {
-                <span class="kw">let</span> <span class="ident">default</span> <span class="op">=</span> <span class="ident">filter_default_targets</span>(<span class="ident">pkg</span>.<span class="ident">targets</span>(), <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>);
+                <span class="kw">let</span> <span class="ident">default</span> <span class="op">=</span> <span class="ident">filter_default_targets</span>(<span class="ident">pkg</span>.<span class="ident">targets</span>(), <span class="ident">mode</span>);
                 <span class="ident">proposals</span>.<span class="ident">extend</span>(<span class="ident">default</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">target</span><span class="op">|</span> <span class="ident">Proposal</span> {
                     <span class="ident">pkg</span>,
                     <span class="ident">target</span>,
                     <span class="ident">requires_features</span>: <span class="op">!</span><span class="ident">required_features_filterable</span>,
-                    <span class="ident">mode</span>: <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>,
+                    <span class="ident">mode</span>,
                 }));
-                <span class="kw">if</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span> <span class="op">=</span><span class="op">=</span> <span class="ident">CompileMode</span>::<span class="ident">Test</span> {
+                <span class="kw">if</span> <span class="ident">mode</span> <span class="op">=</span><span class="op">=</span> <span class="ident">CompileMode</span>::<span class="ident">Test</span> {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">t</span>) <span class="op">=</span> <span class="ident">pkg</span>
                         .<span class="ident">targets</span>()
                         .<span class="ident">iter</span>()
@@ -1907,11 +1924,9 @@
         } <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">lib</span> <span class="op">!</span><span class="op">=</span> <span class="ident">LibRule</span>::<span class="ident">False</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">libs</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
-                <span class="kw">for</span> <span class="ident">proposal</span> <span class="kw">in</span>
-                    <span class="ident">filter_targets</span>(<span class="ident">packages</span>, <span class="ident">Target</span>::<span class="ident">is_lib</span>, <span class="bool-val">false</span>, <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>)
-                {
+                <span class="kw">for</span> <span class="ident">proposal</span> <span class="kw">in</span> <span class="ident">filter_targets</span>(<span class="ident">packages</span>, <span class="ident">Target</span>::<span class="ident">is_lib</span>, <span class="bool-val">false</span>, <span class="ident">mode</span>) {
                     <span class="kw">let</span> <span class="ident">Proposal</span> { <span class="ident">target</span>, <span class="ident">pkg</span>, .. } <span class="op">=</span> <span class="ident">proposal</span>;
-                    <span class="kw">if</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>.<span class="ident">is_doc_test</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">target</span>.<span class="ident">doctestable</span>() {
+                    <span class="kw">if</span> <span class="ident">mode</span>.<span class="ident">is_doc_test</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">target</span>.<span class="ident">doctestable</span>() {
                         <span class="ident">ws</span>.<span class="ident">config</span>().<span class="ident">shell</span>().<span class="ident">warn</span>(<span class="macro">format</span><span class="macro">!</span>(
                             <span class="string">&quot;doc tests are not supported for crate type(s) `{}` in package `{}`&quot;</span>,
                             <span class="ident">target</span>.<span class="ident">rustc_crate_types</span>().<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>),
@@ -1938,10 +1953,10 @@
                 <span class="ident">FilterRule</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Target</span>::<span class="ident">tested</span>,
                 <span class="ident">FilterRule</span>::<span class="ident">Just</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Target</span>::<span class="ident">is_test</span>,
             };
-            <span class="kw">let</span> <span class="ident">test_mode</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span> {
+            <span class="kw">let</span> <span class="ident">test_mode</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">mode</span> {
                 <span class="ident">CompileMode</span>::<span class="ident">Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Test</span>,
                 <span class="ident">CompileMode</span>::<span class="ident">Check</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Check</span> { <span class="ident">test</span>: <span class="bool-val">true</span> },
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>,
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">mode</span>,
             };
             <span class="comment">// If `--benches` was specified, add all targets that would be</span>
             <span class="comment">// generated by `cargo bench`.</span>
@@ -1949,10 +1964,10 @@
                 <span class="ident">FilterRule</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Target</span>::<span class="ident">benched</span>,
                 <span class="ident">FilterRule</span>::<span class="ident">Just</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Target</span>::<span class="ident">is_bench</span>,
             };
-            <span class="kw">let</span> <span class="ident">bench_mode</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span> {
+            <span class="kw">let</span> <span class="ident">bench_mode</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">mode</span> {
                 <span class="ident">CompileMode</span>::<span class="ident">Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Bench</span>,
                 <span class="ident">CompileMode</span>::<span class="ident">Check</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CompileMode</span>::<span class="ident">Check</span> { <span class="ident">test</span>: <span class="bool-val">true</span> },
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>,
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">mode</span>,
             };
 
             <span class="ident">proposals</span>.<span class="ident">extend</span>(<span class="ident">list_rule_targets</span>(
@@ -1960,14 +1975,14 @@
                 <span class="ident">bins</span>,
                 <span class="string">&quot;bin&quot;</span>,
                 <span class="ident">Target</span>::<span class="ident">is_bin</span>,
-                <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>,
+                <span class="ident">mode</span>,
             )<span class="question-mark">?</span>);
             <span class="ident">proposals</span>.<span class="ident">extend</span>(<span class="ident">list_rule_targets</span>(
                 <span class="ident">packages</span>,
                 <span class="ident">examples</span>,
                 <span class="string">&quot;example&quot;</span>,
                 <span class="ident">Target</span>::<span class="ident">is_example</span>,
-                <span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">mode</span>,
+                <span class="ident">mode</span>,
             )<span class="question-mark">?</span>);
             <span class="ident">proposals</span>.<span class="ident">extend</span>(<span class="ident">list_rule_targets</span>(
                 <span class="ident">packages</span>,
@@ -2004,15 +2019,14 @@
         <span class="kw">let</span> <span class="ident">unavailable_features</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">target</span>.<span class="ident">required_features</span>() {
             <span class="prelude-val">Some</span>(<span class="ident">rf</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">features</span> <span class="op">=</span> <span class="ident">features_map</span>.<span class="ident">entry</span>(<span class="ident">pkg</span>).<span class="ident">or_insert_with</span>(<span class="op">|</span><span class="op">|</span> {
-                    <span class="ident">resolve_all_features</span>(<span class="ident">resolve</span>, <span class="ident">resolved_features</span>, <span class="ident">pkg</span>.<span class="ident">package_id</span>())
+                    <span class="ident">resolve_all_features</span>(<span class="ident">resolve</span>, <span class="ident">resolved_features</span>, <span class="ident">package_set</span>, <span class="ident">pkg</span>.<span class="ident">package_id</span>())
                 });
                 <span class="ident">rf</span>.<span class="ident">iter</span>().<span class="ident">filter</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="op">!</span><span class="ident">features</span>.<span class="ident">contains</span>(<span class="kw-2">*</span><span class="ident">f</span>)).<span class="ident">collect</span>()
             }
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Vec</span>::<span class="ident">new</span>(),
         };
         <span class="kw">if</span> <span class="ident">target</span>.<span class="ident">is_lib</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">unavailable_features</span>.<span class="ident">is_empty</span>() {
-            <span class="kw">let</span> <span class="ident">unit</span> <span class="op">=</span> <span class="ident">new_unit</span>(<span class="ident">pkg</span>, <span class="ident">target</span>, <span class="ident">mode</span>);
-            <span class="ident">units</span>.<span class="ident">insert</span>(<span class="ident">unit</span>);
+            <span class="ident">new_unit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">units</span>, <span class="ident">pkg</span>, <span class="ident">target</span>, <span class="ident">mode</span>);
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">requires_features</span> {
             <span class="kw">let</span> <span class="ident">required_features</span> <span class="op">=</span> <span class="ident">target</span>.<span class="ident">required_features</span>().<span class="ident">unwrap</span>();
             <span class="kw">let</span> <span class="ident">quoted_required_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">required_features</span>
@@ -2038,9 +2052,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Dependencies are added as `dep_name/feat_name` because `required-features`</span>
 <span class="doccomment">/// wants to support that syntax.</span>
-<span class="kw">fn</span> <span class="ident">resolve_all_features</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_all_features</span>(
     <span class="ident">resolve_with_overrides</span>: <span class="kw-2">&amp;</span><span class="ident">Resolve</span>,
     <span class="ident">resolved_features</span>: <span class="kw-2">&amp;</span><span class="ident">features</span>::<span class="ident">ResolvedFeatures</span>,
+    <span class="ident">package_set</span>: <span class="kw-2">&amp;</span><span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">package_id</span>: <span class="ident">PackageId</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">features</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">resolved_features</span>
@@ -2052,14 +2067,17 @@
     <span class="comment">// Include features enabled for use by dependencies so targets can also use them with the</span>
     <span class="comment">// required-features field when deciding whether to be built or skipped.</span>
     <span class="kw">for</span> (<span class="ident">dep_id</span>, <span class="ident">deps</span>) <span class="kw">in</span> <span class="ident">resolve_with_overrides</span>.<span class="ident">deps</span>(<span class="ident">package_id</span>) {
+        <span class="kw">let</span> <span class="ident">is_proc_macro</span> <span class="op">=</span> <span class="ident">package_set</span>
+            .<span class="ident">get_one</span>(<span class="ident">dep_id</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;packages downloaded&quot;</span>)
+            .<span class="ident">proc_macro</span>();
         <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">deps</span> {
-            <span class="kw">let</span> <span class="ident">features_for</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">is_build</span>() {
-                <span class="ident">FeaturesFor</span>::<span class="ident">BuildDep</span>
-            } <span class="kw">else</span> {
-                <span class="ident">FeaturesFor</span>::<span class="ident">NormalOrDev</span>
-            };
-            <span class="kw">for</span> <span class="ident">feature</span> <span class="kw">in</span> <span class="ident">resolved_features</span>.<span class="ident">activated_features</span>(<span class="ident">dep_id</span>, <span class="ident">features_for</span>) {
-                <span class="ident">features</span>.<span class="ident">insert</span>(<span class="ident">dep</span>.<span class="ident">name_in_toml</span>().<span class="ident">to_string</span>() <span class="op">+</span> <span class="string">&quot;/&quot;</span> <span class="op">+</span> <span class="kw-2">&amp;</span><span class="ident">feature</span>);
+            <span class="kw">let</span> <span class="ident">features_for</span> <span class="op">=</span> <span class="ident">FeaturesFor</span>::<span class="ident">from_for_host</span>(<span class="ident">is_proc_macro</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dep</span>.<span class="ident">is_build</span>());
+            <span class="kw">for</span> <span class="ident">feature</span> <span class="kw">in</span> <span class="ident">resolved_features</span>
+                .<span class="ident">activated_features_unverified</span>(<span class="ident">dep_id</span>, <span class="ident">features_for</span>)
+                .<span class="ident">unwrap_or_default</span>()
+            {
+                <span class="ident">features</span>.<span class="ident">insert</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}/{}&quot;</span>, <span class="ident">dep</span>.<span class="ident">name_in_toml</span>(), <span class="ident">feature</span>));
             }
         }
     }
@@ -2168,38 +2186,6 @@
         }
     }
     <span class="ident">proposals</span>
-}
-
-<span class="doccomment">/// When using `-Zbuild-std` we&#39;re building the standard library, but a</span>
-<span class="doccomment">/// technical detail of the standard library right now is that it builds itself</span>
-<span class="doccomment">/// as both an `rlib` and a `dylib`. We don&#39;t actually want to really publicize</span>
-<span class="doccomment">/// the `dylib` and in general it&#39;s a pain to work with, so when building libstd</span>
-<span class="doccomment">/// we want to remove the `dylib` crate type.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Cargo doesn&#39;t have a fantastic way of doing that right now, so let&#39;s hack</span>
-<span class="doccomment">/// around it a bit and (ab)use the fact that we have mutable access to</span>
-<span class="doccomment">/// `PackageSet` here to rewrite downloaded packages. We iterate over all `path`</span>
-<span class="doccomment">/// packages (which should download immediately and not actually cause blocking</span>
-<span class="doccomment">/// here) and edit their manifests to only list one `LibKind` for an `Rlib`.</span>
-<span class="kw">fn</span> <span class="ident">remove_dylib_crate_type</span>(<span class="ident">set</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">ids</span> <span class="op">=</span> <span class="ident">set</span>
-        .<span class="ident">package_ids</span>()
-        .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">source_id</span>().<span class="ident">is_path</span>())
-        .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-    <span class="ident">set</span>.<span class="ident">get_many</span>(<span class="ident">ids</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>())<span class="question-mark">?</span>;
-
-    <span class="kw">for</span> <span class="ident">id</span> <span class="kw">in</span> <span class="ident">ids</span> {
-        <span class="kw">let</span> <span class="ident">pkg</span> <span class="op">=</span> <span class="ident">set</span>.<span class="ident">lookup_mut</span>(<span class="ident">id</span>).<span class="ident">expect</span>(<span class="string">&quot;should be downloaded now&quot;</span>);
-
-        <span class="kw">for</span> <span class="ident">target</span> <span class="kw">in</span> <span class="ident">pkg</span>.<span class="ident">manifest_mut</span>().<span class="ident">targets_mut</span>() {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="ident">TargetKind</span>::<span class="ident">Lib</span>(<span class="ident">crate_types</span>) <span class="op">=</span> <span class="ident">target</span>.<span class="ident">kind_mut</span>() {
-                <span class="ident">crate_types</span>.<span class="ident">truncate</span>(<span class="number">0</span>);
-                <span class="ident">crate_types</span>.<span class="ident">push</span>(<span class="ident">LibKind</span>::<span class="ident">Rlib</span>);
-            }
-        }
-    }
-
-    <span class="prelude-val">Ok</span>(())
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

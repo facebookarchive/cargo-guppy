@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cargo-0.44.0/src/cargo/core/compiler/fingerprint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fingerprint.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/compiler/fingerprint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fingerprint.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1679,6 +1679,142 @@
 <span id="1679">1679</span>
 <span id="1680">1680</span>
 <span id="1681">1681</span>
+<span id="1682">1682</span>
+<span id="1683">1683</span>
+<span id="1684">1684</span>
+<span id="1685">1685</span>
+<span id="1686">1686</span>
+<span id="1687">1687</span>
+<span id="1688">1688</span>
+<span id="1689">1689</span>
+<span id="1690">1690</span>
+<span id="1691">1691</span>
+<span id="1692">1692</span>
+<span id="1693">1693</span>
+<span id="1694">1694</span>
+<span id="1695">1695</span>
+<span id="1696">1696</span>
+<span id="1697">1697</span>
+<span id="1698">1698</span>
+<span id="1699">1699</span>
+<span id="1700">1700</span>
+<span id="1701">1701</span>
+<span id="1702">1702</span>
+<span id="1703">1703</span>
+<span id="1704">1704</span>
+<span id="1705">1705</span>
+<span id="1706">1706</span>
+<span id="1707">1707</span>
+<span id="1708">1708</span>
+<span id="1709">1709</span>
+<span id="1710">1710</span>
+<span id="1711">1711</span>
+<span id="1712">1712</span>
+<span id="1713">1713</span>
+<span id="1714">1714</span>
+<span id="1715">1715</span>
+<span id="1716">1716</span>
+<span id="1717">1717</span>
+<span id="1718">1718</span>
+<span id="1719">1719</span>
+<span id="1720">1720</span>
+<span id="1721">1721</span>
+<span id="1722">1722</span>
+<span id="1723">1723</span>
+<span id="1724">1724</span>
+<span id="1725">1725</span>
+<span id="1726">1726</span>
+<span id="1727">1727</span>
+<span id="1728">1728</span>
+<span id="1729">1729</span>
+<span id="1730">1730</span>
+<span id="1731">1731</span>
+<span id="1732">1732</span>
+<span id="1733">1733</span>
+<span id="1734">1734</span>
+<span id="1735">1735</span>
+<span id="1736">1736</span>
+<span id="1737">1737</span>
+<span id="1738">1738</span>
+<span id="1739">1739</span>
+<span id="1740">1740</span>
+<span id="1741">1741</span>
+<span id="1742">1742</span>
+<span id="1743">1743</span>
+<span id="1744">1744</span>
+<span id="1745">1745</span>
+<span id="1746">1746</span>
+<span id="1747">1747</span>
+<span id="1748">1748</span>
+<span id="1749">1749</span>
+<span id="1750">1750</span>
+<span id="1751">1751</span>
+<span id="1752">1752</span>
+<span id="1753">1753</span>
+<span id="1754">1754</span>
+<span id="1755">1755</span>
+<span id="1756">1756</span>
+<span id="1757">1757</span>
+<span id="1758">1758</span>
+<span id="1759">1759</span>
+<span id="1760">1760</span>
+<span id="1761">1761</span>
+<span id="1762">1762</span>
+<span id="1763">1763</span>
+<span id="1764">1764</span>
+<span id="1765">1765</span>
+<span id="1766">1766</span>
+<span id="1767">1767</span>
+<span id="1768">1768</span>
+<span id="1769">1769</span>
+<span id="1770">1770</span>
+<span id="1771">1771</span>
+<span id="1772">1772</span>
+<span id="1773">1773</span>
+<span id="1774">1774</span>
+<span id="1775">1775</span>
+<span id="1776">1776</span>
+<span id="1777">1777</span>
+<span id="1778">1778</span>
+<span id="1779">1779</span>
+<span id="1780">1780</span>
+<span id="1781">1781</span>
+<span id="1782">1782</span>
+<span id="1783">1783</span>
+<span id="1784">1784</span>
+<span id="1785">1785</span>
+<span id="1786">1786</span>
+<span id="1787">1787</span>
+<span id="1788">1788</span>
+<span id="1789">1789</span>
+<span id="1790">1790</span>
+<span id="1791">1791</span>
+<span id="1792">1792</span>
+<span id="1793">1793</span>
+<span id="1794">1794</span>
+<span id="1795">1795</span>
+<span id="1796">1796</span>
+<span id="1797">1797</span>
+<span id="1798">1798</span>
+<span id="1799">1799</span>
+<span id="1800">1800</span>
+<span id="1801">1801</span>
+<span id="1802">1802</span>
+<span id="1803">1803</span>
+<span id="1804">1804</span>
+<span id="1805">1805</span>
+<span id="1806">1806</span>
+<span id="1807">1807</span>
+<span id="1808">1808</span>
+<span id="1809">1809</span>
+<span id="1810">1810</span>
+<span id="1811">1811</span>
+<span id="1812">1812</span>
+<span id="1813">1813</span>
+<span id="1814">1814</span>
+<span id="1815">1815</span>
+<span id="1816">1816</span>
+<span id="1817">1817</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Fingerprints</span>
 <span class="doccomment">//!</span>
@@ -1687,23 +1823,30 @@
 <span class="doccomment">//! (needs to be recompiled) or &quot;fresh&quot; (it does not need to be recompiled).</span>
 <span class="doccomment">//! There are several mechanisms that influence a Unit&#39;s freshness:</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! - The `Metadata` hash isolates each Unit on the filesystem by being</span>
-<span class="doccomment">//!   embedded in the filename. If something in the hash changes, then the</span>
-<span class="doccomment">//!   output files will be missing, and the Unit will be dirty (missing</span>
-<span class="doccomment">//!   outputs are considered &quot;dirty&quot;).</span>
-<span class="doccomment">//! - The `Fingerprint` is another hash, saved to the filesystem in the</span>
-<span class="doccomment">//!   `.fingerprint` directory, that tracks information about the inputs to a</span>
-<span class="doccomment">//!   Unit. If any of the inputs changes from the last compilation, then the</span>
-<span class="doccomment">//!   Unit is considered dirty. A missing fingerprint (such as during the</span>
-<span class="doccomment">//!   first build) is also considered dirty.</span>
-<span class="doccomment">//! - Whether or not input files are actually present. For example a build</span>
-<span class="doccomment">//!   script which says it depends on a nonexistent file `foo` is always rerun.</span>
-<span class="doccomment">//! - Propagation throughout the dependency graph of file modification time</span>
-<span class="doccomment">//!   information, used to detect changes on the filesystem. Each `Fingerprint`</span>
-<span class="doccomment">//!   keeps track of what files it&#39;ll be processing, and when necessary it will</span>
-<span class="doccomment">//!   check the `mtime` of each file (last modification time) and compare it to</span>
-<span class="doccomment">//!   dependencies and output to see if files have been changed or if a change</span>
-<span class="doccomment">//!   needs to force recompiles of downstream dependencies.</span>
+<span class="doccomment">//! - The `Fingerprint` is a hash, saved to the filesystem in the</span>
+<span class="doccomment">//!   `.fingerprint` directory, that tracks information about the Unit. If the</span>
+<span class="doccomment">//!   fingerprint is missing (such as the first time the unit is being</span>
+<span class="doccomment">//!   compiled), then the unit is dirty. If any of the fingerprint fields</span>
+<span class="doccomment">//!   change (like the name of the source file), then the Unit is considered</span>
+<span class="doccomment">//!   dirty.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!   The `Fingerprint` also tracks the fingerprints of all its dependencies,</span>
+<span class="doccomment">//!   so a change in a dependency will propagate the &quot;dirty&quot; status up.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - Filesystem mtime tracking is also used to check if a unit is dirty.</span>
+<span class="doccomment">//!   See the section below on &quot;Mtime comparison&quot; for more details. There</span>
+<span class="doccomment">//!   are essentially two parts to mtime tracking:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!   1. The mtime of a Unit&#39;s output files is compared to the mtime of all</span>
+<span class="doccomment">//!      its dependencies&#39; output file mtimes (see `check_filesystem`). If any</span>
+<span class="doccomment">//!      output is missing, or is older than a dependency&#39;s output, then the</span>
+<span class="doccomment">//!      unit is dirty.</span>
+<span class="doccomment">//!   2. The mtime of a Unit&#39;s source files is compared to the mtime of its</span>
+<span class="doccomment">//!      dep-info file in the fingerprint directory (see `find_stale_file`).</span>
+<span class="doccomment">//!      The dep-info file is used as an anchor to know when the last build of</span>
+<span class="doccomment">//!      the unit was done. See the &quot;dep-info files&quot; section below for more</span>
+<span class="doccomment">//!      details. If any input files are missing, or are newer than the</span>
+<span class="doccomment">//!      dep-info, then the unit is dirty.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Note: Fingerprinting is not a perfect solution. Filesystem mtime tracking</span>
 <span class="doccomment">//! is notoriously imprecise and problematic. Only a small part of the</span>
@@ -1715,11 +1858,16 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Fingerprints and Metadata</span>
 <span class="doccomment">//!</span>
+<span class="doccomment">//! The `Metadata` hash is a hash added to the output filenames to isolate</span>
+<span class="doccomment">//! each unit. See the documentation in the `compilation_files` module for</span>
+<span class="doccomment">//! more details. NOTE: Not all output files are isolated via filename hashes</span>
+<span class="doccomment">//! (like dylibs), but the fingerprint directory always has the `Metadata`</span>
+<span class="doccomment">//! hash in its directory name.</span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! Fingerprints and Metadata are similar, and track some of the same things.</span>
 <span class="doccomment">//! The Metadata contains information that is required to keep Units separate.</span>
 <span class="doccomment">//! The Fingerprint includes additional information that should cause a</span>
-<span class="doccomment">//! recompile, but it is desired to reuse the same filenames. Generally the</span>
-<span class="doccomment">//! items in the Metadata do not need to be in the Fingerprint. A comparison</span>
+<span class="doccomment">//! recompile, but it is desired to reuse the same filenames. A comparison</span>
 <span class="doccomment">//! of what is tracked:</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Value                                      | Fingerprint | Metadata</span>
@@ -1736,21 +1884,28 @@
 <span class="doccomment">//! __CARGO_DEFAULT_LIB_METADATA[^4]           |             | ✓</span>
 <span class="doccomment">//! package_id                                 |             | ✓</span>
 <span class="doccomment">//! authors, description, homepage, repo       | ✓           |</span>
-<span class="doccomment">//! Target src path                            | ✓           |</span>
-<span class="doccomment">//! Target path relative to ws                 | ✓           |</span>
+<span class="doccomment">//! Target src path relative to ws             | ✓           |</span>
 <span class="doccomment">//! Target flags (test/bench/for_host/edition) | ✓           |</span>
 <span class="doccomment">//! -C incremental=… flag                      | ✓           |</span>
 <span class="doccomment">//! mtime of sources                           | ✓[^3]       |</span>
 <span class="doccomment">//! RUSTFLAGS/RUSTDOCFLAGS                     | ✓           |</span>
+<span class="doccomment">//! LTO flags                                  | ✓           |</span>
 <span class="doccomment">//! is_std                                     |             | ✓</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [^1]: Build script and bin dependencies are not included.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! [^3]: The mtime is only tracked for workspace members and path</span>
-<span class="doccomment">//!       dependencies. Git dependencies track the git revision.</span>
+<span class="doccomment">//! [^3]: See below for details on mtime tracking.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [^4]: `__CARGO_DEFAULT_LIB_METADATA` is set by rustbuild to embed the</span>
 <span class="doccomment">//!        release channel (bootstrap/stable/beta/nightly) in libstd.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! When deciding what should go in the Metadata vs the Fingerprint, consider</span>
+<span class="doccomment">//! that some files (like dylibs) do not have a hash in their filename. Thus,</span>
+<span class="doccomment">//! if a value changes, only the fingerprint will detect the change (consider,</span>
+<span class="doccomment">//! for example, swapping between different features). Fields that are only in</span>
+<span class="doccomment">//! Metadata generally aren&#39;t relevant to the fingerprint because they</span>
+<span class="doccomment">//! fundamentally change the output (like target vs host changes the directory</span>
+<span class="doccomment">//! where it is emitted).</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Fingerprint files</span>
 <span class="doccomment">//!</span>
@@ -1765,9 +1920,7 @@
 <span class="doccomment">//!   `CARGO_LOG=cargo::core::compiler::fingerprint=trace cargo build` can be</span>
 <span class="doccomment">//!   used to display this log information.</span>
 <span class="doccomment">//! - A &quot;dep-info&quot; file which contains a list of source filenames for the</span>
-<span class="doccomment">//!   target. This is produced by reading the output of `rustc</span>
-<span class="doccomment">//!   --emit=dep-info` and packing it into a condensed format. Cargo uses this</span>
-<span class="doccomment">//!   to check the mtime of every file to see if any of them have changed.</span>
+<span class="doccomment">//!   target. See below for details.</span>
 <span class="doccomment">//! - An `invoked.timestamp` file whose filesystem mtime is updated every time</span>
 <span class="doccomment">//!   the Unit is built. This is an experimental feature used for cleaning</span>
 <span class="doccomment">//!   unused artifacts.</span>
@@ -1791,6 +1944,103 @@
 <span class="doccomment">//! dependency information. Since a Fingerprint includes the Fingerprints of</span>
 <span class="doccomment">//! all dependencies, when it is updated, by using `Arc` clones, it</span>
 <span class="doccomment">//! automatically picks up the updates to its dependencies.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ### dep-info files</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Cargo passes the `--emit=dep-info` flag to `rustc` so that `rustc` will</span>
+<span class="doccomment">//! generate a &quot;dep info&quot; file (with the `.d` extension). This is a</span>
+<span class="doccomment">//! Makefile-like syntax that includes all of the source files used to build</span>
+<span class="doccomment">//! the crate. This file is used by Cargo to know which files to check to see</span>
+<span class="doccomment">//! if the crate will need to be rebuilt.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! After `rustc` exits successfully, Cargo will read the dep info file and</span>
+<span class="doccomment">//! translate it into a binary format that is stored in the fingerprint</span>
+<span class="doccomment">//! directory (`translate_dep_info`). The mtime of the fingerprint dep-info</span>
+<span class="doccomment">//! file itself is used as the reference for comparing the source files to</span>
+<span class="doccomment">//! determine if any of the source files have been modified (see below for</span>
+<span class="doccomment">//! more detail).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! There is also a third dep-info file. Cargo will extend the file created by</span>
+<span class="doccomment">//! rustc with some additional information and saves this into the output</span>
+<span class="doccomment">//! directory. This is intended for build system integration. See the</span>
+<span class="doccomment">//! `output_depinfo` module for more detail.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #### -Zbinary-dep-depinfo</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `rustc` has an experimental flag `-Zbinary-dep-depinfo`. This causes</span>
+<span class="doccomment">//! `rustc` to include binary files (like rlibs) in the dep-info file. This is</span>
+<span class="doccomment">//! primarily to support rustc development, so that Cargo can check the</span>
+<span class="doccomment">//! implicit dependency to the standard library (which lives in the sysroot).</span>
+<span class="doccomment">//! We want Cargo to recompile whenever the standard library rlib/dylibs</span>
+<span class="doccomment">//! change, and this is a generic mechanism to make that work.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ### Mtime comparison</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The use of modification timestamps is the most common way a unit will be</span>
+<span class="doccomment">//! determined to be dirty or fresh between builds. There are many subtle</span>
+<span class="doccomment">//! issues and edge cases with mtime comparisons. This gives a high-level</span>
+<span class="doccomment">//! overview, but you&#39;ll need to read the code for the gritty details. Mtime</span>
+<span class="doccomment">//! handling is different for different unit kinds. The different styles are</span>
+<span class="doccomment">//! driven by the `Fingerprint.local` field, which is set based on the unit</span>
+<span class="doccomment">//! kind.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The status of whether or not the mtime is &quot;stale&quot; or &quot;up-to-date&quot; is</span>
+<span class="doccomment">//! stored in `Fingerprint.fs_status`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! All units will compare the mtime of its newest output file with the mtimes</span>
+<span class="doccomment">//! of the outputs of all its dependencies. If any output file is missing,</span>
+<span class="doccomment">//! then the unit is stale. If any dependency is newer, the unit is stale.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #### Normal package mtime handling</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `LocalFingerprint::CheckDepinfo` is used for checking the mtime of</span>
+<span class="doccomment">//! packages. It compares the mtime of the input files (the source files) to</span>
+<span class="doccomment">//! the mtime of the dep-info file (which is written last after a build is</span>
+<span class="doccomment">//! finished). If the dep-info is missing, the unit is stale (it has never</span>
+<span class="doccomment">//! been built). The list of input files comes from the dep-info file. See the</span>
+<span class="doccomment">//! section above for details on dep-info files.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Also note that although registry and git packages use `CheckDepInfo`, none</span>
+<span class="doccomment">//! of their source files are included in the dep-info (see</span>
+<span class="doccomment">//! `translate_dep_info`), so for those kinds no mtime checking is done</span>
+<span class="doccomment">//! (unless `-Zbinary-dep-depinfo` is used). Repository and git packages are</span>
+<span class="doccomment">//! static, so there is no need to check anything.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! When a build is complete, the mtime of the dep-info file in the</span>
+<span class="doccomment">//! fingerprint directory is modified to rewind it to the time when the build</span>
+<span class="doccomment">//! started. This is done by creating an `invoked.timestamp` file when the</span>
+<span class="doccomment">//! build starts to capture the start time. The mtime is rewound to the start</span>
+<span class="doccomment">//! to handle the case where the user modifies a source file while a build is</span>
+<span class="doccomment">//! running. Cargo can&#39;t know whether or not the file was included in the</span>
+<span class="doccomment">//! build, so it takes a conservative approach of assuming the file was *not*</span>
+<span class="doccomment">//! included, and it should be rebuilt during the next build.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #### Rustdoc mtime handling</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Rustdoc does not emit a dep-info file, so Cargo currently has a relatively</span>
+<span class="doccomment">//! simple system for detecting rebuilds. `LocalFingerprint::Precalculated` is</span>
+<span class="doccomment">//! used for rustdoc units. For registry packages, this is the package</span>
+<span class="doccomment">//! version. For git packages, it is the git hash. For path packages, it is</span>
+<span class="doccomment">//! the a string of the mtime of the newest file in the package.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! There are some known bugs with how this works, so it should be improved at</span>
+<span class="doccomment">//! some point.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #### Build script mtime handling</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Build script mtime handling runs in different modes. There is the &quot;old</span>
+<span class="doccomment">//! style&quot; where the build script does not emit any `rerun-if` directives. In</span>
+<span class="doccomment">//! this mode, Cargo will use `LocalFingerprint::Precalculated`. See the</span>
+<span class="doccomment">//! &quot;rustdoc&quot; section above how it works.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! In the new-style, each `rerun-if` directive is translated to the</span>
+<span class="doccomment">//! corresponding `LocalFingerprint` variant. The `RerunIfChanged` variant</span>
+<span class="doccomment">//! compares the mtime of the given filenames against the mtime of the</span>
+<span class="doccomment">//! &quot;output&quot; file.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Similar to normal units, the build script &quot;output&quot; file mtime is rewound</span>
+<span class="doccomment">//! to the time just before the build script is executed to handle mid-build</span>
+<span class="doccomment">//! modifications.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Considerations for inclusion in a fingerprint</span>
 <span class="doccomment">//!</span>
@@ -1884,7 +2134,7 @@
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">ser</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">unit_dependencies</span>::<span class="ident">UnitDep</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">unit_graph</span>::<span class="ident">UnitDep</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">InternedString</span>, <span class="ident">Package</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>};
@@ -1912,11 +2162,7 @@
 <span class="doccomment">/// transitively propagate throughout the dependency graph, it only forces this</span>
 <span class="doccomment">/// one unit which is very unlikely to be what you want unless you&#39;re</span>
 <span class="doccomment">/// exclusively talking about top-level units.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepare_target</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">force</span>: <span class="ident">bool</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Job</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepare_target</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>, <span class="ident">force</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Job</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">_p</span> <span class="op">=</span> <span class="ident">profile</span>::<span class="ident">start</span>(<span class="macro">format</span><span class="macro">!</span>(
         <span class="string">&quot;fingerprint: {} / {}&quot;</span>,
         <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>(),
@@ -1957,6 +2203,40 @@
 
     <span class="kw">if</span> <span class="ident">compare</span>.<span class="ident">is_ok</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">force</span> {
         <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Job</span>::<span class="ident">new</span>(<span class="ident">Work</span>::<span class="ident">noop</span>(), <span class="ident">Fresh</span>));
+    }
+
+    <span class="comment">// Clear out the old fingerprint file if it exists. This protects when</span>
+    <span class="comment">// compilation is interrupted leaving a corrupt file. For example, a</span>
+    <span class="comment">// project with a lib.rs and integration test (two units):</span>
+    <span class="comment">//</span>
+    <span class="comment">// 1. Build the library and integration test.</span>
+    <span class="comment">// 2. Make a change to lib.rs (NOT the integration test).</span>
+    <span class="comment">// 3. Build the integration test, hit Ctrl-C while linking. With gcc, this</span>
+    <span class="comment">//    will leave behind an incomplete executable (zero size, or partially</span>
+    <span class="comment">//    written). NOTE: The library builds successfully, it is the linking</span>
+    <span class="comment">//    of the integration test that we are interrupting.</span>
+    <span class="comment">// 4. Build the integration test again.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Without the following line, then step 3 will leave a valid fingerprint</span>
+    <span class="comment">// on the disk. Then step 4 will think the integration test is &quot;fresh&quot;</span>
+    <span class="comment">// because:</span>
+    <span class="comment">//</span>
+    <span class="comment">// - There is a valid fingerprint hash on disk (written in step 1).</span>
+    <span class="comment">// - The mtime of the output file (the corrupt integration executable</span>
+    <span class="comment">//   written in step 3) is newer than all of its dependencies.</span>
+    <span class="comment">// - The mtime of the integration test fingerprint dep-info file (written</span>
+    <span class="comment">//   in step 1) is newer than the integration test&#39;s source files, because</span>
+    <span class="comment">//   we haven&#39;t modified any of its source files.</span>
+    <span class="comment">//</span>
+    <span class="comment">// But the executable is corrupt and needs to be rebuilt. Clearing the</span>
+    <span class="comment">// fingerprint at step 3 ensures that Cargo never mistakes a partially</span>
+    <span class="comment">// written output as up-to-date.</span>
+    <span class="kw">if</span> <span class="ident">loc</span>.<span class="ident">exists</span>() {
+        <span class="comment">// Truncate instead of delete so that compare_old_fingerprint will</span>
+        <span class="comment">// still log the reason for the fingerprint failure instead of just</span>
+        <span class="comment">// reporting &quot;failed to read fingerprint&quot; during the next build if</span>
+        <span class="comment">// this build fails.</span>
+        <span class="ident">paths</span>::<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="ident">loc</span>, <span class="string">b&quot;&quot;</span>)<span class="question-mark">?</span>;
     }
 
     <span class="kw">let</span> <span class="ident">write_fingerprint</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_run_custom_build</span>() {
@@ -2166,9 +2446,8 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Hash</span>)]</span>
 <span class="kw">enum</span> <span class="ident">LocalFingerprint</span> {
     <span class="doccomment">/// This is a precalculated fingerprint which has an opaque string we just</span>
-    <span class="doccomment">/// hash as usual. This variant is primarily used for git/crates.io</span>
-    <span class="doccomment">/// dependencies where the source never changes so we can quickly conclude</span>
-    <span class="doccomment">/// that there&#39;s some string we can hash and it won&#39;t really change much.</span>
+    <span class="doccomment">/// hash as usual. This variant is primarily used for rustdoc where we</span>
+    <span class="doccomment">/// don&#39;t have a dep-info file to compare against.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is also used for build scripts with no `rerun-if-*` statements, but</span>
     <span class="doccomment">/// that&#39;s overall a mistake and causes bugs in Cargo. We shouldn&#39;t use this</span>
@@ -2515,10 +2794,9 @@
             <span class="kw">let</span> (<span class="ident">dep_path</span>, <span class="ident">dep_mtime</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">only_requires_rmeta</span> {
                 <span class="ident">dep_mtimes</span>
                     .<span class="ident">iter</span>()
-                    .<span class="ident">filter</span>(<span class="op">|</span>(<span class="ident">path</span>, <span class="ident">_mtime</span>)<span class="op">|</span> {
+                    .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">path</span>, <span class="ident">_mtime</span>)<span class="op">|</span> {
                         <span class="ident">path</span>.<span class="ident">extension</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">to_str</span>()) <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="string">&quot;rmeta&quot;</span>)
                     })
-                    .<span class="ident">next</span>()
                     .<span class="ident">expect</span>(<span class="string">&quot;failed to find rmeta&quot;</span>)
             } <span class="kw">else</span> {
                 <span class="kw">match</span> <span class="ident">dep_mtimes</span>.<span class="ident">iter</span>().<span class="ident">max_by_key</span>(<span class="op">|</span><span class="ident">kv</span><span class="op">|</span> <span class="ident">kv</span>.<span class="number">1</span>) {
@@ -2638,11 +2916,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">DepFingerprint</span> {
-    <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-        <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-        <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-        <span class="ident">dep</span>: <span class="kw-2">&amp;</span><span class="ident">UnitDep</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">DepFingerprint</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>, <span class="ident">dep</span>: <span class="kw-2">&amp;</span><span class="ident">UnitDep</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">DepFingerprint</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">fingerprint</span> <span class="op">=</span> <span class="ident">calculate</span>(<span class="ident">cx</span>, <span class="kw-2">&amp;</span><span class="ident">dep</span>.<span class="ident">unit</span>)<span class="question-mark">?</span>;
         <span class="comment">// We need to be careful about what we hash here. We have a goal of</span>
         <span class="comment">// supporting renaming a project directory and not rebuilding</span>
@@ -2708,10 +2982,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Information like file modification time is only calculated for path</span>
 <span class="doccomment">/// dependencies.</span>
-<span class="kw">fn</span> <span class="ident">calculate</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Fingerprint</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">calculate</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Fingerprint</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="comment">// This function is slammed quite a lot, so the result is memoized.</span>
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">fingerprints</span>.<span class="ident">get</span>(<span class="ident">unit</span>) {
         <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Arc</span>::<span class="ident">clone</span>(<span class="ident">s</span>));
@@ -2730,16 +3001,14 @@
     <span class="ident">fingerprint</span>.<span class="ident">check_filesystem</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cx</span>.<span class="ident">mtime_cache</span>, <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">root</span>(), <span class="kw-2">&amp;</span><span class="ident">target_root</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">fingerprint</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">fingerprint</span>);
-    <span class="ident">cx</span>.<span class="ident">fingerprints</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">unit</span>, <span class="ident">Arc</span>::<span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="ident">fingerprint</span>));
+    <span class="ident">cx</span>.<span class="ident">fingerprints</span>
+        .<span class="ident">insert</span>(<span class="ident">unit</span>.<span class="ident">clone</span>(), <span class="ident">Arc</span>::<span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="ident">fingerprint</span>));
     <span class="prelude-val">Ok</span>(<span class="ident">fingerprint</span>)
 }
 
 <span class="doccomment">/// Calculate a fingerprint for a &quot;normal&quot; unit, or anything that&#39;s not a build</span>
 <span class="doccomment">/// script. This is an internal helper of `calculate`, don&#39;t call directly.</span>
-<span class="kw">fn</span> <span class="ident">calculate_normal</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Fingerprint</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">calculate_normal</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Fingerprint</span><span class="op">&gt;</span> {
     <span class="comment">// Recursively calculate the fingerprint for all of our dependencies.</span>
     <span class="comment">//</span>
     <span class="comment">// Skip fingerprints of binaries because they don&#39;t actually induce a</span>
@@ -2755,19 +3024,21 @@
         .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
     <span class="ident">deps</span>.<span class="ident">sort_by</span>(<span class="op">|</span><span class="ident">a</span>, <span class="ident">b</span><span class="op">|</span> <span class="ident">a</span>.<span class="ident">pkg_id</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">b</span>.<span class="ident">pkg_id</span>));
 
-    <span class="comment">// Afterwards calculate our own fingerprint information. We specially</span>
-    <span class="comment">// handle `path` packages to ensure we track files on the filesystem</span>
-    <span class="comment">// correctly, but otherwise upstream packages like from crates.io or git</span>
-    <span class="comment">// get bland fingerprints because they don&#39;t change without their</span>
-    <span class="comment">// `PackageId` changing.</span>
+    <span class="comment">// Afterwards calculate our own fingerprint information.</span>
     <span class="kw">let</span> <span class="ident">target_root</span> <span class="op">=</span> <span class="ident">target_root</span>(<span class="ident">cx</span>);
-    <span class="kw">let</span> <span class="ident">local</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">use_dep_info</span>(<span class="ident">unit</span>) {
+    <span class="kw">let</span> <span class="ident">local</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() {
+        <span class="comment">// rustdoc does not have dep-info files.</span>
+        <span class="kw">let</span> <span class="ident">fingerprint</span> <span class="op">=</span> <span class="ident">pkg_fingerprint</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
+            <span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;failed to determine package fingerprint for documenting {}&quot;</span>,
+                <span class="ident">unit</span>.<span class="ident">pkg</span>
+            )
+        })<span class="question-mark">?</span>;
+        <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">LocalFingerprint</span>::<span class="ident">Precalculated</span>(<span class="ident">fingerprint</span>)]
+    } <span class="kw">else</span> {
         <span class="kw">let</span> <span class="ident">dep_info</span> <span class="op">=</span> <span class="ident">dep_info_loc</span>(<span class="ident">cx</span>, <span class="ident">unit</span>);
         <span class="kw">let</span> <span class="ident">dep_info</span> <span class="op">=</span> <span class="ident">dep_info</span>.<span class="ident">strip_prefix</span>(<span class="kw-2">&amp;</span><span class="ident">target_root</span>).<span class="ident">unwrap</span>().<span class="ident">to_path_buf</span>();
         <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">LocalFingerprint</span>::<span class="ident">CheckDepInfo</span> { <span class="ident">dep_info</span> }]
-    } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">fingerprint</span> <span class="op">=</span> <span class="ident">pkg_fingerprint</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>, <span class="ident">unit</span>.<span class="ident">pkg</span>)<span class="question-mark">?</span>;
-        <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">LocalFingerprint</span>::<span class="ident">Precalculated</span>(<span class="ident">fingerprint</span>)]
     };
 
     <span class="comment">// Figure out what the outputs of our unit is, and we&#39;ll be storing them</span>
@@ -2782,24 +3053,19 @@
     <span class="comment">// Fill out a bunch more information that we&#39;ll be tracking typically</span>
     <span class="comment">// hashed to take up less space on disk as we just need to know when things</span>
     <span class="comment">// change.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">extra_flags</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() {
+    <span class="kw">let</span> <span class="ident">extra_flags</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() {
         <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">rustdocflags_args</span>(<span class="ident">unit</span>)
     } <span class="kw">else</span> {
         <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">rustflags_args</span>(<span class="ident">unit</span>)
     }
     .<span class="ident">to_vec</span>();
-    <span class="kw">if</span> <span class="ident">cx</span>.<span class="ident">is_primary_package</span>(<span class="ident">unit</span>) {
-        <span class="comment">// This is primarily here for clippy arguments.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">proc</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">primary_unit_rustc</span> {
-            <span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">proc</span>
-                .<span class="ident">get_args</span>()
-                .<span class="ident">iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">to_string_lossy</span>().<span class="ident">to_string</span>());
-            <span class="ident">extra_flags</span>.<span class="ident">extend</span>(<span class="ident">args</span>);
-        }
-    }
 
-    <span class="kw">let</span> <span class="ident">profile_hash</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">hash_u64</span>((<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">profile</span>, <span class="ident">unit</span>.<span class="ident">mode</span>, <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">extra_args_for</span>(<span class="ident">unit</span>)));
+    <span class="kw">let</span> <span class="ident">profile_hash</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">hash_u64</span>((
+        <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">profile</span>,
+        <span class="ident">unit</span>.<span class="ident">mode</span>,
+        <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">extra_args_for</span>(<span class="ident">unit</span>),
+        <span class="ident">cx</span>.<span class="ident">lto</span>[<span class="ident">unit</span>],
+    ));
     <span class="comment">// Include metadata since it is exposed as environment variables.</span>
     <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">manifest</span>().<span class="ident">metadata</span>();
     <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">hash_u64</span>((<span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">authors</span>, <span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">description</span>, <span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">homepage</span>, <span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">repository</span>));
@@ -2821,18 +3087,9 @@
     })
 }
 
-<span class="doccomment">/// Whether or not the fingerprint should track the dependencies from the</span>
-<span class="doccomment">/// dep-info file for this unit.</span>
-<span class="kw">fn</span> <span class="ident">use_dep_info</span>(<span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-    <span class="op">!</span><span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>()
-}
-
 <span class="doccomment">/// Calculate a fingerprint for an &quot;execute a build script&quot; unit.  This is an</span>
 <span class="doccomment">/// internal helper of `calculate`, don&#39;t call directly.</span>
-<span class="kw">fn</span> <span class="ident">calculate_run_custom_build</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Fingerprint</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">calculate_run_custom_build</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Fingerprint</span><span class="op">&gt;</span> {
     <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_run_custom_build</span>());
     <span class="comment">// Using the `BuildDeps` information we&#39;ll have previously parsed and</span>
     <span class="comment">// inserted into `build_explicit_deps` built an initial snapshot of the</span>
@@ -2842,7 +3099,18 @@
     <span class="comment">// the whole crate.</span>
     <span class="kw">let</span> (<span class="ident">gen_local</span>, <span class="ident">overridden</span>) <span class="op">=</span> <span class="ident">build_script_local_fingerprints</span>(<span class="ident">cx</span>, <span class="ident">unit</span>);
     <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">cx</span>.<span class="ident">build_explicit_deps</span>[<span class="ident">unit</span>];
-    <span class="kw">let</span> <span class="ident">local</span> <span class="op">=</span> (<span class="ident">gen_local</span>)(<span class="ident">deps</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="op">|</span><span class="op">|</span> <span class="ident">pkg_fingerprint</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>, <span class="ident">unit</span>.<span class="ident">pkg</span>)))<span class="question-mark">?</span>.<span class="ident">unwrap</span>();
+    <span class="kw">let</span> <span class="ident">local</span> <span class="op">=</span> (<span class="ident">gen_local</span>)(
+        <span class="ident">deps</span>,
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="op">|</span><span class="op">|</span> {
+            <span class="ident">pkg_fingerprint</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
+                <span class="macro">format</span><span class="macro">!</span>(
+                    <span class="string">&quot;failed to determine package fingerprint for build script for {}&quot;</span>,
+                    <span class="ident">unit</span>.<span class="ident">pkg</span>
+                )
+            })
+        }),
+    )<span class="question-mark">?</span>
+    .<span class="ident">unwrap</span>();
     <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">build_script_output</span>.<span class="ident">clone</span>();
 
     <span class="comment">// Include any dependencies of our execution, which is typically just the</span>
@@ -2907,9 +3175,9 @@
 <span class="doccomment">/// improve please do so!</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// FIXME(#6779) - see all the words above</span>
-<span class="kw">fn</span> <span class="ident">build_script_local_fingerprints</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="kw">fn</span> <span class="ident">build_script_local_fingerprints</span>(
+    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> (
     <span class="ident">Box</span><span class="op">&lt;</span>
         <span class="kw">dyn</span> <span class="ident">FnOnce</span>(
@@ -2982,9 +3250,9 @@
 
 <span class="doccomment">/// Create a `LocalFingerprint` for an overridden build script.</span>
 <span class="doccomment">/// Returns None if it is not overridden.</span>
-<span class="kw">fn</span> <span class="ident">build_script_override_fingerprint</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(
-    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>,
-    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+<span class="kw">fn</span> <span class="ident">build_script_override_fingerprint</span>(
+    <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+    <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">LocalFingerprint</span><span class="op">&gt;</span> {
     <span class="comment">// Build script output is only populated at this stage when it is</span>
     <span class="comment">// overridden.</span>
@@ -3057,7 +3325,7 @@
 }
 
 <span class="doccomment">/// Prepare for work when a package starts to build</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepare_init</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prepare_init</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">new1</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">fingerprint_dir</span>(<span class="ident">unit</span>);
 
     <span class="comment">// Doc tests have no output, thus no fingerprint.</span>
@@ -3070,7 +3338,7 @@
 
 <span class="doccomment">/// Returns the location that the dep-info file will show up at for the `unit`</span>
 <span class="doccomment">/// specified.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_info_loc</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PathBuf</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_info_loc</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PathBuf</span> {
     <span class="ident">cx</span>.<span class="ident">files</span>()
         .<span class="ident">fingerprint_dir</span>(<span class="ident">unit</span>)
         .<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;dep-{}&quot;</span>, <span class="ident">filename</span>(<span class="ident">cx</span>, <span class="ident">unit</span>)))
@@ -3093,7 +3361,7 @@
         <span class="comment">// update the mtime so other cleaners know we used it</span>
         <span class="kw">let</span> <span class="ident">t</span> <span class="op">=</span> <span class="ident">FileTime</span>::<span class="ident">from_system_time</span>(<span class="ident">SystemTime</span>::<span class="ident">now</span>());
         <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;mtime-on-use forcing {:?} to {}&quot;</span>, <span class="ident">loc</span>, <span class="ident">t</span>);
-        <span class="ident">filetime</span>::<span class="ident">set_file_times</span>(<span class="ident">loc</span>, <span class="ident">t</span>, <span class="ident">t</span>)<span class="question-mark">?</span>;
+        <span class="ident">paths</span>::<span class="ident">set_file_time_no_err</span>(<span class="ident">loc</span>, <span class="ident">t</span>);
     }
 
     <span class="kw">let</span> <span class="ident">new_hash</span> <span class="op">=</span> <span class="ident">new_fingerprint</span>.<span class="ident">hash</span>();
@@ -3105,13 +3373,16 @@
     <span class="kw">let</span> <span class="ident">old_fingerprint_json</span> <span class="op">=</span> <span class="ident">paths</span>::<span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="ident">loc</span>.<span class="ident">with_extension</span>(<span class="string">&quot;json&quot;</span>))<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">old_fingerprint</span>: <span class="ident">Fingerprint</span> <span class="op">=</span> <span class="ident">serde_json</span>::<span class="ident">from_str</span>(<span class="kw-2">&amp;</span><span class="ident">old_fingerprint_json</span>)
         .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">internal</span>(<span class="string">&quot;failed to deserialize json&quot;</span>))<span class="question-mark">?</span>;
-    <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="ident">util</span>::<span class="ident">to_hex</span>(<span class="ident">old_fingerprint</span>.<span class="ident">hash</span>()), <span class="ident">old_fingerprint_short</span>);
+    <span class="comment">// Fingerprint can be empty after a failed rebuild (see comment in prepare_target).</span>
+    <span class="kw">if</span> <span class="op">!</span><span class="ident">old_fingerprint_short</span>.<span class="ident">is_empty</span>() {
+        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="ident">util</span>::<span class="ident">to_hex</span>(<span class="ident">old_fingerprint</span>.<span class="ident">hash</span>()), <span class="ident">old_fingerprint_short</span>);
+    }
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">new_fingerprint</span>.<span class="ident">compare</span>(<span class="kw-2">&amp;</span><span class="ident">old_fingerprint</span>);
     <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">result</span>.<span class="ident">is_err</span>());
     <span class="ident">result</span>
 }
 
-<span class="kw">fn</span> <span class="ident">log_compare</span>(<span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">compare</span>: <span class="kw-2">&amp;</span><span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span>) {
+<span class="kw">fn</span> <span class="ident">log_compare</span>(<span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>, <span class="ident">compare</span>: <span class="kw-2">&amp;</span><span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span>) {
     <span class="kw">let</span> <span class="ident">ce</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">compare</span> {
         <span class="prelude-val">Ok</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span>,
         <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">e</span>,
@@ -3226,7 +3497,7 @@
     <span class="prelude-val">None</span>
 }
 
-<span class="kw">fn</span> <span class="ident">filename</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+<span class="kw">fn</span> <span class="ident">filename</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
     <span class="comment">// file_stem includes metadata hash. Thus we have a different</span>
     <span class="comment">// fingerprint for every metadata hash version. This works because</span>
     <span class="comment">// even if the package is fresh, we&#39;ll still link the fresh target</span>
@@ -3281,7 +3552,8 @@
 <span class="doccomment">/// included. If it is false, then package-relative paths are skipped and</span>
 <span class="doccomment">/// ignored (typically used for registry or git dependencies where we assume</span>
 <span class="doccomment">/// the source never changes, and we don&#39;t want the cost of running `stat` on</span>
-<span class="doccomment">/// all those files).</span>
+<span class="doccomment">/// all those files). See the module-level docs for the note about</span>
+<span class="doccomment">/// `-Zbinary-dep-depinfo` for more details on why this is done.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The serialized Cargo format will contain a list of files, all of which are</span>
 <span class="doccomment">/// relative if they&#39;re under `root`. or absolute if they&#39;re elsewhere.</span>

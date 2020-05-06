@@ -291,6 +291,24 @@
 <span id="291">291</span>
 <span id="292">292</span>
 <span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -304,9 +322,9 @@
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">DependencyDirection</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">graph</span>::{<span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>},
-    <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>,
+    <span class="ident">PackageId</span>,
 };
-<span class="kw">use</span> <span class="ident">guppy_cmdlib</span>::{<span class="ident">triple_to_platform</span>, <span class="ident">PackagesAndFeatures</span>};
+<span class="kw">use</span> <span class="ident">guppy_cmdlib</span>::{<span class="ident">triple_to_platform</span>, <span class="ident">CargoMetadataOptions</span>, <span class="ident">PackagesAndFeatures</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
@@ -336,11 +354,20 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_dups</span>(<span class="ident">filter_opts</span>: <span class="kw-2">&amp;</span><span class="ident">FilterOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">MetadataCommand</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DupsOptions</span> {
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="ident">filter_opts</span>: <span class="ident">FilterOptions</span>,
 
-    <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">filter_opts</span>.<span class="ident">make_resolver</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>);
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_dups</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">DupsOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
+    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
+
+    <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">filter_opts</span>.<span class="ident">make_resolver</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>);
     <span class="kw">let</span> <span class="ident">selection</span> <span class="op">=</span> <span class="ident">pkg_graph</span>.<span class="ident">query_workspace</span>();
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dupe_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
@@ -380,6 +407,9 @@
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;host-platform&quot;</span>)]</span>
     <span class="doccomment">/// Evaluate against host platform, &quot;current&quot; or &quot;any&quot; (default: any)</span>
     <span class="ident">host_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_resolve_cargo</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ResolveCargoOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
@@ -391,8 +421,8 @@
         .<span class="ident">with_host_platform</span>(<span class="ident">host_platform</span>.<span class="ident">as_ref</span>());
 
     <span class="comment">// TODO: allow package/feature/omitted selection</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">MetadataCommand</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
+    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">cargo_set</span> <span class="op">=</span> <span class="ident">opts</span>
         .<span class="ident">pf</span>
         .<span class="ident">make_feature_query</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>)<span class="question-mark">?</span>
@@ -454,11 +484,14 @@
 
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
     <span class="ident">query_opts</span>: <span class="ident">QueryOptions</span>,
+
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_select</span>(<span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CmdSelectOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">MetadataCommand</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
+    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">query</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">query_opts</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">filter_opts</span>.<span class="ident">make_resolver</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>);
@@ -499,11 +532,14 @@
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;screaming_snake_case&quot;</span>)]</span>
     <span class="doccomment">/// The root packages to start the selection from</span>
     <span class="ident">root</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_subtree_size</span>(<span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">SubtreeSizeOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">MetadataCommand</span>::<span class="ident">new</span>();
-    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">PackageGraph</span>::<span class="ident">from_command</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">command</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
+    <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">filter_opts</span>.<span class="ident">make_resolver</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>);
 

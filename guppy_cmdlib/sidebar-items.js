@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["triple_to_platform","Parse a given triple, the string \"current\", or \"any\", into a platform."]],"struct":[["PackagesAndFeatures","Support for packages and features."]]});
+initSidebarItems({"fn":[["triple_to_platform","Parse a given triple, the string \"current\", or \"any\", into a platform."]],"mod":[["proptest","Proptest support."]],"struct":[["CargoMetadataOptions","Context for invoking the `cargo metadata` command."],["PackagesAndFeatures","Support for packages and features."]]});

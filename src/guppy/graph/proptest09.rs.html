@@ -123,11 +123,51 @@
 <span id="123">123</span>
 <span id="124">124</span>
 <span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageQuery</span>, <span class="ident">PackageResolver</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageQuery</span>, <span class="ident">PackageResolver</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PackageId</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
@@ -186,6 +226,46 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop09_resolver_strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">Prop09Resolver</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="comment">// Generate a FixedBitSet to filter based off of.</span>
         <span class="ident">fixedbitset_strategy</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">edge_count</span>()).<span class="ident">prop_map</span>(<span class="ident">Prop09Resolver</span>::<span class="ident">new</span>)
+    }
+}
+
+<span class="doccomment">/// ## Helpers for property testing</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The methods in this section allow a `Workspace` to be used in property-based testing</span>
+<span class="doccomment">/// scenarios.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Currently, [proptest 0.9](https://docs.rs/proptest/0.9) is supported if the `proptest09` feature</span>
+<span class="doccomment">/// is enabled.</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Returns a `Strategy` that generates random package names from this workspace.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Requires the `proptest09` feature to be enabled.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Panics if there are no packages in this `Workspace`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop09_name_strategy</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+        <span class="kw">let</span> <span class="ident">name_list</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">name_list</span>();
+        (<span class="number">0</span>..<span class="ident">name_list</span>.<span class="ident">len</span>()).<span class="ident">prop_map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">idx</span><span class="op">|</span> <span class="ident">name_list</span>[<span class="ident">idx</span>].<span class="ident">as_ref</span>())
+    }
+
+    <span class="doccomment">/// Returns a `Strategy` that generates random package IDs from this workspace.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Requires the `proptest09` feature to be enabled.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Panics if there are no packages in this `Workspace`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop09_id_strategy</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+        <span class="kw">let</span> <span class="ident">members_by_name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_name</span>;
+        <span class="self">self</span>.<span class="ident">prop09_name_strategy</span>()
+            .<span class="ident">prop_map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">name</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">members_by_name</span>[<span class="ident">name</span>])
+    }
+
+    <span class="kw">fn</span> <span class="ident">name_list</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>] {
+        <span class="self">self</span>.<span class="ident">inner</span>
+            .<span class="ident">name_list</span>
+            .<span class="ident">get_or_init</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_name</span>.<span class="ident">keys</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>())
     }
 }
 
