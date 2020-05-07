@@ -41,7 +41,7 @@ impl<'g> FeatureGraph<'g> {
         );
         FeatureSet {
             graph: DebugIgnore(*self),
-            core: ResolveCore::from_included(included.0),
+            core: ResolveCore::from_included(included),
         }
     }
 }

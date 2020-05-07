@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.1] - 2020-05-07
+
+This is a small followup release with some APIs that were meant to be added to 0.4.0.
+
+### Added
+- `PackageGraph` now has some new `resolve_` methods:
+  - `resolve_ids`: creates a `PackageSet` with the specified package IDs.
+  - `resolve_workspace`: creates a `PackageSet` with all workspace packages (but no transitive dependencies).
+  - `resolve_workspace_names`: creates a `PackageSet` with the specified workspace packages by name (but no transitive
+    dependencies).
+
 ## [0.4.0] - 2020-05-06
 
 This is a major overhaul of `guppy`, with many new features and several changed APIs.
@@ -170,6 +181,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.4.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.4.1
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.4.0
 [0.3.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.3.1
 [0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.3.0

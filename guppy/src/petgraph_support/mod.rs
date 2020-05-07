@@ -23,6 +23,12 @@ pub fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::Ed
 
 pub struct IxBitSet(pub FixedBitSet);
 
+impl From<IxBitSet> for FixedBitSet {
+    fn from(ix_set: IxBitSet) -> Self {
+        ix_set.0
+    }
+}
+
 impl<Ix: IndexType> FromIterator<NodeIndex<Ix>> for IxBitSet {
     fn from_iter<T: IntoIterator<Item = NodeIndex<Ix>>>(iter: T) -> Self {
         IxBitSet(iter.into_iter().map(|node_ix| node_ix.index()).collect())
