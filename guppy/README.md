@@ -14,7 +14,7 @@ Add the following to `Cargo.toml`:
 
 ```toml
 [dependencies]
-guppy = "0.3"
+guppy = "0.4"
 ```
 
 ## Examples
@@ -22,7 +22,7 @@ guppy = "0.3"
 Print out all direct dependencies of a package:
 
 ```rust
-use guppy::{PackageId, CargoMetadata};
+use guppy::{CargoMetadata, PackageId};
 
 // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
 let metadata = CargoMetadata::parse_json(include_str!("../../fixtures/small/metadata1.json")).unwrap();

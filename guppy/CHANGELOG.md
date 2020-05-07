@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.4.0] - 2020-05-06
+
+This is a major overhaul of `guppy`, with many new features and several changed APIs.
+
+### Added
+- Support for graph analysis on a per-feature basis.
+  - The APIs are contained in `guppy::graph::feature`, and are accessible through `PackageGraph::feature_graph`.
+  - An almost complete set of queries and operations is available through `FeatureQuery` and `FeatureSet`.
+- Support for simulating what packages and features would be built by Cargo.
+  - The APIs are contained in `guppy::graph::cargo`, and are accessible by constructing a `FeatureQuery` and using its
+    `resolve_cargo` method.
+  - Both the current resolver and the upcoming [V2 resolver](https://github.com/rust-lang/cargo/pull/7820) are
+    supported, and there are extensive property-based tests to ensure that `guppy` faithfully emulates `cargo`.
+- `PackageQuery` (and `FeatureQuery`) can now be introspected with new methods `direction` and `starts_from`.
+- `PackageMetadata` instances now have `has_build_script` and `is_proc_macro` methods.
+- Add `PackageGraph::query_workspace_names` to make a `PackageQuery` by workspace name.
+
+### Changed
+- `PackageSet`'s consuming `into_` iterators have been turned into borrowing iterators.
+  - `into_ids` is now `ids`, and `into_links` is now `links`.
+- Direct dependency and reverse dependency queries now live on `PackageMetadata` instances.
+- `PackageLink`, instead of having public `from`, `to` and `edge` fields, now has methods which return that data.
+  - The functionality of `PackageEdge` has been subsumed into `PackageLink`.
+- The data model for platform-specific statuses has been overhauled. See `EnabledStatus`, `PlatformStatus` and
+  `PlatformEval`.
+- `PackageResolver` (and `FeatureResolver`) improvements.
+  - Resolver instances now have the query passed in, to make it easier to write stateless resolvers.
+  - Resolver instances now take in `&mut self` instead of a plain `&self` (or `FnMut` instead of `Fn`).
+- `MetadataCommand` has been reimplemented in `guppy`, and now has a `build_graph` method.
+  - `Metadata` has been reworked as well, and renamed to `CargoMetadata`.
+
+### Removed
+- `PackageGraph::retain_edges` no longer exists: its functionality can be replicated through `PackageResolver`.
+
 ## [0.3.1] - 2020-04-15
 
 ### Added
