@@ -28,7 +28,8 @@ pub struct PackageQuery<'g> {
 impl PackageGraph {
     /// Creates a new forward query over the entire workspace.
     ///
-    /// `query_workspace` will select all workspace packages and their transitive dependencies.
+    /// `query_workspace` will select all workspace packages and their transitive dependencies. To
+    /// create a `PackageSet` with just workspace packages, use `resolve_workspace`.
     pub fn query_workspace(&self) -> PackageQuery {
         self.query_forward(self.workspace().member_ids())
             .expect("workspace packages should all be known")

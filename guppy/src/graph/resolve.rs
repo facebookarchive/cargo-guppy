@@ -8,7 +8,8 @@ use crate::graph::{
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::reversed::MaybeReversedEdge;
-use crate::PackageId;
+use crate::petgraph_support::IxBitSet;
+use crate::{Error, PackageId};
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef, VisitMap};
@@ -17,9 +18,8 @@ use std::fmt;
 impl PackageGraph {
     /// Creates a new `PackageSet` consisting of all members of this package graph.
     ///
-    /// This is normally the same as `query_workspace().resolve()`, but can differ in some cases:
-    /// * if packages have been replaced with `[patch]` or `[replace]`
-    /// * if some edges have been removed from this graph with `retain_edges`.
+    /// This is normally the same as `query_workspace().resolve()`, but can differ if packages have
+    /// been replaced with `[patch]` or `[replace]`.
     ///
     /// In most situations, `query_workspace` is preferred. Use `resolve_all` if you know you need
     /// parts of the graph that aren't accessible from the workspace.
@@ -28,6 +28,61 @@ impl PackageGraph {
             graph: self,
             core: ResolveCore::all_nodes(&self.dep_graph),
         }
+    }
+
+    /// Creates a new `PackageSet` consisting of the specified package IDs.
+    ///
+    /// This does not include transitive dependencies. To do so, use the `query_` methods.
+    ///
+    /// Returns an error if any package IDs are unknown.
+    pub fn resolve_ids<'a>(
+        &self,
+        package_ids: impl IntoIterator<Item = &'a PackageId>,
+    ) -> Result<PackageSet, Error> {
+        Ok(PackageSet {
+            graph: self,
+            core: ResolveCore::from_included::<IxBitSet>(self.package_ixs(package_ids)?),
+        })
+    }
+
+    /// Creates a new `PackageSet` consisting of all packages in this workspace.
+    ///
+    /// This does not include transitive dependencies. To do so, use `query_workspace`.
+    pub fn resolve_workspace(&self) -> PackageSet {
+        let included: IxBitSet = self
+            .workspace()
+            .members()
+            .map(|(_, package)| package.package_ix())
+            .collect();
+        PackageSet {
+            graph: self,
+            core: ResolveCore::from_included(included),
+        }
+    }
+
+    /// Creates a new `PackageSet` consisting of the specified workspace packages by name.
+    ///
+    /// This does not include transitive dependencies. To do so, use `query_workspace_names`.
+    ///
+    /// Returns an error if any workspace names are unknown.
+    pub fn resolve_workspace_names<'a>(
+        &self,
+        names: impl IntoIterator<Item = &'a str>,
+    ) -> Result<PackageSet, Error> {
+        let workspace = self.workspace();
+        let included: IxBitSet = names
+            .into_iter()
+            .map(|name| {
+                workspace
+                    .member_by_name(name)
+                    .map(|package| package.package_ix())
+                    .ok_or_else(|| Error::UnknownWorkspaceName(name.to_string()))
+            })
+            .collect::<Result<_, _>>()?;
+        Ok(PackageSet {
+            graph: self,
+            core: ResolveCore::from_included(included),
+        })
     }
 }
 

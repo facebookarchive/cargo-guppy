@@ -71,7 +71,8 @@ impl<G: GraphSpec> ResolveCore<G> {
         }
     }
 
-    pub(super) fn from_included(included: FixedBitSet) -> Self {
+    pub(super) fn from_included<T: Into<FixedBitSet>>(included: T) -> Self {
+        let included = included.into();
         let len = included.count_ones(..);
         Self {
             included,
@@ -108,7 +109,11 @@ impl<G: GraphSpec> ResolveCore<G> {
 
     // fixedbitset 0.2.0 doesn't have a difference_with :(
     pub(super) fn difference(&self, other: &Self) -> Self {
-        Self::from_included(self.included.difference(&other.included).collect())
+        Self::from_included(
+            self.included
+                .difference(&other.included)
+                .collect::<FixedBitSet>(),
+        )
     }
 
     pub(super) fn symmetric_difference_with(&mut self, other: &Self) {

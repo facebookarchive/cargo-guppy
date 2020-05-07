@@ -15,18 +15,16 @@ fn main() -> Result<(), Error> {
         CargoMetadata::parse_json(include_str!("../../fixtures/large/metadata_libra.json"))?;
     let package_graph = metadata.build_graph()?;
 
-    // Non-workspace packages cannot depend on packages within the workspace, so the reverse
-    // transitive deps of workspace packages are exactly the set of workspace packages.
-    let query = package_graph.query_reverse(package_graph.workspace().member_ids())?;
-    let package_set = query.resolve();
+    // This produces the set of packages in this workspace.
+    let workspace_set = package_graph.resolve_workspace();
 
     // Iterate over packages in forward topo order.
-    for package in package_set.packages(DependencyDirection::Forward) {
+    for package in workspace_set.packages(DependencyDirection::Forward) {
         // All selected packages are in the workspace.
         let workspace_path = package
             .workspace_path()
             .expect("packages in workspace should have workspace path");
-        println!("{}: {:?}", package.name(), workspace_path);
+        println!("{}: {}", package.name(), workspace_path.display());
     }
 
     Ok(())
