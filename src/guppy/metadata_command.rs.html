@@ -111,6 +111,17 @@
 <span id="111">111</span>
 <span id="112">112</span>
 <span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -118,9 +129,13 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">PackageGraph</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::<span class="ident">CargoOpt</span>;
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
 
 <span class="doccomment">/// A builder for configuring `cargo metadata` invocations.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This is the most common entry point for constructing a `PackageGraph`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ## Examples</span>
 <span class="doccomment">///</span>
@@ -182,6 +197,7 @@
     <span class="doccomment">/// command invocation.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Note that `guppy` internally:</span>
+    <span class="doccomment">/// * uses `--format-version 1` as its metadata format.</span>
     <span class="doccomment">/// * passes in `--all-features`, so that `guppy` has a full view of the dependency graph.</span>
     <span class="doccomment">/// * does not pass in `--no-deps`, so that `guppy` knows about non-workspace dependencies.</span>
     <span class="doccomment">///</span>
@@ -191,7 +207,7 @@
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Runs the configured `cargo metadata` and returns a parsed `CargoMetadata`.</span>
+    <span class="doccomment">/// Runs the configured `cargo metadata` and returns a deserialized `CargoMetadata`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CargoMetadata</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">exec</span>().<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">command_error</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">CargoMetadata</span>(<span class="ident">inner</span>))
@@ -204,23 +220,29 @@
     }
 }
 
-<span class="doccomment">/// A parsed `Cargo` metadata returned by a `MetadataCommand`.</span>
+<span class="doccomment">/// A deserialized Cargo metadata returned by a `MetadataCommand`.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This is an intermediate, opaque struct which may be generated either through</span>
-<span class="doccomment">/// `MetadataCommand::to_metadata` or through deserializing JSON representing `cargo metadata`. To</span>
-<span class="doccomment">/// analyze Cargo metadata by building a `PackageGraph`</span>
-<span class="doccomment">/// from it, call the `into_package_graph` method.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="doccomment">/// This is an alternative entry point for constructing a `PackageGraph`, to be used if the JSON</span>
+<span class="doccomment">/// output of `cargo metadata` is already available.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This struct implements `serde::Serialize` and `Deserialize`.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">transparent</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CargoMetadata</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">cargo_metadata</span>::<span class="ident">Metadata</span>);
 
 <span class="kw">impl</span> <span class="ident">CargoMetadata</span> {
-    <span class="doccomment">/// Parses this JSON blob into a `Metadata`.</span>
+    <span class="doccomment">/// Deserializes this JSON blob into a `CargoMetadata`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_json</span>(<span class="ident">json</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">serde_json</span>::<span class="ident">from_str</span>(<span class="ident">json</span>.<span class="ident">as_ref</span>()).<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">MetadataParseError</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">inner</span>))
     }
 
-    <span class="doccomment">/// Builds a `PackageGraph` out of this `Metadata`.</span>
+    <span class="doccomment">/// Serializes this metadata into the given writer.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw">impl</span> <span class="ident">io</span>::<span class="ident">Write</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="ident">serde_json</span>::<span class="ident">to_writer</span>(<span class="ident">writer</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">MetadataSerializeError</span>)
+    }
+
+    <span class="doccomment">/// Parses this metadata and builds a `PackageGraph` from it.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_graph</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageGraph</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident">PackageGraph</span>::<span class="ident">from_metadata</span>(<span class="self">self</span>)
     }
