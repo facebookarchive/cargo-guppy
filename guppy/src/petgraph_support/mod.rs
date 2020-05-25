@@ -13,7 +13,7 @@ use std::iter::FromIterator;
 
 pub mod dfs;
 pub mod dot;
-pub mod reversed;
+pub mod edge_ref;
 pub mod scc;
 pub mod walk;
 

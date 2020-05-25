@@ -7,6 +7,7 @@ use crate::graph::{DependencyDirection, GraphSpec};
 use crate::petgraph_support::scc::{NodeIter, Sccs};
 use crate::petgraph_support::walk::EdgeDfs;
 use fixedbitset::FixedBitSet;
+use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
 use serde::export::PhantomData;
@@ -47,20 +48,20 @@ impl<G: GraphSpec> ResolveCore<G> {
     }
 
     /// The arguments to the edge filter are the (source, target, edge ix), unreversed.
-    pub(super) fn with_edge_filter(
-        graph: &Graph<G::Node, G::Edge, Directed, G::Ix>,
+    pub(super) fn with_edge_filter<'g>(
+        graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
         params: QueryParams<G>,
-        mut edge_filter: impl FnMut(NodeIndex<G::Ix>, NodeIndex<G::Ix>, EdgeIndex<G::Ix>) -> bool,
+        mut edge_filter: impl FnMut(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
     ) -> Self {
         let (included, len) = match params {
             QueryParams::Forward(initials) => reachable_map_filtered(
                 graph,
-                |edge_ref| edge_filter(edge_ref.source(), edge_ref.target(), edge_ref.id()),
+                |edge_ref| edge_filter(edge_ref),
                 initials.into_inner(),
             ),
             QueryParams::Reverse(initials) => reachable_map_filtered(
                 Reversed(graph),
-                |edge_ref| edge_filter(edge_ref.target(), edge_ref.source(), edge_ref.id()),
+                |edge_ref| edge_filter(edge_ref.into_unreversed()),
                 initials.into_inner(),
             ),
         };
