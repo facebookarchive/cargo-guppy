@@ -12,6 +12,7 @@ use crate::petgraph_support::IxBitSet;
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::graph::NodeIndex;
+use petgraph::visit::EdgeRef;
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.
@@ -72,19 +73,20 @@ impl<'g> FeatureSet<'g> {
         let params = query.params.clone();
         Self {
             graph: DebugIgnore(graph),
-            core: ResolveCore::with_edge_filter(
-                graph.dep_graph(),
-                params,
-                |source_ix, target_ix, edge_ix| {
-                    match graph.edge_to_cross_link(source_ix, target_ix, edge_ix, None) {
-                        Some(cross_link) => resolver.accept(&query, cross_link),
-                        None => {
-                            // Feature links within the same package are always followed.
-                            true
-                        }
+            core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge| {
+                match graph.edge_to_cross_link(
+                    edge.source(),
+                    edge.target(),
+                    edge.id(),
+                    Some(edge.weight()),
+                ) {
+                    Some(cross_link) => resolver.accept(&query, cross_link),
+                    None => {
+                        // Feature links within the same package are always followed.
+                        true
                     }
-                },
-            ),
+                }
+            }),
         }
     }
 

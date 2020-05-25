@@ -15,6 +15,7 @@ use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
 use petgraph::algo::{has_path_connecting, DfsSpace};
+use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -313,9 +314,7 @@ impl PackageGraph {
     ) -> impl Iterator<Item = PackageLink<'g>> + 'g {
         self.dep_graph
             .edges_directed(package_ix, dir)
-            .map(move |edge| {
-                self.edge_to_link(edge.source(), edge.target(), edge.id(), Some(edge.weight()))
-            })
+            .map(move |edge| self.edge_ref_to_link(edge))
     }
 
     /// Constructs a map of strongly connected components for this graph.
@@ -337,34 +336,33 @@ impl PackageGraph {
         &self.dep_graph
     }
 
-    /// Maps an edge source, target and weight to a dependency link.
-    pub(super) fn edge_to_link<'g>(
+    /// Maps an edge reference to a dependency link.
+    pub(super) fn edge_ref_to_link<'g>(
         &'g self,
-        source: NodeIndex<PackageIx>,
-        target: NodeIndex<PackageIx>,
-        edge_ix: EdgeIndex<PackageIx>,
-        edge: Option<&'g PackageLinkImpl>,
+        edge: EdgeReference<'g, PackageLinkImpl, PackageIx>,
     ) -> PackageLink<'g> {
-        // Note: It would be really lovely if this could just take in any EdgeRef with the right
-        // parameters, but 'weight' wouldn't live long enough unfortunately.
-        //
-        // https://docs.rs/petgraph/0.4.13/petgraph/graph/struct.EdgeReference.html#method.weight
-        // is defined separately for the same reason.
-        let from = self
-            .data
-            .metadata_impl(&self.dep_graph[source])
-            .expect("'from' should have associated metadata");
-        let to = self
-            .data
-            .metadata_impl(&self.dep_graph[target])
-            .expect("'to' should have associated metadata");
-        PackageLink {
-            graph: self,
-            from,
-            to,
+        PackageLink::new(
+            self,
+            edge.source(),
+            edge.target(),
+            edge.id(),
+            Some(edge.weight()),
+        )
+    }
+
+    /// Maps an edge index to a dependency link.
+    pub(super) fn edge_ix_to_link<'g>(&'g self, edge_ix: EdgeIndex<PackageIx>) -> PackageLink<'g> {
+        let (source_ix, target_ix) = self
+            .dep_graph
+            .edge_endpoints(edge_ix)
+            .expect("valid edge ix");
+        PackageLink::new(
+            self,
+            source_ix,
+            target_ix,
             edge_ix,
-            inner: edge.unwrap_or_else(|| &self.dep_graph[edge_ix]),
-        }
+            self.dep_graph.edge_weight(edge_ix),
+        )
     }
 
     /// Maps an iterator of package IDs to their internal graph node indexes.
@@ -906,6 +904,30 @@ pub struct PackageLink<'g> {
 }
 
 impl<'g> PackageLink<'g> {
+    pub(super) fn new(
+        graph: &'g PackageGraph,
+        source_ix: NodeIndex<PackageIx>,
+        target_ix: NodeIndex<PackageIx>,
+        edge_ix: EdgeIndex<PackageIx>,
+        inner: Option<&'g PackageLinkImpl>,
+    ) -> Self {
+        let from = graph
+            .data
+            .metadata_impl(&graph.dep_graph[source_ix])
+            .expect("'from' should have associated metadata");
+        let to = graph
+            .data
+            .metadata_impl(&graph.dep_graph[target_ix])
+            .expect("'to' should have associated metadata");
+        Self {
+            graph,
+            from,
+            to,
+            edge_ix,
+            inner: inner.unwrap_or_else(|| &graph.dep_graph[edge_ix]),
+        }
+    }
+
     /// Returns the package which depends on the `to` package.
     pub fn from(&self) -> PackageMetadata<'g> {
         PackageMetadata::new(self.graph, self.from)

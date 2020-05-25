@@ -46,11 +46,7 @@ impl PackageGraph {
             // indexes in the middle of the range. Graph compacts edge indexes so that all
             // indexes from 0 to link_count are valid.
             let edge_ix = EdgeIndex::new(index.index(self.link_count()));
-            let (source_ix, target_ix) = self
-                .dep_graph
-                .edge_endpoints(edge_ix)
-                .expect("all edge indexes 0..link_count should be valid");
-            self.edge_to_link(source_ix, target_ix, edge_ix, None)
+            self.edge_ix_to_link(edge_ix)
         })
     }
 

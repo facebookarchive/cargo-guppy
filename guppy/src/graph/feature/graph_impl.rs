@@ -624,14 +624,9 @@ impl<'g> CrossLink<'g> {
 
     /// Returns the `PackageLink` from which this `CrossLink` was derived.
     pub fn package_link(&self) -> PackageLink<'g> {
-        let from_node = self.graph.dep_graph()[self.from.feature_ix];
-        let to_node = self.graph.dep_graph()[self.to.feature_ix];
-        self.graph.package_graph.edge_to_link(
-            from_node.package_ix,
-            to_node.package_ix,
-            self.inner.package_edge_ix,
-            None,
-        )
+        self.graph
+            .package_graph
+            .edge_ix_to_link(self.inner.package_edge_ix)
     }
 
     // ---

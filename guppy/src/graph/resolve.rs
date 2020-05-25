@@ -7,7 +7,7 @@ use crate::graph::{
     PackageQuery,
 };
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
-use crate::petgraph_support::reversed::MaybeReversedEdge;
+use crate::petgraph_support::edge_ref::GraphEdgeRef;
 use crate::petgraph_support::IxBitSet;
 use crate::{Error, PackageId};
 use fixedbitset::FixedBitSet;
@@ -119,14 +119,10 @@ impl<'g> PackageSet<'g> {
         let params = query.params.clone();
         Self {
             graph,
-            core: ResolveCore::with_edge_filter(
-                graph.dep_graph(),
-                params,
-                |source, target, edge_ix| {
-                    let link = graph.edge_to_link(source, target, edge_ix, None);
-                    resolver.accept(&query, link)
-                },
-            ),
+            core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge| {
+                let link = graph.edge_ref_to_link(edge);
+                resolver.accept(&query, link)
+            }),
         }
     }
 
@@ -327,7 +323,7 @@ impl<'g> PackageSet<'g> {
         self.core
             .links(graph.dep_graph(), graph.sccs(), direction)
             .map(move |(source_ix, target_ix, edge_ix)| {
-                graph.edge_to_link(source_ix, target_ix, edge_ix, None)
+                PackageLink::new(graph, source_ix, target_ix, edge_ix, None)
             })
     }
 
@@ -409,11 +405,7 @@ impl<'g, V, NR, ER> DotVisitor<NR, ER> for VisitorWrap<'g, V>
 where
     V: PackageDotVisitor,
     NR: NodeRef<NodeId = NodeIndex<PackageIx>, Weight = PackageId>,
-    ER: MaybeReversedEdge<
-        NodeId = NodeIndex<PackageIx>,
-        EdgeId = EdgeIndex<PackageIx>,
-        Weight = PackageLinkImpl,
-    >,
+    ER: GraphEdgeRef<'g, PackageLinkImpl, PackageIx>,
 {
     fn visit_node(&self, node: NR, f: &mut DotWrite<'_, '_>) -> fmt::Result {
         let metadata = self
@@ -424,10 +416,7 @@ where
     }
 
     fn visit_edge(&self, edge: ER, f: &mut DotWrite<'_, '_>) -> fmt::Result {
-        let (source_ix, target_ix) = edge.original_endpoints();
-        let link = self
-            .graph
-            .edge_to_link(source_ix, target_ix, edge.id(), Some(edge.weight()));
+        let link = self.graph.edge_ref_to_link(edge.into_edge_reference());
         self.inner.visit_link(link, f)
     }
 }

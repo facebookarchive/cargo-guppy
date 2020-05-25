@@ -157,13 +157,9 @@ impl<'g> CargoSet<'g> {
         &'a self,
     ) -> impl Iterator<Item = PackageLink<'g>> + ExactSizeIterator + 'a {
         let package_graph = self.target_features.graph().package_graph;
-        self.proc_macro_edge_ixs.iter().map(move |edge_ix| {
-            let (source_ix, target_ix) = package_graph
-                .dep_graph
-                .edge_endpoints(*edge_ix)
-                .expect("valid edge ix");
-            package_graph.edge_to_link(source_ix, target_ix, *edge_ix, None)
-        })
+        self.proc_macro_edge_ixs
+            .iter()
+            .map(move |edge_ix| package_graph.edge_ix_to_link(*edge_ix))
     }
 }
 
