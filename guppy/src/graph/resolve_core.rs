@@ -132,22 +132,13 @@ impl<G: GraphSpec> ResolveCore<G> {
         sccs: &Sccs<G::Ix>,
         direction: DependencyDirection,
     ) -> Vec<NodeIndex<G::Ix>> {
-        // If any element of an SCC is in the reachable map, so would every other element. This
-        // means that any SCC map computed on the full graph will work on a prefiltered graph. (This
-        // will change if we decide to implement edge visiting/filtering.)
-        //
-        // TODO: petgraph 0.5.1 will allow the closure to be replaced with &self.reachable. Switch
-        // to it when it's out.
+        // This uses the SCCs in self.sccs. If any node in an SCC is a root, so is any other.
         match direction {
             DependencyDirection::Forward => sccs
-                .externals(&NodeFiltered::from_fn(graph, |x| {
-                    self.included.is_visited(&x)
-                }))
+                .externals(&NodeFiltered(graph, &self.included))
                 .collect(),
             DependencyDirection::Reverse => sccs
-                .externals(&NodeFiltered::from_fn(Reversed(graph), |x| {
-                    self.included.is_visited(&x)
-                }))
+                .externals(&NodeFiltered(Reversed(graph), &self.included))
                 .collect(),
         }
     }
@@ -191,12 +182,11 @@ impl<G: GraphSpec> ResolveCore<G> {
     ) -> Links<'g, G> {
         let edge_dfs = match direction {
             DependencyDirection::Forward => {
-                let filtered_graph = NodeFiltered::from_fn(graph, |x| self.included.is_visited(&x));
+                let filtered_graph = NodeFiltered(graph, &self.included);
                 EdgeDfs::new(&filtered_graph, sccs.externals(&filtered_graph))
             }
             DependencyDirection::Reverse => {
-                let filtered_reversed_graph =
-                    NodeFiltered::from_fn(Reversed(graph), |x| self.included.is_visited(&x));
+                let filtered_reversed_graph = NodeFiltered(Reversed(graph), &self.included);
                 EdgeDfs::new(
                     &filtered_reversed_graph,
                     sccs.externals(&filtered_reversed_graph),
@@ -263,17 +253,11 @@ impl<'g, G: GraphSpec> Iterator for Links<'g, G> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.direction {
             DependencyDirection::Forward => {
-                let included = self.included;
-                let filtered =
-                    NodeFiltered::from_fn(self.graph.0, |node_ix| included.is_visited(&node_ix));
+                let filtered = NodeFiltered(self.graph.0, self.included);
                 self.edge_dfs.next(&filtered)
             }
             DependencyDirection::Reverse => {
-                let included = self.included;
-                // TODO: replace with &self.included once petgraph 0.5.1 is out.
-                let filtered_reversed = NodeFiltered::from_fn(Reversed(self.graph.0), |node_ix| {
-                    included.is_visited(&node_ix)
-                });
+                let filtered_reversed = NodeFiltered(Reversed(self.graph.0), self.included);
                 self.edge_dfs
                     .next(&filtered_reversed)
                     .map(|(source_ix, target_ix, edge_ix)| {

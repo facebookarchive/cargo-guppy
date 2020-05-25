@@ -12,7 +12,7 @@ use crate::petgraph_support::IxBitSet;
 use crate::{Error, PackageId};
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
-use petgraph::visit::{NodeFiltered, NodeRef, VisitMap};
+use petgraph::visit::{NodeFiltered, NodeRef};
 use std::fmt;
 
 impl PackageGraph {
@@ -336,10 +336,7 @@ impl<'g> PackageSet<'g> {
         &'a self,
         visitor: V,
     ) -> impl fmt::Display + 'a {
-        let included = &self.core.included;
-        let node_filtered = NodeFiltered::from_fn(self.graph.dep_graph(), move |package_ix| {
-            included.is_visited(&package_ix)
-        });
+        let node_filtered = NodeFiltered(self.graph.dep_graph(), &self.core.included);
         DotFmt::new(node_filtered, VisitorWrap::new(self.graph, visitor))
     }
 }
