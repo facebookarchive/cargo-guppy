@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/git2-0.13.5/src/diff.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>diff.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../git2/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/git2-0.13.6/src/diff.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>diff.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../git2/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1460,6 +1460,230 @@
 <span id="1460">1460</span>
 <span id="1461">1461</span>
 <span id="1462">1462</span>
+<span id="1463">1463</span>
+<span id="1464">1464</span>
+<span id="1465">1465</span>
+<span id="1466">1466</span>
+<span id="1467">1467</span>
+<span id="1468">1468</span>
+<span id="1469">1469</span>
+<span id="1470">1470</span>
+<span id="1471">1471</span>
+<span id="1472">1472</span>
+<span id="1473">1473</span>
+<span id="1474">1474</span>
+<span id="1475">1475</span>
+<span id="1476">1476</span>
+<span id="1477">1477</span>
+<span id="1478">1478</span>
+<span id="1479">1479</span>
+<span id="1480">1480</span>
+<span id="1481">1481</span>
+<span id="1482">1482</span>
+<span id="1483">1483</span>
+<span id="1484">1484</span>
+<span id="1485">1485</span>
+<span id="1486">1486</span>
+<span id="1487">1487</span>
+<span id="1488">1488</span>
+<span id="1489">1489</span>
+<span id="1490">1490</span>
+<span id="1491">1491</span>
+<span id="1492">1492</span>
+<span id="1493">1493</span>
+<span id="1494">1494</span>
+<span id="1495">1495</span>
+<span id="1496">1496</span>
+<span id="1497">1497</span>
+<span id="1498">1498</span>
+<span id="1499">1499</span>
+<span id="1500">1500</span>
+<span id="1501">1501</span>
+<span id="1502">1502</span>
+<span id="1503">1503</span>
+<span id="1504">1504</span>
+<span id="1505">1505</span>
+<span id="1506">1506</span>
+<span id="1507">1507</span>
+<span id="1508">1508</span>
+<span id="1509">1509</span>
+<span id="1510">1510</span>
+<span id="1511">1511</span>
+<span id="1512">1512</span>
+<span id="1513">1513</span>
+<span id="1514">1514</span>
+<span id="1515">1515</span>
+<span id="1516">1516</span>
+<span id="1517">1517</span>
+<span id="1518">1518</span>
+<span id="1519">1519</span>
+<span id="1520">1520</span>
+<span id="1521">1521</span>
+<span id="1522">1522</span>
+<span id="1523">1523</span>
+<span id="1524">1524</span>
+<span id="1525">1525</span>
+<span id="1526">1526</span>
+<span id="1527">1527</span>
+<span id="1528">1528</span>
+<span id="1529">1529</span>
+<span id="1530">1530</span>
+<span id="1531">1531</span>
+<span id="1532">1532</span>
+<span id="1533">1533</span>
+<span id="1534">1534</span>
+<span id="1535">1535</span>
+<span id="1536">1536</span>
+<span id="1537">1537</span>
+<span id="1538">1538</span>
+<span id="1539">1539</span>
+<span id="1540">1540</span>
+<span id="1541">1541</span>
+<span id="1542">1542</span>
+<span id="1543">1543</span>
+<span id="1544">1544</span>
+<span id="1545">1545</span>
+<span id="1546">1546</span>
+<span id="1547">1547</span>
+<span id="1548">1548</span>
+<span id="1549">1549</span>
+<span id="1550">1550</span>
+<span id="1551">1551</span>
+<span id="1552">1552</span>
+<span id="1553">1553</span>
+<span id="1554">1554</span>
+<span id="1555">1555</span>
+<span id="1556">1556</span>
+<span id="1557">1557</span>
+<span id="1558">1558</span>
+<span id="1559">1559</span>
+<span id="1560">1560</span>
+<span id="1561">1561</span>
+<span id="1562">1562</span>
+<span id="1563">1563</span>
+<span id="1564">1564</span>
+<span id="1565">1565</span>
+<span id="1566">1566</span>
+<span id="1567">1567</span>
+<span id="1568">1568</span>
+<span id="1569">1569</span>
+<span id="1570">1570</span>
+<span id="1571">1571</span>
+<span id="1572">1572</span>
+<span id="1573">1573</span>
+<span id="1574">1574</span>
+<span id="1575">1575</span>
+<span id="1576">1576</span>
+<span id="1577">1577</span>
+<span id="1578">1578</span>
+<span id="1579">1579</span>
+<span id="1580">1580</span>
+<span id="1581">1581</span>
+<span id="1582">1582</span>
+<span id="1583">1583</span>
+<span id="1584">1584</span>
+<span id="1585">1585</span>
+<span id="1586">1586</span>
+<span id="1587">1587</span>
+<span id="1588">1588</span>
+<span id="1589">1589</span>
+<span id="1590">1590</span>
+<span id="1591">1591</span>
+<span id="1592">1592</span>
+<span id="1593">1593</span>
+<span id="1594">1594</span>
+<span id="1595">1595</span>
+<span id="1596">1596</span>
+<span id="1597">1597</span>
+<span id="1598">1598</span>
+<span id="1599">1599</span>
+<span id="1600">1600</span>
+<span id="1601">1601</span>
+<span id="1602">1602</span>
+<span id="1603">1603</span>
+<span id="1604">1604</span>
+<span id="1605">1605</span>
+<span id="1606">1606</span>
+<span id="1607">1607</span>
+<span id="1608">1608</span>
+<span id="1609">1609</span>
+<span id="1610">1610</span>
+<span id="1611">1611</span>
+<span id="1612">1612</span>
+<span id="1613">1613</span>
+<span id="1614">1614</span>
+<span id="1615">1615</span>
+<span id="1616">1616</span>
+<span id="1617">1617</span>
+<span id="1618">1618</span>
+<span id="1619">1619</span>
+<span id="1620">1620</span>
+<span id="1621">1621</span>
+<span id="1622">1622</span>
+<span id="1623">1623</span>
+<span id="1624">1624</span>
+<span id="1625">1625</span>
+<span id="1626">1626</span>
+<span id="1627">1627</span>
+<span id="1628">1628</span>
+<span id="1629">1629</span>
+<span id="1630">1630</span>
+<span id="1631">1631</span>
+<span id="1632">1632</span>
+<span id="1633">1633</span>
+<span id="1634">1634</span>
+<span id="1635">1635</span>
+<span id="1636">1636</span>
+<span id="1637">1637</span>
+<span id="1638">1638</span>
+<span id="1639">1639</span>
+<span id="1640">1640</span>
+<span id="1641">1641</span>
+<span id="1642">1642</span>
+<span id="1643">1643</span>
+<span id="1644">1644</span>
+<span id="1645">1645</span>
+<span id="1646">1646</span>
+<span id="1647">1647</span>
+<span id="1648">1648</span>
+<span id="1649">1649</span>
+<span id="1650">1650</span>
+<span id="1651">1651</span>
+<span id="1652">1652</span>
+<span id="1653">1653</span>
+<span id="1654">1654</span>
+<span id="1655">1655</span>
+<span id="1656">1656</span>
+<span id="1657">1657</span>
+<span id="1658">1658</span>
+<span id="1659">1659</span>
+<span id="1660">1660</span>
+<span id="1661">1661</span>
+<span id="1662">1662</span>
+<span id="1663">1663</span>
+<span id="1664">1664</span>
+<span id="1665">1665</span>
+<span id="1666">1666</span>
+<span id="1667">1667</span>
+<span id="1668">1668</span>
+<span id="1669">1669</span>
+<span id="1670">1670</span>
+<span id="1671">1671</span>
+<span id="1672">1672</span>
+<span id="1673">1673</span>
+<span id="1674">1674</span>
+<span id="1675">1675</span>
+<span id="1676">1676</span>
+<span id="1677">1677</span>
+<span id="1678">1678</span>
+<span id="1679">1679</span>
+<span id="1680">1680</span>
+<span id="1681">1681</span>
+<span id="1682">1682</span>
+<span id="1683">1683</span>
+<span id="1684">1684</span>
+<span id="1685">1685</span>
+<span id="1686">1686</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">libc</span>::{<span class="ident">c_char</span>, <span class="ident">c_int</span>, <span class="ident">c_void</span>, <span class="ident">size_t</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::<span class="ident">CString</span>;
@@ -1514,6 +1738,11 @@
 <span class="doccomment">/// Control behavior of rename and copy detection</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DiffFindOptions</span> {
     <span class="ident">raw</span>: <span class="ident">raw</span>::<span class="ident">git_diff_find_options</span>,
+}
+
+<span class="doccomment">/// Control behavior of formatting emails</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DiffFormatEmailOptions</span> {
+    <span class="ident">raw</span>: <span class="ident">raw</span>::<span class="ident">git_diff_format_email_options</span>,
 }
 
 <span class="doccomment">/// An iterator over the diffs in a delta</span>
@@ -1704,7 +1933,59 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="comment">// TODO: num_deltas_of_type, format_email, find_similar</span>
+    <span class="doccomment">/// Create an e-mail ready patch from a diff.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Matches the format created by `git format-patch`</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">format_email</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">patch_no</span>: <span class="ident">usize</span>,
+        <span class="ident">total_patches</span>: <span class="ident">usize</span>,
+        <span class="ident">commit</span>: <span class="kw-2">&amp;</span><span class="kw">crate</span>::<span class="ident">Commit</span><span class="op">&lt;</span><span class="lifetime">&#39;repo</span><span class="op">&gt;</span>,
+        <span class="ident">opts</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DiffFormatEmailOptions</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Buf</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">patch_no</span> <span class="op">&gt;</span> <span class="number">0</span>);
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">patch_no</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">total_patches</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">default</span> <span class="op">=</span> <span class="ident">DiffFormatEmailOptions</span>::<span class="ident">default</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">raw_opts</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">map_or</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">default</span>.<span class="ident">raw</span>, <span class="op">|</span><span class="ident">opts</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">opts</span>.<span class="ident">raw</span>);
+        <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="ident">commit</span>.<span class="ident">summary_bytes</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">commit</span>.<span class="ident">message_bytes</span>();
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">message</span>.<span class="ident">starts_with</span>(<span class="ident">summary</span>));
+        <span class="ident">message</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">message</span>[<span class="ident">summary</span>.<span class="ident">len</span>()..];
+        <span class="ident">raw_opts</span>.<span class="ident">patch_no</span> <span class="op">=</span> <span class="ident">patch_no</span>;
+        <span class="ident">raw_opts</span>.<span class="ident">total_patches</span> <span class="op">=</span> <span class="ident">total_patches</span>;
+        <span class="ident">raw_opts</span>.<span class="ident">id</span> <span class="op">=</span> <span class="ident">commit</span>.<span class="ident">id</span>().<span class="ident">raw</span>();
+        <span class="ident">raw_opts</span>.<span class="ident">summary</span> <span class="op">=</span> <span class="ident">summary</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>;
+        <span class="ident">raw_opts</span>.<span class="ident">body</span> <span class="op">=</span> <span class="ident">message</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>;
+        <span class="ident">raw_opts</span>.<span class="ident">author</span> <span class="op">=</span> <span class="ident">commit</span>.<span class="ident">author</span>().<span class="ident">raw</span>();
+        <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">Buf</span>::<span class="ident">new</span>();
+        <span class="kw">unsafe</span> {
+            <span class="macro">try_call</span><span class="macro">!</span>(<span class="ident">raw</span>::<span class="ident">git_diff_format_email</span>(<span class="ident">buf</span>.<span class="ident">raw</span>(), <span class="self">self</span>.<span class="ident">raw</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">raw_opts</span>));
+        }
+        <span class="prelude-val">Ok</span>(<span class="ident">buf</span>)
+    }
+
+    <span class="comment">// TODO: num_deltas_of_type, find_similar</span>
+}
+<span class="kw">impl</span> <span class="ident">Diff</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Read the contents of a git patch file into a `git_diff` object.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The diff object produced is similar to the one that would be</span>
+    <span class="doccomment">/// produced if you actually produced it computationally by comparing</span>
+    <span class="doccomment">/// two trees, however there may be subtle differences. For example,</span>
+    <span class="doccomment">/// a patch file likely contains abbreviated object IDs, so the</span>
+    <span class="doccomment">/// object IDs parsed by this function will also be abreviated.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_buffer</span>(<span class="ident">buffer</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Diff</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">diff</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">raw</span>::<span class="ident">git_diff</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+        <span class="kw">unsafe</span> {
+            <span class="comment">// NOTE: Doesn&#39;t depend on repo, so lifetime can be &#39;static</span>
+            <span class="macro">try_call</span><span class="macro">!</span>(<span class="ident">raw</span>::<span class="ident">git_diff_from_buffer</span>(
+                <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">diff</span>,
+                <span class="ident">buffer</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_char</span>,
+                <span class="ident">buffer</span>.<span class="ident">len</span>()
+            ));
+            <span class="prelude-val">Ok</span>(<span class="ident">Diff</span>::<span class="ident">from_raw</span>(<span class="ident">diff</span>))
+        }
+    }
 }
 
 <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">print_cb</span>(
@@ -2364,7 +2645,7 @@
     }
 
     <span class="doccomment">/// Content of this line as bytes.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">content</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">content</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>] {
         <span class="kw">unsafe</span> {
             <span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(
                 (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">raw</span>).<span class="ident">content</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>,
@@ -2452,7 +2733,7 @@
     }
 
     <span class="doccomment">/// Header text</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>] {
         <span class="kw">unsafe</span> {
             <span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(
                 (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">raw</span>).<span class="ident">header</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>,
@@ -2800,9 +3081,47 @@
     <span class="comment">// TODO: expose git_diff_similarity_metric</span>
 }
 
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DiffFormatEmailOptions</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span>::<span class="ident">new</span>()
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">DiffFormatEmailOptions</span> {
+    <span class="doccomment">/// Creates a new set of email options,</span>
+    <span class="doccomment">/// initialized to the default values</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">DiffFormatEmailOptions</span> {
+            <span class="ident">raw</span>: <span class="kw">unsafe</span> { <span class="ident">mem</span>::<span class="ident">zeroed</span>() },
+        };
+        <span class="macro">assert_eq</span><span class="macro">!</span>(
+            <span class="kw">unsafe</span> { <span class="ident">raw</span>::<span class="ident">git_diff_format_email_options_init</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">opts</span>.<span class="ident">raw</span>, <span class="number">1</span>) },
+            <span class="number">0</span>
+        );
+        <span class="ident">opts</span>
+    }
+
+    <span class="kw">fn</span> <span class="ident">flag</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">opt</span>: <span class="ident">u32</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="kw">if</span> <span class="ident">val</span> {
+            <span class="self">self</span>.<span class="ident">raw</span>.<span class="ident">flags</span> <span class="op">|</span><span class="op">=</span> <span class="ident">opt</span>;
+        } <span class="kw">else</span> {
+            <span class="self">self</span>.<span class="ident">raw</span>.<span class="ident">flags</span> <span class="kw-2">&amp;</span><span class="op">=</span> <span class="op">!</span><span class="ident">opt</span>;
+        }
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// Exclude `[PATCH]` from the subject header</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exclude_subject_patch_header</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">should_exclude</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">flag</span>(
+            <span class="ident">raw</span>::<span class="ident">GIT_DIFF_FORMAT_EMAIL_EXCLUDE_SUBJECT_PATCH_MARKER</span>,
+            <span class="ident">should_exclude</span>,
+        )
+    }
+}
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">DiffOptions</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">DiffOptions</span>, <span class="ident">Signature</span>, <span class="ident">Time</span>};
     <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">borrow</span>::<span class="ident">Borrow</span>;
     <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>::<span class="ident">File</span>;
     <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>::<span class="ident">Write</span>;
@@ -2921,6 +3240,135 @@
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bin_content</span>, <span class="prelude-val">Some</span>(<span class="ident">deflated_fib</span>));
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">new_lines</span>, <span class="number">1</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">line_content</span>, <span class="prelude-val">Some</span>(<span class="string">&quot;bar\n&quot;</span>.<span class="ident">to_string</span>()));
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">format_email_simple</span>() {
+        <span class="kw">let</span> (<span class="ident">_td</span>, <span class="ident">repo</span>) <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">test</span>::<span class="ident">repo_init</span>();
+        <span class="kw">const</span> <span class="ident">COMMIT_MESSAGE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;Modify some content&quot;</span>;
+        <span class="kw">const</span> <span class="ident">EXPECTED_EMAIL_START</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">concat</span><span class="macro">!</span>(
+            <span class="string">&quot;From f1234fb0588b6ed670779a34ba5c51ef962f285f Mon Sep 17 00:00:00 2001\n&quot;</span>,
+            <span class="string">&quot;From: Techcable &lt;dummy@dummy.org&gt;\n&quot;</span>,
+            <span class="string">&quot;Date: Tue, 11 Jan 1972 17:46:40 +0000\n&quot;</span>,
+            <span class="string">&quot;Subject: [PATCH] Modify some content\n&quot;</span>,
+            <span class="string">&quot;\n&quot;</span>,
+            <span class="string">&quot;---\n&quot;</span>,
+            <span class="string">&quot; file1.txt | 8 +++++---\n&quot;</span>,
+            <span class="string">&quot; 1 file changed, 5 insertions(+), 3 deletions(-)\n&quot;</span>,
+            <span class="string">&quot;\n&quot;</span>,
+            <span class="string">&quot;diff --git a/file1.txt b/file1.txt\n&quot;</span>,
+            <span class="string">&quot;index 94aaae8..af8f41d 100644\n&quot;</span>,
+            <span class="string">&quot;--- a/file1.txt\n&quot;</span>,
+            <span class="string">&quot;+++ b/file1.txt\n&quot;</span>,
+            <span class="string">&quot;@@ -1,15 +1,17 @@\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot;+_file1.txt_\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot;+\n&quot;</span>,
+            <span class="string">&quot;+\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot;-file1.txt\n&quot;</span>,
+            <span class="string">&quot;-file1.txt\n&quot;</span>,
+            <span class="string">&quot;-file1.txt\n&quot;</span>,
+            <span class="string">&quot;+_file1.txt_\n&quot;</span>,
+            <span class="string">&quot;+_file1.txt_\n&quot;</span>,
+            <span class="string">&quot; file1.txt\n&quot;</span>,
+            <span class="string">&quot;--\n&quot;</span>
+        );
+        <span class="kw">const</span> <span class="ident">ORIGINAL_FILE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">concat</span><span class="macro">!</span>(
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>
+        );
+        <span class="kw">const</span> <span class="ident">UPDATED_FILE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">concat</span><span class="macro">!</span>(
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;_file1.txt_\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;\n&quot;</span>,
+            <span class="string">&quot;\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>,
+            <span class="string">&quot;_file1.txt_\n&quot;</span>,
+            <span class="string">&quot;_file1.txt_\n&quot;</span>,
+            <span class="string">&quot;file1.txt\n&quot;</span>
+        );
+        <span class="kw">const</span> <span class="ident">FILE_MODE</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">0o100644</span>;
+        <span class="kw">let</span> <span class="ident">original_file</span> <span class="op">=</span> <span class="ident">repo</span>.<span class="ident">blob</span>(<span class="ident">ORIGINAL_FILE</span>.<span class="ident">as_bytes</span>()).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">updated_file</span> <span class="op">=</span> <span class="ident">repo</span>.<span class="ident">blob</span>(<span class="ident">UPDATED_FILE</span>.<span class="ident">as_bytes</span>()).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">original_tree</span> <span class="op">=</span> <span class="ident">repo</span>.<span class="ident">treebuilder</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
+        <span class="ident">original_tree</span>
+            .<span class="ident">insert</span>(<span class="string">&quot;file1.txt&quot;</span>, <span class="ident">original_file</span>, <span class="ident">FILE_MODE</span>)
+            .<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">original_tree</span> <span class="op">=</span> <span class="ident">original_tree</span>.<span class="ident">write</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">updated_tree</span> <span class="op">=</span> <span class="ident">repo</span>.<span class="ident">treebuilder</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
+        <span class="ident">updated_tree</span>
+            .<span class="ident">insert</span>(<span class="string">&quot;file1.txt&quot;</span>, <span class="ident">updated_file</span>, <span class="ident">FILE_MODE</span>)
+            .<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">updated_tree</span> <span class="op">=</span> <span class="ident">updated_tree</span>.<span class="ident">write</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">time</span> <span class="op">=</span> <span class="ident">Time</span>::<span class="ident">new</span>(<span class="number">64_000_000</span>, <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">author</span> <span class="op">=</span> <span class="ident">Signature</span>::<span class="ident">new</span>(<span class="string">&quot;Techcable&quot;</span>, <span class="string">&quot;dummy@dummy.org&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">time</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">updated_commit</span> <span class="op">=</span> <span class="ident">repo</span>
+            .<span class="ident">commit</span>(
+                <span class="prelude-val">None</span>,
+                <span class="kw-2">&amp;</span><span class="ident">author</span>,
+                <span class="kw-2">&amp;</span><span class="ident">author</span>,
+                <span class="ident">COMMIT_MESSAGE</span>,
+                <span class="kw-2">&amp;</span><span class="ident">repo</span>.<span class="ident">find_tree</span>(<span class="ident">updated_tree</span>).<span class="ident">unwrap</span>(),
+                <span class="kw-2">&amp;</span>[], <span class="comment">// NOTE: Have no parents to ensure stable hash</span>
+            )
+            .<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">updated_commit</span> <span class="op">=</span> <span class="ident">repo</span>.<span class="ident">find_commit</span>(<span class="ident">updated_commit</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">repo</span>
+            .<span class="ident">diff_tree_to_tree</span>(
+                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">repo</span>.<span class="ident">find_tree</span>(<span class="ident">original_tree</span>).<span class="ident">unwrap</span>()),
+                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">repo</span>.<span class="ident">find_tree</span>(<span class="ident">updated_tree</span>).<span class="ident">unwrap</span>()),
+                <span class="prelude-val">None</span>,
+            )
+            .<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">actual_email</span> <span class="op">=</span> <span class="ident">diff</span>.<span class="ident">format_email</span>(<span class="number">1</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">updated_commit</span>, <span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">actual_email</span> <span class="op">=</span> <span class="ident">actual_email</span>.<span class="ident">as_str</span>().<span class="ident">unwrap</span>();
+        <span class="macro">assert</span><span class="macro">!</span>(
+            <span class="ident">actual_email</span>.<span class="ident">starts_with</span>(<span class="ident">EXPECTED_EMAIL_START</span>),
+            <span class="string">&quot;Unexpected email:\n{}&quot;</span>,
+            <span class="ident">actual_email</span>
+        );
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remaining_lines</span> <span class="op">=</span> <span class="ident">actual_email</span>[<span class="ident">EXPECTED_EMAIL_START</span>.<span class="ident">len</span>()..].<span class="ident">lines</span>();
+        <span class="kw">let</span> <span class="ident">version_line</span> <span class="op">=</span> <span class="ident">remaining_lines</span>.<span class="ident">next</span>();
+        <span class="macro">assert</span><span class="macro">!</span>(
+            <span class="ident">version_line</span>.<span class="ident">unwrap</span>().<span class="ident">starts_with</span>(<span class="string">&quot;libgit2&quot;</span>),
+            <span class="string">&quot;Invalid version line: {:?}&quot;</span>,
+            <span class="ident">version_line</span>
+        );
+        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">line</span>) <span class="op">=</span> <span class="ident">remaining_lines</span>.<span class="ident">next</span>() {
+            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">line</span>.<span class="ident">trim</span>(), <span class="string">&quot;&quot;</span>)
+        }
     }
 }
 </pre></div>
