@@ -20,7 +20,6 @@ use petgraph::prelude::*;
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::iter;
-use std::mem;
 use std::path::{Path, PathBuf};
 use target_spec::TargetSpec;
 
@@ -325,8 +324,8 @@ impl PackageGraph {
     /// Invalidates internal caches. Primarily for testing.
     #[doc(hidden)]
     pub fn invalidate_caches(&mut self) {
-        mem::replace(&mut self.sccs, OnceCell::new());
-        mem::replace(&mut self.feature_graph, OnceCell::new());
+        self.sccs.take();
+        self.feature_graph.take();
     }
 
     /// Returns the inner dependency graph.
