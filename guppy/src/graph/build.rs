@@ -13,7 +13,6 @@ use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::mem;
 use std::path::{Path, PathBuf};
 use target_spec::TargetSpec;
 
@@ -712,7 +711,7 @@ impl PlatformStatusImpl {
             }
             (PlatformStatusImpl::Specs(_), PlatformStatusImpl::Always) => {
                 // Mark self as Always.
-                mem::replace(self, PlatformStatusImpl::Always);
+                *self = PlatformStatusImpl::Always;
             }
             (PlatformStatusImpl::Specs(specs), PlatformStatusImpl::Specs(other)) => {
                 specs.extend_from_slice(other.as_slice());
@@ -728,7 +727,7 @@ impl PlatformStatusImpl {
             }
             (PlatformStatusImpl::Specs(_), None) => {
                 // Mark self as Always.
-                mem::replace(self, PlatformStatusImpl::Always);
+                *self = PlatformStatusImpl::Always;
             }
             (PlatformStatusImpl::Specs(specs), Some(spec)) => {
                 specs.push(spec.clone());
