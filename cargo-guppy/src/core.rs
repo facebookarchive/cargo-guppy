@@ -5,6 +5,7 @@
 
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
+use guppy::graph::cargo::{CargoPostfilter, CargoResolvePhase};
 use guppy::graph::{
     DependencyDirection, DependencyReq, EnabledTernary, PackageGraph, PackageLink, PackageQuery,
 };
@@ -13,12 +14,31 @@ use std::collections::HashSet;
 use structopt::StructOpt;
 
 arg_enum! {
-    #[derive(Debug)]
+    #[derive(Copy, Clone, Debug)]
     pub enum Kind {
         All,
         Workspace,
         DirectThirdParty,
         ThirdParty,
+    }
+}
+
+impl Kind {
+    /// Returns true if this link should be traversed.
+    pub fn should_traverse(self, link: &PackageLink<'_>) -> bool {
+        // NOTE: We always retain all workspace deps in the graph, otherwise
+        // we'll get a disconnected graph.
+        match self {
+            Kind::All | Kind::ThirdParty => true,
+            Kind::DirectThirdParty => link.from().in_workspace(),
+            Kind::Workspace => link.from().in_workspace() && link.to().in_workspace(),
+        }
+    }
+}
+
+impl<'g> CargoPostfilter<'g> for Kind {
+    fn accept_package(&mut self, _phase: CargoResolvePhase<'_, '_>, link: PackageLink<'_>) -> bool {
+        self.should_traverse(&link)
     }
 }
 
@@ -67,6 +87,10 @@ pub struct BaseFilterOptions {
     /// Omit edges that point into a given package; useful for seeing how
     /// removing a dependency affects the graph
     pub omit_edges_into: Vec<String>,
+
+    #[structopt(long, short, possible_values = &Kind::variants(), case_insensitive = true, default_value = "all")]
+    /// Kind of crates to select
+    pub kind: Kind,
 }
 
 impl BaseFilterOptions {
@@ -84,10 +108,6 @@ impl BaseFilterOptions {
 pub struct FilterOptions {
     #[structopt(flatten)]
     pub base_opts: BaseFilterOptions,
-
-    #[structopt(long, short, possible_values = &Kind::variants(), case_insensitive = true, default_value = "all")]
-    /// Kind of crates to select
-    pub kind: Kind,
 
     #[structopt(long, rename_all = "kebab-case")]
     /// Include dev dependencies
@@ -119,15 +139,8 @@ impl FilterOptions {
         };
 
         move |_, link| {
-            let (from, to) = link.endpoints();
             // filter by the kind of dependency (--kind)
-            // NOTE: We always retain all workspace deps in the graph, otherwise
-            // we'll get a disconnected graph.
-            let include_kind = match self.kind {
-                Kind::All | Kind::ThirdParty => true,
-                Kind::DirectThirdParty => from.in_workspace(),
-                Kind::Workspace => from.in_workspace() && to.in_workspace(),
-            };
+            let include_kind = self.base_opts.kind.should_traverse(&link);
 
             let include_type = if let Some(platform) = &platform {
                 // filter out irrelevant dependencies for a specific target (--target)
@@ -140,7 +153,7 @@ impl FilterOptions {
             };
 
             // filter out provided edge targets (--omit-edges-into)
-            let include_edge = !omitted_package_ids.contains(to.id());
+            let include_edge = !omitted_package_ids.contains(link.to().id());
 
             include_kind && include_type && include_edge
         }

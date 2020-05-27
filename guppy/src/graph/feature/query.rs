@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::cargo::{CargoOptions, CargoSet};
+use crate::graph::cargo::{CargoOptions, CargoPostfilter, CargoSet};
 use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureSet};
 use crate::graph::query_core::QueryParams;
 use crate::graph::{DependencyDirection, FeatureIx, PackageQuery};
@@ -301,7 +301,10 @@ impl<'g> FeatureQuery<'g> {
     /// features.
     ///
     /// There is some flexibility in how packages are built in the end.
-    pub fn resolve_cargo(self, opts: &CargoOptions<'_>) -> Result<CargoSet<'g>, Error> {
+    pub fn resolve_cargo<PF>(self, opts: &mut CargoOptions<'_, PF>) -> Result<CargoSet<'g>, Error>
+    where
+        PF: CargoPostfilter<'g>,
+    {
         CargoSet::new(self, opts)
     }
 }

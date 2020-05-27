@@ -123,8 +123,9 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let host_platform = triple_to_platform(opts.host_platform.as_deref(), || None)?;
     let mut command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
+    let mut kind_postfilter = opts.base_filter_opts.kind;
 
-    let cargo_opts = CargoOptions::new()
+    let mut cargo_opts = CargoOptions::new_postfilter(&mut kind_postfilter)
         .with_dev_deps(opts.include_dev)
         .with_target_platform(target_platform.as_ref())
         .with_host_platform(host_platform.as_ref())
@@ -133,19 +134,25 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let cargo_set = opts
         .pf
         .make_feature_query(&pkg_graph)?
-        .resolve_cargo(&cargo_opts)?;
+        .resolve_cargo(&mut cargo_opts)?;
 
-    fn print_packages(feature_set: &FeatureSet) {
+    let print_packages = |feature_set: &FeatureSet| {
         for feature_list in feature_set.packages_with_features(DependencyDirection::Forward) {
             let package = feature_list.package();
-            println!(
-                "{} {}: {}",
-                package.name(),
-                package.version(),
-                feature_list.display_features()
-            );
+            let show_package = match opts.base_filter_opts.kind {
+                Kind::All | Kind::Workspace => true,
+                Kind::DirectThirdParty | Kind::ThirdParty => !package.in_workspace(),
+            };
+            if show_package {
+                println!(
+                    "{} {}: {}",
+                    package.name(),
+                    package.version(),
+                    feature_list.display_features()
+                );
+            }
         }
-    }
+    };
 
     match opts.build_kind {
         BuildKind::All => {
@@ -204,7 +211,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
         let direct_dep = package
             .reverse_direct_links()
             .any(|link| link.from().in_workspace() && !link.to().in_workspace());
-        let show_package = match options.filter_opts.kind {
+        let show_package = match options.filter_opts.base_opts.kind {
             Kind::All => true,
             Kind::Workspace => in_workspace,
             Kind::DirectThirdParty => direct_dep,
