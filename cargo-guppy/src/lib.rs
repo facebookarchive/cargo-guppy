@@ -99,6 +99,9 @@ pub struct ResolveCargoOptions {
     /// Include dev-dependencies of initial packages (default: false)
     include_dev: bool,
 
+    #[structopt(flatten)]
+    base_filter_opts: BaseFilterOptions,
+
     #[structopt(long = "target-platform")]
     /// Evaluate against target platform, "current" or "any" (default: any)
     target_platform: Option<String>,
@@ -118,14 +121,15 @@ pub struct ResolveCargoOptions {
 pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error> {
     let target_platform = triple_to_platform(opts.target_platform.as_deref(), || None)?;
     let host_platform = triple_to_platform(opts.host_platform.as_deref(), || None)?;
+    let mut command = opts.metadata_opts.make_command();
+    let pkg_graph = command.build_graph()?;
+
     let cargo_opts = CargoOptions::new()
         .with_dev_deps(opts.include_dev)
         .with_target_platform(target_platform.as_ref())
-        .with_host_platform(host_platform.as_ref());
+        .with_host_platform(host_platform.as_ref())
+        .with_omitted_packages(opts.base_filter_opts.omitted_package_ids(&pkg_graph));
 
-    // TODO: allow package/feature/omitted selection
-    let mut command = opts.metadata_opts.make_command();
-    let pkg_graph = command.build_graph()?;
     let cargo_set = opts
         .pf
         .make_feature_query(&pkg_graph)?
