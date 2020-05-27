@@ -6,7 +6,9 @@ mod diff;
 
 pub use crate::core::*;
 
+use clap::arg_enum;
 use guppy::graph::cargo::CargoOptions;
+use guppy::graph::feature::FeatureSet;
 use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
@@ -79,6 +81,15 @@ pub fn cmd_dups(opts: &DupsOptions) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+arg_enum! {
+    #[derive(Debug)]
+    pub enum BuildKind {
+        All,
+        Target,
+        Host,
+    }
+}
+
 #[derive(Debug, StructOpt)]
 pub struct ResolveCargoOptions {
     #[structopt(flatten)]
@@ -95,6 +106,10 @@ pub struct ResolveCargoOptions {
     #[structopt(long = "host-platform")]
     /// Evaluate against host platform, "current" or "any" (default: any)
     host_platform: Option<String>,
+
+    #[structopt(long, possible_values = &BuildKind::variants(), case_insensitive = true, default_value = "all")]
+    /// Print target, host or all deps
+    build_kind: BuildKind,
 
     #[structopt(flatten)]
     metadata_opts: CargoMetadataOptions,
@@ -116,30 +131,24 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
         .make_feature_query(&pkg_graph)?
         .resolve_cargo(&cargo_opts)?;
 
-    println!("** target:");
-    for feature_list in cargo_set
-        .target_features()
-        .packages_with_features(DependencyDirection::Forward)
-    {
-        println!(
-            "{} {}: {}",
-            feature_list.package().name(),
-            feature_list.package().version(),
-            feature_list.display_features()
-        );
+    fn print_packages(feature_set: &FeatureSet) {
+        for feature_list in feature_set.packages_with_features(DependencyDirection::Forward) {
+            let package = feature_list.package();
+            println!(
+                "{} {}: {}",
+                package.name(),
+                package.version(),
+                feature_list.display_features()
+            );
+        }
     }
 
-    println!("\n** host:");
-    for feature_list in cargo_set
-        .host_features()
-        .packages_with_features(DependencyDirection::Forward)
-    {
-        println!(
-            "{} {}: {}",
-            feature_list.package().name(),
-            feature_list.package().version(),
-            feature_list.display_features()
-        );
+    match opts.build_kind {
+        BuildKind::All => {
+            print_packages(&cargo_set.target_features().union(cargo_set.host_features()))
+        }
+        BuildKind::Target => print_packages(cargo_set.target_features()),
+        BuildKind::Host => print_packages(cargo_set.host_features()),
     }
 
     Ok(())
