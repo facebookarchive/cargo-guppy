@@ -7,7 +7,7 @@
 //! module reimplements those algorithms using `guppy`'s data structures.
 
 use crate::graph::feature::{all_filter, CrossLink, FeatureQuery, FeatureSet};
-use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink};
+use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageQuery};
 use crate::sorted_set::SortedSet;
 use crate::{DependencyKind, Error, PackageId};
 use petgraph::prelude::*;
@@ -18,12 +18,13 @@ use target_spec::Platform;
 ///
 /// This provides control over the resolution algorithm used by `guppy`'s simulation of Cargo.
 #[derive(Clone, Debug)]
-pub struct CargoOptions<'a> {
+pub struct CargoOptions<'a, PF = ()> {
     version: CargoResolverVersion,
     include_dev: bool,
     host_platform: Option<&'a Platform<'a>>,
     target_platform: Option<&'a Platform<'a>>,
     omitted_packages: HashSet<&'a PackageId>,
+    postfilter: PF,
 }
 
 impl<'a> CargoOptions<'a> {
@@ -36,12 +37,28 @@ impl<'a> CargoOptions<'a> {
     /// * resolve dependencies assuming any possible host or target platform
     /// * do not omit any packages.
     pub fn new() -> Self {
-        Self {
+        Self::new_postfilter(())
+    }
+}
+
+impl<'g, 'a, PF> CargoOptions<'a, PF>
+where
+    PF: CargoPostfilter<'g>,
+{
+    /// Creates a new `CargoOptions` with a specified postfilter.
+    ///
+    /// The default settings are the same as `CargoOptions::new`.
+    ///
+    /// A link is traversed if it otherwise meets all other requirements and if the postfilter
+    /// returns true for it.
+    pub fn new_postfilter(postfilter: PF) -> Self {
+        CargoOptions {
             version: CargoResolverVersion::V1,
             include_dev: false,
             host_platform: None,
             target_platform: None,
             omitted_packages: HashSet::new(),
+            postfilter,
         }
     }
 
@@ -105,6 +122,112 @@ impl<'a> Default for CargoOptions<'a> {
     }
 }
 
+/// The phase of Cargo resolution currently being computed.
+///
+/// This is used in `CargoPostfilter`.
+#[derive(Copy, Clone, Debug)]
+pub enum CargoResolvePhase<'g, 'a> {
+    /// A resolution phase that doesn't distinguish between host and target features.
+    ///
+    /// This is passed into `CargoPostfilter::accept_feature` for the `V1` and
+    /// `V1Install` resolvers.
+    V1Unified(&'a FeatureQuery<'g>),
+
+    /// A resolution phase for packages on the target platform.
+    ///
+    /// This is passed into `CargoPostfilter::accept_package` for the `V1` and `V1Install` resolvers.
+    TargetPackage(&'a PackageQuery<'g>),
+
+    /// A resolution phase for features on the target platform.
+    ///
+    /// This is passed into `CargoPostfilter::accept_feature` for the `V2` resolver.
+    TargetFeature(&'a FeatureQuery<'g>),
+
+    /// A resolution phase for packages on the host platform.
+    ///
+    /// This is passed into `CargoPostfilter::accept_package` for the `V1` and `V1Install` resolvers.
+    HostPackage(&'a PackageQuery<'g>),
+
+    /// A resolution phase for packages on the host platform.
+    ///
+    /// This is passed into `CargoPostfilter::accept_feature` for the `V2` resolver.
+    HostFeature(&'a FeatureQuery<'g>),
+}
+
+/// A final filter for if a package or feature link should be traversed during Cargo resolution.
+///
+/// This may be useful for more advanced control over package and feature resolution.
+pub trait CargoPostfilter<'g> {
+    /// Returns true if this package link should be considered during a resolve operation.
+    ///
+    /// This is called for the `V1` and `V1Install` resolvers.
+    ///
+    /// Returning `false` does not prevent the `to` package from being included if it's reachable
+    /// through other means.
+    fn accept_package(&mut self, phase: CargoResolvePhase<'g, '_>, link: PackageLink<'g>) -> bool;
+
+    /// Returns true if this feature link should be considered during a resolve operation.
+    ///
+    /// This is called for all resolvers. The default implementation forwards to `accept_package`.
+    ///
+    /// Returning `false` does not prevent the `to` package from being included if it's reachable
+    /// through other means.
+    ///
+    /// The provided implementation forwards to `accept_package`. It is possible to customize this
+    /// if necessary.
+    fn accept_feature(&mut self, phase: CargoResolvePhase<'g, '_>, link: CrossLink<'g>) -> bool {
+        self.accept_package(phase, link.package_link())
+    }
+}
+
+impl<'g, 'a, T> CargoPostfilter<'g> for &'a mut T
+where
+    T: CargoPostfilter<'g>,
+{
+    fn accept_package(&mut self, phase: CargoResolvePhase<'g, '_>, link: PackageLink<'g>) -> bool {
+        (**self).accept_package(phase, link)
+    }
+
+    fn accept_feature(&mut self, phase: CargoResolvePhase<'g, '_>, link: CrossLink<'g>) -> bool {
+        (**self).accept_feature(phase, link)
+    }
+}
+
+impl<'g, 'a> CargoPostfilter<'g> for Box<dyn CargoPostfilter<'g> + 'a> {
+    fn accept_package(&mut self, phase: CargoResolvePhase<'g, '_>, link: PackageLink<'g>) -> bool {
+        (**self).accept_package(phase, link)
+    }
+
+    fn accept_feature(&mut self, phase: CargoResolvePhase<'g, '_>, link: CrossLink<'g>) -> bool {
+        (**self).accept_feature(phase, link)
+    }
+}
+
+impl<'g, 'a> CargoPostfilter<'g> for &'a mut dyn CargoPostfilter<'g> {
+    fn accept_package(&mut self, phase: CargoResolvePhase<'g, '_>, link: PackageLink<'g>) -> bool {
+        (**self).accept_package(phase, link)
+    }
+
+    fn accept_feature(&mut self, phase: CargoResolvePhase<'g, '_>, link: CrossLink<'g>) -> bool {
+        (**self).accept_feature(phase, link)
+    }
+}
+
+/// This default implementation accepts all packages and features passed in.
+impl<'g> CargoPostfilter<'g> for () {
+    fn accept_package(
+        &mut self,
+        _phase: CargoResolvePhase<'g, '_>,
+        _link: PackageLink<'g>,
+    ) -> bool {
+        true
+    }
+
+    fn accept_feature(&mut self, _phase: CargoResolvePhase<'g, '_>, _link: CrossLink<'g>) -> bool {
+        true
+    }
+}
+
 /// A set of packages and features, as would be built by Cargo.
 ///
 /// Cargo implements a set of algorithms to figure out which packages or features are built in
@@ -120,7 +243,10 @@ impl<'g> CargoSet<'g> {
     ///
     /// This is also accessible through `FeatureQuery::resolve_cargo()`, and it may be more
     /// convenient to use that if the code is written in a "fluent" style.
-    pub fn new(query: FeatureQuery<'g>, opts: &CargoOptions<'_>) -> Result<Self, Error> {
+    pub fn new<PF>(query: FeatureQuery<'g>, opts: &mut CargoOptions<'_, PF>) -> Result<Self, Error>
+    where
+        PF: CargoPostfilter<'g>,
+    {
         let build_state = CargoSetBuildState::new(&query, opts)?;
         Ok(build_state.build(query))
     }
@@ -163,13 +289,16 @@ impl<'g> CargoSet<'g> {
     }
 }
 
-struct CargoSetBuildState<'a> {
-    opts: &'a CargoOptions<'a>,
+struct CargoSetBuildState<'a, 'b, PF> {
+    opts: &'a mut CargoOptions<'b, PF>,
     omitted_packages: SortedSet<NodeIndex<PackageIx>>,
 }
 
-impl<'a> CargoSetBuildState<'a> {
-    fn new(query: &FeatureQuery<'_>, opts: &'a CargoOptions<'a>) -> Result<Self, Error> {
+impl<'g, 'a, 'b, PF> CargoSetBuildState<'a, 'b, PF>
+where
+    PF: CargoPostfilter<'g>,
+{
+    fn new(query: &FeatureQuery<'g>, opts: &'a mut CargoOptions<'b, PF>) -> Result<Self, Error> {
         if query.direction() == DependencyDirection::Reverse {
             return Err(Error::CargoSetError(
                 "attempted to compute for reverse query".into(),
@@ -187,7 +316,7 @@ impl<'a> CargoSetBuildState<'a> {
         })
     }
 
-    fn build(self, query: FeatureQuery<'_>) -> CargoSet {
+    fn build(self, query: FeatureQuery<'g>) -> CargoSet {
         match self.opts.version {
             CargoResolverVersion::V1 => self.new_v1(query, false),
             CargoResolverVersion::V1Install => {
@@ -198,7 +327,7 @@ impl<'a> CargoSetBuildState<'a> {
         }
     }
 
-    fn new_v1(self, query: FeatureQuery<'_>, avoid_dev_deps: bool) -> CargoSet {
+    fn new_v1(self, query: FeatureQuery<'g>, avoid_dev_deps: bool) -> CargoSet {
         // Prepare a package query for step 2.
         let graph = *query.graph();
         let package_ixs: SortedSet<_> = query
@@ -214,7 +343,7 @@ impl<'a> CargoSetBuildState<'a> {
         // 1. Perform a "complete" feature query. This will provide more packages than will be
         // included in the final build, but for each package it will have the correct feature set.
         let complete_set = query.resolve_with_fn(|query, link| {
-            if self.is_omitted(link.to().package_ix()) {
+            let res = if self.is_omitted(link.to().package_ix()) {
                 // Pretend that the omitted set doesn't exist.
                 false
             } else if !avoid_dev_deps
@@ -227,7 +356,12 @@ impl<'a> CargoSetBuildState<'a> {
             } else {
                 // Follow normal and build edges for everything else.
                 !link.dev_only()
-            }
+            };
+
+            res && self
+                .opts
+                .postfilter
+                .accept_feature(CargoResolvePhase::V1Unified(query), link)
         });
 
         // While doing traversal 2 below, record any packages discovered along build edges for use
@@ -237,7 +371,7 @@ impl<'a> CargoSetBuildState<'a> {
         let mut proc_macro_edge_ixs = Vec::new();
 
         let is_enabled =
-            |link: PackageLink<'_>, kind: DependencyKind, platform: Option<&Platform<'_>>| {
+            |link: &PackageLink<'_>, kind: DependencyKind, platform: Option<&Platform<'_>>| {
                 let (from, to) = link.endpoints();
                 let req_status = link.req_for_kind(kind).status();
                 // Check the complete set to figure out whether we look at required_on or
@@ -285,25 +419,42 @@ impl<'a> CargoSetBuildState<'a> {
             let consider_build = from.has_build_script();
 
             let mut follow_target =
-                is_enabled(link, DependencyKind::Normal, self.opts.target_platform)
+                is_enabled(&link, DependencyKind::Normal, self.opts.target_platform)
                     || (consider_dev
                         && is_enabled(
-                            link,
+                            &link,
                             DependencyKind::Development,
                             self.opts.target_platform,
                         ));
 
             // Proc macros build on the host, so for normal/dev dependencies redirect it to the host
             // instead.
-            if follow_target && to.is_proc_macro() {
-                host_ixs.push(to.package_ix());
-                proc_macro_edge_ixs.push(link.edge_ix());
-                follow_target = false;
-            }
+            let mut proc_macro_redirect = follow_target && to.is_proc_macro();
 
             // Build dependencies are evaluated against the host platform.
-            if consider_build && is_enabled(link, DependencyKind::Build, self.opts.host_platform) {
+            let mut build_dep_redirect =
+                consider_build && is_enabled(&link, DependencyKind::Build, self.opts.host_platform);
+
+            // If the postfilter returns false, don't traverse this edge at all.
+            let included = follow_target || proc_macro_redirect || build_dep_redirect;
+            if included
+                && !self
+                    .opts
+                    .postfilter
+                    .accept_package(CargoResolvePhase::TargetPackage(query), link)
+            {
+                follow_target = false;
+                proc_macro_redirect = false;
+                build_dep_redirect = false;
+            }
+
+            // Finally, process what needs to be done.
+            if build_dep_redirect || proc_macro_redirect {
                 host_ixs.push(to.package_ix());
+            }
+            if proc_macro_redirect {
+                proc_macro_edge_ixs.push(link.edge_ix());
+                follow_target = false;
             }
 
             follow_target
@@ -314,7 +465,7 @@ impl<'a> CargoSetBuildState<'a> {
         let host_packages = graph
             .package_graph
             .query_from_parts(host_ixs, DependencyDirection::Forward)
-            .resolve_with_fn(|_, link| {
+            .resolve_with_fn(|query, link| {
                 let (from, to) = link.endpoints();
                 if self.is_omitted(to.package_ix()) {
                     // Pretend that the omitted set doesn't exist.
@@ -324,9 +475,14 @@ impl<'a> CargoSetBuildState<'a> {
 
                 // Only normal and build dependencies are considered, regardless of whether this is
                 // an initial. (Dev-dependencies of initials would have been considered in step 2).
-                is_enabled(link, DependencyKind::Normal, self.opts.host_platform)
+                let res = is_enabled(&link, DependencyKind::Normal, self.opts.host_platform)
                     || (consider_build
-                        && is_enabled(link, DependencyKind::Build, self.opts.host_platform))
+                        && is_enabled(&link, DependencyKind::Build, self.opts.host_platform));
+
+                res && self
+                    .opts
+                    .postfilter
+                    .accept_package(CargoResolvePhase::HostPackage(query), link)
             });
 
         // Finally, the features are whatever packages were selected, intersected with whatever
@@ -347,10 +503,10 @@ impl<'a> CargoSetBuildState<'a> {
         }
     }
 
-    fn new_v2(self, query: FeatureQuery<'_>) -> CargoSet {
+    fn new_v2(self, query: FeatureQuery<'g>) -> CargoSet {
         let graph = *query.graph();
 
-        let is_enabled = |link: CrossLink<'_>,
+        let is_enabled = |link: &CrossLink<'_>,
                           kind: DependencyKind,
                           platform: Option<&Platform<'_>>| {
             let platform_status = link.status_for_kind(kind);
@@ -381,25 +537,42 @@ impl<'a> CargoSetBuildState<'a> {
             // XXX is this broken in upstream cargo?
 
             let mut follow_target =
-                is_enabled(link, DependencyKind::Normal, self.opts.target_platform)
+                is_enabled(&link, DependencyKind::Normal, self.opts.target_platform)
                     || (consider_dev
                         && is_enabled(
-                            link,
+                            &link,
                             DependencyKind::Development,
                             self.opts.target_platform,
                         ));
 
             // Proc macros build on the host, so for normal/dev dependencies redirect it to the host
             // instead.
-            if follow_target && to.package().is_proc_macro() {
-                host_ixs.push(to.feature_ix());
-                proc_macro_edge_ixs.push(link.package_edge_ix());
-                follow_target = false;
-            }
+            let mut proc_macro_redirect = follow_target && to.package().is_proc_macro();
 
             // Build dependencies are evaluated against the host platform.
-            if is_enabled(link, DependencyKind::Build, self.opts.host_platform) {
+            let mut build_dep_redirect =
+                is_enabled(&link, DependencyKind::Build, self.opts.host_platform);
+
+            // If the postfilter returns false, don't traverse this edge at all.
+            let included = follow_target || proc_macro_redirect || build_dep_redirect;
+            if included
+                && !self
+                    .opts
+                    .postfilter
+                    .accept_feature(CargoResolvePhase::TargetFeature(query), link)
+            {
+                follow_target = false;
+                proc_macro_redirect = false;
+                build_dep_redirect = false;
+            }
+
+            // Finally, process what needs to be done.
+            if build_dep_redirect || proc_macro_redirect {
                 host_ixs.push(to.feature_ix());
+            }
+            if proc_macro_redirect {
+                proc_macro_edge_ixs.push(link.package_edge_ix());
+                follow_target = false;
             }
 
             follow_target
@@ -408,7 +581,7 @@ impl<'a> CargoSetBuildState<'a> {
         // 2. Perform a feature query for the host.
         let host_features = graph
             .query_from_parts(SortedSet::new(host_ixs), DependencyDirection::Forward)
-            .resolve_with_fn(|_, link| {
+            .resolve_with_fn(|query, link| {
                 let (from, to) = link.endpoints();
                 if self.is_omitted(to.package_ix()) {
                     // Pretend that the omitted set doesn't exist.
@@ -424,10 +597,15 @@ impl<'a> CargoSetBuildState<'a> {
                 // Interestingly, dev-dependencies of initials may also be followed on the host
                 // platform.
                 // XXX is this a bug in upstream cargo?
-                is_enabled(link, DependencyKind::Normal, self.opts.host_platform)
-                    || is_enabled(link, DependencyKind::Build, self.opts.host_platform)
+                let res = is_enabled(&link, DependencyKind::Normal, self.opts.host_platform)
+                    || is_enabled(&link, DependencyKind::Build, self.opts.host_platform)
                     || (consider_dev
-                        && is_enabled(link, DependencyKind::Development, self.opts.host_platform))
+                        && is_enabled(&link, DependencyKind::Development, self.opts.host_platform));
+
+                res && self
+                    .opts
+                    .postfilter
+                    .accept_feature(CargoResolvePhase::HostFeature(query), link)
             });
 
         let proc_macro_edge_ixs = SortedSet::new(proc_macro_edge_ixs);

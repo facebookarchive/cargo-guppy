@@ -158,12 +158,12 @@ impl GuppyCargoCommon {
             _ => panic!("unknown resolver version {:?}", version),
         };
 
-        let cargo_opts = CargoOptions::new()
+        let mut cargo_opts = CargoOptions::new()
             .with_version(version)
             .with_dev_deps(self.include_dev)
             .with_target_platform(target_platform.as_ref())
             .with_host_platform(host_platform.as_ref());
-        let cargo_set = feature_query.resolve_cargo(&cargo_opts)?;
+        let cargo_set = feature_query.resolve_cargo(&mut cargo_opts)?;
 
         Ok(FeatureMap::from_guppy(&cargo_set, merge_maps))
     }
