@@ -45,7 +45,7 @@ impl QueryOptions {
             // cases are passing workspace members as the root set, which won't be
             // duplicated.
             let root_set = self.roots.iter().map(|s| s.as_str()).collect();
-            Ok(pkg_graph.query_directed(names_to_ids(&pkg_graph, &root_set), self.direction)?)
+            Ok(pkg_graph.query_directed(names_to_ids(&pkg_graph, root_set), self.direction)?)
         } else {
             ensure!(
                 self.direction == DependencyDirection::Forward,
@@ -57,7 +57,34 @@ impl QueryOptions {
 }
 
 #[derive(Debug, StructOpt)]
+pub struct BaseFilterOptions {
+    #[structopt(
+        long,
+        rename_all = "kebab-case",
+        name = "package",
+        number_of_values = 1
+    )]
+    /// Omit edges that point into a given package; useful for seeing how
+    /// removing a dependency affects the graph
+    pub omit_edges_into: Vec<String>,
+}
+
+impl BaseFilterOptions {
+    /// Return the set of omitted package IDs.
+    pub fn omitted_package_ids<'g: 'a, 'a>(
+        &'a self,
+        pkg_graph: &'g PackageGraph,
+    ) -> impl Iterator<Item = &'g PackageId> + 'a {
+        let omitted_set: HashSet<&str> = self.omit_edges_into.iter().map(|s| s.as_str()).collect();
+        names_to_ids(pkg_graph, omitted_set)
+    }
+}
+
+#[derive(Debug, StructOpt)]
 pub struct FilterOptions {
+    #[structopt(flatten)]
+    pub base_opts: BaseFilterOptions,
+
     #[structopt(long, short, possible_values = &Kind::variants(), case_insensitive = true, default_value = "all")]
     /// Kind of crates to select
     pub kind: Kind,
@@ -73,16 +100,6 @@ pub struct FilterOptions {
     #[structopt(long)]
     /// Target to filter, default is to match all targets
     pub target: Option<String>,
-
-    #[structopt(
-        long,
-        rename_all = "kebab-case",
-        name = "package",
-        number_of_values = 1
-    )]
-    /// Omit edges that point into a given package; useful for seeing how
-    /// removing a dependency affects the graph
-    pub omit_edges_into: Vec<String>,
 }
 
 impl FilterOptions {
@@ -91,8 +108,8 @@ impl FilterOptions {
         &'g self,
         pkg_graph: &'g PackageGraph,
     ) -> impl Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool + 'g {
-        let omitted_set: HashSet<&str> = self.omit_edges_into.iter().map(|s| s.as_str()).collect();
-        let omitted_package_ids: HashSet<_> = names_to_ids(pkg_graph, &omitted_set).collect();
+        let omitted_package_ids: HashSet<_> =
+            self.base_opts.omitted_package_ids(pkg_graph).collect();
 
         let platform = if let Some(ref target) = self.target {
             // The features are unknown.
@@ -152,7 +169,7 @@ pub(crate) fn parse_direction(reverse: bool) -> DependencyDirection {
 
 pub(crate) fn names_to_ids<'g: 'a, 'a>(
     pkg_graph: &'g PackageGraph,
-    names: &'a HashSet<&str>,
+    names: HashSet<&'a str>,
 ) -> impl Iterator<Item = &'g PackageId> + 'a {
     pkg_graph.packages().filter_map(move |metadata| {
         if names.contains(metadata.name()) {
