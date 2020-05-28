@@ -275,6 +275,7 @@ pub struct CargoSet<'g> {
     target_features: FeatureSet<'g>,
     host_features: FeatureSet<'g>,
     proc_macro_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
+    build_dep_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
 }
 
 impl<'g> CargoSet<'g> {
@@ -323,6 +324,25 @@ impl<'g> CargoSet<'g> {
     ) -> impl Iterator<Item = PackageLink<'g>> + ExactSizeIterator + 'a {
         let package_graph = self.target_features.graph().package_graph;
         self.proc_macro_edge_ixs
+            .iter()
+            .map(move |edge_ix| package_graph.edge_ix_to_link(*edge_ix))
+    }
+
+    /// Returns `PackageLink` instances for build dependencies from target packages.
+    ///
+    /// ## Notes
+    ///
+    /// For each link, the `from` is built on the target while the `to` is built on the host.
+    /// It is possible (though rare) that a build dependency is also included as a normal
+    /// dependency, or as a dev dependency in which case it will also be built on the target.
+    ///
+    /// The returned iterators will not include build dependencies of host packages -- those are
+    /// also built on the host.
+    pub fn build_dep_links<'a>(
+        &'a self,
+    ) -> impl Iterator<Item = PackageLink<'g>> + ExactSizeIterator + 'a {
+        let package_graph = self.target_features.graph().package_graph;
+        self.build_dep_edge_ixs
             .iter()
             .map(move |edge_ix| package_graph.edge_ix_to_link(*edge_ix))
     }
@@ -406,8 +426,10 @@ where
         // While doing traversal 2 below, record any packages discovered along build edges for use
         // in step 3. This will also include proc-macros.
         let mut host_ixs = Vec::new();
-        // This list will contain proc-macro edges out of normal or dev dependencies.
+        // This list will contain proc-macro edges out of target packages.
         let mut proc_macro_edge_ixs = Vec::new();
+        // This list will contain build dep edges out of target packages.
+        let mut build_dep_edge_ixs = Vec::new();
 
         let is_enabled =
             |link: &PackageLink<'_>, kind: DependencyKind, platform: Option<&Platform<'_>>| {
@@ -491,6 +513,9 @@ where
             if build_dep_redirect || proc_macro_redirect {
                 host_ixs.push(to.package_ix());
             }
+            if build_dep_redirect {
+                build_dep_edge_ixs.push(link.edge_ix());
+            }
             if proc_macro_redirect {
                 proc_macro_edge_ixs.push(link.edge_ix());
                 follow_target = false;
@@ -533,12 +558,11 @@ where
             .resolve_packages(&host_packages, all_filter())
             .intersection(&complete_set);
 
-        let proc_macro_edge_ixs = SortedSet::new(proc_macro_edge_ixs);
-
         CargoSet {
             target_features,
             host_features,
-            proc_macro_edge_ixs,
+            proc_macro_edge_ixs: SortedSet::new(proc_macro_edge_ixs),
+            build_dep_edge_ixs: SortedSet::new(build_dep_edge_ixs),
         }
     }
 
@@ -559,6 +583,7 @@ where
         // State to maintain between steps 1 and 2.
         let mut host_ixs = Vec::new();
         let mut proc_macro_edge_ixs = Vec::new();
+        let mut build_dep_edge_ixs = Vec::new();
 
         // 1. Perform a feature query for the target.
         let target_features = query.clone().resolve_with_fn(|query, link| {
@@ -609,6 +634,9 @@ where
             if build_dep_redirect || proc_macro_redirect {
                 host_ixs.push(to.feature_ix());
             }
+            if build_dep_redirect {
+                build_dep_edge_ixs.push(link.package_edge_ix());
+            }
             if proc_macro_redirect {
                 proc_macro_edge_ixs.push(link.package_edge_ix());
                 follow_target = false;
@@ -647,12 +675,11 @@ where
                     .accept_feature(CargoResolvePhase::HostFeature(query), link)
             });
 
-        let proc_macro_edge_ixs = SortedSet::new(proc_macro_edge_ixs);
-
         CargoSet {
             target_features,
             host_features,
-            proc_macro_edge_ixs,
+            proc_macro_edge_ixs: SortedSet::new(proc_macro_edge_ixs),
+            build_dep_edge_ixs: SortedSet::new(build_dep_edge_ixs),
         }
     }
 
