@@ -41,6 +41,21 @@ impl<'a> CargoOptions<'a> {
     }
 }
 
+impl<'g, 'a, F> CargoOptions<'a, PostfilterFn<F>>
+where
+    F: FnMut(CargoResolvePhase<'g, '_>, PackageLink<'g>) -> bool,
+{
+    /// Creates a new `CargoOptions` with the specified postfilter function.
+    ///
+    /// The default settings are the same as `CargoOptions::new`.
+    ///
+    /// A link is traversed if it otherwise meets all other requirements and if the postfilter
+    /// returns true for it.
+    pub fn new_postfilter_fn(f: F) -> Self {
+        Self::new_postfilter(PostfilterFn::new(f))
+    }
+}
+
 impl<'g, 'a, PF> CargoOptions<'a, PF>
 where
     PF: CargoPostfilter<'g>,
@@ -148,7 +163,7 @@ pub enum CargoResolvePhase<'g, 'a> {
     /// This is passed into `CargoPostfilter::accept_package` for the `V1` and `V1Install` resolvers.
     HostPackage(&'a PackageQuery<'g>),
 
-    /// A resolution phase for packages on the host platform.
+    /// A resolution phase for features on the host platform.
     ///
     /// This is passed into `CargoPostfilter::accept_feature` for the `V2` resolver.
     HostFeature(&'a FeatureQuery<'g>),
@@ -160,7 +175,8 @@ pub enum CargoResolvePhase<'g, 'a> {
 pub trait CargoPostfilter<'g> {
     /// Returns true if this package link should be considered during a resolve operation.
     ///
-    /// This is called for the `V1` and `V1Install` resolvers.
+    /// This is called for the `V1` and `V1Install` resolvers, and as part of the default
+    /// implementation for `accept_feature`.
     ///
     /// Returning `false` does not prevent the `to` package from being included if it's reachable
     /// through other means.
@@ -225,6 +241,29 @@ impl<'g> CargoPostfilter<'g> for () {
 
     fn accept_feature(&mut self, _phase: CargoResolvePhase<'g, '_>, _link: CrossLink<'g>) -> bool {
         true
+    }
+}
+
+/// A wrapper that converts a function to a `CargoPostfilter`.
+#[derive(Clone, Debug)]
+pub struct PostfilterFn<F>(F);
+
+impl<'g, F> PostfilterFn<F>
+where
+    F: FnMut(CargoResolvePhase<'g, '_>, PackageLink<'g>) -> bool,
+{
+    /// Creates a new `PostfilterFn` by wrapping the provided function.
+    pub fn new(f: F) -> Self {
+        PostfilterFn(f)
+    }
+}
+
+impl<'g, F> CargoPostfilter<'g> for PostfilterFn<F>
+where
+    F: FnMut(CargoResolvePhase<'g, '_>, PackageLink<'g>) -> bool,
+{
+    fn accept_package(&mut self, phase: CargoResolvePhase<'g, '_>, link: PackageLink<'g>) -> bool {
+        (self.0)(phase, link)
     }
 }
 
