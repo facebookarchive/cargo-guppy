@@ -6,7 +6,7 @@ use crate::Error;
 use cargo_metadata::CargoOpt;
 use serde::{Deserialize, Serialize};
 use std::io;
-use std::path::Path;
+use std::path::PathBuf;
 
 /// A builder for configuring `cargo metadata` invocations.
 ///
@@ -43,7 +43,7 @@ impl MetadataCommand {
     /// Sets the path to the `cargo` executable.
     ///
     /// If unset, this will use the `$CARGO` environment variable, or else `cargo` from `$PATH`.
-    pub fn cargo_path(&mut self, path: impl AsRef<Path>) -> &mut Self {
+    pub fn cargo_path(&mut self, path: impl Into<PathBuf>) -> &mut Self {
         self.inner.cargo_path(path);
         self
     }
@@ -53,7 +53,7 @@ impl MetadataCommand {
     /// By default, this will look for `Cargo.toml` in the ancestors of the current directory. Note
     /// that this doesn't need to be the root `Cargo.toml` in a workspace -- any member of the
     /// workspace is fine.
-    pub fn manifest_path(&mut self, path: impl AsRef<Path>) -> &mut Self {
+    pub fn manifest_path(&mut self, path: impl Into<PathBuf>) -> &mut Self {
         self.inner.manifest_path(path);
         self
     }
@@ -61,7 +61,7 @@ impl MetadataCommand {
     /// Sets the current directory of the `cargo metadata` process.
     ///
     /// By default, the current directory will be inherited from this process.
-    pub fn current_dir(&mut self, path: impl AsRef<Path>) -> &mut Self {
+    pub fn current_dir(&mut self, path: impl Into<PathBuf>) -> &mut Self {
         self.inner.current_dir(path);
         self
     }
@@ -77,7 +77,7 @@ impl MetadataCommand {
     /// * does not pass in `--no-deps`, so that `guppy` knows about non-workspace dependencies.
     ///
     /// Attempting to override either of those options may lead to unexpected results.
-    pub fn other_options(&mut self, options: impl AsRef<[String]>) -> &mut Self {
+    pub fn other_options(&mut self, options: impl Into<Vec<String>>) -> &mut Self {
         self.inner.other_options(options);
         self
     }
