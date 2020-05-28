@@ -59,7 +59,7 @@ fn main() {
     };
 
     match result {
-        Err(e) => println!("{}\nAborting...", e),
+        Err(e) => eprintln!("{}\nAborting...", e),
         Ok(()) => {}
     }
 }
