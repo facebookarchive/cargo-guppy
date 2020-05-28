@@ -8,7 +8,7 @@ pub use crate::core::*;
 
 use clap::arg_enum;
 use guppy::graph::cargo::CargoOptions;
-use guppy::graph::feature::FeatureSet;
+use guppy::graph::feature::{all_filter, FeatureSet};
 use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
@@ -86,6 +86,8 @@ arg_enum! {
     pub enum BuildKind {
         All,
         Target,
+        ProcMacro,
+        TargetAndProcMacro,
         Host,
     }
 }
@@ -111,7 +113,7 @@ pub struct ResolveCargoOptions {
     host_platform: Option<String>,
 
     #[structopt(long, possible_values = &BuildKind::variants(), case_insensitive = true, default_value = "all")]
-    /// Print target, host or all deps
+    /// Print packages built on target, host or both
     build_kind: BuildKind,
 
     #[structopt(flatten)]
@@ -154,11 +156,23 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
         }
     };
 
+    let proc_macro_features = || {
+        let proc_macro_ids = cargo_set.proc_macro_links().map(|link| link.to().id());
+        let package_set = pkg_graph.resolve_ids(proc_macro_ids).expect("valid IDs");
+        let feature_set = pkg_graph
+            .feature_graph()
+            .resolve_packages(&package_set, all_filter());
+        cargo_set.host_features().intersection(&feature_set)
+    };
     match opts.build_kind {
         BuildKind::All => {
             print_packages(&cargo_set.target_features().union(cargo_set.host_features()))
         }
         BuildKind::Target => print_packages(cargo_set.target_features()),
+        BuildKind::ProcMacro => print_packages(&proc_macro_features()),
+        BuildKind::TargetAndProcMacro => {
+            print_packages(&cargo_set.target_features().union(&proc_macro_features()))
+        }
         BuildKind::Host => print_packages(cargo_set.host_features()),
     }
 
