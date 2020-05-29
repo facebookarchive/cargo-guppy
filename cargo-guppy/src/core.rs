@@ -5,7 +5,6 @@
 
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
-use guppy::graph::cargo::{CargoPostfilter, CargoResolvePhase};
 use guppy::graph::{
     DependencyDirection, DependencyReq, EnabledTernary, PackageGraph, PackageLink, PackageQuery,
 };
@@ -33,12 +32,6 @@ impl Kind {
             Kind::DirectThirdParty => link.from().in_workspace(),
             Kind::Workspace => link.from().in_workspace() && link.to().in_workspace(),
         }
-    }
-}
-
-impl<'g> CargoPostfilter<'g> for Kind {
-    fn accept_package(&mut self, _phase: CargoResolvePhase<'_, '_>, link: PackageLink<'_>) -> bool {
-        self.should_traverse(&link)
     }
 }
 
