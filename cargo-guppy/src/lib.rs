@@ -14,7 +14,9 @@ use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
     PackageId,
 };
-use guppy_cmdlib::{triple_to_platform, CargoMetadataOptions, PackagesAndFeatures};
+use guppy_cmdlib::{
+    triple_to_platform, CargoMetadataOptions, CargoResolverOpts, PackagesAndFeatures,
+};
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -97,9 +99,8 @@ pub struct ResolveCargoOptions {
     #[structopt(flatten)]
     pf: PackagesAndFeatures,
 
-    #[structopt(long = "include-dev")]
-    /// Include dev-dependencies of initial packages (default: false)
-    include_dev: bool,
+    #[structopt(flatten)]
+    resolver_opts: CargoResolverOpts,
 
     #[structopt(flatten)]
     base_filter_opts: BaseFilterOptions,
@@ -125,10 +126,11 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let host_platform = triple_to_platform(opts.host_platform.as_deref(), || None)?;
     let mut command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
-    let mut kind_postfilter = opts.base_filter_opts.kind;
+    let kind = opts.base_filter_opts.kind;
 
-    let mut cargo_opts = CargoOptions::new_postfilter(&mut kind_postfilter)
-        .with_dev_deps(opts.include_dev)
+    let mut cargo_opts = CargoOptions::new_postfilter_fn(|_, link| kind.should_traverse(&link))
+        .with_dev_deps(opts.resolver_opts.include_dev)
+        .with_version(opts.resolver_opts.resolver_version)
         .with_target_platform(target_platform.as_ref())
         .with_host_platform(host_platform.as_ref())
         .with_omitted_packages(opts.base_filter_opts.omitted_package_ids(&pkg_graph));

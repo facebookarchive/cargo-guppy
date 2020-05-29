@@ -9,6 +9,7 @@
 pub mod proptest;
 
 use anyhow::Result;
+use guppy::graph::cargo::CargoResolverVersion;
 use guppy::graph::feature::{
     all_filter, default_filter, feature_filter, none_filter, FeatureFilter, FeatureQuery,
 };
@@ -16,6 +17,7 @@ use guppy::graph::PackageGraph;
 use guppy::{MetadataCommand, Platform, TargetFeatures};
 use std::env;
 use std::path::PathBuf;
+use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
 /// Support for packages and features.
@@ -63,6 +65,38 @@ impl PackagesAndFeatures {
         Ok(graph
             .feature_graph()
             .query_packages(&package_query, feature_filter))
+    }
+}
+
+arg_enum! {
+    // Identical to guppy's CargoResolverVersion, except with additional string metadata generated
+    // for matching.
+    enum ResolverVersion {
+        V1,
+        V1Install,
+        V2,
+    }
+}
+
+/// Support for options like the Cargo resolver version.
+#[derive(Clone, Debug, StructOpt)]
+pub struct CargoResolverOpts {
+    #[structopt(long = "include-dev")]
+    /// Include dev-dependencies of initial packages (default: false)
+    pub include_dev: bool,
+
+    #[structopt(long = "resolver-version", parse(try_from_str = parse_resolver_version))]
+    #[structopt(possible_values = &ResolverVersion::variants(), case_insensitive = true, default_value = "V1")]
+    pub resolver_version: CargoResolverVersion,
+}
+
+/// Parses a named resolver version into a CargoResolverVersion.
+pub fn parse_resolver_version(s: &str) -> Result<CargoResolverVersion, String> {
+    let version = s.parse::<ResolverVersion>()?;
+    match version {
+        ResolverVersion::V1 => Ok(CargoResolverVersion::V1),
+        ResolverVersion::V1Install => Ok(CargoResolverVersion::V1Install),
+        ResolverVersion::V2 => Ok(CargoResolverVersion::V2),
     }
 }
 
