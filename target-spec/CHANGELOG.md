@@ -3,7 +3,7 @@
 ## [0.2.4] - 2020-05-06
 
 ### Added
-- New feature `proptest09` to generate random platforms for property testing.
+- New feature `proptest010` to generate random platforms for property testing.
 
 ## [0.2.3] - 2020-04-15
 
