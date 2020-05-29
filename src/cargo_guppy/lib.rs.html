@@ -343,6 +343,8 @@
 <span id="343">343</span>
 <span id="344">344</span>
 <span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -360,7 +362,9 @@
     <span class="ident">graph</span>::{<span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>},
     <span class="ident">PackageId</span>,
 };
-<span class="kw">use</span> <span class="ident">guppy_cmdlib</span>::{<span class="ident">triple_to_platform</span>, <span class="ident">CargoMetadataOptions</span>, <span class="ident">PackagesAndFeatures</span>};
+<span class="kw">use</span> <span class="ident">guppy_cmdlib</span>::{
+    <span class="ident">triple_to_platform</span>, <span class="ident">CargoMetadataOptions</span>, <span class="ident">CargoResolverOpts</span>, <span class="ident">PackagesAndFeatures</span>,
+};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
@@ -443,9 +447,8 @@
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
     <span class="ident">pf</span>: <span class="ident">PackagesAndFeatures</span>,
 
-    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;include-dev&quot;</span>)]</span>
-    <span class="doccomment">/// Include dev-dependencies of initial packages (default: false)</span>
-    <span class="ident">include_dev</span>: <span class="ident">bool</span>,
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="ident">resolver_opts</span>: <span class="ident">CargoResolverOpts</span>,
 
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
     <span class="ident">base_filter_opts</span>: <span class="ident">BaseFilterOptions</span>,
@@ -471,10 +474,11 @@
     <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">triple_to_platform</span>(<span class="ident">opts</span>.<span class="ident">host_platform</span>.<span class="ident">as_deref</span>(), <span class="op">|</span><span class="op">|</span> <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
     <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kind_postfilter</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">base_filter_opts</span>.<span class="ident">kind</span>;
+    <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">base_filter_opts</span>.<span class="ident">kind</span>;
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cargo_opts</span> <span class="op">=</span> <span class="ident">CargoOptions</span>::<span class="ident">new_postfilter</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">kind_postfilter</span>)
-        .<span class="ident">with_dev_deps</span>(<span class="ident">opts</span>.<span class="ident">include_dev</span>)
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cargo_opts</span> <span class="op">=</span> <span class="ident">CargoOptions</span>::<span class="ident">new_postfilter_fn</span>(<span class="op">|</span><span class="kw">_</span>, <span class="ident">link</span><span class="op">|</span> <span class="ident">kind</span>.<span class="ident">should_traverse</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>))
+        .<span class="ident">with_dev_deps</span>(<span class="ident">opts</span>.<span class="ident">resolver_opts</span>.<span class="ident">include_dev</span>)
+        .<span class="ident">with_version</span>(<span class="ident">opts</span>.<span class="ident">resolver_opts</span>.<span class="ident">resolver_version</span>)
         .<span class="ident">with_target_platform</span>(<span class="ident">target_platform</span>.<span class="ident">as_ref</span>())
         .<span class="ident">with_host_platform</span>(<span class="ident">host_platform</span>.<span class="ident">as_ref</span>())
         .<span class="ident">with_omitted_packages</span>(<span class="ident">opts</span>.<span class="ident">base_filter_opts</span>.<span class="ident">omitted_package_ids</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>));
