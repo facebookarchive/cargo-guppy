@@ -158,7 +158,7 @@ lazy_static = "0.2"
 ## [0.1.3] - 2019-12-29
 ### Added
 - `PackageSelect::into_root_metadatas` returns package metadatas for all roots within a selection.
-- New optional feature `proptest09` to help with property testing.
+- New optional feature `proptest010` to help with property testing.
 
 ### Changed
 - Upgrade to `petgraph` 0.5 -- this allows for some internal code to be simplified.

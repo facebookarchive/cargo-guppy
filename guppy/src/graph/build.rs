@@ -107,7 +107,7 @@ impl WorkspaceImpl {
             root: workspace_root,
             members_by_path,
             members_by_name,
-            #[cfg(feature = "proptest09")]
+            #[cfg(feature = "proptest010")]
             name_list: OnceCell::new(),
         })
     }

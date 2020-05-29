@@ -525,7 +525,7 @@ pub(super) struct WorkspaceImpl {
     pub(super) members_by_path: BTreeMap<PathBuf, PackageId>,
     pub(super) members_by_name: BTreeMap<Box<str>, PackageId>,
     // Cache for members by name (only used for proptests)
-    #[cfg(feature = "proptest09")]
+    #[cfg(feature = "proptest010")]
     pub(super) name_list: OnceCell<Vec<Box<str>>>,
 }
 

@@ -200,7 +200,7 @@ pub(super) struct BuildTargetImpl {
 
 /// Owned version of `BuildTargetId`.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(all(test, feature = "proptest09"), derive(proptest_derive::Arbitrary))]
+#[cfg_attr(all(test, feature = "proptest010"), derive(proptest_derive::Arbitrary))]
 pub(super) enum OwnedBuildTargetId {
     Library,
     BuildScript,
@@ -277,7 +277,7 @@ impl<'g> Ord for (dyn BuildTargetKey + 'g) {
     }
 }
 
-#[cfg(all(test, feature = "proptest09"))]
+#[cfg(all(test, feature = "proptest010"))]
 mod tests {
     use super::*;
     use proptest::prelude::*;
