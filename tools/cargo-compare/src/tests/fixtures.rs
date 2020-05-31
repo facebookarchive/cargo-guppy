@@ -3,8 +3,7 @@
 
 use crate::common::GuppyCargoCommon;
 use guppy::graph::PackageGraph;
-use guppy_cmdlib::proptest::triple_strategy;
-use guppy_cmdlib::{CargoMetadataOptions, PackagesAndFeatures};
+use guppy_cmdlib::CargoMetadataOptions;
 use once_cell::sync::Lazy;
 use proptest::prelude::*;
 use std::env;
@@ -91,21 +90,6 @@ impl Fixture {
     }
 
     pub fn common_strategy<'a>(&'a self) -> impl Strategy<Value = GuppyCargoCommon> + 'a {
-        let metadata_opts = &self.metadata_opts;
-        (
-            PackagesAndFeatures::strategy(self.graph()),
-            any::<bool>(),
-            any::<bool>(),
-            triple_strategy(),
-        )
-            .prop_map(
-                move |(pf, include_dev, v2, target_platform)| GuppyCargoCommon {
-                    pf,
-                    include_dev,
-                    v2,
-                    target_platform: target_platform.map(|s| s.to_string()),
-                    metadata_opts: metadata_opts.clone(),
-                },
-            )
+        GuppyCargoCommon::strategy(&self.metadata_opts, self.graph())
     }
 }
