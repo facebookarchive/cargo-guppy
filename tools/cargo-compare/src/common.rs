@@ -12,9 +12,11 @@ use cargo::ops::resolve_ws_with_opts;
 use cargo::Config;
 use guppy::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
 use guppy::graph::feature::FeatureSet;
-use guppy::graph::DependencyDirection;
+use guppy::graph::{DependencyDirection, PackageGraph};
 use guppy::{PackageId, Platform, TargetFeatures};
+use guppy_cmdlib::proptest::triple_strategy;
 use guppy_cmdlib::{CargoMetadataOptions, PackagesAndFeatures};
+use proptest::prelude::*;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -167,6 +169,25 @@ impl GuppyCargoCommon {
             Some(triple) => Ok(Platform::new(triple, TargetFeatures::Unknown)?),
             None => self.guppy_current_platform(),
         }
+    }
+
+    pub fn strategy<'a>(
+        metadata_opts: &'a CargoMetadataOptions,
+        graph: &'a PackageGraph,
+    ) -> impl Strategy<Value = Self> + 'a {
+        (
+            PackagesAndFeatures::strategy(graph),
+            any::<bool>(),
+            any::<bool>(),
+            triple_strategy(),
+        )
+            .prop_map(move |(pf, include_dev, v2, target_platform)| Self {
+                pf,
+                include_dev,
+                v2,
+                target_platform: target_platform.map(|s| s.to_string()),
+                metadata_opts: metadata_opts.clone(),
+            })
     }
 
     // ---

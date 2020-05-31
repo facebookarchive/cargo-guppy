@@ -54,11 +54,7 @@ impl DiffOpts {
             verbose: self.verbose,
         };
 
-        Ok(TargetHostDiff {
-            target_diff,
-            host_diff,
-            any_diff: OnceCell::new(),
-        })
+        Ok(TargetHostDiff::new(target_diff, host_diff))
     }
 }
 
@@ -69,6 +65,14 @@ pub struct TargetHostDiff<'g> {
 }
 
 impl<'g> TargetHostDiff<'g> {
+    pub fn new(target_diff: FeatureDiff<'g>, host_diff: FeatureDiff<'g>) -> Self {
+        Self {
+            target_diff,
+            host_diff,
+            any_diff: OnceCell::new(),
+        }
+    }
+
     /// Returns true if there's a diff.
     pub fn any_diff(&self) -> bool {
         *self
@@ -89,10 +93,10 @@ impl<'g> fmt::Display for TargetHostDiff<'g> {
 }
 
 pub struct FeatureDiff<'g> {
-    graph: &'g PackageGraph,
-    a: BTreeMap<PackageId, BTreeSet<String>>,
-    b: BTreeMap<PackageId, BTreeSet<String>>,
-    verbose: bool,
+    pub graph: &'g PackageGraph,
+    pub a: BTreeMap<PackageId, BTreeSet<String>>,
+    pub b: BTreeMap<PackageId, BTreeSet<String>>,
+    pub verbose: bool,
 }
 
 impl<'g> FeatureDiff<'g> {
