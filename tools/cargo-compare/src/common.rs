@@ -6,7 +6,7 @@ use crate::GlobalContext;
 use anyhow::Result;
 use cargo::core::compiler::{CompileKind, CompileTarget, RustcTargetData};
 use cargo::core::resolver::features::FeaturesFor;
-use cargo::core::resolver::{HasDevUnits, ResolveOpts};
+use cargo::core::resolver::{ForceAllTargets, HasDevUnits, ResolveOpts};
 use cargo::core::{enable_nightly_features, PackageIdSpec, Workspace};
 use cargo::ops::resolve_ws_with_opts;
 use cargo::Config;
@@ -87,6 +87,8 @@ impl GuppyCargoCommon {
             } else {
                 HasDevUnits::No
             },
+            // TODO: allow for target to be "any", set this to Yes in that case
+            ForceAllTargets::No,
         )?;
 
         let targeted_resolve = ws_resolve.targeted_resolve;
