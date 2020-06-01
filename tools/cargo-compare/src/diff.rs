@@ -5,8 +5,11 @@ use crate::common::GuppyCargoCommon;
 use crate::GlobalContext;
 use anyhow::Result;
 use diffus::{edit, Diffable};
+use guppy::graph::PackageGraph;
 use guppy::PackageId;
+use itertools::Itertools;
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt;
 use structopt::StructOpt;
 
 /// Options for cargo/guppy comparisons.
@@ -22,25 +25,78 @@ impl DiffOpts {
         let cargo_map = self.common.resolve_cargo(ctx)?;
         let guppy_map = self.common.resolve_guppy(ctx)?;
 
-        println!("** target diff (guppy -> cargo):");
-        print_diff(&guppy_map.target_map, &cargo_map.target_map);
+        let target_diff = FeatureDiff {
+            graph: ctx.graph(),
+            a: &guppy_map.target_map,
+            b: &cargo_map.target_map,
+        };
+        println!("** target diff (guppy -> cargo):\n{}\n", target_diff);
 
-        println!("\n** host diff (guppy -> cargo):");
-        print_diff(&guppy_map.host_map, &cargo_map.host_map);
+        let host_diff = FeatureDiff {
+            graph: ctx.graph(),
+            a: &guppy_map.host_map,
+            b: &cargo_map.host_map,
+        };
+        println!("** host diff (guppy -> cargo):\n{}", host_diff);
 
         Ok(())
     }
 }
 
-fn print_diff(
-    a: &BTreeMap<PackageId, BTreeSet<String>>,
-    b: &BTreeMap<PackageId, BTreeSet<String>>,
-) {
-    if let edit::Edit::Change(diff) = a.diff(&b) {
-        for (pkg_id, diff) in diff {
-            if !diff.is_copy() {
-                println!("{}: {:?}", pkg_id, diff);
+struct FeatureDiff<'g> {
+    graph: &'g PackageGraph,
+    a: &'g BTreeMap<PackageId, BTreeSet<String>>,
+    b: &'g BTreeMap<PackageId, BTreeSet<String>>,
+}
+
+impl<'g> fmt::Display for FeatureDiff<'g> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let edit::Edit::Change(diff) = self.a.diff(&self.b) {
+            for (pkg_id, diff) in diff {
+                use diffus::edit::map::Edit;
+
+                let package = self.graph.metadata(&pkg_id).expect("valid package ID");
+                match diff {
+                    Edit::Copy(_) => {}
+                    Edit::Insert(features) => writeln!(
+                        f,
+                        "{} {}: added\n  * new features: {}",
+                        package.name(),
+                        package.version(),
+                        features.iter().join(", ")
+                    )?,
+                    Edit::Remove(features) => writeln!(
+                        f,
+                        "{} {}: removed\n  * old features: {}",
+                        package.name(),
+                        package.version(),
+                        features.iter().join(", "),
+                    )?,
+                    Edit::Change(diff) => {
+                        writeln!(
+                            f,
+                            "{} {}: changed, features:",
+                            package.name(),
+                            package.version(),
+                        )?;
+                        for (feature_name, diff) in diff {
+                            use diffus::edit::set::Edit;
+
+                            match diff {
+                                Edit::Copy(_) => {}
+                                Edit::Insert(_) => {
+                                    writeln!(f, "  * {}: added", feature_name)?;
+                                }
+                                Edit::Remove(_) => {
+                                    writeln!(f, "  * {}: removed", feature_name)?;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        Ok(())
     }
 }
