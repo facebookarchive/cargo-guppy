@@ -17,6 +17,9 @@ use structopt::StructOpt;
 pub struct DiffOpts {
     #[structopt(flatten)]
     pub common: GuppyCargoCommon,
+    /// Print out unchanged packages and features as well
+    #[structopt(long)]
+    pub verbose: bool,
 }
 
 impl DiffOpts {
@@ -29,6 +32,7 @@ impl DiffOpts {
             graph: ctx.graph(),
             a: &guppy_map.target_map,
             b: &cargo_map.target_map,
+            verbose: self.verbose,
         };
         println!("** target diff (guppy -> cargo):\n{}\n", target_diff);
 
@@ -36,6 +40,7 @@ impl DiffOpts {
             graph: ctx.graph(),
             a: &guppy_map.host_map,
             b: &cargo_map.host_map,
+            verbose: self.verbose,
         };
         println!("** host diff (guppy -> cargo):\n{}", host_diff);
 
@@ -47,51 +52,83 @@ struct FeatureDiff<'g> {
     graph: &'g PackageGraph,
     a: &'g BTreeMap<PackageId, BTreeSet<String>>,
     b: &'g BTreeMap<PackageId, BTreeSet<String>>,
+    verbose: bool,
 }
 
 impl<'g> fmt::Display for FeatureDiff<'g> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let edit::Edit::Change(diff) = self.a.diff(&self.b) {
-            for (pkg_id, diff) in diff {
-                use diffus::edit::map::Edit;
+        match self.a.diff(&self.b) {
+            edit::Edit::Change(diff) => {
+                for (pkg_id, diff) in diff {
+                    use diffus::edit::map::Edit;
 
-                let package = self.graph.metadata(&pkg_id).expect("valid package ID");
-                match diff {
-                    Edit::Copy(_) => {}
-                    Edit::Insert(features) => writeln!(
-                        f,
-                        "{} {}: added\n  * new features: {}",
-                        package.name(),
-                        package.version(),
-                        features.iter().join(", ")
-                    )?,
-                    Edit::Remove(features) => writeln!(
-                        f,
-                        "{} {}: removed\n  * old features: {}",
-                        package.name(),
-                        package.version(),
-                        features.iter().join(", "),
-                    )?,
-                    Edit::Change(diff) => {
-                        writeln!(
+                    let package = self.graph.metadata(&pkg_id).expect("valid package ID");
+                    match diff {
+                        Edit::Copy(features) => {
+                            if self.verbose {
+                                writeln!(
+                                    f,
+                                    "{} {}: unchanged\n  * features: {}",
+                                    package.name(),
+                                    package.version(),
+                                    features.iter().join(", ")
+                                )?
+                            }
+                        }
+                        Edit::Insert(features) => writeln!(
                             f,
-                            "{} {}: changed, features:",
+                            "{} {}: added\n  * new features: {}",
                             package.name(),
                             package.version(),
-                        )?;
-                        for (feature_name, diff) in diff {
-                            use diffus::edit::set::Edit;
+                            features.iter().join(", ")
+                        )?,
+                        Edit::Remove(features) => writeln!(
+                            f,
+                            "{} {}: removed\n  * old features: {}",
+                            package.name(),
+                            package.version(),
+                            features.iter().join(", "),
+                        )?,
+                        Edit::Change(diff) => {
+                            writeln!(
+                                f,
+                                "{} {}: changed, features:",
+                                package.name(),
+                                package.version(),
+                            )?;
+                            for (feature_name, diff) in diff {
+                                use diffus::edit::set::Edit;
 
-                            match diff {
-                                Edit::Copy(_) => {}
-                                Edit::Insert(_) => {
-                                    writeln!(f, "  * {}: added", feature_name)?;
-                                }
-                                Edit::Remove(_) => {
-                                    writeln!(f, "  * {}: removed", feature_name)?;
+                                match diff {
+                                    Edit::Copy(_) => {
+                                        if self.verbose {
+                                            writeln!(f, "  * {}: unchanged", feature_name)?
+                                        }
+                                    }
+                                    Edit::Insert(_) => {
+                                        writeln!(f, "  * {}: added", feature_name)?;
+                                    }
+                                    Edit::Remove(_) => {
+                                        writeln!(f, "  * {}: removed", feature_name)?;
+                                    }
                                 }
                             }
                         }
+                    }
+                }
+            }
+            edit::Edit::Copy(map) => {
+                if self.verbose {
+                    for (pkg_id, features) in map {
+                        let package = self.graph.metadata(&pkg_id).expect("valid package ID");
+
+                        writeln!(
+                            f,
+                            "{} {}: unchanged\n  * features: {}",
+                            package.name(),
+                            package.version(),
+                            features.iter().join(", ")
+                        )?;
                     }
                 }
             }

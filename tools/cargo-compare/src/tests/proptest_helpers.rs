@@ -29,7 +29,10 @@ macro_rules! proptest_suite {
 
 /// Test that there is no diff between guppy and cargo for the same query.
 pub(super) fn compare(graph: &PackageGraph, common: GuppyCargoCommon) {
-    let diff_opts = DiffOpts { common };
+    let diff_opts = DiffOpts {
+        common,
+        verbose: false,
+    };
     let ctx = GlobalContext::new(true, graph).expect("context created");
     diff_opts.exec(&ctx).expect("no errors and no diff found");
 }
