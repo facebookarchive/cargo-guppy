@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/registry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>registry.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/15bb455/src/cargo/core/registry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>registry.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -718,6 +718,125 @@
 <span id="718">718</span>
 <span id="719">719</span>
 <span id="720">720</span>
+<span id="721">721</span>
+<span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
+<span id="727">727</span>
+<span id="728">728</span>
+<span id="729">729</span>
+<span id="730">730</span>
+<span id="731">731</span>
+<span id="732">732</span>
+<span id="733">733</span>
+<span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
+<span id="755">755</span>
+<span id="756">756</span>
+<span id="757">757</span>
+<span id="758">758</span>
+<span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
+<span id="763">763</span>
+<span id="764">764</span>
+<span id="765">765</span>
+<span id="766">766</span>
+<span id="767">767</span>
+<span id="768">768</span>
+<span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
+<span id="773">773</span>
+<span id="774">774</span>
+<span id="775">775</span>
+<span id="776">776</span>
+<span id="777">777</span>
+<span id="778">778</span>
+<span id="779">779</span>
+<span id="780">780</span>
+<span id="781">781</span>
+<span id="782">782</span>
+<span id="783">783</span>
+<span id="784">784</span>
+<span id="785">785</span>
+<span id="786">786</span>
+<span id="787">787</span>
+<span id="788">788</span>
+<span id="789">789</span>
+<span id="790">790</span>
+<span id="791">791</span>
+<span id="792">792</span>
+<span id="793">793</span>
+<span id="794">794</span>
+<span id="795">795</span>
+<span id="796">796</span>
+<span id="797">797</span>
+<span id="798">798</span>
+<span id="799">799</span>
+<span id="800">800</span>
+<span id="801">801</span>
+<span id="802">802</span>
+<span id="803">803</span>
+<span id="804">804</span>
+<span id="805">805</span>
+<span id="806">806</span>
+<span id="807">807</span>
+<span id="808">808</span>
+<span id="809">809</span>
+<span id="810">810</span>
+<span id="811">811</span>
+<span id="812">812</span>
+<span id="813">813</span>
+<span id="814">814</span>
+<span id="815">815</span>
+<span id="816">816</span>
+<span id="817">817</span>
+<span id="818">818</span>
+<span id="819">819</span>
+<span id="820">820</span>
+<span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
+<span id="831">831</span>
+<span id="832">832</span>
+<span id="833">833</span>
+<span id="834">834</span>
+<span id="835">835</span>
+<span id="836">836</span>
+<span id="837">837</span>
+<span id="838">838</span>
+<span id="839">839</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 
@@ -943,15 +1062,34 @@
     <span class="doccomment">/// the manifest.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Here the `deps` will be resolved to a precise version and stored</span>
-    <span class="doccomment">/// internally for future calls to `query` below. It&#39;s expected that `deps`</span>
-    <span class="doccomment">/// have had `lock_to` call already, if applicable. (e.g., if a lock file was</span>
-    <span class="doccomment">/// already present).</span>
+    <span class="doccomment">/// internally for future calls to `query` below. `deps` should be a tuple</span>
+    <span class="doccomment">/// where the first element is the patch definition straight from the</span>
+    <span class="doccomment">/// manifest, and the second element is an optional variant where the</span>
+    <span class="doccomment">/// patch has been locked. This locked patch is the patch locked to</span>
+    <span class="doccomment">/// a specific version found in Cargo.lock. This will be `None` if</span>
+    <span class="doccomment">/// `Cargo.lock` doesn&#39;t exist, or the patch did not match any existing</span>
+    <span class="doccomment">/// entries in `Cargo.lock`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Note that the patch list specified here *will not* be available to</span>
     <span class="doccomment">/// `query` until `lock_patches` is called below, which should be called</span>
     <span class="doccomment">/// once all patches have been added.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">patch</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">url</span>: <span class="kw-2">&amp;</span><span class="ident">Url</span>, <span class="ident">deps</span>: <span class="kw-2">&amp;</span>[<span class="ident">Dependency</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The return value is a `Vec` of patches that should *not* be locked.</span>
+    <span class="doccomment">/// This happens when the patch is locked, but the patch has been updated</span>
+    <span class="doccomment">/// so the locked value is no longer correct.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">patch</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">url</span>: <span class="kw-2">&amp;</span><span class="ident">Url</span>,
+        <span class="ident">deps</span>: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="ident">Dependency</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Dependency</span>, <span class="ident">PackageId</span>)<span class="op">&gt;</span>)],
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Dependency</span>, <span class="ident">PackageId</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="comment">// NOTE: None of this code is aware of required features. If a patch</span>
+        <span class="comment">// is missing a required feature, you end up with an &quot;unused patch&quot;</span>
+        <span class="comment">// warning, which is very hard to understand. Ideally the warning</span>
+        <span class="comment">// would be tailored to indicate *why* it is unused.</span>
         <span class="kw">let</span> <span class="ident">canonical</span> <span class="op">=</span> <span class="ident">CanonicalUrl</span>::<span class="ident">new</span>(<span class="ident">url</span>)<span class="question-mark">?</span>;
+
+        <span class="comment">// Return value of patches that shouldn&#39;t be locked.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unlock_patches</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
 
         <span class="comment">// First up we need to actually resolve each `deps` specification to</span>
         <span class="comment">// precisely one summary. We&#39;re not using the `query` method below as it</span>
@@ -964,7 +1102,15 @@
         <span class="comment">// of summaries which should be the same length as `deps` above.</span>
         <span class="kw">let</span> <span class="ident">unlocked_summaries</span> <span class="op">=</span> <span class="ident">deps</span>
             .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> {
+            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">orig_patch</span>, <span class="ident">locked</span>)<span class="op">|</span> {
+                <span class="comment">// Remove double reference in orig_patch. Is there maybe a</span>
+                <span class="comment">// magic pattern that could avoid this?</span>
+                <span class="kw">let</span> <span class="ident">orig_patch</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">orig_patch</span>;
+                <span class="comment">// Use the locked patch if it exists, otherwise use the original.</span>
+                <span class="kw">let</span> <span class="ident">dep</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">locked</span> {
+                    <span class="prelude-val">Some</span>((<span class="ident">locked_patch</span>, <span class="ident">_locked_id</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">locked_patch</span>,
+                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">orig_patch</span>,
+                };
                 <span class="macro">debug</span><span class="macro">!</span>(
                     <span class="string">&quot;registering a patch for `{}` with `{}`&quot;</span>,
                     <span class="ident">url</span>,
@@ -982,30 +1128,27 @@
                         )
                     })<span class="question-mark">?</span>;
 
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">summaries</span> <span class="op">=</span> <span class="self">self</span>
+                <span class="kw">let</span> <span class="ident">source</span> <span class="op">=</span> <span class="self">self</span>
                     .<span class="ident">sources</span>
                     .<span class="ident">get_mut</span>(<span class="ident">dep</span>.<span class="ident">source_id</span>())
-                    .<span class="ident">expect</span>(<span class="string">&quot;loaded source not present&quot;</span>)
-                    .<span class="ident">query_vec</span>(<span class="ident">dep</span>)<span class="question-mark">?</span>
-                    .<span class="ident">into_iter</span>();
-
-                <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">summaries</span>.<span class="ident">next</span>() {
-                    <span class="prelude-val">Some</span>(<span class="ident">summary</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">summary</span>,
-                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                        <span class="string">&quot;patch for `{}` in `{}` did not resolve to any crates. If this is \
-                         unexpected, you may wish to consult: \
-                         https://github.com/rust-lang/cargo/issues/4678&quot;</span>,
-                        <span class="ident">dep</span>.<span class="ident">package_name</span>(),
-                        <span class="ident">url</span>
-                    ),
-                };
-                <span class="kw">if</span> <span class="ident">summaries</span>.<span class="ident">next</span>().<span class="ident">is_some</span>() {
-                    <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                        <span class="string">&quot;patch for `{}` in `{}` resolved to more than one candidate&quot;</span>,
-                        <span class="ident">dep</span>.<span class="ident">package_name</span>(),
-                        <span class="ident">url</span>
-                    )
+                    .<span class="ident">expect</span>(<span class="string">&quot;loaded source not present&quot;</span>);
+                <span class="kw">let</span> <span class="ident">summaries</span> <span class="op">=</span> <span class="ident">source</span>.<span class="ident">query_vec</span>(<span class="ident">dep</span>)<span class="question-mark">?</span>;
+                <span class="kw">let</span> (<span class="ident">summary</span>, <span class="ident">should_unlock</span>) <span class="op">=</span>
+                    <span class="ident">summary_for_patch</span>(<span class="ident">orig_patch</span>, <span class="kw-2">&amp;</span><span class="ident">locked</span>, <span class="ident">summaries</span>, <span class="ident">source</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
+                        <span class="macro">format</span><span class="macro">!</span>(
+                            <span class="string">&quot;patch for `{}` in `{}` failed to resolve&quot;</span>,
+                            <span class="ident">orig_patch</span>.<span class="ident">package_name</span>(),
+                            <span class="ident">url</span>,
+                        )
+                    })<span class="question-mark">?</span>;
+                <span class="macro">debug</span><span class="macro">!</span>(
+                    <span class="string">&quot;patch summary is {:?} should_unlock={:?}&quot;</span>,
+                    <span class="ident">summary</span>, <span class="ident">should_unlock</span>
+                );
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">unlock_id</span>) <span class="op">=</span> <span class="ident">should_unlock</span> {
+                    <span class="ident">unlock_patches</span>.<span class="ident">push</span>((<span class="ident">orig_patch</span>.<span class="ident">clone</span>(), <span class="ident">unlock_id</span>));
                 }
+
                 <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">summary</span>.<span class="ident">package_id</span>().<span class="ident">source_id</span>().<span class="ident">canonical_url</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">canonical</span> {
                     <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
                         <span class="string">&quot;patch for `{}` in `{}` points to the same source, but \
@@ -1042,7 +1185,7 @@
         <span class="self">self</span>.<span class="ident">patches_available</span>.<span class="ident">insert</span>(<span class="ident">canonical</span>.<span class="ident">clone</span>(), <span class="ident">ids</span>);
         <span class="self">self</span>.<span class="ident">patches</span>.<span class="ident">insert</span>(<span class="ident">canonical</span>, <span class="ident">unlocked_summaries</span>);
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="prelude-val">Ok</span>(<span class="ident">unlock_patches</span>)
     }
 
     <span class="doccomment">/// Lock all patch summaries added via `patch`, making them available to</span>
@@ -1056,6 +1199,7 @@
         <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">patches_locked</span>);
         <span class="kw">for</span> <span class="ident">summaries</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">patches</span>.<span class="ident">values_mut</span>() {
             <span class="kw">for</span> <span class="ident">summary</span> <span class="kw">in</span> <span class="ident">summaries</span> {
+                <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;locking patch {:?}&quot;</span>, <span class="ident">summary</span>);
                 <span class="kw-2">*</span><span class="ident">summary</span> <span class="op">=</span> <span class="ident">lock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">locked</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">patches_available</span>, <span class="ident">summary</span>.<span class="ident">clone</span>());
             }
         }
@@ -1438,6 +1582,100 @@ https://doc.rust-lang.org/cargo/reference/overriding-dependencies.html
         <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;\tnope, unlocked&quot;</span>);
         <span class="ident">dep</span>
     })
+}
+
+<span class="doccomment">/// This is a helper for selecting the summary, or generating a helpful error message.</span>
+<span class="kw">fn</span> <span class="ident">summary_for_patch</span>(
+    <span class="ident">orig_patch</span>: <span class="kw-2">&amp;</span><span class="ident">Dependency</span>,
+    <span class="ident">locked</span>: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Dependency</span>, <span class="ident">PackageId</span>)<span class="op">&gt;</span>,
+    <span class="kw-2">mut</span> <span class="ident">summaries</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Summary</span><span class="op">&gt;</span>,
+    <span class="ident">source</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw">dyn</span> <span class="ident">Source</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">Summary</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
+    <span class="kw">if</span> <span class="ident">summaries</span>.<span class="ident">len</span>() <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="ident">summaries</span>.<span class="ident">pop</span>().<span class="ident">unwrap</span>(), <span class="prelude-val">None</span>));
+    }
+    <span class="kw">if</span> <span class="ident">summaries</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
+        <span class="comment">// TODO: In the future, it might be nice to add all of these</span>
+        <span class="comment">// candidates so that version selection would just pick the</span>
+        <span class="comment">// appropriate one. However, as this is currently structured, if we</span>
+        <span class="comment">// added these all as patches, the unselected versions would end up in</span>
+        <span class="comment">// the &quot;unused patch&quot; listing, and trigger a warning. It might take a</span>
+        <span class="comment">// fair bit of restructuring to make that work cleanly, and there</span>
+        <span class="comment">// isn&#39;t any demand at this time to support that.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">summaries</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">summary</span><span class="op">|</span> <span class="ident">summary</span>.<span class="ident">version</span>()).<span class="ident">collect</span>();
+        <span class="ident">vers</span>.<span class="ident">sort</span>();
+        <span class="kw">let</span> <span class="ident">versions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">vers</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">to_string</span>()).<span class="ident">collect</span>();
+        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
+            <span class="string">&quot;patch for `{}` in `{}` resolved to more than one candidate\n\
+            Found versions: {}\n\
+            Update the patch definition to select only one package.\n\
+            For example, add an `=` version requirement to the patch definition, \
+            such as `version = \&quot;={}\&quot;`.&quot;</span>,
+            <span class="ident">orig_patch</span>.<span class="ident">package_name</span>(),
+            <span class="ident">orig_patch</span>.<span class="ident">source_id</span>(),
+            <span class="ident">versions</span>.<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>),
+            <span class="ident">versions</span>.<span class="ident">last</span>().<span class="ident">unwrap</span>()
+        );
+    }
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">summaries</span>.<span class="ident">is_empty</span>());
+    <span class="comment">// No summaries found, try to help the user figure out what is wrong.</span>
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">_locked_patch</span>, <span class="ident">locked_id</span>)) <span class="op">=</span> <span class="ident">locked</span> {
+        <span class="comment">// Since the locked patch did not match anything, try the unlocked one.</span>
+        <span class="kw">let</span> <span class="ident">orig_matches</span> <span class="op">=</span> <span class="ident">source</span>.<span class="ident">query_vec</span>(<span class="ident">orig_patch</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+            <span class="ident">log</span>::<span class="macro">warn</span><span class="macro">!</span>(
+                <span class="string">&quot;could not determine unlocked summaries for dep {:?}: {:?}&quot;</span>,
+                <span class="ident">orig_patch</span>,
+                <span class="ident">e</span>
+            );
+            <span class="ident">Vec</span>::<span class="ident">new</span>()
+        });
+        <span class="kw">let</span> (<span class="ident">summary</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">summary_for_patch</span>(<span class="ident">orig_patch</span>, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>, <span class="ident">orig_matches</span>, <span class="ident">source</span>)<span class="question-mark">?</span>;
+        <span class="comment">// The unlocked version found a match. This returns a value to</span>
+        <span class="comment">// indicate that this entry should be unlocked.</span>
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="ident">summary</span>, <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">locked_id</span>)));
+    }
+    <span class="comment">// Try checking if there are *any* packages that match this by name.</span>
+    <span class="kw">let</span> <span class="ident">name_only_dep</span> <span class="op">=</span> <span class="ident">Dependency</span>::<span class="ident">new_override</span>(<span class="ident">orig_patch</span>.<span class="ident">package_name</span>(), <span class="ident">orig_patch</span>.<span class="ident">source_id</span>());
+    <span class="kw">let</span> <span class="ident">name_summaries</span> <span class="op">=</span> <span class="ident">source</span>.<span class="ident">query_vec</span>(<span class="kw-2">&amp;</span><span class="ident">name_only_dep</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+        <span class="ident">log</span>::<span class="macro">warn</span><span class="macro">!</span>(
+            <span class="string">&quot;failed to do name-only summary query for {:?}: {:?}&quot;</span>,
+            <span class="ident">name_only_dep</span>,
+            <span class="ident">e</span>
+        );
+        <span class="ident">Vec</span>::<span class="ident">new</span>()
+    });
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vers</span> <span class="op">=</span> <span class="ident">name_summaries</span>
+        .<span class="ident">iter</span>()
+        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">summary</span><span class="op">|</span> <span class="ident">summary</span>.<span class="ident">version</span>())
+        .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+    <span class="kw">let</span> <span class="ident">found</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">vers</span>.<span class="ident">len</span>() {
+        <span class="number">0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;&quot;</span>),
+        <span class="number">1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;version `{}`&quot;</span>, <span class="ident">vers</span>[<span class="number">0</span>]),
+        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">vers</span>.<span class="ident">sort</span>();
+            <span class="kw">let</span> <span class="ident">strs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">vers</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">to_string</span>()).<span class="ident">collect</span>();
+            <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;versions `{}`&quot;</span>, <span class="ident">strs</span>.<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>))
+        }
+    };
+    <span class="kw">if</span> <span class="ident">found</span>.<span class="ident">is_empty</span>() {
+        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
+            <span class="string">&quot;The patch location `{}` does not appear to contain any packages \
+            matching the name `{}`.&quot;</span>,
+            <span class="ident">orig_patch</span>.<span class="ident">source_id</span>(),
+            <span class="ident">orig_patch</span>.<span class="ident">package_name</span>()
+        );
+    } <span class="kw">else</span> {
+        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
+            <span class="string">&quot;The patch location `{}` contains a `{}` package with {}, but the patch \
+            definition requires `{}`.\n\
+            Check that the version in the patch location is what you expect, \
+            and update the patch definition to match.&quot;</span>,
+            <span class="ident">orig_patch</span>.<span class="ident">source_id</span>(),
+            <span class="ident">orig_patch</span>.<span class="ident">package_name</span>(),
+            <span class="ident">found</span>,
+            <span class="ident">orig_patch</span>.<span class="ident">version_req</span>()
+        );
+    }
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

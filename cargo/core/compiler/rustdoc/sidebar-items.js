@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["RustdocExternMode","Mode used for `std`."]],"fn":[["add_root_urls",""]],"struct":[["RustdocExternMap",""]]});

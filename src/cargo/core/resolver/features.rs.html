@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/resolver/features.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>features.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/15bb455/src/cargo/core/resolver/features.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>features.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -592,6 +592,25 @@
 <span id="592">592</span>
 <span id="593">593</span>
 <span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Feature resolver.</span>
 <span class="doccomment">//!</span>
@@ -686,6 +705,13 @@
     <span class="ident">No</span>,
 }
 
+<span class="doccomment">/// Flag to indicate that target-specific filtering should be disabled.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ForceAllTargets</span> {
+    <span class="ident">Yes</span>,
+    <span class="ident">No</span>,
+}
+
 <span class="doccomment">/// Flag to indicate if features are requested for a build dependency or not.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FeaturesFor</span> {
@@ -705,7 +731,11 @@
 }
 
 <span class="kw">impl</span> <span class="ident">FeatureOpts</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">has_dev_units</span>: <span class="ident">HasDevUnits</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">FeatureOpts</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+        <span class="ident">has_dev_units</span>: <span class="ident">HasDevUnits</span>,
+        <span class="ident">force_all_targets</span>: <span class="ident">ForceAllTargets</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">FeatureOpts</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">FeatureOpts</span>::<span class="ident">default</span>();
         <span class="kw">let</span> <span class="ident">unstable_flags</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>().<span class="ident">cli_unstable</span>();
         <span class="ident">opts</span>.<span class="ident">package_features</span> <span class="op">=</span> <span class="ident">unstable_flags</span>.<span class="ident">package_features</span>;
@@ -749,6 +779,9 @@
         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">HasDevUnits</span>::<span class="ident">Yes</span> <span class="op">=</span> <span class="ident">has_dev_units</span> {
             <span class="comment">// Dev deps cannot be decoupled when they are in use.</span>
             <span class="ident">opts</span>.<span class="ident">decouple_dev_deps</span> <span class="op">=</span> <span class="bool-val">false</span>;
+        }
+        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ForceAllTargets</span>::<span class="ident">Yes</span> <span class="op">=</span> <span class="ident">force_all_targets</span> {
+            <span class="ident">opts</span>.<span class="ident">ignore_inactive_targets</span> <span class="op">=</span> <span class="bool-val">false</span>;
         }
         <span class="prelude-val">Ok</span>(<span class="ident">opts</span>)
     }
@@ -864,11 +897,12 @@
         <span class="ident">specs</span>: <span class="kw-2">&amp;</span>[<span class="ident">PackageIdSpec</span>],
         <span class="ident">requested_targets</span>: <span class="kw-2">&amp;</span>[<span class="ident">CompileKind</span>],
         <span class="ident">has_dev_units</span>: <span class="ident">HasDevUnits</span>,
+        <span class="ident">force_all_targets</span>: <span class="ident">ForceAllTargets</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ResolvedFeatures</span><span class="op">&gt;</span> {
         <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">profile</span>;
         <span class="kw">let</span> <span class="ident">_p</span> <span class="op">=</span> <span class="ident">profile</span>::<span class="ident">start</span>(<span class="string">&quot;resolve features&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">FeatureOpts</span>::<span class="ident">new</span>(<span class="ident">ws</span>, <span class="ident">has_dev_units</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">FeatureOpts</span>::<span class="ident">new</span>(<span class="ident">ws</span>, <span class="ident">has_dev_units</span>, <span class="ident">force_all_targets</span>)<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="op">!</span><span class="ident">opts</span>.<span class="ident">new_resolver</span> {
             <span class="comment">// Legacy mode.</span>
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ResolvedFeatures</span> {
@@ -1168,9 +1202,13 @@
         <span class="kw">for</span> ((<span class="ident">pkg_id</span>, <span class="ident">dep_kind</span>), <span class="ident">features</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">activated_features</span> {
             <span class="kw">let</span> <span class="ident">r_features</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">resolve</span>.<span class="ident">features</span>(<span class="kw-2">*</span><span class="ident">pkg_id</span>);
             <span class="kw">if</span> <span class="op">!</span><span class="ident">r_features</span>.<span class="ident">iter</span>().<span class="ident">eq</span>(<span class="ident">features</span>.<span class="ident">iter</span>()) {
-                <span class="macro">eprintln</span><span class="macro">!</span>(
+                <span class="kw">crate</span>::<span class="macro">drop_eprintln</span><span class="macro">!</span>(
+                    <span class="self">self</span>.<span class="ident">ws</span>.<span class="ident">config</span>(),
                     <span class="string">&quot;{}/{:?} features mismatch\nresolve: {:?}\nnew: {:?}\n&quot;</span>,
-                    <span class="ident">pkg_id</span>, <span class="ident">dep_kind</span>, <span class="ident">r_features</span>, <span class="ident">features</span>
+                    <span class="ident">pkg_id</span>,
+                    <span class="ident">dep_kind</span>,
+                    <span class="ident">r_features</span>,
+                    <span class="ident">features</span>
                 );
                 <span class="ident">found</span> <span class="op">=</span> <span class="bool-val">true</span>;
             }

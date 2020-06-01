@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/compiler/job_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>job_queue.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/15bb455/src/cargo/core/compiler/job_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>job_queue.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -952,6 +952,42 @@
 <span id="952">952</span>
 <span id="953">953</span>
 <span id="954">954</span>
+<span id="955">955</span>
+<span id="956">956</span>
+<span id="957">957</span>
+<span id="958">958</span>
+<span id="959">959</span>
+<span id="960">960</span>
+<span id="961">961</span>
+<span id="962">962</span>
+<span id="963">963</span>
+<span id="964">964</span>
+<span id="965">965</span>
+<span id="966">966</span>
+<span id="967">967</span>
+<span id="968">968</span>
+<span id="969">969</span>
+<span id="970">970</span>
+<span id="971">971</span>
+<span id="972">972</span>
+<span id="973">973</span>
+<span id="974">974</span>
+<span id="975">975</span>
+<span id="976">976</span>
+<span id="977">977</span>
+<span id="978">978</span>
+<span id="979">979</span>
+<span id="980">980</span>
+<span id="981">981</span>
+<span id="982">982</span>
+<span id="983">983</span>
+<span id="984">984</span>
+<span id="985">985</span>
+<span id="986">986</span>
+<span id="987">987</span>
+<span id="988">988</span>
+<span id="989">989</span>
+<span id="990">990</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! This module implements the job queue which determines the ordering in which</span>
 <span class="doccomment">//! rustc is spawned off. It also manages the allocation of jobserver tokens to</span>
@@ -1024,7 +1060,7 @@
 };
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">timings</span>::<span class="ident">Timings</span>;
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">BuildContext</span>, <span class="ident">BuildPlan</span>, <span class="ident">CompileMode</span>, <span class="ident">Context</span>, <span class="ident">Unit</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">PackageId</span>, <span class="ident">TargetKind</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">PackageId</span>, <span class="ident">Shell</span>, <span class="ident">TargetKind</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">diagnostic_server</span>::{<span class="self">self</span>, <span class="ident">DiagnosticPrinter</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">machine_message</span>::{<span class="self">self</span>, <span class="ident">Message</span> <span class="kw">as</span> <span class="kw">_</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="self">self</span>, <span class="ident">internal</span>, <span class="ident">profile</span>};
@@ -1356,8 +1392,13 @@
             .<span class="ident">take</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">srv</span><span class="op">|</span> <span class="ident">srv</span>.<span class="ident">start</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">msg</span><span class="op">|</span> <span class="ident">messages</span>.<span class="ident">push</span>(<span class="ident">Message</span>::<span class="ident">FixDiagnostic</span>(<span class="ident">msg</span>))));
 
-        <span class="ident">crossbeam_utils</span>::<span class="ident">thread</span>::<span class="ident">scope</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">scope</span><span class="op">|</span> <span class="ident">state</span>.<span class="ident">drain_the_queue</span>(<span class="ident">cx</span>, <span class="ident">plan</span>, <span class="ident">scope</span>, <span class="kw-2">&amp;</span><span class="ident">helper</span>))
-            .<span class="ident">expect</span>(<span class="string">&quot;child threads shouldn&#39;t panic&quot;</span>)
+        <span class="ident">crossbeam_utils</span>::<span class="ident">thread</span>::<span class="ident">scope</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">scope</span><span class="op">|</span> {
+            <span class="kw">match</span> <span class="ident">state</span>.<span class="ident">drain_the_queue</span>(<span class="ident">cx</span>, <span class="ident">plan</span>, <span class="ident">scope</span>, <span class="kw-2">&amp;</span><span class="ident">helper</span>) {
+                <span class="prelude-val">Some</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
+            }
+        })
+        .<span class="ident">expect</span>(<span class="string">&quot;child threads shouldn&#39;t panic&quot;</span>)
     }
 }
 
@@ -1367,7 +1408,6 @@
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">jobserver_helper</span>: <span class="kw-2">&amp;</span><span class="ident">HelperThread</span>,
         <span class="ident">scope</span>: <span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-        <span class="ident">has_errored</span>: <span class="ident">bool</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="comment">// Dequeue as much work as we can, learning about everything</span>
         <span class="comment">// possible that can run. Note that this is also the point where we</span>
@@ -1378,11 +1418,6 @@
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">active</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="self">self</span>.<span class="ident">pending_queue</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
                 <span class="ident">jobserver_helper</span>.<span class="ident">request_token</span>();
             }
-        }
-
-        <span class="comment">// Do not actually spawn the new work if we&#39;ve errored out</span>
-        <span class="kw">if</span> <span class="ident">has_errored</span> {
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
         }
 
         <span class="comment">// Now that we&#39;ve learned of all possible work that we can execute</span>
@@ -1442,7 +1477,7 @@
         <span class="ident">jobserver_helper</span>: <span class="kw-2">&amp;</span><span class="ident">HelperThread</span>,
         <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BuildPlan</span>,
         <span class="ident">event</span>: <span class="ident">Message</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">event</span> {
             <span class="ident">Message</span>::<span class="ident">Run</span>(<span class="ident">id</span>, <span class="ident">cmd</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">cx</span>.<span class="ident">bcx</span>
@@ -1455,7 +1490,7 @@
                 <span class="ident">plan</span>.<span class="ident">update</span>(<span class="kw-2">&amp;</span><span class="ident">module_name</span>, <span class="kw-2">&amp;</span><span class="ident">cmd</span>, <span class="kw-2">&amp;</span><span class="ident">filenames</span>)<span class="question-mark">?</span>;
             }
             <span class="ident">Message</span>::<span class="ident">Stdout</span>(<span class="ident">out</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">stdout_println</span>(<span class="ident">out</span>);
+                <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">out</span>(), <span class="string">&quot;{}&quot;</span>, <span class="ident">out</span>)<span class="question-mark">?</span>;
             }
             <span class="ident">Message</span>::<span class="ident">Stderr</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shell</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>();
@@ -1500,17 +1535,7 @@
                     <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="string">&quot;The following warnings were emitted during compilation:&quot;</span>;
                         <span class="self">self</span>.<span class="ident">emit_warnings</span>(<span class="prelude-val">Some</span>(<span class="ident">msg</span>), <span class="kw-2">&amp;</span><span class="ident">unit</span>, <span class="ident">cx</span>)<span class="question-mark">?</span>;
-
-                        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">active</span>.<span class="ident">is_empty</span>() {
-                            <span class="kw">crate</span>::<span class="ident">display_error</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>());
-                            <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">warn</span>(
-                                <span class="string">&quot;build failed, waiting for other \
-                                 jobs to finish...&quot;</span>,
-                            )<span class="question-mark">?</span>;
-                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">anyhow</span>::<span class="macro">format_err</span><span class="macro">!</span>(<span class="string">&quot;build failed&quot;</span>)));
-                        } <span class="kw">else</span> {
-                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">e</span>));
-                        }
+                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>);
                     }
                 }
             }
@@ -1545,7 +1570,7 @@
             }
         }
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="comment">// This will also tick the progress bar as appropriate</span>
@@ -1586,13 +1611,18 @@
         <span class="ident">events</span>
     }
 
+    <span class="doccomment">/// This is the &quot;main&quot; loop, where Cargo does all work to run the</span>
+    <span class="doccomment">/// compiler.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This returns an Option to prevent the use of `?` on `Result` types</span>
+    <span class="doccomment">/// because it is important for the loop to carefully handle errors.</span>
     <span class="kw">fn</span> <span class="ident">drain_the_queue</span>(
         <span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BuildPlan</span>,
         <span class="ident">scope</span>: <span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">jobserver_helper</span>: <span class="kw-2">&amp;</span><span class="ident">HelperThread</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;queue: {:#?}&quot;</span>, <span class="self">self</span>.<span class="ident">queue</span>);
 
         <span class="comment">// Iteratively execute the entire dependency graph. Each turn of the</span>
@@ -1606,8 +1636,15 @@
         <span class="comment">// successful and otherwise wait for pending work to finish if it failed</span>
         <span class="comment">// and then immediately return.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+        <span class="comment">// CAUTION! Do not use `?` or break out of the loop early. Every error</span>
+        <span class="comment">// must be handled in such a way that the loop is still allowed to</span>
+        <span class="comment">// drain event messages.</span>
         <span class="kw">loop</span> {
-            <span class="self">self</span>.<span class="ident">spawn_work_if_possible</span>(<span class="ident">cx</span>, <span class="ident">jobserver_helper</span>, <span class="ident">scope</span>, <span class="ident">error</span>.<span class="ident">is_some</span>())<span class="question-mark">?</span>;
+            <span class="kw">if</span> <span class="ident">error</span>.<span class="ident">is_none</span>() {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">spawn_work_if_possible</span>(<span class="ident">cx</span>, <span class="ident">jobserver_helper</span>, <span class="ident">scope</span>) {
+                    <span class="self">self</span>.<span class="ident">handle_error</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">error</span>, <span class="ident">e</span>);
+                }
+            }
 
             <span class="comment">// If after all that we&#39;re not actually running anything then we&#39;re</span>
             <span class="comment">// done!</span>
@@ -1615,7 +1652,9 @@
                 <span class="kw">break</span>;
             }
 
-            <span class="self">self</span>.<span class="ident">grant_rustc_token_requests</span>()<span class="question-mark">?</span>;
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">grant_rustc_token_requests</span>() {
+                <span class="self">self</span>.<span class="ident">handle_error</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">error</span>, <span class="ident">e</span>);
+            }
 
             <span class="comment">// And finally, before we block waiting for the next event, drop any</span>
             <span class="comment">// excess tokens we may have accidentally acquired. Due to how our</span>
@@ -1623,8 +1662,8 @@
             <span class="comment">// don&#39;t actually use, and if this happens just relinquish it back</span>
             <span class="comment">// to the jobserver itself.</span>
             <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">wait_for_events</span>() {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">handle_event</span>(<span class="ident">cx</span>, <span class="ident">jobserver_helper</span>, <span class="ident">plan</span>, <span class="ident">event</span>)<span class="question-mark">?</span> {
-                    <span class="ident">error</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>);
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">event_err</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">handle_event</span>(<span class="ident">cx</span>, <span class="ident">jobserver_helper</span>, <span class="ident">plan</span>, <span class="ident">event</span>) {
+                    <span class="self">self</span>.<span class="ident">handle_error</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">error</span>, <span class="ident">event_err</span>);
                 }
             }
         }
@@ -1649,29 +1688,62 @@
         }
 
         <span class="kw">let</span> <span class="ident">time_elapsed</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">elapsed</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">creation_time</span>().<span class="ident">elapsed</span>());
-        <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">finished</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>, <span class="kw-2">&amp;</span><span class="ident">error</span>)<span class="question-mark">?</span>;
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">finished</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>, <span class="kw-2">&amp;</span><span class="ident">error</span>) {
+            <span class="kw">if</span> <span class="ident">error</span>.<span class="ident">is_some</span>() {
+                <span class="kw">crate</span>::<span class="ident">display_error</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>());
+            } <span class="kw">else</span> {
+                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">e</span>);
+            }
+        }
         <span class="kw">if</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">emit_json</span>() {
             <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">machine_message</span>::<span class="ident">BuildFinished</span> {
                 <span class="ident">success</span>: <span class="ident">error</span>.<span class="ident">is_none</span>(),
             }
             .<span class="ident">to_json_string</span>();
-            <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">stdout_println</span>(<span class="ident">msg</span>);
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">out</span>(), <span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>) {
+                <span class="kw">if</span> <span class="ident">error</span>.<span class="ident">is_some</span>() {
+                    <span class="kw">crate</span>::<span class="ident">display_error</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>());
+                } <span class="kw">else</span> {
+                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">e</span>.<span class="ident">into</span>());
+                }
+            }
         }
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">error</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>)
+            <span class="prelude-val">Some</span>(<span class="ident">e</span>)
         } <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">queue</span>.<span class="ident">is_empty</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="self">self</span>.<span class="ident">pending_queue</span>.<span class="ident">is_empty</span>() {
             <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(
                 <span class="string">&quot;{} [{}] target(s) in {}&quot;</span>,
                 <span class="ident">profile_name</span>, <span class="ident">opt_type</span>, <span class="ident">time_elapsed</span>
             );
             <span class="kw">if</span> <span class="op">!</span><span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">build_plan</span> {
-                <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">status</span>(<span class="string">&quot;Finished&quot;</span>, <span class="ident">message</span>)<span class="question-mark">?</span>;
+                <span class="comment">// It doesn&#39;t really matter if this fails.</span>
+                <span class="ident">drop</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">status</span>(<span class="string">&quot;Finished&quot;</span>, <span class="ident">message</span>));
             }
-            <span class="prelude-val">Ok</span>(())
+            <span class="prelude-val">None</span>
         } <span class="kw">else</span> {
             <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;queue: {:#?}&quot;</span>, <span class="self">self</span>.<span class="ident">queue</span>);
-            <span class="prelude-val">Err</span>(<span class="ident">internal</span>(<span class="string">&quot;finished with jobs still left in the queue&quot;</span>))
+            <span class="prelude-val">Some</span>(<span class="ident">internal</span>(<span class="string">&quot;finished with jobs still left in the queue&quot;</span>))
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">handle_error</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">shell</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Shell</span>,
+        <span class="ident">err_state</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span>,
+        <span class="ident">new_err</span>: <span class="ident">anyhow</span>::<span class="ident">Error</span>,
+    ) {
+        <span class="kw">if</span> <span class="ident">err_state</span>.<span class="ident">is_some</span>() {
+            <span class="comment">// Already encountered one error.</span>
+            <span class="ident">log</span>::<span class="macro">warn</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">new_err</span>);
+        } <span class="kw">else</span> {
+            <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">active</span>.<span class="ident">is_empty</span>() {
+                <span class="kw">crate</span>::<span class="ident">display_error</span>(<span class="kw-2">&amp;</span><span class="ident">new_err</span>, <span class="ident">shell</span>);
+                <span class="ident">drop</span>(<span class="ident">shell</span>.<span class="ident">warn</span>(<span class="string">&quot;build failed, waiting for other jobs to finish...&quot;</span>));
+                <span class="kw-2">*</span><span class="ident">err_state</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">anyhow</span>::<span class="macro">format_err</span><span class="macro">!</span>(<span class="string">&quot;build failed&quot;</span>));
+            } <span class="kw">else</span> {
+                <span class="kw-2">*</span><span class="ident">err_state</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">new_err</span>);
+            }
         }
     }
 

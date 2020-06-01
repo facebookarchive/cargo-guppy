@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/features.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>features.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/15bb455/src/cargo/core/features.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>features.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -530,6 +530,11 @@
 <span id="530">530</span>
 <span id="531">531</span>
 <span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Support for nightly features in Cargo itself.</span>
 <span class="doccomment">//!</span>
@@ -747,6 +752,9 @@
 
         <span class="comment">// Opt-in new-resolver behavior.</span>
         [<span class="ident">unstable</span>] <span class="ident">resolver</span>: <span class="ident">bool</span>,
+
+        <span class="comment">// Allow to specify whether binaries should be stripped.</span>
+        [<span class="ident">unstable</span>] <span class="ident">strip</span>: <span class="ident">bool</span>,
     }
 }
 
@@ -886,6 +894,7 @@
     <span class="kw">pub</span> <span class="ident">crate_versions</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">separate_nightlies</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">multitarget</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">rustdoc_map</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">CliUnstable</span> {
@@ -965,6 +974,7 @@
             <span class="string">&quot;crate-versions&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">crate_versions</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;separate-nightlies&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">separate_nightlies</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;multitarget&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">multitarget</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
+            <span class="string">&quot;rustdoc-map&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">rustdoc_map</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;unknown `-Z` flag specified: {}&quot;</span>, <span class="ident">k</span>),
         }
 

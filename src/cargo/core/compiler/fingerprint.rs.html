@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/compiler/fingerprint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fingerprint.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/15bb455/src/cargo/core/compiler/fingerprint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fingerprint.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1815,6 +1815,7 @@
 <span id="1815">1815</span>
 <span id="1816">1816</span>
 <span id="1817">1817</span>
+<span id="1818">1818</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Fingerprints</span>
 <span class="doccomment">//!</span>
@@ -1861,8 +1862,9 @@
 <span class="doccomment">//! The `Metadata` hash is a hash added to the output filenames to isolate</span>
 <span class="doccomment">//! each unit. See the documentation in the `compilation_files` module for</span>
 <span class="doccomment">//! more details. NOTE: Not all output files are isolated via filename hashes</span>
-<span class="doccomment">//! (like dylibs), but the fingerprint directory always has the `Metadata`</span>
-<span class="doccomment">//! hash in its directory name.</span>
+<span class="doccomment">//! (like dylibs). The fingerprint directory uses a hash, but sometimes units</span>
+<span class="doccomment">//! share the same fingerprint directory (when they don&#39;t have Metadata) so</span>
+<span class="doccomment">//! care should be taken to handle this!</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Fingerprints and Metadata are similar, and track some of the same things.</span>
 <span class="doccomment">//! The Metadata contains information that is required to keep Units separate.</span>
@@ -1890,6 +1892,7 @@
 <span class="doccomment">//! mtime of sources                           | ✓[^3]       |</span>
 <span class="doccomment">//! RUSTFLAGS/RUSTDOCFLAGS                     | ✓           |</span>
 <span class="doccomment">//! LTO flags                                  | ✓           |</span>
+<span class="doccomment">//! config settings[^5]                        | ✓           |</span>
 <span class="doccomment">//! is_std                                     |             | ✓</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [^1]: Build script and bin dependencies are not included.</span>
@@ -1898,6 +1901,9 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [^4]: `__CARGO_DEFAULT_LIB_METADATA` is set by rustbuild to embed the</span>
 <span class="doccomment">//!        release channel (bootstrap/stable/beta/nightly) in libstd.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [^5]: Config settings that are not otherwise captured anywhere else.</span>
+<span class="doccomment">//!       Currently, this is only `doc.extern-map`.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! When deciding what should go in the Metadata vs the Fingerprint, consider</span>
 <span class="doccomment">//! that some files (like dylibs) do not have a hash in their filename. Thus,</span>
@@ -1922,8 +1928,9 @@
 <span class="doccomment">//! - A &quot;dep-info&quot; file which contains a list of source filenames for the</span>
 <span class="doccomment">//!   target. See below for details.</span>
 <span class="doccomment">//! - An `invoked.timestamp` file whose filesystem mtime is updated every time</span>
-<span class="doccomment">//!   the Unit is built. This is an experimental feature used for cleaning</span>
-<span class="doccomment">//!   unused artifacts.</span>
+<span class="doccomment">//!   the Unit is built. This is used for capturing the time when the build</span>
+<span class="doccomment">//!   starts, to detect if files are changed in the middle of the build. See</span>
+<span class="doccomment">//!   below for more details.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Note that some units are a little different. A Unit for *running* a build</span>
 <span class="doccomment">//! script or for `rustdoc` does not have a dep-info file (it&#39;s not</span>
@@ -2169,8 +2176,7 @@
         <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">name</span>()
     ));
     <span class="kw">let</span> <span class="ident">bcx</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>;
-    <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">fingerprint_dir</span>(<span class="ident">unit</span>);
-    <span class="kw">let</span> <span class="ident">loc</span> <span class="op">=</span> <span class="ident">new</span>.<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="ident">filename</span>(<span class="ident">cx</span>, <span class="ident">unit</span>));
+    <span class="kw">let</span> <span class="ident">loc</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">fingerprint_file_path</span>(<span class="ident">unit</span>, <span class="string">&quot;&quot;</span>);
 
     <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;fingerprint at: {}&quot;</span>, <span class="ident">loc</span>.<span class="ident">display</span>());
 
@@ -2350,6 +2356,8 @@
     <span class="doccomment">/// &quot;description&quot;, which are exposed as environment variables during</span>
     <span class="doccomment">/// compilation.</span>
     <span class="ident">metadata</span>: <span class="ident">u64</span>,
+    <span class="doccomment">/// Hash of various config settings that change how things are compiled.</span>
+    <span class="ident">config</span>: <span class="ident">u64</span>,
     <span class="doccomment">/// Description of whether the filesystem status for this unit is up to date</span>
     <span class="doccomment">/// or should be considered stale.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
@@ -2563,6 +2571,7 @@
             <span class="ident">memoized_hash</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="prelude-val">None</span>),
             <span class="ident">rustflags</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
             <span class="ident">metadata</span>: <span class="number">0</span>,
+            <span class="ident">config</span>: <span class="number">0</span>,
             <span class="ident">fs_status</span>: <span class="ident">FsStatus</span>::<span class="ident">Stale</span>,
             <span class="ident">outputs</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
         }
@@ -2622,6 +2631,9 @@
         }
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">metadata</span> <span class="op">!</span><span class="op">=</span> <span class="ident">old</span>.<span class="ident">metadata</span> {
             <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;metadata changed&quot;</span>)
+        }
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">config</span> <span class="op">!</span><span class="op">=</span> <span class="ident">old</span>.<span class="ident">config</span> {
+            <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;configuration settings have changed&quot;</span>)
         }
         <span class="kw">let</span> <span class="ident">my_local</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">local</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">old_local</span> <span class="op">=</span> <span class="ident">old</span>.<span class="ident">local</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
@@ -2857,12 +2869,13 @@
             <span class="kw-2">ref</span> <span class="ident">deps</span>,
             <span class="kw-2">ref</span> <span class="ident">local</span>,
             <span class="ident">metadata</span>,
+            <span class="ident">config</span>,
             <span class="kw-2">ref</span> <span class="ident">rustflags</span>,
             ..
         } <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span>;
         <span class="kw">let</span> <span class="ident">local</span> <span class="op">=</span> <span class="ident">local</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
         (
-            <span class="ident">rustc</span>, <span class="ident">features</span>, <span class="ident">target</span>, <span class="ident">path</span>, <span class="ident">profile</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">local</span>, <span class="ident">metadata</span>, <span class="ident">rustflags</span>,
+            <span class="ident">rustc</span>, <span class="ident">features</span>, <span class="ident">target</span>, <span class="ident">path</span>, <span class="ident">profile</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">local</span>, <span class="ident">metadata</span>, <span class="ident">config</span>, <span class="ident">rustflags</span>,
         )
             .<span class="ident">hash</span>(<span class="ident">h</span>);
 
@@ -3046,7 +3059,7 @@
     <span class="kw">let</span> <span class="ident">outputs</span> <span class="op">=</span> <span class="ident">cx</span>
         .<span class="ident">outputs</span>(<span class="ident">unit</span>)<span class="question-mark">?</span>
         .<span class="ident">iter</span>()
-        .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">output</span><span class="op">|</span> <span class="ident">output</span>.<span class="ident">flavor</span> <span class="op">!</span><span class="op">=</span> <span class="ident">FileFlavor</span>::<span class="ident">DebugInfo</span>)
+        .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">output</span><span class="op">|</span> <span class="op">!</span><span class="macro">matches</span><span class="macro">!</span>(<span class="ident">output</span>.<span class="ident">flavor</span>, <span class="ident">FileFlavor</span>::<span class="ident">DebugInfo</span> <span class="op">|</span> <span class="ident">FileFlavor</span>::<span class="ident">Auxiliary</span>))
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">output</span><span class="op">|</span> <span class="ident">output</span>.<span class="ident">path</span>.<span class="ident">clone</span>())
         .<span class="ident">collect</span>();
 
@@ -3069,6 +3082,14 @@
     <span class="comment">// Include metadata since it is exposed as environment variables.</span>
     <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">manifest</span>().<span class="ident">metadata</span>();
     <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">hash_u64</span>((<span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">authors</span>, <span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">description</span>, <span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">homepage</span>, <span class="kw-2">&amp;</span><span class="ident">m</span>.<span class="ident">repository</span>));
+    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">cli_unstable</span>().<span class="ident">rustdoc_map</span> {
+        <span class="ident">cx</span>.<span class="ident">bcx</span>
+            .<span class="ident">config</span>
+            .<span class="ident">doc_extern_map</span>()
+            .<span class="ident">map_or</span>(<span class="number">0</span>, <span class="op">|</span><span class="ident">map</span><span class="op">|</span> <span class="ident">util</span>::<span class="ident">hash_u64</span>(<span class="ident">map</span>))
+    } <span class="kw">else</span> {
+        <span class="number">0</span>
+    };
     <span class="prelude-val">Ok</span>(<span class="ident">Fingerprint</span> {
         <span class="ident">rustc</span>: <span class="ident">util</span>::<span class="ident">hash_u64</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">rustc</span>().<span class="ident">verbose_version</span>),
         <span class="ident">target</span>: <span class="ident">util</span>::<span class="ident">hash_u64</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">target</span>),
@@ -3081,6 +3102,7 @@
         <span class="ident">local</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">local</span>),
         <span class="ident">memoized_hash</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="prelude-val">None</span>),
         <span class="ident">metadata</span>,
+        <span class="ident">config</span>,
         <span class="ident">rustflags</span>: <span class="ident">extra_flags</span>,
         <span class="ident">fs_status</span>: <span class="ident">FsStatus</span>::<span class="ident">Stale</span>,
         <span class="ident">outputs</span>,
@@ -3339,9 +3361,7 @@
 <span class="doccomment">/// Returns the location that the dep-info file will show up at for the `unit`</span>
 <span class="doccomment">/// specified.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_info_loc</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PathBuf</span> {
-    <span class="ident">cx</span>.<span class="ident">files</span>()
-        .<span class="ident">fingerprint_dir</span>(<span class="ident">unit</span>)
-        .<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;dep-{}&quot;</span>, <span class="ident">filename</span>(<span class="ident">cx</span>, <span class="ident">unit</span>)))
+    <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">fingerprint_file_path</span>(<span class="ident">unit</span>, <span class="string">&quot;dep-&quot;</span>)
 }
 
 <span class="doccomment">/// Returns an absolute path that target directory.</span>
@@ -3495,24 +3515,6 @@
         <span class="ident">reference</span>, <span class="ident">reference_mtime</span>
     );
     <span class="prelude-val">None</span>
-}
-
-<span class="kw">fn</span> <span class="ident">filename</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-    <span class="comment">// file_stem includes metadata hash. Thus we have a different</span>
-    <span class="comment">// fingerprint for every metadata hash version. This works because</span>
-    <span class="comment">// even if the package is fresh, we&#39;ll still link the fresh target</span>
-    <span class="kw">let</span> <span class="ident">file_stem</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">file_stem</span>(<span class="ident">unit</span>);
-    <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">kind</span>().<span class="ident">description</span>();
-    <span class="kw">let</span> <span class="ident">flavor</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_any_test</span>() {
-        <span class="string">&quot;test-&quot;</span>
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() {
-        <span class="string">&quot;doc-&quot;</span>
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_run_custom_build</span>() {
-        <span class="string">&quot;run-&quot;</span>
-    } <span class="kw">else</span> {
-        <span class="string">&quot;&quot;</span>
-    };
-    <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}{}-{}&quot;</span>, <span class="ident">flavor</span>, <span class="ident">kind</span>, <span class="ident">file_stem</span>)
 }
 
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>

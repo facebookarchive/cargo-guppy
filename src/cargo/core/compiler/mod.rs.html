@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/d7966eb/src/cargo/core/compiler/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/git/checkouts/cargo-e7ff1db891893a9e/15bb455/src/cargo/core/compiler/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1354,16 +1354,6 @@
 <span id="1354">1354</span>
 <span id="1355">1355</span>
 <span id="1356">1356</span>
-<span id="1357">1357</span>
-<span id="1358">1358</span>
-<span id="1359">1359</span>
-<span id="1360">1360</span>
-<span id="1361">1361</span>
-<span id="1362">1362</span>
-<span id="1363">1363</span>
-<span id="1364">1364</span>
-<span id="1365">1365</span>
-<span id="1366">1366</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">build_config</span>;
 <span class="kw">mod</span> <span class="ident">build_context</span>;
@@ -1371,6 +1361,7 @@
 <span class="kw">mod</span> <span class="ident">compilation</span>;
 <span class="kw">mod</span> <span class="ident">compile_kind</span>;
 <span class="kw">mod</span> <span class="ident">context</span>;
+<span class="kw">mod</span> <span class="ident">crate_type</span>;
 <span class="kw">mod</span> <span class="ident">custom_build</span>;
 <span class="kw">mod</span> <span class="ident">fingerprint</span>;
 <span class="kw">mod</span> <span class="ident">job</span>;
@@ -1379,6 +1370,7 @@
 <span class="kw">mod</span> <span class="ident">links</span>;
 <span class="kw">mod</span> <span class="ident">lto</span>;
 <span class="kw">mod</span> <span class="ident">output_depinfo</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">rustdoc</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">standard_lib</span>;
 <span class="kw">mod</span> <span class="ident">timings</span>;
 <span class="kw">mod</span> <span class="ident">unit</span>;
@@ -1397,20 +1389,22 @@
 <span class="kw">use</span> <span class="ident">log</span>::<span class="ident">debug</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">build_config</span>::{<span class="ident">BuildConfig</span>, <span class="ident">CompileMode</span>, <span class="ident">MessageFormat</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">build_context</span>::{<span class="ident">BuildContext</span>, <span class="ident">FileFlavor</span>, <span class="ident">RustcTargetData</span>, <span class="ident">TargetInfo</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">build_context</span>::{<span class="ident">BuildContext</span>, <span class="ident">FileFlavor</span>, <span class="ident">FileType</span>, <span class="ident">RustcTargetData</span>, <span class="ident">TargetInfo</span>};
 <span class="kw">use</span> <span class="self">self</span>::<span class="ident">build_plan</span>::<span class="ident">BuildPlan</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">compilation</span>::{<span class="ident">Compilation</span>, <span class="ident">Doctest</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">compile_kind</span>::{<span class="ident">CompileKind</span>, <span class="ident">CompileTarget</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">context</span>::{<span class="ident">Context</span>, <span class="ident">Metadata</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">crate_type</span>::<span class="ident">CrateType</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">custom_build</span>::{<span class="ident">BuildOutput</span>, <span class="ident">BuildScriptOutputs</span>, <span class="ident">BuildScripts</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">job</span>::<span class="ident">Freshness</span>;
 <span class="kw">use</span> <span class="self">self</span>::<span class="ident">job</span>::{<span class="ident">Job</span>, <span class="ident">Work</span>};
 <span class="kw">use</span> <span class="self">self</span>::<span class="ident">job_queue</span>::{<span class="ident">JobQueue</span>, <span class="ident">JobState</span>};
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use</span> <span class="self">self</span>::<span class="ident">layout</span>::<span class="ident">Layout</span>;
 <span class="kw">use</span> <span class="self">self</span>::<span class="ident">output_depinfo</span>::<span class="ident">output_depinfo</span>;
 <span class="kw">use</span> <span class="self">self</span>::<span class="ident">unit_graph</span>::<span class="ident">UnitDep</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">unit</span>::{<span class="ident">Unit</span>, <span class="ident">UnitInterner</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">manifest</span>::<span class="ident">TargetSourcePath</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">profiles</span>::{<span class="ident">PanicStrategy</span>, <span class="ident">Profile</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">profiles</span>::{<span class="ident">PanicStrategy</span>, <span class="ident">Profile</span>, <span class="ident">Strip</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Edition</span>, <span class="ident">Feature</span>, <span class="ident">InternedString</span>, <span class="ident">PackageId</span>, <span class="ident">Target</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="self">self</span>, <span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>, <span class="ident">ProcessError</span>, <span class="ident">VerboseError</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">machine_message</span>::<span class="ident">Message</span>;
@@ -1510,7 +1504,7 @@
                     <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">target</span>,
                     <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">message_cache_path</span>(<span class="ident">unit</span>),
                     <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">build_config</span>.<span class="ident">message_format</span>,
-                    <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">supports_color</span>(),
+                    <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">err_supports_color</span>(),
                 )
             } <span class="kw">else</span> {
                 <span class="ident">Work</span>::<span class="ident">noop</span>()
@@ -1557,17 +1551,12 @@
     <span class="comment">// don&#39;t pass the `-l` flags.</span>
     <span class="kw">let</span> <span class="ident">pass_l_flag</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">is_lib</span>() <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">targets</span>().<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">is_lib</span>());
     <span class="kw">let</span> <span class="ident">pass_cdylib_link_args</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">is_cdylib</span>();
-    <span class="kw">let</span> <span class="ident">do_rename</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">allows_dashes</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_any_test</span>();
-    <span class="kw">let</span> <span class="ident">real_name</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">name</span>().<span class="ident">to_string</span>();
-    <span class="kw">let</span> <span class="ident">crate_name</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">crate_name</span>();
 
-    <span class="comment">// Rely on `target_filenames` iterator as source of truth rather than rederiving filestem.</span>
-    <span class="kw">let</span> <span class="ident">rustc_dep_info_loc</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">do_rename</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">metadata</span>(<span class="ident">unit</span>).<span class="ident">is_none</span>() {
-        <span class="ident">root</span>.<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="ident">crate_name</span>)
-    } <span class="kw">else</span> {
-        <span class="ident">root</span>.<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">file_stem</span>(<span class="ident">unit</span>))
-    }
-    .<span class="ident">with_extension</span>(<span class="string">&quot;d&quot;</span>);
+    <span class="kw">let</span> <span class="ident">dep_info_name</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">metadata</span>(<span class="ident">unit</span>) {
+        <span class="prelude-val">Some</span>(<span class="ident">metadata</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}-{}.d&quot;</span>, <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">crate_name</span>(), <span class="ident">metadata</span>),
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}.d&quot;</span>, <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">crate_name</span>()),
+    };
+    <span class="kw">let</span> <span class="ident">rustc_dep_info_loc</span> <span class="op">=</span> <span class="ident">root</span>.<span class="ident">join</span>(<span class="ident">dep_info_name</span>);
     <span class="kw">let</span> <span class="ident">dep_info_loc</span> <span class="op">=</span> <span class="ident">fingerprint</span>::<span class="ident">dep_info_loc</span>(<span class="ident">cx</span>, <span class="ident">unit</span>);
 
     <span class="ident">rustc</span>.<span class="ident">args</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">rustflags_args</span>(<span class="ident">unit</span>));
@@ -1657,20 +1646,6 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">verbose_if_simple_exit_code</span>)
             .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;could not compile `{}`.&quot;</span>, <span class="ident">name</span>))<span class="question-mark">?</span>;
-        }
-
-        <span class="kw">if</span> <span class="ident">do_rename</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">real_name</span> <span class="op">!</span><span class="op">=</span> <span class="ident">crate_name</span> {
-            <span class="kw">let</span> <span class="ident">dst</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">outputs</span>[<span class="number">0</span>].<span class="ident">path</span>;
-            <span class="kw">let</span> <span class="ident">src</span> <span class="op">=</span> <span class="ident">dst</span>.<span class="ident">with_file_name</span>(
-                <span class="ident">dst</span>.<span class="ident">file_name</span>()
-                    .<span class="ident">unwrap</span>()
-                    .<span class="ident">to_str</span>()
-                    .<span class="ident">unwrap</span>()
-                    .<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="ident">real_name</span>, <span class="kw-2">&amp;</span><span class="ident">crate_name</span>),
-            );
-            <span class="kw">if</span> <span class="ident">src</span>.<span class="ident">exists</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">src</span>.<span class="ident">file_name</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">dst</span>.<span class="ident">file_name</span>() {
-                <span class="ident">fs</span>::<span class="ident">rename</span>(<span class="kw-2">&amp;</span><span class="ident">src</span>, <span class="kw-2">&amp;</span><span class="ident">dst</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;could not rename crate {:?}&quot;</span>, <span class="ident">src</span>))<span class="question-mark">?</span>;
-            }
         }
 
         <span class="kw">if</span> <span class="ident">rustc_dep_info_loc</span>.<span class="ident">exists</span>() {
@@ -1899,7 +1874,7 @@
 
 <span class="kw">fn</span> <span class="ident">prepare_rustc</span>(
     <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">crate_types</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>],
+    <span class="ident">crate_types</span>: <span class="kw-2">&amp;</span>[<span class="ident">CrateType</span>],
     <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">ProcessBuilder</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">is_primary</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">is_primary_package</span>(<span class="ident">unit</span>);
@@ -1953,6 +1928,7 @@
     }
 
     <span class="ident">build_deps_args</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rustdoc</span>, <span class="ident">cx</span>, <span class="ident">unit</span>)<span class="question-mark">?</span>;
+    <span class="ident">rustdoc</span>::<span class="ident">add_root_urls</span>(<span class="ident">cx</span>, <span class="ident">unit</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rustdoc</span>)<span class="question-mark">?</span>;
 
     <span class="ident">rustdoc</span>.<span class="ident">args</span>(<span class="ident">bcx</span>.<span class="ident">rustdocflags_args</span>(<span class="ident">unit</span>));
 
@@ -2101,7 +2077,7 @@
     <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">cmd</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ProcessBuilder</span>,
     <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
-    <span class="ident">crate_types</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>],
+    <span class="ident">crate_types</span>: <span class="kw-2">&amp;</span>[<span class="ident">CrateType</span>],
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_run_custom_build</span>());
 
@@ -2115,6 +2091,7 @@
         <span class="ident">rpath</span>,
         <span class="kw-2">ref</span> <span class="ident">panic</span>,
         <span class="ident">incremental</span>,
+        <span class="ident">strip</span>,
         ..
     } <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">profile</span>;
     <span class="kw">let</span> <span class="ident">test</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_any_test</span>();
@@ -2131,7 +2108,7 @@
 
     <span class="kw">if</span> <span class="op">!</span><span class="ident">test</span> {
         <span class="kw">for</span> <span class="ident">crate_type</span> <span class="kw">in</span> <span class="ident">crate_types</span>.<span class="ident">iter</span>() {
-            <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;--crate-type&quot;</span>).<span class="ident">arg</span>(<span class="ident">crate_type</span>);
+            <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;--crate-type&quot;</span>).<span class="ident">arg</span>(<span class="ident">crate_type</span>.<span class="ident">as_str</span>());
         }
     }
 
@@ -2147,7 +2124,7 @@
     }
 
     <span class="kw">let</span> <span class="ident">prefer_dynamic</span> <span class="op">=</span> (<span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">for_host</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">is_custom_build</span>())
-        <span class="op">|</span><span class="op">|</span> (<span class="ident">crate_types</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="string">&quot;dylib&quot;</span>) <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">bcx</span>.<span class="ident">ws</span>.<span class="ident">members</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">p</span> <span class="op">!</span><span class="op">=</span> <span class="ident">unit</span>.<span class="ident">pkg</span>));
+        <span class="op">|</span><span class="op">|</span> (<span class="ident">crate_types</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">CrateType</span>::<span class="ident">Dylib</span>) <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">bcx</span>.<span class="ident">ws</span>.<span class="ident">members</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">p</span> <span class="op">!</span><span class="op">=</span> <span class="ident">unit</span>.<span class="ident">pkg</span>));
     <span class="kw">if</span> <span class="ident">prefer_dynamic</span> {
         <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;-C&quot;</span>).<span class="ident">arg</span>(<span class="string">&quot;prefer-dynamic&quot;</span>);
     }
@@ -2160,7 +2137,7 @@
         <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;-C&quot;</span>).<span class="ident">arg</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;panic={}&quot;</span>, <span class="ident">panic</span>));
     }
 
-    <span class="kw">match</span> <span class="ident">cx</span>.<span class="ident">lto</span>[<span class="kw-2">&amp;</span><span class="ident">unit</span>] {
+    <span class="kw">match</span> <span class="ident">cx</span>.<span class="ident">lto</span>[<span class="ident">unit</span>] {
         <span class="ident">lto</span>::<span class="ident">Lto</span>::<span class="ident">Run</span>(<span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;-C&quot;</span>).<span class="ident">arg</span>(<span class="string">&quot;lto&quot;</span>);
         }
@@ -2293,6 +2270,10 @@
         <span class="ident">opt</span>(<span class="ident">cmd</span>, <span class="string">&quot;-C&quot;</span>, <span class="string">&quot;incremental=&quot;</span>, <span class="prelude-val">Some</span>(<span class="ident">dir</span>));
     }
 
+    <span class="kw">if</span> <span class="ident">strip</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Strip</span>::<span class="prelude-val">None</span> {
+        <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;-Z&quot;</span>).<span class="ident">arg</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;strip={}&quot;</span>, <span class="ident">strip</span>));
+    }
+
     <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">is_std</span> {
         <span class="comment">// -Zforce-unstable-if-unmarked prevents the accidental use of</span>
         <span class="comment">// unstable crates within the sysroot (such as &quot;extern crate libc&quot; or</span>
@@ -2351,7 +2332,7 @@
     <span class="comment">// error in the future (see PR #4797).</span>
     <span class="kw">if</span> <span class="op">!</span><span class="ident">deps</span>
         .<span class="ident">iter</span>()
-        .<span class="ident">any</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> <span class="op">!</span><span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">linkable</span>())
+        .<span class="ident">any</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> <span class="op">!</span><span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">is_linkable</span>())
     {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dep</span>) <span class="op">=</span> <span class="ident">deps</span>
             .<span class="ident">iter</span>()
@@ -2434,19 +2415,18 @@
             };
 
             <span class="kw">let</span> <span class="ident">outputs</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">outputs</span>(<span class="kw-2">&amp;</span><span class="ident">dep</span>.<span class="ident">unit</span>)<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">outputs</span> <span class="op">=</span> <span class="ident">outputs</span>.<span class="ident">iter</span>().<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">output</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">output</span>.<span class="ident">flavor</span> {
-                <span class="ident">FileFlavor</span>::<span class="ident">Linkable</span> { <span class="ident">rmeta</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>((<span class="ident">output</span>, <span class="ident">rmeta</span>)),
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-            });
 
-            <span class="kw">if</span> <span class="ident">cx</span>.<span class="ident">only_requires_rmeta</span>(<span class="ident">unit</span>, <span class="kw-2">&amp;</span><span class="ident">dep</span>.<span class="ident">unit</span>) {
-                <span class="kw">let</span> (<span class="ident">output</span>, <span class="ident">_rmeta</span>) <span class="op">=</span> <span class="ident">outputs</span>
-                    .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">_output</span>, <span class="ident">rmeta</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">rmeta</span>)
-                    .<span class="ident">expect</span>(<span class="string">&quot;failed to find rlib dep for pipelined dep&quot;</span>);
+            <span class="kw">if</span> <span class="ident">cx</span>.<span class="ident">only_requires_rmeta</span>(<span class="ident">unit</span>, <span class="kw-2">&amp;</span><span class="ident">dep</span>.<span class="ident">unit</span>) <span class="op">|</span><span class="op">|</span> <span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_check</span>() {
+                <span class="comment">// Example: rlib dependency for an rlib, rmeta is all that is required.</span>
+                <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">outputs</span>
+                    .<span class="ident">iter</span>()
+                    .<span class="ident">find</span>(<span class="op">|</span><span class="ident">output</span><span class="op">|</span> <span class="ident">output</span>.<span class="ident">flavor</span> <span class="op">=</span><span class="op">=</span> <span class="ident">FileFlavor</span>::<span class="ident">Rmeta</span>)
+                    .<span class="ident">expect</span>(<span class="string">&quot;failed to find rmeta dep for pipelined dep&quot;</span>);
                 <span class="ident">pass</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">path</span>);
             } <span class="kw">else</span> {
-                <span class="kw">for</span> (<span class="ident">output</span>, <span class="ident">rmeta</span>) <span class="kw">in</span> <span class="ident">outputs</span> {
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">rmeta</span> {
+                <span class="comment">// Example: a bin needs `rlib` for dependencies, it cannot use rmeta.</span>
+                <span class="kw">for</span> <span class="ident">output</span> <span class="kw">in</span> <span class="ident">outputs</span>.<span class="ident">iter</span>() {
+                    <span class="kw">if</span> <span class="ident">output</span>.<span class="ident">flavor</span> <span class="op">=</span><span class="op">=</span> <span class="ident">FileFlavor</span>::<span class="ident">Linkable</span> {
                         <span class="ident">pass</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">path</span>);
                     }
                 }
@@ -2455,7 +2435,7 @@
         };
 
     <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">deps</span> {
-        <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">linkable</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() {
+        <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">is_linkable</span>() <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() {
             <span class="ident">link_to</span>(<span class="ident">dep</span>, <span class="ident">dep</span>.<span class="ident">extern_crate_name</span>, <span class="ident">dep</span>.<span class="ident">noprelude</span>)<span class="question-mark">?</span>;
         }
     }
@@ -2493,7 +2473,7 @@
 <span class="kw">impl</span> <span class="ident">OutputOptions</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">OutputOptions</span> {
         <span class="kw">let</span> <span class="ident">look_for_metadata_directive</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">rmeta_required</span>(<span class="ident">unit</span>);
-        <span class="kw">let</span> <span class="ident">color</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">supports_color</span>();
+        <span class="kw">let</span> <span class="ident">color</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">err_supports_color</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">files</span>().<span class="ident">message_cache_path</span>(<span class="ident">unit</span>);
         <span class="comment">// Remove old cache, ignore ENOENT, which is the common case.</span>
         <span class="ident">drop</span>(<span class="ident">fs</span>::<span class="ident">remove_file</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>));
@@ -2528,7 +2508,7 @@
         <span class="comment">// Check if caching is enabled.</span>
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">path</span>, <span class="ident">cell</span>)) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">options</span>.<span class="ident">cache_cell</span> {
             <span class="comment">// Cache the output, which will be replayed later when Fresh.</span>
-            <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">cell</span>.<span class="ident">try_borrow_mut_with</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">File</span>::<span class="ident">create</span>(<span class="ident">path</span>))<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">cell</span>.<span class="ident">try_borrow_mut_with</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">paths</span>::<span class="ident">create</span>(<span class="ident">path</span>))<span class="question-mark">?</span>;
             <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">line</span>.<span class="ident">contains</span>(<span class="string">&#39;\n&#39;</span>));
             <span class="ident">f</span>.<span class="ident">write_all</span>(<span class="ident">line</span>.<span class="ident">as_bytes</span>())<span class="question-mark">?</span>;
             <span class="ident">f</span>.<span class="ident">write_all</span>(<span class="kw-2">&amp;</span>[<span class="string">b&#39;\n&#39;</span>])<span class="question-mark">?</span>;
@@ -2716,7 +2696,7 @@
         <span class="comment">// We sometimes have gigabytes of output from the compiler, so avoid</span>
         <span class="comment">// loading it all into memory at once, as that can cause OOM where</span>
         <span class="comment">// otherwise there would be none.</span>
-        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">File</span>::<span class="ident">open</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">paths</span>::<span class="ident">open</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">io</span>::<span class="ident">BufReader</span>::<span class="ident">new</span>(<span class="ident">file</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">new</span>();
         <span class="kw">loop</span> {
