@@ -5,6 +5,8 @@ use crate::common::GuppyCargoCommon;
 use crate::diff::DiffOpts;
 use crate::GlobalContext;
 use guppy::graph::PackageGraph;
+use proptest::test_runner::{TestCaseError, TestCaseResult};
+use std::env;
 
 macro_rules! proptest_suite {
     ($name: ident) => {
@@ -20,7 +22,7 @@ macro_rules! proptest_suite {
                 proptest!(ProptestConfig::with_cases(fixture.num_proptests()), |(
                     common in fixture.common_strategy(),
                 )| {
-                    compare(fixture.graph(), common);
+                    compare(fixture.graph(), common)?;
                 });
             }
         }
@@ -28,11 +30,23 @@ macro_rules! proptest_suite {
 }
 
 /// Test that there is no diff between guppy and cargo for the same query.
-pub(super) fn compare(graph: &PackageGraph, common: GuppyCargoCommon) {
-    let diff_opts = DiffOpts {
-        common,
-        verbose: false,
+pub(super) fn compare(graph: &PackageGraph, common: GuppyCargoCommon) -> TestCaseResult {
+    let verbose = match env::var("PROPTEST_VERBOSE")
+        .as_ref()
+        .map(|val| val.as_str())
+    {
+        Ok("true") | Ok("1") => true,
+        _ => false,
     };
+    let diff_opts = DiffOpts { common, verbose };
     let ctx = GlobalContext::new(true, graph).expect("context created");
-    diff_opts.exec(&ctx).expect("no errors and no diff found");
+    let target_host_diff = diff_opts
+        .compute_diff(&ctx)
+        .expect("compute_diff succeeded");
+    if target_host_diff.any_diff() {
+        println!("{}", target_host_diff);
+        Err(TestCaseError::fail("diff found"))
+    } else {
+        Ok(())
+    }
 }
