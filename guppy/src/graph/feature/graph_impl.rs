@@ -193,6 +193,14 @@ impl<'g> FeatureGraph<'g> {
         self.metadata_impl_for_node(&feature_node)
     }
 
+    pub(in crate::graph) fn metadata_for_ix(
+        &self,
+        feature_ix: NodeIndex<FeatureIx>,
+    ) -> FeatureMetadata<'g> {
+        self.metadata_for_node(self.dep_graph()[feature_ix])
+            .expect("valid feature ix")
+    }
+
     pub(super) fn metadata_for_node(&self, node: FeatureNode) -> Option<FeatureMetadata<'g>> {
         let inner = self.metadata_impl_for_node(&node)?;
         Some(FeatureMetadata {

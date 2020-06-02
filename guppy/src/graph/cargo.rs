@@ -10,6 +10,7 @@ use crate::graph::feature::{all_filter, CrossLink, FeatureQuery, FeatureSet};
 use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageQuery};
 use crate::sorted_set::SortedSet;
 use crate::{DependencyKind, Error, PackageId};
+use itertools::{Either, Itertools};
 use petgraph::prelude::*;
 use std::collections::HashSet;
 use target_spec::Platform;
@@ -389,15 +390,20 @@ where
     fn new_v1(self, query: FeatureQuery<'g>, avoid_dev_deps: bool) -> CargoSet {
         // Prepare a package query for step 2.
         let graph = *query.graph();
-        let package_ixs: SortedSet<_> = query
-            .params
-            .initials()
-            .iter()
-            .map(|feature_ix| graph.package_ix_for_feature_ix(*feature_ix))
-            .collect();
+        let (target_ixs, host_ixs): (Vec<_>, Vec<_>) =
+            query.params.initials().iter().partition_map(|feature_ix| {
+                let metadata = graph.metadata_for_ix(*feature_ix);
+                if metadata.package().is_proc_macro() {
+                    // Proc macros are built on the host.
+                    Either::Right(metadata.package_ix())
+                } else {
+                    // Everything else is built on the target.
+                    Either::Left(metadata.package_ix())
+                }
+            });
         let target_query = graph
             .package_graph
-            .query_from_parts(package_ixs, DependencyDirection::Forward);
+            .query_from_parts(SortedSet::new(target_ixs), DependencyDirection::Forward);
 
         // 1. Perform a "complete" feature query. This will provide more packages than will be
         // included in the final build, but for each package it will have the correct feature set.
@@ -425,7 +431,7 @@ where
 
         // While doing traversal 2 below, record any packages discovered along build edges for use
         // in step 3. This will also include proc-macros.
-        let mut host_ixs = Vec::new();
+        let mut host_ixs = host_ixs;
         // This list will contain proc-macro edges out of target packages.
         let mut proc_macro_edge_ixs = Vec::new();
         // This list will contain build dep edges out of target packages.
@@ -569,6 +575,21 @@ where
     fn new_v2(self, query: FeatureQuery<'g>) -> CargoSet {
         let graph = *query.graph();
 
+        // Filter out any proc macros in the query and move them to the host ix set.
+        let (target_ixs, host_ixs): (Vec<_>, Vec<_>) =
+            query.params.initials().iter().partition_map(|feature_ix| {
+                let metadata = graph.metadata_for_ix(*feature_ix);
+                if metadata.package().is_proc_macro() {
+                    // Proc macros are built on the host.
+                    Either::Right(metadata.feature_ix())
+                } else {
+                    // Everything else is built on the target.
+                    Either::Left(metadata.feature_ix())
+                }
+            });
+        let target_query =
+            graph.query_from_parts(SortedSet::new(target_ixs), DependencyDirection::Forward);
+
         let is_enabled = |link: &CrossLink<'_>,
                           kind: DependencyKind,
                           platform: Option<&Platform<'_>>| {
@@ -581,12 +602,12 @@ where
         };
 
         // State to maintain between steps 1 and 2.
-        let mut host_ixs = Vec::new();
+        let mut host_ixs = host_ixs;
         let mut proc_macro_edge_ixs = Vec::new();
         let mut build_dep_edge_ixs = Vec::new();
 
         // 1. Perform a feature query for the target.
-        let target_features = query.clone().resolve_with_fn(|query, link| {
+        let target_features = target_query.clone().resolve_with_fn(|query, link| {
             let (from, to) = link.endpoints();
 
             if self.is_omitted(to.package_ix()) {
