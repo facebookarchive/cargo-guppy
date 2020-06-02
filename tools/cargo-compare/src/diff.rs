@@ -3,11 +3,12 @@
 
 use crate::common::GuppyCargoCommon;
 use crate::GlobalContext;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use diffus::{edit, Diffable};
 use guppy::graph::PackageGraph;
 use guppy::PackageId;
 use itertools::Itertools;
+use once_cell::sync::OnceCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use structopt::StructOpt;
@@ -25,34 +26,80 @@ pub struct DiffOpts {
 impl DiffOpts {
     /// Executes this command.
     pub fn exec(self, ctx: &GlobalContext) -> Result<()> {
+        let target_host_diff = self.compute_diff(ctx)?;
+        println!("{}", target_host_diff);
+
+        if target_host_diff.any_diff() {
+            bail!("non-empty diff!")
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn compute_diff<'g>(self, ctx: &'g GlobalContext) -> Result<TargetHostDiff<'g>> {
         let cargo_map = self.common.resolve_cargo(ctx)?;
         let guppy_map = self.common.resolve_guppy(ctx)?;
 
         let target_diff = FeatureDiff {
             graph: ctx.graph(),
-            a: &guppy_map.target_map,
-            b: &cargo_map.target_map,
+            a: guppy_map.target_map,
+            b: cargo_map.target_map,
             verbose: self.verbose,
         };
-        println!("** target diff (guppy -> cargo):\n{}\n", target_diff);
 
         let host_diff = FeatureDiff {
             graph: ctx.graph(),
-            a: &guppy_map.host_map,
-            b: &cargo_map.host_map,
+            a: guppy_map.host_map,
+            b: cargo_map.host_map,
             verbose: self.verbose,
         };
-        println!("** host diff (guppy -> cargo):\n{}", host_diff);
 
-        Ok(())
+        Ok(TargetHostDiff {
+            target_diff,
+            host_diff,
+            any_diff: OnceCell::new(),
+        })
     }
 }
 
-struct FeatureDiff<'g> {
+pub struct TargetHostDiff<'g> {
+    pub target_diff: FeatureDiff<'g>,
+    pub host_diff: FeatureDiff<'g>,
+    any_diff: OnceCell<bool>,
+}
+
+impl<'g> TargetHostDiff<'g> {
+    /// Returns true if there's a diff.
+    pub fn any_diff(&self) -> bool {
+        *self
+            .any_diff
+            .get_or_init(|| self.target_diff.any_diff() || self.host_diff.any_diff())
+    }
+}
+
+impl<'g> fmt::Display for TargetHostDiff<'g> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "** target diff (guppy -> cargo):\n{}\n",
+            self.target_diff
+        )?;
+        write!(f, "** host diff (guppy -> cargo):\n{}\n", self.host_diff)
+    }
+}
+
+pub struct FeatureDiff<'g> {
     graph: &'g PackageGraph,
-    a: &'g BTreeMap<PackageId, BTreeSet<String>>,
-    b: &'g BTreeMap<PackageId, BTreeSet<String>>,
+    a: BTreeMap<PackageId, BTreeSet<String>>,
+    b: BTreeMap<PackageId, BTreeSet<String>>,
     verbose: bool,
+}
+
+impl<'g> FeatureDiff<'g> {
+    /// Returns true if there's a diff.
+    pub fn any_diff(&self) -> bool {
+        self.a.diff(&self.b).is_change()
+    }
 }
 
 impl<'g> fmt::Display for FeatureDiff<'g> {
