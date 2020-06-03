@@ -146,28 +146,19 @@ impl GuppyCargoCommon {
                 CargoResolverVersion::V1Install
             }
         };
-        let (target_platform, host_platform, merge_maps) = match version {
-            CargoResolverVersion::V2 => (
-                Some(self.make_target_platform()?),
-                Some(self.guppy_current_platform()?),
-                false,
-            ),
-            CargoResolverVersion::V1 | CargoResolverVersion::V1Install => {
-                // Cargo's V1 resolver does platform-specific filtering after resolution. It also
-                // merges the host and target maps.
-                (None, None, true)
-            }
-            _ => panic!("unknown resolver version {:?}", version),
-        };
+
+        let target_platform = self.make_target_platform()?;
+        let host_platform = self.guppy_current_platform()?;
 
         let mut cargo_opts = CargoOptions::new()
             .with_version(version)
             .with_dev_deps(self.include_dev)
-            .with_target_platform(target_platform.as_ref())
-            .with_host_platform(host_platform.as_ref());
-        let cargo_set = feature_query.resolve_cargo(&mut cargo_opts)?;
+            .with_target_platform(Some(&target_platform))
+            .with_host_platform(Some(&host_platform));
+        let intermediate_set = CargoSet::new_intermediate(feature_query, &mut cargo_opts)?;
+        let (target_features, host_features) = intermediate_set.target_host_sets();
 
-        Ok(FeatureMap::from_guppy(&cargo_set, merge_maps))
+        Ok(FeatureMap::from_guppy(target_features, host_features))
     }
 
     /// Returns a `Platform` corresponding to the target platform.
@@ -245,21 +236,12 @@ pub struct FeatureMap {
 }
 
 impl FeatureMap {
-    fn from_guppy(cargo_set: &CargoSet<'_>, merge_maps: bool) -> Self {
-        if merge_maps {
-            let unified_set = cargo_set.target_features().union(cargo_set.host_features());
-            let unified_map = Self::feature_set_to_map(&unified_set);
-            Self {
-                target_map: unified_map.clone(),
-                host_map: unified_map,
-            }
-        } else {
-            let target_map = Self::feature_set_to_map(cargo_set.target_features());
-            let host_map = Self::feature_set_to_map(cargo_set.host_features());
-            Self {
-                target_map,
-                host_map,
-            }
+    fn from_guppy(target_features: &FeatureSet<'_>, host_features: &FeatureSet<'_>) -> Self {
+        let target_map = Self::feature_set_to_map(target_features);
+        let host_map = Self::feature_set_to_map(host_features);
+        Self {
+            target_map,
+            host_map,
         }
     }
 

@@ -150,7 +150,7 @@ pub enum CargoResolvePhase<'g, 'a> {
 
     /// A resolution phase for packages on the target platform.
     ///
-    /// This is passed into `CargoPostfilter::accept_package` for the `V1` and `V1Install` resolvers.
+    /// This is passed into `CargoPostfilter::accept_package` for all resolvers.
     TargetPackage(&'a PackageQuery<'g>),
 
     /// A resolution phase for features on the target platform.
@@ -160,7 +160,7 @@ pub enum CargoResolvePhase<'g, 'a> {
 
     /// A resolution phase for packages on the host platform.
     ///
-    /// This is passed into `CargoPostfilter::accept_package` for the `V1` and `V1Install` resolvers.
+    /// This is passed into `CargoPostfilter::accept_package` for all resolvers.
     HostPackage(&'a PackageQuery<'g>),
 
     /// A resolution phase for features on the host platform.
@@ -288,7 +288,24 @@ impl<'g> CargoSet<'g> {
         PF: CargoPostfilter<'g>,
     {
         let build_state = CargoSetBuildState::new(&query, opts)?;
-        Ok(build_state.build(query))
+        Ok(build_state.build(query, opts))
+    }
+
+    /// Creates a new `CargoIntermediateSet` based on the given query and options.
+    ///
+    /// This set contains an over-estimate of targets and features.
+    ///
+    /// Not part of the stable API, exposed for testing.
+    #[doc(hidden)]
+    pub fn new_intermediate<PF>(
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'_, PF>,
+    ) -> Result<CargoIntermediateSet<'g>, Error>
+    where
+        PF: CargoPostfilter<'g>,
+    {
+        let build_state = CargoSetBuildState::new(&query, opts)?;
+        Ok(build_state.build_intermediate(query, opts))
     }
 
     /// Returns the feature set enabled on the target platform.
@@ -355,16 +372,18 @@ impl<'g> CargoSet<'g> {
     }
 }
 
-struct CargoSetBuildState<'a, 'b, PF> {
-    opts: &'a mut CargoOptions<'b, PF>,
+struct CargoSetBuildState {
     omitted_packages: SortedSet<NodeIndex<PackageIx>>,
 }
 
-impl<'g, 'a, 'b, PF> CargoSetBuildState<'a, 'b, PF>
-where
-    PF: CargoPostfilter<'g>,
-{
-    fn new(query: &FeatureQuery<'g>, opts: &'a mut CargoOptions<'b, PF>) -> Result<Self, Error> {
+impl CargoSetBuildState {
+    fn new<'g, 'a, PF>(
+        query: &FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+    ) -> Result<Self, Error>
+    where
+        PF: CargoPostfilter<'g>,
+    {
         if query.direction() == DependencyDirection::Reverse {
             return Err(Error::CargoSetError(
                 "attempted to compute for reverse query".into(),
@@ -376,24 +395,92 @@ where
             .package_graph
             .package_ixs(opts.omitted_packages.iter().copied())?;
 
-        Ok(Self {
-            opts,
-            omitted_packages,
-        })
+        Ok(Self { omitted_packages })
     }
 
-    fn build(self, query: FeatureQuery<'g>) -> CargoSet {
-        match self.opts.version {
-            CargoResolverVersion::V1 => self.new_v1(query, false),
+    fn build<'g, 'a, PF>(
+        self,
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+    ) -> CargoSet<'g>
+    where
+        PF: CargoPostfilter<'g>,
+    {
+        match opts.version {
+            CargoResolverVersion::V1 => self.new_v1(query, opts, false),
             CargoResolverVersion::V1Install => {
-                let avoid_dev_deps = !self.opts.include_dev;
-                self.new_v1(query, avoid_dev_deps)
+                let avoid_dev_deps = !opts.include_dev;
+                self.new_v1(query, opts, avoid_dev_deps)
             }
-            CargoResolverVersion::V2 => self.new_v2(query),
+            CargoResolverVersion::V2 => self.new_v2(query, opts),
         }
     }
 
-    fn new_v1(self, query: FeatureQuery<'g>, avoid_dev_deps: bool) -> CargoSet {
+    fn build_intermediate<'g, 'a, PF>(
+        self,
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+    ) -> CargoIntermediateSet<'g>
+    where
+        PF: CargoPostfilter<'g>,
+    {
+        match opts.version {
+            CargoResolverVersion::V1 => self.new_v1_intermediate(query, opts, false),
+            CargoResolverVersion::V1Install => {
+                let avoid_dev_deps = !opts.include_dev;
+                self.new_v1_intermediate(query, opts, avoid_dev_deps)
+            }
+            CargoResolverVersion::V2 => self.new_v2_intermediate(query, opts),
+        }
+    }
+
+    fn new_v1<'g, 'a, PF>(
+        self,
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+        avoid_dev_deps: bool,
+    ) -> CargoSet<'g>
+    where
+        PF: CargoPostfilter<'g>,
+    {
+        self.build_set(query, opts, |query, opts| {
+            self.new_v1_intermediate(query, opts, avoid_dev_deps)
+        })
+    }
+
+    fn new_v2<'g, 'a, PF>(
+        self,
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+    ) -> CargoSet<'g>
+    where
+        PF: CargoPostfilter<'g>,
+    {
+        self.build_set(query, opts, |query, opts| {
+            self.new_v2_intermediate(query, opts)
+        })
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    fn is_omitted(&self, package_ix: NodeIndex<PackageIx>) -> bool {
+        self.omitted_packages.contains(&package_ix)
+    }
+
+    fn build_set<'g, 'a, PF>(
+        &self,
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+        intermediate_fn: impl FnOnce(
+            FeatureQuery<'g>,
+            &mut CargoOptions<'a, PF>,
+        ) -> CargoIntermediateSet<'g>,
+    ) -> CargoSet<'g>
+    where
+        PF: CargoPostfilter<'g>,
+    {
         // Prepare a package query for step 2.
         let graph = *query.graph();
         // Note that currently, proc macros specified in initials are built on both the target and
@@ -417,29 +504,10 @@ where
             .package_graph
             .query_from_parts(SortedSet::new(target_ixs), DependencyDirection::Forward);
 
-        // 1. Perform a "complete" feature query. This will provide more packages than will be
-        // included in the final build, but for each package it will have the correct feature set.
-        let complete_set = query.resolve_with_fn(|query, link| {
-            let res = if self.is_omitted(link.to().package_ix()) {
-                // Pretend that the omitted set doesn't exist.
-                false
-            } else if !avoid_dev_deps
-                && query
-                    .starts_from(link.from().feature_id())
-                    .expect("valid ID")
-            {
-                // Follow everything for initials.
-                true
-            } else {
-                // Follow normal and build edges for everything else.
-                !link.dev_only()
-            };
-
-            res && self
-                .opts
-                .postfilter
-                .accept_feature(CargoResolvePhase::V1Unified(query), link)
-        });
+        // 1. Build the intermediate set containing the features for any possible package that can
+        // be built.
+        let intermediate_set = intermediate_fn(query, opts);
+        let (target_set, host_set) = intermediate_set.target_host_sets();
 
         // While doing traversal 2 below, record any packages discovered along build edges for use
         // in host ixs, to prepare for step 3. This will also include proc-macros.
@@ -449,38 +517,40 @@ where
         // This list will contain build dep edges out of target packages.
         let mut build_dep_edge_ixs = Vec::new();
 
-        let is_enabled =
-            |link: &PackageLink<'_>, kind: DependencyKind, platform: Option<&Platform<'_>>| {
-                let (from, to) = link.endpoints();
-                let req_status = link.req_for_kind(kind).status();
-                // Check the complete set to figure out whether we look at required_on or
-                // enabled_on.
-                let consider_optional = complete_set
-                    .contains((from.id(), link.dep_name()))
-                    .unwrap_or_else(|| {
-                        // If the feature ID isn't present, it means the dependency wasn't declared
-                        // as optional. In that case the value doesn't matter.
-                        debug_assert!(
-                            req_status.optional_status().is_never(),
-                            "for {} -> {}, dep '{}' not declared as optional",
-                            from.name(),
-                            to.name(),
-                            link.dep_name()
-                        );
-                        false
-                    });
+        let is_enabled = |feature_set: &FeatureSet<'_>,
+                          link: &PackageLink<'_>,
+                          kind: DependencyKind,
+                          platform: Option<&Platform<'_>>| {
+            let (from, to) = link.endpoints();
+            let req_status = link.req_for_kind(kind).status();
+            // Check the complete set to figure out whether we look at required_on or
+            // enabled_on.
+            let consider_optional = feature_set
+                .contains((from.id(), link.dep_name()))
+                .unwrap_or_else(|| {
+                    // If the feature ID isn't present, it means the dependency wasn't declared
+                    // as optional. In that case the value doesn't matter.
+                    debug_assert!(
+                        req_status.optional_status().is_never(),
+                        "for {} -> {}, dep '{}' not declared as optional",
+                        from.name(),
+                        to.name(),
+                        link.dep_name()
+                    );
+                    false
+                });
 
-                match (consider_optional, platform) {
-                    (true, Some(platform)) => {
-                        req_status.enabled_on(platform) != EnabledTernary::Disabled
-                    }
-                    (true, None) => req_status.enabled_on_any(),
-                    (false, Some(platform)) => {
-                        req_status.required_on(platform) != EnabledTernary::Disabled
-                    }
-                    (false, None) => req_status.required_on_any(),
+            match (consider_optional, platform) {
+                (true, Some(platform)) => {
+                    req_status.enabled_on(platform) != EnabledTernary::Disabled
                 }
-            };
+                (true, None) => req_status.enabled_on_any(),
+                (false, Some(platform)) => {
+                    req_status.required_on(platform) != EnabledTernary::Disabled
+                }
+                (false, None) => req_status.required_on_any(),
+            }
+        };
 
         // 2. Figure out what packages will be included on the target platform, i.e. normal + dev
         // (if requested).
@@ -492,33 +562,35 @@ where
                 return false;
             }
 
-            let consider_dev =
-                self.opts.include_dev && query.starts_from(from.id()).expect("valid ID");
+            let consider_dev = opts.include_dev && query.starts_from(from.id()).expect("valid ID");
             // Build dependencies are only considered if there's a build script.
             let consider_build = from.has_build_script();
 
-            let mut follow_target =
-                is_enabled(&link, DependencyKind::Normal, self.opts.target_platform)
-                    || (consider_dev
-                        && is_enabled(
-                            &link,
-                            DependencyKind::Development,
-                            self.opts.target_platform,
-                        ));
+            let mut follow_target = is_enabled(
+                target_set,
+                &link,
+                DependencyKind::Normal,
+                opts.target_platform,
+            ) || (consider_dev
+                && is_enabled(
+                    target_set,
+                    &link,
+                    DependencyKind::Development,
+                    opts.target_platform,
+                ));
 
             // Proc macros build on the host, so for normal/dev dependencies redirect it to the host
             // instead.
             let mut proc_macro_redirect = follow_target && to.is_proc_macro();
 
             // Build dependencies are evaluated against the host platform.
-            let mut build_dep_redirect =
-                consider_build && is_enabled(&link, DependencyKind::Build, self.opts.host_platform);
+            let mut build_dep_redirect = consider_build
+                && is_enabled(target_set, &link, DependencyKind::Build, opts.host_platform);
 
             // If the postfilter returns false, don't traverse this edge at all.
             let included = follow_target || proc_macro_redirect || build_dep_redirect;
             if included
-                && !self
-                    .opts
+                && !opts
                     .postfilter
                     .accept_package(CargoResolvePhase::TargetPackage(query), link)
             {
@@ -557,12 +629,11 @@ where
 
                 // Only normal and build dependencies are considered, regardless of whether this is
                 // an initial. (Dev-dependencies of initials would have been considered in step 2).
-                let res = is_enabled(&link, DependencyKind::Normal, self.opts.host_platform)
+                let res = is_enabled(host_set, &link, DependencyKind::Normal, opts.host_platform)
                     || (consider_build
-                        && is_enabled(&link, DependencyKind::Build, self.opts.host_platform));
+                        && is_enabled(host_set, &link, DependencyKind::Build, opts.host_platform));
 
-                res && self
-                    .opts
+                res && opts
                     .postfilter
                     .accept_package(CargoResolvePhase::HostPackage(query), link)
             });
@@ -571,10 +642,10 @@ where
         // features were selected.
         let target_features = graph
             .resolve_packages(&target_packages, all_filter())
-            .intersection(&complete_set);
+            .intersection(target_set);
         let host_features = graph
             .resolve_packages(&host_packages, all_filter())
-            .intersection(&complete_set);
+            .intersection(host_set);
 
         CargoSet {
             target_features,
@@ -584,10 +655,51 @@ where
         }
     }
 
-    fn new_v2(self, query: FeatureQuery<'g>) -> CargoSet {
-        let graph = *query.graph();
+    fn new_v1_intermediate<'g, 'a, PF>(
+        &self,
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+        avoid_dev_deps: bool,
+    ) -> CargoIntermediateSet<'g>
+    where
+        PF: CargoPostfilter<'g>,
+    {
+        // Perform a "complete" feature query. This will provide more packages than will be
+        // included in the final build, but for each package it will have the correct feature set.
+        let complete_set = query.resolve_with_fn(|query, link| {
+            let res = if self.is_omitted(link.to().package_ix()) {
+                // Pretend that the omitted set doesn't exist.
+                false
+            } else if !avoid_dev_deps
+                && query
+                    .starts_from(link.from().feature_id())
+                    .expect("valid ID")
+            {
+                // Follow everything for initials.
+                true
+            } else {
+                // Follow normal and build edges for everything else.
+                !link.dev_only()
+            };
 
-        // Note that currently, proc macros specified in initials take part in feature resolution
+            res && opts
+                .postfilter
+                .accept_feature(CargoResolvePhase::V1Unified(query), link)
+        });
+
+        CargoIntermediateSet::Unified(complete_set)
+    }
+
+    fn new_v2_intermediate<'g, 'a, PF>(
+        &self,
+        query: FeatureQuery<'g>,
+        opts: &mut CargoOptions<'a, PF>,
+    ) -> CargoIntermediateSet<'g>
+    where
+        PF: CargoPostfilter<'g>,
+    {
+        let graph = *query.graph();
+        // Note that proc macros specified in initials take part in feature resolution
         // for both target and host ixs. If they didn't, then the query would be partitioned into
         // host and target ixs instead.
         // https://github.com/rust-lang/cargo/issues/8312
@@ -618,14 +730,10 @@ where
             }
         };
 
-        // State to maintain between steps 1 and 2.
-        let mut proc_macro_edge_ixs = Vec::new();
-        let mut build_dep_edge_ixs = Vec::new();
-
         // Keep a copy of the target query for use in step 2.
         let target_query = query.clone();
         // 1. Perform a feature query for the target.
-        let target_features = query.resolve_with_fn(|query, link| {
+        let target = query.resolve_with_fn(|query, link| {
             let (from, to) = link.endpoints();
 
             if self.is_omitted(to.package_ix()) {
@@ -634,19 +742,11 @@ where
             }
 
             let consider_dev =
-                self.opts.include_dev && query.starts_from(from.feature_id()).expect("valid ID");
-            // The V2 resolver behaves differently from the V1 resolver -- it doesn't appear to
-            // check for whether this package has a build script.
-            // XXX is this broken in upstream cargo?
-
-            let mut follow_target =
-                is_enabled(&link, DependencyKind::Normal, self.opts.target_platform)
-                    || (consider_dev
-                        && is_enabled(
-                            &link,
-                            DependencyKind::Development,
-                            self.opts.target_platform,
-                        ));
+                opts.include_dev && query.starts_from(from.feature_id()).expect("valid ID");
+            // This resolver doesn't check for whether this package has a build script.
+            let mut follow_target = is_enabled(&link, DependencyKind::Normal, opts.target_platform)
+                || (consider_dev
+                    && is_enabled(&link, DependencyKind::Development, opts.target_platform));
 
             // Proc macros build on the host, so for normal/dev dependencies redirect it to the host
             // instead.
@@ -654,13 +754,12 @@ where
 
             // Build dependencies are evaluated against the host platform.
             let mut build_dep_redirect =
-                is_enabled(&link, DependencyKind::Build, self.opts.host_platform);
+                is_enabled(&link, DependencyKind::Build, opts.host_platform);
 
             // If the postfilter returns false, don't traverse this edge at all.
             let included = follow_target || proc_macro_redirect || build_dep_redirect;
             if included
-                && !self
-                    .opts
+                && !opts
                     .postfilter
                     .accept_feature(CargoResolvePhase::TargetFeature(query), link)
             {
@@ -673,11 +772,7 @@ where
             if build_dep_redirect || proc_macro_redirect {
                 host_ixs.push(to.feature_ix());
             }
-            if build_dep_redirect {
-                build_dep_edge_ixs.push(link.package_edge_ix());
-            }
             if proc_macro_redirect {
-                proc_macro_edge_ixs.push(link.package_edge_ix());
                 follow_target = false;
             }
 
@@ -685,7 +780,7 @@ where
         });
 
         // 2. Perform a feature query for the host.
-        let host_features = graph
+        let host = graph
             .query_from_parts(SortedSet::new(host_ixs), DependencyDirection::Forward)
             .resolve_with_fn(|query, link| {
                 let (from, to) = link.endpoints();
@@ -693,43 +788,49 @@ where
                     // Pretend that the omitted set doesn't exist.
                     return false;
                 }
-                // The V2 resolver behaves differently from the V1 resolver -- it doesn't appear to
-                // check for whether this package has a build script. It also unifies dev
-                // dependencies of initials, even on the host platform.
-                // XXX is this a bug in upstream cargo?
-                let consider_dev = self.opts.include_dev
+                // During feature resolution, the v2 resolver doesn't check for whether this package
+                // has a build script. It also unifies dev dependencies of initials, even on the
+                // host platform.
+                let consider_dev = opts.include_dev
                     && target_query
                         .starts_from(from.feature_id())
                         .expect("valid ID");
 
-                // Interestingly, dev-dependencies of initials may also be followed on the host
-                // platform.
-                // XXX is this a bug in upstream cargo?
-                let res = is_enabled(&link, DependencyKind::Normal, self.opts.host_platform)
-                    || is_enabled(&link, DependencyKind::Build, self.opts.host_platform)
+                let res = is_enabled(&link, DependencyKind::Normal, opts.host_platform)
+                    || is_enabled(&link, DependencyKind::Build, opts.host_platform)
                     || (consider_dev
-                        && is_enabled(&link, DependencyKind::Development, self.opts.host_platform));
+                        && is_enabled(&link, DependencyKind::Development, opts.host_platform));
 
-                res && self
-                    .opts
+                res && opts
                     .postfilter
                     .accept_feature(CargoResolvePhase::HostFeature(query), link)
             });
 
-        CargoSet {
-            target_features,
-            host_features,
-            proc_macro_edge_ixs: SortedSet::new(proc_macro_edge_ixs),
-            build_dep_edge_ixs: SortedSet::new(build_dep_edge_ixs),
-        }
+        CargoIntermediateSet::TargetHost { target, host }
     }
+}
 
-    // ---
-    // Helper methods
-    // ---
+/// An intermediate set representing an overestimate of what packages are built, but an accurate
+/// summary of what features are built given a particular package.
+///
+/// Not part of the stable API, exposed for cargo-compare.
+#[doc(hidden)]
+#[derive(Debug)]
+pub enum CargoIntermediateSet<'g> {
+    Unified(FeatureSet<'g>),
+    TargetHost {
+        target: FeatureSet<'g>,
+        host: FeatureSet<'g>,
+    },
+}
 
-    fn is_omitted(&self, package_ix: NodeIndex<PackageIx>) -> bool {
-        self.omitted_packages.contains(&package_ix)
+impl<'g> CargoIntermediateSet<'g> {
+    #[doc(hidden)]
+    pub fn target_host_sets(&self) -> (&FeatureSet<'g>, &FeatureSet<'g>) {
+        match self {
+            CargoIntermediateSet::Unified(set) => (set, set),
+            CargoIntermediateSet::TargetHost { target, host } => (target, host),
+        }
     }
 }
 

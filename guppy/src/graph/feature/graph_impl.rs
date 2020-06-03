@@ -641,6 +641,7 @@ impl<'g> CrossLink<'g> {
     // Helper methods
     // ---
 
+    #[allow(dead_code)]
     pub(in crate::graph) fn package_edge_ix(&self) -> EdgeIndex<PackageIx> {
         self.inner.package_edge_ix
     }
