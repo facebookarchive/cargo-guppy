@@ -742,6 +742,26 @@
 <span id="742">742</span>
 <span id="743">743</span>
 <span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
+<span id="755">755</span>
+<span id="756">756</span>
+<span id="757">757</span>
+<span id="758">758</span>
+<span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
+<span id="763">763</span>
+<span id="764">764</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -755,7 +775,6 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">EnabledTernary</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageQuery</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">DependencyKind</span>, <span class="ident">Error</span>, <span class="ident">PackageId</span>};
-<span class="kw">use</span> <span class="ident">itertools</span>::{<span class="ident">Either</span>, <span class="ident">Itertools</span>};
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span>;
 <span class="kw">use</span> <span class="ident">target_spec</span>::<span class="ident">Platform</span>;
@@ -1041,6 +1060,11 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This represents the packages and features that are included as code in the final build</span>
     <span class="doccomment">/// artifacts. This is relevant for both cross-compilation and auditing.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note that currently, procedural macros specified in the initial query are included on both</span>
+    <span class="doccomment">/// the target and the host platforms. This is even though they&#39;re typically only built on</span>
+    <span class="doccomment">/// the host platform -- if there are binary or test targets specified in the proc-macro</span>
+    <span class="doccomment">/// package, those will be built on the target platform.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_features</span>
     }
@@ -1049,6 +1073,8 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This represents the packages and features that influence the final build artifacts, but</span>
     <span class="doccomment">/// whose code is generally not directly included.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This includes all procedural macros, including those specified in the initial query.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_features</span>
     }
@@ -1135,17 +1161,23 @@
     <span class="kw">fn</span> <span class="ident">new_v1</span>(<span class="self">self</span>, <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">avoid_dev_deps</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span> {
         <span class="comment">// Prepare a package query for step 2.</span>
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">query</span>.<span class="ident">graph</span>();
-        <span class="kw">let</span> (<span class="ident">target_ixs</span>, <span class="ident">host_ixs</span>): (<span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>) <span class="op">=</span>
-            <span class="ident">query</span>.<span class="ident">params</span>.<span class="ident">initials</span>().<span class="ident">iter</span>().<span class="ident">partition_map</span>(<span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
+        <span class="comment">// Note that currently, proc macros specified in initials are built on both the target and</span>
+        <span class="comment">// the host.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">host_ixs</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">target_ixs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">query</span>
+            .<span class="ident">params</span>
+            .<span class="ident">initials</span>()
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">metadata_for_ix</span>(<span class="kw-2">*</span><span class="ident">feature_ix</span>);
+                <span class="kw">let</span> <span class="ident">package_ix</span> <span class="op">=</span> <span class="ident">metadata</span>.<span class="ident">package_ix</span>();
                 <span class="kw">if</span> <span class="ident">metadata</span>.<span class="ident">package</span>().<span class="ident">is_proc_macro</span>() {
-                    <span class="comment">// Proc macros are built on the host.</span>
-                    <span class="ident">Either</span>::<span class="ident">Right</span>(<span class="ident">metadata</span>.<span class="ident">package_ix</span>())
-                } <span class="kw">else</span> {
-                    <span class="comment">// Everything else is built on the target.</span>
-                    <span class="ident">Either</span>::<span class="ident">Left</span>(<span class="ident">metadata</span>.<span class="ident">package_ix</span>())
+                    <span class="comment">// Proc macros are also built on the host.</span>
+                    <span class="ident">host_ixs</span>.<span class="ident">push</span>(<span class="ident">package_ix</span>);
                 }
-            });
+                <span class="ident">package_ix</span>
+            })
+            .<span class="ident">collect</span>();
         <span class="kw">let</span> <span class="ident">target_query</span> <span class="op">=</span> <span class="ident">graph</span>
             .<span class="ident">package_graph</span>
             .<span class="ident">query_from_parts</span>(<span class="ident">SortedSet</span>::<span class="ident">new</span>(<span class="ident">target_ixs</span>), <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>);
@@ -1175,8 +1207,8 @@
         });
 
         <span class="comment">// While doing traversal 2 below, record any packages discovered along build edges for use</span>
-        <span class="comment">// in step 3. This will also include proc-macros.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">host_ixs</span> <span class="op">=</span> <span class="ident">host_ixs</span>;
+        <span class="comment">// in host ixs, to prepare for step 3. This will also include proc-macros.</span>
+
         <span class="comment">// This list will contain proc-macro edges out of target packages.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">proc_macro_edge_ixs</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
         <span class="comment">// This list will contain build dep edges out of target packages.</span>
@@ -1320,20 +1352,25 @@
     <span class="kw">fn</span> <span class="ident">new_v2</span>(<span class="self">self</span>, <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">query</span>.<span class="ident">graph</span>();
 
-        <span class="comment">// Filter out any proc macros in the query and move them to the host ix set.</span>
-        <span class="kw">let</span> (<span class="ident">target_ixs</span>, <span class="ident">host_ixs</span>): (<span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>) <span class="op">=</span>
-            <span class="ident">query</span>.<span class="ident">params</span>.<span class="ident">initials</span>().<span class="ident">iter</span>().<span class="ident">partition_map</span>(<span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
+        <span class="comment">// Note that currently, proc macros specified in initials take part in feature resolution</span>
+        <span class="comment">// for both target and host ixs. If they didn&#39;t, then the query would be partitioned into</span>
+        <span class="comment">// host and target ixs instead.</span>
+        <span class="comment">// https://github.com/rust-lang/cargo/issues/8312</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">host_ixs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">query</span>
+            .<span class="ident">params</span>
+            .<span class="ident">initials</span>()
+            .<span class="ident">iter</span>()
+            .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">metadata_for_ix</span>(<span class="kw-2">*</span><span class="ident">feature_ix</span>);
                 <span class="kw">if</span> <span class="ident">metadata</span>.<span class="ident">package</span>().<span class="ident">is_proc_macro</span>() {
                     <span class="comment">// Proc macros are built on the host.</span>
-                    <span class="ident">Either</span>::<span class="ident">Right</span>(<span class="ident">metadata</span>.<span class="ident">feature_ix</span>())
+                    <span class="prelude-val">Some</span>(<span class="ident">metadata</span>.<span class="ident">feature_ix</span>())
                 } <span class="kw">else</span> {
                     <span class="comment">// Everything else is built on the target.</span>
-                    <span class="ident">Either</span>::<span class="ident">Left</span>(<span class="ident">metadata</span>.<span class="ident">feature_ix</span>())
+                    <span class="prelude-val">None</span>
                 }
-            });
-        <span class="kw">let</span> <span class="ident">target_query</span> <span class="op">=</span>
-            <span class="ident">graph</span>.<span class="ident">query_from_parts</span>(<span class="ident">SortedSet</span>::<span class="ident">new</span>(<span class="ident">target_ixs</span>), <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>);
+            })
+            .<span class="ident">collect</span>();
 
         <span class="kw">let</span> <span class="ident">is_enabled</span> <span class="op">=</span> <span class="op">|</span><span class="ident">link</span>: <span class="kw-2">&amp;</span><span class="ident">CrossLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
                           <span class="ident">kind</span>: <span class="ident">DependencyKind</span>,
@@ -1347,12 +1384,13 @@
         };
 
         <span class="comment">// State to maintain between steps 1 and 2.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">host_ixs</span> <span class="op">=</span> <span class="ident">host_ixs</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">proc_macro_edge_ixs</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">build_dep_edge_ixs</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
 
+        <span class="comment">// Keep a copy of the target query for use in step 2.</span>
+        <span class="kw">let</span> <span class="ident">target_query</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">clone</span>();
         <span class="comment">// 1. Perform a feature query for the target.</span>
-        <span class="kw">let</span> <span class="ident">target_features</span> <span class="op">=</span> <span class="ident">target_query</span>.<span class="ident">clone</span>().<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="ident">query</span>, <span class="ident">link</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="ident">target_features</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="ident">query</span>, <span class="ident">link</span><span class="op">|</span> {
             <span class="kw">let</span> (<span class="ident">from</span>, <span class="ident">to</span>) <span class="op">=</span> <span class="ident">link</span>.<span class="ident">endpoints</span>();
 
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_omitted</span>(<span class="ident">to</span>.<span class="ident">package_ix</span>()) {
@@ -1425,7 +1463,9 @@
                 <span class="comment">// dependencies of initials, even on the host platform.</span>
                 <span class="comment">// XXX is this a bug in upstream cargo?</span>
                 <span class="kw">let</span> <span class="ident">consider_dev</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">include_dev</span>
-                    <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">query</span>.<span class="ident">starts_from</span>(<span class="ident">from</span>.<span class="ident">feature_id</span>()).<span class="ident">expect</span>(<span class="string">&quot;valid ID&quot;</span>);
+                    <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">target_query</span>
+                        .<span class="ident">starts_from</span>(<span class="ident">from</span>.<span class="ident">feature_id</span>())
+                        .<span class="ident">expect</span>(<span class="string">&quot;valid ID&quot;</span>);
 
                 <span class="comment">// Interestingly, dev-dependencies of initials may also be followed on the host</span>
                 <span class="comment">// platform.</span>
