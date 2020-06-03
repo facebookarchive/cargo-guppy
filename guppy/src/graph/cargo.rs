@@ -21,6 +21,7 @@ use target_spec::Platform;
 pub struct CargoOptions<'a, PF = ()> {
     version: CargoResolverVersion,
     include_dev: bool,
+    proc_macros_on_target: bool,
     host_platform: Option<&'a Platform<'a>>,
     target_platform: Option<&'a Platform<'a>>,
     omitted_packages: HashSet<&'a PackageId>,
@@ -34,6 +35,7 @@ impl<'a> CargoOptions<'a> {
     ///
     /// * use version 1 of the Cargo resolver
     /// * exclude dev-dependencies
+    /// * do not build proc macros specified in the query on the target platform
     /// * resolve dependencies assuming any possible host or target platform
     /// * do not omit any packages.
     pub fn new() -> Self {
@@ -70,6 +72,7 @@ where
         CargoOptions {
             version: CargoResolverVersion::V1,
             include_dev: false,
+            proc_macros_on_target: false,
             host_platform: None,
             target_platform: None,
             omitted_packages: HashSet::new(),
@@ -93,6 +96,19 @@ where
     /// The default is true, which matches what a plain `cargo build` does.
     pub fn with_dev_deps(mut self, include_dev: bool) -> Self {
         self.include_dev = include_dev;
+        self
+    }
+
+    /// If set to true, causes procedural macros (and transitive dependencies) specified in the
+    /// initial set to be built on the host platform as well, not just the target platform.
+    ///
+    /// Procedural macros are typically not built on the target platform, but if they contain binary
+    /// or test targets they will be.
+    ///
+    /// Procedural macros that are dependencies of the initial set will only be built on the host
+    /// platform, regardless of whether this configuration is set.
+    pub fn with_proc_macros_on_target(mut self, proc_macros_on_target: bool) -> Self {
+        self.proc_macros_on_target = proc_macros_on_target;
         self
     }
 
@@ -312,11 +328,6 @@ impl<'g> CargoSet<'g> {
     ///
     /// This represents the packages and features that are included as code in the final build
     /// artifacts. This is relevant for both cross-compilation and auditing.
-    ///
-    /// Note that currently, procedural macros specified in the initial query are included on both
-    /// the target and the host platforms. This is even though they're typically only built on
-    /// the host platform -- if there are binary or test targets specified in the proc-macro
-    /// package, those will be built on the target platform.
     pub fn target_features(&self) -> &FeatureSet<'g> {
         &self.target_features
     }
@@ -490,14 +501,20 @@ impl CargoSetBuildState {
             .params
             .initials()
             .iter()
-            .map(|feature_ix| {
+            .filter_map(|feature_ix| {
                 let metadata = graph.metadata_for_ix(*feature_ix);
                 let package_ix = metadata.package_ix();
                 if metadata.package().is_proc_macro() {
-                    // Proc macros are also built on the host.
+                    // Proc macros are built on the host.
                     host_ixs.push(package_ix);
+                    if opts.proc_macros_on_target {
+                        Some(package_ix)
+                    } else {
+                        None
+                    }
+                } else {
+                    Some(package_ix)
                 }
-                package_ix
             })
             .collect();
         let target_query = graph

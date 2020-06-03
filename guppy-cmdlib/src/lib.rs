@@ -85,6 +85,10 @@ pub struct CargoResolverOpts {
     /// Include dev-dependencies of initial packages (default: false)
     pub include_dev: bool,
 
+    #[structopt(long = "proc-macros-on-target")]
+    /// Include initial proc-macros on target platform (default: false)
+    pub proc_macros_on_target: bool,
+
     #[structopt(long = "resolver-version", parse(try_from_str = parse_resolver_version))]
     #[structopt(possible_values = &ResolverVersion::variants(), case_insensitive = true, default_value = "V1")]
     pub resolver_version: CargoResolverVersion,

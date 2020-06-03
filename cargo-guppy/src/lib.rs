@@ -131,6 +131,7 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let mut cargo_opts = CargoOptions::new_postfilter_fn(|_, link| kind.should_traverse(&link))
         .with_dev_deps(opts.resolver_opts.include_dev)
         .with_version(opts.resolver_opts.resolver_version)
+        .with_proc_macros_on_target(opts.resolver_opts.proc_macros_on_target)
         .with_target_platform(target_platform.as_ref())
         .with_host_platform(host_platform.as_ref())
         .with_omitted_packages(opts.base_filter_opts.omitted_package_ids(&pkg_graph));
