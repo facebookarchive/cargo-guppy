@@ -606,8 +606,10 @@ where
         let mut proc_macro_edge_ixs = Vec::new();
         let mut build_dep_edge_ixs = Vec::new();
 
+        // Keep a copy of the target query for use in step 2.
+        let target_query = query.clone();
         // 1. Perform a feature query for the target.
-        let target_features = target_query.clone().resolve_with_fn(|query, link| {
+        let target_features = query.resolve_with_fn(|query, link| {
             let (from, to) = link.endpoints();
 
             if self.is_omitted(to.package_ix()) {
@@ -680,7 +682,9 @@ where
                 // dependencies of initials, even on the host platform.
                 // XXX is this a bug in upstream cargo?
                 let consider_dev = self.opts.include_dev
-                    && query.starts_from(from.feature_id()).expect("valid ID");
+                    && target_query
+                        .starts_from(from.feature_id())
+                        .expect("valid ID");
 
                 // Interestingly, dev-dependencies of initials may also be followed on the host
                 // platform.
