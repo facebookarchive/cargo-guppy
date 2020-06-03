@@ -10,7 +10,6 @@ use crate::graph::feature::{all_filter, CrossLink, FeatureQuery, FeatureSet};
 use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageQuery};
 use crate::sorted_set::SortedSet;
 use crate::{DependencyKind, Error, PackageId};
-use itertools::{Either, Itertools};
 use petgraph::prelude::*;
 use std::collections::HashSet;
 use target_spec::Platform;
@@ -296,6 +295,11 @@ impl<'g> CargoSet<'g> {
     ///
     /// This represents the packages and features that are included as code in the final build
     /// artifacts. This is relevant for both cross-compilation and auditing.
+    ///
+    /// Note that currently, procedural macros specified in the initial query are included on both
+    /// the target and the host platforms. This is even though they're typically only built on
+    /// the host platform -- if there are binary or test targets specified in the proc-macro
+    /// package, those will be built on the target platform.
     pub fn target_features(&self) -> &FeatureSet<'g> {
         &self.target_features
     }
@@ -304,6 +308,8 @@ impl<'g> CargoSet<'g> {
     ///
     /// This represents the packages and features that influence the final build artifacts, but
     /// whose code is generally not directly included.
+    ///
+    /// This includes all procedural macros, including those specified in the initial query.
     pub fn host_features(&self) -> &FeatureSet<'g> {
         &self.host_features
     }
@@ -390,17 +396,23 @@ where
     fn new_v1(self, query: FeatureQuery<'g>, avoid_dev_deps: bool) -> CargoSet {
         // Prepare a package query for step 2.
         let graph = *query.graph();
-        let (target_ixs, host_ixs): (Vec<_>, Vec<_>) =
-            query.params.initials().iter().partition_map(|feature_ix| {
+        // Note that currently, proc macros specified in initials are built on both the target and
+        // the host.
+        let mut host_ixs = Vec::new();
+        let target_ixs: Vec<_> = query
+            .params
+            .initials()
+            .iter()
+            .map(|feature_ix| {
                 let metadata = graph.metadata_for_ix(*feature_ix);
+                let package_ix = metadata.package_ix();
                 if metadata.package().is_proc_macro() {
-                    // Proc macros are built on the host.
-                    Either::Right(metadata.package_ix())
-                } else {
-                    // Everything else is built on the target.
-                    Either::Left(metadata.package_ix())
+                    // Proc macros are also built on the host.
+                    host_ixs.push(package_ix);
                 }
-            });
+                package_ix
+            })
+            .collect();
         let target_query = graph
             .package_graph
             .query_from_parts(SortedSet::new(target_ixs), DependencyDirection::Forward);
@@ -430,8 +442,8 @@ where
         });
 
         // While doing traversal 2 below, record any packages discovered along build edges for use
-        // in step 3. This will also include proc-macros.
-        let mut host_ixs = host_ixs;
+        // in host ixs, to prepare for step 3. This will also include proc-macros.
+
         // This list will contain proc-macro edges out of target packages.
         let mut proc_macro_edge_ixs = Vec::new();
         // This list will contain build dep edges out of target packages.
@@ -575,20 +587,25 @@ where
     fn new_v2(self, query: FeatureQuery<'g>) -> CargoSet {
         let graph = *query.graph();
 
-        // Filter out any proc macros in the query and move them to the host ix set.
-        let (target_ixs, host_ixs): (Vec<_>, Vec<_>) =
-            query.params.initials().iter().partition_map(|feature_ix| {
+        // Note that currently, proc macros specified in initials take part in feature resolution
+        // for both target and host ixs. If they didn't, then the query would be partitioned into
+        // host and target ixs instead.
+        // https://github.com/rust-lang/cargo/issues/8312
+        let mut host_ixs: Vec<_> = query
+            .params
+            .initials()
+            .iter()
+            .filter_map(|feature_ix| {
                 let metadata = graph.metadata_for_ix(*feature_ix);
                 if metadata.package().is_proc_macro() {
                     // Proc macros are built on the host.
-                    Either::Right(metadata.feature_ix())
+                    Some(metadata.feature_ix())
                 } else {
                     // Everything else is built on the target.
-                    Either::Left(metadata.feature_ix())
+                    None
                 }
-            });
-        let target_query =
-            graph.query_from_parts(SortedSet::new(target_ixs), DependencyDirection::Forward);
+            })
+            .collect();
 
         let is_enabled = |link: &CrossLink<'_>,
                           kind: DependencyKind,
@@ -602,7 +619,6 @@ where
         };
 
         // State to maintain between steps 1 and 2.
-        let mut host_ixs = host_ixs;
         let mut proc_macro_edge_ixs = Vec::new();
         let mut build_dep_edge_ixs = Vec::new();
 
