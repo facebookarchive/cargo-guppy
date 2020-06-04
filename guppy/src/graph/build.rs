@@ -4,7 +4,7 @@
 use crate::graph::{
     cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
     DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
-    PackageLinkImpl, PackageMetadataImpl, PlatformStatusImpl, WorkspaceImpl,
+    PackageLinkImpl, PackageMetadataImpl, PackageSourceImpl, PlatformStatusImpl, WorkspaceImpl,
 };
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
@@ -80,12 +80,15 @@ impl WorkspaceImpl {
                 Error::PackageGraphConstructError(format!("workspace member '{}' not found", id))
             })?;
 
-            let workspace_path = package_metadata.workspace_path.clone().ok_or_else(|| {
-                Error::PackageGraphConstructError(format!(
-                    "workspace member '{}' at path {:?} not in workspace",
-                    id, package_metadata.manifest_path,
-                ))
-            })?;
+            let workspace_path = match &package_metadata.source {
+                PackageSourceImpl::Workspace(path) => path,
+                _ => {
+                    return Err(Error::PackageGraphConstructError(format!(
+                        "workspace member '{}' at path {:?} not in workspace",
+                        id, package_metadata.manifest_path,
+                    )));
+                }
+            };
             members_by_path.insert(workspace_path.to_path_buf(), id.clone());
 
             match members_by_name.entry(package_metadata.name.clone().into_boxed_str()) {
@@ -172,10 +175,29 @@ impl<'a> GraphBuildState<'a> {
         let package_id = PackageId::from_metadata(package.id);
         let (package_ix, _, _) = self.package_data(&package_id)?;
 
-        let workspace_path = if self.workspace_members.contains(&package_id) {
-            Some(self.workspace_path(&package_id, &package.manifest_path)?)
+        let source = if self.workspace_members.contains(&package_id) {
+            PackageSourceImpl::Workspace(self.workspace_path(&package_id, &package.manifest_path)?)
+        } else if let Some(source) = package.source {
+            if source.is_crates_io() {
+                PackageSourceImpl::CratesIo
+            } else {
+                PackageSourceImpl::External(source.repr.into())
+            }
         } else {
-            None
+            // Path dependency: get the directory from the manifest path.
+            let dirname = match package.manifest_path.parent() {
+                Some(dirname) => dirname,
+                None => {
+                    return Err(Error::PackageGraphConstructError(format!(
+                        "package '{}': manifest path '{}' does not have parent",
+                        package_id,
+                        package.manifest_path.display(),
+                    )));
+                }
+            };
+            let rel_path = pathdiff::diff_paths(dirname, self.workspace_root)
+                .expect("workspace root is absolute");
+            PackageSourceImpl::Path(rel_path.into_boxed_path())
         };
 
         let mut build_targets = BuildTargets::new(&package_id);
@@ -268,7 +290,7 @@ impl<'a> GraphBuildState<'a> {
                 features,
 
                 package_ix,
-                workspace_path,
+                source,
                 build_targets,
                 has_default_feature,
                 resolved_deps,

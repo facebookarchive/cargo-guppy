@@ -4,7 +4,7 @@
 use crate::errors::FeatureBuildStage;
 use crate::graph::{
     BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
-    PackageGraph, PackageLink, PackageMetadata, Workspace,
+    PackageGraph, PackageLink, PackageMetadata, PackageSource, Workspace,
 };
 use crate::unit_tests::dep_helpers::{
     assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
@@ -15,7 +15,7 @@ use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::{BTreeMap, HashMap};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use target_spec::TargetFeatures;
 
 // Metadata along with interesting crate names.
@@ -608,6 +608,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("")
         .with_build_targets(vec![(
             BuildTargetId::Binary("testcrate"),
             BuildTargetKind::Binary,
@@ -643,6 +644,7 @@ impl FixtureDetails {
             Some("Data-driven tests in Rust\n"),
             Some("MIT/Apache-2.0"),
         )
+        .with_crates_io()
         .with_build_targets(vec![
             (
                 BuildTargetId::Library,
@@ -698,6 +700,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("testcrate")
         .with_deps(vec![
             (
                 "datatest",
@@ -726,6 +729,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("walkdir")
         .with_deps(vec![])
         .with_reverse_deps(vec![("walkdir", METADATA2_TESTCRATE)])
         .insert_into(&mut details);
@@ -739,6 +743,7 @@ impl FixtureDetails {
             Some("Quasi-quoting macro quote!(...)"),
             Some("MIT OR Apache-2.0"),
         )
+        .with_local_path("../quote")
         .with_deps(vec![(
             "proc-macro2",
             "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -777,6 +782,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("")
         .with_deps(vec![
             ("lazy_static", METADATA_DUPS_LAZY_STATIC_1),
             ("lazy_static", METADATA_DUPS_LAZY_STATIC_02),
@@ -799,6 +805,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("")
         .with_deps(vec![("testcycles-helper", METADATA_CYCLE1_HELPER)])
         .with_transitive_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
         .with_transitive_reverse_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
@@ -812,6 +819,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_local_path("../testcycles-helper")
         .with_deps(vec![("testcycles-base", METADATA_CYCLE1_BASE)])
         .with_transitive_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
         .with_transitive_reverse_deps(vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER])
@@ -838,6 +846,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("upper-a")
         .with_deps(vec![("upper-b", METADATA_CYCLE2_UPPER_B)])
         .with_reverse_deps(vec![("upper-a", METADATA_CYCLE2_UPPER_B)])
         .with_transitive_deps(vec![
@@ -858,6 +867,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("upper-b")
         .with_deps(vec![
             ("upper-a", METADATA_CYCLE2_UPPER_A),
             ("lower-a", METADATA_CYCLE2_LOWER_A),
@@ -881,6 +891,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("lower-a")
         .with_deps(vec![("lower-b", METADATA_CYCLE2_LOWER_B)])
         .with_reverse_deps(vec![
             ("lower-a", METADATA_CYCLE2_UPPER_B),
@@ -904,6 +915,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("lower-b")
         .with_deps(vec![("lower-a", METADATA_CYCLE2_LOWER_A)])
         .with_reverse_deps(vec![("lower-b", METADATA_CYCLE2_LOWER_A)])
         .with_transitive_deps(vec![METADATA_CYCLE2_LOWER_A, METADATA_CYCLE2_LOWER_B])
@@ -986,6 +998,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("")
         .with_deps(vec![
             ("lazy_static", METADATA_TARGETS1_LAZY_STATIC_1),
             ("lazy_static", METADATA_TARGETS1_LAZY_STATIC_02),
@@ -1243,6 +1256,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("")
         .with_build_targets(vec![
             (
                 BuildTargetId::Library,
@@ -1291,6 +1305,7 @@ impl FixtureDetails {
             None,
             None,
         )
+        .with_workspace_path("macro")
         .with_reverse_deps(vec![
             ("macro", METADATA_PROC_MACRO1_NORMAL_USER),
             ("macro", METADATA_PROC_MACRO1_BUILD_USER),
@@ -1312,6 +1327,7 @@ impl FixtureDetails {
             Some("Libra language e2e tests"),
             Some("Apache-2.0"),
         )
+        .with_workspace_path("language/e2e-tests")
         .with_transitive_reverse_deps(vec![
             METADATA_LIBRA_E2E_TESTS,
             METADATA_LIBRA_COST_SYNTHESIS,
@@ -1330,6 +1346,7 @@ impl FixtureDetails {
             Some("A macro for declaring lazily evaluated statics in Rust."),
             Some("MIT/Apache-2.0"),
         )
+        .with_crates_io()
         .with_transitive_deps(vec![
             METADATA_LIBRA_LAZY_STATIC,
             "spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1477,6 +1494,7 @@ pub(crate) struct PackageDetails {
     description: Option<&'static str>,
     license: Option<&'static str>,
 
+    source: Option<PackageSource<'static>>,
     build_targets: Option<Vec<(BuildTargetId<'static>, BuildTargetKind<'static>, PathBuf)>>,
     // The vector items are (name, package id).
     // XXX add more details about dependency edges here?
@@ -1503,6 +1521,7 @@ impl PackageDetails {
             authors,
             description,
             license,
+            source: None,
             build_targets: None,
             deps: None,
             reverse_deps: None,
@@ -1512,9 +1531,27 @@ impl PackageDetails {
         }
     }
 
+    fn with_workspace_path(mut self, path: &'static str) -> Self {
+        self.source = Some(PackageSource::Workspace(Path::new(path)));
+        self
+    }
+
+    fn with_local_path(mut self, path: &'static str) -> Self {
+        self.source = Some(PackageSource::Path(Path::new(path)));
+        self
+    }
+
+    fn with_crates_io(self) -> Self {
+        self.with_external_source(PackageSource::CRATES_IO_REGISTRY)
+    }
+
+    fn with_external_source(mut self, source: &'static str) -> Self {
+        self.source = Some(PackageSource::External(source));
+        self
+    }
+
     fn with_build_targets(
         mut self,
-
         mut build_targets: Vec<(
             BuildTargetId<'static>,
             BuildTargetKind<'static>,
@@ -1629,6 +1666,9 @@ impl PackageDetails {
             msg
         );
         assert_eq!(&self.license, &metadata.license(), "{}: same license", msg);
+        if let Some(source) = &self.source {
+            assert_eq!(source, &metadata.source(), "{}: same source", msg);
+        }
     }
 }
 

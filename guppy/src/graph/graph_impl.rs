@@ -19,6 +19,7 @@ use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
 use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt;
 use std::iter;
 use std::path::{Path, PathBuf};
 use target_spec::TargetSpec;
@@ -92,7 +93,7 @@ impl PackageGraph {
         for metadata in self.packages() {
             let package_id = metadata.id();
 
-            match metadata.workspace_path() {
+            match metadata.source().workspace_path() {
                 Some(workspace_path) => {
                     // This package is in the workspace, so the workspace should have information
                     // about it.
@@ -622,6 +623,20 @@ impl<'g> PackageMetadata<'g> {
         self.inner.license_file.as_ref().map(|path| path.as_ref())
     }
 
+    /// Returns the source from which this package was retrieved.
+    ///
+    /// This may be the workspace path, an external path, or a registry like `crates.io`.
+    pub fn source(&self) -> PackageSource<'g> {
+        PackageSource::new(&self.inner.source)
+    }
+
+    /// Returns true if this package is in the workspace.
+    ///
+    /// For more detailed information, use `source()`.
+    pub fn in_workspace(&self) -> bool {
+        self.source().is_workspace()
+    }
+
     /// Returns the full path to the `Cargo.toml` for this package.
     ///
     /// This is specific to the system that `cargo metadata` was run on.
@@ -691,17 +706,6 @@ impl<'g> PackageMetadata<'g> {
     /// This is the same as the `publish` field of `Cargo.toml`.
     pub fn publish(&self) -> Option<&'g [String]> {
         self.inner.publish.as_deref()
-    }
-
-    /// Returns true if this package is in the workspace.
-    pub fn in_workspace(&self) -> bool {
-        self.inner.workspace_path.is_some()
-    }
-
-    /// Returns the relative path to this package in the workspace, or `None` if this package is
-    /// not in the workspace.
-    pub fn workspace_path(&self) -> Option<&'g Path> {
-        self.inner.workspace_path.as_ref().map(|path| path.as_ref())
     }
 
     /// Returns all the build targets for this package.
@@ -880,11 +884,141 @@ pub(crate) struct PackageMetadataImpl {
 
     // Other information.
     pub(super) package_ix: NodeIndex<PackageIx>,
-    pub(super) workspace_path: Option<Box<Path>>,
+    pub(super) source: PackageSourceImpl,
     pub(super) build_targets: BTreeMap<OwnedBuildTargetId, BuildTargetImpl>,
     pub(super) has_default_feature: bool,
     pub(super) resolved_deps: Vec<NodeDep>,
     pub(super) resolved_features: Vec<String>,
+}
+
+/// The source of a package.
+///
+/// This enum contains information about where a package is found, and whether it is inside or
+/// outside the workspace.
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum PackageSource<'g> {
+    /// This package is in the workspace.
+    ///
+    /// The path is relative to the workspace root.
+    Workspace(&'g Path),
+
+    /// This package is a path dependency that isn't in the workspace.
+    ///
+    /// The path is relative to the workspace root.
+    Path(&'g Path),
+
+    /// This package is an external dependency.
+    ///
+    /// * For packages retrieved from `crates.io`, the source is the string
+    ///   `"registry+https://github.com/rust-lang/crates.io-index"`.
+    /// * For packages retrieved from other registries, the source begins with `"registry+"`.
+    /// * For packages retrieved from Git repositories, the source begins with `"git+"`.
+    External(&'g str),
+}
+
+impl<'g> PackageSource<'g> {
+    /// The path to the crates.io registry.
+    pub const CRATES_IO_REGISTRY: &'static str =
+        "registry+https://github.com/rust-lang/crates.io-index";
+
+    pub(super) fn new(inner: &'g PackageSourceImpl) -> Self {
+        match inner {
+            PackageSourceImpl::Workspace(path) => PackageSource::Workspace(path),
+            PackageSourceImpl::Path(path) => PackageSource::Path(path),
+            PackageSourceImpl::CratesIo => PackageSource::External(Self::CRATES_IO_REGISTRY),
+            PackageSourceImpl::External(source) => PackageSource::External(source),
+        }
+    }
+
+    /// Returns true if this package source represents a workspace.
+    pub fn is_workspace(&self) -> bool {
+        match self {
+            PackageSource::Workspace(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Returns true if this package source represents a path dependency that isn't in the
+    /// workspace.
+    pub fn is_path(&self) -> bool {
+        match self {
+            PackageSource::Path(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Returns true if this package source represents an external dependency.
+    pub fn is_external(&self) -> bool {
+        match self {
+            PackageSource::External(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Returns true if the source is `crates.io`.
+    pub fn is_crates_io(&self) -> bool {
+        match self {
+            PackageSource::External(Self::CRATES_IO_REGISTRY) => true,
+            _ => false,
+        }
+    }
+
+    /// Returns true if this package is a local dependency, i.e. either in the workspace or a local
+    /// path.
+    pub fn is_local(&self) -> bool {
+        !self.is_external()
+    }
+
+    /// Returns the path if this is a workspace dependency, or `None` if this is a non-workspace
+    /// dependency.
+    ///
+    /// The path is relative to the workspace root.
+    pub fn workspace_path(&self) -> Option<&'g Path> {
+        match self {
+            PackageSource::Workspace(path) => Some(path),
+            _ => None,
+        }
+    }
+
+    /// Returns the local path if this is a local dependency, or `None` if it is an external
+    /// dependency.
+    ///
+    /// The path is relative to the workspace root.
+    pub fn local_path(&self) -> Option<&'g Path> {
+        match self {
+            PackageSource::Path(path) | PackageSource::Workspace(path) => Some(path),
+            _ => None,
+        }
+    }
+
+    /// Returns the external source if this is an external dependency, or `None` if it is a local
+    /// dependency.
+    pub fn external_source(&self) -> Option<&'g str> {
+        match self {
+            PackageSource::External(source) => Some(source),
+            _ => None,
+        }
+    }
+}
+
+impl<'g> fmt::Display for PackageSource<'g> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            PackageSource::Workspace(path) => write!(f, "{}", path.display()),
+            PackageSource::Path(path) => write!(f, "{}", path.display()),
+            PackageSource::External(source) => write!(f, "{}", source),
+        }
+    }
+}
+
+/// Internal representation of the source of a package.
+#[derive(Clone, Debug)]
+pub(super) enum PackageSourceImpl {
+    Workspace(Box<Path>),
+    Path(Box<Path>),
+    // Special, common case.
+    CratesIo,
+    External(Box<str>),
 }
 
 /// Represents a dependency from one package to another.
