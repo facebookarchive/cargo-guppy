@@ -741,7 +741,7 @@ impl PlatformStatusImpl {
         }
     }
 
-    pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec>) {
+    pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec<'static>>) {
         // &mut *self is a reborrow to allow mem::replace to work below.
         match (&mut *self, spec) {
             (PlatformStatusImpl::Always, _) => {
