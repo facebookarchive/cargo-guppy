@@ -41,7 +41,7 @@ fn main() -> Result<(), Error> {
         for (id, metadata) in &current {
             writeln!(f, "* {}: {}", id, metadata.name()).unwrap();
         }
-        writeln!(f, "").unwrap();
+        writeln!(f).unwrap();
         level += 1;
 
         // Compute the package IDs in the next level.
