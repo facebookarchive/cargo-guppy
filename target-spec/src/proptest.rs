@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{Platform, TargetFeatures};
-use cfg_expr::targets::ALL;
+use cfg_expr::targets::ALL_BUILTINS;
 use proptest::prelude::*;
 
 /// ## Helpers for property testing
@@ -31,8 +31,8 @@ impl<'a> Platform<'a> {
     pub fn strategy(
         target_features: impl Strategy<Value = TargetFeatures<'a>> + 'a,
     ) -> impl Strategy<Value = Platform<'a>> + 'a {
-        (0..ALL.len(), target_features).prop_map(|(idx, target_features)| {
-            Platform::new(ALL[idx].triple, target_features).expect("known triple")
+        (0..ALL_BUILTINS.len(), target_features).prop_map(|(idx, target_features)| {
+            Platform::new(ALL_BUILTINS[idx].triple, target_features).expect("known triple")
         })
     }
 
@@ -43,7 +43,7 @@ impl<'a> Platform<'a> {
         triple_filter: impl Fn(&'static str) -> bool,
         target_features: impl Strategy<Value = TargetFeatures<'a>> + 'a,
     ) -> impl Strategy<Value = Platform<'a>> + 'a {
-        let filtered: Vec<_> = ALL
+        let filtered: Vec<_> = ALL_BUILTINS
             .iter()
             .filter(|target_info| triple_filter(target_info.triple))
             .collect();

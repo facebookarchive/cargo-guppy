@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{eval_target, Platform};
-use cfg_expr::targets::{get_target_by_triple, TargetInfo};
+use cfg_expr::targets::{get_builtin_target_by_triple, TargetInfo};
 use cfg_expr::{Expression, Predicate};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -37,10 +37,10 @@ pub struct TargetSpec {
 }
 
 impl TargetSpec {
-    /// Evaluates this specification against the given platform triple.
+    /// Evaluates this specification against the given platform.
     ///
     /// Returns `Some(true)` if there's a match, `Some(false)` if there's none, or `None` if the
-    /// result of the evaluation is unknown (typically found if target families are involved).
+    /// result of the evaluation is unknown (typically found if target features are involved).
     #[inline]
     pub fn eval(&self, platform: &Platform<'_>) -> Option<bool> {
         eval_target(&self.target, platform)
@@ -59,7 +59,7 @@ impl FromStr for TargetSpec {
 
 #[derive(Clone, Debug)]
 pub(crate) enum Target {
-    TargetInfo(&'static TargetInfo),
+    TargetInfo(&'static TargetInfo<'static>),
     Spec(Arc<Expression>),
 }
 
@@ -70,9 +70,10 @@ impl Target {
             let expr = Expression::parse(input).map_err(ParseError::invalid_cfg)?;
             Self::verify_expr(expr)
         } else {
-            Ok(Target::TargetInfo(get_target_by_triple(input).ok_or_else(
-                || ParseError::UnknownTriple(input.to_string()),
-            )?))
+            Ok(Target::TargetInfo(
+                get_builtin_target_by_triple(input)
+                    .ok_or_else(|| ParseError::UnknownTriple(input.to_string()))?,
+            ))
         }
     }
 
@@ -102,7 +103,7 @@ pub enum ParseError {
 }
 
 impl ParseError {
-    pub(crate) fn invalid_cfg(err: cfg_expr::ParseError<'_>) -> Self {
+    pub(crate) fn invalid_cfg(err: cfg_expr::ParseError) -> Self {
         ParseError::InvalidCfg(format!("{}", err))
     }
 }
@@ -146,9 +147,7 @@ mod tests {
         };
         assert_eq!(
             expr.predicates().collect::<Vec<_>>(),
-            vec![Predicate::Target(TargetPredicate::Family(Some(
-                Family::windows
-            )))],
+            vec![Predicate::Target(TargetPredicate::Family(Family::windows))],
         );
     }
 
@@ -171,7 +170,7 @@ mod tests {
 
         assert_eq!(
             expr.predicates().collect::<Vec<_>>(),
-            vec![Predicate::Target(TargetPredicate::Os(Some(Os::windows)))],
+            vec![Predicate::Target(TargetPredicate::Os(Os::windows))],
         );
     }
 
