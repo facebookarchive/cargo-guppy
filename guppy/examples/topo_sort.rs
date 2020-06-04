@@ -22,6 +22,7 @@ fn main() -> Result<(), Error> {
     for package in workspace_set.packages(DependencyDirection::Forward) {
         // All selected packages are in the workspace.
         let workspace_path = package
+            .source()
             .workspace_path()
             .expect("packages in workspace should have workspace path");
         println!("{}: {}", package.name(), workspace_path.display());
