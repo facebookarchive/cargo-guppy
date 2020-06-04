@@ -62,7 +62,7 @@ pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, EvalEr
     }
 }
 
-pub(crate) fn eval_target(target: &Target, platform: &Platform<'_>) -> Option<bool> {
+pub(crate) fn eval_target(target: &Target<'_>, platform: &Platform<'_>) -> Option<bool> {
     match target {
         Target::TargetInfo(ref target_info) => Some(platform.triple() == target_info.triple),
         Target::Spec(ref expr) => eval_expr(expr, platform),

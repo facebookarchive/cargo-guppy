@@ -1452,7 +1452,7 @@ impl EnabledTernary {
 /// in the Cargo reference.
 #[derive(Copy, Clone, Debug)]
 pub struct PlatformEval<'g> {
-    specs: &'g [TargetSpec],
+    specs: &'g [TargetSpec<'static>],
 }
 
 impl<'g> PlatformEval<'g> {
@@ -1532,7 +1532,7 @@ impl DepRequiredOrOptional {
 pub(crate) enum PlatformStatusImpl {
     Always,
     // Empty vector means never.
-    Specs(Vec<TargetSpec>),
+    Specs(Vec<TargetSpec<'static>>),
 }
 
 impl PlatformStatusImpl {

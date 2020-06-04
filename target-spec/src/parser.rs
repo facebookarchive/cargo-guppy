@@ -1,8 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::custom_platforms::TargetInfo;
 use crate::{eval_target, Platform};
-use cfg_expr::targets::{get_builtin_target_by_triple, TargetInfo};
+use cfg_expr::targets::get_builtin_target_by_triple;
 use cfg_expr::{Expression, Predicate};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -32,11 +33,24 @@ use std::{error, fmt};
 /// assert_eq!(spec.eval(&i686_linux), Some(true), "i686 Linux matches some features");
 /// ```
 #[derive(Clone, Debug)]
-pub struct TargetSpec {
-    target: Target,
+pub struct TargetSpec<'a> {
+    target: Target<'a>,
 }
 
-impl TargetSpec {
+impl<'a> TargetSpec<'a> {
+    /// Creates a new exact, custom target spec to match against.
+    ///
+    /// Note that this is for an *exact* target spec, similar to a triple specified, not an
+    /// expression like `cfg(windows)`.
+    ///
+    /// Custom platforms are often found in embedded and similar environments. For built-in
+    /// platforms, the `FromStr` implementation is recommended instead.
+    pub fn custom(target_info: &'a TargetInfo<'a>) -> Self {
+        Self {
+            target: Target::TargetInfo(target_info),
+        }
+    }
+
     /// Evaluates this specification against the given platform.
     ///
     /// Returns `Some(true)` if there's a match, `Some(false)` if there's none, or `None` if the
@@ -47,7 +61,7 @@ impl TargetSpec {
     }
 }
 
-impl FromStr for TargetSpec {
+impl FromStr for TargetSpec<'static> {
     type Err = ParseError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
@@ -58,14 +72,14 @@ impl FromStr for TargetSpec {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum Target {
-    TargetInfo(&'static TargetInfo<'static>),
+pub(crate) enum Target<'a> {
+    TargetInfo(&'a TargetInfo<'a>),
     Spec(Arc<Expression>),
 }
 
-impl Target {
+impl Target<'static> {
     /// Parses this expression into a `Target` instance.
-    fn parse(input: &str) -> Result<Target, ParseError> {
+    fn parse(input: &str) -> Result<Self, ParseError> {
         if input.starts_with("cfg(") {
             let expr = Expression::parse(input).map_err(ParseError::invalid_cfg)?;
             Self::verify_expr(expr)
@@ -76,7 +90,9 @@ impl Target {
             ))
         }
     }
+}
 
+impl<'a> Target<'a> {
     /// Verify this `cfg()` expression.
     fn verify_expr(expr: Expression) -> Result<Self, ParseError> {
         // Error out on unknown key-value pairs. Everything else is recognized (though
