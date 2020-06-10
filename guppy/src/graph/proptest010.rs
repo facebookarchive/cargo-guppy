@@ -1,13 +1,16 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::graph::cargo::{CargoOptions, CargoResolverVersion};
 use crate::graph::{PackageGraph, PackageLink, PackageQuery, PackageResolver, Workspace};
 use crate::PackageId;
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
 use petgraph::visit::VisitMap;
-use proptest::collection::vec;
+use proptest::collection::{hash_set, vec};
+use proptest::option;
 use proptest::prelude::*;
+use target_spec::{Platform, TargetFeatures};
 
 /// ## Helpers for property testing
 ///
@@ -56,6 +59,43 @@ impl PackageGraph {
     pub fn prop010_resolver_strategy<'g>(&'g self) -> impl Strategy<Value = Prop010Resolver> + 'g {
         // Generate a FixedBitSet to filter based off of.
         fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop010Resolver::new)
+    }
+
+    /// Returns a `Strategy` that generates a random `CargoOptions` from this graph.
+    ///
+    /// Requires the `proptest010` feature to be enabled.
+    pub fn prop010_cargo_options_strategy<'g>(
+        &'g self,
+    ) -> impl Strategy<Value = CargoOptions<'g>> + 'g {
+        let target_platform = option::of(Platform::strategy(any::<TargetFeatures<'static>>()));
+        let host_platform = option::of(Platform::strategy(any::<TargetFeatures<'static>>()));
+        let omitted_packages = hash_set(self.prop010_id_strategy(), 0..8);
+        (
+            any::<CargoResolverVersion>(),
+            any::<bool>(),
+            any::<bool>(),
+            target_platform,
+            host_platform,
+            omitted_packages,
+        )
+            .prop_map(
+                |(
+                    version,
+                    include_dev,
+                    proc_macros_on_target,
+                    host_platform,
+                    target_platform,
+                    omitted_packages,
+                )| {
+                    CargoOptions::new()
+                        .with_version(version)
+                        .with_dev_deps(include_dev)
+                        .with_proc_macros_on_target(proc_macros_on_target)
+                        .with_host_platform(host_platform)
+                        .with_target_platform(target_platform)
+                        .with_omitted_packages(omitted_packages)
+                },
+            )
     }
 }
 
