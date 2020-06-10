@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cfg-expr-0.3.0/src/expr/parser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parser.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cfg_expr/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/cfg-expr-0.4.1/src/expr/parser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parser.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cfg_expr/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -425,12 +425,21 @@
 <span id="425">425</span>
 <span id="426">426</span>
 <span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">error</span>::{<span class="ident">ParseError</span>, <span class="ident">Reason</span>},
     <span class="ident">expr</span>::{
         <span class="ident">lexer</span>::{<span class="ident">Lexer</span>, <span class="ident">Token</span>},
-        <span class="ident">ExprNode</span>, <span class="ident">Expression</span>, <span class="ident">Func</span>, <span class="ident">InnerPredicate</span>, <span class="ident">TargetPredicate</span>,
+        <span class="ident">ExprNode</span>, <span class="ident">Expression</span>, <span class="ident">Func</span>, <span class="ident">InnerPredicate</span>,
     },
 };
 <span class="kw">use</span> <span class="ident">smallvec</span>::<span class="ident">SmallVec</span>;
@@ -442,7 +451,7 @@
     <span class="doccomment">/// ```</span>
     <span class="doccomment">/// assert!(cfg_expr::Expression::parse(r#&quot;cfg(all(unix, target_arch = &quot;x86_64&quot;))&quot;#).is_ok());</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">original</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ParseError</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">original</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ParseError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">lexer</span> <span class="op">=</span> <span class="ident">Lexer</span>::<span class="ident">new</span>(<span class="ident">original</span>);
 
         <span class="comment">// The lexer automatically trims any cfg( ), so reacquire</span>
@@ -466,7 +475,7 @@
 
         <span class="kw">let</span> <span class="ident">parse_predicate</span> <span class="op">=</span> <span class="op">|</span><span class="ident">key</span>: (<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">std</span>::<span class="ident">ops</span>::<span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>),
                                <span class="ident">val</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">std</span>::<span class="ident">ops</span>::<span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">|</span>
-         <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InnerPredicate</span>, <span class="ident">ParseError</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+         <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">InnerPredicate</span>, <span class="ident">ParseError</span><span class="op">&gt;</span> {
             <span class="comment">// Warning: It is possible for arbitrarily-set configuration</span>
             <span class="comment">// options to have the same value as compiler-set configuration</span>
             <span class="comment">// options. For example, it is possible to do rustc --cfg &quot;unix&quot; program.rs</span>
@@ -481,7 +490,7 @@
                 () <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">vspan</span>)) <span class="op">=</span> <span class="ident">val</span> {
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                            <span class="ident">original</span>,
+                            <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                             <span class="ident">span</span>: <span class="ident">vspan</span>,
                             <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span>[]),
                         });
@@ -492,6 +501,8 @@
             <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">key</span>.<span class="number">1</span>;
             <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">key</span>.<span class="number">0</span>;
 
+            <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">InnerTarget</span>, <span class="ident">Which</span>};
+
             <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">key</span> {
                 <span class="comment">// These are special cases in the cfg language that are</span>
                 <span class="comment">// semantically the same as `target_family = &quot;&lt;family&gt;&quot;`,</span>
@@ -500,12 +511,15 @@
                     <span class="macro">err_if_val</span><span class="macro">!</span>();
 
                     <span class="kw">let</span> <span class="ident">fam</span> <span class="op">=</span> <span class="ident">key</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">reason</span><span class="op">|</span> <span class="ident">ParseError</span> {
-                        <span class="ident">original</span>,
+                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                         <span class="ident">span</span>,
                         <span class="ident">reason</span>,
                     })<span class="question-mark">?</span>;
 
-                    <span class="ident">InnerPredicate</span>::<span class="ident">Target</span>(<span class="ident">TargetPredicate</span>::<span class="ident">Family</span>(<span class="prelude-val">Some</span>(<span class="ident">fam</span>)))
+                    <span class="ident">InnerPredicate</span>::<span class="ident">Target</span>(<span class="ident">InnerTarget</span> {
+                        <span class="ident">which</span>: <span class="ident">Which</span>::<span class="ident">Family</span>(<span class="ident">fam</span>),
+                        <span class="ident">span</span>: <span class="prelude-val">None</span>,
+                    })
                 }
                 <span class="string">&quot;test&quot;</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="macro">err_if_val</span><span class="macro">!</span>();
@@ -528,7 +542,7 @@
                         <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">span</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">InnerPredicate</span>::<span class="ident">Feature</span>(<span class="ident">span</span>),
                         <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                <span class="ident">original</span>,
+                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                                 <span class="ident">span</span>,
                                 <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;feature_name&gt;\&quot;&quot;</span>]),
                             });
@@ -539,7 +553,7 @@
                     <span class="kw">let</span> (<span class="ident">val</span>, <span class="ident">vspan</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">val</span> {
                         <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                <span class="ident">original</span>,
+                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                                 <span class="ident">span</span>,
                                 <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;= \&quot;&lt;target_cfg_value&gt;\&quot;&quot;</span>]),
                             });
@@ -549,24 +563,9 @@
 
                     <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">tp</span> {
                         (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                            <span class="ident">TargetPredicate</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">ParseError</span> {
-                                <span class="ident">original</span>,
-                                <span class="ident">span</span>: <span class="ident">vspan</span>,
-                                <span class="ident">reason</span>: <span class="ident">r</span>,
-                            })<span class="question-mark">?</span>)
-                        };
-
-                        (<span class="ident">opt</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                            <span class="kw">if</span> <span class="op">!</span><span class="ident">val</span>.<span class="ident">is_empty</span>() {
-                                <span class="ident">TargetPredicate</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>(<span class="prelude-val">Some</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> {
-                                    <span class="ident">ParseError</span> {
-                                        <span class="ident">original</span>,
-                                        <span class="ident">span</span>: <span class="ident">vspan</span>,
-                                        <span class="ident">reason</span>: <span class="ident">r</span>,
-                                    }
-                                })<span class="question-mark">?</span>))
-                            } <span class="kw">else</span> {
-                                <span class="ident">TargetPredicate</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>(<span class="prelude-val">None</span>)
+                            <span class="ident">InnerTarget</span> {
+                                <span class="ident">which</span>: <span class="ident">Which</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">which</span>,
+                                <span class="ident">span</span>: <span class="prelude-val">Some</span>(<span class="ident">vspan</span>),
                             }
                         };
                     }
@@ -576,7 +575,7 @@
                         <span class="string">&quot;feature&quot;</span> <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="kw">if</span> <span class="ident">val</span>.<span class="ident">is_empty</span>() {
                                 <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                    <span class="ident">original</span>,
+                                    <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                                     <span class="ident">span</span>: <span class="ident">vspan</span>,
                                     <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;&lt;feature&gt;&quot;</span>]),
                                 });
@@ -584,21 +583,40 @@
 
                             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">InnerPredicate</span>::<span class="ident">TargetFeature</span>(<span class="ident">vspan</span>));
                         }
-                        <span class="string">&quot;os&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">opt</span> <span class="ident">Os</span>),
-                        <span class="string">&quot;family&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">opt</span> <span class="ident">Family</span>),
-                        <span class="string">&quot;env&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">opt</span> <span class="ident">Env</span>),
-                        <span class="string">&quot;endian&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">Endian</span>),
-                        <span class="string">&quot;pointer_width&quot;</span> <span class="op">=</span><span class="op">&gt;</span> {
-                            <span class="ident">TargetPredicate</span>::<span class="ident">PointerWidth</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ParseError</span> {
-                                <span class="ident">original</span>,
+                        <span class="string">&quot;os&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">Os</span>),
+                        <span class="string">&quot;family&quot;</span> <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="kw">let</span> <span class="ident">fam</span> <span class="op">=</span> <span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">reason</span><span class="op">|</span> <span class="ident">ParseError</span> {
+                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
+                                <span class="ident">span</span>,
+                                <span class="ident">reason</span>,
+                            })<span class="question-mark">?</span>;
+
+                            <span class="ident">InnerTarget</span> {
+                                <span class="ident">which</span>: <span class="ident">Which</span>::<span class="ident">Family</span>(<span class="ident">fam</span>),
+                                <span class="ident">span</span>: <span class="prelude-val">None</span>,
+                            }
+                        }
+                        <span class="string">&quot;env&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">Env</span>),
+                        <span class="string">&quot;endian&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">InnerTarget</span> {
+                            <span class="ident">which</span>: <span class="ident">Which</span>::<span class="ident">Endian</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ParseError</span> {
+                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                                 <span class="ident">span</span>: <span class="ident">vspan</span>,
                                 <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">InvalidInteger</span>,
-                            })<span class="question-mark">?</span>)
-                        }
-                        <span class="string">&quot;vendor&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">opt</span> <span class="ident">Vendor</span>),
+                            })<span class="question-mark">?</span>),
+                            <span class="ident">span</span>: <span class="prelude-val">None</span>,
+                        },
+                        <span class="string">&quot;pointer_width&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">InnerTarget</span> {
+                            <span class="ident">which</span>: <span class="ident">Which</span>::<span class="ident">PointerWidth</span>(<span class="ident">val</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ParseError</span> {
+                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
+                                <span class="ident">span</span>: <span class="ident">vspan</span>,
+                                <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">InvalidInteger</span>,
+                            })<span class="question-mark">?</span>),
+                            <span class="ident">span</span>: <span class="prelude-val">None</span>,
+                        },
+                        <span class="string">&quot;vendor&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">tp</span><span class="macro">!</span>(<span class="ident">Vendor</span>),
                         <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                <span class="ident">original</span>,
+                                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                                 <span class="ident">span</span>,
                                 <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span>[
                                     <span class="string">&quot;target_arch&quot;</span>,
@@ -637,7 +655,7 @@
                 };
 
                 <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                    <span class="ident">original</span>,
+                    <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                     <span class="ident">span</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">span</span>,
                     <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span><span class="ident">expected</span>),
                 });
@@ -727,7 +745,7 @@
                                     <span class="comment">// so ensure we have exactly 1</span>
                                     <span class="kw">if</span> <span class="ident">num_predicates</span> <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
                                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                                            <span class="ident">original</span>,
+                                            <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                                             <span class="ident">span</span>: <span class="ident">top</span>.<span class="ident">span</span>.<span class="ident">start</span>..<span class="ident">lt</span>.<span class="ident">span</span>.<span class="ident">end</span>,
                                             <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">InvalidNot</span>(<span class="ident">num_predicates</span>),
                                         });
@@ -756,7 +774,7 @@
 
                         <span class="comment">// We didn&#39;t have an opening parentheses if we get here</span>
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                            <span class="ident">original</span>,
+                            <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                             <span class="ident">span</span>: <span class="ident">lt</span>.<span class="ident">span</span>,
                             <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">UnopenedParens</span>,
                         });
@@ -799,7 +817,7 @@
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">Token</span>::<span class="ident">Equals</span>) <span class="op">=</span> <span class="ident">last_token</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                <span class="ident">original</span>,
+                <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                 <span class="ident">span</span>: <span class="ident">original</span>.<span class="ident">len</span>()..<span class="ident">original</span>.<span class="ident">len</span>(),
                 <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;\&quot;&lt;value&gt;\&quot;&quot;</span>]),
             });
@@ -810,13 +828,13 @@
             <span class="prelude-val">Some</span>(<span class="ident">top</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="ident">top</span>.<span class="ident">parens_index</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
                     <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>,
+                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                         <span class="ident">span</span>: <span class="ident">top</span>.<span class="ident">parens_index</span>..<span class="ident">original</span>.<span class="ident">len</span>(),
                         <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">UnclosedParens</span>,
                     })
                 } <span class="kw">else</span> {
                     <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>,
+                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                         <span class="ident">span</span>: <span class="ident">top</span>.<span class="ident">span</span>,
                         <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Unexpected</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;(&quot;</span>]),
                     })
@@ -833,13 +851,13 @@
 
                 <span class="kw">if</span> <span class="ident">expr_queue</span>.<span class="ident">is_empty</span>() {
                     <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>,
+                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                         <span class="ident">span</span>: <span class="number">0</span>..<span class="ident">original</span>.<span class="ident">len</span>(),
                         <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">Empty</span>,
                     })
                 } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">root_predicate_count</span> <span class="op">&gt;</span> <span class="number">1</span> {
                     <span class="prelude-val">Err</span>(<span class="ident">ParseError</span> {
-                        <span class="ident">original</span>,
+                        <span class="ident">original</span>: <span class="ident">original</span>.<span class="ident">to_owned</span>(),
                         <span class="ident">span</span>: <span class="number">0</span>..<span class="ident">original</span>.<span class="ident">len</span>(),
                         <span class="ident">reason</span>: <span class="ident">Reason</span>::<span class="ident">MultipleRootPredicates</span>,
                     })
