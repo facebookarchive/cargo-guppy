@@ -111,7 +111,7 @@ impl CargoSetBuildState {
 
     fn build_set<'g, 'a, PF>(
         &self,
-        query: FeatureQuery<'g>,
+        original_query: FeatureQuery<'g>,
         opts: &mut CargoOptions<'a, PF>,
         intermediate_fn: impl FnOnce(
             FeatureQuery<'g>,
@@ -122,11 +122,11 @@ impl CargoSetBuildState {
         PF: CargoPostfilter<'g>,
     {
         // Prepare a package query for step 2.
-        let graph = *query.graph();
+        let graph = *original_query.graph();
         // Note that currently, proc macros specified in initials are built on both the target and
         // the host.
         let mut host_ixs = Vec::new();
-        let target_ixs: Vec<_> = query
+        let target_ixs: Vec<_> = original_query
             .params
             .initials()
             .iter()
@@ -152,7 +152,7 @@ impl CargoSetBuildState {
 
         // 1. Build the intermediate set containing the features for any possible package that can
         // be built.
-        let intermediate_set = intermediate_fn(query, opts);
+        let intermediate_set = intermediate_fn(original_query.clone(), opts);
         let (target_set, host_set) = intermediate_set.target_host_sets();
 
         // While doing traversal 2 below, record any packages discovered along build edges for use
@@ -291,6 +291,7 @@ impl CargoSetBuildState {
             .intersection(host_set);
 
         CargoSet {
+            original_query,
             target_features,
             host_features,
             proc_macro_edge_ixs: SortedSet::new(proc_macro_edge_ixs),

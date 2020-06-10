@@ -7,6 +7,7 @@ use crate::graph::{PackageIx, PackageLink, PackageQuery};
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
 use petgraph::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use supercow::Supercow;
 use target_spec::Platform;
@@ -196,7 +197,8 @@ impl<'a> CargoImmOptions<'a> {
 }
 
 /// The version of Cargo's feature resolver to use.
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[cfg_attr(feature = "proptest010", derive(proptest_derive::Arbitrary))]
 #[non_exhaustive]
 pub enum CargoResolverVersion {
     /// The default "classic" feature resolver in Rust.
@@ -360,6 +362,7 @@ where
 /// Cargo implements a set of algorithms to figure out which packages or features are built in
 /// a given situation. `guppy` implements those algorithms.
 pub struct CargoSet<'g> {
+    pub(super) original_query: FeatureQuery<'g>,
     pub(super) target_features: FeatureSet<'g>,
     pub(super) host_features: FeatureSet<'g>,
     pub(super) proc_macro_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
@@ -394,6 +397,11 @@ impl<'g> CargoSet<'g> {
     {
         let build_state = CargoSetBuildState::new(&query, opts)?;
         Ok(build_state.build_intermediate(query, opts))
+    }
+
+    /// Returns the original query from which the `CargoSet` instance was constructed.
+    pub fn original_query(&self) -> &FeatureQuery<'g> {
+        &self.original_query
     }
 
     /// Returns the feature set enabled on the target platform.

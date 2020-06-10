@@ -3,7 +3,9 @@
 
 use crate::{Platform, TargetFeatures};
 use cfg_expr::targets::ALL_BUILTINS;
+use proptest::collection::hash_set;
 use proptest::prelude::*;
+use proptest::sample::select;
 
 /// ## Helpers for property testing
 ///
@@ -50,5 +52,25 @@ impl<'a> Platform<'a> {
         (0..filtered.len(), target_features).prop_map(move |(idx, target_features)| {
             Platform::new(filtered[idx].triple, target_features).expect("known triple")
         })
+    }
+}
+
+/// The `Arbitrary` implementation for `TargetFeatures` uses a predefined list of features.
+impl Arbitrary for TargetFeatures<'static> {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        // https://doc.rust-lang.org/reference/attributes/codegen.html#available-features
+        static KNOWN_FEATURES: &[&str] = &[
+            "aes", "avx", "avx2", "bmi1", "bmi2", "fma", "rdrand", "sha", "sse", "sse2", "sse3",
+            "sse4.1", "sse4.2", "ssse3", "xsave", "xsavec", "xsaveopt", "xsaves",
+        ];
+        prop_oneof![
+            Just(TargetFeatures::Unknown),
+            Just(TargetFeatures::All),
+            hash_set(select(KNOWN_FEATURES), 0..8).prop_map(TargetFeatures::Features),
+        ]
+        .boxed()
     }
 }
