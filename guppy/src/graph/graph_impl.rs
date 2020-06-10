@@ -1151,16 +1151,23 @@ impl<'g> PackageLink<'g> {
     }
 
     /// Returns (source, target, edge) as a triple of pointers. Useful for testing.
-    #[cfg(test)]
-    pub(crate) fn as_inner_ptrs(
-        &self,
-    ) -> (
-        *const PackageMetadataImpl,
-        *const PackageMetadataImpl,
-        *const PackageLinkImpl,
-    ) {
-        (self.from, self.to, self.inner)
+    #[doc(hidden)]
+    pub fn as_inner_ptrs(&self) -> PackageLinkPtrs {
+        PackageLinkPtrs {
+            from: self.from,
+            to: self.to,
+            inner: self.inner,
+        }
     }
+}
+
+/// An opaque identifier for a PackageLink's pointers. Used for tests.
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[doc(hidden)]
+pub struct PackageLinkPtrs {
+    from: *const PackageMetadataImpl,
+    to: *const PackageMetadataImpl,
+    inner: *const PackageLinkImpl,
 }
 
 #[derive(Clone, Debug)]

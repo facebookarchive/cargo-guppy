@@ -1,19 +1,18 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet};
-use crate::graph::{
-    DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkImpl,
-    PackageMetadata, PackageMetadataImpl, PackageQuery, PackageSet,
+use crate::details::PackageDetails;
+use guppy::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet};
+use guppy::graph::{
+    DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkPtrs,
+    PackageMetadata, PackageQuery, PackageSet,
 };
-use crate::unit_tests::fixtures::PackageDetails;
-use crate::{DependencyKind, Error, PackageId};
+use guppy::{DependencyKind, Error, PackageId, Platform};
 use pretty_assertions::assert_eq;
 use std::collections::{BTreeSet, HashSet};
 use std::fmt;
 use std::hash::Hash;
 use std::iter;
-use target_spec::Platform;
 
 fn __from_metadata<'a>(link: &PackageLink<'a>) -> PackageMetadata<'a> {
     link.from()
@@ -27,7 +26,7 @@ type LinkToMetadata<'a> = fn(&PackageLink<'a>) -> PackageMetadata<'a>;
 /// ones. For forward deps, we use the terms "known" for 'from' and "variable" for 'to'. For
 /// reverse deps it's the other way round.
 #[derive(Clone, Copy)]
-pub(crate) struct DirectionDesc<'a> {
+pub struct DirectionDesc<'a> {
     direction_desc: &'static str,
     known_desc: &'static str,
     variable_desc: &'static str,
@@ -102,7 +101,6 @@ pub(crate) fn assert_deps_internal(
         .metadata(known_details.id())
         .unwrap_or_else(|| panic!("{}: package not found", msg))
         .direct_links_directed(direction)
-        .into_iter()
         .collect();
     let mut actual_dep_ids: Vec<_> = actual_deps
         .iter()
@@ -371,7 +369,7 @@ fn assert_enabled_status_is_known(req: DependencyReq<'_>, msg: &str) {
     }
 }
 
-pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
+pub trait GraphAssert<'g>: Copy + fmt::Debug {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Metadata: GraphMetadata<'g, Id = Self::Id>;
     type Query: GraphQuery<'g, Id = Self::Id, Set = Self::Set>;
@@ -429,7 +427,7 @@ pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
             .root_metadatas(iter_direction)
     }
 
-    fn assert_topo_order<'a>(
+    fn assert_topo_order(
         &self,
         topo_ids: impl IntoIterator<Item = Self::Id>,
         direction: DependencyDirection,
@@ -569,12 +567,12 @@ pub(super) trait GraphAssert<'g>: Copy + fmt::Debug {
     }
 }
 
-pub(super) trait GraphMetadata<'g> {
+pub trait GraphMetadata<'g> {
     type Id: Copy + Eq + Hash + fmt::Debug;
     fn id(&self) -> Self::Id;
 }
 
-pub(super) trait GraphQuery<'g> {
+pub trait GraphQuery<'g> {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Set: GraphSet<'g, Id = Self::Id>;
 
@@ -585,10 +583,15 @@ pub(super) trait GraphQuery<'g> {
     fn resolve(self) -> Self::Set;
 }
 
-pub(super) trait GraphSet<'g>: Clone + fmt::Debug {
+pub trait GraphSet<'g>: Clone + fmt::Debug {
     type Id: Copy + Eq + Hash + fmt::Debug;
     type Metadata: GraphMetadata<'g, Id = Self::Id>;
     fn len(&self) -> usize;
+
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     fn contains(&self, id: Self::Id) -> bool;
 
     fn union(&self, other: &Self) -> Self;
@@ -807,7 +810,7 @@ impl<'g> GraphSet<'g> for FeatureSet<'g> {
 ///   before it appears in the `from` of a link.
 /// * If direction is Reverse, the package should appear in the `from` of a link at least once
 ///   before it appears in the `to` of a link.
-pub(crate) fn assert_link_order<'g>(
+pub fn assert_link_order<'g>(
     links: impl IntoIterator<Item = PackageLink<'g>>,
     initial: impl IntoIterator<Item = &'g PackageId>,
     desc: impl Into<DirectionDesc<'g>>,
@@ -834,13 +837,7 @@ pub(crate) fn assert_link_order<'g>(
     }
 }
 
-fn dep_link_ptrs<'g>(
-    dep_links: impl IntoIterator<Item = PackageLink<'g>>,
-) -> Vec<(
-    *const PackageMetadataImpl,
-    *const PackageMetadataImpl,
-    *const PackageLinkImpl,
-)> {
+fn dep_link_ptrs<'g>(dep_links: impl IntoIterator<Item = PackageLink<'g>>) -> Vec<PackageLinkPtrs> {
     let mut triples: Vec<_> = dep_links
         .into_iter()
         .map(|link| link.as_inner_ptrs())

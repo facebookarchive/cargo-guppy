@@ -119,10 +119,7 @@ impl Prop010Resolver {
 
     /// If called with true, this resolver will then verify that any links passed in are in the
     /// correct direction.
-    ///
-    /// Used for internal testing.
-    #[cfg(test)]
-    pub(crate) fn check_depends_on(&mut self, check: bool) {
+    pub fn check_depends_on(&mut self, check: bool) {
         self.check_depends_on = check;
     }
 

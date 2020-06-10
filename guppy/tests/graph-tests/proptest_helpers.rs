@@ -1,12 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{all_filter, none_filter, FeatureId, FeatureSet};
-use crate::graph::{DependencyDirection, PackageGraph, Prop010Resolver};
-use crate::unit_tests::dep_helpers::{
-    assert_link_order, GraphAssert, GraphMetadata, GraphQuery, GraphSet,
-};
-use crate::PackageId;
+use fixtures::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphQuery, GraphSet};
+use guppy::graph::feature::{all_filter, none_filter, FeatureId, FeatureSet};
+use guppy::graph::{DependencyDirection, PackageGraph, Prop010Resolver};
+use guppy::PackageId;
 use pretty_assertions::assert_eq;
 use proptest::collection::vec;
 use proptest::prelude::*;
@@ -16,16 +14,16 @@ use std::collections::HashSet;
 macro_rules! proptest_suite {
     ($name: ident) => {
         mod $name {
-            use crate::graph::DependencyDirection;
-            use crate::unit_tests::fixtures::Fixture;
-            use crate::unit_tests::proptest_helpers::*;
+            use crate::proptest_helpers::*;
+            use fixtures::json::JsonFixture;
+            use guppy::graph::DependencyDirection;
             use proptest::collection::{hash_set, vec};
             use proptest::prelude::*;
             use proptest::sample::Index;
 
             #[test]
             fn proptest_query_depends_on() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let graph = fixture.graph();
 
                 proptest!(|(
@@ -40,7 +38,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_feature_query_depends_on() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
@@ -56,7 +54,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_depends_on_same_package_id() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
 
                 proptest!(|(query_id in package_graph.prop010_id_strategy())| {
@@ -66,7 +64,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_depends_on_same_feature_id() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
@@ -77,7 +75,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_query_link_order() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let graph = fixture.graph();
 
                 proptest!(|(
@@ -91,7 +89,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_query_roots() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let graph = fixture.graph();
 
                 proptest!(|(
@@ -113,7 +111,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_feature_query_roots() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
@@ -136,7 +134,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_resolve_contains() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
 
                 proptest!(|(
@@ -150,7 +148,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_feature_resolve_contains() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
@@ -165,7 +163,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_resolve_ops() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
 
                 proptest!(|(
@@ -177,7 +175,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_feature_resolve_ops() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
@@ -190,7 +188,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_package_feature_set_roundtrip() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
@@ -208,7 +206,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_feature_set_props() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
@@ -222,7 +220,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_query_starts_from() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
 
                 proptest!(|(
@@ -236,7 +234,7 @@ macro_rules! proptest_suite {
 
             #[test]
             fn proptest_feature_query_starts_from() {
-                let fixture = Fixture::$name();
+                let fixture = JsonFixture::$name();
                 let package_graph = fixture.graph();
                 let feature_graph = package_graph.feature_graph();
 
