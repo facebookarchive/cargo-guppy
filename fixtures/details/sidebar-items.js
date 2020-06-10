@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["FixtureDetails","This captures metadata fields that are relevant for tests. They are meant to be written out lazily as tests are filled out -- feel free to add more details as necessary!"],["LinkDetails",""],["PackageDetails",""],["PlatformResults",""]]});
