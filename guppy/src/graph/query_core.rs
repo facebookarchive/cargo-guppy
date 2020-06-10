@@ -63,7 +63,7 @@ where
     // This is DfsPostOrder since that handles cycles while a regular DFS doesn't.
     let mut dfs = DfsPostOrder::empty(graph);
     dfs.stack = roots.into();
-    while let Some(_) = dfs.next(graph) {}
+    while dfs.next(graph).is_some() {}
 
     // Once the DFS is done, the discovered map (or the finished map) is what's reachable.
     debug_assert_eq!(
@@ -88,7 +88,7 @@ where
     // This is DfsPostOrder since that handles cycles while a regular DFS doesn't.
     let mut dfs = DfsPostOrder::empty(graph);
     dfs.stack = roots.into();
-    while let Some(_) = dfs_next_filtered(&mut dfs, graph, &mut edge_filter) {}
+    while dfs_next_filtered(&mut dfs, graph, &mut edge_filter).is_some() {}
 
     // Once the DFS is done, the discovered map (or the finished map) is what's reachable.
     debug_assert_eq!(

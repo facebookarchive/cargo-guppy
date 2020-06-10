@@ -298,7 +298,7 @@ impl<'g> FeatureGraphBuildState<'g> {
         feature_id: FeatureNode,
         feature_type: FeatureType,
     ) -> NodeIndex<FeatureIx> {
-        let feature_ix = self.graph.add_node(feature_id.clone());
+        let feature_ix = self.graph.add_node(feature_id);
         self.map.insert(
             feature_id,
             FeatureMetadataImpl {
