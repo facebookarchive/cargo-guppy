@@ -1,6 +1,7 @@
-use crate::{graph::PackageGraph, unit_tests::fixtures, Error};
 use assert_matches::assert_matches;
 use cargo_metadata::{Metadata, Target};
+use fixtures::json;
+use guppy::{graph::PackageGraph, Error};
 
 #[test]
 fn optional_dev_dep() {
@@ -57,7 +58,7 @@ fn proc_macro_mixed_kinds() {
             .expect("valid target")
     }
 
-    let mut metadata: Metadata = serde_json::from_str(fixtures::METADATA_PROC_MACRO1)
+    let mut metadata: Metadata = serde_json::from_str(json::METADATA_PROC_MACRO1)
         .expect("parsing metadata JSON should succeed");
     {
         let target = macro_target(&mut metadata);

@@ -711,8 +711,11 @@ impl FeatureNode {
 }
 
 /// Information about why a feature depends on another feature.
+///
+/// Not part of the stable API -- only exposed for FeatureSet::links().
 #[derive(Clone, Debug)]
-pub(crate) enum FeatureEdge {
+#[doc(hidden)]
+pub enum FeatureEdge {
     /// This edge is from a feature to its base package.
     FeatureToBase,
     /// This is a cross-package edge, e.g. through:
@@ -738,8 +741,10 @@ pub(crate) enum FeatureEdge {
     FeatureDependency,
 }
 
+/// Not part of the stable API -- only exposed for FeatureSet::links().
 #[derive(Clone, Debug)]
-pub(crate) struct CrossLinkImpl {
+#[doc(hidden)]
+pub struct CrossLinkImpl {
     pub(super) package_edge_ix: EdgeIndex<PackageIx>,
     pub(super) normal: PlatformStatusImpl,
     pub(super) build: PlatformStatusImpl,

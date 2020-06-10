@@ -1,9 +1,12 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use super::fixtures::{self, Fixture};
-use crate::graph::feature::{all_filter, none_filter, FeatureId};
-use crate::graph::{
+use fixtures::{
+    json::{self, JsonFixture},
+    package_id,
+};
+use guppy::graph::feature::{all_filter, default_filter, feature_filter, none_filter, FeatureId};
+use guppy::graph::{
     BuildTargetId, BuildTargetKind, DependencyDirection, DotWrite, PackageDotVisitor, PackageLink,
     PackageMetadata,
 };
@@ -12,20 +15,18 @@ use std::iter;
 
 mod small {
     use super::*;
-    use crate::graph::feature::{default_filter, feature_filter};
-    use crate::unit_tests::feature_helpers::assert_features_for_package;
-    use crate::unit_tests::fixtures::{package_id, METADATA_PROC_MACRO1_MACRO};
+    use crate::feature_helpers::assert_features_for_package;
     use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
     #[test]
     fn metadata1() {
-        let metadata1 = Fixture::metadata1();
+        let metadata1 = JsonFixture::metadata1();
         metadata1.verify();
 
         let graph = metadata1.graph();
         let testcrate = graph
-            .metadata(&fixtures::package_id(fixtures::METADATA1_TESTCRATE))
+            .metadata(&package_id(json::METADATA1_TESTCRATE))
             .expect("root crate should exist");
         let mut root_deps: Vec<_> = testcrate.direct_links().collect();
 
@@ -55,9 +56,7 @@ mod small {
 }
 "#;
         let package_set = graph
-            .query_forward(iter::once(&fixtures::package_id(
-                fixtures::METADATA1_REGION,
-            )))
+            .query_forward(iter::once(&package_id(json::METADATA1_REGION)))
             .unwrap()
             .resolve();
         assert_eq!(
@@ -78,7 +77,7 @@ mod small {
 }
 "#;
         let package_set = graph
-            .query_reverse(iter::once(&fixtures::package_id(fixtures::METADATA1_DTOA)))
+            .query_reverse(iter::once(&package_id(json::METADATA1_DTOA)))
             .unwrap()
             .resolve();
 
@@ -106,9 +105,7 @@ mod small {
 }
 "#;
         let package_set = graph
-            .query_forward(iter::once(&fixtures::package_id(
-                fixtures::METADATA1_REGION,
-            )))
+            .query_forward(iter::once(&package_id(json::METADATA1_REGION)))
             .unwrap()
             .resolve_with_fn(|_, link| link.to().name() != "libc");
         assert_eq!(
@@ -124,7 +121,7 @@ mod small {
         assert_eq!(feature_graph.link_count(), 610, "link count");
         let feature_set = feature_graph.query_workspace(all_filter()).resolve();
         let root_ids: Vec<_> = feature_set.root_ids(DependencyDirection::Forward).collect();
-        let testcrate_id = fixtures::package_id(fixtures::METADATA1_TESTCRATE);
+        let testcrate_id = package_id(json::METADATA1_TESTCRATE);
         let expected = vec![FeatureId::new(&testcrate_id, "datatest")];
         assert_eq!(root_ids, expected, "feature graph root IDs match");
     }
@@ -133,7 +130,7 @@ mod small {
 
     #[test]
     fn metadata2() {
-        let metadata2 = Fixture::metadata2();
+        let metadata2 = JsonFixture::metadata2();
         metadata2.verify();
 
         let feature_graph = metadata2.graph().feature_graph();
@@ -144,7 +141,7 @@ mod small {
             .resolve()
             .root_ids(DependencyDirection::Forward)
             .collect();
-        let testcrate_id = fixtures::package_id(fixtures::METADATA2_TESTCRATE);
+        let testcrate_id = package_id(json::METADATA2_TESTCRATE);
         let expected = vec![FeatureId::base(&testcrate_id)];
         assert_eq!(root_ids, expected, "feature graph root IDs match");
     }
@@ -153,7 +150,7 @@ mod small {
 
     #[test]
     fn metadata_dups() {
-        let metadata_dups = Fixture::metadata_dups();
+        let metadata_dups = JsonFixture::metadata_dups();
         metadata_dups.verify();
     }
 
@@ -161,7 +158,7 @@ mod small {
 
     #[test]
     fn metadata_cycle1() {
-        let metadata_cycle1 = Fixture::metadata_cycle1();
+        let metadata_cycle1 = JsonFixture::metadata_cycle1();
         metadata_cycle1.verify();
     }
 
@@ -169,7 +166,7 @@ mod small {
 
     #[test]
     fn metadata_cycle2() {
-        let metadata_cycle2 = Fixture::metadata_cycle2();
+        let metadata_cycle2 = JsonFixture::metadata_cycle2();
         metadata_cycle2.verify();
     }
 
@@ -177,7 +174,7 @@ mod small {
 
     #[test]
     fn metadata_targets1() {
-        let metadata_targets1 = Fixture::metadata_targets1();
+        let metadata_targets1 = JsonFixture::metadata_targets1();
         metadata_targets1.verify();
 
         let package_graph = metadata_targets1.graph();
@@ -214,7 +211,7 @@ mod small {
             &package_set,
             feature_filter(default_filter(), ["foo", "bar"].iter().copied()),
         );
-        let dep_a_id = fixtures::package_id(fixtures::METADATA_TARGETS1_DEP_A);
+        let dep_a_id = package_id(json::METADATA_TARGETS1_DEP_A);
         assert!(feature_set
             .contains((&dep_a_id, "foo"))
             .expect("valid feature ID"));
@@ -230,7 +227,7 @@ mod small {
 
         assert_features_for_package(
             &feature_set,
-            &fixtures::package_id(fixtures::METADATA_TARGETS1_TESTCRATE),
+            &package_id(json::METADATA_TARGETS1_TESTCRATE),
             &[None],
             "testcrate",
         );
@@ -242,7 +239,7 @@ mod small {
         );
         assert_features_for_package(
             &feature_set,
-            &fixtures::package_id(fixtures::METADATA_TARGETS1_LAZY_STATIC_1),
+            &package_id(json::METADATA_TARGETS1_LAZY_STATIC_1),
             &[None],
             "lazy_static",
         );
@@ -252,7 +249,7 @@ mod small {
 
     #[test]
     fn metadata_build_targets1() {
-        let metadata_build_targets1 = Fixture::metadata_build_targets1();
+        let metadata_build_targets1 = JsonFixture::metadata_build_targets1();
         metadata_build_targets1.verify();
     }
 
@@ -260,12 +257,12 @@ mod small {
 
     #[test]
     fn metadata_proc_macro1() {
-        let metadata = Fixture::metadata_proc_macro1();
+        let metadata = JsonFixture::metadata_proc_macro1();
         metadata.verify();
         let graph = metadata.graph();
 
         let package = graph
-            .metadata(&package_id(METADATA_PROC_MACRO1_MACRO))
+            .metadata(&package_id(json::METADATA_PROC_MACRO1_MACRO))
             .expect("valid package ID");
         assert!(package.is_proc_macro(), "is proc macro");
         assert!(matches!(
@@ -282,14 +279,11 @@ mod small {
 
 mod large {
     use super::*;
-    use crate::unit_tests::dep_helpers::GraphAssert;
-    use crate::unit_tests::fixtures::{
-        package_id, METADATA_LIBRA_ADMISSION_CONTROL_SERVICE, METADATA_LIBRA_EXECUTOR_UTILS,
-    };
+    use fixtures::dep_helpers::GraphAssert;
 
     #[test]
     fn metadata_libra() {
-        let metadata_libra = Fixture::metadata_libra();
+        let metadata_libra = JsonFixture::metadata_libra();
         metadata_libra.verify();
     }
 
@@ -297,7 +291,7 @@ mod large {
 
     #[test]
     fn metadata_libra_f0091a4() {
-        let metadata = Fixture::metadata_libra_f0091a4();
+        let metadata = JsonFixture::metadata_libra_f0091a4();
         metadata.verify();
     }
 
@@ -305,19 +299,19 @@ mod large {
 
     #[test]
     fn metadata_libra_9ffd93b() {
-        let metadata = Fixture::metadata_libra_9ffd93b();
+        let metadata = JsonFixture::metadata_libra_9ffd93b();
         metadata.verify();
 
         let graph = metadata.graph();
         graph.assert_depends_on(
-            &package_id(METADATA_LIBRA_ADMISSION_CONTROL_SERVICE),
-            &package_id(METADATA_LIBRA_EXECUTOR_UTILS),
+            &package_id(json::METADATA_LIBRA_ADMISSION_CONTROL_SERVICE),
+            &package_id(json::METADATA_LIBRA_EXECUTOR_UTILS),
             DependencyDirection::Forward,
             "admission-control-service should depend on executor-utils",
         );
         graph.assert_not_depends_on(
-            &package_id(METADATA_LIBRA_EXECUTOR_UTILS),
-            &package_id(METADATA_LIBRA_ADMISSION_CONTROL_SERVICE),
+            &package_id(json::METADATA_LIBRA_EXECUTOR_UTILS),
+            &package_id(json::METADATA_LIBRA_ADMISSION_CONTROL_SERVICE),
             DependencyDirection::Forward,
             "executor-utils should not depend on admission-control-service",
         );
