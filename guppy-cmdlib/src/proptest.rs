@@ -14,7 +14,7 @@ impl PackagesAndFeatures {
         let workspace = graph.workspace();
         (
             // The lower bound of 0 is important because 0 means the whole workspace.
-            hash_set(workspace.prop09_name_strategy(), 0..8),
+            hash_set(workspace.prop010_name_strategy(), 0..8),
             any::<bool>(),
             any::<bool>(),
         )

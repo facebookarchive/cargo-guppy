@@ -65,7 +65,7 @@ fn id_pairs_strategy<'g>(
     graph: &'g PackageGraph,
 ) -> impl Strategy<Value = Vec<(&'g PackageId, &'g PackageId)>> + 'g {
     vec(
-        (graph.prop09_id_strategy(), graph.prop09_id_strategy()),
+        (graph.prop010_id_strategy(), graph.prop010_id_strategy()),
         256,
     )
 }
@@ -77,7 +77,7 @@ fn ids_directions_strategy<'g>(
 {
     vec(
         (
-            vec(graph.prop09_id_strategy(), 32),
+            vec(graph.prop010_id_strategy(), 32),
             any::<DependencyDirection>(),
             any::<DependencyDirection>(),
         ),

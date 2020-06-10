@@ -24,7 +24,7 @@ impl PackageGraph {
     /// ## Panics
     ///
     /// Panics if there are no packages in this `PackageGraph`.
-    pub fn prop09_id_strategy<'g>(&'g self) -> impl Strategy<Value = &'g PackageId> + 'g {
+    pub fn prop010_id_strategy<'g>(&'g self) -> impl Strategy<Value = &'g PackageId> + 'g {
         let dep_graph = &self.dep_graph;
         any::<prop::sample::Index>().prop_map(move |index| {
             let package_ix = NodeIndex::new(index.index(dep_graph.node_count()));
@@ -39,7 +39,7 @@ impl PackageGraph {
     /// ## Panics
     ///
     /// Panics if there are no dependency edges in this `PackageGraph`.
-    pub fn prop09_link_strategy<'g>(&'g self) -> impl Strategy<Value = PackageLink<'g>> + 'g {
+    pub fn prop010_link_strategy<'g>(&'g self) -> impl Strategy<Value = PackageLink<'g>> + 'g {
         any::<prop::sample::Index>().prop_map(move |index| {
             // Note that this works because PackageGraph uses petgraph::Graph, not StableGraph. If
             // PackageGraph used StableGraph, a retain_edges call would create holes -- invalid
@@ -53,9 +53,9 @@ impl PackageGraph {
     /// Returns a `Strategy` that generates a random `PackageResolver` instance from this graph.
     ///
     /// Requires the `proptest010` feature to be enabled.
-    pub fn prop09_resolver_strategy<'g>(&'g self) -> impl Strategy<Value = Prop09Resolver> + 'g {
+    pub fn prop010_resolver_strategy<'g>(&'g self) -> impl Strategy<Value = Prop010Resolver> + 'g {
         // Generate a FixedBitSet to filter based off of.
-        fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop09Resolver::new)
+        fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop010Resolver::new)
     }
 }
 
@@ -74,7 +74,7 @@ impl<'g> Workspace<'g> {
     /// ## Panics
     ///
     /// Panics if there are no packages in this `Workspace`.
-    pub fn prop09_name_strategy(&self) -> impl Strategy<Value = &'g str> + 'g {
+    pub fn prop010_name_strategy(&self) -> impl Strategy<Value = &'g str> + 'g {
         let name_list = self.name_list();
         (0..name_list.len()).prop_map(move |idx| name_list[idx].as_ref())
     }
@@ -86,9 +86,9 @@ impl<'g> Workspace<'g> {
     /// ## Panics
     ///
     /// Panics if there are no packages in this `Workspace`.
-    pub fn prop09_id_strategy(&self) -> impl Strategy<Value = &'g PackageId> + 'g {
+    pub fn prop010_id_strategy(&self) -> impl Strategy<Value = &'g PackageId> + 'g {
         let members_by_name = &self.inner.members_by_name;
-        self.prop09_name_strategy()
+        self.prop010_name_strategy()
             .prop_map(move |name| &members_by_name[name])
     }
 
@@ -101,15 +101,15 @@ impl<'g> Workspace<'g> {
 
 /// A randomly generated package resolver.
 ///
-/// Created by `PackageGraph::prop09_resolver_strategy`. Requires the `proptest010` feature to be
+/// Created by `PackageGraph::prop010_resolver_strategy`. Requires the `proptest010` feature to be
 /// enabled.
 #[derive(Clone, Debug)]
-pub struct Prop09Resolver {
+pub struct Prop010Resolver {
     included_edges: FixedBitSet,
     check_depends_on: bool,
 }
 
-impl Prop09Resolver {
+impl Prop010Resolver {
     fn new(included_edges: FixedBitSet) -> Self {
         Self {
             included_edges,
@@ -132,7 +132,7 @@ impl Prop09Resolver {
     }
 }
 
-impl<'g> PackageResolver<'g> for Prop09Resolver {
+impl<'g> PackageResolver<'g> for Prop010Resolver {
     fn accept(&mut self, query: &PackageQuery<'g>, link: PackageLink<'g>) -> bool {
         if self.check_depends_on {
             assert!(
