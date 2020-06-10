@@ -8,6 +8,7 @@ use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
 use petgraph::prelude::*;
 use std::collections::HashSet;
+use supercow::Supercow;
 use target_spec::Platform;
 
 /// Options for queries which simulate what Cargo does.
@@ -15,12 +16,9 @@ use target_spec::Platform;
 /// This provides control over the resolution algorithm used by `guppy`'s simulation of Cargo.
 #[derive(Clone, Debug)]
 pub struct CargoOptions<'a, PF = ()> {
-    pub(super) version: CargoResolverVersion,
-    pub(super) include_dev: bool,
-    pub(super) proc_macros_on_target: bool,
-    pub(super) host_platform: Option<&'a Platform<'a>>,
-    pub(super) target_platform: Option<&'a Platform<'a>>,
-    pub(super) omitted_packages: HashSet<&'a PackageId>,
+    // Keep operations that can be used through a & reference separate, so that it can be shared
+    // more easily.
+    pub(super) imm_options: CargoImmOptions<'a>,
     pub(super) postfilter: PF,
 }
 
@@ -66,12 +64,7 @@ where
     /// returns true for it.
     pub fn new_postfilter(postfilter: PF) -> Self {
         CargoOptions {
-            version: CargoResolverVersion::V1,
-            include_dev: false,
-            proc_macros_on_target: false,
-            host_platform: None,
-            target_platform: None,
-            omitted_packages: HashSet::new(),
+            imm_options: CargoImmOptions::new(),
             postfilter,
         }
     }
@@ -80,7 +73,7 @@ where
     ///
     /// For more about feature resolution, see the documentation for `CargoResolverVersion`.
     pub fn with_version(mut self, version: CargoResolverVersion) -> Self {
-        self.version = version;
+        self.imm_options.version = version;
         self
     }
 
@@ -91,7 +84,7 @@ where
     ///
     /// The default is true, which matches what a plain `cargo build` does.
     pub fn with_dev_deps(mut self, include_dev: bool) -> Self {
-        self.include_dev = include_dev;
+        self.imm_options.include_dev = include_dev;
         self
     }
 
@@ -104,27 +97,37 @@ where
     /// Procedural macros that are dependencies of the initial set will only be built on the host
     /// platform, regardless of whether this configuration is set.
     pub fn with_proc_macros_on_target(mut self, proc_macros_on_target: bool) -> Self {
-        self.proc_macros_on_target = proc_macros_on_target;
+        self.imm_options.proc_macros_on_target = proc_macros_on_target;
         self
     }
 
     /// Sets both the target and host platforms to the provided one, or to evaluate against any
     /// platform if `None`.
-    pub fn with_platform(mut self, platform: Option<&'a Platform<'a>>) -> Self {
-        self.target_platform = platform;
-        self.host_platform = platform;
+    pub fn with_platform(
+        mut self,
+        platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
+    ) -> Self {
+        let platform = Self::convert_platform(platform);
+        self.imm_options.target_platform = platform.clone();
+        self.imm_options.host_platform = platform;
         self
     }
 
     /// Sets the target platform to the provided one, or to evaluate against any platform if `None`.
-    pub fn with_target_platform(mut self, target_platform: Option<&'a Platform<'a>>) -> Self {
-        self.target_platform = target_platform;
+    pub fn with_target_platform(
+        mut self,
+        target_platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
+    ) -> Self {
+        self.imm_options.target_platform = Self::convert_platform(target_platform);
         self
     }
 
     /// Sets the host platform to the provided one, or to evaluate against any platform if `None`.
-    pub fn with_host_platform(mut self, host_platform: Option<&'a Platform<'a>>) -> Self {
-        self.host_platform = host_platform;
+    pub fn with_host_platform(
+        mut self,
+        host_platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
+    ) -> Self {
+        self.imm_options.host_platform = Self::convert_platform(host_platform);
         self
     }
 
@@ -138,14 +141,57 @@ where
         mut self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Self {
-        self.omitted_packages.extend(package_ids);
+        self.imm_options.omitted_packages.extend(package_ids);
         self
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    fn convert_platform(
+        platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
+    ) -> Option<Supercow<'a, Platform<'a>>> {
+        platform.map(|platform| platform.into())
     }
 }
 
 impl<'a> Default for CargoOptions<'a> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Immutable options used by Cargo.
+#[derive(Clone, Debug)]
+pub(super) struct CargoImmOptions<'a> {
+    pub(super) version: CargoResolverVersion,
+    pub(super) include_dev: bool,
+    pub(super) proc_macros_on_target: bool,
+    // Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.
+    pub(super) host_platform: Option<Supercow<'a, Platform<'a>>>,
+    pub(super) target_platform: Option<Supercow<'a, Platform<'a>>>,
+    pub(super) omitted_packages: HashSet<&'a PackageId>,
+}
+
+impl<'a> CargoImmOptions<'a> {
+    fn new() -> Self {
+        Self {
+            version: CargoResolverVersion::V1,
+            include_dev: false,
+            proc_macros_on_target: false,
+            host_platform: None,
+            target_platform: None,
+            omitted_packages: HashSet::new(),
+        }
+    }
+
+    pub(super) fn target_platform(&self) -> Option<&Platform<'a>> {
+        self.target_platform.as_deref()
+    }
+
+    pub(super) fn host_platform(&self) -> Option<&Platform<'a>> {
+        self.host_platform.as_deref()
     }
 }
 
