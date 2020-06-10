@@ -6,11 +6,13 @@ use crate::package_id;
 use guppy::errors::FeatureBuildStage;
 use guppy::graph::{BuildTargetId, BuildTargetKind, EnabledTernary, PackageGraph};
 use guppy::{errors::FeatureGraphWarning, CargoMetadata, DependencyKind, Platform, TargetFeatures};
-use once_cell::sync::Lazy;
-use std::collections::HashMap;
+use once_cell::sync::{Lazy, OnceCell};
+use std::collections::{BTreeMap, HashMap};
+use std::fs;
+use std::path::{Component, Path, PathBuf};
 
 // Metadata along with interesting crate names.
-pub static METADATA1: &str = include_str!("../small/metadata1.json");
+pub static METADATA1_PATH: &str = "../small/metadata1.json";
 pub static METADATA1_TESTCRATE: &str = "testcrate 0.1.0 (path+file:///fakepath/testcrate)";
 pub static METADATA1_DATATEST: &str =
     "datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)";
@@ -19,14 +21,14 @@ pub static METADATA1_REGION: &str =
 pub static METADATA1_DTOA: &str =
     "dtoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub static METADATA2: &str = include_str!("../small/metadata2.json");
+pub static METADATA2_PATH: &str = "../small/metadata2.json";
 pub static METADATA2_TESTCRATE: &str =
     "testworkspace-crate 0.1.0 (path+file:///Users/fakeuser/local/testworkspace/testcrate)";
 pub static METADATA2_WALKDIR: &str =
     "walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)";
 pub static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
 
-pub static METADATA_DUPS: &str = include_str!("../small/metadata_dups.json");
+pub static METADATA_DUPS_PATH: &str = "../small/metadata_dups.json";
 pub static METADATA_DUPS_TESTCRATE: &str =
     "testcrate-dups 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-dups)";
 pub static METADATA_DUPS_LAZY_STATIC_1: &str =
@@ -38,13 +40,13 @@ pub static METADATA_DUPS_BYTES_03: &str =
 pub static METADATA_DUPS_BYTES_05: &str =
     "bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub static METADATA_CYCLE1: &str = include_str!("../small/metadata_cycle1.json");
+pub static METADATA_CYCLE1_PATH: &str = "../small/metadata_cycle1.json";
 pub static METADATA_CYCLE1_BASE: &str =
     "testcycles-base 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-base)";
 pub static METADATA_CYCLE1_HELPER: &str =
     "testcycles-helper 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-helper)";
 
-pub static METADATA_CYCLE2: &str = include_str!("../small/metadata_cycle2.json");
+pub static METADATA_CYCLE2_PATH: &str = "../small/metadata_cycle2.json";
 pub static METADATA_CYCLE2_UPPER_A: &str =
     "upper-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/upper-a)";
 pub static METADATA_CYCLE2_UPPER_B: &str =
@@ -54,7 +56,7 @@ pub static METADATA_CYCLE2_LOWER_A: &str =
 pub static METADATA_CYCLE2_LOWER_B: &str =
     "lower-b 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-b)";
 
-pub static METADATA_TARGETS1: &str = include_str!("../small/metadata_targets1.json");
+pub static METADATA_TARGETS1_PATH: &str = "../small/metadata_targets1.json";
 pub static METADATA_TARGETS1_TESTCRATE: &str =
     "testcrate-targets 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-targets)";
 pub static METADATA_TARGETS1_LAZY_STATIC_1: &str =
@@ -68,11 +70,11 @@ pub static METADATA_TARGETS1_BYTES: &str =
 pub static METADATA_TARGETS1_DEP_A: &str =
     "dep-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/dep-a)";
 
-pub static METADATA_BUILD_TARGETS1: &str = include_str!("../small/metadata_build_targets1.json");
+pub static METADATA_BUILD_TARGETS1_PATH: &str = "../small/metadata_build_targets1.json";
 pub static METADATA_BUILD_TARGETS1_TESTCRATE: &str =
     "testcrate 0.1.0 (path+file:///Users/fakeuser/local/testcrates/test-build-targets)";
 
-pub static METADATA_PROC_MACRO1: &str = include_str!("../small/metadata_proc_macro1.json");
+pub static METADATA_PROC_MACRO1_PATH: &str = "../small/metadata_proc_macro1.json";
 pub static METADATA_PROC_MACRO1_MACRO: &str =
     "macro 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/macro)";
 pub static METADATA_PROC_MACRO1_NORMAL_USER: &str =
@@ -82,7 +84,7 @@ pub static METADATA_PROC_MACRO1_BUILD_USER: &str =
 pub static METADATA_PROC_MACRO1_DEV_USER: &str =
     "dev-user 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/dev-user)";
 
-pub static METADATA_LIBRA: &str = include_str!("../large/metadata_libra.json");
+pub static METADATA_LIBRA_PATH: &str = "../large/metadata_libra.json";
 pub static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
     "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)";
 pub static METADATA_LIBRA_COMPILER: &str =
@@ -126,61 +128,130 @@ pub static METADATA_LIBRA_BACKTRACE: &str =
 pub static METADATA_LIBRA_CFG_IF: &str =
     "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)";
 
-pub static METADATA_LIBRA_F0091A4: &str = include_str!("../large/metadata_libra_f0091a4.json");
+pub static METADATA_LIBRA_F0091A4_PATH: &str = "../large/metadata_libra_f0091a4.json";
 
-pub static METADATA_LIBRA_9FFD93B: &str = include_str!("../large/metadata_libra_9ffd93b.json");
+pub static METADATA_LIBRA_9FFD93B_PATH: &str = "../large/metadata_libra_9ffd93b.json";
 
 pub static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
-macro_rules! define_fixture {
-    ($name: ident, $json: ident) => {
-        pub fn $name() -> &'static JsonFixture {
-            static FIXTURE: Lazy<JsonFixture> = Lazy::new(|| JsonFixture {
-                graph: JsonFixture::parse_graph($json),
-                details: FixtureDetails::$name(),
-            });
-            &*FIXTURE
+macro_rules! define_fixtures {
+    ($($name: ident => $json_path: ident,)*) => {
+        impl JsonFixture {
+            // Access all fixtures.
+            pub fn all_fixtures() -> &'static BTreeMap<&'static str, JsonFixture> {
+                // Provide a list of all fixtures.
+                static ALL_FIXTURES: Lazy<BTreeMap<&'static str, JsonFixture>> = Lazy::new(|| {
+                    let mut map = BTreeMap::new();
+
+                    $(map.insert(
+                        stringify!($name),
+                        JsonFixture::new(stringify!($name), $json_path, FixtureDetails::$name()),
+                    );)*
+
+                    map
+                });
+
+                &*ALL_FIXTURES
+            }
+
+            // Access individual fixtures if the name is known.
+            $(pub fn $name() -> &'static Self {
+                &JsonFixture::all_fixtures()[stringify!($name)]
+            })*
         }
     };
 }
 
+define_fixtures! {
+    metadata1 => METADATA1_PATH,
+    metadata2 => METADATA2_PATH,
+    metadata_dups => METADATA_DUPS_PATH,
+    metadata_cycle1 => METADATA_CYCLE1_PATH,
+    metadata_cycle2 => METADATA_CYCLE2_PATH,
+    metadata_targets1 => METADATA_TARGETS1_PATH,
+    metadata_build_targets1 => METADATA_BUILD_TARGETS1_PATH,
+    metadata_proc_macro1 => METADATA_PROC_MACRO1_PATH,
+    metadata_libra => METADATA_LIBRA_PATH,
+    metadata_libra_f0091a4 => METADATA_LIBRA_F0091A4_PATH,
+    metadata_libra_9ffd93b => METADATA_LIBRA_9FFD93B_PATH,
+}
+
 pub struct JsonFixture {
-    graph: PackageGraph,
+    name: &'static str,
+    workspace_path: PathBuf,
+    abs_path: PathBuf,
+    json_graph: OnceCell<(String, PackageGraph)>,
     details: FixtureDetails,
 }
 
 impl JsonFixture {
-    /// Returns the package graph for this fixture.
-    pub fn graph(&self) -> &PackageGraph {
-        &self.graph
+    fn new(name: &'static str, rel_path: &'static str, details: FixtureDetails) -> Self {
+        let rel_path = Path::new(rel_path);
+        let fixtures_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        // rel_path is relative to this dir.
+        let mut abs_path = fixtures_dir.join("src");
+        abs_path.push(rel_path);
+
+        let workspace_root = fixtures_dir.parent().expect("up to workspace root");
+        let workspace_path = pathdiff::diff_paths(&abs_path, workspace_root)
+            .expect("both abs_path and workspace root are absolute");
+
+        // No symlinks in this repo, so normalize this path.
+        let workspace_path = normalize_assuming_no_symlinks(&workspace_path);
+
+        Self {
+            name,
+            workspace_path,
+            abs_path,
+            json_graph: OnceCell::new(),
+            details,
+        }
     }
 
-    /// Returns a mutable reference to the package graph for this fixture.
-    #[allow(dead_code)]
-    pub fn graph_mut(&mut self) -> &mut PackageGraph {
-        &mut self.graph
+    /// Returns the name of this fixture.
+    pub fn name(&self) -> &'static str {
+        self.name
+    }
+
+    /// Returns the absolute path of this fixture.
+    pub fn abs_path(&self) -> &Path {
+        &self.abs_path
+    }
+
+    /// Returns the path of this fixture, relative to the workspace root.
+    pub fn workspace_path(&self) -> &Path {
+        &self.workspace_path
+    }
+
+    /// Returns the unparsed JSON string for this fixture.
+    pub fn json(&self) -> &str {
+        self.init_graph().0
+    }
+
+    /// Returns the package graph for this fixture.
+    pub fn graph(&self) -> &PackageGraph {
+        self.init_graph().1
     }
 
     /// Returns the test details for this fixture.
-    #[allow(dead_code)]
     pub fn details(&self) -> &FixtureDetails {
         &self.details
     }
 
     /// Verifies that the parsed metadata matches known details.
     pub fn verify(&self) {
-        self.graph
-            .verify()
-            .expect("graph verification should succeed");
+        let graph = self.graph();
 
-        self.details.assert_cycles(&self.graph, "cycles");
+        graph.verify().expect("graph verification should succeed");
 
-        self.details.assert_workspace(self.graph.workspace());
-        self.details.assert_topo(&self.graph);
+        self.details.assert_cycles(graph, "cycles");
+
+        self.details.assert_workspace(graph.workspace());
+        self.details.assert_topo(graph);
 
         for id in self.details.known_ids() {
             let msg = format!("error while verifying package '{}'", id);
-            let metadata = self.graph.metadata(id).expect(&msg);
+            let metadata = graph.metadata(id).expect(&msg);
             self.details.assert_metadata(id, metadata, &msg);
 
             // Check for build targets.
@@ -190,23 +261,23 @@ impl JsonFixture {
 
             // Check for direct dependency queries.
             if self.details.has_deps(id) {
-                self.details.assert_deps(&self.graph, id, &msg);
+                self.details.assert_deps(graph, id, &msg);
             }
             if self.details.has_reverse_deps(id) {
-                self.details.assert_reverse_deps(&self.graph, id, &msg);
+                self.details.assert_reverse_deps(graph, id, &msg);
             }
 
             // Check for transitive dependency queries. Use both ID based and edge-based queries.
             if self.details.has_transitive_deps(id) {
                 self.details.assert_transitive_deps(
-                    &self.graph,
+                    graph,
                     id,
                     &format!("{} (transitive deps)", msg),
                 );
             }
             if self.details.has_transitive_reverse_deps(id) {
                 self.details.assert_transitive_reverse_deps(
-                    &self.graph,
+                    graph,
                     id,
                     &format!("{} (transitive reverse deps)", msg),
                 );
@@ -214,41 +285,48 @@ impl JsonFixture {
 
             // Check for named features.
             if self.details.has_named_features(id) {
-                self.details.assert_named_features(
-                    &self.graph,
-                    id,
-                    &format!("{} (named features)", msg),
-                );
+                self.details
+                    .assert_named_features(graph, id, &format!("{} (named features)", msg));
             }
         }
 
-        self.details
-            .assert_link_details(&self.graph, "link details");
+        self.details.assert_link_details(graph, "link details");
 
         // Tests for the feature graph.
         self.details
-            .assert_feature_graph_warnings(&self.graph, "feature graph warnings");
+            .assert_feature_graph_warnings(graph, "feature graph warnings");
     }
 
-    // Specific fixtures follow.
-
-    define_fixture!(metadata1, METADATA1);
-    define_fixture!(metadata2, METADATA2);
-    define_fixture!(metadata_dups, METADATA_DUPS);
-    define_fixture!(metadata_cycle1, METADATA_CYCLE1);
-    define_fixture!(metadata_cycle2, METADATA_CYCLE2);
-    define_fixture!(metadata_targets1, METADATA_TARGETS1);
-    define_fixture!(metadata_build_targets1, METADATA_BUILD_TARGETS1);
-    define_fixture!(metadata_proc_macro1, METADATA_PROC_MACRO1);
-    define_fixture!(metadata_libra, METADATA_LIBRA);
-    define_fixture!(metadata_libra_f0091a4, METADATA_LIBRA_F0091A4);
-    define_fixture!(metadata_libra_9ffd93b, METADATA_LIBRA_9FFD93B);
+    fn init_graph(&self) -> (&str, &PackageGraph) {
+        let (json, package_graph) = self.json_graph.get_or_init(|| {
+            let json = fs::read_to_string(&self.abs_path).unwrap_or_else(|err| {
+                panic!("reading file '{}' failed: {}", self.abs_path.display(), err)
+            });
+            let graph = Self::parse_graph(&json);
+            (json, graph)
+        });
+        (json.as_str(), package_graph)
+    }
 
     fn parse_graph(json: &str) -> PackageGraph {
         let metadata =
             CargoMetadata::parse_json(json).expect("parsing metadata JSON should succeed");
         PackageGraph::from_metadata(metadata).expect("constructing package graph should succeed")
     }
+}
+
+// Thanks to @porglezomp on Twitter for this simple normalization method.
+fn normalize_assuming_no_symlinks(p: impl AsRef<Path>) -> PathBuf {
+    let mut out = PathBuf::new();
+    for c in p.as_ref().components() {
+        match c {
+            Component::ParentDir => {
+                out.pop();
+            }
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 impl FixtureDetails {

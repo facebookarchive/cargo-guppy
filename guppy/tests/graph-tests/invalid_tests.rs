@@ -1,6 +1,6 @@
 use assert_matches::assert_matches;
 use cargo_metadata::{Metadata, Target};
-use fixtures::json;
+use fixtures::json::JsonFixture;
 use guppy::{graph::PackageGraph, Error};
 
 #[test]
@@ -58,7 +58,7 @@ fn proc_macro_mixed_kinds() {
             .expect("valid target")
     }
 
-    let mut metadata: Metadata = serde_json::from_str(json::METADATA_PROC_MACRO1)
+    let mut metadata: Metadata = serde_json::from_str(JsonFixture::metadata_proc_macro1().json())
         .expect("parsing metadata JSON should succeed");
     {
         let target = macro_target(&mut metadata);
