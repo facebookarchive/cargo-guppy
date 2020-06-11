@@ -1,7 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use anyhow::Result;
+pub mod summaries;
+
+use crate::summaries::*;
+use anyhow::{anyhow, bail, Result};
+use clap::arg_enum;
 use fixtures::json::JsonFixture;
 use structopt::StructOpt;
 
@@ -16,6 +20,7 @@ impl FixtureManager {
     pub fn exec(self) -> Result<()> {
         match self.cmd {
             Command::List => list(),
+            Command::GenerateSummaries(opts) => opts.exec(),
         }
     }
 }
@@ -25,6 +30,8 @@ enum Command {
     #[structopt(name = "list")]
     /// List fixtures
     List,
+    /// Generate summaries
+    GenerateSummaries(GenerateSummariesOpts),
 }
 
 pub fn list() -> Result<()> {
@@ -33,4 +40,113 @@ pub fn list() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[derive(Debug, StructOpt)]
+pub struct GenerateSummariesOpts {
+    /// Number of summaries to generate
+    #[structopt(long, default_value = Self::DEFAULT_COUNT_STR)]
+    pub count: usize,
+
+    /// Execution mode (check, force or generate)
+    #[structopt(long, short, possible_values = &GenerateSummariesMode::variants(), case_insensitive = true, default_value = "generate")]
+    pub mode: GenerateSummariesMode,
+
+    /// Only generate summaries for these fixtures
+    #[structopt(long)]
+    pub fixtures: Vec<String>,
+}
+
+impl GenerateSummariesOpts {
+    /// The default value of the `count` field, as a string.
+    pub const DEFAULT_COUNT_STR: &'static str = "8";
+
+    /// The default value of the `count` field.
+    pub fn default_count() -> usize {
+        Self::DEFAULT_COUNT_STR
+            .parse()
+            .expect("DEFAULT_COUNT_STR should parse as a usize")
+    }
+}
+
+arg_enum! {
+    #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+    pub enum GenerateSummariesMode {
+        Generate,
+        Check,
+        Force,
+    }
+}
+
+impl GenerateSummariesOpts {
+    pub fn exec(self) -> Result<()> {
+        let fixtures: Box<dyn Iterator<Item = (&str, &JsonFixture)>> = if self.fixtures.is_empty() {
+            Box::new(
+                JsonFixture::all_fixtures()
+                    .iter()
+                    .map(|(name, fixture)| (*name, fixture)),
+            )
+        } else {
+            let fixtures = self
+                .fixtures
+                .iter()
+                .map(|name| {
+                    let fixture = JsonFixture::by_name(name)
+                        .ok_or_else(|| anyhow!("unknown fixture: {}", name))?;
+                    Ok((name.as_str(), fixture))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            Box::new(fixtures.into_iter())
+        };
+
+        let mut num_changed = 0;
+
+        for (name, fixture) in fixtures {
+            println!("generating {} summaries for {}...", self.count, name);
+
+            let context = GenerateSummaryContext::new(
+                fixture,
+                self.count,
+                self.mode == GenerateSummariesMode::Force,
+            )?;
+            for summary_pair in context {
+                let summary_pair = summary_pair?;
+                let is_changed = summary_pair.is_changed();
+
+                if is_changed {
+                    num_changed += 1;
+                }
+
+                if self.mode == GenerateSummariesMode::Check {
+                    if is_changed {
+                        println!(
+                            "** {}:\n{}",
+                            summary_pair.summary_path.display(),
+                            summary_pair.diff()
+                        );
+                    }
+
+                    continue;
+                }
+
+                if is_changed || self.mode == GenerateSummariesMode::Force {
+                    // Write the summary to a string.
+                    let header = format!(
+                        "# This summary was @generated. To regenerate, run:\n\
+                         #   cargo run -p fixture-manager -- generate-summaries --fixture {}\n\n",
+                        name
+                    );
+                    summary_pair.write(header)?;
+                }
+            }
+        }
+
+        if self.mode == GenerateSummariesMode::Check && num_changed > 0 {
+            bail!("{} summaries changed", num_changed);
+        }
+
+        println!("{} summaries changed", num_changed);
+
+        Ok(())
+    }
 }

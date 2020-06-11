@@ -139,7 +139,7 @@ impl<'g> PackageSet<'g> {
     /// Returns true if this package ID is contained in this resolve set, false if it isn't, and
     /// None if the package ID wasn't found.
     pub fn contains(&self, package_id: &PackageId) -> Option<bool> {
-        Some(self.core.contains(self.graph.package_ix(package_id)?))
+        Some(self.contains_ix(self.graph.package_ix(package_id)?))
     }
 
     // ---
@@ -334,6 +334,14 @@ impl<'g> PackageSet<'g> {
     ) -> impl fmt::Display + 'a {
         let node_filtered = NodeFiltered(self.graph.dep_graph(), &self.core.included);
         DotFmt::new(node_filtered, VisitorWrap::new(self.graph, visitor))
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    pub(super) fn contains_ix(&self, package_ix: NodeIndex<PackageIx>) -> bool {
+        self.core.contains(package_ix)
     }
 }
 
