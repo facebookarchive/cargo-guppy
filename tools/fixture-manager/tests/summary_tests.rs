@@ -26,7 +26,7 @@ fn summaries_unchanged() -> Result<()> {
                 println!(
                     "** {}:\n{}",
                     summary_pair.summary_path.display(),
-                    summary_pair.diff()
+                    summary_pair.diff().report()
                 );
             }
         }

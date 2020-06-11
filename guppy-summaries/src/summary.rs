@@ -194,10 +194,12 @@ impl SummarySource {
 impl fmt::Display for SummarySource {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            // Don't differentiate here between workspace and non-workspace paths because
+            // PackageStatus provides that info.
             SummarySource::Workspace { workspace_path } => {
-                write!(f, "workspace path '{}'", workspace_path.display())
+                write!(f, "path '{}'", workspace_path.display())
             }
-            SummarySource::Path { path } => write!(f, "local path '{}'", path.display()),
+            SummarySource::Path { path } => write!(f, "path '{}'", path.display()),
             SummarySource::CratesIo => write!(f, "crates.io"),
             SummarySource::External { source } => write!(f, "external '{}'", source),
         }

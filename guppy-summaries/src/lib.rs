@@ -92,25 +92,25 @@
 //! // Diff summary and summary2.
 //! let diff = summary.diff(&summary2);
 //!
-//! // Pretty-print the diff.
-//! let diff_str = format!("{}", diff);
+//! // Pretty-print a report generated from the diff.
+//! let diff_str = format!("{}", diff.report());
 //! assert_eq!(
-//!     diff_str,
 //!     r#"target packages:
-//!   foo 1.2.4 (initial, workspace path 'new-location/foo')
+//!   A once_cell 1.4.0 (transitive third-party, external 'git+https://github.com/matklad/once_cell?tag=v1.4.0')
+//!     * features: std
+//!   M foo 1.2.4 (initial, path 'new-location/foo')
 //!     * version upgraded from 1.2.3
-//!     * source changed from workspace path 'foo'
+//!     * source changed from path 'foo'
 //!     * added features: feature-b
 //!     * removed features: feature-c
 //!     * (unchanged features: feature-a)
-//!   once_cell 1.4.0 (transitive third-party, external 'git+https://github.com/matklad/once_cell?tag=v1.4.0')
-//!     * added package, features: std
 //!
 //! host packages:
-//!   proc-macro 0.1.2 (workspace path 'proc-macros/macro')
-//!     * removed package, old status: workspace, old features: macro-expand
+//!   R proc-macro 0.1.2 (workspace, path 'proc-macros/macro')
+//!     * (old features: macro-expand)
 //!
-//! "#
+//! "#,
+//!     diff_str,
 //! );
 //! ```
 
@@ -118,9 +118,11 @@
 #![warn(missing_docs)]
 
 mod diff;
+mod report;
 mod summary;
 #[cfg(test)]
 mod unit_tests;
 
 pub use diff::*;
+pub use report::*;
 pub use summary::*;

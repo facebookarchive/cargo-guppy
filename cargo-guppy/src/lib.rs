@@ -74,7 +74,7 @@ impl DiffSummariesOptions {
 
         let diff = old_summary.diff(&new_summary);
 
-        println!("{}", diff);
+        println!("{}", diff.report());
 
         // TODO: different error codes for non-empty diff and failure, similar to git/hg
         if diff.is_changed() {

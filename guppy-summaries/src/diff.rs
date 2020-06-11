@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{
-    PackageInfo, PackageMap, PackageStatus, SummaryId, SummarySource, SummaryWithMetadata,
+    PackageInfo, PackageMap, PackageStatus, SummaryId, SummaryReport, SummarySource,
+    SummaryWithMetadata,
 };
 use diffus::{edit, Diffable};
 use semver::Version;
@@ -37,18 +38,12 @@ impl<'a> SummaryDiff<'a> {
     pub fn is_unchanged(&self) -> bool {
         self.target_packages.is_unchanged() && self.host_packages.is_unchanged()
     }
-}
 
-impl<'a> fmt::Display for SummaryDiff<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if !self.target_packages.is_unchanged() {
-            writeln!(f, "target packages:\n{}", self.target_packages)?;
-        }
-        if !self.host_packages.is_unchanged() {
-            writeln!(f, "host packages:\n{}", self.host_packages)?;
-        }
-
-        Ok(())
+    /// Returns a report for this diff.
+    ///
+    /// This report can be used with `fmt::Display`.
+    pub fn report<'b>(&'b self) -> SummaryReport<'a, 'b> {
+        SummaryReport::new(self)
     }
 }
 
@@ -179,111 +174,6 @@ impl<'a> PackageDiff<'a> {
     }
 }
 
-impl<'a> fmt::Display for PackageDiff<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for (summary_id, status) in &self.changed {
-            if let Some(new_status) = status.new_status() {
-                write!(
-                    f,
-                    "  {} {} ({}, {})",
-                    summary_id.name, summary_id.version, new_status, summary_id.source
-                )?;
-            } else {
-                write!(
-                    f,
-                    "  {} {} ({})",
-                    summary_id.name, summary_id.version, summary_id.source
-                )?;
-            }
-
-            // Print out other versions if available.
-            if let Some(unchanged_list) = self.unchanged.get(summary_id.name.as_str()) {
-                write!(f, " (other versions: ")?;
-                display_list(f, unchanged_list.iter().map(|(version, _, _)| *version))?;
-                write!(f, ")")?;
-            }
-
-            writeln!(f)?;
-
-            match status {
-                SummaryDiffStatus::Added { info } => {
-                    write!(f, "    * added package, features: ")?;
-                    display_list(f, &info.features)?;
-                    writeln!(f)?;
-                }
-                SummaryDiffStatus::Removed { old_info } => {
-                    write!(
-                        f,
-                        "    * removed package, old status: {}, old features: ",
-                        old_info.status
-                    )?;
-                    display_list(f, &old_info.features)?;
-                    writeln!(f)?;
-                }
-                SummaryDiffStatus::Modified {
-                    old_version,
-                    old_source,
-                    old_status,
-                    // The new status is printed in the package header.
-                    new_status: _,
-                    added_features,
-                    removed_features,
-                    unchanged_features,
-                } => {
-                    if let Some(old_version) = old_version {
-                        let change_str = if summary_id.version > **old_version {
-                            "upgraded"
-                        } else {
-                            "DOWNGRADED"
-                        };
-                        writeln!(f, "    * version {} from {}", change_str, old_version)?;
-                    }
-                    if let Some(old_source) = old_source {
-                        writeln!(f, "    * source changed from {}", old_source)?;
-                    }
-                    if let Some(old_status) = old_status {
-                        writeln!(f, "    * status changed from {}", old_status)?;
-                    }
-                    if !added_features.is_empty() {
-                        write!(f, "    * added features: ")?;
-                        display_list(f, added_features.iter().copied())?;
-                        writeln!(f)?;
-                    }
-                    if !removed_features.is_empty() {
-                        write!(f, "    * removed features: ")?;
-                        display_list(f, removed_features.iter().copied())?;
-                        writeln!(f)?;
-                    }
-                    write!(f, "    * (unchanged features: ")?;
-                    display_list(f, unchanged_features.iter().copied())?;
-                    writeln!(f, ")")?;
-                }
-            }
-        }
-
-        Ok(())
-    }
-}
-
-fn display_list<I>(f: &mut fmt::Formatter, items: I) -> fmt::Result
-where
-    I: IntoIterator,
-    I::Item: fmt::Display,
-    I::IntoIter: ExactSizeIterator,
-{
-    let items = items.into_iter();
-    let len = items.len();
-    for (idx, item) in items.enumerate() {
-        write!(f, "{}", item)?;
-        // Add a comma for all items except the last one.
-        if idx + 1 < len {
-            write!(f, ", ")?;
-        }
-    }
-
-    Ok(())
-}
-
 /// The diff status for a particular summary ID and source.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SummaryDiffStatus<'a> {
@@ -395,11 +285,48 @@ impl<'a> SummaryDiffStatus<'a> {
         }
     }
 
-    fn new_status(&self) -> Option<PackageStatus> {
+    /// Returns the tag for this status.
+    ///
+    /// The tag is similar to this enum, except it has no associated data.
+    pub fn tag(&self) -> SummaryDiffTag {
         match self {
-            SummaryDiffStatus::Added { info } => Some(info.status),
-            SummaryDiffStatus::Removed { .. } => None,
-            SummaryDiffStatus::Modified { new_status, .. } => Some(*new_status),
+            SummaryDiffStatus::Added { .. } => SummaryDiffTag::Added,
+            SummaryDiffStatus::Removed { .. } => SummaryDiffTag::Removed,
+            SummaryDiffStatus::Modified { .. } => SummaryDiffTag::Modified,
+        }
+    }
+
+    /// Returns the new package status if available, otherwise the old status.
+    pub fn latest_status(&self) -> PackageStatus {
+        match self {
+            SummaryDiffStatus::Added { info } => info.status,
+            SummaryDiffStatus::Removed { old_info } => old_info.status,
+            SummaryDiffStatus::Modified { new_status, .. } => *new_status,
+        }
+    }
+}
+
+/// A tag representing `SummaryDiffStatus` except with no data attached.
+///
+/// The order is significant: it is what's used as the default order in reports.
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum SummaryDiffTag {
+    /// This package was added.
+    Added,
+
+    /// This package was modified.
+    Modified,
+
+    /// This package was removed.
+    Removed,
+}
+
+impl fmt::Display for SummaryDiffTag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SummaryDiffTag::Added => write!(f, "A"),
+            SummaryDiffTag::Modified => write!(f, "M"),
+            SummaryDiffTag::Removed => write!(f, "R"),
         }
     }
 }
