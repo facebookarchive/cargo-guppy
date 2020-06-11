@@ -28,6 +28,11 @@ impl<'a> SummaryDiff<'a> {
         }
     }
 
+    /// Returns true if there are any changes in this diff.
+    pub fn is_changed(&self) -> bool {
+        !self.is_unchanged()
+    }
+
     /// Returns true if there are no changes in this diff.
     pub fn is_unchanged(&self) -> bool {
         self.target_packages.is_unchanged() && self.host_packages.is_unchanged()

@@ -69,7 +69,7 @@ impl PackageGraph {
     ) -> impl Strategy<Value = CargoOptions<'g>> + 'g {
         let target_platform = option::of(Platform::strategy(any::<TargetFeatures<'static>>()));
         let host_platform = option::of(Platform::strategy(any::<TargetFeatures<'static>>()));
-        let omitted_packages = hash_set(self.prop010_id_strategy(), 0..8);
+        let omitted_packages = hash_set(self.prop010_id_strategy(), 0..4);
         (
             any::<CargoResolverVersion>(),
             any::<bool>(),

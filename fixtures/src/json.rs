@@ -208,6 +208,11 @@ impl JsonFixture {
         }
     }
 
+    /// Lookup a fixture by name, or `None` if the name wasn't found.
+    pub fn by_name(name: &str) -> Option<&'static Self> {
+        Self::all_fixtures().get(name)
+    }
+
     /// Returns the name of this fixture.
     pub fn name(&self) -> &'static str {
         self.name

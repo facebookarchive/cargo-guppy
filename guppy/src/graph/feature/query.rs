@@ -4,9 +4,9 @@
 use crate::graph::cargo::{CargoOptions, CargoPostfilter, CargoSet};
 use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureSet};
 use crate::graph::query_core::QueryParams;
-use crate::graph::{DependencyDirection, FeatureIx, PackageQuery};
+use crate::graph::{DependencyDirection, FeatureIx, PackageIx, PackageQuery};
 use crate::sorted_set::SortedSet;
-use crate::Error;
+use crate::{Error, PackageId};
 use petgraph::graph::NodeIndex;
 use std::collections::HashSet;
 
@@ -265,6 +265,14 @@ impl<'g> FeatureQuery<'g> {
         self.params.direction()
     }
 
+    /// Returns true if the query starts from the given package.
+    ///
+    /// Returns `None` if the package ID is unknown.
+    pub fn starts_from_package(&self, package_id: &PackageId) -> Option<bool> {
+        let package_ix = self.graph.package_graph.package_ix(package_id)?;
+        Some(self.starts_from_package_ix(package_ix))
+    }
+
     /// Returns true if the query starts from the given feature ID.
     ///
     /// Returns `None` if this package ID is unknown.
@@ -306,6 +314,19 @@ impl<'g> FeatureQuery<'g> {
         PF: CargoPostfilter<'g>,
     {
         CargoSet::new(self, opts)
+    }
+
+    // ---
+    // Helper methods
+    // ---
+
+    pub(in crate::graph) fn starts_from_package_ix(
+        &self,
+        package_ix: NodeIndex<PackageIx>,
+    ) -> bool {
+        self.graph
+            .feature_ixs_for_package_ix(package_ix)
+            .any(|feature_ix| self.params.has_initial(feature_ix))
     }
 }
 

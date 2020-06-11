@@ -199,6 +199,7 @@ impl<'a> CargoImmOptions<'a> {
 /// The version of Cargo's feature resolver to use.
 #[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[cfg_attr(feature = "proptest010", derive(proptest_derive::Arbitrary))]
+#[serde(rename_all = "kebab-case")]
 #[non_exhaustive]
 pub enum CargoResolverVersion {
     /// The default "classic" feature resolver in Rust.

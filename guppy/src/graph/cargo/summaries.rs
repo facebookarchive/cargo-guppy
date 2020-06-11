@@ -7,8 +7,8 @@
 //! stable `guppy` API.
 
 use crate::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
-use crate::graph::feature::FeatureSet;
-use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSource};
+use crate::graph::feature::{FeatureQuery, FeatureSet};
+use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet, PackageSource};
 pub use guppy_summaries::*;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -22,37 +22,52 @@ impl<'g> CargoSet<'g> {
     #[doc(hidden)]
     pub fn to_summary(&self, opts: &CargoOptions<'_>) -> Summary {
         let metadata = CargoOptionsSummary::new(self.original_query.graph().package_graph, opts);
-        let initials = self.original_query().clone().resolve_with_fn(|_, _| false);
-
+        let original_query = self.original_query();
         let target_features = self.target_features();
-        let target_initials = initials.intersection(target_features);
-
         let host_features = self.host_features();
-        let host_initials = initials.intersection(host_features);
 
         Summary {
             metadata: Some(metadata),
-            target_initials: target_initials.to_package_map(),
-            target_packages: target_features.to_package_map(),
-            host_initials: host_initials.to_package_map(),
-            host_packages: host_features.to_package_map(),
+            target_packages: target_features
+                .to_package_map(original_query, self.target_direct_deps()),
+            host_packages: host_features.to_package_map(original_query, self.host_direct_deps()),
         }
     }
 }
 
 impl<'g> FeatureSet<'g> {
     /// Creates a `PackageMap` from this `FeatureSet`.
-    fn to_package_map(&self) -> PackageMap {
+    ///
+    /// original_query and direct_deps are used to assign a PackageStatus.
+    fn to_package_map(
+        &self,
+        original_query: &FeatureQuery<'g>,
+        direct_deps: &PackageSet<'g>,
+    ) -> PackageMap {
         self.packages_with_features(DependencyDirection::Forward)
             .map(|feature_list| {
-                (
-                    feature_list.package().to_summary_id(),
-                    feature_list
+                let package = feature_list.package();
+
+                let status = if original_query.starts_from_package_ix(package.package_ix()) {
+                    PackageStatus::Initial
+                } else if package.in_workspace() {
+                    PackageStatus::Workspace
+                } else if direct_deps.contains_ix(package.package_ix()) {
+                    PackageStatus::Direct
+                } else {
+                    PackageStatus::Transitive
+                };
+
+                let info = PackageInfo {
+                    status,
+                    features: feature_list
                         .features()
                         .iter()
                         .map(|feature| feature.to_string())
                         .collect(),
-                )
+                };
+
+                (feature_list.package().to_summary_id(), info)
             })
             .collect()
     }
@@ -70,7 +85,7 @@ impl<'g> PackageMetadata<'g> {
 }
 
 /// A summary of Cargo options used to build a `CargoSet`.
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 #[non_exhaustive]
 pub struct CargoOptionsSummary {
@@ -84,12 +99,15 @@ pub struct CargoOptionsSummary {
     pub proc_macros_on_target: bool,
 
     /// The host platform.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub host_platform: Option<PlatformSummary>,
 
     /// The target platform.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub target_platform: Option<PlatformSummary>,
 
     /// The set of packages omitted from computations.
+    #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
     pub omitted_packages: BTreeSet<SummaryId>,
 }
 
@@ -136,13 +154,14 @@ impl<'g> PackageSource<'g> {
 }
 
 /// Summary of platform information.
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct PlatformSummary {
     /// The platform triple.
     pub triple: String,
 
-    /// The target features used. `None` means
+    /// The target features used.
+    #[serde(with = "target_features_impl")]
     pub target_features: TargetFeaturesSummary,
 }
 
@@ -158,8 +177,8 @@ impl PlatformSummary {
 }
 
 /// Summary of target feature information.
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case", untagged)]
 pub enum TargetFeaturesSummary {
     /// The target features are unknown.
     Unknown,
@@ -180,5 +199,52 @@ impl TargetFeaturesSummary {
             TargetFeatures::All => TargetFeaturesSummary::All,
             other => panic!("Unknown target features: {:?}", other),
         }
+    }
+}
+
+mod target_features_impl {
+    use super::*;
+    use serde::de::Error;
+    use serde::{Deserializer, Serializer};
+
+    pub fn serialize<S>(
+        target_features: &TargetFeaturesSummary,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match target_features {
+            TargetFeaturesSummary::Unknown => "unknown".serialize(serializer),
+            TargetFeaturesSummary::All => "all".serialize(serializer),
+            TargetFeaturesSummary::Features(features) => features.serialize(serializer),
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<TargetFeaturesSummary, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let d = TargetFeaturesDeserialize::deserialize(deserializer)?;
+        match d {
+            TargetFeaturesDeserialize::String(target_features) => match target_features.as_str() {
+                "unknown" => Ok(TargetFeaturesSummary::Unknown),
+                "all" => Ok(TargetFeaturesSummary::All),
+                other => Err(D::Error::custom(format!(
+                    "unknown string for target features: {}",
+                    other,
+                ))),
+            },
+            TargetFeaturesDeserialize::List(target_features) => {
+                Ok(TargetFeaturesSummary::Features(target_features))
+            }
+        }
+    }
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum TargetFeaturesDeserialize {
+        String(String),
+        List(BTreeSet<String>),
     }
 }
