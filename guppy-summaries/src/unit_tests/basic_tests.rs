@@ -1,7 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{PackageMap, Summary, SummaryDiffStatus, SummaryId, SummarySource};
+use crate::{
+    PackageInfo, PackageMap, PackageStatus, Summary, SummaryDiffStatus, SummaryId, SummarySource,
+};
 use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::BTreeSet;
@@ -26,39 +28,45 @@ fn empty_roundtrip() {
 
 #[test]
 fn basic_roundtrip() {
-    let target_initials = vec![(
-        SummaryId::new(
-            "foo",
-            Version::new(1, 2, 3),
-            SummarySource::workspace("foo"),
+    let target_packages = vec![
+        (
+            SummaryId::new(
+                "foo",
+                Version::new(1, 2, 3),
+                SummarySource::workspace("foo"),
+            ),
+            PackageStatus::Initial,
+            vec!["default", "feature1"],
         ),
-        vec!["default", "feature1"],
-    )];
-    let host_initials = vec![(
-        SummaryId::new(
-            "bar",
-            Version::new(0, 1, 0),
-            SummarySource::workspace("dir/bar"),
+        (
+            SummaryId::new("dep", Version::new(0, 4, 2), SummarySource::crates_io()),
+            PackageStatus::Direct,
+            vec!["std"],
         ),
-        vec!["default", "feature2"],
-    )];
-    let target_packages = vec![(
-        SummaryId::new("dep", Version::new(0, 4, 2), SummarySource::crates_io()),
-        vec!["std"],
-    )];
-    let host_packages = vec![(
-        SummaryId::new(
-            "local-dep",
-            Version::new(1, 1, 2),
-            SummarySource::path("../local-dep"),
+    ];
+    let host_packages = vec![
+        (
+            SummaryId::new(
+                "bar",
+                Version::new(0, 1, 0),
+                SummarySource::workspace("dir/bar"),
+            ),
+            PackageStatus::Workspace,
+            vec!["default", "feature2"],
         ),
-        vec![],
-    )];
+        (
+            SummaryId::new(
+                "local-dep",
+                Version::new(1, 1, 2),
+                SummarySource::path("../local-dep"),
+            ),
+            PackageStatus::Transitive,
+            vec![],
+        ),
+    ];
 
     let summary = Summary {
         metadata: None,
-        target_initials: make_summary(target_initials),
-        host_initials: make_summary(host_initials),
         target_packages: make_summary(target_packages),
         host_packages: make_summary(host_packages),
     };
@@ -68,28 +76,32 @@ fn basic_roundtrip() {
 
     static SERIALIZED_SUMMARY: &str = r#"# This is a test @generated summary.
 
-[[target-initial]]
+[[target-package]]
 name = 'foo'
 version = '1.2.3'
 workspace-path = 'foo'
+status = 'initial'
 features = ['default', 'feature1']
-
-[[host-initial]]
-name = 'bar'
-version = '0.1.0'
-workspace-path = 'dir/bar'
-features = ['default', 'feature2']
 
 [[target-package]]
 name = 'dep'
 version = '0.4.2'
 crates-io = true
+status = 'direct'
 features = ['std']
+
+[[host-package]]
+name = 'bar'
+version = '0.1.0'
+workspace-path = 'dir/bar'
+status = 'workspace'
+features = ['default', 'feature2']
 
 [[host-package]]
 name = 'local-dep'
 version = '1.1.2'
 path = '../local-dep'
+status = 'transitive'
 features = []
 "#;
     assert_eq!(&s, SERIALIZED_SUMMARY, "serialized representation matches");
@@ -103,91 +115,56 @@ features = []
     // Try changing some things.
     static SUMMARY2: &str = r#"# This is a test @generated summary.
 
-[[target-initial]]
+[[target-package]]
 name = 'foo'
 version = '1.2.3'
 workspace-path = 'foo'
+status = 'initial'
 features = ['default', 'feature1', 'feature2']
-
-[[host-initial]]
-name = 'bar'
-version = '0.2.0'
-workspace-path = 'dir/bar'
-features = ['default', 'feature2']
 
 [[target-package]]
 name = 'dep'
 version = '0.4.3'
 crates-io = true
+status = 'direct'
 features = ['std']
 
 [[target-package]]
 name = 'dep'
 version = '0.5.0'
 crates-io = true
+status = 'transitive'
 features = ['std']
+
+[[host-package]]
+name = 'bar'
+version = '0.2.0'
+workspace-path = 'dir/bar'
+status = 'initial'
+features = ['default', 'feature2']
 
 [[host-package]]
 name = 'local-dep'
 version = '1.1.2'
 path = '../local-dep'
+status = 'transitive'
 features = ['dep-feature']
 
 [[host-package]]
 name = 'local-dep'
 version = '2.0.0'
 path = '../local-dep-2'
+status = 'transitive'
 features = []
 "#;
 
     let summary2 = Summary::parse(SUMMARY2).expect("from_str succeeded");
     let diff = summary.diff(&summary2);
 
-    assert_eq!(diff.target_initials.changed.len(), 1, "1 changed entry");
-    let (summary_id, status) = diff
-        .target_initials
-        .changed
-        .iter()
-        .next()
-        .expect("target_initials has 1 element");
-    assert_eq!(summary_id.name, "foo");
-    assert_eq!(summary_id.version.to_string(), "1.2.3");
-    assert_eq!(summary_id.source, SummarySource::workspace("foo"));
-    assert_eq!(
-        *status,
-        SummaryDiffStatus::Changed {
-            old_version: None,
-            old_source: None,
-            added_features: vec!["feature2"].into_iter().collect(),
-            removed_features: BTreeSet::new(),
-            unchanged_features: vec!["default", "feature1"].into_iter().collect(),
-        }
-    );
-
-    // bar is an insert and a remove, so it should be combined.
-    assert_eq!(diff.host_initials.changed.len(), 1, "1 changed entry");
-    let (summary_id, status) = diff
-        .host_initials
-        .changed
-        .iter()
-        .next()
-        .expect("host_initials has 1 element");
-    assert_eq!(summary_id.name, "bar");
-    assert_eq!(summary_id.version.to_string(), "0.2.0");
-    assert_eq!(summary_id.source, SummarySource::workspace("dir/bar"));
-    assert_eq!(
-        *status,
-        SummaryDiffStatus::Changed {
-            old_version: Some(&Version::new(0, 1, 0)),
-            old_source: None,
-            added_features: BTreeSet::new(),
-            removed_features: BTreeSet::new(),
-            unchanged_features: vec!["default", "feature2"].into_iter().collect(),
-        }
-    );
-
-    // target_packages is a remove + 2 inserts for dep, so it should not be combined.
-    assert_eq!(diff.target_packages.changed.len(), 3, "3 changed entries");
+    // target_packages is:
+    // * a change for foo = 1 entry
+    // * a remove + 2 inserts for dep (so it should not be combined) = 3 entries
+    assert_eq!(diff.target_packages.changed.len(), 4, "4 changed entries");
     let mut iter = diff.target_packages.changed.iter();
 
     // First, dep 0.4.2.
@@ -199,8 +176,11 @@ features = []
     assert_eq!(
         *status,
         SummaryDiffStatus::Removed {
-            old_features: &std_feature
-        }
+            old_info: &PackageInfo {
+                status: PackageStatus::Direct,
+                features: std_feature.clone(),
+            },
+        },
     );
 
     // Next, dep 0.4.3.
@@ -211,11 +191,14 @@ features = []
     assert_eq!(
         *status,
         SummaryDiffStatus::Added {
-            features: &std_feature
-        }
+            info: &PackageInfo {
+                status: PackageStatus::Direct,
+                features: std_feature.clone(),
+            },
+        },
     );
 
-    // Finally, dep 0.5.0.
+    // Next, dep 0.5.0.
     let (summary_id, status) = iter.next().expect("1 element left");
     assert_eq!(summary_id.name, "dep");
     assert_eq!(summary_id.version.to_string(), "0.5.0");
@@ -223,15 +206,56 @@ features = []
     assert_eq!(
         *status,
         SummaryDiffStatus::Added {
-            features: &std_feature
+            info: &PackageInfo {
+                status: PackageStatus::Transitive,
+                features: std_feature,
+            },
         }
     );
 
-    // host_packages is a change + insert, so it should not be combined.
-    assert_eq!(diff.host_packages.changed.len(), 2, "2 changed entries");
+    // Finally, foo.
+    let (summary_id, status) = iter.next().expect("0 elements left");
+    assert_eq!(summary_id.name, "foo");
+    assert_eq!(summary_id.version.to_string(), "1.2.3");
+    assert_eq!(summary_id.source, SummarySource::workspace("foo"));
+    assert_eq!(
+        *status,
+        SummaryDiffStatus::Changed {
+            old_version: None,
+            old_source: None,
+            old_status: None,
+            new_status: PackageStatus::Initial,
+            added_features: vec!["feature2"].into_iter().collect(),
+            removed_features: BTreeSet::new(),
+            unchanged_features: vec!["default", "feature1"].into_iter().collect(),
+        }
+    );
+
+    // host_packages is:
+    // * an insert + remove for bar, so it *should* be combined = 1 entry
+    // * a change + insert for local-dep, so it should not be combined = 2 entries.
+    assert_eq!(diff.host_packages.changed.len(), 3, "3 changed entries");
     let mut iter = diff.host_packages.changed.iter();
 
-    // First, local-dep 1.1.2.
+    // First, bar 0.2.0.
+    let (summary_id, status) = iter.next().expect("2 elements left");
+    assert_eq!(summary_id.name, "bar");
+    assert_eq!(summary_id.version.to_string(), "0.2.0");
+    assert_eq!(summary_id.source, SummarySource::workspace("dir/bar"));
+    assert_eq!(
+        *status,
+        SummaryDiffStatus::Changed {
+            old_version: Some(&Version::new(0, 1, 0)),
+            old_source: None,
+            old_status: Some(PackageStatus::Workspace),
+            new_status: PackageStatus::Initial,
+            added_features: BTreeSet::new(),
+            removed_features: BTreeSet::new(),
+            unchanged_features: vec!["default", "feature2"].into_iter().collect(),
+        }
+    );
+
+    // Next, local-dep 1.1.2.
     let (summary_id, status) = iter.next().expect("2 elements left");
     assert_eq!(summary_id.name, "local-dep");
     assert_eq!(summary_id.version.to_string(), "1.1.2");
@@ -241,13 +265,15 @@ features = []
         SummaryDiffStatus::Changed {
             old_version: None,
             old_source: None,
+            old_status: None,
+            new_status: PackageStatus::Transitive,
             added_features: vec!["dep-feature"].into_iter().collect(),
             removed_features: BTreeSet::new(),
             unchanged_features: BTreeSet::new(),
         }
     );
 
-    // Next, local-dep 2.0.0.
+    // Finally, local-dep 2.0.0.
     let (summary_id, status) = iter.next().expect("1 element left");
     assert_eq!(summary_id.name, "local-dep");
     assert_eq!(summary_id.version.to_string(), "2.0.0");
@@ -255,21 +281,22 @@ features = []
     assert_eq!(
         *status,
         SummaryDiffStatus::Added {
-            features: &BTreeSet::new(),
-        }
+            info: &PackageInfo {
+                status: PackageStatus::Transitive,
+                features: BTreeSet::new(),
+            },
+        },
     );
 }
 
-fn make_summary(list: Vec<(SummaryId, Vec<&str>)>) -> PackageMap {
+fn make_summary(list: Vec<(SummaryId, PackageStatus, Vec<&str>)>) -> PackageMap {
     list.into_iter()
-        .map(|(summary_id, features)| {
-            (
-                summary_id,
-                features
-                    .into_iter()
-                    .map(|feature| feature.to_string())
-                    .collect(),
-            )
+        .map(|(summary_id, status, features)| {
+            let features = features
+                .into_iter()
+                .map(|feature| feature.to_string())
+                .collect();
+            (summary_id, PackageInfo { status, features })
         })
         .collect()
 }

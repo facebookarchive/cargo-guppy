@@ -1,7 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{PackageMap, SummaryId, SummarySource, SummaryWithMetadata};
+use crate::{
+    PackageInfo, PackageMap, PackageStatus, SummaryId, SummarySource, SummaryWithMetadata,
+};
 use diffus::{edit, Diffable};
 use semver::Version;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -10,12 +12,6 @@ use std::{fmt, mem};
 /// A diff of two summaries.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SummaryDiff<'a> {
-    /// Diff of the initial target packages.
-    pub target_initials: PackageDiff<'a>,
-
-    /// Diff of the initial host packages.
-    pub host_initials: PackageDiff<'a>,
-
     /// Diff of target packages.
     pub target_packages: PackageDiff<'a>,
 
@@ -27,8 +23,6 @@ impl<'a> SummaryDiff<'a> {
     /// Computes a diff between two summaries.
     pub fn new<M1, M2>(old: &'a SummaryWithMetadata<M1>, new: &'a SummaryWithMetadata<M2>) -> Self {
         Self {
-            target_initials: PackageDiff::new(&old.target_initials, &new.target_initials),
-            host_initials: PackageDiff::new(&old.host_initials, &new.host_initials),
             target_packages: PackageDiff::new(&old.target_packages, &new.target_packages),
             host_packages: PackageDiff::new(&old.host_packages, &new.host_packages),
         }
@@ -36,21 +30,12 @@ impl<'a> SummaryDiff<'a> {
 
     /// Returns true if there are no changes in this diff.
     pub fn is_unchanged(&self) -> bool {
-        self.target_initials.is_unchanged()
-            && self.host_initials.is_unchanged()
-            && self.target_packages.is_unchanged()
-            && self.host_packages.is_unchanged()
+        self.target_packages.is_unchanged() && self.host_packages.is_unchanged()
     }
 }
 
 impl<'a> fmt::Display for SummaryDiff<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if !self.target_initials.is_unchanged() {
-            writeln!(f, "target initials:\n{}", self.target_initials)?;
-        }
-        if !self.host_initials.is_unchanged() {
-            writeln!(f, "host initials:\n{}", self.host_initials)?;
-        }
         if !self.target_packages.is_unchanged() {
             writeln!(f, "target packages:\n{}", self.target_packages)?;
         }
@@ -63,7 +48,7 @@ impl<'a> fmt::Display for SummaryDiff<'a> {
 }
 
 /// Type alias for list entries in the `PackageDiff::unchanged` map.
-pub type UnchangedInfo<'a> = (&'a Version, &'a SummarySource, &'a BTreeSet<String>);
+pub type UnchangedInfo<'a> = (&'a Version, &'a SummarySource, &'a PackageInfo);
 
 /// A diff from a particular section of a summary.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -81,42 +66,41 @@ impl<'a> PackageDiff<'a> {
         let mut changed = BTreeMap::new();
         let mut unchanged = BTreeMap::new();
 
-        let mut add_unchanged = |summary_id: &'a SummaryId, features: &'a BTreeSet<String>| {
+        let mut add_unchanged = |summary_id: &'a SummaryId, info: &'a PackageInfo| {
             unchanged
                 .entry(summary_id.name.as_str())
                 .or_insert_with(Vec::new)
-                .push((&summary_id.version, &summary_id.source, features));
+                .push((&summary_id.version, &summary_id.source, info));
         };
 
         match (*old).diff(new) {
             edit::Edit::Copy(_) => {
                 // Add all elements to unchanged.
-                for (summary_id, features) in new {
-                    add_unchanged(summary_id, features);
+                for (summary_id, info) in new {
+                    add_unchanged(summary_id, info);
                 }
             }
             edit::Edit::Change(diff) => {
                 for (summary_id, diff) in diff {
                     match diff {
-                        edit::map::Edit::Copy(features) => {
+                        edit::map::Edit::Copy(info) => {
                             // No changes.
-                            add_unchanged(summary_id, features);
+                            add_unchanged(summary_id, info);
                         }
-                        edit::map::Edit::Insert(features) => {
+                        edit::map::Edit::Insert(info) => {
                             // New package.
-                            let status = SummaryDiffStatus::Added { features };
+                            let status = SummaryDiffStatus::Added { info };
                             changed.insert(summary_id, status);
                         }
-                        edit::map::Edit::Remove(features) => {
+                        edit::map::Edit::Remove(old_info) => {
                             // Removed package.
-                            let status = SummaryDiffStatus::Removed {
-                                old_features: features,
-                            };
+                            let status = SummaryDiffStatus::Removed { old_info };
                             changed.insert(summary_id, status);
                         }
-                        edit::map::Edit::Change(diff) => {
-                            // The feature set changed.
-                            let status = SummaryDiffStatus::make_changed_diff(None, None, diff);
+                        edit::map::Edit::Change((old_info, new_info)) => {
+                            // The feature set or status changed.
+                            let status =
+                                SummaryDiffStatus::make_changed(None, None, old_info, new_info);
                             changed.insert(summary_id, status);
                         }
                     }
@@ -159,14 +143,14 @@ impl<'a> PackageDiff<'a> {
                     .remove(removed)
                     .expect("removed ID should be present");
 
-                let old_features = match removed_status {
-                    SummaryDiffStatus::Removed { old_features } => old_features,
+                let old_info = match removed_status {
+                    SummaryDiffStatus::Removed { old_info } => old_info,
                     other => panic!("expected Removed, found {:?}", other),
                 };
 
                 let added_status = changed.get_mut(added).expect("added ID should be present");
-                let new_features = match &*added_status {
-                    SummaryDiffStatus::Added { features } => *features,
+                let new_info = match &*added_status {
+                    SummaryDiffStatus::Added { info } => *info,
                     other => panic!("expected Added, found {:?}", other),
                 };
 
@@ -183,12 +167,7 @@ impl<'a> PackageDiff<'a> {
 
                 mem::replace(
                     added_status,
-                    SummaryDiffStatus::make_changed(
-                        old_version,
-                        old_source,
-                        old_features,
-                        new_features,
-                    ),
+                    SummaryDiffStatus::make_changed(old_version, old_source, old_info, new_info),
                 );
             }
         }
@@ -198,11 +177,19 @@ impl<'a> PackageDiff<'a> {
 impl<'a> fmt::Display for PackageDiff<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (summary_id, status) in &self.changed {
-            write!(
-                f,
-                "  {} {} ({})",
-                summary_id.name, summary_id.version, summary_id.source
-            )?;
+            if let Some(new_status) = status.new_status() {
+                write!(
+                    f,
+                    "  {} {} ({}, {})",
+                    summary_id.name, summary_id.version, new_status, summary_id.source
+                )?;
+            } else {
+                write!(
+                    f,
+                    "  {} {} ({})",
+                    summary_id.name, summary_id.version, summary_id.source
+                )?;
+            }
 
             // Print out other versions if available.
             if let Some(unchanged_list) = self.unchanged.get(summary_id.name.as_str()) {
@@ -214,19 +201,26 @@ impl<'a> fmt::Display for PackageDiff<'a> {
             writeln!(f)?;
 
             match status {
-                SummaryDiffStatus::Added { features } => {
+                SummaryDiffStatus::Added { info } => {
                     write!(f, "    * added package, features: ")?;
-                    display_list(f, *features)?;
+                    display_list(f, &info.features)?;
                     writeln!(f)?;
                 }
-                SummaryDiffStatus::Removed { old_features } => {
-                    write!(f, "    * removed package, old features: ")?;
-                    display_list(f, *old_features)?;
+                SummaryDiffStatus::Removed { old_info } => {
+                    write!(
+                        f,
+                        "    * removed package, old status: {}, old features: ",
+                        old_info.status
+                    )?;
+                    display_list(f, &old_info.features)?;
                     writeln!(f)?;
                 }
                 SummaryDiffStatus::Changed {
                     old_version,
                     old_source,
+                    old_status,
+                    // The new status is printed in the package header.
+                    new_status: _,
                     added_features,
                     removed_features,
                     unchanged_features,
@@ -241,6 +235,9 @@ impl<'a> fmt::Display for PackageDiff<'a> {
                     }
                     if let Some(old_source) = old_source {
                         writeln!(f, "    * source changed from {}", old_source)?;
+                    }
+                    if let Some(old_status) = old_status {
+                        writeln!(f, "    * status changed from {}", old_status)?;
                     }
                     if !added_features.is_empty() {
                         write!(f, "    * added features: ")?;
@@ -287,14 +284,14 @@ where
 pub enum SummaryDiffStatus<'a> {
     /// This package was added.
     Added {
-        /// The feature set enabled for this package.
-        features: &'a BTreeSet<String>,
+        /// The information for this package.
+        info: &'a PackageInfo,
     },
 
     /// This package was removed.
     Removed {
-        /// The features this package used to have enabled.
-        old_features: &'a BTreeSet<String>,
+        /// The information this package used to have.
+        old_info: &'a PackageInfo,
     },
 
     /// Some details about the package changed:
@@ -306,6 +303,12 @@ pub enum SummaryDiffStatus<'a> {
 
         /// The old source of this package, if the source changed.
         old_source: Option<&'a SummarySource>,
+
+        /// The old status of this package, if the status changed.
+        old_status: Option<PackageStatus>,
+
+        /// The current status of this package.
+        new_status: PackageStatus,
 
         /// The set of features added to the package.
         added_features: BTreeSet<&'a str>,
@@ -322,28 +325,40 @@ impl<'a> SummaryDiffStatus<'a> {
     fn make_changed(
         old_version: Option<&'a Version>,
         old_source: Option<&'a SummarySource>,
-        old_features: &'a BTreeSet<String>,
-        new_features: &'a BTreeSet<String>,
+        old_info: &'a PackageInfo,
+        new_info: &'a PackageInfo,
     ) -> Self {
-        match (*old_features).diff(new_features) {
+        let old_status = if old_info.status != new_info.status {
+            Some(old_info.status)
+        } else {
+            None
+        };
+
+        match old_info.features.diff(&new_info.features) {
             edit::Edit::Copy(features) => {
                 // No diff between the old and new features, so put everything in unchanged.
                 let unchanged_features = features.iter().map(|feature| feature.as_str()).collect();
                 SummaryDiffStatus::Changed {
                     old_version,
                     old_source,
+                    old_status,
+                    new_status: new_info.status,
                     added_features: BTreeSet::new(),
                     removed_features: BTreeSet::new(),
                     unchanged_features,
                 }
             }
-            edit::Edit::Change(diff) => Self::make_changed_diff(old_version, old_source, diff),
+            edit::Edit::Change(diff) => {
+                Self::make_changed_diff(old_version, old_source, old_status, new_info.status, diff)
+            }
         }
     }
 
     fn make_changed_diff(
         old_version: Option<&'a Version>,
         old_source: Option<&'a SummarySource>,
+        old_status: Option<PackageStatus>,
+        new_status: PackageStatus,
         feature_diff: BTreeMap<&'a String, edit::set::Edit<'a, String>>,
     ) -> Self {
         let mut added_features = BTreeSet::new();
@@ -367,9 +382,43 @@ impl<'a> SummaryDiffStatus<'a> {
         SummaryDiffStatus::Changed {
             old_version,
             old_source,
+            old_status,
+            new_status,
             added_features,
             removed_features,
             unchanged_features,
+        }
+    }
+
+    fn new_status(&self) -> Option<PackageStatus> {
+        match self {
+            SummaryDiffStatus::Added { info } => Some(info.status),
+            SummaryDiffStatus::Removed { .. } => None,
+            SummaryDiffStatus::Changed { new_status, .. } => Some(*new_status),
+        }
+    }
+}
+
+impl<'a> Diffable<'a> for PackageInfo {
+    type Diff = (&'a PackageInfo, &'a PackageInfo);
+
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self> {
+        if self == other {
+            edit::Edit::Copy(self)
+        } else {
+            edit::Edit::Change((self, other))
+        }
+    }
+}
+
+impl<'a> Diffable<'a> for PackageStatus {
+    type Diff = (&'a PackageStatus, &'a PackageStatus);
+
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self> {
+        if self == other {
+            edit::Edit::Copy(self)
+        } else {
+            edit::Edit::Change((self, other))
         }
     }
 }

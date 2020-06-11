@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use toml::{Serializer, Value};
 
 /// A type representing a package map as used in `Summary` instances.
-pub type PackageMap = BTreeMap<SummaryId, BTreeSet<String>>;
+pub type PackageMap = BTreeMap<SummaryId, PackageInfo>;
 
 /// A build summary, with the metadata parameter set to the default of `toml::Value`.
 pub type Summary = SummaryWithMetadata<Value>;
@@ -30,24 +30,6 @@ pub struct SummaryWithMetadata<M = Value> {
     /// The type defaults to `toml::Value` but is customizable.
     #[serde(default = "Option::default")]
     pub metadata: Option<M>,
-
-    /// The initial set of packages built on the target platform.
-    #[serde(
-        rename = "target-initial",
-        with = "package_map_impl",
-        default = "PackageMap::new",
-        skip_serializing_if = "PackageMap::is_empty"
-    )]
-    pub target_initials: PackageMap,
-
-    /// The initial set of packages built on the host platform.
-    #[serde(
-        rename = "host-initial",
-        with = "package_map_impl",
-        default = "PackageMap::new",
-        skip_serializing_if = "PackageMap::is_empty"
-    )]
-    pub host_initials: PackageMap,
 
     /// The packages and features built on the target platform.
     #[serde(
@@ -119,8 +101,6 @@ impl<M> Default for SummaryWithMetadata<M> {
     fn default() -> Self {
         Self {
             metadata: None,
-            target_initials: PackageMap::new(),
-            host_initials: PackageMap::new(),
             target_packages: PackageMap::new(),
             host_packages: PackageMap::new(),
         }
@@ -224,25 +204,68 @@ impl fmt::Display for SummarySource {
     }
 }
 
+/// Information about a package in a summary that isn't part of the unique identifier.
+#[derive(Clone, Debug, Deserialize, Eq, Hash, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct PackageInfo {
+    /// Where this package lies in the dependency graph.
+    pub status: PackageStatus,
+
+    /// The features built for this package.
+    pub features: BTreeSet<String>,
+}
+
+/// The status of a package in a summary, such as whether it is part of the initial build set.
+///
+/// The ordering here determines what order packages will be written out in the summary.
+#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, Ord, Serialize, PartialEq, PartialOrd)]
+#[serde(rename_all = "kebab-case")]
+pub enum PackageStatus {
+    /// This package is part of the requested build set.
+    Initial,
+
+    /// This is a workspace package that isn't part of the requested build set.
+    Workspace,
+
+    /// This package is a direct non-workspace dependency.
+    ///
+    /// A `Direct` package may also be transitively included.
+    Direct,
+
+    /// This package is a transitive non-workspace dependency.
+    Transitive,
+}
+
+impl fmt::Display for PackageStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            PackageStatus::Initial => "initial",
+            PackageStatus::Workspace => "workspace",
+            PackageStatus::Direct => "direct third-party",
+            PackageStatus::Transitive => "transitive third-party",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 /// Serialization and deserialization for `PackageMap` instances.
 mod package_map_impl {
     use super::*;
-    use serde::ser::SerializeSeq;
     use serde::{Deserializer, Serializer};
 
     pub fn serialize<S>(package_map: &PackageMap, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut seq = serializer.serialize_seq(Some(package_map.len()))?;
-        for (summary_id, features) in package_map {
-            seq.serialize_element(&PackageSerialize {
-                summary_id,
-                features,
-            })?;
-        }
-
-        seq.end()
+        // Make a list of `PackageSerialize` instances and sort by:
+        // * status (to ensure initials come first)
+        // * summary ID
+        let mut package_list: Vec<_> = package_map
+            .iter()
+            .map(|(summary_id, info)| PackageSerialize { summary_id, info })
+            .collect();
+        package_list.sort_unstable_by_key(|package| (&package.info.status, package.summary_id));
+        package_list.serialize(serializer)
     }
 
     /// TOML representation of a package in a build summary, for serialization.
@@ -250,7 +273,8 @@ mod package_map_impl {
     struct PackageSerialize<'a> {
         #[serde(flatten)]
         summary_id: &'a SummaryId,
-        features: &'a BTreeSet<String>,
+        #[serde(flatten)]
+        info: &'a PackageInfo,
     }
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<PackageMap, D::Error>
@@ -261,7 +285,7 @@ mod package_map_impl {
         let mut package_map: PackageMap = BTreeMap::new();
 
         for package in packages {
-            package_map.insert(package.summary_id, package.features);
+            package_map.insert(package.summary_id, package.info);
         }
         Ok(package_map)
     }
@@ -271,7 +295,8 @@ mod package_map_impl {
     struct PackageDeserialize {
         #[serde(flatten)]
         summary_id: SummaryId,
-        features: BTreeSet<String>,
+        #[serde(flatten)]
+        info: PackageInfo,
     }
 }
 
