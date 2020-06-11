@@ -156,17 +156,60 @@
 <span id="156">156</span>
 <span id="157">157</span>
 <span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoResolverVersion</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageQuery</span>, <span class="ident">PackageResolver</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PackageId</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::<span class="ident">VisitMap</span>;
-<span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">collection</span>::<span class="ident">vec</span>;
+<span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">collection</span>::{<span class="ident">hash_set</span>, <span class="ident">vec</span>};
+<span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">option</span>;
 <span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">target_spec</span>::{<span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>};
 
 <span class="doccomment">/// ## Helpers for property testing</span>
 <span class="doccomment">///</span>
@@ -215,6 +258,43 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_resolver_strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">Prop010Resolver</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="comment">// Generate a FixedBitSet to filter based off of.</span>
         <span class="ident">fixedbitset_strategy</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">edge_count</span>()).<span class="ident">prop_map</span>(<span class="ident">Prop010Resolver</span>::<span class="ident">new</span>)
+    }
+
+    <span class="doccomment">/// Returns a `Strategy` that generates a random `CargoOptions` from this graph.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Requires the `proptest010` feature to be enabled.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_cargo_options_strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+        <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">option</span>::<span class="ident">of</span>(<span class="ident">Platform</span>::<span class="ident">strategy</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
+        <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">option</span>::<span class="ident">of</span>(<span class="ident">Platform</span>::<span class="ident">strategy</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
+        <span class="kw">let</span> <span class="ident">omitted_packages</span> <span class="op">=</span> <span class="ident">hash_set</span>(<span class="self">self</span>.<span class="ident">prop010_id_strategy</span>(), <span class="number">0</span>..<span class="number">8</span>);
+        (
+            <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">CargoResolverVersion</span><span class="op">&gt;</span>(),
+            <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>(),
+            <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>(),
+            <span class="ident">target_platform</span>,
+            <span class="ident">host_platform</span>,
+            <span class="ident">omitted_packages</span>,
+        )
+            .<span class="ident">prop_map</span>(
+                <span class="op">|</span>(
+                    <span class="ident">version</span>,
+                    <span class="ident">include_dev</span>,
+                    <span class="ident">proc_macros_on_target</span>,
+                    <span class="ident">host_platform</span>,
+                    <span class="ident">target_platform</span>,
+                    <span class="ident">omitted_packages</span>,
+                )<span class="op">|</span> {
+                    <span class="ident">CargoOptions</span>::<span class="ident">new</span>()
+                        .<span class="ident">with_version</span>(<span class="ident">version</span>)
+                        .<span class="ident">with_dev_deps</span>(<span class="ident">include_dev</span>)
+                        .<span class="ident">with_proc_macros_on_target</span>(<span class="ident">proc_macros_on_target</span>)
+                        .<span class="ident">with_host_platform</span>(<span class="ident">host_platform</span>)
+                        .<span class="ident">with_target_platform</span>(<span class="ident">target_platform</span>)
+                        .<span class="ident">with_omitted_packages</span>(<span class="ident">omitted_packages</span>)
+                },
+            )
     }
 }
 

@@ -1142,6 +1142,84 @@
 <span id="1142">1142</span>
 <span id="1143">1143</span>
 <span id="1144">1144</span>
+<span id="1145">1145</span>
+<span id="1146">1146</span>
+<span id="1147">1147</span>
+<span id="1148">1148</span>
+<span id="1149">1149</span>
+<span id="1150">1150</span>
+<span id="1151">1151</span>
+<span id="1152">1152</span>
+<span id="1153">1153</span>
+<span id="1154">1154</span>
+<span id="1155">1155</span>
+<span id="1156">1156</span>
+<span id="1157">1157</span>
+<span id="1158">1158</span>
+<span id="1159">1159</span>
+<span id="1160">1160</span>
+<span id="1161">1161</span>
+<span id="1162">1162</span>
+<span id="1163">1163</span>
+<span id="1164">1164</span>
+<span id="1165">1165</span>
+<span id="1166">1166</span>
+<span id="1167">1167</span>
+<span id="1168">1168</span>
+<span id="1169">1169</span>
+<span id="1170">1170</span>
+<span id="1171">1171</span>
+<span id="1172">1172</span>
+<span id="1173">1173</span>
+<span id="1174">1174</span>
+<span id="1175">1175</span>
+<span id="1176">1176</span>
+<span id="1177">1177</span>
+<span id="1178">1178</span>
+<span id="1179">1179</span>
+<span id="1180">1180</span>
+<span id="1181">1181</span>
+<span id="1182">1182</span>
+<span id="1183">1183</span>
+<span id="1184">1184</span>
+<span id="1185">1185</span>
+<span id="1186">1186</span>
+<span id="1187">1187</span>
+<span id="1188">1188</span>
+<span id="1189">1189</span>
+<span id="1190">1190</span>
+<span id="1191">1191</span>
+<span id="1192">1192</span>
+<span id="1193">1193</span>
+<span id="1194">1194</span>
+<span id="1195">1195</span>
+<span id="1196">1196</span>
+<span id="1197">1197</span>
+<span id="1198">1198</span>
+<span id="1199">1199</span>
+<span id="1200">1200</span>
+<span id="1201">1201</span>
+<span id="1202">1202</span>
+<span id="1203">1203</span>
+<span id="1204">1204</span>
+<span id="1205">1205</span>
+<span id="1206">1206</span>
+<span id="1207">1207</span>
+<span id="1208">1208</span>
+<span id="1209">1209</span>
+<span id="1210">1210</span>
+<span id="1211">1211</span>
+<span id="1212">1212</span>
+<span id="1213">1213</span>
+<span id="1214">1214</span>
+<span id="1215">1215</span>
+<span id="1216">1216</span>
+<span id="1217">1217</span>
+<span id="1218">1218</span>
+<span id="1219">1219</span>
+<span id="1220">1220</span>
+<span id="1221">1221</span>
+<span id="1222">1222</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1151,11 +1229,13 @@
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">errors</span>::<span class="ident">FeatureBuildStage</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::{<span class="ident">BuildTargetId</span>, <span class="ident">BuildTargetKind</span>, <span class="ident">EnabledTernary</span>, <span class="ident">PackageGraph</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{<span class="ident">errors</span>::<span class="ident">FeatureGraphWarning</span>, <span class="ident">CargoMetadata</span>, <span class="ident">DependencyKind</span>, <span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>};
-<span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">Lazy</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashMap</span>;
+<span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::{<span class="ident">Lazy</span>, <span class="ident">OnceCell</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::{<span class="ident">Component</span>, <span class="ident">Path</span>, <span class="ident">PathBuf</span>};
 
 <span class="comment">// Metadata along with interesting crate names.</span>
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA1</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata1.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA1_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata1.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA1_TESTCRATE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;testcrate 0.1.0 (path+file:///fakepath/testcrate)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA1_DATATEST</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;datatest 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)&quot;</span>;
@@ -1164,14 +1244,14 @@
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA1_DTOA</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;dtoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA2</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata2.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA2_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata2.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA2_TESTCRATE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;testworkspace-crate 0.1.0 (path+file:///Users/fakeuser/local/testworkspace/testcrate)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA2_WALKDIR</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA2_QUOTE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;quote 1.0.2 (path+file:///Users/fakeuser/local/quote)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_DUPS</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata_dups.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_DUPS_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata_dups.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_DUPS_TESTCRATE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;testcrate-dups 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-dups)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_DUPS_LAZY_STATIC_1</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
@@ -1183,13 +1263,13 @@
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_DUPS_BYTES_05</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE1</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata_cycle1.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE1_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata_cycle1.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE1_BASE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;testcycles-base 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-base)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE1_HELPER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;testcycles-helper 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcycles/testcycles-helper)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE2</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata_cycle2.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE2_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata_cycle2.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE2_UPPER_A</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;upper-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/upper-a)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE2_UPPER_B</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
@@ -1199,7 +1279,7 @@
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_CYCLE2_LOWER_B</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;lower-b 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-b)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_TARGETS1</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata_targets1.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_TARGETS1_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata_targets1.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_TARGETS1_TESTCRATE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;testcrate-targets 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-targets)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_TARGETS1_LAZY_STATIC_1</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
@@ -1213,11 +1293,11 @@
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_TARGETS1_DEP_A</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;dep-a 0.1.0 (path+file:///Users/fakeuser/local/testcrates/dep-a)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_BUILD_TARGETS1</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata_build_targets1.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_BUILD_TARGETS1_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata_build_targets1.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_BUILD_TARGETS1_TESTCRATE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;testcrate 0.1.0 (path+file:///Users/fakeuser/local/testcrates/test-build-targets)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_PROC_MACRO1</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../small/metadata_proc_macro1.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_PROC_MACRO1_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../small/metadata_proc_macro1.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_PROC_MACRO1_MACRO</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;macro 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/macro)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_PROC_MACRO1_NORMAL_USER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
@@ -1227,7 +1307,7 @@
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_PROC_MACRO1_DEV_USER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;dev-user 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/dev-user)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../large/metadata_libra.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../large/metadata_libra.json&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_ADMISSION_CONTROL_SERVICE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)&quot;</span>;
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_COMPILER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
@@ -1271,61 +1351,130 @@
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_CFG_IF</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span>
     <span class="string">&quot;cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_F0091A4</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../large/metadata_libra_f0091a4.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_F0091A4_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../large/metadata_libra_f0091a4.json&quot;</span>;
 
-<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_9FFD93B</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">include_str</span><span class="macro">!</span>(<span class="string">&quot;../large/metadata_libra_9ffd93b.json&quot;</span>);
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">METADATA_LIBRA_9FFD93B_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;../large/metadata_libra_9ffd93b.json&quot;</span>;
 
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">FAKE_AUTHOR</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;Fake Author &lt;fakeauthor@example.com&gt;&quot;</span>;
 
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">define_fixture</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>: <span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">json</span>: <span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">JsonFixture</span> {
-            <span class="kw">static</span> <span class="ident">FIXTURE</span>: <span class="ident">Lazy</span><span class="op">&lt;</span><span class="ident">JsonFixture</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Lazy</span>::<span class="ident">new</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">JsonFixture</span> {
-                <span class="ident">graph</span>: <span class="ident">JsonFixture</span>::<span class="ident">parse_graph</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">json</span>),
-                <span class="ident">details</span>: <span class="ident">FixtureDetails</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(),
-            });
-            <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">FIXTURE</span>
+<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">define_fixtures</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>: <span class="ident">ident</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">json_path</span>: <span class="ident">ident</span>,)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">impl</span> <span class="ident">JsonFixture</span> {
+            <span class="comment">// Access all fixtures.</span>
+            <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">all_fixtures</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">JsonFixture</span><span class="op">&gt;</span> {
+                <span class="comment">// Provide a list of all fixtures.</span>
+                <span class="kw">static</span> <span class="ident">ALL_FIXTURES</span>: <span class="ident">Lazy</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">JsonFixture</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Lazy</span>::<span class="ident">new</span>(<span class="op">|</span><span class="op">|</span> {
+                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">BTreeMap</span>::<span class="ident">new</span>();
+
+                    $(<span class="ident">map</span>.<span class="ident">insert</span>(
+                        <span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>),
+                        <span class="ident">JsonFixture</span>::<span class="ident">new</span>(<span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>), <span class="macro-nonterminal">$</span><span class="macro-nonterminal">json_path</span>, <span class="ident">FixtureDetails</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>()),
+                    );)<span class="op">*</span>
+
+                    <span class="ident">map</span>
+                });
+
+                <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">ALL_FIXTURES</span>
+            }
+
+            <span class="comment">// Access individual fixtures if the name is known.</span>
+            $(<span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="self">Self</span> {
+                <span class="kw-2">&amp;</span><span class="ident">JsonFixture</span>::<span class="ident">all_fixtures</span>()[<span class="macro">stringify</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>)]
+            })<span class="op">*</span>
         }
     };
 }
 
+<span class="macro">define_fixtures</span><span class="macro">!</span> {
+    <span class="ident">metadata1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA1_PATH</span>,
+    <span class="ident">metadata2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA2_PATH</span>,
+    <span class="ident">metadata_dups</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_DUPS_PATH</span>,
+    <span class="ident">metadata_cycle1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_CYCLE1_PATH</span>,
+    <span class="ident">metadata_cycle2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_CYCLE2_PATH</span>,
+    <span class="ident">metadata_targets1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_TARGETS1_PATH</span>,
+    <span class="ident">metadata_build_targets1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_BUILD_TARGETS1_PATH</span>,
+    <span class="ident">metadata_proc_macro1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_PROC_MACRO1_PATH</span>,
+    <span class="ident">metadata_libra</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_LIBRA_PATH</span>,
+    <span class="ident">metadata_libra_f0091a4</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_LIBRA_F0091A4_PATH</span>,
+    <span class="ident">metadata_libra_9ffd93b</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">METADATA_LIBRA_9FFD93B_PATH</span>,
+}
+
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">JsonFixture</span> {
-    <span class="ident">graph</span>: <span class="ident">PackageGraph</span>,
+    <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
+    <span class="ident">workspace_path</span>: <span class="ident">PathBuf</span>,
+    <span class="ident">abs_path</span>: <span class="ident">PathBuf</span>,
+    <span class="ident">json_graph</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="ident">PackageGraph</span>)<span class="op">&gt;</span>,
     <span class="ident">details</span>: <span class="ident">FixtureDetails</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">JsonFixture</span> {
-    <span class="doccomment">/// Returns the package graph for this fixture.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">rel_path</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">details</span>: <span class="ident">FixtureDetails</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">rel_path</span>);
+        <span class="kw">let</span> <span class="ident">fixtures_dir</span> <span class="op">=</span> <span class="ident">Path</span>::<span class="ident">new</span>(<span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>));
+        <span class="comment">// rel_path is relative to this dir.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">abs_path</span> <span class="op">=</span> <span class="ident">fixtures_dir</span>.<span class="ident">join</span>(<span class="string">&quot;src&quot;</span>);
+        <span class="ident">abs_path</span>.<span class="ident">push</span>(<span class="ident">rel_path</span>);
+
+        <span class="kw">let</span> <span class="ident">workspace_root</span> <span class="op">=</span> <span class="ident">fixtures_dir</span>.<span class="ident">parent</span>().<span class="ident">expect</span>(<span class="string">&quot;up to workspace root&quot;</span>);
+        <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">pathdiff</span>::<span class="ident">diff_paths</span>(<span class="kw-2">&amp;</span><span class="ident">abs_path</span>, <span class="ident">workspace_root</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;both abs_path and workspace root are absolute&quot;</span>);
+
+        <span class="comment">// No symlinks in this repo, so normalize this path.</span>
+        <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">normalize_assuming_no_symlinks</span>(<span class="kw-2">&amp;</span><span class="ident">workspace_path</span>);
+
+        <span class="self">Self</span> {
+            <span class="ident">name</span>,
+            <span class="ident">workspace_path</span>,
+            <span class="ident">abs_path</span>,
+            <span class="ident">json_graph</span>: <span class="ident">OnceCell</span>::<span class="ident">new</span>(),
+            <span class="ident">details</span>,
+        }
     }
 
-    <span class="doccomment">/// Returns a mutable reference to the package graph for this fixture.</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">graph_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">PackageGraph</span> {
-        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">graph</span>
+    <span class="doccomment">/// Returns the name of this fixture.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
+        <span class="self">self</span>.<span class="ident">name</span>
+    }
+
+    <span class="doccomment">/// Returns the absolute path of this fixture.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abs_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Path</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">abs_path</span>
+    }
+
+    <span class="doccomment">/// Returns the path of this fixture, relative to the workspace root.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Path</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">workspace_path</span>
+    }
+
+    <span class="doccomment">/// Returns the unparsed JSON string for this fixture.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">json</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">str</span> {
+        <span class="self">self</span>.<span class="ident">init_graph</span>().<span class="number">0</span>
+    }
+
+    <span class="doccomment">/// Returns the package graph for this fixture.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span> {
+        <span class="self">self</span>.<span class="ident">init_graph</span>().<span class="number">1</span>
     }
 
     <span class="doccomment">/// Returns the test details for this fixture.</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">details</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">FixtureDetails</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">details</span>
     }
 
     <span class="doccomment">/// Verifies that the parsed metadata matches known details.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">graph</span>
-            .<span class="ident">verify</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;graph verification should succeed&quot;</span>);
+        <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>();
 
-        <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_cycles</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>, <span class="string">&quot;cycles&quot;</span>);
+        <span class="ident">graph</span>.<span class="ident">verify</span>().<span class="ident">expect</span>(<span class="string">&quot;graph verification should succeed&quot;</span>);
 
-        <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_workspace</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">workspace</span>());
-        <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_topo</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>);
+        <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_cycles</span>(<span class="ident">graph</span>, <span class="string">&quot;cycles&quot;</span>);
+
+        <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_workspace</span>(<span class="ident">graph</span>.<span class="ident">workspace</span>());
+        <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_topo</span>(<span class="ident">graph</span>);
 
         <span class="kw">for</span> <span class="ident">id</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">known_ids</span>() {
             <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;error while verifying package &#39;{}&#39;&quot;</span>, <span class="ident">id</span>);
-            <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">id</span>).<span class="ident">expect</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>);
+            <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">id</span>).<span class="ident">expect</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>);
             <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_metadata</span>(<span class="ident">id</span>, <span class="ident">metadata</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
 
             <span class="comment">// Check for build targets.</span>
@@ -1335,23 +1484,23 @@
 
             <span class="comment">// Check for direct dependency queries.</span>
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">has_deps</span>(<span class="ident">id</span>) {
-                <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_deps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
+                <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_deps</span>(<span class="ident">graph</span>, <span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
             }
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">has_reverse_deps</span>(<span class="ident">id</span>) {
-                <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_reverse_deps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
+                <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_reverse_deps</span>(<span class="ident">graph</span>, <span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
             }
 
             <span class="comment">// Check for transitive dependency queries. Use both ID based and edge-based queries.</span>
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">has_transitive_deps</span>(<span class="ident">id</span>) {
                 <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_transitive_deps</span>(
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>,
+                    <span class="ident">graph</span>,
                     <span class="ident">id</span>,
                     <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{} (transitive deps)&quot;</span>, <span class="ident">msg</span>),
                 );
             }
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">has_transitive_reverse_deps</span>(<span class="ident">id</span>) {
                 <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_transitive_reverse_deps</span>(
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>,
+                    <span class="ident">graph</span>,
                     <span class="ident">id</span>,
                     <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{} (transitive reverse deps)&quot;</span>, <span class="ident">msg</span>),
                 );
@@ -1359,41 +1508,48 @@
 
             <span class="comment">// Check for named features.</span>
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">has_named_features</span>(<span class="ident">id</span>) {
-                <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_named_features</span>(
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>,
-                    <span class="ident">id</span>,
-                    <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{} (named features)&quot;</span>, <span class="ident">msg</span>),
-                );
+                <span class="self">self</span>.<span class="ident">details</span>
+                    .<span class="ident">assert_named_features</span>(<span class="ident">graph</span>, <span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{} (named features)&quot;</span>, <span class="ident">msg</span>));
             }
         }
 
-        <span class="self">self</span>.<span class="ident">details</span>
-            .<span class="ident">assert_link_details</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>, <span class="string">&quot;link details&quot;</span>);
+        <span class="self">self</span>.<span class="ident">details</span>.<span class="ident">assert_link_details</span>(<span class="ident">graph</span>, <span class="string">&quot;link details&quot;</span>);
 
         <span class="comment">// Tests for the feature graph.</span>
         <span class="self">self</span>.<span class="ident">details</span>
-            .<span class="ident">assert_feature_graph_warnings</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>, <span class="string">&quot;feature graph warnings&quot;</span>);
+            .<span class="ident">assert_feature_graph_warnings</span>(<span class="ident">graph</span>, <span class="string">&quot;feature graph warnings&quot;</span>);
     }
 
-    <span class="comment">// Specific fixtures follow.</span>
-
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata1</span>, <span class="ident">METADATA1</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata2</span>, <span class="ident">METADATA2</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_dups</span>, <span class="ident">METADATA_DUPS</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_cycle1</span>, <span class="ident">METADATA_CYCLE1</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_cycle2</span>, <span class="ident">METADATA_CYCLE2</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_targets1</span>, <span class="ident">METADATA_TARGETS1</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_build_targets1</span>, <span class="ident">METADATA_BUILD_TARGETS1</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_proc_macro1</span>, <span class="ident">METADATA_PROC_MACRO1</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_libra</span>, <span class="ident">METADATA_LIBRA</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_libra_f0091a4</span>, <span class="ident">METADATA_LIBRA_F0091A4</span>);
-    <span class="macro">define_fixture</span><span class="macro">!</span>(<span class="ident">metadata_libra_9ffd93b</span>, <span class="ident">METADATA_LIBRA_9FFD93B</span>);
+    <span class="kw">fn</span> <span class="ident">init_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span>) {
+        <span class="kw">let</span> (<span class="ident">json</span>, <span class="ident">package_graph</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">json_graph</span>.<span class="ident">get_or_init</span>(<span class="op">|</span><span class="op">|</span> {
+            <span class="kw">let</span> <span class="ident">json</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">read_to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">abs_path</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
+                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;reading file &#39;{}&#39; failed: {}&quot;</span>, <span class="self">self</span>.<span class="ident">abs_path</span>.<span class="ident">display</span>(), <span class="ident">err</span>)
+            });
+            <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">parse_graph</span>(<span class="kw-2">&amp;</span><span class="ident">json</span>);
+            (<span class="ident">json</span>, <span class="ident">graph</span>)
+        });
+        (<span class="ident">json</span>.<span class="ident">as_str</span>(), <span class="ident">package_graph</span>)
+    }
 
     <span class="kw">fn</span> <span class="ident">parse_graph</span>(<span class="ident">json</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageGraph</span> {
         <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span>
             <span class="ident">CargoMetadata</span>::<span class="ident">parse_json</span>(<span class="ident">json</span>).<span class="ident">expect</span>(<span class="string">&quot;parsing metadata JSON should succeed&quot;</span>);
         <span class="ident">PackageGraph</span>::<span class="ident">from_metadata</span>(<span class="ident">metadata</span>).<span class="ident">expect</span>(<span class="string">&quot;constructing package graph should succeed&quot;</span>)
     }
+}
+
+<span class="comment">// Thanks to @porglezomp on Twitter for this simple normalization method.</span>
+<span class="kw">fn</span> <span class="ident">normalize_assuming_no_symlinks</span>(<span class="ident">p</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PathBuf</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">PathBuf</span>::<span class="ident">new</span>();
+    <span class="kw">for</span> <span class="ident">c</span> <span class="kw">in</span> <span class="ident">p</span>.<span class="ident">as_ref</span>().<span class="ident">components</span>() {
+        <span class="kw">match</span> <span class="ident">c</span> {
+            <span class="ident">Component</span>::<span class="ident">ParentDir</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">out</span>.<span class="ident">pop</span>();
+            }
+            <span class="ident">c</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">out</span>.<span class="ident">push</span>(<span class="ident">c</span>),
+        }
+    }
+    <span class="ident">out</span>
 }
 
 <span class="kw">impl</span> <span class="ident">FixtureDetails</span> {
