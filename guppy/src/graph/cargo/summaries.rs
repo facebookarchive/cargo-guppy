@@ -20,7 +20,7 @@ pub type Summary = SummaryWithMetadata<CargoOptionsSummary>;
 impl<'g> CargoSet<'g> {
     /// Creates a build summary with the given options.
     #[doc(hidden)]
-    pub fn to_summary(&self, opts: &CargoOptions<'_>) -> Summary {
+    pub fn to_summary<PF>(&self, opts: &CargoOptions<'_, PF>) -> Summary {
         let metadata = CargoOptionsSummary::new(self.original_query.graph().package_graph, opts);
         let original_query = self.original_query();
         let target_features = self.target_features();
@@ -114,7 +114,7 @@ pub struct CargoOptionsSummary {
 impl CargoOptionsSummary {
     /// Creates a new `CargoOptionsSummary` from the given Cargo options.
     #[doc(hidden)]
-    pub fn new(graph: &PackageGraph, opts: &CargoOptions<'_>) -> Self {
+    pub fn new<PF>(graph: &PackageGraph, opts: &CargoOptions<'_, PF>) -> Self {
         let omitted_summary_ids = opts
             .imm_options
             .omitted_packages

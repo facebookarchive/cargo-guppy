@@ -1,7 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use cargo_guppy::{CmdSelectOptions, DupsOptions, ResolveCargoOptions, SubtreeSizeOptions};
+use anyhow::Result;
+use cargo_guppy::{
+    CmdSelectOptions, DiffSummariesOptions, DupsOptions, ResolveCargoOptions, SubtreeSizeOptions,
+};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -21,6 +24,9 @@ enum Command {
         old: String,
         new: String,
     },
+    #[structopt(name = "diff-summaries")]
+    /// Diff two guppy summaries
+    DiffSummaries(DiffSummariesOptions),
     #[structopt(name = "dups")]
     /// Print the number of duplicate packages
     Duplicates(DupsOptions),
@@ -47,19 +53,15 @@ fn args() -> impl Iterator<Item = String> {
     args.into_iter()
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Args::from_iter(args());
 
-    let result = match args.cmd {
+    match args.cmd {
         Command::Diff { json, old, new } => cargo_guppy::cmd_diff(json, &old, &new),
+        Command::DiffSummaries(options) => options.exec(),
         Command::Duplicates(ref options) => cargo_guppy::cmd_dups(options),
         Command::ResolveCargo(ref options) => cargo_guppy::cmd_resolve_cargo(options),
         Command::Select(ref options) => cargo_guppy::cmd_select(options),
         Command::SubtreeSize(ref options) => cargo_guppy::cmd_subtree_size(options),
-    };
-
-    match result {
-        Err(e) => eprintln!("{}\nAborting...", e),
-        Ok(()) => {}
     }
 }
