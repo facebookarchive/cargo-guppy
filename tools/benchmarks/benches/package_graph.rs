@@ -4,9 +4,9 @@
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use guppy::graph::{DependencyDirection, PackageGraph};
 use guppy::PackageId;
-use guppy_benchmarks::ValueGenerator;
 use proptest::collection::vec;
 use proptest::prelude::*;
+use proptest_ext::ValueGenerator;
 
 pub fn benchmarks(c: &mut Criterion) {
     let package_graph = make_package_graph();
