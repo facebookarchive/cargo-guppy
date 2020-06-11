@@ -35,7 +35,8 @@ pub struct SummaryWithMetadata<M = Value> {
     #[serde(
         rename = "target-initial",
         with = "package_map_impl",
-        default = "PackageMap::new"
+        default = "PackageMap::new",
+        skip_serializing_if = "PackageMap::is_empty"
     )]
     pub target_initials: PackageMap,
 
@@ -43,7 +44,8 @@ pub struct SummaryWithMetadata<M = Value> {
     #[serde(
         rename = "host-initial",
         with = "package_map_impl",
-        default = "PackageMap::new"
+        default = "PackageMap::new",
+        skip_serializing_if = "PackageMap::is_empty"
     )]
     pub host_initials: PackageMap,
 
@@ -51,7 +53,8 @@ pub struct SummaryWithMetadata<M = Value> {
     #[serde(
         rename = "target-package",
         with = "package_map_impl",
-        default = "PackageMap::new"
+        default = "PackageMap::new",
+        skip_serializing_if = "PackageMap::is_empty"
     )]
     pub target_packages: PackageMap,
 
@@ -59,7 +62,8 @@ pub struct SummaryWithMetadata<M = Value> {
     #[serde(
         rename = "host-package",
         with = "package_map_impl",
-        default = "PackageMap::new"
+        default = "PackageMap::new",
+        skip_serializing_if = "PackageMap::is_empty"
     )]
     pub host_packages: PackageMap,
 }
@@ -108,6 +112,18 @@ impl<M> SummaryWithMetadata<M> {
         let mut serializer = Serializer::pretty(dst);
         serializer.pretty_array(false);
         self.serialize(&mut serializer)
+    }
+}
+
+impl<M> Default for SummaryWithMetadata<M> {
+    fn default() -> Self {
+        Self {
+            metadata: None,
+            target_initials: PackageMap::new(),
+            host_initials: PackageMap::new(),
+            target_packages: PackageMap::new(),
+            host_packages: PackageMap::new(),
+        }
     }
 }
 

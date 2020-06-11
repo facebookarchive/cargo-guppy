@@ -7,6 +7,24 @@ use semver::Version;
 use std::collections::BTreeSet;
 
 #[test]
+fn empty_roundtrip() {
+    let summary = Summary::default();
+
+    let mut s = "# This is a test @generated summary.\n\n".to_string();
+    summary.write_to_string(&mut s).expect("write succeeded");
+
+    static SERIALIZED_SUMMARY: &str = "# This is a test @generated summary.\n\n";
+
+    assert_eq!(&s, SERIALIZED_SUMMARY, "serialized representation matches");
+
+    let deserialized = Summary::parse(&s).expect("from_str succeeded");
+    assert_eq!(summary, deserialized, "deserialized representation matches");
+
+    let diff = summary.diff(&deserialized);
+    assert!(diff.is_unchanged(), "diff should be empty");
+}
+
+#[test]
 fn basic_roundtrip() {
     let target_initials = vec![(
         SummaryId::new(
