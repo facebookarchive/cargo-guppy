@@ -6,10 +6,12 @@ use crate::graph::cargo::{
     CargoSet,
 };
 use crate::graph::feature::{all_filter, CrossLink, FeatureQuery, FeatureSet};
-use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink};
+use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageSet};
 use crate::sorted_set::SortedSet;
 use crate::{DependencyKind, Error};
+use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
+use petgraph::visit::VisitMap;
 use target_spec::Platform;
 
 pub(super) struct CargoSetBuildState {
@@ -198,14 +200,25 @@ impl CargoSetBuildState {
             }
         };
 
+        // Record workspace + direct third-party deps in these sets.
+        let mut target_direct_deps =
+            FixedBitSet::with_capacity(graph.package_graph.package_count());
+        let mut host_direct_deps = FixedBitSet::with_capacity(graph.package_graph.package_count());
+
         // 2. Figure out what packages will be included on the target platform, i.e. normal + dev
         // (if requested).
         let imm_opts = &opts.imm_options;
         let postfilter = &mut opts.postfilter;
         let target_platform = imm_opts.target_platform();
         let host_platform = imm_opts.host_platform();
+
         let target_packages = target_query.resolve_with_fn(|query, link| {
             let (from, to) = link.endpoints();
+
+            if from.in_workspace() {
+                // Mark initials in target_direct_deps.
+                target_direct_deps.visit(from.package_ix());
+            }
 
             if self.is_omitted(to.package_ix()) {
                 // Pretend that the omitted set doesn't exist.
@@ -246,6 +259,10 @@ impl CargoSetBuildState {
 
             // Finally, process what needs to be done.
             if build_dep_redirect || proc_macro_redirect {
+                if from.in_workspace() {
+                    // The 'to' node is either in the workspace or a direct dependency [a].
+                    host_direct_deps.visit(to.package_ix());
+                }
                 host_ixs.push(to.package_ix());
             }
             if build_dep_redirect {
@@ -254,6 +271,11 @@ impl CargoSetBuildState {
             if proc_macro_redirect {
                 proc_macro_edge_ixs.push(link.edge_ix());
                 follow_target = false;
+            }
+
+            if from.in_workspace() && follow_target {
+                // The 'to' node is either in the workspace or a direct dependency.
+                target_direct_deps.visit(to.package_ix());
             }
 
             follow_target
@@ -270,6 +292,9 @@ impl CargoSetBuildState {
                     // Pretend that the omitted set doesn't exist.
                     return false;
                 }
+
+                // All relevant nodes in host_ixs have already been added to host_direct_deps at [a].
+
                 let consider_build = from.has_build_script();
 
                 // Only normal and build dependencies are considered, regardless of whether this is
@@ -278,7 +303,15 @@ impl CargoSetBuildState {
                     || (consider_build
                         && is_enabled(host_set, &link, DependencyKind::Build, host_platform));
 
-                res && postfilter.accept_package(CargoResolvePhase::HostPackage(query), link)
+                if res && postfilter.accept_package(CargoResolvePhase::HostPackage(query), link) {
+                    if from.in_workspace() {
+                        // The 'to' node is either in the workspace or a direct dependency.
+                        host_direct_deps.visit(to.package_ix());
+                    }
+                    true
+                } else {
+                    false
+                }
             });
 
         // Finally, the features are whatever packages were selected, intersected with whatever
@@ -290,10 +323,17 @@ impl CargoSetBuildState {
             .resolve_packages(&host_packages, all_filter())
             .intersection(host_set);
 
+        // Also construct the direct dep sets.
+        let target_direct_deps =
+            PackageSet::from_included(graph.package_graph(), target_direct_deps);
+        let host_direct_deps = PackageSet::from_included(graph.package_graph, host_direct_deps);
+
         CargoSet {
             original_query,
             target_features,
             host_features,
+            target_direct_deps,
+            host_direct_deps,
             proc_macro_edge_ixs: SortedSet::new(proc_macro_edge_ixs),
             build_dep_edge_ixs: SortedSet::new(build_dep_edge_ixs),
         }
