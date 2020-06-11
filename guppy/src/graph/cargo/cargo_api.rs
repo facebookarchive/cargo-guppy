@@ -3,7 +3,7 @@
 
 use crate::graph::cargo::build::CargoSetBuildState;
 use crate::graph::feature::{CrossLink, FeatureQuery, FeatureSet};
-use crate::graph::{PackageIx, PackageLink, PackageQuery};
+use crate::graph::{PackageIx, PackageLink, PackageQuery, PackageSet};
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
 use petgraph::prelude::*;
@@ -365,6 +365,8 @@ pub struct CargoSet<'g> {
     pub(super) original_query: FeatureQuery<'g>,
     pub(super) target_features: FeatureSet<'g>,
     pub(super) host_features: FeatureSet<'g>,
+    pub(super) target_direct_deps: PackageSet<'g>,
+    pub(super) host_direct_deps: PackageSet<'g>,
     pub(super) proc_macro_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
     pub(super) build_dep_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
 }
@@ -420,6 +422,20 @@ impl<'g> CargoSet<'g> {
     /// This includes all procedural macros, including those specified in the initial query.
     pub fn host_features(&self) -> &FeatureSet<'g> {
         &self.host_features
+    }
+
+    /// Returns the set of workspace and direct dependency packages on the target platform.
+    ///
+    /// The packages in this set are a subset of the packages in `target_features`.
+    pub fn target_direct_deps(&self) -> &PackageSet<'g> {
+        &self.target_direct_deps
+    }
+
+    /// Returns the set of workspace and direct dependency packages on the host platform.
+    ///
+    /// The packages in this set are a subset of the packages in `host_features`.
+    pub fn host_direct_deps(&self) -> &PackageSet<'g> {
+        &self.host_direct_deps
     }
 
     /// Returns `PackageLink` instances for procedural macro dependencies from target packages.
