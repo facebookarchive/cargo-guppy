@@ -138,7 +138,7 @@ impl<'a> PackageDiff<'a> {
             match status {
                 SummaryDiffStatus::Added { .. } => entry.record_added(summary_id),
                 SummaryDiffStatus::Removed { .. } => entry.record_removed(summary_id),
-                SummaryDiffStatus::Changed { .. } => entry.record_changed(),
+                SummaryDiffStatus::Modified { .. } => entry.record_changed(),
             }
         }
 
@@ -220,7 +220,7 @@ impl<'a> fmt::Display for PackageDiff<'a> {
                     display_list(f, &old_info.features)?;
                     writeln!(f)?;
                 }
-                SummaryDiffStatus::Changed {
+                SummaryDiffStatus::Modified {
                     old_version,
                     old_source,
                     old_status,
@@ -302,7 +302,7 @@ pub enum SummaryDiffStatus<'a> {
     /// Some details about the package changed:
     /// * a feature was added or removed
     /// * the version or source changed.
-    Changed {
+    Modified {
         /// The old version of this package, if the version changed.
         old_version: Option<&'a Version>,
 
@@ -343,7 +343,7 @@ impl<'a> SummaryDiffStatus<'a> {
             edit::Edit::Copy(features) => {
                 // No diff between the old and new features, so put everything in unchanged.
                 let unchanged_features = features.iter().map(|feature| feature.as_str()).collect();
-                SummaryDiffStatus::Changed {
+                SummaryDiffStatus::Modified {
                     old_version,
                     old_source,
                     old_status,
@@ -384,7 +384,7 @@ impl<'a> SummaryDiffStatus<'a> {
             }
         }
 
-        SummaryDiffStatus::Changed {
+        SummaryDiffStatus::Modified {
             old_version,
             old_source,
             old_status,
@@ -399,7 +399,7 @@ impl<'a> SummaryDiffStatus<'a> {
         match self {
             SummaryDiffStatus::Added { info } => Some(info.status),
             SummaryDiffStatus::Removed { .. } => None,
-            SummaryDiffStatus::Changed { new_status, .. } => Some(*new_status),
+            SummaryDiffStatus::Modified { new_status, .. } => Some(*new_status),
         }
     }
 }
