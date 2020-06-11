@@ -220,7 +220,7 @@ features = []
     assert_eq!(summary_id.source, SummarySource::workspace("foo"));
     assert_eq!(
         *status,
-        SummaryDiffStatus::Changed {
+        SummaryDiffStatus::Modified {
             old_version: None,
             old_source: None,
             old_status: None,
@@ -244,7 +244,7 @@ features = []
     assert_eq!(summary_id.source, SummarySource::workspace("dir/bar"));
     assert_eq!(
         *status,
-        SummaryDiffStatus::Changed {
+        SummaryDiffStatus::Modified {
             old_version: Some(&Version::new(0, 1, 0)),
             old_source: None,
             old_status: Some(PackageStatus::Workspace),
@@ -262,7 +262,7 @@ features = []
     assert_eq!(summary_id.source, SummarySource::path("../local-dep"));
     assert_eq!(
         *status,
-        SummaryDiffStatus::Changed {
+        SummaryDiffStatus::Modified {
             old_version: None,
             old_source: None,
             old_status: None,
