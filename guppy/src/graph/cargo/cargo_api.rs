@@ -6,7 +6,6 @@ use crate::graph::feature::{FeatureGraph, FeatureQuery, FeatureSet};
 use crate::graph::{PackageGraph, PackageIx, PackageLink, PackageSet};
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
-use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -193,10 +192,6 @@ pub struct CargoSet<'g> {
     pub(super) host_direct_deps: PackageSet<'g>,
     pub(super) proc_macro_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
     pub(super) build_dep_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
-
-    // Unified sets, cached on first use.
-    pub(super) unified_features: OnceCell<FeatureSet<'g>>,
-    pub(super) unified_direct_deps: OnceCell<PackageSet<'g>>,
 }
 
 impl<'g> CargoSet<'g> {
@@ -256,17 +251,6 @@ impl<'g> CargoSet<'g> {
         &self.host_features
     }
 
-    /// Returns the union of the target and host feature sets.
-    ///
-    /// This may be used if differentiating between the target and host platforms is not considered
-    /// important.
-    ///
-    /// The unified feature set is computed and cached on first access.
-    pub fn unified_features(&self) -> &FeatureSet<'g> {
-        self.unified_features
-            .get_or_init(|| self.target_features.union(&self.host_features))
-    }
-
     /// Returns the set of workspace and direct dependency packages on the target platform.
     ///
     /// The packages in this set are a subset of the packages in `target_features`.
@@ -279,14 +263,6 @@ impl<'g> CargoSet<'g> {
     /// The packages in this set are a subset of the packages in `host_features`.
     pub fn host_direct_deps(&self) -> &PackageSet<'g> {
         &self.host_direct_deps
-    }
-
-    /// Returns the union of the target and host direct dependency sets.
-    ///
-    /// The packages in this set are a subset of the packages in `unified_features`.
-    pub fn unified_direct_deps(&self) -> &PackageSet<'g> {
-        self.unified_direct_deps
-            .get_or_init(|| self.target_direct_deps.union(&self.host_direct_deps))
     }
 
     /// Returns `PackageLink` instances for procedural macro dependencies from target packages.

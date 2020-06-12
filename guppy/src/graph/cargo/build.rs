@@ -7,7 +7,6 @@ use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink, 
 use crate::sorted_set::SortedSet;
 use crate::{DependencyKind, Error};
 use fixedbitset::FixedBitSet;
-use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use petgraph::visit::VisitMap;
 use target_spec::Platform;
@@ -286,9 +285,6 @@ impl<'a> CargoSetBuildState<'a> {
             host_direct_deps,
             proc_macro_edge_ixs: SortedSet::new(proc_macro_edge_ixs),
             build_dep_edge_ixs: SortedSet::new(build_dep_edge_ixs),
-
-            unified_features: OnceCell::new(),
-            unified_direct_deps: OnceCell::new(),
         }
     }
 
