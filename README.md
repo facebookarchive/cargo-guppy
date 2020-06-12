@@ -4,8 +4,10 @@
 
 This repository contains the source code for:
 * [`guppy`](guppy): a library for performing queries on Cargo dependency graphs [![guppy on crates.io](https://img.shields.io/crates/v/guppy)](https://crates.io/crates/guppy) [![Documentation (latest release)](https://docs.rs/guppy/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/guppy/)
+* [`guppy-summaries`](guppy-summaries): a library for managing build summaries listing packages and features [![guppy-summaries on crates.io](https://img.shields.io/crates/v/guppy-summaries)](https://crates.io/crates/guppy-summaries) [![Documentation (latest release)](https://docs.rs/guppy-summaries/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/guppy_summaries/)  
 * [`target-spec`](target-spec): an evaluator for `Cargo.toml` target specifications [![target-spec on crates.io](https://img.shields.io/crates/v/target-spec)](https://crates.io/crates/target-spec) [![Documentation (latest release)](https://docs.rs/target-spec/badge.svg)](https://docs.rs/target-spec/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/target_spec/)
 * [`cargo-guppy`](cargo-guppy): a command-line frontend for the `guppy` library
+* and a number of [tools](tools) and [test fixtures](fixtures) used to verify that `guppy` behaves correctly. 
 
 The code in this repository is in a **pre-release** state and is under active development.
 
@@ -26,12 +28,14 @@ the `cargo-guppy` CLI as well:
 * perform queries based on [Cargo features](https://doc.rust-lang.org/cargo/reference/features.html)
 * simulate Cargo builds and return what packages and features would be built by it
 * evaluate target specs for [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)
+* generate *summary files* for Cargo builds, which can be used to:
+  * receive CI feedback if a dependency is added, updated or removed, or if new features are added
+  * receive CI feedback if a package is added to a high-assurance subset, or if any new features are enabled in
+    an existing package in that subset. This can be used to flag those changes for extra scrutiny.
 * print out a `dot` graph for a subset of crates, for formatting with [graphviz](https://www.graphviz.org/)
 
 Still to come:
 
-* receive CI feedback if a dependency is added, updated or removed
-* receive CI feedback if a package goes from not being included in a high-assurance subset to being included
 * a command-line query language
 
 This code has been written for the [Libra Core](https://github.com/libra/libra) project, but it may be useful for other
