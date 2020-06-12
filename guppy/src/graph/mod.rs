@@ -127,7 +127,14 @@ impl GraphSpec for PackageGraph {
     type Ix = PackageIx;
 }
 
-impl<'g> GraphSpec for feature::FeatureGraph<'g> {
+/// Marker type to hang `impl GraphSpec` for `FeatureGraph` off of.
+///
+/// Do this instead of `impl<'g> GraphSpec for feature::FeatureGraph<'g>` to deal with lifetime
+/// variance issues.
+#[derive(Clone, Debug)]
+pub(crate) enum FeatureGraphSpec {}
+
+impl GraphSpec for FeatureGraphSpec {
     type Node = feature::FeatureNode;
     type Edge = feature::FeatureEdge;
     type Ix = FeatureIx;

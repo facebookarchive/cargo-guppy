@@ -94,6 +94,8 @@ pub struct PackageSet<'g> {
     core: ResolveCore<PackageGraph>,
 }
 
+assert_covariant!(PackageSet);
+
 impl<'g> PackageSet<'g> {
     pub(super) fn new(query: PackageQuery<'g>) -> Self {
         let graph = query.graph;

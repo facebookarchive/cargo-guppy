@@ -11,6 +11,9 @@ pub struct SortedSet<T> {
     inner: Box<[T]>,
 }
 
+type _SortedSetCovariant<'a> = SortedSet<&'a ()>;
+assert_covariant!(_SortedSetCovariant);
+
 impl<T> SortedSet<T>
 where
     T: Ord,

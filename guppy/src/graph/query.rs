@@ -21,6 +21,8 @@ pub struct PackageQuery<'g> {
     pub(super) params: QueryParams<PackageGraph>,
 }
 
+assert_covariant!(PackageQuery);
+
 /// ## Queries
 ///
 /// The methods in this section create *queries* over subsets of this package graph. Use the methods

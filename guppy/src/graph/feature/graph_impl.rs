@@ -70,6 +70,8 @@ pub struct FeatureGraph<'g> {
     pub(super) inner: &'g FeatureGraphImpl,
 }
 
+assert_covariant!(FeatureGraph);
+
 impl<'g> FeatureGraph<'g> {
     /// Returns any non-fatal warnings encountered while constructing the feature graph.
     pub fn build_warnings(&self) -> &'g [FeatureGraphWarning] {
@@ -354,6 +356,8 @@ pub struct FeatureId<'g> {
     feature: Option<&'g str>,
 }
 
+assert_covariant!(FeatureId);
+
 impl<'g> FeatureId<'g> {
     /// Creates a new `FeatureId`.
     pub fn new(package_id: &'g PackageId, feature: &'g str) -> Self {
@@ -466,6 +470,8 @@ pub struct FeatureMetadata<'g> {
     inner: &'g FeatureMetadataImpl,
 }
 
+assert_covariant!(FeatureMetadata);
+
 impl<'g> FeatureMetadata<'g> {
     /// Returns the feature ID corresponding to this metadata.
     pub fn feature_id(&self) -> FeatureId<'g> {
@@ -568,6 +574,8 @@ pub struct CrossLink<'g> {
     edge_ix: EdgeIndex<FeatureIx>,
     inner: &'g CrossLinkImpl,
 }
+
+assert_covariant!(CrossLink);
 
 impl<'g> CrossLink<'g> {
     #[allow(dead_code)]

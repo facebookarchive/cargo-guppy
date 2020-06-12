@@ -4,7 +4,7 @@
 use crate::graph::cargo::{CargoOptions, CargoSet};
 use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureSet};
 use crate::graph::query_core::QueryParams;
-use crate::graph::{DependencyDirection, FeatureIx, PackageIx, PackageQuery};
+use crate::graph::{DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageQuery};
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
 use petgraph::graph::NodeIndex;
@@ -157,8 +157,10 @@ pub fn feature_id_filter<'g: 'a, 'a>(
 #[derive(Clone, Debug)]
 pub struct FeatureQuery<'g> {
     pub(super) graph: FeatureGraph<'g>,
-    pub(in crate::graph) params: QueryParams<FeatureGraph<'g>>,
+    pub(in crate::graph) params: QueryParams<FeatureGraphSpec>,
 }
+
+assert_covariant!(FeatureQuery);
 
 /// ## Queries
 ///

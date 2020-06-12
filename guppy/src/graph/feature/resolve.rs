@@ -7,7 +7,7 @@ use crate::graph::feature::{
     FeatureQuery, FeatureResolver,
 };
 use crate::graph::resolve_core::ResolveCore;
-use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
+use crate::graph::{DependencyDirection, FeatureGraphSpec, PackageMetadata, PackageSet};
 use crate::petgraph_support::IxBitSet;
 use crate::{Error, PackageId};
 use fixedbitset::FixedBitSet;
@@ -53,8 +53,10 @@ impl<'g> FeatureGraph<'g> {
 #[derive(Clone, Debug)]
 pub struct FeatureSet<'g> {
     graph: DebugIgnore<FeatureGraph<'g>>,
-    core: ResolveCore<FeatureGraph<'g>>,
+    core: ResolveCore<FeatureGraphSpec>,
 }
+
+assert_covariant!(FeatureSet);
 
 impl<'g> FeatureSet<'g> {
     pub(super) fn new(query: FeatureQuery<'g>) -> Self {

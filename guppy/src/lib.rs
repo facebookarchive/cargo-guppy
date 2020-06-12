@@ -53,6 +53,9 @@
 
 #![warn(missing_docs)]
 
+#[macro_use]
+mod macros;
+
 mod debug_ignore;
 mod dependency_kind;
 pub mod errors;
