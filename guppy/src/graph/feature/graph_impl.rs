@@ -3,7 +3,7 @@
 
 use crate::errors::FeatureGraphWarning;
 use crate::graph::feature::build::FeatureGraphBuildState;
-use crate::graph::feature::{Cycles, FeatureFilter};
+use crate::graph::feature::{Cycles, FeatureFilter, FeatureList};
 use crate::graph::{
     DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
     PlatformStatus, PlatformStatusImpl,
@@ -103,6 +103,18 @@ impl<'g> FeatureGraph<'g> {
             .ok_or_else(|| Error::unknown_feature_id(feature_id))?;
         self.metadata_for_node(feature_node)
             .ok_or_else(|| Error::unknown_feature_id(feature_id))
+    }
+
+    /// Returns all known features for a package.
+    ///
+    /// Returns an error if the package ID was unknown.
+    pub fn all_features_for(&self, package_id: &PackageId) -> Result<FeatureList<'g>, Error> {
+        let package = self.package_graph.metadata(package_id)?;
+        let dep_graph = self.dep_graph();
+        let features = self
+            .feature_ixs_for_package_ix(package.package_ix())
+            .map(|feature_ix| FeatureId::node_to_feature(package, &dep_graph[feature_ix]));
+        Ok(FeatureList::new(package, features))
     }
 
     /// Returns true if this feature is included in a package's build by default.

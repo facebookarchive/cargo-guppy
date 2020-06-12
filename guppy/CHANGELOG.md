@@ -12,6 +12,7 @@
   * A number of bug fixes around edge cases.
 * `Workspace::members_by_paths` and `Workspace::members_by_names` look up a list of workspace members
   by path or name, respectively.
+* `FeatureGraph::all_features_for` returns a list of all known features for a specified package.
 
 ### Changed
 
