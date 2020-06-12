@@ -17,6 +17,11 @@ Add the following to `Cargo.toml`:
 guppy = "0.4"
 ```
 
+## Optional features
+
+* `proptest010`: Support for [property-based testing](https://jessitron.com/2013/04/25/property-based-testing-what-is-it/)
+  using the [`proptest`](https://altsysrq.github.io/proptest-book/intro.html) framework.
+
 ## Examples
 
 Print out all direct dependencies of a package:
