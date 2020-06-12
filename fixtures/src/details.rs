@@ -235,7 +235,7 @@ impl FixtureDetails {
         for ((from, to), details) in &self.link_details {
             let metadata = graph
                 .metadata(from)
-                .unwrap_or_else(|| panic!("{}: known package ID '{}' should be valid", msg, from));
+                .unwrap_or_else(|err| panic!("{}: {}", msg, err));
             let mut links: Vec<_> = metadata
                 .direct_links()
                 .filter(|link| link.to().id() == to)

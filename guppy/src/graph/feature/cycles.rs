@@ -35,8 +35,8 @@ impl<'g> Cycles<'g> {
     ) -> Result<bool, Error> {
         let a = a.into();
         let b = b.into();
-        let a_ix = self.feature_graph.feature_ix_err(a)?;
-        let b_ix = self.feature_graph.feature_ix_err(b)?;
+        let a_ix = self.feature_graph.feature_ix(a)?;
+        let b_ix = self.feature_graph.feature_ix(b)?;
         Ok(self.sccs.is_same_scc(a_ix, b_ix))
     }
 

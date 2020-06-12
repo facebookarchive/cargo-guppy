@@ -136,7 +136,7 @@ impl<'a> CargoSetBuildState<'a> {
             // enabled_on.
             let consider_optional = feature_set
                 .contains((from.id(), link.dep_name()))
-                .unwrap_or_else(|| {
+                .unwrap_or_else(|_| {
                     // If the feature ID isn't present, it means the dependency wasn't declared
                     // as optional. In that case the value doesn't matter.
                     debug_assert!(

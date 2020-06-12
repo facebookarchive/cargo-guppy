@@ -267,20 +267,19 @@ impl<'g> FeatureQuery<'g> {
 
     /// Returns true if the query starts from the given package.
     ///
-    /// Returns `None` if the package ID is unknown.
-    pub fn starts_from_package(&self, package_id: &PackageId) -> Option<bool> {
+    /// Returns an error if the package ID is unknown.
+    pub fn starts_from_package(&self, package_id: &PackageId) -> Result<bool, Error> {
         let package_ix = self.graph.package_graph.package_ix(package_id)?;
-        Some(self.starts_from_package_ix(package_ix))
+        Ok(self.starts_from_package_ix(package_ix))
     }
 
     /// Returns true if the query starts from the given feature ID.
     ///
-    /// Returns `None` if this package ID is unknown.
-    pub fn starts_from<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Option<bool> {
-        Some(
-            self.params
-                .has_initial(self.graph.feature_ix(feature_id.into())?),
-        )
+    /// Returns an error if this feature ID is unknown.
+    pub fn starts_from<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Result<bool, Error> {
+        Ok(self
+            .params
+            .has_initial(self.graph.feature_ix(feature_id.into())?))
     }
 
     /// Resolves this query into a set of known feature IDs.

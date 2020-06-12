@@ -13,6 +13,7 @@
 
 ### Changed
 
+* Lookup methods like `PackageGraph::metadata` now return `Result`s with errors instead of `Option`s.
 * `target-spec` has been upgraded to 0.3.
 * `proptest` has been upgraded to 0.10. The feature has accordingly been renamed to
   `proptest010`.
