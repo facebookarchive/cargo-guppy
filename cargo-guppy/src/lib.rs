@@ -19,7 +19,6 @@ use guppy::{
 use guppy_cmdlib::{
     triple_to_platform, CargoMetadataOptions, CargoResolverOpts, PackagesAndFeatures,
 };
-use std::borrow::Cow;
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -187,13 +186,9 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     // direct deps of workspace proc macros (e.g. quote) will be included. This feels like it's
     // what's desired for this request.
     let direct_deps = match opts.build_kind {
-        BuildKind::All | BuildKind::TargetAndProcMacro => Cow::Owned(
-            cargo_set
-                .host_direct_deps()
-                .union(cargo_set.target_direct_deps()),
-        ),
-        BuildKind::Target => Cow::Borrowed(cargo_set.target_direct_deps()),
-        BuildKind::Host | BuildKind::ProcMacro => Cow::Borrowed(cargo_set.host_direct_deps()),
+        BuildKind::All | BuildKind::TargetAndProcMacro => cargo_set.unified_direct_deps(),
+        BuildKind::Target => cargo_set.target_direct_deps(),
+        BuildKind::Host | BuildKind::ProcMacro => cargo_set.host_direct_deps(),
     };
 
     let print_packages = |feature_set: &FeatureSet| {
