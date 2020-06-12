@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `Platform::custom` creates platforms that are unknown to rustc.
+  - This is supported through `cfg-expr`, which is now a public dependency.
+  - Custom platforms are often found in embedded Rust.
+
+### Changed
+
+- In order to support custom platforms, `Platform::triple` now returns a `&'a str`
+  instead of a `&'static str`.
+
 ## [0.2.4] - 2020-05-06
 
 ### Added
