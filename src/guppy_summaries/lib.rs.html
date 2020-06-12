@@ -119,6 +119,13 @@
 <span id="119">119</span>
 <span id="120">120</span>
 <span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -143,29 +150,32 @@
 <span class="doccomment">//! # Examples</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```</span>
-<span class="doccomment">//! use guppy_summaries::{Summary, SummaryId, SummarySource, SummaryDiffStatus};</span>
+<span class="doccomment">//! use guppy_summaries::{Summary, SummaryId, SummarySource, SummaryDiffStatus, PackageStatus};</span>
 <span class="doccomment">//! use pretty_assertions::assert_eq;</span>
 <span class="doccomment">//! use semver::Version;</span>
 <span class="doccomment">//! use std::collections::BTreeSet;</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // A summary is a TOML file that has this format:</span>
 <span class="doccomment">//! static SUMMARY: &amp;str = r#&quot;</span>
-<span class="doccomment">//! [[target-initial]]</span>
+<span class="doccomment">//! [[target-package]]</span>
 <span class="doccomment">//! name = &quot;foo&quot;</span>
 <span class="doccomment">//! version = &quot;1.2.3&quot;</span>
 <span class="doccomment">//! workspace-path = &quot;foo&quot;</span>
+<span class="doccomment">//! status = &#39;initial&#39;</span>
 <span class="doccomment">//! features = [&quot;feature-a&quot;, &quot;feature-c&quot;]</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! [[host-initial]]</span>
+<span class="doccomment">//! [[host-package]]</span>
 <span class="doccomment">//! name = &quot;proc-macro&quot;</span>
 <span class="doccomment">//! version = &quot;0.1.2&quot;</span>
 <span class="doccomment">//! workspace-path = &quot;proc-macros/macro&quot;</span>
+<span class="doccomment">//! status = &#39;workspace&#39;</span>
 <span class="doccomment">//! features = [&quot;macro-expand&quot;]</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [[host-package]]</span>
 <span class="doccomment">//! name = &quot;bar&quot;</span>
 <span class="doccomment">//! version = &quot;0.4.5&quot;</span>
 <span class="doccomment">//! crates-io = true</span>
+<span class="doccomment">//! status = &#39;direct&#39;</span>
 <span class="doccomment">//! features = []</span>
 <span class="doccomment">//! &quot;#;</span>
 <span class="doccomment">//!</span>
@@ -174,31 +184,35 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // ... and a package and its features can be looked up.</span>
 <span class="doccomment">//! let summary_id = SummaryId::new(&quot;foo&quot;, Version::new(1, 2, 3), SummarySource::workspace(&quot;foo&quot;));</span>
-<span class="doccomment">//! let features = &amp;summary.target_initials[&amp;summary_id];</span>
+<span class="doccomment">//! let info = &amp;summary.target_packages[&amp;summary_id];</span>
+<span class="doccomment">//! assert_eq!(info.status, PackageStatus::Initial, &quot;correct status&quot;);</span>
 <span class="doccomment">//! assert_eq!(</span>
-<span class="doccomment">//!     &amp;features.iter().map(|feature| feature.as_str()).collect::&lt;Vec&lt;_&gt;&gt;(),</span>
-<span class="doccomment">//!     &amp;[&quot;feature-a&quot;, &quot;feature-c&quot;],</span>
+<span class="doccomment">//!     info.features.iter().map(|feature| feature.as_str()).collect::&lt;Vec&lt;_&gt;&gt;(),</span>
+<span class="doccomment">//!     [&quot;feature-a&quot;, &quot;feature-c&quot;],</span>
 <span class="doccomment">//!     &quot;correct feature list&quot;</span>
 <span class="doccomment">//! );</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Another summary.</span>
 <span class="doccomment">//! static SUMMARY2: &amp;str = r#&quot;</span>
-<span class="doccomment">//! [[target-initial]]</span>
+<span class="doccomment">//! [[target-package]]</span>
 <span class="doccomment">//! name = &quot;foo&quot;</span>
 <span class="doccomment">//! version = &quot;1.2.4&quot;</span>
 <span class="doccomment">//! workspace-path = &quot;new-location/foo&quot;</span>
+<span class="doccomment">//! status = &#39;initial&#39;</span>
 <span class="doccomment">//! features = [&quot;feature-a&quot;, &quot;feature-b&quot;]</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [[target-package]]</span>
 <span class="doccomment">//! name = &quot;once_cell&quot;</span>
 <span class="doccomment">//! version = &quot;1.4.0&quot;</span>
 <span class="doccomment">//! source = &quot;git+https://github.com/matklad/once_cell?tag=v1.4.0&quot;</span>
+<span class="doccomment">//! status = &#39;transitive&#39;</span>
 <span class="doccomment">//! features = [&quot;std&quot;]</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [[host-package]]</span>
 <span class="doccomment">//! name = &quot;bar&quot;</span>
 <span class="doccomment">//! version = &quot;0.4.5&quot;</span>
 <span class="doccomment">//! crates-io = true</span>
+<span class="doccomment">//! status = &#39;direct&#39;</span>
 <span class="doccomment">//! features = []</span>
 <span class="doccomment">//! &quot;#;</span>
 <span class="doccomment">//!</span>
@@ -207,27 +221,25 @@
 <span class="doccomment">//! // Diff summary and summary2.</span>
 <span class="doccomment">//! let diff = summary.diff(&amp;summary2);</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! // Pretty-print the diff.</span>
-<span class="doccomment">//! let diff_str = format!(&quot;{}&quot;, diff);</span>
+<span class="doccomment">//! // Pretty-print a report generated from the diff.</span>
+<span class="doccomment">//! let diff_str = format!(&quot;{}&quot;, diff.report());</span>
 <span class="doccomment">//! assert_eq!(</span>
-<span class="doccomment">//!     diff_str,</span>
-<span class="doccomment">//!     r#&quot;target initials:</span>
-<span class="doccomment">//!   foo 1.2.4 (workspace path &#39;new-location/foo&#39;)</span>
+<span class="doccomment">//!     r#&quot;target packages:</span>
+<span class="doccomment">//!   A once_cell 1.4.0 (transitive third-party, external &#39;git+https://github.com/matklad/once_cell?tag=v1.4.0&#39;)</span>
+<span class="doccomment">//!     * features: std</span>
+<span class="doccomment">//!   M foo 1.2.4 (initial, path &#39;new-location/foo&#39;)</span>
 <span class="doccomment">//!     * version upgraded from 1.2.3</span>
-<span class="doccomment">//!     * source changed from workspace path &#39;foo&#39;</span>
+<span class="doccomment">//!     * source changed from path &#39;foo&#39;</span>
 <span class="doccomment">//!     * added features: feature-b</span>
 <span class="doccomment">//!     * removed features: feature-c</span>
 <span class="doccomment">//!     * (unchanged features: feature-a)</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! host initials:</span>
-<span class="doccomment">//!   proc-macro 0.1.2 (workspace path &#39;proc-macros/macro&#39;)</span>
-<span class="doccomment">//!     * removed package, old features: macro-expand</span>
+<span class="doccomment">//! host packages:</span>
+<span class="doccomment">//!   R proc-macro 0.1.2 (workspace, path &#39;proc-macros/macro&#39;)</span>
+<span class="doccomment">//!     * (old features: macro-expand)</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! target packages:</span>
-<span class="doccomment">//!   once_cell 1.4.0 (external &#39;git+https://github.com/matklad/once_cell?tag=v1.4.0&#39;)</span>
-<span class="doccomment">//!     * added package, features: std</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! &quot;#</span>
+<span class="doccomment">//! &quot;#,</span>
+<span class="doccomment">//!     diff_str,</span>
 <span class="doccomment">//! );</span>
 <span class="doccomment">//! ```</span>
 
@@ -235,11 +247,13 @@
 <span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
 
 <span class="kw">mod</span> <span class="ident">diff</span>;
+<span class="kw">mod</span> <span class="ident">report</span>;
 <span class="kw">mod</span> <span class="ident">summary</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">unit_tests</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">diff</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">report</span>::<span class="kw-2">*</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">summary</span>::<span class="kw-2">*</span>;
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "guppy_summaries";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

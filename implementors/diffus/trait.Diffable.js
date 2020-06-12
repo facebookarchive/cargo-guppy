@@ -1,3 +1,4 @@
 (function() {var implementors = {};
 implementors["diffus"] = [];
+implementors["guppy_summaries"] = [{"text":"impl&lt;'a&gt; <a class=\"trait\" href=\"diffus/trait.Diffable.html\" title=\"trait diffus::Diffable\">Diffable</a>&lt;'a&gt; for <a class=\"struct\" href=\"guppy_summaries/struct.PackageInfo.html\" title=\"struct guppy_summaries::PackageInfo\">PackageInfo</a>","synthetic":false,"types":["guppy_summaries::summary::PackageInfo"]},{"text":"impl&lt;'a&gt; <a class=\"trait\" href=\"diffus/trait.Diffable.html\" title=\"trait diffus::Diffable\">Diffable</a>&lt;'a&gt; for <a class=\"enum\" href=\"guppy_summaries/enum.PackageStatus.html\" title=\"enum guppy_summaries::PackageStatus\">PackageStatus</a>","synthetic":false,"types":["guppy_summaries::summary::PackageStatus"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

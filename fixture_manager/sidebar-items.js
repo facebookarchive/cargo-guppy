@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["list",""]],"struct":[["FixtureManager",""]]});
+initSidebarItems({"enum":[["GenerateSummariesMode",""]],"fn":[["list",""]],"mod":[["summaries",""]],"struct":[["FixtureManager",""],["GenerateSummariesOpts",""]]});
