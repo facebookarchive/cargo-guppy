@@ -14,6 +14,7 @@ use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef};
 use std::fmt;
+use std::path::Path;
 
 impl PackageGraph {
     /// Creates a new `PackageSet` consisting of all members of this package graph.
@@ -60,21 +61,45 @@ impl PackageGraph {
         }
     }
 
+    /// Creates a new `PackageSet` consisting of the specified workspace packages by path.
+    ///
+    /// This does not include transitive dependencies. To do so, use `query_workspace_paths`.
+    ///
+    /// Returns an error if any workspace paths are unknown.
+    pub fn resolve_workspace_paths(
+        &self,
+        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+    ) -> Result<PackageSet, Error> {
+        let workspace = self.workspace();
+        let included: IxBitSet = paths
+            .into_iter()
+            .map(|path| {
+                workspace
+                    .member_by_path(path.as_ref())
+                    .map(|package| package.package_ix())
+            })
+            .collect::<Result<_, Error>>()?;
+        Ok(PackageSet {
+            graph: self,
+            core: ResolveCore::from_included(included),
+        })
+    }
+
     /// Creates a new `PackageSet` consisting of the specified workspace packages by name.
     ///
     /// This does not include transitive dependencies. To do so, use `query_workspace_names`.
     ///
     /// Returns an error if any workspace names are unknown.
-    pub fn resolve_workspace_names<'a>(
+    pub fn resolve_workspace_names(
         &self,
-        names: impl IntoIterator<Item = &'a str>,
+        names: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<PackageSet, Error> {
         let workspace = self.workspace();
         let included: IxBitSet = names
             .into_iter()
             .map(|name| {
                 workspace
-                    .member_by_name(name)
+                    .member_by_name(name.as_ref())
                     .map(|package| package.package_ix())
             })
             .collect::<Result<_, _>>()?;

@@ -9,6 +9,7 @@ use crate::graph::{
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
 use petgraph::prelude::*;
+use std::path::Path;
 
 /// A query over a package graph.
 ///
@@ -37,24 +38,46 @@ impl PackageGraph {
             .expect("workspace packages should all be known")
     }
 
+    /// Creates a new forward query over the specified workspace packages by path.
+    ///
+    /// Returns an error if any workspace paths were unknown.
+    pub fn query_workspace_paths(
+        &self,
+        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+    ) -> Result<PackageQuery, Error> {
+        let workspace = self.workspace();
+        let package_ixs = paths
+            .into_iter()
+            .map(|path| {
+                workspace
+                    .member_by_path(path.as_ref())
+                    .map(|package| package.package_ix())
+            })
+            .collect::<Result<SortedSet<_>, Error>>()?;
+
+        Ok(self.query_from_parts(package_ixs, DependencyDirection::Forward))
+    }
+
     /// Creates a new forward query over the specified workspace packages by name.
     ///
     /// This is similar to `cargo`'s `--package` option.
     ///
     /// Returns an error if any package names were unknown.
-    pub fn query_workspace_names<'a>(
+    pub fn query_workspace_names(
         &self,
-        names: impl IntoIterator<Item = &'a str>,
+        names: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<PackageQuery, Error> {
         let workspace = self.workspace();
-        let package_ids: Vec<_> = names
+        let package_ixs = names
             .into_iter()
-            .map(|name| workspace.member_by_name(name).map(|package| package.id()))
-            .collect::<Result<_, Error>>()?;
+            .map(|name| {
+                workspace
+                    .member_by_name(name.as_ref())
+                    .map(|package| package.package_ix())
+            })
+            .collect::<Result<SortedSet<_>, Error>>()?;
 
-        Ok(self
-            .query_forward(package_ids)
-            .expect("workspace packages should all be known"))
+        Ok(self.query_from_parts(package_ixs, DependencyDirection::Forward))
     }
 
     /// Creates a new query that returns transitive dependencies of the given packages in the
