@@ -194,6 +194,8 @@ pub struct CargoSet<'g> {
     pub(super) build_dep_edge_ixs: SortedSet<EdgeIndex<PackageIx>>,
 }
 
+assert_covariant!(CargoSet);
+
 impl<'g> CargoSet<'g> {
     /// Creates a new `CargoSet` based on the given query and options.
     ///

@@ -587,6 +587,8 @@ pub struct PackageMetadata<'g> {
     inner: &'g PackageMetadataImpl,
 }
 
+assert_covariant!(PackageMetadata);
+
 impl<'g> PackageMetadata<'g> {
     pub(super) fn new(graph: &'g PackageGraph, inner: &'g PackageMetadataImpl) -> Self {
         Self { graph, inner }
@@ -962,6 +964,8 @@ pub enum PackageSource<'g> {
     External(&'g str),
 }
 
+assert_covariant!(PackageSource);
+
 impl<'g> PackageSource<'g> {
     /// The path to the crates.io registry.
     pub const CRATES_IO_REGISTRY: &'static str =
@@ -1081,6 +1085,8 @@ pub struct PackageLink<'g> {
     edge_ix: EdgeIndex<PackageIx>,
     inner: &'g PackageLinkImpl,
 }
+
+assert_covariant!(PackageLink);
 
 impl<'g> PackageLink<'g> {
     pub(super) fn new(
@@ -1324,6 +1330,8 @@ pub struct EnabledStatus<'g> {
     optional: PlatformStatus<'g>,
 }
 
+assert_covariant!(EnabledStatus);
+
 impl<'g> EnabledStatus<'g> {
     pub(super) fn new(required: &'g PlatformStatusImpl, optional: &'g PlatformStatusImpl) -> Self {
         Self {
@@ -1399,6 +1407,8 @@ pub enum PlatformStatus<'g> {
         eval: PlatformEval<'g>,
     },
 }
+
+assert_covariant!(PlatformStatus);
 
 impl<'g> PlatformStatus<'g> {
     pub(super) fn new(specs: &'g PlatformStatusImpl) -> Self {
@@ -1507,6 +1517,8 @@ impl EnabledTernary {
 pub struct PlatformEval<'g> {
     specs: &'g [TargetSpec<'static>],
 }
+
+assert_covariant!(PlatformEval);
 
 impl<'g> PlatformEval<'g> {
     /// Runs this evaluator against the given platform.

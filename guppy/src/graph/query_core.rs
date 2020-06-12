@@ -8,8 +8,8 @@ use fixedbitset::FixedBitSet;
 use petgraph::graph::IndexType;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdges, IntoNeighbors, Visitable};
+use std::fmt;
 
-#[derive(Clone, Debug)]
 pub(super) enum QueryParams<G: GraphSpec> {
     Forward(SortedSet<NodeIndex<G::Ix>>),
     Reverse(SortedSet<NodeIndex<G::Ix>>),
@@ -35,6 +35,30 @@ impl<G: GraphSpec> QueryParams<G> {
         match self {
             QueryParams::Forward(v) => &v,
             QueryParams::Reverse(v) => &v,
+        }
+    }
+}
+
+impl<G: GraphSpec> Clone for QueryParams<G>
+where
+    G::Ix: Clone,
+{
+    fn clone(&self) -> Self {
+        match self {
+            QueryParams::Forward(v) => QueryParams::Forward(v.clone()),
+            QueryParams::Reverse(v) => QueryParams::Reverse(v.clone()),
+        }
+    }
+}
+
+impl<G: GraphSpec> fmt::Debug for QueryParams<G>
+where
+    G::Ix: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            QueryParams::Forward(v) => f.debug_tuple("Forward").field(v).finish(),
+            QueryParams::Reverse(v) => f.debug_tuple("Reverse").field(v).finish(),
         }
     }
 }
