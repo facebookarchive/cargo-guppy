@@ -7,14 +7,12 @@
 * `PackageMetadata::source` provides the source of a package (a local path, `crates.io`, a `git` repository or a custom
   registry).
 * Improvements to Cargo resolution:
-  * Fine-grained control over Cargo resolution with postfilters.
   * `CargoSet` now carries with it the original query and information about
     direct third-party dependencies.
   * A number of bug fixes around edge cases. 
 
 ### Changed
 
-* `CargoOptions` now needs to be passed in as `&mut` rather than `&`.
 * `target-spec` has been upgraded to 0.3.
 * `proptest` has been upgraded to 0.10. The feature has accordingly been renamed to
   `proptest010`.

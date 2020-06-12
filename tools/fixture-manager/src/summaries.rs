@@ -123,9 +123,9 @@ fn iter_summaries<'g>(
             .make_feature_query(graph)
             .expect("valid feature query");
 
-        let mut cargo_opts = generator.generate(&cargo_opts_strategy);
+        let cargo_opts = generator.generate(&cargo_opts_strategy);
         let cargo_set = feature_query
-            .resolve_cargo(&mut cargo_opts)
+            .resolve_cargo(&cargo_opts)
             .expect("resolve_cargo succeeded");
 
         cargo_set.to_summary(&cargo_opts)

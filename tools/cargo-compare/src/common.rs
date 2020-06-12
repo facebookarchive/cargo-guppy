@@ -150,12 +150,12 @@ impl GuppyCargoCommon {
         let target_platform = self.make_target_platform()?;
         let host_platform = self.guppy_current_platform()?;
 
-        let mut cargo_opts = CargoOptions::new()
+        let cargo_opts = CargoOptions::new()
             .with_version(version)
             .with_dev_deps(self.include_dev)
             .with_target_platform(Some(&target_platform))
             .with_host_platform(Some(&host_platform));
-        let intermediate_set = CargoSet::new_intermediate(feature_query, &mut cargo_opts)?;
+        let intermediate_set = CargoSet::new_intermediate(feature_query, &cargo_opts)?;
         let (target_features, host_features) = intermediate_set.target_host_sets();
 
         Ok(FeatureMap::from_guppy(target_features, host_features))

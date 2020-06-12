@@ -19,6 +19,7 @@ use guppy::{
 use guppy_cmdlib::{
     triple_to_platform, CargoMetadataOptions, CargoResolverOpts, PackagesAndFeatures,
 };
+use std::borrow::Cow;
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -168,9 +169,8 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let host_platform = triple_to_platform(opts.host_platform.as_deref(), || None)?;
     let mut command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
-    let kind = opts.base_filter_opts.kind;
 
-    let mut cargo_opts = CargoOptions::new_postfilter_fn(|_, link| kind.should_traverse(&link))
+    let cargo_opts = CargoOptions::new()
         .with_dev_deps(opts.resolver_opts.include_dev)
         .with_version(opts.resolver_opts.resolver_version)
         .with_proc_macros_on_target(opts.resolver_opts.proc_macros_on_target)
@@ -181,14 +181,32 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let cargo_set = opts
         .pf
         .make_feature_query(&pkg_graph)?
-        .resolve_cargo(&mut cargo_opts)?;
+        .resolve_cargo(&cargo_opts)?;
+
+    // Note that for the target+proc macro case, we unify direct deps here. This means that
+    // direct deps of workspace proc macros (e.g. quote) will be included. This feels like it's
+    // what's desired for this request.
+    let direct_deps = match opts.build_kind {
+        BuildKind::All | BuildKind::TargetAndProcMacro => Cow::Owned(
+            cargo_set
+                .host_direct_deps()
+                .union(cargo_set.target_direct_deps()),
+        ),
+        BuildKind::Target => Cow::Borrowed(cargo_set.target_direct_deps()),
+        BuildKind::Host | BuildKind::ProcMacro => Cow::Borrowed(cargo_set.host_direct_deps()),
+    };
 
     let print_packages = |feature_set: &FeatureSet| {
         for feature_list in feature_set.packages_with_features(DependencyDirection::Forward) {
             let package = feature_list.package();
             let show_package = match opts.base_filter_opts.kind {
-                Kind::All | Kind::Workspace => true,
-                Kind::DirectThirdParty | Kind::ThirdParty => !package.in_workspace(),
+                Kind::All => true,
+                Kind::Workspace => package.in_workspace(),
+                Kind::DirectThirdParty => {
+                    !package.in_workspace()
+                        && direct_deps.contains(package.id()).expect("valid package")
+                }
+                Kind::ThirdParty => !package.in_workspace(),
             };
             if show_package {
                 println!(
