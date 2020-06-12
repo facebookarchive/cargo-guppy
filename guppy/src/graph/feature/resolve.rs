@@ -9,7 +9,7 @@ use crate::graph::feature::{
 use crate::graph::resolve_core::ResolveCore;
 use crate::graph::{DependencyDirection, PackageMetadata, PackageSet};
 use crate::petgraph_support::IxBitSet;
-use crate::PackageId;
+use crate::{Error, PackageId};
 use fixedbitset::FixedBitSet;
 use petgraph::graph::NodeIndex;
 use petgraph::visit::EdgeRef;
@@ -113,13 +113,13 @@ impl<'g> FeatureSet<'g> {
         self.core.is_empty()
     }
 
-    /// Returns true if this set contains the given feature ID, false if it doesn't, or None if it
-    /// wasn't found.
-    pub fn contains<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Option<bool> {
-        Some(
-            self.core
-                .contains(self.graph.feature_ix(feature_id.into())?),
-        )
+    /// Returns true if this set contains the given feature ID.
+    ///
+    /// Returns an error if this feature ID was unknown.
+    pub fn contains<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Result<bool, Error> {
+        Ok(self
+            .core
+            .contains(self.graph.feature_ix(feature_id.into())?))
     }
 
     // ---
@@ -193,12 +193,13 @@ impl<'g> FeatureSet<'g> {
     // Queries around packages
     // ---
 
-    /// Returns a list of features present for this package.
+    /// Returns a list of features present for this package, or `None` if this package is not
+    /// present in the feature set.
     ///
-    /// Returns `None` if this is an unknown package.
-    pub fn features_for(&self, package_id: &PackageId) -> Option<FeatureList<'g>> {
+    /// Returns an error if the package ID was unknown.
+    pub fn features_for(&self, package_id: &PackageId) -> Result<Option<FeatureList<'g>>, Error> {
         let package = self.graph.package_graph.metadata(package_id)?;
-        self.features_for_package_impl(package)
+        Ok(self.features_for_package_impl(package))
     }
 
     /// Converts this `FeatureSet` into a `PackageSet` containing all packages with any selected

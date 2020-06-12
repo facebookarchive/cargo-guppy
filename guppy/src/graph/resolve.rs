@@ -76,7 +76,6 @@ impl PackageGraph {
                 workspace
                     .member_by_name(name)
                     .map(|package| package.package_ix())
-                    .ok_or_else(|| Error::UnknownWorkspaceName(name.to_string()))
             })
             .collect::<Result<_, _>>()?;
         Ok(PackageSet {
@@ -136,10 +135,11 @@ impl<'g> PackageSet<'g> {
         self.core.is_empty()
     }
 
-    /// Returns true if this package ID is contained in this resolve set, false if it isn't, and
-    /// None if the package ID wasn't found.
-    pub fn contains(&self, package_id: &PackageId) -> Option<bool> {
-        Some(self.contains_ix(self.graph.package_ix(package_id)?))
+    /// Returns true if this package ID is contained in this resolve set.
+    ///
+    /// Returns `None` if the package ID is unknown.
+    pub fn contains(&self, package_id: &PackageId) -> Result<bool, Error> {
+        Ok(self.contains_ix(self.graph.package_ix(package_id)?))
     }
 
     // ---
@@ -244,14 +244,8 @@ impl<'g> PackageSet<'g> {
         direction: DependencyDirection,
     ) -> impl Iterator<Item = PackageMetadata<'g>> + ExactSizeIterator + 'a {
         let graph = self.graph;
-        self.package_ids(direction).map(move |package_id| {
-            graph.metadata(package_id).unwrap_or_else(|| {
-                panic!(
-                    "known package ID '{}' not found in metadata map",
-                    package_id
-                )
-            })
-        })
+        self.package_ids(direction)
+            .map(move |package_id| graph.metadata(package_id).expect("known package IDs"))
     }
 
     /// Returns the set of "root package" IDs in the specified direction.

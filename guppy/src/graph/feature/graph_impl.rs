@@ -94,17 +94,26 @@ impl<'g> FeatureGraph<'g> {
     }
 
     /// Returns metadata for the given feature ID, or `None` if the feature wasn't found.
-    pub fn metadata(&self, feature_id: impl Into<FeatureId<'g>>) -> Option<FeatureMetadata<'g>> {
-        let feature_node = FeatureNode::from_id(self, feature_id.into())?;
+    pub fn metadata(
+        &self,
+        feature_id: impl Into<FeatureId<'g>>,
+    ) -> Result<FeatureMetadata<'g>, Error> {
+        let feature_id = feature_id.into();
+        let feature_node = FeatureNode::from_id(self, feature_id)
+            .ok_or_else(|| Error::unknown_feature_id(feature_id))?;
         self.metadata_for_node(feature_node)
+            .ok_or_else(|| Error::unknown_feature_id(feature_id))
     }
 
     /// Returns true if this feature is included in a package's build by default.
     ///
     /// This includes transitive dependencies of the default feature.
     ///
-    /// Returns `None` if this feature ID is unknown.
-    pub fn is_default_feature<'a>(&self, feature_id: impl Into<FeatureId<'a>>) -> Option<bool> {
+    /// Returns an error if this feature ID is unknown.
+    pub fn is_default_feature<'a>(
+        &self,
+        feature_id: impl Into<FeatureId<'a>>,
+    ) -> Result<bool, Error> {
         let feature_id = feature_id.into();
         let default_ix = self.feature_ix(
             self.package_graph
@@ -112,7 +121,7 @@ impl<'g> FeatureGraph<'g> {
                 .default_feature_id(),
         )?;
         let feature_ix = self.feature_ix(feature_id)?;
-        Some(self.feature_ix_depends_on(default_ix, feature_ix))
+        Ok(self.feature_ix_depends_on(default_ix, feature_ix))
     }
 
     /// Returns true if `feature_a` depends (directly or indirectly) on `feature_b`.
@@ -128,8 +137,8 @@ impl<'g> FeatureGraph<'g> {
     ) -> Result<bool, Error> {
         let feature_a = feature_a.into();
         let feature_b = feature_b.into();
-        let a_ix = self.feature_ix_err(feature_a)?;
-        let b_ix = self.feature_ix_err(feature_b)?;
+        let a_ix = self.feature_ix(feature_a)?;
+        let b_ix = self.feature_ix(feature_b)?;
         Ok(self.feature_ix_depends_on(a_ix, b_ix))
     }
 
@@ -145,8 +154,8 @@ impl<'g> FeatureGraph<'g> {
     ) -> Result<bool, Error> {
         let feature_a = feature_a.into();
         let feature_b = feature_b.into();
-        let a_ix = self.feature_ix_err(feature_a)?;
-        let b_ix = self.feature_ix_err(feature_b)?;
+        let a_ix = self.feature_ix(feature_a)?;
+        let b_ix = self.feature_ix(feature_b)?;
         Ok(self.dep_graph().contains_edge(a_ix, b_ix))
     }
 
@@ -306,23 +315,18 @@ impl<'g> FeatureGraph<'g> {
     {
         feature_ids
             .into_iter()
-            .map(|feature_id| self.feature_ix_err(feature_id))
+            .map(|feature_id| self.feature_ix(feature_id))
             .collect()
     }
 
-    pub(super) fn feature_ix(&self, feature_id: FeatureId<'g>) -> Option<NodeIndex<FeatureIx>> {
-        let metadata = self.metadata_impl(feature_id)?;
-        Some(metadata.feature_ix)
-    }
-
-    pub(super) fn feature_ix_err(
+    pub(super) fn feature_ix(
         &self,
         feature_id: FeatureId<'g>,
     ) -> Result<NodeIndex<FeatureIx>, Error> {
-        self.feature_ix(feature_id).ok_or_else(|| {
-            let (package_id, feature) = feature_id.into();
-            Error::UnknownFeatureId(package_id, feature)
-        })
+        let metadata = self
+            .metadata_impl(feature_id)
+            .ok_or_else(|| Error::unknown_feature_id(feature_id))?;
+        Ok(metadata.feature_ix)
     }
 }
 
@@ -685,7 +689,7 @@ impl FeatureNode {
     }
 
     fn from_id(feature_graph: &FeatureGraph<'_>, id: FeatureId<'_>) -> Option<Self> {
-        let metadata = feature_graph.package_graph.metadata(id.package_id())?;
+        let metadata = feature_graph.package_graph.metadata(id.package_id()).ok()?;
         match id.feature() {
             Some(feature_name) => Some(FeatureNode::new(
                 metadata.package_ix(),

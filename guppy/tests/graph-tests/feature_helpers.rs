@@ -23,8 +23,10 @@ pub(super) fn assert_features_for_package(
     );
 
     assert_eq!(
-        actual, expected,
+        actual,
+        Some(expected),
         "{}: for package {}, features in feature set match",
-        msg, package_id
+        msg,
+        package_id
     );
 }

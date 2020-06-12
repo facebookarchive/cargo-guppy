@@ -47,12 +47,7 @@ impl PackageGraph {
         let workspace = self.workspace();
         let package_ids: Vec<_> = names
             .into_iter()
-            .map(|name| {
-                workspace
-                    .member_by_name(name)
-                    .map(|package| package.id())
-                    .ok_or_else(|| Error::UnknownWorkspaceName(name.to_string()))
-            })
+            .map(|name| workspace.member_by_name(name).map(|package| package.id()))
             .collect::<Result<_, Error>>()?;
 
         Ok(self
@@ -130,9 +125,9 @@ impl<'g> PackageQuery<'g> {
 
     /// Returns true if the query starts from the given package ID.
     ///
-    /// Returns `None` if this package ID is unknown.
-    pub fn starts_from(&self, package_id: &PackageId) -> Option<bool> {
-        Some(self.params.has_initial(self.graph.package_ix(package_id)?))
+    /// Returns an error if this package ID is unknown.
+    pub fn starts_from(&self, package_id: &PackageId) -> Result<bool, Error> {
+        Ok(self.params.has_initial(self.graph.package_ix(package_id)?))
     }
 
     /// Resolves this query into a set of known packages, following every link found along the

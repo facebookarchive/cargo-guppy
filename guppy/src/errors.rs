@@ -7,6 +7,8 @@ use crate::PackageId;
 use std::error;
 use std::fmt;
 
+use crate::graph::feature::FeatureId;
+use std::path::PathBuf;
 use Error::*;
 
 /// Error type describing the sorts of errors `guppy` can return.
@@ -25,6 +27,8 @@ pub enum Error {
     UnknownPackageId(PackageId),
     /// A feature ID was unknown to this `FeatureGraph`.
     UnknownFeatureId(PackageId, Option<String>),
+    /// A package specified by path was unknown to this workspac.e
+    UnknownWorkspacePath(PathBuf),
     /// A package specified by name was unknown to this workspace.
     UnknownWorkspaceName(String),
     /// An error occured while computing a `CargoSet`.
@@ -38,6 +42,11 @@ pub enum Error {
 impl Error {
     pub(crate) fn command_error(err: cargo_metadata::Error) -> Self {
         Error::CommandError(Box::new(err))
+    }
+
+    pub(crate) fn unknown_feature_id(feature_id: FeatureId<'_>) -> Self {
+        let (package_id, feature) = feature_id.into();
+        Error::UnknownFeatureId(package_id, feature)
     }
 }
 
@@ -63,6 +72,7 @@ impl fmt::Display for Error {
                 Some(feature) => write!(f, "Unknown feature ID: '{}' '{}'", package_id, feature),
                 None => write!(f, "Unknown feature ID: '{}' (base)", package_id),
             },
+            UnknownWorkspacePath(path) => write!(f, "Unknown workspace path: {}", path.display()),
             UnknownWorkspaceName(name) => write!(f, "Unknown workspace package name: {}", name),
             CargoSetError(msg) => write!(f, "Error while computing Cargo set: {}", msg),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
@@ -80,6 +90,7 @@ impl error::Error for Error {
             PackageGraphConstructError(_) => None,
             UnknownPackageId(_) => None,
             UnknownFeatureId(_, _) => None,
+            UnknownWorkspacePath(_) => None,
             UnknownWorkspaceName(_) => None,
             CargoSetError(_) => None,
             PackageGraphInternalError(_) => None,

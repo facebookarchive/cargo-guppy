@@ -99,7 +99,7 @@ impl PackageGraph {
                     // about it.
                     let metadata2 = workspace.member_by_path(workspace_path);
                     let metadata2_id = metadata2.map(|metadata| metadata.id());
-                    if metadata2_id != Some(package_id) {
+                    if !matches!(metadata2_id, Ok(id) if id == package_id) {
                         return Err(Error::PackageGraphInternalError(format!(
                             "package {} has workspace path {:?} but query by path returned {:?}",
                             package_id, workspace_path, metadata2_id,
@@ -108,7 +108,7 @@ impl PackageGraph {
 
                     let metadata3 = workspace.member_by_name(metadata.name());
                     let metadata3_id = metadata3.map(|metadata| metadata.id());
-                    if metadata3_id != Some(package_id) {
+                    if !matches!(metadata3_id, Ok(id) if id == package_id) {
                         return Err(Error::PackageGraphInternalError(format!(
                             "package {} has name {}, but workspace query by name returned {:?}",
                             package_id,
@@ -238,10 +238,12 @@ impl PackageGraph {
     }
 
     /// Returns the metadata for the given package ID.
-    pub fn metadata(&self, package_id: &PackageId) -> Option<PackageMetadata> {
-        self.data
+    pub fn metadata(&self, package_id: &PackageId) -> Result<PackageMetadata, Error> {
+        let inner = self
+            .data
             .metadata_impl(package_id)
-            .map(move |inner| PackageMetadata::new(self, inner))
+            .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))?;
+        Ok(PackageMetadata::new(self, inner))
     }
 
     /// Returns the number of packages in this graph.
@@ -289,8 +291,8 @@ impl PackageGraph {
         package_a: &PackageId,
         package_b: &PackageId,
     ) -> Result<bool, Error> {
-        let a_ix = self.package_ix_err(package_a)?;
-        let b_ix = self.package_ix_err(package_b)?;
+        let a_ix = self.package_ix(package_a)?;
+        let b_ix = self.package_ix(package_b)?;
         Ok(self.dep_graph.contains_edge(a_ix, b_ix))
     }
 
@@ -375,24 +377,14 @@ impl PackageGraph {
     {
         package_ids
             .into_iter()
-            .map(|package_id| self.package_ix_err(package_id))
+            .map(|package_id| self.package_ix(package_id))
             .collect()
-    }
-
-    /// Maps a package ID to its internal graph node index.
-    pub(super) fn package_ix(&self, package_id: &PackageId) -> Option<NodeIndex<PackageIx>> {
-        self.metadata(package_id)
-            .map(|metadata| metadata.package_ix())
     }
 
     /// Maps a package ID to its internal graph node index, and returns an `UnknownPackageId` error
     /// if the package isn't found.
-    pub(super) fn package_ix_err(
-        &self,
-        package_id: &PackageId,
-    ) -> Result<NodeIndex<PackageIx>, Error> {
-        self.package_ix(package_id)
-            .ok_or_else(|| Error::UnknownPackageId(package_id.clone()))
+    pub(super) fn package_ix(&self, package_id: &PackageId) -> Result<NodeIndex<PackageIx>, Error> {
+        Ok(self.metadata(package_id)?.package_ix())
     }
 }
 
@@ -442,8 +434,8 @@ impl<'g> DependsCache<'g> {
         package_a: &PackageId,
         package_b: &PackageId,
     ) -> Result<bool, Error> {
-        let a_ix = self.package_graph.package_ix_err(package_a)?;
-        let b_ix = self.package_graph.package_ix_err(package_b)?;
+        let a_ix = self.package_graph.package_ix(package_a)?;
+        let b_ix = self.package_graph.package_ix(package_b)?;
         Ok(has_path_connecting(
             self.package_graph.dep_graph(),
             a_ix,
@@ -507,15 +499,29 @@ impl<'g> Workspace<'g> {
     }
 
     /// Maps the given path to the corresponding workspace member.
-    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Option<PackageMetadata<'g>> {
-        let id = self.inner.members_by_path.get(path.as_ref())?;
-        Some(self.graph.metadata(id).expect("valid package ID"))
+    ///
+    /// Returns an error if the path didn't match any workspace members.
+    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Result<PackageMetadata<'g>, Error> {
+        let path = path.as_ref();
+        let id = self
+            .inner
+            .members_by_path
+            .get(path)
+            .ok_or_else(|| Error::UnknownWorkspacePath(path.to_path_buf()))?;
+        Ok(self.graph.metadata(id).expect("valid package ID"))
     }
 
     /// Maps the given name to the corresponding workspace member.
-    pub fn member_by_name(&self, name: impl AsRef<str>) -> Option<PackageMetadata<'g>> {
-        let id = self.inner.members_by_name.get(name.as_ref())?;
-        Some(self.graph.metadata(id).expect("valid package ID"))
+    ///
+    /// Returns an error if the name didn't match any workspace members.
+    pub fn member_by_name(&self, name: impl AsRef<str>) -> Result<PackageMetadata<'g>, Error> {
+        let name = name.as_ref();
+        let id = self
+            .inner
+            .members_by_name
+            .get(name)
+            .ok_or_else(|| Error::UnknownWorkspaceName(name.to_string()))?;
+        Ok(self.graph.metadata(id).expect("valid package ID"))
     }
 }
 

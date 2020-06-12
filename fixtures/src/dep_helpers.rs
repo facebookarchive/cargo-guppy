@@ -99,7 +99,7 @@ pub(crate) fn assert_deps_internal(
         .collect();
     let actual_deps: Vec<_> = graph
         .metadata(known_details.id())
-        .unwrap_or_else(|| panic!("{}: package not found", msg))
+        .unwrap_or_else(|err| panic!("{}: {}", msg, err))
         .direct_links_directed(direction)
         .collect();
     let mut actual_dep_ids: Vec<_> = actual_deps
