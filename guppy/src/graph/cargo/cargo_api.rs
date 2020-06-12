@@ -5,7 +5,7 @@ use crate::graph::cargo::build::CargoSetBuildState;
 use crate::graph::feature::{FeatureGraph, FeatureQuery, FeatureSet};
 use crate::graph::{PackageGraph, PackageIx, PackageLink, PackageSet};
 use crate::sorted_set::SortedSet;
-use crate::{Error, PackageId};
+use crate::{Error, Obs, PackageId};
 use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -81,10 +81,29 @@ impl<'a> CargoOptions<'a> {
 
     /// Sets both the target and host platforms to the provided one, or to evaluate against any
     /// platform if `None`.
-    pub fn with_platform(
-        mut self,
-        platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
-    ) -> Self {
+    ///
+    /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
+    /// `Arc<Platform<'static>>`.
+    ///
+    /// ### Examples
+    ///
+    /// ```
+    /// use guppy::graph::cargo::CargoOptions;
+    /// use guppy::Platform;
+    /// use std::sync::Arc;
+    ///
+    /// let platform = Platform::current();
+    ///
+    /// // Borrowed platform.
+    /// let _ = CargoOptions::new().with_platform(platform.as_ref());
+    ///
+    /// // Owned platform.
+    /// let _ = CargoOptions::new().with_platform(platform.clone());
+    ///
+    /// // Shared platform.
+    /// let _ = CargoOptions::new().with_platform(platform.map(Arc::new));
+    /// ```
+    pub fn with_platform(mut self, platform: Option<impl Obs<'a, Platform<'a>>>) -> Self {
         let platform = Self::convert_platform(platform);
         self.target_platform = platform.clone();
         self.host_platform = platform;
@@ -92,19 +111,22 @@ impl<'a> CargoOptions<'a> {
     }
 
     /// Sets the target platform to the provided one, or to evaluate against any platform if `None`.
+    ///
+    /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
+    /// `Arc<Platform<'static>>`.
     pub fn with_target_platform(
         mut self,
-        target_platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
+        target_platform: Option<impl Obs<'a, Platform<'a>>>,
     ) -> Self {
         self.target_platform = Self::convert_platform(target_platform);
         self
     }
 
     /// Sets the host platform to the provided one, or to evaluate against any platform if `None`.
-    pub fn with_host_platform(
-        mut self,
-        host_platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
-    ) -> Self {
+    ///
+    /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
+    /// `Arc<Platform<'static>>`.
+    pub fn with_host_platform(mut self, host_platform: Option<impl Obs<'a, Platform<'a>>>) -> Self {
         self.host_platform = Self::convert_platform(host_platform);
         self
     }
@@ -136,9 +158,9 @@ impl<'a> CargoOptions<'a> {
     }
 
     fn convert_platform(
-        platform: Option<impl Into<Supercow<'a, Platform<'a>>>>,
+        platform: Option<impl Obs<'a, Platform<'a>>>,
     ) -> Option<Supercow<'a, Platform<'a>>> {
-        platform.map(|platform| platform.into())
+        platform.map(|platform| platform.into_supercow())
     }
 }
 
