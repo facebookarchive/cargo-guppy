@@ -10,6 +10,8 @@
   * `CargoSet` now carries with it the original query and information about
     direct third-party dependencies.
   * A number of bug fixes around edge cases.
+* `Workspace::members_by_paths` and `Workspace::members_by_names` look up a list of workspace members
+  by path or name, respectively.
 
 ### Changed
 

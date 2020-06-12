@@ -21,6 +21,7 @@ use semver::{Version, VersionReq};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 use std::iter;
+use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 use target_spec::TargetSpec;
 
@@ -467,6 +468,11 @@ impl<'g> Workspace<'g> {
         self.inner.members_by_path.len()
     }
 
+    /// Returns an iterator over package metadatas, sorted by the path they're in.
+    pub fn iter(&self) -> impl Iterator<Item = PackageMetadata<'g>> + ExactSizeIterator {
+        self.iter_by_path().map(|(_, package)| package)
+    }
+
     /// Returns an iterator over workspace paths and package metadatas, sorted by the path
     /// they're in.
     pub fn iter_by_path(
@@ -511,6 +517,23 @@ impl<'g> Workspace<'g> {
         Ok(self.graph.metadata(id).expect("valid package ID"))
     }
 
+    /// Maps the given paths to their corresponding workspace members, returning a new value of
+    /// the specified collection type (e.g. `Vec`).
+    ///
+    /// Returns an error if any of the paths were unknown.
+    pub fn members_by_paths<B>(
+        &self,
+        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+    ) -> Result<B, Error>
+    where
+        B: FromIterator<PackageMetadata<'g>>,
+    {
+        paths
+            .into_iter()
+            .map(|path| self.member_by_path(path.as_ref()))
+            .collect()
+    }
+
     /// Maps the given name to the corresponding workspace member.
     ///
     /// Returns an error if the name didn't match any workspace members.
@@ -522,6 +545,23 @@ impl<'g> Workspace<'g> {
             .get(name)
             .ok_or_else(|| Error::UnknownWorkspaceName(name.to_string()))?;
         Ok(self.graph.metadata(id).expect("valid package ID"))
+    }
+
+    /// Maps the given names to their corresponding workspace members, returning a new value of
+    /// the specified collection type (e.g. `Vec`).
+    ///
+    /// Returns an error if any of the paths were unknown.
+    pub fn members_by_names<B>(
+        &self,
+        names: impl IntoIterator<Item = impl AsRef<str>>,
+    ) -> Result<B, Error>
+    where
+        B: FromIterator<PackageMetadata<'g>>,
+    {
+        names
+            .into_iter()
+            .map(|name| self.member_by_name(name.as_ref()))
+            .collect()
     }
 }
 
