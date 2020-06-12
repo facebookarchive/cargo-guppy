@@ -9,6 +9,7 @@
 use crate::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
 use crate::graph::feature::{FeatureQuery, FeatureSet};
 use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet, PackageSource};
+use crate::Error;
 pub use guppy_summaries::*;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -132,6 +133,46 @@ impl CargoOptionsSummary {
             omitted_packages: omitted_summary_ids,
         }
     }
+
+    /// Creates a new `CargoOptions` from this summary.
+    #[doc(hidden)]
+    pub fn to_cargo_options<'g>(
+        &'g self,
+        package_graph: &'g PackageGraph,
+    ) -> Result<CargoOptions<'g>, Error> {
+        let omitted_packages = self
+            .omitted_packages
+            .iter()
+            .map(|summary_id| match &summary_id.source {
+                SummarySource::Workspace { workspace_path } => package_graph
+                    .workspace()
+                    .member_by_path(workspace_path)
+                    .map(|package| package.id()),
+                other => unimplemented!(
+                    "conversion from non-workspace sources ({:?}) is currently unsupported",
+                    other
+                ),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(CargoOptions::new()
+            .with_version(self.version)
+            .with_dev_deps(self.include_dev)
+            .with_proc_macros_on_target(self.proc_macros_on_target)
+            .with_host_platform(
+                self.host_platform
+                    .as_ref()
+                    .map(|platform| platform.to_platform())
+                    .transpose()?,
+            )
+            .with_target_platform(
+                self.target_platform
+                    .as_ref()
+                    .map(|platform| platform.to_platform())
+                    .transpose()?,
+            )
+            .with_omitted_packages(omitted_packages))
+    }
 }
 
 impl<'g> PackageSource<'g> {
@@ -173,6 +214,13 @@ impl PlatformSummary {
             target_features: TargetFeaturesSummary::new(platform.target_features()),
         }
     }
+
+    /// Creates a `Platform` from a `PlatformSummary`.
+    #[doc(hidden)]
+    pub fn to_platform(&self) -> Result<Platform, Error> {
+        Platform::new(&self.triple, self.target_features.to_target_features())
+            .ok_or_else(|| Error::UnknownPlatformTriple(self.triple.clone()))
+    }
 }
 
 /// Summary of target feature information.
@@ -197,6 +245,18 @@ impl TargetFeaturesSummary {
             ),
             TargetFeatures::All => TargetFeaturesSummary::All,
             other => panic!("Unknown target features: {:?}", other),
+        }
+    }
+
+    #[doc(hidden)]
+    pub fn to_target_features(&self) -> TargetFeatures {
+        match self {
+            TargetFeaturesSummary::Unknown => TargetFeatures::Unknown,
+            TargetFeaturesSummary::All => TargetFeatures::All,
+            TargetFeaturesSummary::Features(features) => {
+                let hash_set = features.iter().map(|feature| feature.as_str()).collect();
+                TargetFeatures::Features(hash_set)
+            }
         }
     }
 }
