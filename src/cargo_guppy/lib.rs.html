@@ -409,6 +409,11 @@
 <span id="409">409</span>
 <span id="410">410</span>
 <span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -431,6 +436,7 @@
 <span class="kw">use</span> <span class="ident">guppy_cmdlib</span>::{
     <span class="ident">triple_to_platform</span>, <span class="ident">CargoMetadataOptions</span>, <span class="ident">CargoResolverOpts</span>, <span class="ident">PackagesAndFeatures</span>,
 };
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">borrow</span>::<span class="ident">Cow</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
@@ -598,9 +604,13 @@
     <span class="comment">// direct deps of workspace proc macros (e.g. quote) will be included. This feels like it&#39;s</span>
     <span class="comment">// what&#39;s desired for this request.</span>
     <span class="kw">let</span> <span class="ident">direct_deps</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">opts</span>.<span class="ident">build_kind</span> {
-        <span class="ident">BuildKind</span>::<span class="ident">All</span> <span class="op">|</span> <span class="ident">BuildKind</span>::<span class="ident">TargetAndProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cargo_set</span>.<span class="ident">unified_direct_deps</span>(),
-        <span class="ident">BuildKind</span>::<span class="ident">Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cargo_set</span>.<span class="ident">target_direct_deps</span>(),
-        <span class="ident">BuildKind</span>::<span class="ident">Host</span> <span class="op">|</span> <span class="ident">BuildKind</span>::<span class="ident">ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cargo_set</span>.<span class="ident">host_direct_deps</span>(),
+        <span class="ident">BuildKind</span>::<span class="ident">All</span> <span class="op">|</span> <span class="ident">BuildKind</span>::<span class="ident">TargetAndProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Cow</span>::<span class="ident">Owned</span>(
+            <span class="ident">cargo_set</span>
+                .<span class="ident">host_direct_deps</span>()
+                .<span class="ident">union</span>(<span class="ident">cargo_set</span>.<span class="ident">target_direct_deps</span>()),
+        ),
+        <span class="ident">BuildKind</span>::<span class="ident">Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Cow</span>::<span class="ident">Borrowed</span>(<span class="ident">cargo_set</span>.<span class="ident">target_direct_deps</span>()),
+        <span class="ident">BuildKind</span>::<span class="ident">Host</span> <span class="op">|</span> <span class="ident">BuildKind</span>::<span class="ident">ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Cow</span>::<span class="ident">Borrowed</span>(<span class="ident">cargo_set</span>.<span class="ident">host_direct_deps</span>()),
     };
 
     <span class="kw">let</span> <span class="ident">print_packages</span> <span class="op">=</span> <span class="op">|</span><span class="ident">feature_set</span>: <span class="kw-2">&amp;</span><span class="ident">FeatureSet</span><span class="op">|</span> {

@@ -343,16 +343,25 @@
 <span id="343">343</span>
 <span id="344">344</span>
 <span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::<span class="ident">build</span>::<span class="ident">CargoSetBuildState</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureQuery</span>, <span class="ident">FeatureSet</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageSet</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureGraph</span>, <span class="ident">FeatureQuery</span>, <span class="ident">FeatureSet</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
-<span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">Obs</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span>;
@@ -428,10 +437,29 @@
 
     <span class="doccomment">/// Sets both the target and host platforms to the provided one, or to evaluate against any</span>
     <span class="doccomment">/// platform if `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_platform</span>(
-        <span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Supercow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This method accepts an owned `Platform&lt;&#39;a&gt;`, a borrowed `&amp;&#39;a Platform&lt;&#39;a&gt;` or a shared</span>
+    <span class="doccomment">/// `Arc&lt;Platform&lt;&#39;static&gt;&gt;`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ### Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use guppy::graph::cargo::CargoOptions;</span>
+    <span class="doccomment">/// use guppy::Platform;</span>
+    <span class="doccomment">/// use std::sync::Arc;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let platform = Platform::current();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // Borrowed platform.</span>
+    <span class="doccomment">/// let _ = CargoOptions::new().with_platform(platform.as_ref());</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // Owned platform.</span>
+    <span class="doccomment">/// let _ = CargoOptions::new().with_platform(platform.clone());</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // Shared platform.</span>
+    <span class="doccomment">/// let _ = CargoOptions::new().with_platform(platform.map(Arc::new));</span>
+    <span class="doccomment">/// ```</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_platform</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">platform</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">convert_platform</span>(<span class="ident">platform</span>);
         <span class="self">self</span>.<span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">platform</span>.<span class="ident">clone</span>();
         <span class="self">self</span>.<span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">platform</span>;
@@ -439,19 +467,22 @@
     }
 
     <span class="doccomment">/// Sets the target platform to the provided one, or to evaluate against any platform if `None`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This method accepts an owned `Platform&lt;&#39;a&gt;`, a borrowed `&amp;&#39;a Platform&lt;&#39;a&gt;` or a shared</span>
+    <span class="doccomment">/// `Arc&lt;Platform&lt;&#39;static&gt;&gt;`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_target_platform</span>(
         <span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">target_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Supercow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">target_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">target_platform</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">convert_platform</span>(<span class="ident">target_platform</span>);
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// Sets the host platform to the provided one, or to evaluate against any platform if `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_host_platform</span>(
-        <span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">host_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Supercow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This method accepts an owned `Platform&lt;&#39;a&gt;`, a borrowed `&amp;&#39;a Platform&lt;&#39;a&gt;` or a shared</span>
+    <span class="doccomment">/// `Arc&lt;Platform&lt;&#39;static&gt;&gt;`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_host_platform</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">host_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">host_platform</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">convert_platform</span>(<span class="ident">host_platform</span>);
         <span class="self">self</span>
     }
@@ -483,9 +514,9 @@
     }
 
     <span class="kw">fn</span> <span class="ident">convert_platform</span>(
-        <span class="ident">platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Supercow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Supercow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">platform</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">platform</span><span class="op">|</span> <span class="ident">platform</span>.<span class="ident">into</span>())
+        <span class="ident">platform</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">platform</span><span class="op">|</span> <span class="ident">platform</span>.<span class="ident">into_supercow</span>())
     }
 }
 
@@ -539,11 +570,9 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">host_direct_deps</span>: <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">proc_macro_edge_ixs</span>: <span class="ident">SortedSet</span><span class="op">&lt;</span><span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">build_dep_edge_ixs</span>: <span class="ident">SortedSet</span><span class="op">&lt;</span><span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-
-    <span class="comment">// Unified sets, cached on first use.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">unified_features</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span><span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">unified_direct_deps</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span><span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
+
+<span class="macro">assert_covariant</span><span class="macro">!</span>(<span class="ident">CargoSet</span>);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">CargoSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Creates a new `CargoSet` based on the given query and options.</span>
@@ -569,6 +598,16 @@
         <span class="prelude-val">Ok</span>(<span class="ident">build_state</span>.<span class="ident">build_intermediate</span>(<span class="ident">query</span>))
     }
 
+    <span class="doccomment">/// Returns the feature graph for this `CargoSet` instance.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">feature_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">original_query</span>.<span class="ident">graph</span>()
+    }
+
+    <span class="doccomment">/// Returns the package graph for this `CargoSet` instance.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">package_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span> {
+        <span class="self">self</span>.<span class="ident">feature_graph</span>().<span class="ident">package_graph</span>
+    }
+
     <span class="doccomment">/// Returns the original query from which the `CargoSet` instance was constructed.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">original_query</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">original_query</span>
@@ -592,17 +631,6 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_features</span>
     }
 
-    <span class="doccomment">/// Returns the union of the target and host feature sets.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This may be used if differentiating between the target and host platforms is not considered</span>
-    <span class="doccomment">/// important.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The unified feature set is computed and cached on first access.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unified_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">unified_features</span>
-            .<span class="ident">get_or_init</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">target_features</span>.<span class="ident">union</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_features</span>))
-    }
-
     <span class="doccomment">/// Returns the set of workspace and direct dependency packages on the target platform.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The packages in this set are a subset of the packages in `target_features`.</span>
@@ -615,14 +643,6 @@
     <span class="doccomment">/// The packages in this set are a subset of the packages in `host_features`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host_direct_deps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_direct_deps</span>
-    }
-
-    <span class="doccomment">/// Returns the union of the target and host direct dependency sets.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The packages in this set are a subset of the packages in `unified_features`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unified_direct_deps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">unified_direct_deps</span>
-            .<span class="ident">get_or_init</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">target_direct_deps</span>.<span class="ident">union</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_direct_deps</span>))
     }
 
     <span class="doccomment">/// Returns `PackageLink` instances for procedural macro dependencies from target packages.</span>
