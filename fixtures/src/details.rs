@@ -84,7 +84,7 @@ impl FixtureDetails {
     pub fn assert_workspace(&self, workspace: Workspace) {
         if let Some(expected_members) = &self.workspace_members {
             let members: Vec<_> = workspace
-                .members()
+                .iter_by_path()
                 .map(|(path, metadata)| (path, metadata.id()))
                 .collect();
             assert_eq!(
@@ -97,11 +97,11 @@ impl FixtureDetails {
             );
 
             assert_eq!(
-                workspace.members().len(),
-                workspace.members_by_name().len(),
+                workspace.iter_by_path().len(),
+                workspace.iter_by_name().len(),
                 "workspace.members() and members_by_name() return the same number of items"
             );
-            for (name, metadata) in workspace.members_by_name() {
+            for (name, metadata) in workspace.iter_by_name() {
                 assert_eq!(
                     name,
                     metadata.name(),

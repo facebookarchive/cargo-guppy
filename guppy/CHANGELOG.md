@@ -9,13 +9,14 @@
 * Improvements to Cargo resolution:
   * `CargoSet` now carries with it the original query and information about
     direct third-party dependencies.
-  * A number of bug fixes around edge cases. 
+  * A number of bug fixes around edge cases.
 
 ### Changed
 
 * `target-spec` has been upgraded to 0.3.
 * `proptest` has been upgraded to 0.10. The feature has accordingly been renamed to
   `proptest010`.
+* `Workspace::members` is now `Workspace::iter_by_path`, and `Workspace::members_by_name` is now `Workspace::iter_by_name`.
   
 ## Upcoming
 

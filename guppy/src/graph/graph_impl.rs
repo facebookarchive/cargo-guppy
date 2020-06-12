@@ -477,7 +477,7 @@ impl<'g> Workspace<'g> {
 
     /// Returns an iterator over workspace paths and package metadatas, sorted by the path
     /// they're in.
-    pub fn members(
+    pub fn iter_by_path(
         &self,
     ) -> impl Iterator<Item = (&'g Path, PackageMetadata<'g>)> + ExactSizeIterator {
         let graph = self.graph;
@@ -490,7 +490,7 @@ impl<'g> Workspace<'g> {
     }
 
     /// Returns an iterator over workspace names and package metadatas, sorted by names.
-    pub fn members_by_name(
+    pub fn iter_by_name(
         &self,
     ) -> impl Iterator<Item = (&'g str, PackageMetadata<'g>)> + ExactSizeIterator {
         let graph = self.graph;

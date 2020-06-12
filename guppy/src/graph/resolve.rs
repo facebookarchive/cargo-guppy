@@ -51,7 +51,7 @@ impl PackageGraph {
     pub fn resolve_workspace(&self) -> PackageSet {
         let included: IxBitSet = self
             .workspace()
-            .members()
+            .iter_by_path()
             .map(|(_, package)| package.package_ix())
             .collect();
         PackageSet {

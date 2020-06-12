@@ -318,7 +318,7 @@ mod large {
 
         let proc_macro_packages: Vec<_> = graph
             .workspace()
-            .members()
+            .iter_by_path()
             .filter_map(|(_, metadata)| {
                 if metadata.is_proc_macro() {
                     Some(metadata.name())
@@ -335,7 +335,7 @@ mod large {
 
         let build_script_packages: Vec<_> = graph
             .workspace()
-            .members()
+            .iter_by_path()
             .filter_map(|(_, metadata)| {
                 if metadata.has_build_script() {
                     Some(metadata.name())
