@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::cargo::build::CargoSetBuildState;
-use crate::graph::feature::{FeatureQuery, FeatureSet};
-use crate::graph::{PackageIx, PackageLink, PackageSet};
+use crate::graph::feature::{FeatureGraph, FeatureQuery, FeatureSet};
+use crate::graph::{PackageGraph, PackageIx, PackageLink, PackageSet};
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
 use once_cell::sync::OnceCell;
@@ -221,6 +221,16 @@ impl<'g> CargoSet<'g> {
     ) -> Result<CargoIntermediateSet<'g>, Error> {
         let build_state = CargoSetBuildState::new(&query, opts)?;
         Ok(build_state.build_intermediate(query))
+    }
+
+    /// Returns the feature graph for this `CargoSet` instance.
+    pub fn feature_graph(&self) -> &FeatureGraph<'g> {
+        &self.original_query.graph()
+    }
+
+    /// Returns the package graph for this `CargoSet` instance.
+    pub fn package_graph(&self) -> &'g PackageGraph {
+        self.feature_graph().package_graph
     }
 
     /// Returns the original query from which the `CargoSet` instance was constructed.
