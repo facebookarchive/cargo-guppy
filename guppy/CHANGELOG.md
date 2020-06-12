@@ -4,6 +4,8 @@
 
 ### Added
 
+* `PackageGraph::query_workspace_paths` and `resolve_workspace_paths` provide convenient ways
+  to create queries and package sets given a list of workspace paths.
 * `PackageMetadata::source` provides the source of a package (a local path, `crates.io`, a `git` repository or a custom
   registry).
 * Improvements to Cargo resolution:
