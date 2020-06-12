@@ -20,7 +20,7 @@ pub type Summary = SummaryWithMetadata<CargoOptionsSummary>;
 impl<'g> CargoSet<'g> {
     /// Creates a build summary with the given options.
     #[doc(hidden)]
-    pub fn to_summary<PF>(&self, opts: &CargoOptions<'_, PF>) -> Summary {
+    pub fn to_summary(&self, opts: &CargoOptions<'_>) -> Summary {
         let metadata = CargoOptionsSummary::new(self.original_query.graph().package_graph, opts);
         let original_query = self.original_query();
         let target_features = self.target_features();
@@ -114,9 +114,8 @@ pub struct CargoOptionsSummary {
 impl CargoOptionsSummary {
     /// Creates a new `CargoOptionsSummary` from the given Cargo options.
     #[doc(hidden)]
-    pub fn new<PF>(graph: &PackageGraph, opts: &CargoOptions<'_, PF>) -> Self {
+    pub fn new(graph: &PackageGraph, opts: &CargoOptions<'_>) -> Self {
         let omitted_summary_ids = opts
-            .imm_options
             .omitted_packages
             .iter()
             .map(|package_id| {
@@ -125,11 +124,11 @@ impl CargoOptionsSummary {
             })
             .collect();
         Self {
-            version: opts.imm_options.version,
-            include_dev: opts.imm_options.include_dev,
-            proc_macros_on_target: opts.imm_options.proc_macros_on_target,
-            host_platform: opts.imm_options.host_platform().map(PlatformSummary::new),
-            target_platform: opts.imm_options.target_platform().map(PlatformSummary::new),
+            version: opts.version,
+            include_dev: opts.include_dev,
+            proc_macros_on_target: opts.proc_macros_on_target,
+            host_platform: opts.host_platform().map(PlatformSummary::new),
+            target_platform: opts.target_platform().map(PlatformSummary::new),
             omitted_packages: omitted_summary_ids,
         }
     }
