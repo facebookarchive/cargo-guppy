@@ -417,110 +417,31 @@
 <span id="417">417</span>
 <span id="418">418</span>
 <span id="419">419</span>
-<span id="420">420</span>
-<span id="421">421</span>
-<span id="422">422</span>
-<span id="423">423</span>
-<span id="424">424</span>
-<span id="425">425</span>
-<span id="426">426</span>
-<span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
-<span id="430">430</span>
-<span id="431">431</span>
-<span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
-<span id="447">447</span>
-<span id="448">448</span>
-<span id="449">449</span>
-<span id="450">450</span>
-<span id="451">451</span>
-<span id="452">452</span>
-<span id="453">453</span>
-<span id="454">454</span>
-<span id="455">455</span>
-<span id="456">456</span>
-<span id="457">457</span>
-<span id="458">458</span>
-<span id="459">459</span>
-<span id="460">460</span>
-<span id="461">461</span>
-<span id="462">462</span>
-<span id="463">463</span>
-<span id="464">464</span>
-<span id="465">465</span>
-<span id="466">466</span>
-<span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
-<span id="474">474</span>
-<span id="475">475</span>
-<span id="476">476</span>
-<span id="477">477</span>
-<span id="478">478</span>
-<span id="479">479</span>
-<span id="480">480</span>
-<span id="481">481</span>
-<span id="482">482</span>
-<span id="483">483</span>
-<span id="484">484</span>
-<span id="485">485</span>
-<span id="486">486</span>
-<span id="487">487</span>
-<span id="488">488</span>
-<span id="489">489</span>
-<span id="490">490</span>
-<span id="491">491</span>
-<span id="492">492</span>
-<span id="493">493</span>
-<span id="494">494</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{
-    <span class="ident">CargoIntermediateSet</span>, <span class="ident">CargoOptions</span>, <span class="ident">CargoPostfilter</span>, <span class="ident">CargoResolvePhase</span>, <span class="ident">CargoResolverVersion</span>,
-    <span class="ident">CargoSet</span>,
-};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoIntermediateSet</span>, <span class="ident">CargoOptions</span>, <span class="ident">CargoResolverVersion</span>, <span class="ident">CargoSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">all_filter</span>, <span class="ident">CrossLink</span>, <span class="ident">FeatureQuery</span>, <span class="ident">FeatureSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">EnabledTernary</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">DependencyKind</span>, <span class="ident">Error</span>};
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
+<span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::<span class="ident">VisitMap</span>;
 <span class="kw">use</span> <span class="ident">target_spec</span>::<span class="ident">Platform</span>;
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">CargoSetBuildState</span> {
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">CargoSetBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
     <span class="ident">omitted_packages</span>: <span class="ident">SortedSet</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">CargoSetBuildState</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">CargoSetBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="ident">query</span>: <span class="kw-2">&amp;</span><span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
+        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">query</span>.<span class="ident">direction</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">DependencyDirection</span>::<span class="ident">Reverse</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">CargoSetError</span>(
                 <span class="string">&quot;attempted to compute for reverse query&quot;</span>.<span class="ident">into</span>(),
@@ -530,72 +451,44 @@
         <span class="kw">let</span> <span class="ident">omitted_packages</span>: <span class="ident">SortedSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">query</span>
             .<span class="ident">graph</span>()
             .<span class="ident">package_graph</span>
-            .<span class="ident">package_ixs</span>(<span class="ident">opts</span>.<span class="ident">imm_options</span>.<span class="ident">omitted_packages</span>.<span class="ident">iter</span>().<span class="ident">copied</span>())<span class="question-mark">?</span>;
+            .<span class="ident">package_ixs</span>(<span class="ident">opts</span>.<span class="ident">omitted_packages</span>.<span class="ident">iter</span>().<span class="ident">copied</span>())<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">omitted_packages</span> })
-    }
-
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">build</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
-        <span class="self">self</span>,
-        <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
-        <span class="kw">match</span> <span class="ident">opts</span>.<span class="ident">imm_options</span>.<span class="ident">version</span> {
-            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v1</span>(<span class="ident">query</span>, <span class="ident">opts</span>, <span class="bool-val">false</span>),
-            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1Install</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">avoid_dev_deps</span> <span class="op">=</span> <span class="op">!</span><span class="ident">opts</span>.<span class="ident">imm_options</span>.<span class="ident">include_dev</span>;
-                <span class="self">self</span>.<span class="ident">new_v1</span>(<span class="ident">query</span>, <span class="ident">opts</span>, <span class="ident">avoid_dev_deps</span>)
-            }
-            <span class="ident">CargoResolverVersion</span>::<span class="ident">V2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v2</span>(<span class="ident">query</span>, <span class="ident">opts</span>),
-        }
-    }
-
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">build_intermediate</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
-        <span class="self">self</span>,
-        <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
-        <span class="kw">match</span> <span class="ident">opts</span>.<span class="ident">imm_options</span>.<span class="ident">version</span> {
-            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v1_intermediate</span>(<span class="ident">query</span>, <span class="ident">opts</span>, <span class="bool-val">false</span>),
-            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1Install</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">avoid_dev_deps</span> <span class="op">=</span> <span class="op">!</span><span class="ident">opts</span>.<span class="ident">imm_options</span>.<span class="ident">include_dev</span>;
-                <span class="self">self</span>.<span class="ident">new_v1_intermediate</span>(<span class="ident">query</span>, <span class="ident">opts</span>, <span class="ident">avoid_dev_deps</span>)
-            }
-            <span class="ident">CargoResolverVersion</span>::<span class="ident">V2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v2_intermediate</span>(<span class="ident">query</span>, <span class="ident">opts</span>),
-        }
-    }
-
-    <span class="kw">fn</span> <span class="ident">new_v1</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
-        <span class="self">self</span>,
-        <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-        <span class="ident">avoid_dev_deps</span>: <span class="ident">bool</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
-        <span class="self">self</span>.<span class="ident">build_set</span>(<span class="ident">query</span>, <span class="ident">opts</span>, <span class="op">|</span><span class="ident">query</span>, <span class="ident">opts</span><span class="op">|</span> {
-            <span class="self">self</span>.<span class="ident">new_v1_intermediate</span>(<span class="ident">query</span>, <span class="ident">opts</span>, <span class="ident">avoid_dev_deps</span>)
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
+            <span class="ident">opts</span>,
+            <span class="ident">omitted_packages</span>,
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">new_v2</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
-        <span class="self">self</span>,
-        <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
-        <span class="self">self</span>.<span class="ident">build_set</span>(<span class="ident">query</span>, <span class="ident">opts</span>, <span class="op">|</span><span class="ident">query</span>, <span class="ident">opts</span><span class="op">|</span> {
-            <span class="self">self</span>.<span class="ident">new_v2_intermediate</span>(<span class="ident">query</span>, <span class="ident">opts</span>)
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">build</span>(<span class="self">self</span>, <span class="ident">query</span>: <span class="ident">FeatureQuery</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">version</span> {
+            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v1</span>(<span class="ident">query</span>, <span class="bool-val">false</span>),
+            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1Install</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="ident">avoid_dev_deps</span> <span class="op">=</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">include_dev</span>;
+                <span class="self">self</span>.<span class="ident">new_v1</span>(<span class="ident">query</span>, <span class="ident">avoid_dev_deps</span>)
+            }
+            <span class="ident">CargoResolverVersion</span>::<span class="ident">V2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v2</span>(<span class="ident">query</span>),
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">build_intermediate</span>(<span class="self">self</span>, <span class="ident">query</span>: <span class="ident">FeatureQuery</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">version</span> {
+            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v1_intermediate</span>(<span class="ident">query</span>, <span class="bool-val">false</span>),
+            <span class="ident">CargoResolverVersion</span>::<span class="ident">V1Install</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="ident">avoid_dev_deps</span> <span class="op">=</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">include_dev</span>;
+                <span class="self">self</span>.<span class="ident">new_v1_intermediate</span>(<span class="ident">query</span>, <span class="ident">avoid_dev_deps</span>)
+            }
+            <span class="ident">CargoResolverVersion</span>::<span class="ident">V2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">new_v2_intermediate</span>(<span class="ident">query</span>),
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">new_v1</span>(<span class="self">self</span>, <span class="ident">query</span>: <span class="ident">FeatureQuery</span>, <span class="ident">avoid_dev_deps</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span> {
+        <span class="self">self</span>.<span class="ident">build_set</span>(<span class="ident">query</span>, <span class="op">|</span><span class="ident">query</span><span class="op">|</span> {
+            <span class="self">self</span>.<span class="ident">new_v1_intermediate</span>(<span class="ident">query</span>, <span class="ident">avoid_dev_deps</span>)
         })
+    }
+
+    <span class="kw">fn</span> <span class="ident">new_v2</span>(<span class="self">self</span>, <span class="ident">query</span>: <span class="ident">FeatureQuery</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span> {
+        <span class="self">self</span>.<span class="ident">build_set</span>(<span class="ident">query</span>, <span class="op">|</span><span class="ident">query</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">new_v2_intermediate</span>(<span class="ident">query</span>))
     }
 
     <span class="comment">// ---</span>
@@ -606,18 +499,11 @@
         <span class="self">self</span>.<span class="ident">omitted_packages</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">package_ix</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">build_set</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
+    <span class="kw">fn</span> <span class="ident">build_set</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">original_query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-        <span class="ident">intermediate_fn</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(
-            <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-            <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
+        <span class="ident">intermediate_fn</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="comment">// Prepare a package query for step 2.</span>
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">original_query</span>.<span class="ident">graph</span>();
         <span class="comment">// Note that currently, proc macros specified in initials are built on both the target and</span>
@@ -633,7 +519,7 @@
                 <span class="kw">if</span> <span class="ident">metadata</span>.<span class="ident">package</span>().<span class="ident">is_proc_macro</span>() {
                     <span class="comment">// Proc macros are built on the host.</span>
                     <span class="ident">host_ixs</span>.<span class="ident">push</span>(<span class="ident">package_ix</span>);
-                    <span class="kw">if</span> <span class="ident">opts</span>.<span class="ident">imm_options</span>.<span class="ident">proc_macros_on_target</span> {
+                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">proc_macros_on_target</span> {
                         <span class="prelude-val">Some</span>(<span class="ident">package_ix</span>)
                     } <span class="kw">else</span> {
                         <span class="prelude-val">None</span>
@@ -649,7 +535,7 @@
 
         <span class="comment">// 1. Build the intermediate set containing the features for any possible package that can</span>
         <span class="comment">// be built.</span>
-        <span class="kw">let</span> <span class="ident">intermediate_set</span> <span class="op">=</span> <span class="ident">intermediate_fn</span>(<span class="ident">original_query</span>.<span class="ident">clone</span>(), <span class="ident">opts</span>);
+        <span class="kw">let</span> <span class="ident">intermediate_set</span> <span class="op">=</span> <span class="ident">intermediate_fn</span>(<span class="ident">original_query</span>.<span class="ident">clone</span>());
         <span class="kw">let</span> (<span class="ident">target_set</span>, <span class="ident">host_set</span>) <span class="op">=</span> <span class="ident">intermediate_set</span>.<span class="ident">target_host_sets</span>();
 
         <span class="comment">// While doing traversal 2 below, record any packages discovered along build edges for use</span>
@@ -670,7 +556,7 @@
             <span class="comment">// enabled_on.</span>
             <span class="kw">let</span> <span class="ident">consider_optional</span> <span class="op">=</span> <span class="ident">feature_set</span>
                 .<span class="ident">contains</span>((<span class="ident">from</span>.<span class="ident">id</span>(), <span class="ident">link</span>.<span class="ident">dep_name</span>()))
-                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
                     <span class="comment">// If the feature ID isn&#39;t present, it means the dependency wasn&#39;t declared</span>
                     <span class="comment">// as optional. In that case the value doesn&#39;t matter.</span>
                     <span class="macro">debug_assert</span><span class="macro">!</span>(
@@ -702,10 +588,8 @@
 
         <span class="comment">// 2. Figure out what packages will be included on the target platform, i.e. normal + dev</span>
         <span class="comment">// (if requested).</span>
-        <span class="kw">let</span> <span class="ident">imm_opts</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">imm_options</span>;
-        <span class="kw">let</span> <span class="ident">postfilter</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">opts</span>.<span class="ident">postfilter</span>;
-        <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">imm_opts</span>.<span class="ident">target_platform</span>();
-        <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">imm_opts</span>.<span class="ident">host_platform</span>();
+        <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">target_platform</span>();
+        <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">host_platform</span>();
 
         <span class="kw">let</span> <span class="ident">target_packages</span> <span class="op">=</span> <span class="ident">target_query</span>.<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="ident">query</span>, <span class="ident">link</span><span class="op">|</span> {
             <span class="kw">let</span> (<span class="ident">from</span>, <span class="ident">to</span>) <span class="op">=</span> <span class="ident">link</span>.<span class="ident">endpoints</span>();
@@ -721,7 +605,7 @@
             }
 
             <span class="kw">let</span> <span class="ident">consider_dev</span> <span class="op">=</span>
-                <span class="ident">imm_opts</span>.<span class="ident">include_dev</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">query</span>.<span class="ident">starts_from</span>(<span class="ident">from</span>.<span class="ident">id</span>()).<span class="ident">expect</span>(<span class="string">&quot;valid ID&quot;</span>);
+                <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">include_dev</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">query</span>.<span class="ident">starts_from</span>(<span class="ident">from</span>.<span class="ident">id</span>()).<span class="ident">expect</span>(<span class="string">&quot;valid ID&quot;</span>);
             <span class="comment">// Build dependencies are only considered if there&#39;s a build script.</span>
             <span class="kw">let</span> <span class="ident">consider_build</span> <span class="op">=</span> <span class="ident">from</span>.<span class="ident">has_build_script</span>();
 
@@ -737,20 +621,11 @@
 
             <span class="comment">// Proc macros build on the host, so for normal/dev dependencies redirect it to the host</span>
             <span class="comment">// instead.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">proc_macro_redirect</span> <span class="op">=</span> <span class="ident">follow_target</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">to</span>.<span class="ident">is_proc_macro</span>();
+            <span class="kw">let</span> <span class="ident">proc_macro_redirect</span> <span class="op">=</span> <span class="ident">follow_target</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">to</span>.<span class="ident">is_proc_macro</span>();
 
             <span class="comment">// Build dependencies are evaluated against the host platform.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">build_dep_redirect</span> <span class="op">=</span> <span class="ident">consider_build</span>
+            <span class="kw">let</span> <span class="ident">build_dep_redirect</span> <span class="op">=</span> <span class="ident">consider_build</span>
                 <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">is_enabled</span>(<span class="ident">target_set</span>, <span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Build</span>, <span class="ident">host_platform</span>);
-
-            <span class="comment">// If the postfilter returns false, don&#39;t traverse this edge at all.</span>
-            <span class="kw">let</span> <span class="ident">included</span> <span class="op">=</span> <span class="ident">follow_target</span> <span class="op">|</span><span class="op">|</span> <span class="ident">proc_macro_redirect</span> <span class="op">|</span><span class="op">|</span> <span class="ident">build_dep_redirect</span>;
-            <span class="kw">if</span> <span class="ident">included</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">postfilter</span>.<span class="ident">accept_package</span>(<span class="ident">CargoResolvePhase</span>::<span class="ident">TargetPackage</span>(<span class="ident">query</span>), <span class="ident">link</span>)
-            {
-                <span class="ident">follow_target</span> <span class="op">=</span> <span class="bool-val">false</span>;
-                <span class="ident">proc_macro_redirect</span> <span class="op">=</span> <span class="bool-val">false</span>;
-                <span class="ident">build_dep_redirect</span> <span class="op">=</span> <span class="bool-val">false</span>;
-            }
 
             <span class="comment">// Finally, process what needs to be done.</span>
             <span class="kw">if</span> <span class="ident">build_dep_redirect</span> <span class="op">|</span><span class="op">|</span> <span class="ident">proc_macro_redirect</span> {
@@ -781,7 +656,7 @@
         <span class="kw">let</span> <span class="ident">host_packages</span> <span class="op">=</span> <span class="ident">graph</span>
             .<span class="ident">package_graph</span>
             .<span class="ident">query_from_parts</span>(<span class="ident">host_ixs</span>, <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>)
-            .<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="ident">query</span>, <span class="ident">link</span><span class="op">|</span> {
+            .<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="kw">_</span>, <span class="ident">link</span><span class="op">|</span> {
                 <span class="kw">let</span> (<span class="ident">from</span>, <span class="ident">to</span>) <span class="op">=</span> <span class="ident">link</span>.<span class="ident">endpoints</span>();
                 <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_omitted</span>(<span class="ident">to</span>.<span class="ident">package_ix</span>()) {
                     <span class="comment">// Pretend that the omitted set doesn&#39;t exist.</span>
@@ -798,7 +673,7 @@
                     <span class="op">|</span><span class="op">|</span> (<span class="ident">consider_build</span>
                         <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">is_enabled</span>(<span class="ident">host_set</span>, <span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Build</span>, <span class="ident">host_platform</span>));
 
-                <span class="kw">if</span> <span class="ident">res</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">postfilter</span>.<span class="ident">accept_package</span>(<span class="ident">CargoResolvePhase</span>::<span class="ident">HostPackage</span>(<span class="ident">query</span>), <span class="ident">link</span>) {
+                <span class="kw">if</span> <span class="ident">res</span> {
                     <span class="kw">if</span> <span class="ident">from</span>.<span class="ident">in_workspace</span>() {
                         <span class="comment">// The &#39;to&#39; node is either in the workspace or a direct dependency.</span>
                         <span class="ident">host_direct_deps</span>.<span class="ident">visit</span>(<span class="ident">to</span>.<span class="ident">package_ix</span>());
@@ -831,22 +706,21 @@
             <span class="ident">host_direct_deps</span>,
             <span class="ident">proc_macro_edge_ixs</span>: <span class="ident">SortedSet</span>::<span class="ident">new</span>(<span class="ident">proc_macro_edge_ixs</span>),
             <span class="ident">build_dep_edge_ixs</span>: <span class="ident">SortedSet</span>::<span class="ident">new</span>(<span class="ident">build_dep_edge_ixs</span>),
+
+            <span class="ident">unified_features</span>: <span class="ident">OnceCell</span>::<span class="ident">new</span>(),
+            <span class="ident">unified_direct_deps</span>: <span class="ident">OnceCell</span>::<span class="ident">new</span>(),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">new_v1_intermediate</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
+    <span class="kw">fn</span> <span class="ident">new_v1_intermediate</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
         <span class="ident">avoid_dev_deps</span>: <span class="ident">bool</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="comment">// Perform a &quot;complete&quot; feature query. This will provide more packages than will be</span>
         <span class="comment">// included in the final build, but for each package it will have the correct feature set.</span>
         <span class="kw">let</span> <span class="ident">complete_set</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="ident">query</span>, <span class="ident">link</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_omitted</span>(<span class="ident">link</span>.<span class="ident">to</span>().<span class="ident">package_ix</span>()) {
+            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_omitted</span>(<span class="ident">link</span>.<span class="ident">to</span>().<span class="ident">package_ix</span>()) {
                 <span class="comment">// Pretend that the omitted set doesn&#39;t exist.</span>
                 <span class="bool-val">false</span>
             } <span class="kw">else</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">avoid_dev_deps</span>
@@ -859,24 +733,13 @@
             } <span class="kw">else</span> {
                 <span class="comment">// Follow normal and build edges for everything else.</span>
                 <span class="op">!</span><span class="ident">link</span>.<span class="ident">dev_only</span>()
-            };
-
-            <span class="ident">res</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">opts</span>
-                .<span class="ident">postfilter</span>
-                .<span class="ident">accept_feature</span>(<span class="ident">CargoResolvePhase</span>::<span class="ident">V1Unified</span>(<span class="ident">query</span>), <span class="ident">link</span>)
+            }
         });
 
         <span class="ident">CargoIntermediateSet</span>::<span class="ident">Unified</span>(<span class="ident">complete_set</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">new_v2_intermediate</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">PF</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">PF</span>: <span class="ident">CargoPostfilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    {
+    <span class="kw">fn</span> <span class="ident">new_v2_intermediate</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">query</span>: <span class="ident">FeatureQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoIntermediateSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">query</span>.<span class="ident">graph</span>();
         <span class="comment">// Note that proc macros specified in initials take part in feature resolution</span>
         <span class="comment">// for both target and host ixs. If they didn&#39;t, then the query would be partitioned into</span>
@@ -913,10 +776,8 @@
         <span class="kw">let</span> <span class="ident">target_query</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">clone</span>();
 
         <span class="comment">// 1. Perform a feature query for the target.</span>
-        <span class="kw">let</span> <span class="ident">imm_opts</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">imm_options</span>;
-        <span class="kw">let</span> <span class="ident">postfilter</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">opts</span>.<span class="ident">postfilter</span>;
-        <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">imm_opts</span>.<span class="ident">target_platform</span>();
-        <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">imm_opts</span>.<span class="ident">host_platform</span>();
+        <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">target_platform</span>();
+        <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">host_platform</span>();
         <span class="kw">let</span> <span class="ident">target</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="ident">query</span>, <span class="ident">link</span><span class="op">|</span> {
             <span class="kw">let</span> (<span class="ident">from</span>, <span class="ident">to</span>) <span class="op">=</span> <span class="ident">link</span>.<span class="ident">endpoints</span>();
 
@@ -926,7 +787,7 @@
             }
 
             <span class="kw">let</span> <span class="ident">consider_dev</span> <span class="op">=</span>
-                <span class="ident">imm_opts</span>.<span class="ident">include_dev</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">query</span>.<span class="ident">starts_from</span>(<span class="ident">from</span>.<span class="ident">feature_id</span>()).<span class="ident">expect</span>(<span class="string">&quot;valid ID&quot;</span>);
+                <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">include_dev</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">query</span>.<span class="ident">starts_from</span>(<span class="ident">from</span>.<span class="ident">feature_id</span>()).<span class="ident">expect</span>(<span class="string">&quot;valid ID&quot;</span>);
             <span class="comment">// This resolver doesn&#39;t check for whether this package has a build script.</span>
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">follow_target</span> <span class="op">=</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Normal</span>, <span class="ident">target_platform</span>)
                 <span class="op">|</span><span class="op">|</span> (<span class="ident">consider_dev</span>
@@ -934,19 +795,10 @@
 
             <span class="comment">// Proc macros build on the host, so for normal/dev dependencies redirect it to the host</span>
             <span class="comment">// instead.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">proc_macro_redirect</span> <span class="op">=</span> <span class="ident">follow_target</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">to</span>.<span class="ident">package</span>().<span class="ident">is_proc_macro</span>();
+            <span class="kw">let</span> <span class="ident">proc_macro_redirect</span> <span class="op">=</span> <span class="ident">follow_target</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">to</span>.<span class="ident">package</span>().<span class="ident">is_proc_macro</span>();
 
             <span class="comment">// Build dependencies are evaluated against the host platform.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">build_dep_redirect</span> <span class="op">=</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Build</span>, <span class="ident">host_platform</span>);
-
-            <span class="comment">// If the postfilter returns false, don&#39;t traverse this edge at all.</span>
-            <span class="kw">let</span> <span class="ident">included</span> <span class="op">=</span> <span class="ident">follow_target</span> <span class="op">|</span><span class="op">|</span> <span class="ident">proc_macro_redirect</span> <span class="op">|</span><span class="op">|</span> <span class="ident">build_dep_redirect</span>;
-            <span class="kw">if</span> <span class="ident">included</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="op">!</span><span class="ident">postfilter</span>.<span class="ident">accept_feature</span>(<span class="ident">CargoResolvePhase</span>::<span class="ident">TargetFeature</span>(<span class="ident">query</span>), <span class="ident">link</span>)
-            {
-                <span class="ident">follow_target</span> <span class="op">=</span> <span class="bool-val">false</span>;
-                <span class="ident">proc_macro_redirect</span> <span class="op">=</span> <span class="bool-val">false</span>;
-                <span class="ident">build_dep_redirect</span> <span class="op">=</span> <span class="bool-val">false</span>;
-            }
+            <span class="kw">let</span> <span class="ident">build_dep_redirect</span> <span class="op">=</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Build</span>, <span class="ident">host_platform</span>);
 
             <span class="comment">// Finally, process what needs to be done.</span>
             <span class="kw">if</span> <span class="ident">build_dep_redirect</span> <span class="op">|</span><span class="op">|</span> <span class="ident">proc_macro_redirect</span> {
@@ -962,7 +814,7 @@
         <span class="comment">// 2. Perform a feature query for the host.</span>
         <span class="kw">let</span> <span class="ident">host</span> <span class="op">=</span> <span class="ident">graph</span>
             .<span class="ident">query_from_parts</span>(<span class="ident">SortedSet</span>::<span class="ident">new</span>(<span class="ident">host_ixs</span>), <span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>)
-            .<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="ident">query</span>, <span class="ident">link</span><span class="op">|</span> {
+            .<span class="ident">resolve_with_fn</span>(<span class="op">|</span><span class="kw">_</span>, <span class="ident">link</span><span class="op">|</span> {
                 <span class="kw">let</span> (<span class="ident">from</span>, <span class="ident">to</span>) <span class="op">=</span> <span class="ident">link</span>.<span class="ident">endpoints</span>();
                 <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_omitted</span>(<span class="ident">to</span>.<span class="ident">package_ix</span>()) {
                     <span class="comment">// Pretend that the omitted set doesn&#39;t exist.</span>
@@ -971,17 +823,15 @@
                 <span class="comment">// During feature resolution, the v2 resolver doesn&#39;t check for whether this package</span>
                 <span class="comment">// has a build script. It also unifies dev dependencies of initials, even on the</span>
                 <span class="comment">// host platform.</span>
-                <span class="kw">let</span> <span class="ident">consider_dev</span> <span class="op">=</span> <span class="ident">imm_opts</span>.<span class="ident">include_dev</span>
+                <span class="kw">let</span> <span class="ident">consider_dev</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opts</span>.<span class="ident">include_dev</span>
                     <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">target_query</span>
                         .<span class="ident">starts_from</span>(<span class="ident">from</span>.<span class="ident">feature_id</span>())
                         .<span class="ident">expect</span>(<span class="string">&quot;valid ID&quot;</span>);
 
-                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Normal</span>, <span class="ident">host_platform</span>)
+                <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Normal</span>, <span class="ident">host_platform</span>)
                     <span class="op">|</span><span class="op">|</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Build</span>, <span class="ident">host_platform</span>)
                     <span class="op">|</span><span class="op">|</span> (<span class="ident">consider_dev</span>
-                        <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Development</span>, <span class="ident">host_platform</span>));
-
-                <span class="ident">res</span> <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">postfilter</span>.<span class="ident">accept_feature</span>(<span class="ident">CargoResolvePhase</span>::<span class="ident">HostFeature</span>(<span class="ident">query</span>), <span class="ident">link</span>)
+                        <span class="kw-2">&amp;</span><span class="op">&amp;</span> <span class="ident">is_enabled</span>(<span class="kw-2">&amp;</span><span class="ident">link</span>, <span class="ident">DependencyKind</span>::<span class="ident">Development</span>, <span class="ident">host_platform</span>))
             });
 
         <span class="ident">CargoIntermediateSet</span>::<span class="ident">TargetHost</span> { <span class="ident">target</span>, <span class="ident">host</span> }
