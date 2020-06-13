@@ -121,7 +121,7 @@ mod tests {
         // Unknown bogus families.
         let platform = Platform::new("x86_64-unknown-linux-gnu", TargetFeatures::Unknown).unwrap();
         let mut platform_with_flags = platform.clone();
-        platform_with_flags.add_flags(&["foo", "bar"]);
+        platform_with_flags.add_flags(["foo", "bar"].iter().copied());
 
         for family in &["foo", "bar"] {
             let cfg = format!("cfg({})", family);

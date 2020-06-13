@@ -43,6 +43,8 @@ mod parser;
 mod platform;
 #[cfg(feature = "proptest010")]
 mod proptest;
+#[cfg(feature = "summaries")]
+pub mod summaries;
 
 pub use errors::*;
 pub use evaluator::*;

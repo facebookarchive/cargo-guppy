@@ -31,8 +31,8 @@ pub enum Error {
     UnknownWorkspacePath(PathBuf),
     /// A package specified by name was unknown to this workspace.
     UnknownWorkspaceName(String),
-    /// A platform triple was unknown to `guppy`.
-    UnknownPlatformTriple(String),
+    /// An error was returned by `target-spec`.
+    TargetSpecError(String, target_spec::Error),
     /// An error occured while computing a `CargoSet`.
     CargoSetError(String),
     /// An internal error occurred within this `PackageGraph`.
@@ -76,7 +76,7 @@ impl fmt::Display for Error {
             },
             UnknownWorkspacePath(path) => write!(f, "Unknown workspace path: {}", path.display()),
             UnknownWorkspaceName(name) => write!(f, "Unknown workspace package name: {}", name),
-            UnknownPlatformTriple(triple) => write!(f, "Unknown platform triple: {}", triple),
+            TargetSpecError(msg, _) => write!(f, "Target spec error while {}", msg),
             CargoSetError(msg) => write!(f, "Error while computing Cargo set: {}", msg),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
             FeatureGraphInternalError(msg) => write!(f, "Internal error in feature graph: {}", msg),
@@ -95,7 +95,7 @@ impl error::Error for Error {
             UnknownFeatureId(_, _) => None,
             UnknownWorkspacePath(_) => None,
             UnknownWorkspaceName(_) => None,
-            UnknownPlatformTriple(_) => None,
+            TargetSpecError(_, err) => Some(err),
             CargoSetError(_) => None,
             PackageGraphInternalError(_) => None,
             FeatureGraphInternalError(_) => None,

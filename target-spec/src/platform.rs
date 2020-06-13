@@ -24,6 +24,7 @@ pub struct Platform<'a> {
     target_info: &'a TargetInfo<'a>,
     target_features: TargetFeatures<'a>,
     flags: HashSet<&'a str>,
+    is_custom: bool,
 }
 
 impl<'a> Platform<'a> {
@@ -40,6 +41,7 @@ impl<'a> Platform<'a> {
                 .ok_or_else(|| Error::UnknownPlatformTriple(triple.to_string()))?,
             target_features,
             flags: HashSet::new(),
+            is_custom: false,
         })
     }
 
@@ -52,6 +54,7 @@ impl<'a> Platform<'a> {
             target_info,
             target_features,
             flags: HashSet::new(),
+            is_custom: true,
         }
     }
 
@@ -62,13 +65,18 @@ impl<'a> Platform<'a> {
     /// A default `cargo build` will always evaluate flags to false, but custom wrappers may cause
     /// some flags to evaluate to true. For example, as of version 0.6, `cargo web build` will cause
     /// `cargo_web` to evaluate to true.
-    pub fn add_flags(&mut self, flags: &[&'a str]) {
+    pub fn add_flags(&mut self, flags: impl IntoIterator<Item = &'a str>) {
         self.flags.extend(flags);
     }
 
     /// Returns the target triple for this platform.
     pub fn triple(&self) -> &'a str {
         self.target_info.triple
+    }
+
+    /// Returns the set of flags enabled for this platform.
+    pub fn flags<'b>(&'b self) -> impl Iterator<Item = &'a str> + 'b {
+        self.flags.iter().copied()
     }
 
     /// Returns true if this flag was set with `add_flags`.
@@ -85,6 +93,11 @@ impl<'a> Platform<'a> {
     pub fn target_features(&self) -> &TargetFeatures<'a> {
         &self.target_features
     }
+
+    /// Returns true if this is a custom platform, created by `Platform::custom`.
+    pub fn is_custom(&self) -> bool {
+        self.is_custom
+    }
 }
 
 impl Platform<'static> {
@@ -99,12 +112,13 @@ impl Platform<'static> {
             target_info,
             target_features,
             flags: HashSet::new(),
+            is_custom: false,
         })
     }
 }
 
 /// A set of target features to match.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum TargetFeatures<'a> {
     /// The target features are unknown.
