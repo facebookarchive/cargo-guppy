@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::cargo::{CargoOptions, CargoSet};
-use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureSet};
+use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
 use crate::graph::query_core::QueryParams;
-use crate::graph::{DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageQuery};
+use crate::graph::{
+    DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata, PackageQuery,
+};
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
+use itertools::Itertools;
 use petgraph::graph::NodeIndex;
 use std::collections::HashSet;
 
@@ -265,6 +268,27 @@ impl<'g> FeatureQuery<'g> {
     /// Returns the direction the query is happening in.
     pub fn direction(&self) -> DependencyDirection {
         self.params.direction()
+    }
+
+    /// Returns the list of initial features specified in the query.
+    ///
+    /// The order of features is unspecified.
+    pub fn initials<'a>(
+        &'a self,
+    ) -> impl Iterator<Item = FeatureMetadata<'g>> + ExactSizeIterator + 'a {
+        let graph = self.graph;
+        self.params
+            .initials()
+            .iter()
+            .map(move |feature_ix| graph.metadata_for_ix(*feature_ix))
+    }
+
+    /// Returns the list of initial packages specified in the query.
+    ///
+    /// The order of packages is unspecified.
+    pub fn initial_packages<'a>(&'a self) -> impl Iterator<Item = PackageMetadata<'g>> + 'a {
+        // feature ixs are stored in sorted order by package ix, so dedup() is fine.
+        self.initials().map(|feature| feature.package()).dedup()
     }
 
     /// Returns true if the query starts from the given package.

@@ -3,8 +3,8 @@
 
 use crate::graph::query_core::QueryParams;
 use crate::graph::{
-    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageResolver, PackageSet,
-    ResolverFn,
+    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageMetadata, PackageResolver,
+    PackageSet, ResolverFn,
 };
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
@@ -146,6 +146,20 @@ impl<'g> PackageQuery<'g> {
     /// Returns the direction the query is happening in.
     pub fn direction(&self) -> DependencyDirection {
         self.params.direction()
+    }
+
+    /// Returns the list of initial packages specified in the query.
+    ///
+    /// The order of packages is unspecified.
+    pub fn initials<'a>(
+        &'a self,
+    ) -> impl Iterator<Item = PackageMetadata<'g>> + ExactSizeIterator + 'a {
+        let graph = self.graph;
+        self.params.initials().iter().map(move |package_ix| {
+            graph
+                .metadata(&graph.dep_graph[*package_ix])
+                .expect("valid ID")
+        })
     }
 
     /// Returns true if the query starts from the given package ID.
