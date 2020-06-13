@@ -8,6 +8,9 @@
   to create queries and package sets given a list of workspace paths.
 * `PackageMetadata::source` provides the source of a package (a local path, `crates.io`, a `git` repository or a custom
   registry).
+* `PackageQuery::initials` returns the initial set of packages specified in a package query.
+* `FeatureQuery::initials` returns the initial set of features specified in a feature query.
+* `FeatureQuery::initial_packages` returns the initial set of *packages* specified in a feature query.
 * Improvements to Cargo resolution:
   * `CargoSet` now carries with it the original query and information about
     direct third-party dependencies.
