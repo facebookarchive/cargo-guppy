@@ -1,47 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::parser::ParseError;
 use crate::platform::{Platform, TargetFeatures};
-use crate::Target;
 use crate::TargetSpec;
+use crate::{Error, Target};
 use cfg_expr::{Expression, Predicate};
 use std::sync::Arc;
-use std::{error, fmt};
-
-/// An error that occurred during target evaluation.
-#[derive(PartialEq)]
-#[non_exhaustive]
-pub enum EvalError {
-    /// An invalid target spec was specified.
-    InvalidSpec(ParseError),
-    /// The platform was not found in the database.
-    PlatformNotFound,
-}
-
-impl fmt::Display for EvalError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            EvalError::InvalidSpec(_) => write!(f, "invalid target spec"),
-            EvalError::PlatformNotFound => write!(f, "platform not found in database"),
-        }
-    }
-}
-
-impl fmt::Debug for EvalError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        <EvalError as fmt::Display>::fmt(self, f)
-    }
-}
-
-impl error::Error for EvalError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            EvalError::InvalidSpec(err) => Some(err),
-            EvalError::PlatformNotFound => None,
-        }
-    }
-}
 
 /// Evaluates the given spec against the provided target and returns `Some(true)` on a successful
 /// match, and `Some(false)` on a failing match.
@@ -52,14 +16,10 @@ impl error::Error for EvalError {
 /// For more advanced uses, see `TargetSpec::eval`.
 ///
 /// For more information, see the crate-level documentation.
-pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, EvalError> {
-    let target_spec = spec_or_triple
-        .parse::<TargetSpec>()
-        .map_err(EvalError::InvalidSpec)?;
-    match Platform::new(platform, TargetFeatures::Unknown) {
-        None => Err(EvalError::PlatformNotFound),
-        Some(platform) => Ok(target_spec.eval(&platform)),
-    }
+pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, Error> {
+    let target_spec = spec_or_triple.parse::<TargetSpec>()?;
+    let platform = Platform::new(platform, TargetFeatures::Unknown)?;
+    Ok(target_spec.eval(&platform))
 }
 
 pub(crate) fn eval_target(target: &Target<'_>, platform: &Platform<'_>) -> Option<bool> {

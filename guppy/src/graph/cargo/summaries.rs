@@ -219,7 +219,7 @@ impl PlatformSummary {
     #[doc(hidden)]
     pub fn to_platform(&self) -> Result<Platform, Error> {
         Platform::new(&self.triple, self.target_features.to_target_features())
-            .ok_or_else(|| Error::UnknownPlatformTriple(self.triple.clone()))
+            .map_err(|_| Error::UnknownPlatformTriple(self.triple.clone()))
     }
 }
 

@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::custom_platforms::TargetInfo;
-use crate::{eval_target, Platform};
+use crate::{eval_target, Error, Platform};
 use cfg_expr::targets::get_builtin_target_by_triple;
 use cfg_expr::{Expression, Predicate};
 use std::str::FromStr;
 use std::sync::Arc;
-use std::{error, fmt};
 
 /// A parsed target specification or triple, as found in a `Cargo.toml` file.
 ///
@@ -62,7 +61,7 @@ impl<'a> TargetSpec<'a> {
 }
 
 impl FromStr for TargetSpec<'static> {
-    type Err = ParseError;
+    type Err = Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         Ok(Self {
@@ -79,14 +78,14 @@ pub(crate) enum Target<'a> {
 
 impl Target<'static> {
     /// Parses this expression into a `Target` instance.
-    fn parse(input: &str) -> Result<Self, ParseError> {
+    fn parse(input: &str) -> Result<Self, Error> {
         if input.starts_with("cfg(") {
-            let expr = Expression::parse(input).map_err(ParseError::invalid_cfg)?;
+            let expr = Expression::parse(input).map_err(Error::InvalidCfg)?;
             Self::verify_expr(expr)
         } else {
             Ok(Target::TargetInfo(
                 get_builtin_target_by_triple(input)
-                    .ok_or_else(|| ParseError::UnknownTriple(input.to_string()))?,
+                    .ok_or_else(|| Error::UnknownTargetTriple(input.to_string()))?,
             ))
         }
     }
@@ -94,49 +93,17 @@ impl Target<'static> {
 
 impl<'a> Target<'a> {
     /// Verify this `cfg()` expression.
-    fn verify_expr(expr: Expression) -> Result<Self, ParseError> {
+    fn verify_expr(expr: Expression) -> Result<Self, Error> {
         // Error out on unknown key-value pairs. Everything else is recognized (though
         // DebugAssertions/ProcMacro etc always returns false, and flags return false by default).
         for pred in expr.predicates() {
             if let Predicate::KeyValue { key, .. } = pred {
-                return Err(ParseError::UnknownPredicate(key.to_string()));
+                return Err(Error::UnknownPredicate(key.to_string()));
             }
         }
         Ok(Target::Spec(Arc::new(expr)))
     }
 }
-
-/// An error that occurred while attempting to parse a target specification.
-#[derive(Clone, Debug, PartialEq)]
-#[non_exhaustive]
-pub enum ParseError {
-    /// This `cfg()` expression was invalid and could not be parsed.
-    InvalidCfg(String),
-    /// The provided target triple was unknown.
-    UnknownTriple(String),
-    /// The provided `cfg()` expression parsed correctly, but it had an unknown predicate.
-    UnknownPredicate(String),
-}
-
-impl ParseError {
-    pub(crate) fn invalid_cfg(err: cfg_expr::ParseError) -> Self {
-        ParseError::InvalidCfg(format!("{}", err))
-    }
-}
-
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ParseError::InvalidCfg(err) => write!(f, "invalid cfg() expression: {}", err),
-            ParseError::UnknownTriple(triple) => write!(f, "unknown triple: {}", triple),
-            ParseError::UnknownPredicate(pred) => {
-                write!(f, "cfg() expression has unknown predicate: {}", pred)
-            }
-        }
-    }
-}
-
-impl error::Error for ParseError {}
 
 #[cfg(test)]
 mod tests {
@@ -195,7 +162,7 @@ mod tests {
         let err = Target::parse("x86_64-pc-darwin").expect_err("unknown triple");
         assert_eq!(
             err,
-            ParseError::UnknownTriple("x86_64-pc-darwin".to_string())
+            Error::UnknownTargetTriple("x86_64-pc-darwin".to_string())
         );
     }
 
@@ -217,7 +184,7 @@ mod tests {
     #[test]
     fn test_unknown_predicate() {
         let err = Target::parse("cfg(bogus_key = \"bogus_value\")").expect_err("unknown predicate");
-        assert_eq!(err, ParseError::UnknownPredicate("bogus_key".to_string()));
+        assert_eq!(err, Error::UnknownPredicate("bogus_key".to_string()));
     }
 
     #[test]

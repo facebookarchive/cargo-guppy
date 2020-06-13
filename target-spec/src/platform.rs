@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::Error;
 use cfg_expr::targets::get_builtin_target_by_triple;
 use custom_platforms::TargetInfo;
 use std::collections::HashSet;
@@ -29,9 +30,14 @@ impl<'a> Platform<'a> {
     /// Creates a new `Platform` from the given built-in triple and target features.
     ///
     /// Returns `None` if this platform wasn't known to `target-spec`.
-    pub fn new(triple: impl AsRef<str>, target_features: TargetFeatures<'a>) -> Option<Self> {
-        Some(Self {
-            target_info: get_builtin_target_by_triple(triple.as_ref())?,
+    pub fn new(
+        triple: impl AsRef<str>,
+        target_features: TargetFeatures<'a>,
+    ) -> Result<Self, Error> {
+        let triple = triple.as_ref();
+        Ok(Self {
+            target_info: get_builtin_target_by_triple(triple)
+                .ok_or_else(|| Error::UnknownPlatformTriple(triple.to_string()))?,
             target_features,
             flags: HashSet::new(),
         })

@@ -82,4 +82,4 @@ pub use semver::Version;
 pub use serde_json::Value as JsonValue;
 // These are inlined -- generally, treat target_spec as a private dependency so expose these types
 // as part of guppy's API.
-pub use target_spec::{Platform, TargetFeatures};
+pub use target_spec::{Error as TargetSpecError, Platform, TargetFeatures};
