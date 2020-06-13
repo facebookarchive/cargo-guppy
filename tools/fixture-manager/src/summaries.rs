@@ -128,7 +128,9 @@ fn iter_summaries<'g>(
             .resolve_cargo(&cargo_opts)
             .expect("resolve_cargo succeeded");
 
-        cargo_set.to_summary(&cargo_opts)
+        cargo_set
+            .to_summary(&cargo_opts)
+            .expect("generated summaries should serialize correctly")
     })
 }
 

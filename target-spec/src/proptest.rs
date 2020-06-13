@@ -33,8 +33,12 @@ impl<'a> Platform<'a> {
     pub fn strategy(
         target_features: impl Strategy<Value = TargetFeatures<'a>> + 'a,
     ) -> impl Strategy<Value = Platform<'a>> + 'a {
-        (0..ALL_BUILTINS.len(), target_features).prop_map(|(idx, target_features)| {
-            Platform::new(ALL_BUILTINS[idx].triple, target_features).expect("known triple")
+        let flags = hash_set(flag_strategy(), 0..3);
+        (0..ALL_BUILTINS.len(), target_features, flags).prop_map(|(idx, target_features, flags)| {
+            let mut platform =
+                Platform::new(ALL_BUILTINS[idx].triple, target_features).expect("known triple");
+            platform.add_flags(flags);
+            platform
         })
     }
 
@@ -49,10 +53,22 @@ impl<'a> Platform<'a> {
             .iter()
             .filter(|target_info| triple_filter(target_info.triple))
             .collect();
-        (0..filtered.len(), target_features).prop_map(move |(idx, target_features)| {
-            Platform::new(filtered[idx].triple, target_features).expect("known triple")
-        })
+        let flags = hash_set(flag_strategy(), 0..3);
+        (0..filtered.len(), target_features, flags).prop_map(
+            move |(idx, target_features, flags)| {
+                let mut platform =
+                    Platform::new(filtered[idx].triple, target_features).expect("known triple");
+                platform.add_flags(flags);
+                platform
+            },
+        )
     }
+}
+
+/// Picks a random flag from a list of known flags.
+pub fn flag_strategy() -> impl Strategy<Value = &'static str> {
+    static KNOWN_FLAGS: &[&str] = &["cargo_web", "test-flag", "abc", "foo", "bar", "flag-test"];
+    select(KNOWN_FLAGS)
 }
 
 /// The `Arbitrary` implementation for `TargetFeatures` uses a predefined list of features.

@@ -16,6 +16,8 @@ pub enum Error {
     UnknownPlatformTriple(String),
     /// The provided `cfg()` expression parsed correctly, but it had an unknown predicate.
     UnknownPredicate(String),
+    /// Attempt to generate summary from custom platform.
+    CustomPlatformSummary,
 }
 
 impl fmt::Display for Error {
@@ -29,6 +31,10 @@ impl fmt::Display for Error {
             Error::UnknownPredicate(pred) => {
                 write!(f, "cfg() expression has unknown predicate: {}", pred)
             }
+            Error::CustomPlatformSummary => write!(
+                f,
+                "generating summaries for custom platforms is currently unsupported"
+            ),
         }
     }
 }
@@ -40,6 +46,7 @@ impl error::Error for Error {
             Error::UnknownTargetTriple(_) => None,
             Error::UnknownPlatformTriple(_) => None,
             Error::UnknownPredicate(_) => None,
+            Error::CustomPlatformSummary => None,
         }
     }
 }

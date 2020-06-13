@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- New, optional feature `summaries` to provide serialization and deserialization
+  for `Platform` and `TargetFeatures`.
+- `Platform::is_custom` returns true if the platform was created with the `custom`
+  constructor. 
+  
+### Changed
+
+- The error types have been unified into a single `Error` type.
+- `Platform::new` and `Platform::current` now return errors instead of `None`.
+
 ## [0.3.0] - 2020-06-12
 
 ### Added
