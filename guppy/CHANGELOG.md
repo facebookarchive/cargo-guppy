@@ -26,8 +26,15 @@
 * `proptest` has been upgraded to 0.10. The feature has accordingly been renamed to
   `proptest010`.
 * `Workspace::members` is now `Workspace::iter_by_path`, and `Workspace::members_by_name` is now `Workspace::iter_by_name`.
-  
-## Upcoming
+
+### Fixed
+
+* In `FeatureQuery<'g>` and `FeatureSet<'g>`, the lifetime parameter `'g` is now [covariant].
+  Compile-time assertions ensure that all lifetime parameters in `guppy` are covariant.
+
+[covariant]: https://github.com/sunshowers/lifetime-variance-example/blob/master/src/lib.rs
+
+### Upcoming
 
 * Support for *build summaries* is currently in an experimental state.
 
