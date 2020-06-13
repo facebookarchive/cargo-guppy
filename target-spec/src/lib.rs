@@ -37,12 +37,14 @@
 #![warn(missing_docs)]
 #![forbid(unsafe_code)]
 
+mod errors;
 mod evaluator;
 mod parser;
 mod platform;
 #[cfg(feature = "proptest010")]
 mod proptest;
 
+pub use errors::*;
 pub use evaluator::*;
 pub use parser::*;
 pub use platform::*;

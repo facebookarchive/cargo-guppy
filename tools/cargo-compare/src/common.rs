@@ -164,8 +164,7 @@ impl GuppyCargoCommon {
     /// Returns a `Platform` corresponding to the target platform.
     pub fn make_target_platform(&self) -> Result<Platform<'static>> {
         match &self.target_platform {
-            Some(triple) => Platform::new(triple, TargetFeatures::Unknown)
-                .ok_or_else(|| anyhow::anyhow!("unknown triple: {}", triple)),
+            Some(triple) => Ok(Platform::new(triple, TargetFeatures::Unknown)?),
             None => self.guppy_current_platform(),
         }
     }

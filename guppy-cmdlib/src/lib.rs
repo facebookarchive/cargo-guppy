@@ -150,10 +150,7 @@ pub fn triple_to_platform<'a>(
     match triple {
         Some("current") => Ok(Platform::current()),
         Some("any") => Ok(None),
-        Some(triple) => match Platform::new(triple, TargetFeatures::Unknown) {
-            Some(platform) => Ok(Some(platform)),
-            None => anyhow::bail!("unrecognized triple '{}'", triple),
-        },
+        Some(triple) => Ok(Some(Platform::new(triple, TargetFeatures::Unknown)?)),
         None => Ok(default_fn()),
     }
 }
