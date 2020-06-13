@@ -424,6 +424,31 @@
 <span id="424">424</span>
 <span id="425">425</span>
 <span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -441,6 +466,7 @@
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">NodeFiltered</span>, <span class="ident">NodeRef</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
 
 <span class="kw">impl</span> <span class="ident">PackageGraph</span> {
     <span class="doccomment">/// Creates a new `PackageSet` consisting of all members of this package graph.</span>
@@ -487,21 +513,45 @@
         }
     }
 
+    <span class="doccomment">/// Creates a new `PackageSet` consisting of the specified workspace packages by path.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This does not include transitive dependencies. To do so, use `query_workspace_paths`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns an error if any workspace paths are unknown.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_workspace_paths</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">paths</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageSet</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">workspace</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">workspace</span>();
+        <span class="kw">let</span> <span class="ident">included</span>: <span class="ident">IxBitSet</span> <span class="op">=</span> <span class="ident">paths</span>
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> {
+                <span class="ident">workspace</span>
+                    .<span class="ident">member_by_path</span>(<span class="ident">path</span>.<span class="ident">as_ref</span>())
+                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> <span class="ident">package</span>.<span class="ident">package_ix</span>())
+            })
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="ident">PackageSet</span> {
+            <span class="ident">graph</span>: <span class="self">self</span>,
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
+        })
+    }
+
     <span class="doccomment">/// Creates a new `PackageSet` consisting of the specified workspace packages by name.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This does not include transitive dependencies. To do so, use `query_workspace_names`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if any workspace names are unknown.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_workspace_names</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_workspace_names</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">names</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
+        <span class="ident">names</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageSet</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">workspace</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">workspace</span>();
         <span class="kw">let</span> <span class="ident">included</span>: <span class="ident">IxBitSet</span> <span class="op">=</span> <span class="ident">names</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">name</span><span class="op">|</span> {
                 <span class="ident">workspace</span>
-                    .<span class="ident">member_by_name</span>(<span class="ident">name</span>)
+                    .<span class="ident">member_by_name</span>(<span class="ident">name</span>.<span class="ident">as_ref</span>())
                     .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> <span class="ident">package</span>.<span class="ident">package_ix</span>())
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;

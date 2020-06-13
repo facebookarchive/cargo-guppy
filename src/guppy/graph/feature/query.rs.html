@@ -367,16 +367,43 @@
 <span id="367">367</span>
 <span id="368">368</span>
 <span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoSet</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">CrossLink</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureSet</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">CrossLink</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureMetadata</span>, <span class="ident">FeatureSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">query_core</span>::<span class="ident">QueryParams</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">FeatureGraphSpec</span>, <span class="ident">FeatureIx</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageQuery</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
+    <span class="ident">DependencyDirection</span>, <span class="ident">FeatureGraphSpec</span>, <span class="ident">FeatureIx</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageQuery</span>,
+};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
+<span class="kw">use</span> <span class="ident">itertools</span>::<span class="ident">Itertools</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graph</span>::<span class="ident">NodeIndex</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashSet</span>;
 
@@ -635,6 +662,27 @@
     <span class="doccomment">/// Returns the direction the query is happening in.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direction</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyDirection</span> {
         <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">direction</span>()
+    }
+
+    <span class="doccomment">/// Returns the list of initial features specified in the query.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The order of features is unspecified.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initials</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">FeatureMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
+        <span class="self">self</span>.<span class="ident">params</span>
+            .<span class="ident">initials</span>()
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">feature_ix</span><span class="op">|</span> <span class="ident">graph</span>.<span class="ident">metadata_for_ix</span>(<span class="kw-2">*</span><span class="ident">feature_ix</span>))
+    }
+
+    <span class="doccomment">/// Returns the list of initial packages specified in the query.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The order of packages is unspecified.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initial_packages</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="comment">// feature ixs are stored in sorted order by package ix, so dedup() is fine.</span>
+        <span class="self">self</span>.<span class="ident">initials</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature</span><span class="op">|</span> <span class="ident">feature</span>.<span class="ident">package</span>()).<span class="ident">dedup</span>()
     }
 
     <span class="doccomment">/// Returns true if the query starts from the given package.</span>

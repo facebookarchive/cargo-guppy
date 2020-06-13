@@ -247,6 +247,66 @@
 <span id="247">247</span>
 <span id="248">248</span>
 <span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -259,6 +319,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoResolverVersion</span>, <span class="ident">CargoSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureQuery</span>, <span class="ident">FeatureSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>, <span class="ident">PackageSource</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">guppy_summaries</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span>;
@@ -382,6 +443,46 @@
             <span class="ident">omitted_packages</span>: <span class="ident">omitted_summary_ids</span>,
         }
     }
+
+    <span class="doccomment">/// Creates a new `CargoOptions` from this summary.</span>
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_cargo_options</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
+        <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">omitted_packages</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">omitted_packages</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">summary_id</span><span class="op">|</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">summary_id</span>.<span class="ident">source</span> {
+                <span class="ident">SummarySource</span>::<span class="ident">Workspace</span> { <span class="ident">workspace_path</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">package_graph</span>
+                    .<span class="ident">workspace</span>()
+                    .<span class="ident">member_by_path</span>(<span class="ident">workspace_path</span>)
+                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> <span class="ident">package</span>.<span class="ident">id</span>()),
+                <span class="ident">other</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unimplemented</span><span class="macro">!</span>(
+                    <span class="string">&quot;conversion from non-workspace sources ({:?}) is currently unsupported&quot;</span>,
+                    <span class="ident">other</span>
+                ),
+            })
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="ident">CargoOptions</span>::<span class="ident">new</span>()
+            .<span class="ident">with_version</span>(<span class="self">self</span>.<span class="ident">version</span>)
+            .<span class="ident">with_dev_deps</span>(<span class="self">self</span>.<span class="ident">include_dev</span>)
+            .<span class="ident">with_proc_macros_on_target</span>(<span class="self">self</span>.<span class="ident">proc_macros_on_target</span>)
+            .<span class="ident">with_host_platform</span>(
+                <span class="self">self</span>.<span class="ident">host_platform</span>
+                    .<span class="ident">as_ref</span>()
+                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">platform</span><span class="op">|</span> <span class="ident">platform</span>.<span class="ident">to_platform</span>())
+                    .<span class="ident">transpose</span>()<span class="question-mark">?</span>,
+            )
+            .<span class="ident">with_target_platform</span>(
+                <span class="self">self</span>.<span class="ident">target_platform</span>
+                    .<span class="ident">as_ref</span>()
+                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">platform</span><span class="op">|</span> <span class="ident">platform</span>.<span class="ident">to_platform</span>())
+                    .<span class="ident">transpose</span>()<span class="question-mark">?</span>,
+            )
+            .<span class="ident">with_omitted_packages</span>(<span class="ident">omitted_packages</span>))
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PackageSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
@@ -423,6 +524,13 @@
             <span class="ident">target_features</span>: <span class="ident">TargetFeaturesSummary</span>::<span class="ident">new</span>(<span class="ident">platform</span>.<span class="ident">target_features</span>()),
         }
     }
+
+    <span class="doccomment">/// Creates a `Platform` from a `PlatformSummary`.</span>
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_platform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Platform</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="ident">Platform</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">triple</span>, <span class="self">self</span>.<span class="ident">target_features</span>.<span class="ident">to_target_features</span>())
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error</span>::<span class="ident">UnknownPlatformTriple</span>(<span class="self">self</span>.<span class="ident">triple</span>.<span class="ident">clone</span>()))
+    }
 }
 
 <span class="doccomment">/// Summary of target feature information.</span>
@@ -447,6 +555,18 @@
             ),
             <span class="ident">TargetFeatures</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">TargetFeaturesSummary</span>::<span class="ident">All</span>,
             <span class="ident">other</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Unknown target features: {:?}&quot;</span>, <span class="ident">other</span>),
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_target_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TargetFeatures</span> {
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">TargetFeaturesSummary</span>::<span class="ident">Unknown</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">TargetFeatures</span>::<span class="ident">Unknown</span>,
+            <span class="ident">TargetFeaturesSummary</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">TargetFeatures</span>::<span class="ident">All</span>,
+            <span class="ident">TargetFeaturesSummary</span>::<span class="ident">Features</span>(<span class="ident">features</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="ident">hash_set</span> <span class="op">=</span> <span class="ident">features</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature</span><span class="op">|</span> <span class="ident">feature</span>.<span class="ident">as_str</span>()).<span class="ident">collect</span>();
+                <span class="ident">TargetFeatures</span>::<span class="ident">Features</span>(<span class="ident">hash_set</span>)
+            }
         }
     }
 }
