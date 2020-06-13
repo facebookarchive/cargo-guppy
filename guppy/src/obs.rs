@@ -19,18 +19,21 @@ pub trait Obs<'a, T>: private::Sealed {
 impl<T> private::Sealed for T {}
 
 impl<'a, T: Send> Obs<'a, T> for T {
+    #[doc(hidden)]
     fn into_supercow(self) -> Supercow<'a, T> {
         self.into()
     }
 }
 
 impl<'a, T: Sync> Obs<'a, T> for &'a T {
+    #[doc(hidden)]
     fn into_supercow(self) -> Supercow<'a, T> {
         self.into()
     }
 }
 
 impl<'a, T: 'static + Send + Sync> Obs<'a, T> for Arc<T> {
+    #[doc(hidden)]
     fn into_supercow(self) -> Supercow<'a, T> {
         self.into()
     }
