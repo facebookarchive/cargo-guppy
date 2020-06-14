@@ -425,9 +425,9 @@
 
 <span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">bail</span>, <span class="ident">Context</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use</span> <span class="ident">clap</span>::<span class="ident">arg_enum</span>;
-<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::<span class="ident">summaries</span>::<span class="ident">Summary</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::<span class="ident">CargoOptions</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">all_filter</span>, <span class="ident">FeatureSet</span>};
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">summaries</span>::<span class="ident">Summary</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">DependencyDirection</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">graph</span>::{<span class="ident">DotWrite</span>, <span class="ident">PackageDotVisitor</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>},
@@ -482,12 +482,12 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">old_summary</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">read_to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">old</span>)
             .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;reading old summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">old_summary</span> <span class="op">=</span> <span class="ident">Summary</span>::<span class="ident">parse_with_metadata</span>(<span class="kw-2">&amp;</span><span class="ident">old_summary</span>)
+        <span class="kw">let</span> <span class="ident">old_summary</span> <span class="op">=</span> <span class="ident">Summary</span>::<span class="ident">parse</span>(<span class="kw-2">&amp;</span><span class="ident">old_summary</span>)
             .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;parsing old summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">new_summary</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">read_to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">new</span>)
             .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;reading new summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">new</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">new_summary</span> <span class="op">=</span> <span class="ident">Summary</span>::<span class="ident">parse_with_metadata</span>(<span class="kw-2">&amp;</span><span class="ident">new_summary</span>)
+        <span class="kw">let</span> <span class="ident">new_summary</span> <span class="op">=</span> <span class="ident">Summary</span>::<span class="ident">parse</span>(<span class="kw-2">&amp;</span><span class="ident">new_summary</span>)
             .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;parsing new summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">new</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">old_summary</span>.<span class="ident">diff</span>(<span class="kw-2">&amp;</span><span class="ident">new_summary</span>);
@@ -657,7 +657,7 @@
     }
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">summary_path</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">summary</span> {
-        <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="ident">cargo_set</span>.<span class="ident">to_summary</span>(<span class="kw-2">&amp;</span><span class="ident">cargo_opts</span>);
+        <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="ident">cargo_set</span>.<span class="ident">to_summary</span>(<span class="kw-2">&amp;</span><span class="ident">cargo_opts</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="string">&quot;# This summary file was @generated by cargo-guppy.\n\n&quot;</span>.<span class="ident">to_string</span>();
         <span class="ident">summary</span>.<span class="ident">write_to_string</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>)<span class="question-mark">?</span>;
 
