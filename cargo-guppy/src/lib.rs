@@ -8,9 +8,9 @@ pub use crate::core::*;
 
 use anyhow::{bail, Context, Result};
 use clap::arg_enum;
-use guppy::graph::cargo::summaries::Summary;
 use guppy::graph::cargo::CargoOptions;
 use guppy::graph::feature::{all_filter, FeatureSet};
+use guppy::graph::summaries::Summary;
 use guppy::graph::DependencyDirection;
 use guppy::{
     graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
@@ -65,12 +65,12 @@ impl DiffSummariesOptions {
     pub fn exec(&self) -> Result<()> {
         let old_summary = fs::read_to_string(&self.old)
             .with_context(|| format!("reading old summary {} failed", self.old.display()))?;
-        let old_summary = Summary::parse_with_metadata(&old_summary)
+        let old_summary = Summary::parse(&old_summary)
             .with_context(|| format!("parsing old summary {} failed", self.old.display()))?;
 
         let new_summary = fs::read_to_string(&self.new)
             .with_context(|| format!("reading new summary {} failed", self.new.display()))?;
-        let new_summary = Summary::parse_with_metadata(&new_summary)
+        let new_summary = Summary::parse(&new_summary)
             .with_context(|| format!("parsing new summary {} failed", self.new.display()))?;
 
         let diff = old_summary.diff(&new_summary);

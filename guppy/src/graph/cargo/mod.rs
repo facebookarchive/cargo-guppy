@@ -8,8 +8,5 @@
 
 pub(super) mod build;
 mod cargo_api;
-#[cfg(feature = "summaries")]
-#[doc(hidden)]
-pub mod summaries;
 
 pub use cargo_api::*;

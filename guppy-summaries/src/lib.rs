@@ -21,10 +21,14 @@
 //! # Examples
 //!
 //! ```
-//! use guppy_summaries::{Summary, SummaryId, SummarySource, SummaryDiffStatus, PackageStatus};
+//! use guppy_summaries::{SummaryWithMetadata, SummaryId, SummarySource, SummaryDiffStatus, PackageStatus};
 //! use pretty_assertions::assert_eq;
 //! use semver::Version;
 //! use std::collections::BTreeSet;
+//! use toml::Value;
+//!
+//! // Type alias for use in this example.
+//! type Summary = SummaryWithMetadata<Value>;
 //!
 //! // A summary is a TOML file that has this format:
 //! static SUMMARY: &str = r#"

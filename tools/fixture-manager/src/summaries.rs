@@ -3,7 +3,7 @@
 
 use anyhow::{bail, Result};
 use fixtures::json::JsonFixture;
-use guppy::graph::cargo::summaries::{Summary, SummaryDiff};
+use guppy::graph::summaries::{Summary, SummaryDiff};
 use guppy_cmdlib::PackagesAndFeatures;
 use once_cell::sync::Lazy;
 use proptest_ext::ValueGenerator;
@@ -146,7 +146,7 @@ fn read_summary(summary_file: &Path) -> Result<Option<Summary>> {
         }
     };
 
-    Ok(Some(Summary::parse_with_metadata(&data)?))
+    Ok(Some(Summary::parse(&data)?))
 }
 
 /// Returns a summary template for this fixture, creating the directory as necessary.

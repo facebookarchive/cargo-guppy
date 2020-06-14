@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{
-    PackageInfo, PackageMap, PackageStatus, Summary, SummaryDiffStatus, SummaryId, SummarySource,
+    PackageInfo, PackageMap, PackageStatus, SummaryDiffStatus, SummaryId, SummarySource,
+    SummaryWithMetadata,
 };
 use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::BTreeSet;
 
+type Summary = SummaryWithMetadata;
 #[test]
 fn empty_roundtrip() {
     let summary = Summary::default();

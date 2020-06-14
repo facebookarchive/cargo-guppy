@@ -12,9 +12,6 @@ use toml::{Serializer, Value};
 /// A type representing a package map as used in `Summary` instances.
 pub type PackageMap = BTreeMap<SummaryId, PackageInfo>;
 
-/// A build summary, with the metadata parameter set to the default of `toml::Value`.
-pub type Summary = SummaryWithMetadata<Value>;
-
 /// An in-memory representation of a build summary.
 ///
 /// The metadata parameter is customizable.
@@ -50,19 +47,9 @@ pub struct SummaryWithMetadata<M = Value> {
     pub host_packages: PackageMap,
 }
 
-impl Summary {
-    /// Deserializes a summary from the given string.
-    ///
-    /// This uses the default type `toml::Value` for the metadata. To customize the metadata type,
-    /// use `parse_with_metadata`.
-    pub fn parse(s: &str) -> Result<Self, toml::de::Error> {
-        Self::parse_with_metadata(s)
-    }
-}
-
 impl<M> SummaryWithMetadata<M> {
-    /// Deserializes a summary from the given string, with a custom metadata type parameter.
-    pub fn parse_with_metadata<'de>(s: &'de str) -> Result<Self, toml::de::Error>
+    /// Deserializes a summary from the given string, with optional custom metadata.
+    pub fn parse<'de>(s: &'de str) -> Result<Self, toml::de::Error>
     where
         M: Deserialize<'de>,
     {
