@@ -22,6 +22,8 @@ mod query;
 mod query_core;
 mod resolve;
 mod resolve_core;
+#[cfg(feature = "summaries")]
+pub mod summaries;
 
 pub use crate::petgraph_support::dot::DotWrite;
 pub use build_targets::*;

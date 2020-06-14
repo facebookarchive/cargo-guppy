@@ -17,13 +17,13 @@ use target_spec::Platform;
 /// This provides control over the resolution algorithm used by `guppy`'s simulation of Cargo.
 #[derive(Clone, Debug)]
 pub struct CargoOptions<'a> {
-    pub(super) version: CargoResolverVersion,
-    pub(super) include_dev: bool,
-    pub(super) proc_macros_on_target: bool,
+    pub(crate) version: CargoResolverVersion,
+    pub(crate) include_dev: bool,
+    pub(crate) proc_macros_on_target: bool,
     // Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.
-    pub(super) host_platform: Option<Supercow<'a, Platform<'a>>>,
-    pub(super) target_platform: Option<Supercow<'a, Platform<'a>>>,
-    pub(super) omitted_packages: HashSet<&'a PackageId>,
+    pub(crate) host_platform: Option<Supercow<'a, Platform<'a>>>,
+    pub(crate) target_platform: Option<Supercow<'a, Platform<'a>>>,
+    pub(crate) omitted_packages: HashSet<&'a PackageId>,
 }
 
 impl<'a> CargoOptions<'a> {
@@ -149,11 +149,11 @@ impl<'a> CargoOptions<'a> {
     // Helper methods
     // ---
 
-    pub(super) fn target_platform(&self) -> Option<&Platform<'a>> {
+    pub(crate) fn target_platform(&self) -> Option<&Platform<'a>> {
         self.target_platform.as_deref()
     }
 
-    pub(super) fn host_platform(&self) -> Option<&Platform<'a>> {
+    pub(crate) fn host_platform(&self) -> Option<&Platform<'a>> {
         self.host_platform.as_deref()
     }
 
