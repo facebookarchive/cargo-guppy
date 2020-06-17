@@ -22,7 +22,7 @@ guppy-summaries = "0.1.0"
 ## Examples
 
 ```rust
-use guppy_summaries::{SummaryWithMetadata, SummaryId, SummarySource, SummaryDiffStatus, PackageStatus};
+use guppy_summaries::{SummaryWithMetadata, SummaryId, SummarySource, PackageStatus};
 use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::BTreeSet;

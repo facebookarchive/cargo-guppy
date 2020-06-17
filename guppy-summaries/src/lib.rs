@@ -21,7 +21,7 @@
 //! # Examples
 //!
 //! ```
-//! use guppy_summaries::{SummaryWithMetadata, SummaryId, SummarySource, SummaryDiffStatus, PackageStatus};
+//! use guppy_summaries::{SummaryWithMetadata, SummaryId, SummarySource, PackageStatus};
 //! use pretty_assertions::assert_eq;
 //! use semver::Version;
 //! use std::collections::BTreeSet;
@@ -121,12 +121,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-mod diff;
+pub mod diff;
+// report::SummaryReport is exported through the diff module.
 mod report;
 mod summary;
 #[cfg(test)]
 mod unit_tests;
 
-pub use diff::*;
-pub use report::*;
 pub use summary::*;

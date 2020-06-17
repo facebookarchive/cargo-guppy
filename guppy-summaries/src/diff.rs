@@ -1,9 +1,16 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+//! Compare and diff summaries.
+//!
+//! A diff of two summaries is a list of changes between them.
+//!
+//! The main entry point is `SummaryDiff`, which can be created through the `diff` method on
+//! summaries or through `SummaryDiff::new`.
+
+pub use crate::report::SummaryReport;
 use crate::{
-    PackageInfo, PackageMap, PackageStatus, SummaryId, SummaryReport, SummarySource,
-    SummaryWithMetadata,
+    PackageInfo, PackageMap, PackageStatus, SummaryId, SummarySource, SummaryWithMetadata,
 };
 use diffus::{edit, Diffable};
 use semver::Version;

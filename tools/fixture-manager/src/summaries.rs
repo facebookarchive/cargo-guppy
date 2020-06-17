@@ -3,7 +3,7 @@
 
 use anyhow::{bail, Result};
 use fixtures::json::JsonFixture;
-use guppy::graph::summaries::{Summary, SummaryDiff};
+use guppy::graph::summaries::{diff::SummaryDiff, Summary};
 use guppy_cmdlib::PackagesAndFeatures;
 use once_cell::sync::Lazy;
 use proptest_ext::ValueGenerator;
