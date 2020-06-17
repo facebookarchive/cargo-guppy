@@ -83,13 +83,13 @@ impl MetadataCommand {
     }
 
     /// Runs the configured `cargo metadata` and returns a deserialized `CargoMetadata`.
-    pub fn exec(&mut self) -> Result<CargoMetadata, Error> {
+    pub fn exec(&self) -> Result<CargoMetadata, Error> {
         let inner = self.inner.exec().map_err(Error::command_error)?;
         Ok(CargoMetadata(inner))
     }
 
     /// Runs the configured `cargo metadata` and returns a parsed `PackageGraph`.
-    pub fn build_graph(&mut self) -> Result<PackageGraph, Error> {
+    pub fn build_graph(&self) -> Result<PackageGraph, Error> {
         let metadata = self.exec()?;
         metadata.build_graph()
     }

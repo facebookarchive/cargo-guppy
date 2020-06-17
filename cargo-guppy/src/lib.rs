@@ -95,7 +95,7 @@ pub struct DupsOptions {
 }
 
 pub fn cmd_dups(opts: &DupsOptions) -> Result<(), anyhow::Error> {
-    let mut command = opts.metadata_opts.make_command();
+    let command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
     let resolver = opts.filter_opts.make_resolver(&pkg_graph);
@@ -167,7 +167,7 @@ pub struct ResolveCargoOptions {
 pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error> {
     let target_platform = triple_to_platform(opts.target_platform.as_deref(), || None)?;
     let host_platform = triple_to_platform(opts.host_platform.as_deref(), || None)?;
-    let mut command = opts.metadata_opts.make_command();
+    let command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
     let cargo_opts = CargoOptions::new()
@@ -283,7 +283,7 @@ pub struct CmdSelectOptions {
 }
 
 pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
-    let mut command = options.metadata_opts.make_command();
+    let command = options.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
     let query = options.query_opts.apply(&pkg_graph)?;
@@ -331,7 +331,7 @@ pub struct SubtreeSizeOptions {
 }
 
 pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Error> {
-    let mut command = options.metadata_opts.make_command();
+    let command = options.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
     let resolver = options.filter_opts.make_resolver(&pkg_graph);
