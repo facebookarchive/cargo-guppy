@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::SummaryDiff;
+use crate::diff::SummaryDiff;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
