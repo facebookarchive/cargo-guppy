@@ -12,7 +12,7 @@ use std::fmt;
 use std::fs;
 use std::io::{self, Write};
 use std::mem;
-use std::path::{Path, PathBuf};
+use std::path::{Path, PathBuf, MAIN_SEPARATOR};
 use structopt::StructOpt;
 use toml_edit::{decorated, Document, Item, Table, Value};
 
@@ -346,7 +346,7 @@ fn moves_for<'g: 'a, 'a>(
                     let mut new_path = check_unicode_path(new_path)?;
 
                     // new_path can sometimes have a trailing slash -- remove it if it does.
-                    if new_path.ends_with('/') {
+                    if new_path.ends_with(MAIN_SEPARATOR) {
                         new_path.pop();
                     }
 
