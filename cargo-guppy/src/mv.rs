@@ -518,7 +518,8 @@ fn update_root_toml(
             _ => bail!("in [workspace], {} is not an array", to_update),
         };
 
-        for member in members.iter_mut() {
+        for idx in 0..members.len() {
+            let member = members.get(idx).expect("valid idx");
             match member.as_str() {
                 Some(path) => {
                     let abs_member_dir = workspace_root.join(path);
@@ -535,7 +536,9 @@ fn update_root_toml(
 
                     if let Some(package_move) = src_moves.get(member_dir) {
                         // This path was moved.
-                        replace_decorated(member, package_move.new_path.as_str());
+                        members
+                            .replace(idx, package_move.new_path.as_str())
+                            .expect("replacing string with string should work");
                     }
                 }
                 None => bail!("in [workspace], {} contains non-strings", to_update),
