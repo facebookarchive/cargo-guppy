@@ -77,8 +77,12 @@ impl MetadataCommand {
     /// * does not pass in `--no-deps`, so that `guppy` knows about non-workspace dependencies.
     ///
     /// Attempting to override either of those options may lead to unexpected results.
-    pub fn other_options(&mut self, options: impl Into<Vec<String>>) -> &mut Self {
-        self.inner.other_options(options);
+    pub fn other_options(
+        &mut self,
+        options: impl IntoIterator<Item = impl Into<String>>,
+    ) -> &mut Self {
+        self.inner
+            .other_options(options.into_iter().map(|s| s.into()).collect::<Vec<_>>());
         self
     }
 
