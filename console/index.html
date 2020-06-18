@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `console` crate."><meta name="keywords" content="rust, rustlang, rust-lang, console"><title>console - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../console/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate console</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all console's items</p></a><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'console', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/console/lib.rs.html#1-102' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>console</a></span></h1><div class='docblock'><p>console is a library for Rust that provides access to various terminal
+features so you can build nicer looking command line interfaces.  It
+comes with various tools and utilities for working with Terminals and
+formatting text.</p>
+<p>Best paired with other libraries in the family:</p>
+<ul>
+<li><a href="https://docs.rs/dialoguer">dialoguer</a></li>
+<li><a href="https://docs.rs/indicatif">indicatif</a></li>
+</ul>
+<h1 id="terminal-access" class="section-header"><a href="#terminal-access">Terminal Access</a></h1>
+<p>The terminal is abstracted through the <code>console::Term</code> type.  It can
+either directly provide access to the connected terminal or by buffering
+up commands.  A buffered terminal will however not be completely buffered
+on windows where cursor movements are currently directly passed through.</p>
+<p>Example usage:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">thread</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">Duration</span>;
+
+<span class="kw">use</span> <span class="ident">console</span>::<span class="ident">Term</span>;
+
+<span class="kw">let</span> <span class="ident">term</span> <span class="op">=</span> <span class="ident">Term</span>::<span class="ident">stdout</span>();
+<span class="ident">term</span>.<span class="ident">write_line</span>(<span class="string">&quot;Hello World!&quot;</span>)<span class="question-mark">?</span>;
+<span class="ident">thread</span>::<span class="ident">sleep</span>(<span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">2000</span>));
+<span class="ident">term</span>.<span class="ident">clear_line</span>()<span class="question-mark">?</span>;</pre></div>
+<h1 id="colors-and-styles" class="section-header"><a href="#colors-and-styles">Colors and Styles</a></h1>
+<p><code>console</code> uses <code>clicolors-control</code> to control colors.  It also
+provides higher level wrappers for styling text and other things
+that can be displayed with the <code>style</code> function and utility types.</p>
+<p>Example usage:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">console</span>::<span class="ident">style</span>;
+
+<span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;This is {} neat&quot;</span>, <span class="ident">style</span>(<span class="string">&quot;quite&quot;</span>).<span class="ident">cyan</span>());</pre></div>
+<p>You can also store styles and apply them to text later:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">console</span>::<span class="ident">Style</span>;
+
+<span class="kw">let</span> <span class="ident">cyan</span> <span class="op">=</span> <span class="ident">Style</span>::<span class="ident">new</span>().<span class="ident">cyan</span>();
+<span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;This is {} neat&quot;</span>, <span class="ident">cyan</span>.<span class="ident">apply_to</span>(<span class="string">&quot;quite&quot;</span>));</pre></div>
+<h1 id="working-with-ansi-codes" class="section-header"><a href="#working-with-ansi-codes">Working with ANSI Codes</a></h1>
+<p>The crate provids the function <code>strip_ansi_codes</code> to remove ANSI codes
+from a string as well as <code>measure_text_width</code> to calculate the width of a
+string as it would be displayed by the terminal.  Both of those together
+are useful for more complex formatting.</p>
+<h1 id="unicode-width-support" class="section-header"><a href="#unicode-width-support">Unicode Width Support</a></h1>
+<p>By default this crate depends on the <code>unicode-width</code> crate to calculate
+the width of terminal characters.  If you do not need this you can disable
+the <code>unicode-width</code> feature which will cut down on dependencies.</p>
+<h1 id="features" class="section-header"><a href="#features">Features</a></h1>
+<p>By default all features are enabled.  The following features exist:</p>
+<ul>
+<li><code>unicode-width</code>: adds support for unicode width calculations</li>
+<li><code>ansi-parsing</code>: adds support for parsing ansi codes (this adds support
+for stripping and taking ansi escape codes into account for length
+calculations).</li>
+</ul>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.AnsiCodeIterator.html" title='console::AnsiCodeIterator struct'>AnsiCodeIterator</a></td><td class='docblock-short'><p>An iterator over ansi codes in a string.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Emoji.html" title='console::Emoji struct'>Emoji</a></td><td class='docblock-short'><p>&quot;Intelligent&quot; emoji formatter.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Style.html" title='console::Style struct'>Style</a></td><td class='docblock-short'><p>A stored style that can be applied.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.StyledObject.html" title='console::StyledObject struct'>StyledObject</a></td><td class='docblock-short'><p>A formatting wrapper that can be styled for a terminal.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Term.html" title='console::Term struct'>Term</a></td><td class='docblock-short'><p>Abstraction around a terminal.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.TermFeatures.html" title='console::TermFeatures struct'>TermFeatures</a></td><td class='docblock-short'><p>Gives access to the terminal features.</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.Alignment.html" title='console::Alignment enum'>Alignment</a></td><td class='docblock-short'><p>Defines the alignment for padding operations.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.Attribute.html" title='console::Attribute enum'>Attribute</a></td><td class='docblock-short'><p>A terminal style attribute.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.Color.html" title='console::Color enum'>Color</a></td><td class='docblock-short'><p>A terminal color.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.Key.html" title='console::Key enum'>Key</a></td><td class='docblock-short'><p>Key mapping</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.TermFamily.html" title='console::TermFamily enum'>TermFamily</a></td><td class='docblock-short'><p>The family of the terminal.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.TermTarget.html" title='console::TermTarget enum'>TermTarget</a></td><td class='docblock-short'><p>Where the term is writing.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.colors_enabled.html" title='console::colors_enabled fn'>colors_enabled</a></td><td class='docblock-short'><p>Returns <code>true</code> if colors should be enabled for stdout.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.colors_enabled_stderr.html" title='console::colors_enabled_stderr fn'>colors_enabled_stderr</a></td><td class='docblock-short'><p>Returns <code>true</code> if colors should be enabled for stderr.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.measure_text_width.html" title='console::measure_text_width fn'>measure_text_width</a></td><td class='docblock-short'><p>Measure the width of a string in terminal characters.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.pad_str.html" title='console::pad_str fn'>pad_str</a></td><td class='docblock-short'><p>Pads a string to fill a certain number of characters.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.set_colors_enabled.html" title='console::set_colors_enabled fn'>set_colors_enabled</a></td><td class='docblock-short'><p>Forces colorization on or off for stdout.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.set_colors_enabled_stderr.html" title='console::set_colors_enabled_stderr fn'>set_colors_enabled_stderr</a></td><td class='docblock-short'><p>Forces colorization on or off for stderr.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.strip_ansi_codes.html" title='console::strip_ansi_codes fn'>strip_ansi_codes</a></td><td class='docblock-short'><p>Helper function to strip ansi codes.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.style.html" title='console::style fn'>style</a></td><td class='docblock-short'><p>Wraps an object for formatting for styling.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.truncate_str.html" title='console::truncate_str fn'>truncate_str</a></td><td class='docblock-short'><p>Truncates a string to a certain number of characters.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.user_attended.html" title='console::user_attended fn'>user_attended</a></td><td class='docblock-short'><p>A fast way to check if the application has a user attended.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "console";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
