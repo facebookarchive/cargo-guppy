@@ -3,7 +3,8 @@
 
 use anyhow::Result;
 use cargo_guppy::{
-    CmdSelectOptions, DiffSummariesOptions, DupsOptions, ResolveCargoOptions, SubtreeSizeOptions,
+    CmdSelectOptions, DiffSummariesOptions, DupsOptions, MvOptions, ResolveCargoOptions,
+    SubtreeSizeOptions,
 };
 use structopt::StructOpt;
 
@@ -39,6 +40,12 @@ enum Command {
     #[structopt(name = "subtree-size")]
     /// Print a list of dependencies along with their unique subtree size
     SubtreeSize(SubtreeSizeOptions),
+    #[structopt(name = "mv")]
+    /// Move packages to another location, fixing up workspace paths
+    ///
+    /// The source directories must be crates, and the destination must be within the same
+    /// workspace.
+    Mv(MvOptions),
 }
 
 // When invoked as a cargo subcommand, cargo passes too many arguments so we need to filter out
@@ -63,5 +70,6 @@ fn main() -> Result<()> {
         Command::ResolveCargo(ref options) => cargo_guppy::cmd_resolve_cargo(options),
         Command::Select(ref options) => cargo_guppy::cmd_select(options),
         Command::SubtreeSize(ref options) => cargo_guppy::cmd_subtree_size(options),
+        Command::Mv(ref options) => options.exec(),
     }
 }

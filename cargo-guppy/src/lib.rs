@@ -3,8 +3,10 @@
 
 mod core;
 mod diff;
+mod mv;
 
 pub use crate::core::*;
+pub use crate::mv::*;
 
 use anyhow::{bail, Context, Result};
 use clap::arg_enum;
