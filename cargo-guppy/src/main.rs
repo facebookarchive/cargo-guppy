@@ -15,10 +15,11 @@ struct Args {
     cmd: Command,
 }
 
+// Ensure this list is kept up to date with the doc comment in lib.rs.
 #[derive(Debug, StructOpt)]
 enum Command {
     #[structopt(name = "diff")]
-    /// Perform a diff of two Cargo.lock files
+    /// Perform a diff of two cargo metadata JSON files
     Diff {
         #[structopt(long)]
         json: bool,
