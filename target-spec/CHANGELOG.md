@@ -2,12 +2,12 @@
 
 ## Unreleased
 
-### Added
+### [0.4.0] - 2020-06-20
 
 - New, optional feature `summaries` to provide serialization and deserialization
   for `Platform` and `TargetFeatures`.
 - `Platform::is_custom` returns true if the platform was created with the `custom`
-  constructor. 
+  constructor.
   
 ### Changed
 
@@ -61,6 +61,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.4.0
 [0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.3.0
 [0.2.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.4
 [0.2.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.3

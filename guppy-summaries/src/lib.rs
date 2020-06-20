@@ -15,7 +15,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! guppy-summaries = "0.1.0"
+//! guppy-summaries = "0.2.0"
 //! ```
 //!
 //! # Examples
