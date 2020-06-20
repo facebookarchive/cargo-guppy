@@ -20,6 +20,7 @@
 //!
 //! * `proptest010`: Support for [property-based testing](https://jessitron.com/2013/04/25/property-based-testing-what-is-it/)
 //!   using the [`proptest`](https://altsysrq.github.io/proptest-book/intro.html) framework.
+//! * `summaries`: Support for writing out [build summaries](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy-summaries).
 //!
 //! # Examples
 //!
