@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/itertools-0.8.2/src/adaptors/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../itertools/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/itertools-0.9.0/src/adaptors/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../itertools/index.html'><div class='logo-container'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1249,6 +1249,15 @@
 <span id="1249">1249</span>
 <span id="1250">1250</span>
 <span id="1251">1251</span>
+<span id="1252">1252</span>
+<span id="1253">1253</span>
+<span id="1254">1254</span>
+<span id="1255">1255</span>
+<span id="1256">1256</span>
+<span id="1257">1257</span>
+<span id="1258">1258</span>
+<span id="1259">1259</span>
+<span id="1260">1260</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Licensed under the Apache License, Version 2.0</span>
 <span class="doccomment">//! http://www.apache.org/licenses/LICENSE-2.0 or the MIT license</span>
@@ -1264,17 +1273,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>::<span class="ident">replace</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::{<span class="ident">Fuse</span>, <span class="ident">Peekable</span>, <span class="ident">FromIterator</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
-<span class="kw">use</span> <span class="ident">size_hint</span>;
-
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">clone_fields</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">base</span>:<span class="ident">expr</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>:<span class="ident">ident</span>),<span class="op">+</span>) <span class="op">=</span><span class="op">&gt;</span> (
-        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> {
-            $(
-                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span> : <span class="macro-nonterminal">$</span><span class="macro-nonterminal">base</span> . <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span> .<span class="ident">clone</span>()
-            ),<span class="op">*</span>
-        }
-    );
-}
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">size_hint</span>;
 
 <span class="doccomment">/// An iterator adaptor that alternates elements from two iterators until both</span>
 <span class="doccomment">/// run out.</span>
@@ -1495,6 +1494,28 @@
         <span class="ident">size_hint</span>::<span class="ident">add_scalar</span>(<span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">size_hint</span>(), <span class="self">self</span>.<span class="ident">top</span>.<span class="ident">is_some</span>() <span class="kw">as</span> <span class="ident">usize</span>)
     }
 
+    <span class="kw">fn</span> <span class="ident">count</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+        <span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">count</span>() <span class="op">+</span> (<span class="self">self</span>.<span class="ident">top</span>.<span class="ident">is_some</span>() <span class="kw">as</span> <span class="ident">usize</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">last</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">last</span>().<span class="ident">or</span>(<span class="self">self</span>.<span class="ident">top</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">nth</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">top</span> {
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">nth</span>(<span class="ident">n</span>),
+            <span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">some</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">if</span> <span class="ident">n</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+                    <span class="ident">some</span>.<span class="ident">take</span>()
+                } <span class="kw">else</span> {
+                    <span class="kw-2">*</span><span class="ident">some</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+                    <span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">nth</span>(<span class="ident">n</span> <span class="op">-</span> <span class="number">1</span>)
+                }
+            }
+        }
+    }
+
     <span class="kw">fn</span> <span class="ident">all</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>
         <span class="kw">where</span> <span class="ident">G</span>: <span class="ident">FnMut</span>(<span class="self">Self</span>::<span class="ident">Item</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>
     {
@@ -1632,7 +1653,7 @@
 
 <span class="doccomment">/// Create a new Batching iterator.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">batching</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Batching</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="ident">Batching</span> { <span class="ident">f</span>: <span class="ident">f</span>, <span class="ident">iter</span>: <span class="ident">iter</span> }
+    <span class="ident">Batching</span> { <span class="ident">f</span>, <span class="ident">iter</span> }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">F</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Batching</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span>
@@ -1796,7 +1817,7 @@
         <span class="ident">a</span>: <span class="ident">a</span>.<span class="ident">into_iter</span>().<span class="ident">peekable</span>(),
         <span class="ident">b</span>: <span class="ident">b</span>.<span class="ident">into_iter</span>().<span class="ident">peekable</span>(),
         <span class="ident">fused</span>: <span class="prelude-val">None</span>,
-        <span class="ident">cmp</span>: <span class="ident">cmp</span>,
+        <span class="ident">cmp</span>,
     }
 }
 
@@ -1807,9 +1828,7 @@
           <span class="ident">Peekable</span><span class="op">&lt;</span><span class="ident">J</span><span class="op">&gt;</span>: <span class="ident">Clone</span>,
           <span class="ident">F</span>: <span class="ident">Clone</span>
 {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="macro">clone_fields</span><span class="macro">!</span>(<span class="ident">MergeBy</span>, <span class="self">self</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">fused</span>, <span class="ident">cmp</span>)
-    }
+    <span class="macro">clone_fields</span><span class="macro">!</span>(<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">fused</span>, <span class="ident">cmp</span>);
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span>, <span class="ident">F</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">MergeBy</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">J</span>, <span class="ident">F</span><span class="op">&gt;</span>
@@ -1902,9 +1921,7 @@
     <span class="kw">where</span> <span class="ident">I</span>: <span class="ident">Iterator</span>,
           <span class="ident">I</span>::<span class="ident">Item</span>: <span class="ident">Clone</span>
 {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="macro">clone_fields</span><span class="macro">!</span>(<span class="ident">Coalesce</span>, <span class="self">self</span>, <span class="ident">iter</span>, <span class="ident">f</span>)
-    }
+    <span class="macro">clone_fields</span><span class="macro">!</span>(<span class="ident">iter</span>, <span class="ident">f</span>);
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Coalesce</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span>
@@ -1921,9 +1938,9 @@
     <span class="ident">Coalesce</span> {
         <span class="ident">iter</span>: <span class="ident">CoalesceCore</span> {
             <span class="ident">last</span>: <span class="ident">iter</span>.<span class="ident">next</span>(),
-            <span class="ident">iter</span>: <span class="ident">iter</span>,
+            <span class="ident">iter</span>,
         },
-        <span class="ident">f</span>: <span class="ident">f</span>,
+        <span class="ident">f</span>,
     }
 }
 
@@ -1981,9 +1998,7 @@
     <span class="kw">where</span> <span class="ident">I</span>: <span class="ident">Iterator</span>,
           <span class="ident">I</span>::<span class="ident">Item</span>: <span class="ident">Clone</span>,
 {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="macro">clone_fields</span><span class="macro">!</span>(<span class="ident">DedupBy</span>, <span class="self">self</span>, <span class="ident">iter</span>, <span class="ident">dedup_pred</span>)
-    }
+    <span class="macro">clone_fields</span><span class="macro">!</span>(<span class="ident">iter</span>, <span class="ident">dedup_pred</span>);
 }
 
 <span class="doccomment">/// Create a new `DedupBy`.</span>
@@ -1993,7 +2008,7 @@
     <span class="ident">DedupBy</span> {
         <span class="ident">iter</span>: <span class="ident">CoalesceCore</span> {
             <span class="ident">last</span>: <span class="ident">iter</span>.<span class="ident">next</span>(),
-            <span class="ident">iter</span>: <span class="ident">iter</span>,
+            <span class="ident">iter</span>,
         },
         <span class="ident">dedup_pred</span>,
     }
@@ -2015,7 +2030,6 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">Pred</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">DedupBy</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">Pred</span><span class="op">&gt;</span>
     <span class="kw">where</span> <span class="ident">I</span>: <span class="ident">Iterator</span>,
-          <span class="ident">I</span>::<span class="ident">Item</span>: <span class="ident">PartialEq</span>,
           <span class="ident">Pred</span>: <span class="ident">DedupPredicate</span><span class="op">&lt;</span><span class="ident">I</span>::<span class="ident">Item</span><span class="op">&gt;</span>,
 {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">I</span>::<span class="ident">Item</span>;
@@ -2070,7 +2084,7 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">take_while_ref</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">I</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TakeWhileRef</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span>
     <span class="kw">where</span> <span class="ident">I</span>: <span class="ident">Iterator</span> <span class="op">+</span> <span class="ident">Clone</span>
 {
-    <span class="ident">TakeWhileRef</span> { <span class="ident">iter</span>: <span class="ident">iter</span>, <span class="ident">f</span>: <span class="ident">f</span> }
+    <span class="ident">TakeWhileRef</span> { <span class="ident">iter</span>, <span class="ident">f</span> }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">TakeWhileRef</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span>
@@ -2112,7 +2126,7 @@
 
 <span class="doccomment">/// Create a new `WhileSome&lt;I&gt;`.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">while_some</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">WhileSome</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> {
-    <span class="ident">WhileSome</span> { <span class="ident">iter</span>: <span class="ident">iter</span> }
+    <span class="ident">WhileSome</span> { <span class="ident">iter</span> }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">A</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">WhileSome</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
@@ -2138,7 +2152,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// See [`.tuple_combinations()`](../trait.Itertools.html#method.tuple_combinations) for more</span>
 <span class="doccomment">/// information.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TupleCombinations</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">T</span><span class="op">&gt;</span>
     <span class="kw">where</span> <span class="ident">I</span>: <span class="ident">Iterator</span>,
@@ -2177,14 +2191,14 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Tuple1Combination</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> {
     <span class="ident">iter</span>: <span class="ident">I</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Tuple1Combination</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">iter</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">Tuple1Combination</span> { <span class="ident">iter</span>: <span class="ident">iter</span> }
+        <span class="ident">Tuple1Combination</span> { <span class="ident">iter</span> }
     }
 }
 
@@ -2202,7 +2216,7 @@
 
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">impl_tuple_combination</span> {
     (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">C</span>:<span class="ident">ident</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">P</span>:<span class="ident">ident</span> ; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">A</span>:<span class="ident">ident</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">I</span>:<span class="ident">ident</span>),<span class="op">*</span> ; $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">X</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> (
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
         <span class="kw">pub</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">C</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&gt;</span> {
             <span class="ident">item</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">I</span>::<span class="ident">Item</span><span class="op">&gt;</span>,
             <span class="ident">iter</span>: <span class="ident">I</span>,
@@ -2266,6 +2280,7 @@
 <span class="doccomment">/// An iterator adapter to apply `Into` conversion to each element.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See [`.map_into()`](../trait.Itertools.html#method.map_into) for more information.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MapInto</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">R</span><span class="op">&gt;</span> {
     <span class="ident">iter</span>: <span class="ident">I</span>,
@@ -2275,7 +2290,7 @@
 <span class="doccomment">/// Create a new [`MapInto`](struct.MapInto.html) iterator.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_into</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MapInto</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">R</span><span class="op">&gt;</span> {
     <span class="ident">MapInto</span> {
-        <span class="ident">iter</span>: <span class="ident">iter</span>,
+        <span class="ident">iter</span>,
         <span class="ident">_res</span>: <span class="ident">PhantomData</span>,
     }
 }
@@ -2323,6 +2338,7 @@
 <span class="doccomment">/// An iterator adapter to apply a transformation within a nested `Result`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See [`.map_results()`](../trait.Itertools.html#method.map_results) for more information.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MapResults</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span> {
     <span class="ident">iter</span>: <span class="ident">I</span>,
@@ -2335,8 +2351,8 @@
           <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">U</span>,
 {
     <span class="ident">MapResults</span> {
-        <span class="ident">iter</span>: <span class="ident">iter</span>,
-        <span class="ident">f</span>: <span class="ident">f</span>,
+        <span class="ident">iter</span>,
+        <span class="ident">f</span>,
     }
 }
 
@@ -2372,6 +2388,7 @@
 <span class="doccomment">/// An iterator adapter to get the positions of each element that matches a predicate.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See [`.positions()`](../trait.Itertools.html#method.positions) for more information.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Positions</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span> {
     <span class="ident">iter</span>: <span class="ident">I</span>,
@@ -2385,8 +2402,8 @@
           <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">I</span>::<span class="ident">Item</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
 {
     <span class="ident">Positions</span> {
-        <span class="ident">iter</span>: <span class="ident">iter</span>,
-        <span class="ident">f</span>: <span class="ident">f</span>,
+        <span class="ident">iter</span>,
+        <span class="ident">f</span>,
         <span class="ident">count</span>: <span class="number">0</span>
     }
 }
@@ -2430,6 +2447,7 @@
 <span class="doccomment">/// An iterator adapter to apply a mutating function to each element before yielding it.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See [`.update()`](../trait.Itertools.html#method.update) for more information.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="attribute">#[<span class="ident">must_use</span> <span class="op">=</span> <span class="string">&quot;iterator adaptors are lazy and do nothing unless consumed&quot;</span>]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Update</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span> {
     <span class="ident">iter</span>: <span class="ident">I</span>,
@@ -2442,7 +2460,7 @@
     <span class="ident">I</span>: <span class="ident">Iterator</span>,
     <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">I</span>::<span class="ident">Item</span>),
 {
-    <span class="ident">Update</span> { <span class="ident">iter</span>: <span class="ident">iter</span>, <span class="ident">f</span>: <span class="ident">f</span> }
+    <span class="ident">Update</span> { <span class="ident">iter</span>, <span class="ident">f</span> }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Update</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">F</span><span class="op">&gt;</span>
