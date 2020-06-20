@@ -76,12 +76,23 @@
 <span id="76">76</span>
 <span id="77">77</span>
 <span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="doccomment">//! Support for comparing Cargo and Guppy.</span>
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">check</span>::<span class="ident">CheckOpts</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">diff</span>::<span class="ident">DiffOpts</span>;
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">either</span>::<span class="ident">Either</span>;
@@ -91,6 +102,7 @@
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;
 <span class="kw">use</span> <span class="ident">tempfile</span>::<span class="ident">TempDir</span>;
 
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">check</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">common</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">diff</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
@@ -113,6 +125,12 @@
                 <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">GlobalContext</span>::<span class="ident">new</span>(<span class="bool-val">false</span>, <span class="kw-2">&amp;</span><span class="ident">graph</span>)<span class="question-mark">?</span>;
                 <span class="ident">opts</span>.<span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="ident">ctx</span>)
             }
+            <span class="ident">Command</span>::<span class="ident">Check</span>(<span class="ident">opts</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="comment">// Don&#39;t use the temporary home here so that Cargo caches can be reused.</span>
+                <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">metadata</span>.<span class="ident">make_command</span>().<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">GlobalContext</span>::<span class="ident">new</span>(<span class="bool-val">false</span>, <span class="kw-2">&amp;</span><span class="ident">graph</span>)<span class="question-mark">?</span>;
+                <span class="ident">opts</span>.<span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="ident">ctx</span>)
+            }
         }
     }
 }
@@ -122,6 +140,8 @@
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;diff&quot;</span>)]</span>
     <span class="doccomment">/// Perform a diff of Cargo&#39;s results against Guppy&#39;s</span>
     <span class="ident">Diff</span>(<span class="ident">DiffOpts</span>),
+    <span class="doccomment">/// Generate many queries and compare Cargo and Guppy</span>
+    <span class="ident">Check</span>(<span class="ident">CheckOpts</span>),
 }
 
 <span class="doccomment">/// Global context for Cargo comparisons.</span>

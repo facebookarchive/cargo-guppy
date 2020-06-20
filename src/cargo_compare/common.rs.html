@@ -259,6 +259,27 @@
 <span id="259">259</span>
 <span id="260">260</span>
 <span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -274,9 +295,11 @@
 <span class="kw">use</span> <span class="ident">cargo</span>::<span class="ident">Config</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoResolverVersion</span>, <span class="ident">CargoSet</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::<span class="ident">FeatureSet</span>;
-<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">DependencyDirection</span>;
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{<span class="ident">PackageId</span>, <span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>};
+<span class="kw">use</span> <span class="ident">guppy_cmdlib</span>::<span class="ident">proptest</span>::<span class="ident">triple_strategy</span>;
 <span class="kw">use</span> <span class="ident">guppy_cmdlib</span>::{<span class="ident">CargoMetadataOptions</span>, <span class="ident">PackagesAndFeatures</span>};
+<span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;
@@ -429,6 +452,25 @@
             <span class="prelude-val">Some</span>(<span class="ident">triple</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Platform</span>::<span class="ident">new</span>(<span class="ident">triple</span>, <span class="ident">TargetFeatures</span>::<span class="ident">Unknown</span>)<span class="question-mark">?</span>),
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">guppy_current_platform</span>(),
         }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+        <span class="ident">metadata_opts</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">CargoMetadataOptions</span>,
+        <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">PackageGraph</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        (
+            <span class="ident">PackagesAndFeatures</span>::<span class="ident">strategy</span>(<span class="ident">graph</span>),
+            <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>(),
+            <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>(),
+            <span class="ident">triple_strategy</span>(),
+        )
+            .<span class="ident">prop_map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">pf</span>, <span class="ident">include_dev</span>, <span class="ident">v2</span>, <span class="ident">target_platform</span>)<span class="op">|</span> <span class="self">Self</span> {
+                <span class="ident">pf</span>,
+                <span class="ident">include_dev</span>,
+                <span class="ident">v2</span>,
+                <span class="ident">target_platform</span>: <span class="ident">target_platform</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">to_string</span>()),
+                <span class="ident">metadata_opts</span>: <span class="ident">metadata_opts</span>.<span class="ident">clone</span>(),
+            })
     }
 
     <span class="comment">// ---</span>
