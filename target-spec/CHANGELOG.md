@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## [0.4.0] - 2020-06-20
 
-### [0.4.0] - 2020-06-20
+### Added
 
 - New, optional feature `summaries` to provide serialization and deserialization
   for `Platform` and `TargetFeatures`.
