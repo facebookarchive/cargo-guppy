@@ -5,7 +5,7 @@
 //!
 //! `cargo-guppy` provides a frontend for running `guppy` queries.
 //!
-//! ## Installing
+//! # Installing
 //!
 //! `cargo-guppy` is currently a work in progress, and not yet on `crates.io`. To install it, ensure
 //! you have `cargo` installed (preferably through [rustup](https://rustup.rs/)), then run:
@@ -16,23 +16,23 @@
 //!
 //! This will make the `cargo guppy` command available.
 //!
-//! ## Commands
+//! # Commands
 //!
 //! The list of commands is not currently stable and is subject to change.
 //!
-//! ### Query commands
+//! ## Query commands
 //!
 //! * `select`: query packages and their transitive dependencies
 //! * `resolve-cargo`: query packages and features as would be built by cargo
 //! * `subtree-size`: print dependencies along with their unique subtree size
 //! * `dups`: print duplicate packages
 //!
-//! ### Diff commands
+//! ## Diff commands
 //!
 //! * `diff`: perform a diff of two `cargo metadata` JSON outputs
 //! * `diff-summaries`: perform a diff of two [summaries](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy-summaries)
 //!
-//! ### Workspace manipulations
+//! ## Workspace manipulations
 //!
 //! * `mv`: move crates to a new location in a workspace, updating paths along the way
 
