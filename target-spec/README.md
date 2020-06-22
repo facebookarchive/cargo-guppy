@@ -26,13 +26,13 @@ use target_spec::eval;
 
 // Evaluate Rust-like `#[cfg]` syntax.
 let cfg_target = "cfg(all(unix, target_arch = \"x86_64\"))";
-assert_eq!(eval(cfg_target, "x86_64-unknown-linux-gnu"), Ok(true));
-assert_eq!(eval(cfg_target, "i686-unknown-linux-gnu"), Ok(false));
-assert_eq!(eval(cfg_target, "x86_64-pc-windows-msvc"), Ok(false));
+assert_eq!(eval(cfg_target, "x86_64-unknown-linux-gnu"), Ok(Some(true)));
+assert_eq!(eval(cfg_target, "i686-unknown-linux-gnu"), Ok(Some(false)));
+assert_eq!(eval(cfg_target, "x86_64-pc-windows-msvc"), Ok(Some(false)));
 
 // Evaluate a full target-triple.
-assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"), Ok(true));
-assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"), Ok(false));
+assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"), Ok(Some(true)));
+assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"), Ok(Some(false)));
 ```
 
 ## Contributing
