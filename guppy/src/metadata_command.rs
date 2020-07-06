@@ -5,6 +5,7 @@ use crate::graph::PackageGraph;
 use crate::Error;
 use cargo_metadata::CargoOpt;
 use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use std::io;
 use std::path::PathBuf;
 
@@ -99,6 +100,24 @@ impl MetadataCommand {
     }
 }
 
+/// Although consuming a `MetadataCommand` is not required for building a `PackageGraph`, this impl
+/// is provided for convenience.
+impl TryFrom<MetadataCommand> for PackageGraph {
+    type Error = Error;
+
+    fn try_from(command: MetadataCommand) -> Result<Self, Self::Error> {
+        command.build_graph()
+    }
+}
+
+impl<'a> TryFrom<&'a MetadataCommand> for PackageGraph {
+    type Error = Error;
+
+    fn try_from(command: &'a MetadataCommand) -> Result<Self, Self::Error> {
+        command.build_graph()
+    }
+}
+
 /// A deserialized Cargo metadata returned by a `MetadataCommand`.
 ///
 /// This is an alternative entry point for constructing a `PackageGraph`, to be used if the JSON
@@ -124,5 +143,13 @@ impl CargoMetadata {
     /// Parses this metadata and builds a `PackageGraph` from it.
     pub fn build_graph(self) -> Result<PackageGraph, Error> {
         PackageGraph::from_metadata(self)
+    }
+}
+
+impl TryFrom<CargoMetadata> for PackageGraph {
+    type Error = Error;
+
+    fn try_from(metadata: CargoMetadata) -> Result<Self, Self::Error> {
+        metadata.build_graph()
     }
 }
