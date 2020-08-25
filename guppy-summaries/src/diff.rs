@@ -172,7 +172,8 @@ impl<'a> PackageDiff<'a> {
                     None
                 };
 
-                mem::replace(
+                // Don't need the old value of added_status any more since we've already extracted the value out of it.
+                let _ = mem::replace(
                     added_status,
                     SummaryDiffStatus::make_changed(old_version, old_source, old_info, new_info),
                 );
@@ -385,7 +386,7 @@ impl<'a> CombineStatus<'a> {
             _ => CombineStatus::Ignore,
         };
 
-        mem::replace(self, new);
+        let _ = mem::replace(self, new);
     }
 
     fn record_removed(&mut self, summary_id: &'a SummaryId) {
@@ -398,12 +399,12 @@ impl<'a> CombineStatus<'a> {
             _ => CombineStatus::Ignore,
         };
 
-        mem::replace(self, new);
+        let _ = mem::replace(self, new);
     }
 
     fn record_changed(&mut self) {
         // If this package name appears in the changed list at all, don't combine its
         // features.
-        mem::replace(self, CombineStatus::Ignore);
+        let _ = mem::replace(self, CombineStatus::Ignore);
     }
 }
