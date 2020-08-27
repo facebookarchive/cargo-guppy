@@ -7,9 +7,7 @@ This repository contains the source code for:
 * [`guppy-summaries`](guppy-summaries): a library for managing build summaries listing packages and features [![guppy-summaries on crates.io](https://img.shields.io/crates/v/guppy-summaries)](https://crates.io/crates/guppy-summaries) [![Documentation (latest release)](https://docs.rs/guppy-summaries/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/guppy_summaries/)
 * [`cargo-guppy`](cargo-guppy): a command-line frontend for the `guppy` library [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/cargo_guppy/)
 * [`target-spec`](target-spec): an evaluator for `Cargo.toml` target specifications [![target-spec on crates.io](https://img.shields.io/crates/v/target-spec)](https://crates.io/crates/target-spec) [![Documentation (latest release)](https://docs.rs/target-spec/badge.svg)](https://docs.rs/target-spec/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/target_spec/)
-* and a number of [tools](tools) and [test fixtures](fixtures) used to verify that `guppy` behaves correctly. 
-
-The code in this repository is in a **pre-release** state and is under active development.
+* and a number of [internal tools](internal-tools) and [test fixtures](fixtures) used to verify that `guppy` behaves correctly.
 
 ## Use cases
 
@@ -38,8 +36,35 @@ Still to come:
 
 * a command-line query language
 
-This code has been written for the [Libra Core](https://github.com/libra/libra) project, but it may be useful for other
-large Rust projects.
+## Development status
+
+The core `guppy` code in this repository is considered **mostly complete** and the API is mostly stable.
+
+We have ideas for a number of tools on top of guppy, and those are still are under **active development**. Tool requirements may cause further changes in the API, but the goal will be to avoid extensive overhauls.
+
+`guppy`'s simulation of Cargo builds is almost perfect. The known differences that remain are minor, and are mostly internal inconsistencies in Cargo. Comparison testing with `guppy` has already found several bugs in Cargo, for example:
+* [v2 resolver: a proc macro being specified with the key "proc_macro" vs "proc-macro" causes different results](https://github.com/rust-lang/cargo/issues/8315)
+* [v2 resolver: different handling for inactive, optional dependencies based on how they're specified](https://github.com/rust-lang/cargo/issues/8316)
+
+## Production users
+
+`cargo-guppy` is extensively used by the [Libra Core](https://github.com/libra/libra) project.
+
+`guppy` is used for [several lint checks](https://github.com/libra/libra/blob/master/devtools/x/src/lint/guppy.rs). This includes basic rules that look at every workspace package separately:
+* every package has fields like `license` specified
+* crate names and paths should use `-` instead of `_`
+
+to more complex rules about the overall dependency graph, such as:
+* some third-party dependencies are banned from the workspace entirely, or only from default builds
+* every workspace package depends on a `workspace-hack` crate (similar to [rustc-workspace-hack](https://github.com/rust-lang/rust/tree/master/src/tools/rustc-workspace-hack))
+* for any given third-party dependency, the workspace only depends on one version of it directly (transitive dependencies to other versions are still allowed)
+* every workspace package is categorized as either *production* or *test-only*, and the linter checks that test-only crates are not included in production builds
+* support for *overlay features*, which allow test-only code to be:
+  * included in crates (similar to [the `#[cfg(test)]` annotation](https://doc.rust-lang.org/book/ch11-03-test-organization.html#the-tests-module-and-cfgtest))
+  * depended on by test-only code in other crates (`#[cfg(test)]` does not allow this)
+  * but guaranteed to be excluded from production builds
+
+In addition, `guppy-summaries` is used to generate build summaries of packages and features (particularly for [high-security subsets](https://en.wikipedia.org/wiki/Trusted_computing_base) of the codebase), and changes to these sets are flagged by Libra's CI ([example](https://github.com/libra/libra/pull/5799#issuecomment-682221102)).
 
 ## Design
 
