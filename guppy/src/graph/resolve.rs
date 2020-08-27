@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::debug_ignore::DebugIgnore;
 use crate::graph::feature::{FeatureFilter, FeatureSet};
 use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{
@@ -10,7 +11,7 @@ use crate::graph::{
 use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
 use crate::petgraph_support::edge_ref::GraphEdgeRef;
 use crate::petgraph_support::IxBitSet;
-use crate::{Error, PackageId};
+use crate::{sorted_set::SortedSet, Error, PackageId};
 use fixedbitset::FixedBitSet;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, NodeRef};
@@ -27,8 +28,16 @@ impl PackageGraph {
     /// parts of the graph that aren't accessible from the workspace.
     pub fn resolve_all(&self) -> PackageSet {
         PackageSet {
-            graph: self,
+            graph: DebugIgnore(self),
             core: ResolveCore::all_nodes(&self.dep_graph),
+        }
+    }
+
+    /// Creates a new, empty `PackageSet` associated with this package graph.
+    pub fn resolve_none(&self) -> PackageSet {
+        PackageSet {
+            graph: DebugIgnore(self),
+            core: ResolveCore::empty(),
         }
     }
 
@@ -42,7 +51,7 @@ impl PackageGraph {
         package_ids: impl IntoIterator<Item = &'a PackageId>,
     ) -> Result<PackageSet, Error> {
         Ok(PackageSet {
-            graph: self,
+            graph: DebugIgnore(self),
             core: ResolveCore::from_included::<IxBitSet>(self.package_ixs(package_ids)?),
         })
     }
@@ -57,7 +66,7 @@ impl PackageGraph {
             .map(|(_, package)| package.package_ix())
             .collect();
         PackageSet {
-            graph: self,
+            graph: DebugIgnore(self),
             core: ResolveCore::from_included(included),
         }
     }
@@ -81,7 +90,7 @@ impl PackageGraph {
             })
             .collect::<Result<_, Error>>()?;
         Ok(PackageSet {
-            graph: self,
+            graph: DebugIgnore(self),
             core: ResolveCore::from_included(included),
         })
     }
@@ -105,7 +114,7 @@ impl PackageGraph {
             })
             .collect::<Result<_, _>>()?;
         Ok(PackageSet {
-            graph: self,
+            graph: DebugIgnore(self),
             core: ResolveCore::from_included(included),
         })
     }
@@ -116,7 +125,7 @@ impl PackageGraph {
 /// Created by `PackageQuery::resolve`.
 #[derive(Clone, Debug)]
 pub struct PackageSet<'g> {
-    graph: &'g PackageGraph,
+    graph: DebugIgnore<&'g PackageGraph>,
     core: ResolveCore<PackageGraph>,
 }
 
@@ -126,14 +135,14 @@ impl<'g> PackageSet<'g> {
     pub(super) fn new(query: PackageQuery<'g>) -> Self {
         let graph = query.graph;
         Self {
-            graph,
+            graph: DebugIgnore(graph),
             core: ResolveCore::new(graph.dep_graph(), query.params),
         }
     }
 
     pub(super) fn from_included(graph: &'g PackageGraph, included: FixedBitSet) -> Self {
         Self {
-            graph,
+            graph: DebugIgnore(graph),
             core: ResolveCore::from_included(included),
         }
     }
@@ -145,7 +154,7 @@ impl<'g> PackageSet<'g> {
         let graph = query.graph;
         let params = query.params.clone();
         Self {
-            graph,
+            graph: DebugIgnore(graph),
             core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge| {
                 let link = graph.edge_ref_to_link(edge);
                 resolver.accept(&query, link)
@@ -165,9 +174,23 @@ impl<'g> PackageSet<'g> {
 
     /// Returns true if this package ID is contained in this resolve set.
     ///
-    /// Returns `None` if the package ID is unknown.
+    /// Returns an error if the package ID is unknown.
     pub fn contains(&self, package_id: &PackageId) -> Result<bool, Error> {
         Ok(self.contains_ix(self.graph.package_ix(package_id)?))
+    }
+
+    /// Creates a new `PackageQuery` from this set in the specified direction.
+    ///
+    /// This is equivalent to constructing a query from all the `package_ids`.
+    pub fn to_package_query(&self, direction: DependencyDirection) -> PackageQuery<'g> {
+        let package_ixs = SortedSet::new(
+            self.core
+                .included
+                .ones()
+                .map(NodeIndex::new)
+                .collect::<Vec<_>>(),
+        );
+        self.graph.query_from_parts(package_ixs, direction)
     }
 
     // ---
@@ -182,7 +205,7 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn union(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.graph, other.graph),
+            ::std::ptr::eq(self.graph.0, other.graph.0),
             "package graphs passed into union() match"
         );
         let mut res = self.clone();
@@ -197,7 +220,7 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn intersection(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.graph, other.graph),
+            ::std::ptr::eq(self.graph.0, other.graph.0),
             "package graphs passed into intersection() match"
         );
         let mut res = self.clone();
@@ -212,7 +235,7 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn difference(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.graph, other.graph),
+            ::std::ptr::eq(self.graph.0, other.graph.0),
             "package graphs passed into difference() match"
         );
         Self {
@@ -229,7 +252,7 @@ impl<'g> PackageSet<'g> {
     /// Panics if the package graphs associated with `self` and `other` don't match.
     pub fn symmetric_difference(&self, other: &Self) -> Self {
         assert!(
-            ::std::ptr::eq(self.graph, other.graph),
+            ::std::ptr::eq(self.graph.0, other.graph.0),
             "package graphs passed into symmetric_difference() match"
         );
         let mut res = self.clone();
@@ -359,7 +382,7 @@ impl<'g> PackageSet<'g> {
         &'a self,
         direction: DependencyDirection,
     ) -> impl Iterator<Item = PackageLink<'g>> + 'a {
-        let graph = self.graph;
+        let graph = self.graph.0;
         self.core
             .links(graph.dep_graph(), graph.sccs(), direction)
             .map(move |(source_ix, target_ix, edge_ix)| {
@@ -373,7 +396,7 @@ impl<'g> PackageSet<'g> {
         visitor: V,
     ) -> impl fmt::Display + 'a {
         let node_filtered = NodeFiltered(self.graph.dep_graph(), &self.core.included);
-        DotFmt::new(node_filtered, VisitorWrap::new(self.graph, visitor))
+        DotFmt::new(node_filtered, VisitorWrap::new(self.graph.0, visitor))
     }
 
     // ---
@@ -384,6 +407,14 @@ impl<'g> PackageSet<'g> {
         self.core.contains(package_ix)
     }
 }
+
+impl<'g> PartialEq for PackageSet<'g> {
+    fn eq(&self, other: &Self) -> bool {
+        ::std::ptr::eq(self.graph.0, other.graph.0) && self.core == other.core
+    }
+}
+
+impl<'g> Eq for PackageSet<'g> {}
 
 /// Represents whether a particular link within a package graph should be followed during a
 /// resolve operation.

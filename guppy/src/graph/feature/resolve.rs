@@ -27,6 +27,14 @@ impl<'g> FeatureGraph<'g> {
             core: ResolveCore::all_nodes(self.dep_graph()),
         }
     }
+
+    /// Creates a new, empty `FeatureSet` associated with this feature graph.
+    pub fn resolve_none(&self) -> FeatureSet<'g> {
+        FeatureSet {
+            graph: DebugIgnore(*self),
+            core: ResolveCore::empty(),
+        }
+    }
 }
 
 /// A set of resolved feature IDs in a feature graph.
@@ -394,3 +402,12 @@ impl<'g> FeatureSet<'g> {
             })
     }
 }
+
+impl<'g> PartialEq for FeatureSet<'g> {
+    fn eq(&self, other: &Self) -> bool {
+        ::std::ptr::eq(self.graph.package_graph, other.graph.package_graph)
+            && self.core == other.core
+    }
+}
+
+impl<'g> Eq for FeatureSet<'g> {}
