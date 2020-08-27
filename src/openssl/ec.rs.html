@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.10.29/src/ec.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ec.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../openssl/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.10.30/src/ec.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ec.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../openssl/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1043,6 +1043,38 @@
 <span id="1043">1043</span>
 <span id="1044">1044</span>
 <span id="1045">1045</span>
+<span id="1046">1046</span>
+<span id="1047">1047</span>
+<span id="1048">1048</span>
+<span id="1049">1049</span>
+<span id="1050">1050</span>
+<span id="1051">1051</span>
+<span id="1052">1052</span>
+<span id="1053">1053</span>
+<span id="1054">1054</span>
+<span id="1055">1055</span>
+<span id="1056">1056</span>
+<span id="1057">1057</span>
+<span id="1058">1058</span>
+<span id="1059">1059</span>
+<span id="1060">1060</span>
+<span id="1061">1061</span>
+<span id="1062">1062</span>
+<span id="1063">1063</span>
+<span id="1064">1064</span>
+<span id="1065">1065</span>
+<span id="1066">1066</span>
+<span id="1067">1067</span>
+<span id="1068">1068</span>
+<span id="1069">1069</span>
+<span id="1070">1070</span>
+<span id="1071">1071</span>
+<span id="1072">1072</span>
+<span id="1073">1073</span>
+<span id="1074">1074</span>
+<span id="1075">1075</span>
+<span id="1076">1076</span>
+<span id="1077">1077</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Elliptic Curve</span>
 <span class="doccomment">//!</span>
@@ -1061,22 +1093,6 @@
 <span class="doccomment">//! [`EcGroup`]: struct.EcGroup.html</span>
 <span class="doccomment">//! [`Nid`]: ../nid/struct.Nid.html</span>
 <span class="doccomment">//! [Eliptic Curve Cryptography]: https://wiki.openssl.org/index.php/Elliptic_Curve_Cryptography</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Examples</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//! use openssl::ec::{EcGroup, EcPoint};</span>
-<span class="doccomment">//! use openssl::nid::Nid;</span>
-<span class="doccomment">//! use openssl::error::ErrorStack;</span>
-<span class="doccomment">//! fn get_ec_point() -&gt; Result&lt;EcPoint, ErrorStack&gt; {</span>
-<span class="doccomment">//!    let group = EcGroup::from_curve_name(Nid::SECP224R1)?;</span>
-<span class="doccomment">//!    let point = EcPoint::new(&amp;group)?;</span>
-<span class="doccomment">//!    Ok(point)</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! # fn main() {</span>
-<span class="doccomment">//! #    let _ = get_ec_point();</span>
-<span class="doccomment">//! # }</span>
-<span class="doccomment">//! ```</span>
 <span class="kw">use</span> <span class="ident">ffi</span>;
 <span class="kw">use</span> <span class="ident">foreign_types</span>::{<span class="ident">ForeignType</span>, <span class="ident">ForeignTypeRef</span>};
 <span class="kw">use</span> <span class="ident">libc</span>::<span class="ident">c_int</span>;
@@ -1393,6 +1409,7 @@
         <span class="ident">group</span>: <span class="kw-2">&amp;</span><span class="ident">EcGroupRef</span>,
         <span class="ident">q</span>: <span class="kw-2">&amp;</span><span class="ident">EcPointRef</span>,
         <span class="ident">m</span>: <span class="kw-2">&amp;</span><span class="ident">BigNumRef</span>,
+        <span class="comment">// FIXME should be &amp;mut</span>
         <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">BigNumContextRef</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ErrorStack</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
@@ -1413,6 +1430,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">group</span>: <span class="kw-2">&amp;</span><span class="ident">EcGroupRef</span>,
         <span class="ident">n</span>: <span class="kw-2">&amp;</span><span class="ident">BigNumRef</span>,
+        <span class="comment">// FIXME should be &amp;mut</span>
         <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">BigNumContextRef</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ErrorStack</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
@@ -1702,6 +1720,28 @@
             <span class="ident">EcPointRef</span>::<span class="ident">from_ptr</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>)
         }
     }
+
+    <span class="macro">to_pem</span><span class="macro">!</span> {
+        <span class="doccomment">/// Serialies the public key into a PEM-encoded SubjectPublicKeyInfo structure.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// The output will have a header of `-----BEGIN PUBLIC KEY-----`.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// This corresponds to [`PEM_write_bio_EC_PUBKEY`].</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// [`PEM_write_bio_EC_PUBKEY`]: https://www.openssl.org/docs/man1.1.0/crypto/PEM_write_bio_EC_PUBKEY.html</span>
+        <span class="ident">public_key_to_pem</span>,
+        <span class="ident">ffi</span>::<span class="ident">PEM_write_bio_EC_PUBKEY</span>
+    }
+
+    <span class="macro">to_der</span><span class="macro">!</span> {
+        <span class="doccomment">/// Serializes the public key into a DER-encoded SubjectPublicKeyInfo structure.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// This corresponds to [`i2d_EC_PUBKEY`].</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// [`i2d_EC_PUBKEY`]: https://www.openssl.org/docs/man1.1.0/crypto/i2d_EC_PUBKEY.html</span>
+        <span class="ident">public_key_to_der</span>,
+        <span class="ident">ffi</span>::<span class="ident">i2d_EC_PUBKEY</span>
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">EcKeyRef</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
@@ -1838,6 +1878,30 @@
                 })
         }
     }
+
+    <span class="macro">from_pem</span><span class="macro">!</span> {
+        <span class="doccomment">/// Decodes a PEM-encoded SubjectPublicKeyInfo structure containing a EC key.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// The input should have a header of `-----BEGIN PUBLIC KEY-----`.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// This corresponds to [`PEM_read_bio_EC_PUBKEY`].</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// [`PEM_read_bio_EC_PUBKEY`]: https://www.openssl.org/docs/man1.1.0/crypto/PEM_read_bio_EC_PUBKEY.html</span>
+        <span class="ident">public_key_from_pem</span>,
+        <span class="ident">EcKey</span><span class="op">&lt;</span><span class="ident">Public</span><span class="op">&gt;</span>,
+        <span class="ident">ffi</span>::<span class="ident">PEM_read_bio_EC_PUBKEY</span>
+    }
+
+    <span class="macro">from_der</span><span class="macro">!</span> {
+        <span class="doccomment">/// Decodes a DER-encoded SubjectPublicKeyInfo structure containing a EC key.</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// This corresponds to [`d2i_EC_PUBKEY`].</span>
+        <span class="doccomment">///</span>
+        <span class="doccomment">/// [`d2i_EC_PUBKEY`]: https://www.openssl.org/docs/man1.1.0/crypto/d2i_EC_PUBKEY.html</span>
+        <span class="ident">public_key_from_der</span>,
+        <span class="ident">EcKey</span><span class="op">&lt;</span><span class="ident">Public</span><span class="op">&gt;</span>,
+        <span class="ident">ffi</span>::<span class="ident">d2i_EC_PUBKEY</span>
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">EcKey</span><span class="op">&lt;</span><span class="ident">Private</span><span class="op">&gt;</span> {
@@ -1963,6 +2027,7 @@
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">redundant_clone</span>)]</span>
     <span class="kw">fn</span> <span class="ident">dup</span>() {
         <span class="kw">let</span> <span class="ident">group</span> <span class="op">=</span> <span class="ident">EcGroup</span>::<span class="ident">from_curve_name</span>(<span class="ident">Nid</span>::<span class="ident">X9_62_PRIME256V1</span>).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">EcKey</span>::<span class="ident">generate</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>).<span class="ident">unwrap</span>();
@@ -2005,7 +2070,7 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">BigNumContext</span>::<span class="ident">new</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">public_key</span> <span class="op">=</span> <span class="ident">EcPoint</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>).<span class="ident">unwrap</span>();
         <span class="ident">public_key</span>
-            .<span class="ident">mul_generator</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>, <span class="ident">key</span>.<span class="ident">private_key</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ctx</span>)
+            .<span class="ident">mul_generator</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>, <span class="ident">key</span>.<span class="ident">private_key</span>(), <span class="kw-2">&amp;</span><span class="ident">ctx</span>)
             .<span class="ident">unwrap</span>();
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">public_key</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>, <span class="ident">key</span>.<span class="ident">public_key</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ctx</span>).<span class="ident">unwrap</span>());
     }
@@ -2017,7 +2082,7 @@
         <span class="kw">let</span> <span class="ident">one</span> <span class="op">=</span> <span class="ident">BigNum</span>::<span class="ident">from_u32</span>(<span class="number">1</span>).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">BigNumContext</span>::<span class="ident">new</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ecp</span> <span class="op">=</span> <span class="ident">EcPoint</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>).<span class="ident">unwrap</span>();
-        <span class="ident">ecp</span>.<span class="ident">mul_generator</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>, <span class="kw-2">&amp;</span><span class="ident">one</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ctx</span>).<span class="ident">unwrap</span>();
+        <span class="ident">ecp</span>.<span class="ident">mul_generator</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>, <span class="kw-2">&amp;</span><span class="ident">one</span>, <span class="kw-2">&amp;</span><span class="ident">ctx</span>).<span class="ident">unwrap</span>();
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">ecp</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>, <span class="ident">gen</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ctx</span>).<span class="ident">unwrap</span>());
     }
 
@@ -2044,9 +2109,8 @@
 
         <span class="kw">let</span> <span class="ident">dup_key</span> <span class="op">=</span>
             <span class="ident">EcKey</span>::<span class="ident">from_private_components</span>(<span class="kw-2">&amp;</span><span class="ident">group</span>, <span class="ident">key</span>.<span class="ident">private_key</span>(), <span class="ident">key</span>.<span class="ident">public_key</span>()).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">dup_key</span>.<span class="ident">check_key</span>().<span class="ident">unwrap</span>();
+        <span class="ident">dup_key</span>.<span class="ident">check_key</span>().<span class="ident">unwrap</span>();
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">res</span> <span class="op">=</span><span class="op">=</span> ());
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">key</span>.<span class="ident">private_key</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">dup_key</span>.<span class="ident">private_key</span>());
     }
 
