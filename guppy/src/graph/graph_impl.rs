@@ -4,7 +4,7 @@
 use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
 use crate::graph::{
     cargo_version_matches, BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind, Cycles,
-    DependencyDirection, OwnedBuildTargetId, PackageIx,
+    DependencyDirection, OwnedBuildTargetId, PackageIx, PackageQuery,
 };
 use crate::petgraph_support::scc::Sccs;
 use crate::{
@@ -565,6 +565,57 @@ impl<'g> Workspace<'g> {
     }
 }
 
+#[cfg(feature = "rayon1")]
+mod workspace_rayon {
+    use super::*;
+    use rayon::prelude::*;
+
+    /// These parallel iterators require the `rayon1` feature is enabled.
+    impl<'g> Workspace<'g> {
+        /// Returns a parallel iterator over package metadatas, sorted by workspace path.
+        ///
+        /// Requires the `rayon1` feature to be enabled.
+        pub fn par_iter(&self) -> impl ParallelIterator<Item = PackageMetadata<'g>> {
+            self.par_iter_by_path().map(|(_, package)| package)
+        }
+
+        /// Returns a parallel iterator over workspace paths and package metadatas, sorted by
+        /// workspace paths.
+        ///
+        /// Requires the `rayon1` feature to be enabled.
+        pub fn par_iter_by_path(
+            &self,
+        ) -> impl ParallelIterator<Item = (&'g Path, PackageMetadata<'g>)> {
+            let graph = self.graph;
+            self.inner
+                .members_by_path
+                .par_iter()
+                .map(move |(path, id)| {
+                    (
+                        path.as_path(),
+                        graph.metadata(id).expect("valid package ID"),
+                    )
+                })
+        }
+
+        /// Returns a parallel iterator over workspace names and package metadatas, sorted by
+        /// package names.
+        ///
+        /// Requires the `rayon1` feature to be enabled.
+        pub fn par_iter_by_name(
+            &self,
+        ) -> impl ParallelIterator<Item = (&'g str, PackageMetadata<'g>)> {
+            let graph = self.graph;
+            self.inner
+                .members_by_name
+                .par_iter()
+                .map(move |(name, id)| {
+                    (name.as_ref(), graph.metadata(id).expect("valid package ID"))
+                })
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub(super) struct WorkspaceImpl {
     pub(super) root: PathBuf,
@@ -597,6 +648,14 @@ impl<'g> PackageMetadata<'g> {
     /// Returns the unique identifier for this package.
     pub fn id(&self) -> &'g PackageId {
         &self.graph.dep_graph[self.inner.package_ix]
+    }
+
+    /// Creates a `PackageQuery` consisting of this package, in the given direction.
+    ///
+    /// The `PackageQuery` can be used to inspect dependencies in this graph.
+    pub fn to_package_query(&self, direction: DependencyDirection) -> PackageQuery<'g> {
+        self.graph
+            .query_from_parts(iter::once(self.inner.package_ix).collect(), direction)
     }
 
     // ---

@@ -15,7 +15,7 @@ use serde::export::PhantomData;
 /// Core logic for queries that have been resolved into a known set of packages.
 ///
 /// The `G` param ensures that package and feature resolutions aren't mixed up accidentally.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub(super) struct ResolveCore<G> {
     pub(super) included: FixedBitSet,
     pub(super) len: usize,
@@ -43,6 +43,14 @@ impl<G: GraphSpec> ResolveCore<G> {
         Self {
             included,
             len,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub(super) fn empty() -> Self {
+        Self {
+            included: FixedBitSet::with_capacity(0),
+            len: 0,
             _phantom: PhantomData,
         }
     }
@@ -203,6 +211,25 @@ impl<G: GraphSpec> ResolveCore<G> {
         }
     }
 }
+
+impl<G: GraphSpec> PartialEq for ResolveCore<G> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.len != other.len {
+            return false;
+        }
+        if self.included == other.included {
+            return true;
+        }
+        // At the moment we don't normalize the capacity across self.included instances, so check
+        // the symmetric difference.
+        self.included
+            .symmetric_difference(&other.included)
+            .next()
+            .is_none()
+    }
+}
+
+impl<G: GraphSpec> Eq for ResolveCore<G> {}
 
 /// An iterator over package nodes in topological order.
 #[derive(Clone, Debug)]

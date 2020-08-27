@@ -206,6 +206,7 @@ pub enum CargoResolverVersion {
 ///
 /// Cargo implements a set of algorithms to figure out which packages or features are built in
 /// a given situation. `guppy` implements those algorithms.
+#[derive(Clone, Debug)]
 pub struct CargoSet<'g> {
     pub(super) original_query: FeatureQuery<'g>,
     pub(super) target_features: FeatureSet<'g>,
