@@ -11,7 +11,8 @@ fn main() {
 
     let target = env::var("TARGET").unwrap();
 
-    let features = env::var("CARGO_CFG_TARGET_FEATURE").unwrap();
+    // Non-x86/amd64 platforms don't have this environment variable defined at all.
+    let features = env::var("CARGO_CFG_TARGET_FEATURE").unwrap_or_else(|_| "".to_string());
     // The features are in the format |foo,bar|. Convert to |&["foo", "bar", ]|;
     let mut out = vec!["&["];
     for feature in features.split(',') {

@@ -1,0 +1,23 @@
+on: [push, pull_request]
+
+name: CI
+
+jobs:
+  aarch64-build:
+    runs-on: ubuntu-18.04
+    name: Cross-compile to aarch64 
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: aarch64-unknown-linux-gnu
+          override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          # Build all targets to ensure examples are built as well.
+          args: --target aarch64-unknown-linux-gnu --all-targets
+      # TODO: run tests somehow? possibly through cross/qemu
