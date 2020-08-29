@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.1] - 2020-08-28
+
+### Fixed
+
+- Fixed compilation on platforms without target features ([#175](https://github.com/facebookincubator/cargo-guppy/issues/175)).
+
 ## [0.4.0] - 2020-06-20
 
 ### Added
@@ -61,6 +67,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[0.4.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.4.1
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.4.0
 [0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.3.0
 [0.2.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.2.4
