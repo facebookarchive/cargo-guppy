@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::graph::feature::{FeatureFilter, FeatureQuery};
 use crate::graph::query_core::QueryParams;
 use crate::graph::{
     DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageMetadata, PackageResolver,
@@ -190,5 +191,16 @@ impl<'g> PackageQuery<'g> {
         resolver_fn: impl FnMut(&PackageQuery<'g>, PackageLink<'g>) -> bool,
     ) -> PackageSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
+    }
+
+    /// Converts this `PackageQuery` into a `FeatureQuery`, using the given feature filter.
+    ///
+    /// This will cause the feature graph to be constructed if it hasn't been done so already.
+    pub fn to_feature_query(&self, filter: impl FeatureFilter<'g>) -> FeatureQuery<'g> {
+        let package_ixs = self.params.initials();
+        let feature_graph = self.graph.feature_graph();
+        let feature_ixs =
+            feature_graph.feature_ixs_for_package_ixs_filtered(package_ixs.iter().copied(), filter);
+        feature_graph.query_from_parts(feature_ixs, self.direction())
     }
 }
