@@ -207,10 +207,10 @@ mod small {
         assert_eq!(feature_graph.link_count(), 48, "feature link count");
 
         // Check that resolve_packages + a feature filter works.
-        let feature_set = feature_graph.resolve_packages(
-            &package_set,
-            feature_filter(default_filter(), ["foo", "bar"].iter().copied()),
-        );
+        let feature_set = package_set.to_feature_set(feature_filter(
+            default_filter(),
+            ["foo", "bar"].iter().copied(),
+        ));
         let dep_a_id = package_id(json::METADATA_TARGETS1_DEP_A);
         assert!(feature_set
             .contains((&dep_a_id, "foo"))

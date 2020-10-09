@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::graph::feature::{FeatureFilter, FeatureSet};
 use crate::graph::resolve_core::{ResolveCore, Topo};
 use crate::graph::{
     DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageLinkImpl, PackageMetadata,
@@ -234,6 +235,24 @@ impl<'g> PackageSet<'g> {
         let mut res = self.clone();
         res.core.symmetric_difference_with(&other.core);
         res
+    }
+
+    // ---
+    // Conversion to FeatureSet
+    // ---
+
+    /// Creates a new `FeatureSet` consisting of all packages in this `PackageSet`, using the given
+    /// feature filter.
+    ///
+    /// This will cause the feature graph to be constructed if it hasn't been done so already.
+    pub fn to_feature_set(&self, filter: impl FeatureFilter<'g>) -> FeatureSet<'g> {
+        let feature_graph = self.graph.feature_graph();
+        let included: IxBitSet = feature_graph.feature_ixs_for_package_ixs_filtered(
+            // The direction of iteration doesn't matter.
+            self.ixs(DependencyDirection::Forward),
+            filter,
+        );
+        FeatureSet::from_included(feature_graph, included)
     }
 
     // ---

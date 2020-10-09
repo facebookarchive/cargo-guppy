@@ -265,11 +265,11 @@ impl<'a> CargoSetBuildState<'a> {
 
         // Finally, the features are whatever packages were selected, intersected with whatever
         // features were selected.
-        let target_features = graph
-            .resolve_packages(&target_packages, all_filter())
+        let target_features = target_packages
+            .to_feature_set(all_filter())
             .intersection(target_set);
-        let host_features = graph
-            .resolve_packages(&host_packages, all_filter())
+        let host_features = host_packages
+            .to_feature_set(all_filter())
             .intersection(host_set);
 
         // Also construct the direct dep sets.
