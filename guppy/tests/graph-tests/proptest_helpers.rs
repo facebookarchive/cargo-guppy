@@ -509,9 +509,8 @@ pub(super) fn package_feature_set_roundtrip(
         .query_directed(query_ids.iter().copied(), query_direction)
         .expect("valid package IDs")
         .resolve_with(&mut resolver);
-    let feature_graph = package_graph.feature_graph();
-    let all_feature_set = feature_graph.resolve_packages(&package_set, all_filter());
-    let no_feature_set = feature_graph.resolve_packages(&package_set, none_filter());
+    let all_feature_set = package_set.to_feature_set(all_filter());
+    let no_feature_set = package_set.to_feature_set(none_filter());
 
     for test_id in test_ids {
         assert_eq!(

@@ -259,9 +259,7 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let proc_macro_features = || {
         let proc_macro_ids = cargo_set.proc_macro_links().map(|link| link.to().id());
         let package_set = pkg_graph.resolve_ids(proc_macro_ids).expect("valid IDs");
-        let feature_set = pkg_graph
-            .feature_graph()
-            .resolve_packages(&package_set, all_filter());
+        let feature_set = package_set.to_feature_set(all_filter());
         cargo_set.host_features().intersection(&feature_set)
     };
     match opts.build_kind {

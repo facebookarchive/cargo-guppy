@@ -3,8 +3,8 @@
 
 use crate::debug_ignore::DebugIgnore;
 use crate::graph::feature::{
-    CrossLink, FeatureEdge, FeatureFilter, FeatureGraph, FeatureId, FeatureList, FeatureMetadata,
-    FeatureQuery, FeatureResolver,
+    CrossLink, FeatureEdge, FeatureGraph, FeatureId, FeatureList, FeatureMetadata, FeatureQuery,
+    FeatureResolver,
 };
 use crate::graph::resolve_core::ResolveCore;
 use crate::graph::{DependencyDirection, FeatureGraphSpec, PackageMetadata, PackageSet};
@@ -27,29 +27,12 @@ impl<'g> FeatureGraph<'g> {
             core: ResolveCore::all_nodes(self.dep_graph()),
         }
     }
-
-    /// Creates a new `FeatureSet` consisting of all packages in this `PackageSet`, subject to the
-    /// provided filter.
-    pub fn resolve_packages(
-        &self,
-        packages: &PackageSet<'_>,
-        filter: impl FeatureFilter<'g>,
-    ) -> FeatureSet<'g> {
-        let included: IxBitSet = self.feature_ixs_for_package_ixs_filtered(
-            // The direction of iteration doesn't matter.
-            packages.ixs(DependencyDirection::Forward),
-            filter,
-        );
-        FeatureSet {
-            graph: DebugIgnore(*self),
-            core: ResolveCore::from_included(included),
-        }
-    }
 }
 
 /// A set of resolved feature IDs in a feature graph.
 ///
-/// Created by `FeatureQuery::resolve` or the `FeatureGraph::resolve_` methods.
+/// Created by `FeatureQuery::resolve`, the `FeatureGraph::resolve_` methods, or from
+/// `PackageSet::to_feature_set`.
 #[derive(Clone, Debug)]
 pub struct FeatureSet<'g> {
     graph: DebugIgnore<FeatureGraph<'g>>,
@@ -93,10 +76,13 @@ impl<'g> FeatureSet<'g> {
     }
 
     #[allow(dead_code)]
-    pub(super) fn from_included(graph: FeatureGraph<'g>, included: FixedBitSet) -> Self {
+    pub(in crate::graph) fn from_included(
+        graph: FeatureGraph<'g>,
+        included: impl Into<FixedBitSet>,
+    ) -> Self {
         Self {
             graph: DebugIgnore(graph),
-            core: ResolveCore::from_included(included),
+            core: ResolveCore::from_included(included.into()),
         }
     }
 
