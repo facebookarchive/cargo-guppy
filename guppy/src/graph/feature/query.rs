@@ -4,9 +4,7 @@
 use crate::graph::cargo::{CargoOptions, CargoSet};
 use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
 use crate::graph::query_core::QueryParams;
-use crate::graph::{
-    DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata, PackageQuery,
-};
+use crate::graph::{DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata};
 use crate::sorted_set::SortedSet;
 use crate::{Error, PackageId};
 use itertools::Itertools;
@@ -155,8 +153,9 @@ pub fn feature_id_filter<'g: 'a, 'a>(
 
 /// A query over a feature graph.
 ///
-/// This is the entry point for iterators overs IDs and dependency links, and dot graph presentation.
-/// A `FeatureQuery` is constructed through the `query_` methods on `FeatureGraph`.
+/// A `FeatureQuery` is the entry point for Cargo resolution, and also provides iterators over
+/// feature IDs and links. This struct is constructed through the `query_` methods on
+/// `FeatureGraph`, or through `PackageQuery::to_feature_query`.
 #[derive(Clone, Debug)]
 pub struct FeatureQuery<'g> {
     pub(super) graph: FeatureGraph<'g>,
@@ -175,29 +174,9 @@ impl<'g> FeatureGraph<'g> {
     /// `query_workspace` will select all workspace packages (subject to the provided filter) and
     /// their transitive dependencies.
     pub fn query_workspace(&self, filter: impl FeatureFilter<'g>) -> FeatureQuery<'g> {
-        self.query_packages(&self.package_graph.query_workspace(), filter)
-    }
-
-    /// Creates a new query for all packages selected through this `PackageQuery` instance, subject
-    /// to the provided filter.
-    pub fn query_packages(
-        &self,
-        packages: &PackageQuery<'g>,
-        filter: impl FeatureFilter<'g>,
-    ) -> FeatureQuery<'g> {
-        let params = match &packages.params {
-            QueryParams::Forward(package_ixs) => QueryParams::Forward(
-                self.feature_ixs_for_package_ixs_filtered(package_ixs.iter().copied(), filter),
-            ),
-            QueryParams::Reverse(package_ixs) => QueryParams::Reverse(
-                self.feature_ixs_for_package_ixs_filtered(package_ixs.iter().copied(), filter),
-            ),
-        };
-
-        FeatureQuery {
-            graph: *self,
-            params,
-        }
+        self.package_graph
+            .query_workspace()
+            .to_feature_query(filter)
     }
 
     /// Creates a new query that returns transitive dependencies of the given feature IDs in the

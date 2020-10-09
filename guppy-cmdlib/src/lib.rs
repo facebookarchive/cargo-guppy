@@ -62,9 +62,7 @@ impl PackagesAndFeatures {
         // TODO: support feature name validation similar to cargo
         let feature_filter = feature_filter(base_filter, self.features.iter().map(|s| s.as_str()));
 
-        Ok(graph
-            .feature_graph()
-            .query_packages(&package_query, feature_filter))
+        Ok(package_query.to_feature_query(feature_filter))
     }
 }
 

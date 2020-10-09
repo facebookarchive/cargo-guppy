@@ -290,7 +290,7 @@ impl<'g> FeatureGraph<'g> {
             .flat_map(move |package_ix| this.feature_ixs_for_package_ix(package_ix))
     }
 
-    pub(super) fn feature_ixs_for_package_ixs_filtered<B>(
+    pub(in crate::graph) fn feature_ixs_for_package_ixs_filtered<B>(
         &self,
         package_ixs: impl IntoIterator<Item = NodeIndex<PackageIx>>,
         filter: impl FeatureFilter<'g>,
