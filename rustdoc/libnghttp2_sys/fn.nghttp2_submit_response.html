@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `nghttp2_submit_response` fn in crate `libnghttp2_sys`."><meta name="keywords" content="rust, rustlang, rust-lang, nghttp2_submit_response"><title>libnghttp2_sys::nghttp2_submit_response - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../libnghttp2_sys/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><div class="sidebar-elems"><p class='location'><a href='index.html'>libnghttp2_sys</a></p><script>window.sidebarCurrent = {name: 'nghttp2_submit_response', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/libnghttp2_sys/lib.rs.html#3345-3351' title='goto source code'>[src]</a></span><span class='in-band'>Function <a href='index.html'>libnghttp2_sys</a>::<wbr><a class="fn" href=''>nghttp2_submit_response</a></span></h1><pre class='rust fn'>pub unsafe extern &quot;C&quot; fn nghttp2_submit_response(<br>&nbsp;&nbsp;&nbsp;&nbsp;session: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="struct" href="../libnghttp2_sys/struct.nghttp2_session.html" title="struct libnghttp2_sys::nghttp2_session">nghttp2_session</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;stream_id: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.i32.html">i32</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;nva: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*const </a><a class="struct" href="../libnghttp2_sys/struct.nghttp2_nv.html" title="struct libnghttp2_sys::nghttp2_nv">nghttp2_nv</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;nvlen: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;data_prd: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*const </a><a class="struct" href="../libnghttp2_sys/struct.nghttp2_data_provider.html" title="struct libnghttp2_sys::nghttp2_data_provider">nghttp2_data_provider</a><br>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/os/raw/type.c_int.html" title="type std::os::raw::c_int">c_int</a></pre><div class='docblock'><p>@function</p>
+<p>Submits response HEADERS frame and optionally one or more DATA
+frames against the stream |stream_id|.</p>
+<p>The |nva| is an array of name/value pair :type:<code>nghttp2_nv</code> with
+|nvlen| elements.  The application is responsible to include
+required pseudo-header fields (header field whose name starts with
+&quot;:&quot;) in |nva| and must place pseudo-headers before regular header
+fields.</p>
+<p>This function creates copies of all name/value pairs in |nva|.  It
+also lower-cases all names in |nva|.  The order of elements in
+|nva| is preserved.  For header fields with
+:enum:<code>NGHTTP2_NV_FLAG_NO_COPY_NAME</code> and
+:enum:<code>NGHTTP2_NV_FLAG_NO_COPY_VALUE</code> are set, header field name
+and value are not copied respectively.  With
+:enum:<code>NGHTTP2_NV_FLAG_NO_COPY_NAME</code>, application is responsible to
+pass header field name in lowercase.  The application should
+maintain the references to them until
+:type:<code>nghttp2_on_frame_send_callback</code> or
+:type:<code>nghttp2_on_frame_not_send_callback</code> is called.</p>
+<p>HTTP/2 specification has requirement about header fields in the
+response HEADERS.  See the specification for more details.</p>
+<p>If |data_prd| is not <code>NULL</code>, it provides data which will be sent
+in subsequent DATA frames.  This function does not take ownership
+of the |data_prd|.  The function copies the members of the
+|data_prd|.  If |data_prd| is <code>NULL</code>, HEADERS will have
+END_STREAM flag set.</p>
+<p>This method can be used as normal HTTP response and push response.
+When pushing a resource using this function, the |session| must be
+configured using <code>nghttp2_session_server_new()</code> or its variants and
+the target stream denoted by the |stream_id| must be reserved using
+<code>nghttp2_submit_push_promise()</code>.</p>
+<p>To send non-final response headers (e.g., HTTP status 101), don't
+use this function because this function half-closes the outbound
+stream.  Instead, use <code>nghttp2_submit_headers()</code> for this purpose.</p>
+<p>This function returns 0 if it succeeds, or one of the following
+negative error codes:</p>
+<p>:enum:<code>NGHTTP2_ERR_NOMEM</code>
+Out of memory.
+:enum:<code>NGHTTP2_ERR_INVALID_ARGUMENT</code>
+The |stream_id| is 0.
+:enum:<code>NGHTTP2_ERR_DATA_EXIST</code>
+DATA or HEADERS has been already submitted and not fully
+processed yet.  Normally, this does not happen, but when
+application wrongly calls <code>nghttp2_submit_response()</code> twice,
+this may happen.
+:enum:<code>NGHTTP2_ERR_PROTO</code>
+The |session| is client session.</p>
+<p>.. warning::</p>
+<p>Calling this function twice for the same stream ID may lead to
+program crash.  It is generally considered to a programming error
+to commit response twice.</p>
+</div></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "libnghttp2_sys";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

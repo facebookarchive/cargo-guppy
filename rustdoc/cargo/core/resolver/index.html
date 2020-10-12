@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `resolver` mod in crate `cargo`."><meta name="keywords" content="rust, rustlang, rust-lang, resolver"><title>cargo::core::resolver - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a><p class='location'>Module resolver</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'><a href='../../index.html'>cargo</a>::<wbr><a href='../index.html'>core</a></p><script>window.sidebarCurrent = {name: 'resolver', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../../src/cargo/core/resolver/mod.rs.html#1-1085' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../../index.html'>cargo</a>::<wbr><a href='../index.html'>core</a>::<wbr><a class="mod" href=''>resolver</a></span></h1><div class='docblock'><p>Resolution of the entire dependency graph for a crate.</p>
+<p>This module implements the core logic in taking the world of crates and
+constraints and creating a resolved graph with locked versions for all
+crates and their dependencies. This is separate from the registry module
+which is more worried about discovering crates from various sources, this
+module just uses the Registry trait as a source to learn about crates from.</p>
+<p>Actually solving a constraint graph is an NP-hard problem. This algorithm
+is basically a nice heuristic to make sure we get roughly the best answer
+most of the time. The constraints that we're working with are:</p>
+<ol>
+<li>Each crate can have any number of dependencies. Each dependency can
+declare a version range that it is compatible with.</li>
+<li>Crates can be activated with multiple version (e.g., show up in the
+dependency graph twice) so long as each pairwise instance have
+semver-incompatible versions.</li>
+</ol>
+<p>The algorithm employed here is fairly simple, we simply do a DFS, activating
+the &quot;newest crate&quot; (highest version) first and then going to the next
+option. The heuristics we employ are:</p>
+<ul>
+<li>Never try to activate a crate version which is incompatible. This means we
+only try crates which will actually satisfy a dependency and we won't ever
+try to activate a crate that's semver compatible with something else
+activated (as we're only allowed to have one) nor try to activate a crate
+that has the same links attribute as something else
+activated.</li>
+<li>Always try to activate the highest version crate first. The default
+dependency in Cargo (e.g., when you write <code>foo = &quot;0.1.2&quot;</code>) is
+semver-compatible, so selecting the highest version possible will allow us
+to hopefully satisfy as many dependencies at once.</li>
+</ul>
+<p>Beyond that, what's implemented below is just a naive backtracking version
+which should in theory try all possible combinations of dependencies and
+versions to see if one works. The first resolution that works causes
+everything to bail out immediately and return success, and only if <em>nothing</em>
+works do we actually return an error up the stack.</p>
+<h2 id="performance" class="section-header"><a href="#performance">Performance</a></h2>
+<p>Note that this is a relatively performance-critical portion of Cargo. The
+data that we're processing is proportional to the size of the dependency
+graph, which can often be quite large (e.g., take a look at Servo). To make
+matters worse the DFS algorithm we're implemented is inherently quite
+inefficient. When we add the requirement of backtracking on top it means
+that we're implementing something that probably shouldn't be allocating all
+over the place.</p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Re-exports</a></h2>
+<table><tr><td><code>pub use self::features::<a class="enum" href="../../../cargo/core/resolver/features/enum.ForceAllTargets.html" title="enum cargo::core::resolver::features::ForceAllTargets">ForceAllTargets</a>;</code></td></tr><tr><td><code>pub use self::features::<a class="enum" href="../../../cargo/core/resolver/features/enum.HasDevUnits.html" title="enum cargo::core::resolver::features::HasDevUnits">HasDevUnits</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="features/index.html" title='cargo::core::resolver::features mod'>features</a></td><td class='docblock-short'><p>Feature resolver.</p>
+</td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.EncodableDependency.html" title='cargo::core::resolver::EncodableDependency struct'>EncodableDependency</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="struct" href="struct.EncodablePackageId.html" title='cargo::core::resolver::EncodablePackageId struct'>EncodablePackageId</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="struct" href="struct.EncodableResolve.html" title='cargo::core::resolver::EncodableResolve struct'>EncodableResolve</a></td><td class='docblock-short'><p>The <code>Cargo.lock</code> structure.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Resolve.html" title='cargo::core::resolver::Resolve struct'>Resolve</a></td><td class='docblock-short'><p>Represents a fully-resolved package dependency graph. Each node in the graph
+is a package and edges represent dependencies between packages.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.ResolveError.html" title='cargo::core::resolver::ResolveError struct'>ResolveError</a></td><td class='docblock-short'><p>Error during resolution providing a path of <code>PackageId</code>s.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.ResolveOpts.html" title='cargo::core::resolver::ResolveOpts struct'>ResolveOpts</a></td><td class='docblock-short'><p>Options for how the resolve should work.</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.ActivateError.html" title='cargo::core::resolver::ActivateError enum'>ActivateError</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="enum" href="enum.ResolveBehavior.html" title='cargo::core::resolver::ResolveBehavior enum'>ResolveBehavior</a></td><td class='docblock-short'><p>Resolver behavior, used to opt-in to new behavior that is
+backwards-incompatible via the <code>resolver</code> field in the manifest.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.ResolveVersion.html" title='cargo::core::resolver::ResolveVersion enum'>ResolveVersion</a></td><td class='docblock-short'><p>A version to indicate how a <code>Cargo.lock</code> should be serialized. Currently
+V2 is the default when creating a new lockfile. If a V1 lockfile already
+exists, it will stay as V1.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.resolve.html" title='cargo::core::resolver::resolve fn'>resolve</a></td><td class='docblock-short'><p>Builds the list of all packages required to build the first argument.</p>
+</td></tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table><tr class='module-item'><td><a class="type" href="type.ActivateResult.html" title='cargo::core::resolver::ActivateResult type'>ActivateResult</a></td><td class='docblock-short'></td></tr><tr class='module-item'><td><a class="type" href="type.Metadata.html" title='cargo::core::resolver::Metadata type'>Metadata</a></td><td class='docblock-short'></td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>

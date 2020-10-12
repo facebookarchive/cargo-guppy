@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `cfg_expr` crate."><meta name="keywords" content="rust, rustlang, rust-lang, cfg_expr"><title>cfg_expr - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../cfg_expr/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate cfg_expr</p><div class='block version'><p>Version 0.4.1</p></div><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all cfg_expr's items</p></a><div class="block items"><ul><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'cfg_expr', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/cfg_expr/lib.rs.html#1-87' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>cfg_expr</a></span></h1><div class='docblock'><p>cfg-expr is a crate that can be used to parse and evaluate Rust cfg() expressions,
+both as declarable in Rust code itself, as well in cargo's <code>[target.'cfg()'.dependencies]</code> sections.</p>
+<p>It contains a list of all builtin targets known to rustc as of 1.41 that can be used
+to determine if a particular cfg expression is satisfiable.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">cfg_expr</span>::{<span class="ident">targets</span>::<span class="ident">get_builtin_target_by_triple</span>, <span class="ident">Expression</span>, <span class="ident">Predicate</span>};
+
+<span class="kw">let</span> <span class="ident">specific</span> <span class="op">=</span> <span class="ident">Expression</span>::<span class="ident">parse</span>(
+    <span class="string">r#&quot;all(
+        target_os = &quot;windows&quot;,
+        target_arch = &quot;x86&quot;,
+        windows,
+        target_env = &quot;msvc&quot;,
+        target_feature = &quot;fxsr&quot;,
+        target_feature = &quot;sse&quot;,
+        target_feature = &quot;sse2&quot;,
+        target_pointer_width = &quot;32&quot;,
+        target_endian = &quot;little&quot;,
+        not(target_vendor = &quot;uwp&quot;),
+        feature = &quot;cool_thing&quot;,
+    )&quot;#</span>,
+)
+.<span class="ident">unwrap</span>();
+
+<span class="comment">// cfg_expr includes a list of every builtin target in rustc (as of 1.41)</span>
+<span class="kw">let</span> <span class="ident">x86_win</span> <span class="op">=</span> <span class="ident">get_builtin_target_by_triple</span>(<span class="string">&quot;i686-pc-windows-msvc&quot;</span>).<span class="ident">unwrap</span>();
+<span class="kw">let</span> <span class="ident">x86_pentium_win</span> <span class="op">=</span> <span class="ident">get_builtin_target_by_triple</span>(<span class="string">&quot;i586-pc-windows-msvc&quot;</span>).<span class="ident">unwrap</span>();
+<span class="kw">let</span> <span class="ident">uwp_win</span> <span class="op">=</span> <span class="ident">get_builtin_target_by_triple</span>(<span class="string">&quot;i686-uwp-windows-msvc&quot;</span>).<span class="ident">unwrap</span>();
+<span class="kw">let</span> <span class="ident">mac</span> <span class="op">=</span> <span class="ident">get_builtin_target_by_triple</span>(<span class="string">&quot;x86_64-apple-darwin&quot;</span>).<span class="ident">unwrap</span>();
+
+<span class="kw">let</span> <span class="ident">avail_targ_feats</span> <span class="op">=</span> [<span class="string">&quot;fxsr&quot;</span>, <span class="string">&quot;sse&quot;</span>, <span class="string">&quot;sse2&quot;</span>];
+
+<span class="comment">// This will satisfy all requirements</span>
+<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">specific</span>.<span class="ident">eval</span>(<span class="op">|</span><span class="ident">pred</span><span class="op">|</span> {
+    <span class="kw">match</span> <span class="ident">pred</span> {
+        <span class="ident">Predicate</span>::<span class="ident">Target</span>(<span class="ident">tp</span>) <span class="op">=&gt;</span> <span class="ident">tp</span>.<span class="ident">matches</span>(<span class="ident">x86_win</span>),
+        <span class="ident">Predicate</span>::<span class="ident">TargetFeature</span>(<span class="ident">feat</span>) <span class="op">=&gt;</span> <span class="ident">avail_targ_feats</span>.<span class="ident">contains</span>(<span class="ident">feat</span>),
+        <span class="ident">Predicate</span>::<span class="ident">Feature</span>(<span class="ident">feat</span>) <span class="op">=&gt;</span> <span class="kw-2">*</span><span class="ident">feat</span> <span class="op">==</span> <span class="string">&quot;cool_thing&quot;</span>,
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="bool-val">false</span>,
+    }
+}));
+
+<span class="comment">// This won&#39;t, it doesnt&#39; have the cool_thing feature!</span>
+<span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">specific</span>.<span class="ident">eval</span>(<span class="op">|</span><span class="ident">pred</span><span class="op">|</span> {
+    <span class="kw">match</span> <span class="ident">pred</span> {
+        <span class="ident">Predicate</span>::<span class="ident">Target</span>(<span class="ident">tp</span>) <span class="op">=&gt;</span> <span class="ident">tp</span>.<span class="ident">matches</span>(<span class="ident">x86_pentium_win</span>),
+        <span class="ident">Predicate</span>::<span class="ident">TargetFeature</span>(<span class="ident">feat</span>) <span class="op">=&gt;</span> <span class="ident">avail_targ_feats</span>.<span class="ident">contains</span>(<span class="ident">feat</span>),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="bool-val">false</span>,
+    }
+}));
+
+<span class="comment">// This will *not* satisfy the vendor predicate</span>
+<span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">specific</span>.<span class="ident">eval</span>(<span class="op">|</span><span class="ident">pred</span><span class="op">|</span> {
+    <span class="kw">match</span> <span class="ident">pred</span> {
+        <span class="ident">Predicate</span>::<span class="ident">Target</span>(<span class="ident">tp</span>) <span class="op">=&gt;</span> <span class="ident">tp</span>.<span class="ident">matches</span>(<span class="ident">uwp_win</span>),
+        <span class="ident">Predicate</span>::<span class="ident">TargetFeature</span>(<span class="ident">feat</span>) <span class="op">=&gt;</span> <span class="ident">avail_targ_feats</span>.<span class="ident">contains</span>(<span class="ident">feat</span>),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="bool-val">false</span>,
+    }
+}));
+
+<span class="comment">// This will *not* satisfy the vendor, os, or env predicates</span>
+<span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">specific</span>.<span class="ident">eval</span>(<span class="op">|</span><span class="ident">pred</span><span class="op">|</span> {
+    <span class="kw">match</span> <span class="ident">pred</span> {
+        <span class="ident">Predicate</span>::<span class="ident">Target</span>(<span class="ident">tp</span>) <span class="op">=&gt;</span> <span class="ident">tp</span>.<span class="ident">matches</span>(<span class="ident">mac</span>),
+        <span class="ident">Predicate</span>::<span class="ident">TargetFeature</span>(<span class="ident">feat</span>) <span class="op">=&gt;</span> <span class="ident">avail_targ_feats</span>.<span class="ident">contains</span>(<span class="ident">feat</span>),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="bool-val">false</span>,
+    }
+}));</pre></div>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Re-exports</a></h2>
+<table><tr><td><code>pub use error::<a class="struct" href="../cfg_expr/error/struct.ParseError.html" title="struct cfg_expr::error::ParseError">ParseError</a>;</code></td></tr><tr><td><code>pub use expr::<a class="struct" href="../cfg_expr/expr/struct.Expression.html" title="struct cfg_expr::expr::Expression">Expression</a>;</code></td></tr><tr><td><code>pub use expr::<a class="enum" href="../cfg_expr/expr/enum.Predicate.html" title="enum cfg_expr::expr::Predicate">Predicate</a>;</code></td></tr><tr><td><code>pub use expr::<a class="enum" href="../cfg_expr/expr/enum.TargetPredicate.html" title="enum cfg_expr::expr::TargetPredicate">TargetPredicate</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="error/index.html" title='cfg_expr::error mod'>error</a></td><td class='docblock-short'><p>Types related to parse errors</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="expr/index.html" title='cfg_expr::expr mod'>expr</a></td><td class='docblock-short'><p>Types related to cfg expressions</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="targets/index.html" title='cfg_expr::targets mod'>targets</a></td><td class='docblock-short'><p>Types related to rustc targets</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "cfg_expr";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
