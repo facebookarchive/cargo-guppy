@@ -3,9 +3,118 @@ on: [push, pull_request]
 name: CI
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Lint (clippy)
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-features
+      - name: Lint (rustfmt)
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+      - name: Install cargo readme
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-readme
+          version: latest
+          use-tool-cache: true
+      - name: Run cargo readme
+        run: ./scripts/regenerate-readmes.sh
+      - name: Check for differences
+        run: git diff --exit-code
+
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      # Build all packages we care about one by one to ensure feature unification
+      # doesn't happen.
+      # Build all targets to ensure examples are built as well.
+      - name: Build and test target-spec
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-targets --package target-spec
+      # Build all packages we care about one by one to ensure feature unification
+      # doesn't happen.
+      # Build all targets to ensure examples are built as well.
+      - name: Build and test guppy
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-targets --package guppy
+      # Build all packages we care about one by one to ensure feature unification
+      # doesn't happen.
+      # Build all targets to ensure examples are built as well.
+      - name: Build and test cargo-guppy
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-targets --package cargo-guppy
+
+  build-all-features:
+    name: Build and test (all features)
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          # Build all targets to ensure examples are built as well.
+          command: build
+          args: --all-targets --all-features
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
+
+  test-extended:
+    name: cargo-compare extended tests
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+      PROPTEST_MULTIPLIER: 64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build and test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --package cargo-compare --release
+
   aarch64-build:
     runs-on: ubuntu-18.04
-    name: Cross-compile to aarch64 
+    name: Cross-compile to aarch64
+    env:
+      RUSTFLAGS: -D warnings
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
