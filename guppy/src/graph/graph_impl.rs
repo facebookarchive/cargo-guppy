@@ -779,10 +779,7 @@ impl<'g> PackageMetadata<'g> {
     /// Macros](https://doc.rust-lang.org/reference/procedural-macros.html) in the Rust reference.
     pub fn is_proc_macro(&self) -> bool {
         match self.build_target(&BuildTargetId::Library) {
-            Some(build_target) => match build_target.kind() {
-                BuildTargetKind::ProcMacro => true,
-                _ => false,
-            },
+            Some(build_target) => matches!(build_target.kind(), BuildTargetKind::ProcMacro),
             None => false,
         }
     }
@@ -982,35 +979,23 @@ impl<'g> PackageSource<'g> {
 
     /// Returns true if this package source represents a workspace.
     pub fn is_workspace(&self) -> bool {
-        match self {
-            PackageSource::Workspace(_) => true,
-            _ => false,
-        }
+        matches!(self, PackageSource::Workspace(_))
     }
 
     /// Returns true if this package source represents a path dependency that isn't in the
     /// workspace.
     pub fn is_path(&self) -> bool {
-        match self {
-            PackageSource::Path(_) => true,
-            _ => false,
-        }
+        matches!(self, PackageSource::Path(_))
     }
 
     /// Returns true if this package source represents an external dependency.
     pub fn is_external(&self) -> bool {
-        match self {
-            PackageSource::External(_) => true,
-            _ => false,
-        }
+        matches!(self, PackageSource::External(_))
     }
 
     /// Returns true if the source is `crates.io`.
     pub fn is_crates_io(&self) -> bool {
-        match self {
-            PackageSource::External(Self::CRATES_IO_REGISTRY) => true,
-            _ => false,
-        }
+        matches!(self, PackageSource::External(Self::CRATES_IO_REGISTRY))
     }
 
     /// Returns true if this package is a local dependency, i.e. either in the workspace or a local
