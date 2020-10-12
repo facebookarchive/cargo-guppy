@@ -269,7 +269,7 @@ impl FixtureDetails {
             .expect("package id should be valid")
             .named_features()
             .collect();
-        actual.sort();
+        actual.sort_unstable();
         let expected = self.package_details[id].named_features.as_ref().unwrap();
         assert_eq!(expected, &actual, "{}", msg);
     }
@@ -383,7 +383,7 @@ impl PackageDetails {
     }
 
     pub fn with_deps(mut self, mut deps: Vec<(&'static str, &'static str)>) -> Self {
-        deps.sort();
+        deps.sort_unstable();
         self.deps = Some(
             deps.into_iter()
                 .map(|(name, id)| (name, package_id(id)))
@@ -396,7 +396,7 @@ impl PackageDetails {
         mut self,
         mut reverse_deps: Vec<(&'static str, &'static str)>,
     ) -> Self {
-        reverse_deps.sort();
+        reverse_deps.sort_unstable();
         self.reverse_deps = Some(
             reverse_deps
                 .into_iter()
@@ -407,7 +407,7 @@ impl PackageDetails {
     }
 
     pub fn with_transitive_deps(mut self, mut transitive_deps: Vec<&'static str>) -> Self {
-        transitive_deps.sort();
+        transitive_deps.sort_unstable();
         self.transitive_deps = Some(transitive_deps.into_iter().map(package_id).collect());
         self
     }
@@ -416,7 +416,7 @@ impl PackageDetails {
         mut self,
         mut transitive_reverse_deps: Vec<&'static str>,
     ) -> Self {
-        transitive_reverse_deps.sort();
+        transitive_reverse_deps.sort_unstable();
         self.transitive_reverse_deps = Some(
             transitive_reverse_deps
                 .into_iter()
@@ -427,7 +427,7 @@ impl PackageDetails {
     }
 
     pub fn with_named_features(mut self, mut named_features: Vec<&'static str>) -> Self {
-        named_features.sort();
+        named_features.sort_unstable();
         self.named_features = Some(named_features);
         self
     }
@@ -514,7 +514,7 @@ impl LinkDetails {
         dep_kind: DependencyKind,
         mut features: Vec<&'static str>,
     ) -> Self {
-        features.sort();
+        features.sort_unstable();
         self.features.push((dep_kind, features));
         self
     }
@@ -562,7 +562,7 @@ impl LinkDetails {
         for (dep_kind, features) in &self.features {
             let metadata = link.req_for_kind(*dep_kind);
             let mut actual_features: Vec<_> = metadata.features().collect();
-            actual_features.sort();
+            actual_features.sort_unstable();
             assert_eq!(&actual_features, features, "{}: features is correct", msg);
         }
     }
