@@ -1,0 +1,31 @@
+on:
+  push:
+    branches:
+      - master
+
+name: Docs
+
+jobs:
+  docs:
+    name: Build and deploy documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --all-features
+      - name: Organize
+        run: |
+          mkdir target/gh-pages
+          mv target/doc target/gh-pages/rustdoc
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: target/gh-pages
