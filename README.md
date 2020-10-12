@@ -1,6 +1,7 @@
 # cargo-guppy: track and query dependency graphs
 
-[![Build Status](https://circleci.com/gh/facebookincubator/cargo-guppy/tree/master.svg?style=shield)](https://circleci.com/gh/facebookincubator/cargo-guppy/tree/master) [![License](https://img.shields.io/badge/license-Apache-green.svg)](LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE-MIT)
+[![Build Status](https://github.com/facebookincubator/cargo-guppy/workflows/CI/badge.svg?branch=master)]((https://github.com/facebookincubator/cargo-guppy/actions?query=workflow%3ACI+branch%3Amaster))
+[![License](https://img.shields.io/badge/license-Apache-green.svg)](LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE-MIT)
 
 This repository contains the source code for:
 * [`guppy`](guppy): a library for performing queries on Cargo dependency graphs [![guppy on crates.io](https://img.shields.io/crates/v/guppy)](https://crates.io/crates/guppy) [![Documentation (latest release)](https://docs.rs/guppy/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/guppy/)
