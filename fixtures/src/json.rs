@@ -132,6 +132,12 @@ pub static METADATA_LIBRA_F0091A4_PATH: &str = "../large/metadata_libra_f0091a4.
 
 pub static METADATA_LIBRA_9FFD93B_PATH: &str = "../large/metadata_libra_9ffd93b.json";
 
+pub static METADATA_GUPPY_78CB7E8_PATH: &str = "../guppy/metadata_guppy_78cb7e8.json";
+
+pub static METADATA_GUPPY_869476C_PATH: &str = "../guppy/metadata_guppy_869476c.json";
+
+pub static METADATA_GUPPY_C9B4F76_PATH: &str = "../guppy/metadata_guppy_c9b4f76.json";
+
 pub static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
 macro_rules! define_fixtures {
@@ -174,6 +180,9 @@ define_fixtures! {
     metadata_libra => METADATA_LIBRA_PATH,
     metadata_libra_f0091a4 => METADATA_LIBRA_F0091A4_PATH,
     metadata_libra_9ffd93b => METADATA_LIBRA_9FFD93B_PATH,
+    metadata_guppy_78cb7e8 => METADATA_GUPPY_78CB7E8_PATH,
+    metadata_guppy_869476c => METADATA_GUPPY_869476C_PATH,
+    metadata_guppy_c9b4f76 => METADATA_GUPPY_C9B4F76_PATH,
 }
 
 pub struct JsonFixture {
@@ -1223,5 +1232,23 @@ impl FixtureDetails {
             ],
             vec![METADATA_LIBRA_EXECUTOR, METADATA_LIBRA_EXECUTOR_UTILS],
         ])
+    }
+
+    pub(crate) fn metadata_guppy_78cb7e8() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details)
+    }
+
+    pub(crate) fn metadata_guppy_869476c() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details)
+    }
+
+    pub(crate) fn metadata_guppy_c9b4f76() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details)
     }
 }
