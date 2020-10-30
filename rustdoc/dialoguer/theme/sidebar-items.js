@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ColorfulTheme","A colorful theme"],["CustomPromptCharacterTheme","The default theme, with a custom prompt character in place of `:`"],["SimpleTheme","The default theme."]],"trait":[["Theme","Implements a theme for dialoguer."]]});
+initSidebarItems({"struct":[["ColorfulTheme","A colorful theme"],["SimpleTheme","The default theme."]],"trait":[["Theme","Implements a theme for dialoguer."]]});

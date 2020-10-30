@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Zeroizing","`Zeroizing` is a a wrapper for any `Z: Zeroize` type which implements a `Drop` handler which zeroizes dropped values."]],"trait":[["DefaultIsZeroes","Marker trait for types whose `Default` is the desired zeroization result"],["Zeroize","Trait for securely erasing types from memory"]]});

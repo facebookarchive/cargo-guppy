@@ -129,7 +129,6 @@ sourcesIndex["target_spec"] = {"name":"","files":["errors.rs","evaluator.rs","li
 sourcesIndex["tempfile"] = {"name":"","dirs":[{"name":"file","dirs":[{"name":"imp","files":["mod.rs","unix.rs"]}],"files":["mod.rs"]}],"files":["dir.rs","error.rs","lib.rs","spooled.rs","util.rs"]};
 sourcesIndex["termcolor"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["terminal_size"] = {"name":"","files":["lib.rs","unix.rs"]};
-sourcesIndex["termios"] = {"name":"","dirs":[{"name":"os","files":["linux.rs","mod.rs"]}],"files":["ffi.rs","lib.rs"]};
 sourcesIndex["textwrap"] = {"name":"","files":["indentation.rs","lib.rs","splitting.rs"]};
 sourcesIndex["thread_local"] = {"name":"","files":["cached.rs","lib.rs","thread_id.rs","unreachable.rs"]};
 sourcesIndex["time"] = {"name":"","files":["display.rs","duration.rs","lib.rs","parse.rs","sys.rs"]};
@@ -150,4 +149,5 @@ sourcesIndex["void"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["vte"] = {"name":"","files":["definitions.rs","lib.rs","table.rs"]};
 sourcesIndex["wait_timeout"] = {"name":"","files":["lib.rs","unix.rs"]};
 sourcesIndex["walkdir"] = {"name":"","files":["dent.rs","error.rs","lib.rs","util.rs"]};
+sourcesIndex["zeroize"] = {"name":"","files":["lib.rs"]};
 createSourceSidebar();

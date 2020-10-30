@@ -20,4 +20,5 @@ implementors["tempfile"] = [{"text":"impl Drop for TempDir","synthetic":false,"t
 implementors["thread_local"] = [{"text":"impl&lt;T:&nbsp;Send&gt; Drop for ThreadLocal&lt;T&gt;","synthetic":false,"types":[]}];
 implementors["tinyvec"] = [{"text":"impl&lt;'p, A:&nbsp;Array&gt; Drop for ArrayVecDrain&lt;'p, A&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'p, A:&nbsp;Array&gt; Drop for TinyVecDrain&lt;'p, A&gt;","synthetic":false,"types":[]}];
 implementors["url"] = [{"text":"impl&lt;'a&gt; Drop for PathSegmentsMut&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Drop for UrlQuery&lt;'a&gt;","synthetic":false,"types":[]}];
+implementors["zeroize"] = [{"text":"impl&lt;Z&gt; Drop for Zeroizing&lt;Z&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;Z: Zeroize,&nbsp;</span>","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
