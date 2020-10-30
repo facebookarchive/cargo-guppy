@@ -3,8 +3,6 @@
 
 //! Test fixtures for guppy.
 
-// TODO: move repo fixture code into this crate
-
 pub mod dep_helpers;
 pub mod details;
 pub mod json;
