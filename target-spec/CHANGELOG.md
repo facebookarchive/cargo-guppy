@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Updated `cfg-expr` dependency to 0.5.0.
+
 ## [0.4.1] - 2020-08-28
 
 ### Fixed
