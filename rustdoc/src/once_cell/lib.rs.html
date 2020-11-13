@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/once_cell-1.5.1/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../once_cell/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/once_cell-1.5.2/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../once_cell/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
@@ -1047,282 +1047,282 @@
 <span id="1046">1046</span>
 <span id="1047">1047</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="doccomment">/*!
-# Overview
-
-`once_cell` provides two new cell-like types, [`unsync::OnceCell`] and [`sync::OnceCell`]. A `OnceCell`
-might store arbitrary non-`Copy` types, can be assigned to at most once and provides direct access
-to the stored contents. The core API looks *roughly* like this (and there&#39;s much more inside, read on!):
-
-```rust,ignore
-impl&lt;T&gt; OnceCell&lt;T&gt; {
-    fn new() -&gt; OnceCell&lt;T&gt; { ... }
-    fn set(&amp;self, value: T) -&gt; Result&lt;(), T&gt; { ... }
-    fn get(&amp;self) -&gt; Option&lt;&amp;T&gt; { ... }
-}
-```
-
-Note that, like with [`RefCell`] and [`Mutex`], the `set` method requires only a shared reference.
-Because of the single assignment restriction `get` can return a `&amp;T` instead of `Ref&lt;T&gt;`
-or `MutexGuard&lt;T&gt;`.
-
-The `sync` flavor is thread-safe (that is, implements the [`Sync`] trait), while the `unsync` one is not.
-
-[`unsync::OnceCell`]: unsync/struct.OnceCell.html
-[`sync::OnceCell`]: sync/struct.OnceCell.html
-[`RefCell`]: https://doc.rust-lang.org/std/cell/struct.RefCell.html
-[`Mutex`]: https://doc.rust-lang.org/std/sync/struct.Mutex.html
-[`Sync`]: https://doc.rust-lang.org/std/marker/trait.Sync.html
-
-# Patterns
-
-`OnceCell` might be useful for a variety of patterns.
-
-## Safe Initialization of global data
-
-```rust
-use std::{env, io};
-
-use once_cell::sync::OnceCell;
-
-#[derive(Debug)]
-pub struct Logger {
-    // ...
-}
-static INSTANCE: OnceCell&lt;Logger&gt; = OnceCell::new();
-
-impl Logger {
-    pub fn global() -&gt; &amp;&#39;static Logger {
-        INSTANCE.get().expect(&quot;logger is not initialized&quot;)
-    }
-
-    fn from_cli(args: env::Args) -&gt; Result&lt;Logger, std::io::Error&gt; {
-       // ...
-#      Ok(Logger {})
-    }
-}
-
-fn main() {
-    let logger = Logger::from_cli(env::args()).unwrap();
-    INSTANCE.set(logger).unwrap();
-    // use `Logger::global()` from now on
-}
-```
-
-## Lazy initialized global data
-
-This is essentially the `lazy_static!` macro, but without a macro.
-
-```rust
-use std::{sync::Mutex, collections::HashMap};
-
-use once_cell::sync::OnceCell;
-
-fn global_data() -&gt; &amp;&#39;static Mutex&lt;HashMap&lt;i32, String&gt;&gt; {
-    static INSTANCE: OnceCell&lt;Mutex&lt;HashMap&lt;i32, String&gt;&gt;&gt; = OnceCell::new();
-    INSTANCE.get_or_init(|| {
-        let mut m = HashMap::new();
-        m.insert(13, &quot;Spica&quot;.to_string());
-        m.insert(74, &quot;Hoyten&quot;.to_string());
-        Mutex::new(m)
-    })
-}
-```
-
-There are also the [`sync::Lazy`] and [`unsync::Lazy`] convenience types to streamline this pattern:
-
-```rust
-use std::{sync::Mutex, collections::HashMap};
-use once_cell::sync::Lazy;
-
-static GLOBAL_DATA: Lazy&lt;Mutex&lt;HashMap&lt;i32, String&gt;&gt;&gt; = Lazy::new(|| {
-    let mut m = HashMap::new();
-    m.insert(13, &quot;Spica&quot;.to_string());
-    m.insert(74, &quot;Hoyten&quot;.to_string());
-    Mutex::new(m)
-});
-
-fn main() {
-    println!(&quot;{:?}&quot;, GLOBAL_DATA.lock().unwrap());
-}
-```
-
-[`sync::Lazy`]: sync/struct.Lazy.html
-[`unsync::Lazy`]: unsync/struct.Lazy.html
-
-## General purpose lazy evaluation
-
-Unlike `lazy_static!`, `Lazy` works with local variables.
-
-```rust
-use once_cell::unsync::Lazy;
-
-fn main() {
-    let ctx = vec![1, 2, 3];
-    let thunk = Lazy::new(|| {
-        ctx.iter().sum::&lt;i32&gt;()
-    });
-    assert_eq!(*thunk, 6);
-}
-```
-
-If you need a lazy field in a struct, you probably should use `OnceCell`
-directly, because that will allow you to access `self` during initialization.
-
-```rust
-use std::{fs, path::PathBuf};
-
-use once_cell::unsync::OnceCell;
-
-struct Ctx {
-    config_path: PathBuf,
-    config: OnceCell&lt;String&gt;,
-}
-
-impl Ctx {
-    pub fn get_config(&amp;self) -&gt; Result&lt;&amp;str, std::io::Error&gt; {
-        let cfg = self.config.get_or_try_init(|| {
-            fs::read_to_string(&amp;self.config_path)
-        })?;
-        Ok(cfg.as_str())
-    }
-}
-```
-
-## Building block
-
-Naturally, it is  possible to build other abstractions on top of `OnceCell`.
-For example, this is a `regex!` macro which takes a string literal and returns an
-*expression* that evaluates to a `&amp;&#39;static Regex`:
-
-```
-macro_rules! regex {
-    ($re:literal $(,)?) =&gt; {{
-        static RE: once_cell::sync::OnceCell&lt;regex::Regex&gt; = once_cell::sync::OnceCell::new();
-        RE.get_or_init(|| regex::Regex::new($re).unwrap())
-    }};
-}
-```
-
-This macro can be useful to avoid the &quot;compile regex on every loop iteration&quot; problem.
-
-Another pattern would be a `LateInit` type for delayed initialization:
-
-
-```
-use once_cell::sync::OnceCell;
-
-#[derive(Debug)]
-pub struct LateInit&lt;T&gt; { cell: OnceCell&lt;T&gt; }
-
-impl&lt;T&gt; LateInit&lt;T&gt; {
-    pub fn init(&amp;self, value: T) {
-        assert!(self.cell.set(value).is_ok())
-    }
-}
-
-impl&lt;T&gt; Default for LateInit&lt;T&gt; {
-    fn default() -&gt; Self { LateInit { cell: OnceCell::default() } }
-}
-
-impl&lt;T&gt; std::ops::Deref for LateInit&lt;T&gt; {
-    type Target = T;
-    fn deref(&amp;self) -&gt; &amp;T {
-        self.cell.get().unwrap()
-    }
-}
-
-#[derive(Default, Debug)]
-struct A&lt;&#39;a&gt; {
-    b: LateInit&lt;&amp;&#39;a B&lt;&#39;a&gt;&gt;,
-}
-
-#[derive(Default, Debug)]
-struct B&lt;&#39;a&gt; {
-    a: LateInit&lt;&amp;&#39;a A&lt;&#39;a&gt;&gt;
-}
-
-fn build_cycle() {
-    let a = A::default();
-    let b = B::default();
-    a.b.init(&amp;b);
-    b.a.init(&amp;a);
-    println!(&quot;{:?}&quot;, a.b.a.b.a);
-}
-```
-
-# Comparison with std
-
-|`!Sync` types         | Access Mode            | Drawbacks                                     |
-|----------------------|------------------------|-----------------------------------------------|
-|`Cell&lt;T&gt;`             | `T`                    | requires `T: Copy` for `get`                  |
-|`RefCell&lt;T&gt;`          | `RefMut&lt;T&gt;` / `Ref&lt;T&gt;` | may panic at runtime                          |
-|`unsync::OnceCell&lt;T&gt;` | `&amp;T`                   | assignable only once                          |
-
-|`Sync` types          | Access Mode            | Drawbacks                                     |
-|----------------------|------------------------|-----------------------------------------------|
-|`AtomicT`             | `T`                    | works only with certain `Copy` types          |
-|`Mutex&lt;T&gt;`            | `MutexGuard&lt;T&gt;`        | may deadlock at runtime, may block the thread |
-|`sync::OnceCell&lt;T&gt;`   | `&amp;T`                   | assignable only once, may block the thread    |
-
-Technically, calling `get_or_init` will also cause a panic or a deadlock if it recursively calls
-itself. However, because the assignment can happen only once, such cases should be more rare than
-equivalents with `RefCell` and `Mutex`.
-
-# Minimum Supported `rustc` Version
-
-This crate&#39;s minimum supported `rustc` version is `1.36.0`.
-
-If only the `std` feature is enabled, MSRV will be updated conservatively.
-When using other features, like `parking_lot`, MSRV might be updated more frequently, up to the latest stable.
-In both cases, increasing MSRV is *not* considered a semver-breaking change.
-
-# Implementation details
-
-The implementation is based on the [`lazy_static`](https://github.com/rust-lang-nursery/lazy-static.rs/)
-and [`lazy_cell`](https://github.com/indiv0/lazycell/) crates and [`std::sync::Once`]. In some sense,
-`once_cell` just streamlines and unifies those APIs.
-
-To implement a sync flavor of `OnceCell`, this crates uses either a custom re-implementation of
-`std::sync::Once` or `parking_lot::Mutex`. This is controlled by the `parking_lot` feature, which
-is enabled by default. Performance is the same for both cases, but the `parking_lot` based `OnceCell&lt;T&gt;`
-is smaller by up to 16 bytes.
-
-This crate uses `unsafe`.
-
-[`std::sync::Once`]: https://doc.rust-lang.org/std/sync/struct.Once.html
-
-# F.A.Q.
-
-**Should I use lazy_static or once_cell?**
-
-To the first approximation, `once_cell` is both more flexible and more convenient than `lazy_static`
-and should be preferred.
-
-Unlike `once_cell`, `lazy_static` supports spinlock-based implementation of blocking which works with
-`#![no_std]`.
-
-`lazy_static` has received significantly more real world testing, but `once_cell` is also a widely
-used crate.
-
-**Should I use the sync or unsync flavor?**
-
-Because Rust compiler checks thread safety for you, it&#39;s impossible to accidentally use `unsync` where
-`sync` is required. So, use `unsync` in single-threaded code and `sync` in multi-threaded. It&#39;s easy
-to switch between the two if code becomes multi-threaded later.
-
-At the moment, `unsync` has an additional benefit that reentrant initialization causes a panic, which
-might be easier to debug than a deadlock.
-
-# Related crates
-
-* [double-checked-cell](https://github.com/niklasf/double-checked-cell)
-* [lazy-init](https://crates.io/crates/lazy-init)
-* [lazycell](https://crates.io/crates/lazycell)
-* [mitochondria](https://crates.io/crates/mitochondria)
-* [lazy_static](https://crates.io/crates/lazy_static)
-
-*/</span>
+<span class="doccomment">//! # Overview</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `once_cell` provides two new cell-like types, [`unsync::OnceCell`] and [`sync::OnceCell`]. A `OnceCell`</span>
+<span class="doccomment">//! might store arbitrary non-`Copy` types, can be assigned to at most once and provides direct access</span>
+<span class="doccomment">//! to the stored contents. The core API looks *roughly* like this (and there&#39;s much more inside, read on!):</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust,ignore</span>
+<span class="doccomment">//! impl&lt;T&gt; OnceCell&lt;T&gt; {</span>
+<span class="doccomment">//!     fn new() -&gt; OnceCell&lt;T&gt; { ... }</span>
+<span class="doccomment">//!     fn set(&amp;self, value: T) -&gt; Result&lt;(), T&gt; { ... }</span>
+<span class="doccomment">//!     fn get(&amp;self) -&gt; Option&lt;&amp;T&gt; { ... }</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Note that, like with [`RefCell`] and [`Mutex`], the `set` method requires only a shared reference.</span>
+<span class="doccomment">//! Because of the single assignment restriction `get` can return a `&amp;T` instead of `Ref&lt;T&gt;`</span>
+<span class="doccomment">//! or `MutexGuard&lt;T&gt;`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The `sync` flavor is thread-safe (that is, implements the [`Sync`] trait), while the `unsync` one is not.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`unsync::OnceCell`]: unsync/struct.OnceCell.html</span>
+<span class="doccomment">//! [`sync::OnceCell`]: sync/struct.OnceCell.html</span>
+<span class="doccomment">//! [`RefCell`]: https://doc.rust-lang.org/std/cell/struct.RefCell.html</span>
+<span class="doccomment">//! [`Mutex`]: https://doc.rust-lang.org/std/sync/struct.Mutex.html</span>
+<span class="doccomment">//! [`Sync`]: https://doc.rust-lang.org/std/marker/trait.Sync.html</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Patterns</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `OnceCell` might be useful for a variety of patterns.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Safe Initialization of global data</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use std::{env, io};</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! use once_cell::sync::OnceCell;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Debug)]</span>
+<span class="doccomment">//! pub struct Logger {</span>
+<span class="doccomment">//!     // ...</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! static INSTANCE: OnceCell&lt;Logger&gt; = OnceCell::new();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! impl Logger {</span>
+<span class="doccomment">//!     pub fn global() -&gt; &amp;&#39;static Logger {</span>
+<span class="doccomment">//!         INSTANCE.get().expect(&quot;logger is not initialized&quot;)</span>
+<span class="doccomment">//!     }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     fn from_cli(args: env::Args) -&gt; Result&lt;Logger, std::io::Error&gt; {</span>
+<span class="doccomment">//!        // ...</span>
+<span class="doccomment">//! #      Ok(Logger {})</span>
+<span class="doccomment">//!     }</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! fn main() {</span>
+<span class="doccomment">//!     let logger = Logger::from_cli(env::args()).unwrap();</span>
+<span class="doccomment">//!     INSTANCE.set(logger).unwrap();</span>
+<span class="doccomment">//!     // use `Logger::global()` from now on</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Lazy initialized global data</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This is essentially the `lazy_static!` macro, but without a macro.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use std::{sync::Mutex, collections::HashMap};</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! use once_cell::sync::OnceCell;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! fn global_data() -&gt; &amp;&#39;static Mutex&lt;HashMap&lt;i32, String&gt;&gt; {</span>
+<span class="doccomment">//!     static INSTANCE: OnceCell&lt;Mutex&lt;HashMap&lt;i32, String&gt;&gt;&gt; = OnceCell::new();</span>
+<span class="doccomment">//!     INSTANCE.get_or_init(|| {</span>
+<span class="doccomment">//!         let mut m = HashMap::new();</span>
+<span class="doccomment">//!         m.insert(13, &quot;Spica&quot;.to_string());</span>
+<span class="doccomment">//!         m.insert(74, &quot;Hoyten&quot;.to_string());</span>
+<span class="doccomment">//!         Mutex::new(m)</span>
+<span class="doccomment">//!     })</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! There are also the [`sync::Lazy`] and [`unsync::Lazy`] convenience types to streamline this pattern:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use std::{sync::Mutex, collections::HashMap};</span>
+<span class="doccomment">//! use once_cell::sync::Lazy;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! static GLOBAL_DATA: Lazy&lt;Mutex&lt;HashMap&lt;i32, String&gt;&gt;&gt; = Lazy::new(|| {</span>
+<span class="doccomment">//!     let mut m = HashMap::new();</span>
+<span class="doccomment">//!     m.insert(13, &quot;Spica&quot;.to_string());</span>
+<span class="doccomment">//!     m.insert(74, &quot;Hoyten&quot;.to_string());</span>
+<span class="doccomment">//!     Mutex::new(m)</span>
+<span class="doccomment">//! });</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! fn main() {</span>
+<span class="doccomment">//!     println!(&quot;{:?}&quot;, GLOBAL_DATA.lock().unwrap());</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`sync::Lazy`]: sync/struct.Lazy.html</span>
+<span class="doccomment">//! [`unsync::Lazy`]: unsync/struct.Lazy.html</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## General purpose lazy evaluation</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Unlike `lazy_static!`, `Lazy` works with local variables.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use once_cell::unsync::Lazy;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! fn main() {</span>
+<span class="doccomment">//!     let ctx = vec![1, 2, 3];</span>
+<span class="doccomment">//!     let thunk = Lazy::new(|| {</span>
+<span class="doccomment">//!         ctx.iter().sum::&lt;i32&gt;()</span>
+<span class="doccomment">//!     });</span>
+<span class="doccomment">//!     assert_eq!(*thunk, 6);</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! If you need a lazy field in a struct, you probably should use `OnceCell`</span>
+<span class="doccomment">//! directly, because that will allow you to access `self` during initialization.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use std::{fs, path::PathBuf};</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! use once_cell::unsync::OnceCell;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! struct Ctx {</span>
+<span class="doccomment">//!     config_path: PathBuf,</span>
+<span class="doccomment">//!     config: OnceCell&lt;String&gt;,</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! impl Ctx {</span>
+<span class="doccomment">//!     pub fn get_config(&amp;self) -&gt; Result&lt;&amp;str, std::io::Error&gt; {</span>
+<span class="doccomment">//!         let cfg = self.config.get_or_try_init(|| {</span>
+<span class="doccomment">//!             fs::read_to_string(&amp;self.config_path)</span>
+<span class="doccomment">//!         })?;</span>
+<span class="doccomment">//!         Ok(cfg.as_str())</span>
+<span class="doccomment">//!     }</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Building block</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Naturally, it is  possible to build other abstractions on top of `OnceCell`.</span>
+<span class="doccomment">//! For example, this is a `regex!` macro which takes a string literal and returns an</span>
+<span class="doccomment">//! *expression* that evaluates to a `&amp;&#39;static Regex`:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! macro_rules! regex {</span>
+<span class="doccomment">//!     ($re:literal $(,)?) =&gt; {{</span>
+<span class="doccomment">//!         static RE: once_cell::sync::OnceCell&lt;regex::Regex&gt; = once_cell::sync::OnceCell::new();</span>
+<span class="doccomment">//!         RE.get_or_init(|| regex::Regex::new($re).unwrap())</span>
+<span class="doccomment">//!     }};</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This macro can be useful to avoid the &quot;compile regex on every loop iteration&quot; problem.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Another pattern would be a `LateInit` type for delayed initialization:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! use once_cell::sync::OnceCell;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Debug)]</span>
+<span class="doccomment">//! pub struct LateInit&lt;T&gt; { cell: OnceCell&lt;T&gt; }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! impl&lt;T&gt; LateInit&lt;T&gt; {</span>
+<span class="doccomment">//!     pub fn init(&amp;self, value: T) {</span>
+<span class="doccomment">//!         assert!(self.cell.set(value).is_ok())</span>
+<span class="doccomment">//!     }</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! impl&lt;T&gt; Default for LateInit&lt;T&gt; {</span>
+<span class="doccomment">//!     fn default() -&gt; Self { LateInit { cell: OnceCell::default() } }</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! impl&lt;T&gt; std::ops::Deref for LateInit&lt;T&gt; {</span>
+<span class="doccomment">//!     type Target = T;</span>
+<span class="doccomment">//!     fn deref(&amp;self) -&gt; &amp;T {</span>
+<span class="doccomment">//!         self.cell.get().unwrap()</span>
+<span class="doccomment">//!     }</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Default, Debug)]</span>
+<span class="doccomment">//! struct A&lt;&#39;a&gt; {</span>
+<span class="doccomment">//!     b: LateInit&lt;&amp;&#39;a B&lt;&#39;a&gt;&gt;,</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Default, Debug)]</span>
+<span class="doccomment">//! struct B&lt;&#39;a&gt; {</span>
+<span class="doccomment">//!     a: LateInit&lt;&amp;&#39;a A&lt;&#39;a&gt;&gt;</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! fn build_cycle() {</span>
+<span class="doccomment">//!     let a = A::default();</span>
+<span class="doccomment">//!     let b = B::default();</span>
+<span class="doccomment">//!     a.b.init(&amp;b);</span>
+<span class="doccomment">//!     b.a.init(&amp;a);</span>
+<span class="doccomment">//!     println!(&quot;{:?}&quot;, a.b.a.b.a);</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Comparison with std</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! |`!Sync` types         | Access Mode            | Drawbacks                                     |</span>
+<span class="doccomment">//! |----------------------|------------------------|-----------------------------------------------|</span>
+<span class="doccomment">//! |`Cell&lt;T&gt;`             | `T`                    | requires `T: Copy` for `get`                  |</span>
+<span class="doccomment">//! |`RefCell&lt;T&gt;`          | `RefMut&lt;T&gt;` / `Ref&lt;T&gt;` | may panic at runtime                          |</span>
+<span class="doccomment">//! |`unsync::OnceCell&lt;T&gt;` | `&amp;T`                   | assignable only once                          |</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! |`Sync` types          | Access Mode            | Drawbacks                                     |</span>
+<span class="doccomment">//! |----------------------|------------------------|-----------------------------------------------|</span>
+<span class="doccomment">//! |`AtomicT`             | `T`                    | works only with certain `Copy` types          |</span>
+<span class="doccomment">//! |`Mutex&lt;T&gt;`            | `MutexGuard&lt;T&gt;`        | may deadlock at runtime, may block the thread |</span>
+<span class="doccomment">//! |`sync::OnceCell&lt;T&gt;`   | `&amp;T`                   | assignable only once, may block the thread    |</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Technically, calling `get_or_init` will also cause a panic or a deadlock if it recursively calls</span>
+<span class="doccomment">//! itself. However, because the assignment can happen only once, such cases should be more rare than</span>
+<span class="doccomment">//! equivalents with `RefCell` and `Mutex`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Minimum Supported `rustc` Version</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This crate&#39;s minimum supported `rustc` version is `1.36.0`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! If only the `std` feature is enabled, MSRV will be updated conservatively.</span>
+<span class="doccomment">//! When using other features, like `parking_lot`, MSRV might be updated more frequently, up to the latest stable.</span>
+<span class="doccomment">//! In both cases, increasing MSRV is *not* considered a semver-breaking change.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Implementation details</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The implementation is based on the [`lazy_static`](https://github.com/rust-lang-nursery/lazy-static.rs/)</span>
+<span class="doccomment">//! and [`lazy_cell`](https://github.com/indiv0/lazycell/) crates and [`std::sync::Once`]. In some sense,</span>
+<span class="doccomment">//! `once_cell` just streamlines and unifies those APIs.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! To implement a sync flavor of `OnceCell`, this crates uses either a custom re-implementation of</span>
+<span class="doccomment">//! `std::sync::Once` or `parking_lot::Mutex`. This is controlled by the `parking_lot` feature, which</span>
+<span class="doccomment">//! is enabled by default. Performance is the same for both cases, but the `parking_lot` based `OnceCell&lt;T&gt;`</span>
+<span class="doccomment">//! is smaller by up to 16 bytes.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This crate uses `unsafe`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`std::sync::Once`]: https://doc.rust-lang.org/std/sync/struct.Once.html</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # F.A.Q.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! **Should I use lazy_static or once_cell?**</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! To the first approximation, `once_cell` is both more flexible and more convenient than `lazy_static`</span>
+<span class="doccomment">//! and should be preferred.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Unlike `once_cell`, `lazy_static` supports spinlock-based implementation of blocking which works with</span>
+<span class="doccomment">//! `#![no_std]`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `lazy_static` has received significantly more real world testing, but `once_cell` is also a widely</span>
+<span class="doccomment">//! used crate.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! **Should I use the sync or unsync flavor?**</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Because Rust compiler checks thread safety for you, it&#39;s impossible to accidentally use `unsync` where</span>
+<span class="doccomment">//! `sync` is required. So, use `unsync` in single-threaded code and `sync` in multi-threaded. It&#39;s easy</span>
+<span class="doccomment">//! to switch between the two if code becomes multi-threaded later.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! At the moment, `unsync` has an additional benefit that reentrant initialization causes a panic, which</span>
+<span class="doccomment">//! might be easier to debug than a deadlock.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Related crates</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * [double-checked-cell](https://github.com/niklasf/double-checked-cell)</span>
+<span class="doccomment">//! * [lazy-init](https://crates.io/crates/lazy-init)</span>
+<span class="doccomment">//! * [lazycell](https://crates.io/crates/lazycell)</span>
+<span class="doccomment">//! * [mitochondria](https://crates.io/crates/mitochondria)</span>
+<span class="doccomment">//! * [lazy_static](https://crates.io/crates/lazy_static)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Most of this crate&#39;s functionality is available in `std` in nightly Rust.</span>
+<span class="doccomment">//! See the [tracking issue](https://github.com/rust-lang/rust/issues/74465).</span>
 
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>), <span class="ident">no_std</span>)]</span>
 
