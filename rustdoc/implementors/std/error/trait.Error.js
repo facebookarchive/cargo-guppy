@@ -9,7 +9,9 @@ implementors["cfg_expr"] = [{"text":"impl Error for ParseError","synthetic":fals
 implementors["chrono"] = [{"text":"impl Error for ParseError","synthetic":false,"types":[]},{"text":"impl Error for RoundingError","synthetic":false,"types":[]}];
 implementors["clap"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["combine"] = [{"text":"impl&lt;I, R, P&gt; Error for Errors&lt;I, R, P&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;P: Display + Debug,<br>&nbsp;&nbsp;&nbsp;&nbsp;I: Display + Debug,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: Display + Debug,&nbsp;</span>","synthetic":false,"types":[]}];
+implementors["crossbeam_channel"] = [{"text":"impl&lt;T:&nbsp;Send&gt; Error for SendError&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;Send&gt; Error for TrySendError&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;Send&gt; Error for SendTimeoutError&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl Error for RecvError","synthetic":false,"types":[]},{"text":"impl Error for TryRecvError","synthetic":false,"types":[]},{"text":"impl Error for RecvTimeoutError","synthetic":false,"types":[]},{"text":"impl Error for TrySelectError","synthetic":false,"types":[]},{"text":"impl Error for SelectTimeoutError","synthetic":false,"types":[]}];
 implementors["curl"] = [{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for ShareError","synthetic":false,"types":[]},{"text":"impl Error for MultiError","synthetic":false,"types":[]},{"text":"impl Error for FormError","synthetic":false,"types":[]}];
+implementors["determinator"] = [{"text":"impl Error for RulesError","synthetic":false,"types":[]}];
 implementors["either"] = [{"text":"impl&lt;L, R&gt; Error for Either&lt;L, R&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;L: Error,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: Error,&nbsp;</span>","synthetic":false,"types":[]}];
 implementors["flate2"] = [{"text":"impl Error for DecompressError","synthetic":false,"types":[]},{"text":"impl Error for CompressError","synthetic":false,"types":[]}];
 implementors["getrandom"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
@@ -28,6 +30,7 @@ implementors["proc_macro2"] = [{"text":"impl Error for LexError","synthetic":fal
 implementors["proptest"] = [{"text":"impl&lt;T:&nbsp;Debug&gt; Error for TestError&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["rand"] = [{"text":"impl Error for BernoulliError","synthetic":false,"types":[]},{"text":"impl Error for WeightedError","synthetic":false,"types":[]},{"text":"impl Error for ReadError","synthetic":false,"types":[]}];
 implementors["rand_core"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
+implementors["rayon_core"] = [{"text":"impl Error for ThreadPoolBuildError","synthetic":false,"types":[]}];
 implementors["regex"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["regex_syntax"] = [{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for CaseFoldError","synthetic":false,"types":[]},{"text":"impl Error for UnicodeWordError","synthetic":false,"types":[]}];
 implementors["rusty_fork"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];

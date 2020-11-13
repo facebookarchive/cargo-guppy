@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `determinator` crate."><meta name="keywords" content="rust, rustlang, rust-lang, determinator"><title>determinator - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../determinator/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate determinator</p><div class='block version'><p>Version 0.1.0</p></div><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all determinator's items</p></a><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'determinator', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/determinator/lib.rs.html#4-119' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>determinator</a></span></h1><div class='docblock'><p>Figure out what packages in a Rust workspace changed between two commits.</p>
+<p>A typical continuous integration system runs every test on every pull request or proposed
+change. In large monorepos, most proposed changes have no effect on most packages. A
+<em>target determinator</em> figures out, given a proposed change, which packages may have had changes
+to them.</p>
+<p>The determinator is desiged to be used in the
+<a href="https://github.com/libra/libra">Libra Core workspace</a>, which is one such monorepo.</p>
+<h1 id="how-it-works" class="section-header"><a href="#how-it-works">How it works</a></h1>
+<p>Broadly speaking, a change to a Rust package can come from one of two sources:</p>
+<ul>
+<li>The source code or <code>Cargo.toml</code> of the package changing.</li>
+<li>A change to a dependency, which can happen in one of three ways:
+<ol>
+<li>The source code of a workspace dependency changing.</li>
+<li>A version bump to a third-party dependency.</li>
+<li>The feature set of a dependency changing.</li>
+</ol>
+</li>
+</ul>
+<p>The determinator pieces together data from both of these sources, along with information
+provided by <a href="https://docs.rs/guppy">guppy</a>, to figure out which packages need to be re-tested.</p>
+<h2 id="file-changes" class="section-header"><a href="#file-changes">File changes</a></h2>
+<p>The determinator expects to be passed in a list of file changes between two revisions. For each
+file passed in:</p>
+<ul>
+<li>The determinator looks for the package nearest to the file and marks it as changed.</li>
+<li>If the file is outside a package, the determinator ignores the file by default.</li>
+</ul>
+<p>The list of file changes can be obtained from a source control system such as Git. <code>Paths0</code>,
+available in this crate, can help.</p>
+<p>These simple rules may need to be customized for particular scenarios (e.g. if a special file in
+the root of the workspace changes, mark the entire workspace changed). For such situations, the
+determinator has support for custom rules. See the documentation for the <code>rules</code> module for
+more.</p>
+<h2 id="dependency-changes" class="section-header"><a href="#dependency-changes">Dependency changes</a></h2>
+<p>The determinator uses <code>guppy</code> to run Cargo build simulations on every package in the workspace.
+For each package, the determinator figures out whether any of its dependencies (including
+feature sets) have changed. These simulations are done with:</p>
+<ul>
+<li>dev-dependencies enabled (by default; this can be customized)</li>
+<li>both the host and target platforms set to the current platform (by default; this can be
+customized)</li>
+<li>three sets of features for each package:
+<ul>
+<li>no features enabled</li>
+<li>default features</li>
+<li>all features enabled</li>
+</ul>
+</li>
+</ul>
+<p>If any of these simulated builds indicates that a workspace package has had any dependency
+changes through:</p>
+<ul>
+<li>a file change, or</li>
+<li>a third-party dependency change (version or feature set change)</li>
+</ul>
+<p>then it is marked changed.</p>
+<h1 id="customizing-behavior" class="section-header"><a href="#customizing-behavior">Customizing behavior</a></h1>
+<p>The standard rules followed by the determinator may need to be tweaked in some situations:</p>
+<ul>
+<li>Some files should be ignored.</li>
+<li>If some files or packages change, a full test run may be necessary.</li>
+<li>&quot;Virtual dependencies&quot; that Cargo isn't aware of may need to be inserted.</li>
+</ul>
+<p>For these situations, the determinator allows for custom <em>rules</em> to be specified. For more,
+see the documentation for the <code>rules</code> module.</p>
+<h1 id="limitations" class="section-header"><a href="#limitations">Limitations</a></h1>
+<p>The determinator may not be able to figure out third-party changes outside the workspace if they
+aren't accompanied with a version bump. This is not an issue for third-party crates retrieved
+from <code>crates.io</code> or a Git repository, but may be one for third-party dependencies on
+the file system. A future TODO is to add support for assuming that a third-party package has
+changed.</p>
+<p>The determinator is also unaware of changes to the build environment---in those cases, a full
+build may have to be forced from outside the determinator. In general, it is recommended that
+the build environment be checked into the repository (e.g. through <a href="https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions">GitHub Actions workflow
+files</a>)
+and a full build be forced if any of those files change.</p>
+<h1 id="alternatives" class="section-header"><a href="#alternatives">Alternatives</a></h1>
+<p>One way to look at the determinator is through the lens of <em>caching</em>: test results can be
+cached, and changes can be analyzed to
+<a href="https://martinfowler.com/bliki/TwoHardThings.html">invalidate cache results</a>.</p>
+<p>There are a number of other caching systems in existence, such as:</p>
+<ul>
+<li><a href="https://github.com/mozilla/sccache">Mozilla's <code>sccache</code></a> and other &quot;bottom-up&quot; caching build
+systems.</li>
+<li><a href="https://bazel.build/">Bazel</a>, <a href="https://buck.build/">Buck</a> and other &quot;top-down&quot; hash-based
+caching build systems.</li>
+</ul>
+<p>While these systems are great, they may not always be practical (in particular, <code>sccache</code>
+requires paths to be exact across machines, and Bazel and Buck have stringent requirements
+around the environment not affecting build results.) These systems are also geared towards
+builds, which tend to be more hermetic than test results.</p>
+<p>However, it is quite likely that in many cases one of these other systems may provide better
+results. In the <a href="https://github.com/libra/libra">Libra Core workspace</a>, the current plan is to
+perform builds with <code>sccache</code>, and to use this determinator to figure out which tests to run.
+This may change as we learn more about how each of these systems behave in practice.</p>
+<h1 id="inspirations" class="section-header"><a href="#inspirations">Inspirations</a></h1>
+<p>This determinator is inspired by the one used in Facebook's main source repository.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="errors/index.html" title='determinator::errors mod'>errors</a></td><td class='docblock-short'><p>Error types returned by the determinator.</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="rules/index.html" title='determinator::rules mod'>rules</a></td><td class='docblock-short'><p>Custom rules for the target determinator.</p>
+</td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.Determinator.html" title='determinator::Determinator struct'>Determinator</a></td><td class='docblock-short'><p>Determine target dependencies from changed files and packages in a workspace.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.DeterminatorSet.html" title='determinator::DeterminatorSet struct'>DeterminatorSet</a></td><td class='docblock-short'><p>The result of a <code>Determinator</code> computation.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Paths0.html" title='determinator::Paths0 struct'>Paths0</a></td><td class='docblock-short'><p>A store for null-separated paths.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "determinator";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

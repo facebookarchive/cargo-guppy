@@ -469,10 +469,42 @@
 <span id="468">468</span>
 <span id="469">469</span>
 <span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">debug_ignore</span>::<span class="ident">DebugIgnore</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureFilter</span>, <span class="ident">FeatureSet</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
@@ -482,7 +514,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">dot</span>::{<span class="ident">DotFmt</span>, <span class="ident">DotVisitor</span>, <span class="ident">DotWrite</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">edge_ref</span>::<span class="ident">GraphEdgeRef</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">IxBitSet</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">PackageId</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>, <span class="ident">Error</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">NodeFiltered</span>, <span class="ident">NodeRef</span>};
@@ -499,8 +531,16 @@
     <span class="doccomment">/// parts of the graph that aren&#39;t accessible from the workspace.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">PackageSet</span> {
         <span class="ident">PackageSet</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="self">self</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">all_nodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>),
+        }
+    }
+
+    <span class="doccomment">/// Creates a new, empty `PackageSet` associated with this package graph.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_none</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">PackageSet</span> {
+        <span class="ident">PackageSet</span> {
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="self">self</span>),
+            <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">empty</span>(),
         }
     }
 
@@ -514,7 +554,7 @@
         <span class="ident">package_ids</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
     ) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageSet</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">PackageSet</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="self">self</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>::<span class="op">&lt;</span><span class="ident">IxBitSet</span><span class="op">&gt;</span>(<span class="self">self</span>.<span class="ident">package_ixs</span>(<span class="ident">package_ids</span>)<span class="question-mark">?</span>),
         })
     }
@@ -529,7 +569,7 @@
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">package</span>)<span class="op">|</span> <span class="ident">package</span>.<span class="ident">package_ix</span>())
             .<span class="ident">collect</span>();
         <span class="ident">PackageSet</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="self">self</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         }
     }
@@ -553,7 +593,7 @@
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Error</span><span class="op">&gt;&gt;</span>()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">PackageSet</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="self">self</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         })
     }
@@ -577,7 +617,7 @@
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;&gt;</span>()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">PackageSet</span> {
-            <span class="ident">graph</span>: <span class="self">self</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="self">self</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         })
     }
@@ -588,7 +628,7 @@
 <span class="doccomment">/// Created by `PackageQuery::resolve`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
+    <span class="ident">graph</span>: <span class="ident">DebugIgnore</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span><span class="op">&gt;</span>,
     <span class="ident">core</span>: <span class="ident">ResolveCore</span><span class="op">&lt;</span><span class="ident">PackageGraph</span><span class="op">&gt;</span>,
 }
 
@@ -598,14 +638,14 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">query</span>: <span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">graph</span>;
         <span class="self">Self</span> {
-            <span class="ident">graph</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">graph</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">new</span>(<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">query</span>.<span class="ident">params</span>),
         }
     }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">included</span>: <span class="ident">FixedBitSet</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">graph</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">graph</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         }
     }
@@ -617,7 +657,7 @@
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">graph</span>;
         <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">params</span>.<span class="ident">clone</span>();
         <span class="self">Self</span> {
-            <span class="ident">graph</span>,
+            <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">graph</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">with_edge_filter</span>(<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">params</span>, <span class="op">|</span><span class="ident">edge</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">link</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">edge_ref_to_link</span>(<span class="ident">edge</span>);
                 <span class="ident">resolver</span>.<span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="ident">query</span>, <span class="ident">link</span>)
@@ -637,9 +677,23 @@
 
     <span class="doccomment">/// Returns true if this package ID is contained in this resolve set.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `None` if the package ID is unknown.</span>
+    <span class="doccomment">/// Returns an error if the package ID is unknown.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">contains_ix</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_ix</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>))
+    }
+
+    <span class="doccomment">/// Creates a new `PackageQuery` from this set in the specified direction.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is equivalent to constructing a query from all the `package_ids`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_package_query</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-&gt;</span> <span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">package_ixs</span> <span class="op">=</span> <span class="ident">SortedSet</span>::<span class="ident">new</span>(
+            <span class="self">self</span>.<span class="ident">core</span>
+                .<span class="ident">included</span>
+                .<span class="ident">ones</span>()
+                .<span class="ident">map</span>(<span class="ident">NodeIndex</span>::<span class="ident">new</span>)
+                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;&gt;</span>(),
+        );
+        <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">query_from_parts</span>(<span class="ident">package_ixs</span>, <span class="ident">direction</span>)
     }
 
     <span class="comment">// ---</span>
@@ -654,7 +708,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">union</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>, <span class="ident">other</span>.<span class="ident">graph</span>.<span class="number">0</span>),
             <span class="string">&quot;package graphs passed into union() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -669,7 +723,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">intersection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>, <span class="ident">other</span>.<span class="ident">graph</span>.<span class="number">0</span>),
             <span class="string">&quot;package graphs passed into intersection() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -684,7 +738,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>, <span class="ident">other</span>.<span class="ident">graph</span>.<span class="number">0</span>),
             <span class="string">&quot;package graphs passed into difference() match&quot;</span>
         );
         <span class="self">Self</span> {
@@ -701,7 +755,7 @@
     <span class="doccomment">/// Panics if the package graphs associated with `self` and `other` don&#39;t match.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symmetric_difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
-            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>),
+            ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>, <span class="ident">other</span>.<span class="ident">graph</span>.<span class="number">0</span>),
             <span class="string">&quot;package graphs passed into symmetric_difference() match&quot;</span>
         );
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
@@ -831,7 +885,7 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
     ) <span class="op">-&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
+        <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>;
         <span class="self">self</span>.<span class="ident">core</span>
             .<span class="ident">links</span>(<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge_ix</span>)<span class="op">|</span> {
@@ -845,7 +899,7 @@
         <span class="ident">visitor</span>: <span class="ident">V</span>,
     ) <span class="op">-&gt;</span> <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
         <span class="kw">let</span> <span class="ident">node_filtered</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">core</span>.<span class="ident">included</span>);
-        <span class="ident">DotFmt</span>::<span class="ident">new</span>(<span class="ident">node_filtered</span>, <span class="ident">VisitorWrap</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">visitor</span>))
+        <span class="ident">DotFmt</span>::<span class="ident">new</span>(<span class="ident">node_filtered</span>, <span class="ident">VisitorWrap</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>, <span class="ident">visitor</span>))
     }
 
     <span class="comment">// ---</span>
@@ -856,6 +910,14 @@
         <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">contains</span>(<span class="ident">package_ix</span>)
     }
 }
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+        ::<span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">eq</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>, <span class="ident">other</span>.<span class="ident">graph</span>.<span class="number">0</span>) <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">core</span> <span class="op">==</span> <span class="ident">other</span>.<span class="ident">core</span>
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {}
 
 <span class="doccomment">/// Represents whether a particular link within a package graph should be followed during a</span>
 <span class="doccomment">/// resolve operation.</span>
