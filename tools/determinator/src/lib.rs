@@ -13,10 +13,6 @@
 //! The determinator is desiged to be used in the
 //! [Libra Core workspace](https://github.com/libra/libra), which is one such monorepo.
 //!
-//! # Optional features
-//!
-//! * `serde1`: Support loading custom determinator rules from a file.
-//!
 //! # How it works
 //!
 //! Broadly speaking, a change to a Rust package can come from one of two sources:

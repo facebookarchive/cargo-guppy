@@ -22,7 +22,7 @@
 //! * **Package rules** match based on changed packages, and are applied as required until
 //!   exhausted (i.e. a fixpoint is reached).
 //!
-//! If the `serde1` feature is enabled, determinator rules can be read from a TOML file as well.
+//! Determinator rules are a configuration file format and can be read from a TOML file.
 //!
 //! # Examples for path rules
 //!
@@ -93,36 +93,30 @@
 use crate::errors::{RuleIndex, RulesError};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use guppy::graph::{PackageGraph, PackageMetadata, PackageSet, Workspace};
-#[cfg(feature = "serde1")]
 use serde::{Deserialize, Serialize};
 
 /// Rules for the target determinator.
 ///
-/// If the feature `serde1` is enabled, this forms a configuration file format that can be read
-/// from a TOML file.
+/// This forms a configuration file format that can be read from a TOML file.
 ///
 /// For more about determinator rules, see [the module-level documentation](index.html).
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(Deserialize, Serialize))]
-#[cfg_attr(feature = "serde1", serde(deny_unknown_fields))]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct DeterminatorRules {
     /// A list of rules that each changed file path is matched against.
-    #[cfg_attr(feature = "serde1", serde(default, rename = "path-rule"))]
+    #[serde(default, rename = "path-rule")]
     pub path_rules: Vec<PathRule>,
 
     /// A list of rules that each affected package is matched against.
     ///
     /// Sometimes, dependencies between workspace packages aren't expressed in Cargo.tomls. The
     /// packages here act as "virtual dependencies" for the determinator.
-    #[cfg_attr(feature = "serde1", serde(default, rename = "package-rule"))]
+    #[serde(default, rename = "package-rule")]
     pub package_rules: Vec<PackageRule>,
 }
 
 impl DeterminatorRules {
     /// Deserializes determinator rules from the given TOML string.
-    ///
-    /// Requires the `serde1` feature to be enabled.
-    #[cfg(feature = "serde1")]
     pub fn parse(s: &str) -> Result<Self, toml::de::Error> {
         Ok(toml::from_str(s)?)
     }
@@ -141,12 +135,8 @@ impl DeterminatorRules {
 /// ```
 ///
 /// For more examples, see [the module-level documentation](index.html).
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(Deserialize, Serialize))]
-#[cfg_attr(
-    feature = "serde1",
-    serde(deny_unknown_fields, rename_all = "kebab-case")
-)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct PathRule {
     /// The globs to match against.
     ///
@@ -176,18 +166,17 @@ pub struct PathRule {
     /// ```toml
     /// mark-changed = ["guppy", "determinator"]
     /// ```
-    #[cfg_attr(feature = "serde1", serde(with = "mark_changed_impl"))]
+    #[serde(with = "mark_changed_impl")]
     pub mark_changed: DeterminatorMarkChanged,
 
     /// The operation to perform after applying the rule. Set to "skip" by default.
-    #[cfg_attr(feature = "serde1", serde(default))]
+    #[serde(default)]
     pub post_rule: DeterminatorPostRule,
 }
 
 /// The operation to perform after applying the rule.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(Deserialize, Serialize))]
-#[cfg_attr(feature = "serde1", serde(rename_all = "kebab-case"))]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 #[non_exhaustive]
 pub enum DeterminatorPostRule {
     /// Skip all further processing of this path.
@@ -247,12 +236,8 @@ impl Default for DeterminatorPostRule {
 /// ```
 ///
 /// For more examples, see [the module-level documentation](index.html).
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(Deserialize, Serialize))]
-#[cfg_attr(
-    feature = "serde1",
-    serde(deny_unknown_fields, rename_all = "kebab-case")
-)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct PackageRule {
     /// The package names to match against.
     ///
@@ -282,7 +267,7 @@ pub struct PackageRule {
     /// ```toml
     /// mark-changed = ["guppy", "determinator"]
     /// ```
-    #[cfg_attr(feature = "serde1", serde(with = "mark_changed_impl"))]
+    #[serde(with = "mark_changed_impl")]
     pub mark_changed: DeterminatorMarkChanged,
 }
 
@@ -304,8 +289,8 @@ pub struct PackageRule {
 ///
 /// For more examples, see [the module-level documentation](index.html).
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde1", derive(Deserialize, Serialize))]
-#[cfg_attr(feature = "serde1", serde(rename_all = "kebab-case", untagged))]
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case", untagged)]
 pub enum DeterminatorMarkChanged {
     /// Mark the workspace packages with the given names as changed.
     ///
@@ -442,7 +427,6 @@ impl<'g> MarkChangedImpl<'g> {
     }
 }
 
-#[cfg(feature = "serde1")]
 mod mark_changed_impl {
     use super::*;
     use serde::de::Error;
@@ -488,7 +472,7 @@ mod mark_changed_impl {
     }
 }
 
-#[cfg(all(test, feature = "serde1"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 
