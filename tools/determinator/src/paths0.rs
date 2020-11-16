@@ -21,14 +21,22 @@ use std::str::Utf8Error;
 ///
 /// # Examples
 ///
-/// Most source control systems can provide null-separated paths. To obtain a list of added and
-/// modified paths between two revisions, use these commands:
+/// Most source control systems can provide null-separated paths. These examples are expected to be
+/// run from the Cargo workspace root (which is assumed to be the same as the repository root).
+///
+/// To obtain a list of added and modified paths between two revisions:
 ///
 /// * Git: `git diff -z --diff-filter=d --name-only <old rev> <new rev>`
 /// * Mercurial: `hg status --print0 --modified --added --no-status <old rev> <new rev>`
 ///
-/// Null-separated paths are produced through the `-z` option to `git diff`, or the `--print0`
-/// option to `hg status`. If you're using a different system, check its help for instructions.
+/// To obtain a list of all files in the working directory that are tracked by the source control
+/// system:
+///
+/// * Git: `git ls-files -z`
+/// * Mercurial: `hg files --print0`
+///
+/// Null-separated paths are produced through the `-z` option to Git commands, or the `--print0`
+/// option to Mercurial. If you're using a different system, check its help for instructions.
 ///
 /// # Implementations
 ///
