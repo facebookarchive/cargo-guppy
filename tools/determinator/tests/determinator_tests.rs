@@ -12,7 +12,7 @@ fn guppy_path_rules() {
     // There are no dependency changes between the old and new fixtures, only file changes.
     let old = JsonFixture::metadata_guppy_869476c();
     let new = JsonFixture::metadata_guppy_c9b4f76();
-    let opts = read_options(new, "path_rules.toml");
+    let opts = read_options(new, "path-rules.toml");
 
     let mut determinator = Determinator::new(old.graph(), new.graph());
     determinator.set_rules(&opts).expect("rules set correctly");
@@ -160,7 +160,7 @@ fn guppy_package_rules() {
     // There are no dependency changes between the old and new fixtures, only file changes.
     let old = JsonFixture::metadata_guppy_869476c();
     let new = JsonFixture::metadata_guppy_c9b4f76();
-    let opts = read_options(new, "package_rules.toml");
+    let opts = read_options(new, "package-rules.toml");
 
     let mut determinator = Determinator::new(old.graph(), new.graph());
     determinator.set_rules(&opts).expect("rules set correctly");
@@ -240,7 +240,7 @@ fn guppy_package_rules_2() {
     // There are no dependency changes between the old and new fixtures, only file changes.
     let old = JsonFixture::metadata_guppy_869476c();
     let new = JsonFixture::metadata_guppy_c9b4f76();
-    let opts = read_options(new, "package_rules.toml");
+    let opts = read_options(new, "package-rules.toml");
 
     let mut determinator = Determinator::new(old.graph(), new.graph());
     determinator.set_rules(&opts).expect("rules set correctly");
@@ -274,7 +274,7 @@ fn guppy_deps() {
     // new updates the version of toml, which should cause most things to change.
     let old = JsonFixture::metadata_guppy_78cb7e8();
     let new = JsonFixture::metadata_guppy_869476c();
-    let opts = read_options(new, "path_rules.toml");
+    let opts = read_options(new, "path-rules.toml");
 
     let mut determinator = Determinator::new(old.graph(), new.graph());
     determinator.set_rules(&opts).expect("rules set correctly");
