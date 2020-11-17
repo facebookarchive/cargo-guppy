@@ -100,11 +100,12 @@
 //! mark-changed = "all"
 //! ```
 
-use crate::errors::{RuleIndex, RulesError};
+use crate::errors::RulesError;
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use guppy::graph::{PackageGraph, PackageMetadata, PackageSet, Workspace};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// Rules for the target determinator.
 ///
@@ -359,6 +360,52 @@ pub enum DeterminatorMarkChanged {
     All,
 }
 
+/// The result of matching a file path against a determinator.
+///
+/// Returned by `Determinator::match_path`.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PathMatch {
+    /// The path matched a rule, causing everything to be rebuilt.
+    RuleMatchedAll,
+    /// The path matched a rule and ancestor-based matching was not followed.
+    ///
+    /// This will not be returned if the matched rule caused ancestor-based matching to happen.
+    RuleMatched(RuleIndex),
+    /// The path was matched to a package through inspecting the parent directories of each path.
+    AncestorMatched,
+    /// The path wasn't matched to a rule or a nearby package, causing everything to be rebuilt.
+    NoMatches,
+}
+
+/// The index of a rule.
+///
+/// Used in `PathMatch` and while returning errors.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum RuleIndex {
+    /// The custom path rule at this index.
+    CustomPath(usize),
+    /// The default path rule at this index.
+    DefaultPath(usize),
+    /// The package rule at this index.
+    ///
+    /// All package rules are custom: there are no default package rules.
+    Package(usize),
+}
+
+impl fmt::Display for RuleIndex {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RuleIndex::CustomPath(index) => write!(f, "custom path rule {}", index),
+            RuleIndex::DefaultPath(index) => write!(f, "default path rule {}", index),
+            RuleIndex::Package(index) => write!(f, "package rule {}", index),
+        }
+    }
+}
+
+// ---
+// Private types
+// ---
+
 /// Internal version of determinator rules.
 #[derive(Clone, Debug)]
 pub(crate) struct RulesImpl<'g> {
@@ -420,6 +467,7 @@ impl<'g> RulesImpl<'g> {
                         .map_err(|err| RulesError::resolve_ref(rule_index, err))?;
 
                     Ok(PathRuleImpl {
+                        rule_index,
                         glob_set,
                         mark_changed,
                         post_rule: *post_rule,
@@ -463,6 +511,7 @@ impl<'g> RulesImpl<'g> {
 
 #[derive(Clone, Debug)]
 pub(crate) struct PathRuleImpl<'g> {
+    pub(crate) rule_index: RuleIndex,
     pub(crate) glob_set: GlobSet,
     pub(crate) mark_changed: MarkChangedImpl<'g>,
     pub(crate) post_rule: DeterminatorPostRule,

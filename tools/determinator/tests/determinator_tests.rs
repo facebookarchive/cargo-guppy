@@ -3,7 +3,8 @@
 
 //! Higher-level unit tests for the target determinator.
 
-use determinator::{rules::DeterminatorRules, Determinator};
+use determinator::rules::{DeterminatorRules, PathMatch, RuleIndex};
+use determinator::Determinator;
 use fixtures::json::JsonFixture;
 use std::path::Path;
 
@@ -322,6 +323,55 @@ fn guppy_deps() {
         determinator_set.affected_set, expected,
         "some packages affected"
     );
+}
+
+#[test]
+fn guppy_match_paths() {
+    let old = JsonFixture::metadata_guppy_869476c();
+    let new = JsonFixture::metadata_guppy_c9b4f76();
+    let opts = read_options(new, "path-rules.toml");
+
+    let mut determinator = Determinator::new(old.graph(), new.graph());
+    determinator
+        .set_rules(&opts)
+        .expect("options set correctly");
+
+    // These expected outputs were figured out by manually matching path-rules.toml and
+    // default-rules.toml.
+    let expected = vec![
+        ("Cargo.toml", PathMatch::RuleMatchedAll),
+        (
+            "README.md",
+            PathMatch::RuleMatched(RuleIndex::CustomPath(0)),
+        ),
+        (
+            "foo/README.tpl",
+            PathMatch::RuleMatched(RuleIndex::CustomPath(0)),
+        ),
+        (
+            "CONTRIBUTING.md",
+            PathMatch::RuleMatched(RuleIndex::DefaultPath(4)),
+        ),
+        (
+            "CODE_OF_CONDUCT.md",
+            PathMatch::RuleMatched(RuleIndex::CustomPath(2)),
+        ),
+        ("guppy/src/foo", PathMatch::AncestorMatched),
+        ("guppy/src/lib.rs", PathMatch::AncestorMatched),
+        (
+            "Cargo.lock",
+            PathMatch::RuleMatched(RuleIndex::DefaultPath(3)),
+        ),
+    ];
+
+    for (path, m) in expected {
+        assert_eq!(
+            determinator.match_path(path, |_| {}),
+            m,
+            "expected rule match for {}",
+            path
+        );
+    }
 }
 
 fn read_options(fixture: &JsonFixture, toml_name: &str) -> DeterminatorRules {

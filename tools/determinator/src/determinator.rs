@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::errors::RulesError;
-use crate::rules::{DeterminatorPostRule, DeterminatorRules, MarkChangedImpl, RulesImpl};
+use crate::rules::{
+    DeterminatorPostRule, DeterminatorRules, MarkChangedImpl, PathMatch, PathRuleImpl, RulesImpl,
+};
 use globset::Candidate;
 use guppy::graph::cargo::{CargoOptions, CargoSet};
 use guppy::graph::feature::{all_filter, default_filter, none_filter, FeatureFilter};
-use guppy::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet};
+use guppy::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet, Workspace};
 use guppy::{PackageId, Platform};
 use itertools::Itertools;
 use petgraph::graphmap::GraphMap;
@@ -57,6 +59,28 @@ impl<'g, 'a> Determinator<'g, 'a> {
     pub fn add_changed_paths(&mut self, paths: impl IntoIterator<Item = &'a Path>) -> &mut Self {
         self.changed_paths.extend(paths);
         self
+    }
+
+    /// Returns what *would* happen if a given path was added to the changed set.
+    ///
+    /// This does not add any path to the changed set, but indicates what *would* happen if a path
+    /// is added.
+    ///
+    /// This method may be used to ensure that all paths in a repository are covered by at least one
+    /// rule if they don't match a package.
+    ///
+    /// `match_cb` is called for all package IDs that the path matches.
+    pub fn match_path(
+        &self,
+        path: impl AsRef<Path>,
+        match_cb: impl FnMut(&'g PackageId),
+    ) -> PathMatch {
+        process_path(
+            path.as_ref(),
+            &self.new.workspace(),
+            self.rules.as_ref().map(|rules| rules.path_rules.as_slice()),
+            match_cb,
+        )
     }
 
     /// Processes and configures determinator rules.
@@ -196,56 +220,21 @@ impl<'g, 'a, 'b> BuildState<'g, 'a, 'b> {
 
     // A return value of None stands for all packages in the workspace changed.
     fn process_path(mut self, path: &Path) -> Option<Self> {
-        let candidate = Candidate::new(path);
-
-        // 1. Apply any rules that match the path.
-        if let Some(rules) = &self.determinator.rules {
-            for rule in &rules.path_rules {
-                if rule.glob_set.is_match_candidate(&candidate) {
-                    // This glob matches this rule, so execute it.
-                    match &rule.mark_changed {
-                        MarkChangedImpl::Packages(packages) => {
-                            for package in packages {
-                                self.path_changed_ids.insert(package.id());
-                            }
-                        }
-                        MarkChangedImpl::All => {
-                            // Mark all packages changed.
-                            return None;
-                        }
-                    }
-
-                    match &rule.post_rule {
-                        DeterminatorPostRule::Skip => {
-                            // Skip all further processing for this path but continue reading other
-                            // paths.
-                            return Some(self);
-                        }
-                        DeterminatorPostRule::SkipRules => {
-                            // Skip further rule processing but continue to step 2 to match to the
-                            // nearest package.
-                            break;
-                        }
-                        DeterminatorPostRule::Fallthrough => {
-                            // Continue applying rules.
-                            continue;
-                        }
-                    }
-                }
-            }
+        let status = process_path(
+            path,
+            &self.determinator.new.workspace(),
+            self.determinator
+                .rules
+                .as_ref()
+                .map(|rules| rules.path_rules.as_slice()),
+            |id| {
+                self.path_changed_ids.insert(id);
+            },
+        );
+        match status {
+            PathMatch::RuleMatchedAll | PathMatch::NoMatches => None,
+            PathMatch::RuleMatched(_) | PathMatch::AncestorMatched => Some(self),
         }
-
-        // 2. Map the path to its nearest package.
-        let new_workspace = self.determinator.new.workspace();
-        for ancestor in path.ancestors() {
-            if let Ok(package) = new_workspace.member_by_path(ancestor) {
-                self.path_changed_ids.insert(package.id());
-                return Some(self);
-            }
-        }
-
-        // 3. If a file didn't match anything so far, rebuild everything.
-        None
     }
 
     fn process_build_summaries(&mut self) {
@@ -288,6 +277,63 @@ impl<'g, 'a, 'b> BuildState<'g, 'a, 'b> {
         let new_result = &self.build_cache.result_cache[package.id()];
         new_result.is_changed(&old_result, cargo_options)
     }
+}
+
+fn process_path<'g>(
+    path: &Path,
+    workspace: &Workspace<'g>,
+    path_rules: Option<&[PathRuleImpl<'g>]>,
+    mut match_cb: impl FnMut(&'g PackageId),
+) -> PathMatch {
+    let candidate = Candidate::new(path);
+
+    // 1. Apply any rules that match the path.
+    if let Some(path_rules) = path_rules {
+        for rule in path_rules {
+            if rule.glob_set.is_match_candidate(&candidate) {
+                // This glob matches this rule, so execute it.
+                match &rule.mark_changed {
+                    MarkChangedImpl::Packages(packages) => {
+                        for package in packages {
+                            match_cb(package.id());
+                        }
+                    }
+                    MarkChangedImpl::All => {
+                        // Mark all packages changed.
+                        return PathMatch::RuleMatchedAll;
+                    }
+                }
+
+                match &rule.post_rule {
+                    DeterminatorPostRule::Skip => {
+                        // Skip all further processing for this path but continue reading other
+                        // paths.
+                        return PathMatch::RuleMatched(rule.rule_index);
+                    }
+                    DeterminatorPostRule::SkipRules => {
+                        // Skip further rule processing but continue to step 2 to match to the
+                        // nearest package.
+                        break;
+                    }
+                    DeterminatorPostRule::Fallthrough => {
+                        // Continue applying rules.
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Map the path to its nearest ancestor package.
+    for ancestor in path.ancestors() {
+        if let Ok(package) = workspace.member_by_path(ancestor) {
+            match_cb(package.id());
+            return PathMatch::AncestorMatched;
+        }
+    }
+
+    // 3. If a file didn't match anything so far, rebuild everything.
+    PathMatch::NoMatches
 }
 
 /// Stores a build cache of every package in a workspace.
