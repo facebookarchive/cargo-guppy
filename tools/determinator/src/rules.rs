@@ -28,7 +28,14 @@
 //!
 //! The determinator ships with a set of default path rules for common files such as `.gitignore`
 //! and `Cargo.lock`. These rules are applied *after* custom rules, so custom rules matching the
-//! same paths can override them. To disable default rules entirely, set at the top level:
+//! same paths can override them.
+//!
+//! The latest version of the default rules is available
+//! [on GitHub](https://github.com/facebookincubator/cargo-guppy/blob/master/tools/determinator/default-rules.toml).
+//! Note that this may not match the default rules included in this copy of the determinator: you
+//! may wish to browse the history of the `default-rules.toml` file.
+//!
+//! To disable default rules entirely, set at the top level:
 //!
 //! ```toml
 //! use-default-rules = false

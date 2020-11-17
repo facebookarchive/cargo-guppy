@@ -15,15 +15,15 @@
 //!
 //! # How it works
 //!
-//! Broadly speaking, a change to a Rust package can come from one of two sources:
+//! A change to a Rust package can come from one of two sources:
 //! * The source code or `Cargo.toml` of the package changing.
 //! * A change to a dependency, which can happen in one of three ways:
 //!   1. The source code of a workspace dependency changing.
 //!   2. A version bump to a third-party dependency.
 //!   3. The feature set of a dependency changing.
 //!
-//! The determinator pieces together data from both of these sources, along with information
-//! provided by [guppy](https://docs.rs/guppy), to figure out which packages need to be re-tested.
+//! The determinator gathers data from both of these sources, and processes it through
+//! [guppy](https://docs.rs/guppy), to figure out which packages need to be re-tested.
 //!
 //! ## File changes
 //!
@@ -34,11 +34,10 @@
 //!   rebuilt.
 //!
 //! The list of file changes can be obtained from a source control system such as Git. `Paths0`,
-//! available in this crate, can help.
+//! available in this crate, can help do this correctly.
 //!
-//! These simple rules may need to be customized for particular scenarios (e.g. if a special file in
-//! the root of the workspace changes, mark the entire workspace changed). See the
-//! [Customizing behavior](#customizing-behavior) section below for more.
+//! These simple rules may need to be customized for particular scenarios (e.g. to ignore certain
+//! files). See the [Customizing behavior](#customizing-behavior) section below for more.
 //!
 //! ## Dependency changes
 //!
@@ -55,8 +54,8 @@
 //!
 //! If any of these simulated builds indicates that a workspace package has had any dependency
 //! changes through:
-//! * a file change, or
-//! * a third-party dependency change (version or feature set change)
+//! * a file change in another workspace dependency, or
+//! * a third-party dependency change (the source, version or feature set changed)
 //!
 //! then it is marked changed.
 //!
