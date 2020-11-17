@@ -557,16 +557,65 @@
 <span id="556">556</span>
 <span id="557">557</span>
 <span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">errors</span>::<span class="ident">RulesError</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">rules</span>::{<span class="ident">DeterminatorPostRule</span>, <span class="ident">DeterminatorRules</span>, <span class="ident">MarkChangedImpl</span>, <span class="ident">RulesImpl</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">rules</span>::{
+    <span class="ident">DeterminatorPostRule</span>, <span class="ident">DeterminatorRules</span>, <span class="ident">MarkChangedImpl</span>, <span class="ident">PathMatch</span>, <span class="ident">PathRuleImpl</span>, <span class="ident">RulesImpl</span>,
+};
 <span class="kw">use</span> <span class="ident">globset</span>::<span class="ident">Candidate</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoSet</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">all_filter</span>, <span class="ident">default_filter</span>, <span class="ident">none_filter</span>, <span class="ident">FeatureFilter</span>};
-<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>};
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{<span class="ident">PackageId</span>, <span class="ident">Platform</span>};
 <span class="kw">use</span> <span class="ident">itertools</span>::<span class="ident">Itertools</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">graphmap</span>::<span class="ident">GraphMap</span>;
@@ -617,6 +666,28 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_changed_paths</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">paths</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">changed_paths</span>.<span class="ident">extend</span>(<span class="ident">paths</span>);
         <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// Returns what *would* happen if a given path was added to the changed set.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This does not add any path to the changed set, but indicates what *would* happen if a path</span>
+    <span class="doccomment">/// is added.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This method may be used to ensure that all paths in a repository are covered by at least one</span>
+    <span class="doccomment">/// rule if they don&#39;t match a package.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `match_cb` is called for all package IDs that the path matches.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">match_path</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">path</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>,
+        <span class="ident">match_cb</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>),
+    ) <span class="op">-&gt;</span> <span class="ident">PathMatch</span> {
+        <span class="ident">process_path</span>(
+            <span class="ident">path</span>.<span class="ident">as_ref</span>(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">new</span>.<span class="ident">workspace</span>(),
+            <span class="self">self</span>.<span class="ident">rules</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">rules</span><span class="op">|</span> <span class="ident">rules</span>.<span class="ident">path_rules</span>.<span class="ident">as_slice</span>()),
+            <span class="ident">match_cb</span>,
+        )
     }
 
     <span class="doccomment">/// Processes and configures determinator rules.</span>
@@ -756,55 +827,21 @@
 
     <span class="comment">// A return value of None stands for all packages in the workspace changed.</span>
     <span class="kw">fn</span> <span class="ident">process_path</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">candidate</span> <span class="op">=</span> <span class="ident">Candidate</span>::<span class="ident">new</span>(<span class="ident">path</span>);
-
-        <span class="comment">// 1. Apply any rules that match the path.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rules</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">determinator</span>.<span class="ident">rules</span> {
-            <span class="kw">for</span> <span class="ident">rule</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">rules</span>.<span class="ident">path_rules</span> {
-                <span class="kw">if</span> <span class="ident">rule</span>.<span class="ident">glob_set</span>.<span class="ident">is_match_candidate</span>(<span class="kw-2">&amp;</span><span class="ident">candidate</span>) {
-                    <span class="comment">// This glob matches this rule, so execute it.</span>
-                    <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">rule</span>.<span class="ident">mark_changed</span> {
-                        <span class="ident">MarkChangedImpl</span>::<span class="ident">Packages</span>(<span class="ident">packages</span>) <span class="op">=&gt;</span> {
-                            <span class="kw">for</span> <span class="ident">package</span> <span class="kw">in</span> <span class="ident">packages</span> {
-                                <span class="self">self</span>.<span class="ident">path_changed_ids</span>.<span class="ident">insert</span>(<span class="ident">package</span>.<span class="ident">id</span>());
-                            }
-                        }
-                        <span class="ident">MarkChangedImpl</span>::<span class="ident">All</span> <span class="op">=&gt;</span> {
-                            <span class="comment">// Mark all packages changed.</span>
-                            <span class="kw">return</span> <span class="prelude-val">None</span>;
-                        }
-                    }
-
-                    <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">rule</span>.<span class="ident">post_rule</span> {
-                        <span class="ident">DeterminatorPostRule</span>::<span class="ident">Skip</span> <span class="op">=&gt;</span> {
-                            <span class="comment">// Skip all further processing for this path but continue reading other</span>
-                            <span class="comment">// paths.</span>
-                            <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="self">self</span>);
-                        }
-                        <span class="ident">DeterminatorPostRule</span>::<span class="ident">SkipRules</span> <span class="op">=&gt;</span> {
-                            <span class="comment">// Skip further rule processing but continue to step 2 to match to the</span>
-                            <span class="comment">// nearest package.</span>
-                            <span class="kw">break</span>;
-                        }
-                        <span class="ident">DeterminatorPostRule</span>::<span class="ident">Fallthrough</span> <span class="op">=&gt;</span> {
-                            <span class="comment">// Continue applying rules.</span>
-                            <span class="kw">continue</span>;
-                        }
-                    }
-                }
-            }
+        <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">process_path</span>(
+            <span class="ident">path</span>,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">determinator</span>.<span class="ident">new</span>.<span class="ident">workspace</span>(),
+            <span class="self">self</span>.<span class="ident">determinator</span>
+                .<span class="ident">rules</span>
+                .<span class="ident">as_ref</span>()
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">rules</span><span class="op">|</span> <span class="ident">rules</span>.<span class="ident">path_rules</span>.<span class="ident">as_slice</span>()),
+            <span class="op">|</span><span class="ident">id</span><span class="op">|</span> {
+                <span class="self">self</span>.<span class="ident">path_changed_ids</span>.<span class="ident">insert</span>(<span class="ident">id</span>);
+            },
+        );
+        <span class="kw">match</span> <span class="ident">status</span> {
+            <span class="ident">PathMatch</span>::<span class="ident">RuleMatchedAll</span> <span class="op">|</span> <span class="ident">PathMatch</span>::<span class="ident">NoMatches</span> <span class="op">=&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">PathMatch</span>::<span class="ident">RuleMatched</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">PathMatch</span>::<span class="ident">AncestorMatched</span> <span class="op">=&gt;</span> <span class="prelude-val">Some</span>(<span class="self">self</span>),
         }
-
-        <span class="comment">// 2. Map the path to its nearest package.</span>
-        <span class="kw">let</span> <span class="ident">new_workspace</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">determinator</span>.<span class="ident">new</span>.<span class="ident">workspace</span>();
-        <span class="kw">for</span> <span class="ident">ancestor</span> <span class="kw">in</span> <span class="ident">path</span>.<span class="ident">ancestors</span>() {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">package</span>) <span class="op">=</span> <span class="ident">new_workspace</span>.<span class="ident">member_by_path</span>(<span class="ident">ancestor</span>) {
-                <span class="self">self</span>.<span class="ident">path_changed_ids</span>.<span class="ident">insert</span>(<span class="ident">package</span>.<span class="ident">id</span>());
-                <span class="kw">break</span>;
-            }
-        }
-
-        <span class="prelude-val">Some</span>(<span class="self">self</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">process_build_summaries</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
@@ -847,6 +884,63 @@
         <span class="kw">let</span> <span class="ident">new_result</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">build_cache</span>.<span class="ident">result_cache</span>[<span class="ident">package</span>.<span class="ident">id</span>()];
         <span class="ident">new_result</span>.<span class="ident">is_changed</span>(<span class="kw-2">&amp;</span><span class="ident">old_result</span>, <span class="ident">cargo_options</span>)
     }
+}
+
+<span class="kw">fn</span> <span class="ident">process_path</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
+    <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
+    <span class="ident">workspace</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    <span class="ident">path_rules</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">PathRuleImpl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>]<span class="op">&gt;</span>,
+    <span class="kw-2">mut</span> <span class="ident">match_cb</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>),
+) <span class="op">-&gt;</span> <span class="ident">PathMatch</span> {
+    <span class="kw">let</span> <span class="ident">candidate</span> <span class="op">=</span> <span class="ident">Candidate</span>::<span class="ident">new</span>(<span class="ident">path</span>);
+
+    <span class="comment">// 1. Apply any rules that match the path.</span>
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">path_rules</span>) <span class="op">=</span> <span class="ident">path_rules</span> {
+        <span class="kw">for</span> <span class="ident">rule</span> <span class="kw">in</span> <span class="ident">path_rules</span> {
+            <span class="kw">if</span> <span class="ident">rule</span>.<span class="ident">glob_set</span>.<span class="ident">is_match_candidate</span>(<span class="kw-2">&amp;</span><span class="ident">candidate</span>) {
+                <span class="comment">// This glob matches this rule, so execute it.</span>
+                <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">rule</span>.<span class="ident">mark_changed</span> {
+                    <span class="ident">MarkChangedImpl</span>::<span class="ident">Packages</span>(<span class="ident">packages</span>) <span class="op">=&gt;</span> {
+                        <span class="kw">for</span> <span class="ident">package</span> <span class="kw">in</span> <span class="ident">packages</span> {
+                            <span class="ident">match_cb</span>(<span class="ident">package</span>.<span class="ident">id</span>());
+                        }
+                    }
+                    <span class="ident">MarkChangedImpl</span>::<span class="ident">All</span> <span class="op">=&gt;</span> {
+                        <span class="comment">// Mark all packages changed.</span>
+                        <span class="kw">return</span> <span class="ident">PathMatch</span>::<span class="ident">RuleMatchedAll</span>;
+                    }
+                }
+
+                <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">rule</span>.<span class="ident">post_rule</span> {
+                    <span class="ident">DeterminatorPostRule</span>::<span class="ident">Skip</span> <span class="op">=&gt;</span> {
+                        <span class="comment">// Skip all further processing for this path but continue reading other</span>
+                        <span class="comment">// paths.</span>
+                        <span class="kw">return</span> <span class="ident">PathMatch</span>::<span class="ident">RuleMatched</span>(<span class="ident">rule</span>.<span class="ident">rule_index</span>);
+                    }
+                    <span class="ident">DeterminatorPostRule</span>::<span class="ident">SkipRules</span> <span class="op">=&gt;</span> {
+                        <span class="comment">// Skip further rule processing but continue to step 2 to match to the</span>
+                        <span class="comment">// nearest package.</span>
+                        <span class="kw">break</span>;
+                    }
+                    <span class="ident">DeterminatorPostRule</span>::<span class="ident">Fallthrough</span> <span class="op">=&gt;</span> {
+                        <span class="comment">// Continue applying rules.</span>
+                        <span class="kw">continue</span>;
+                    }
+                }
+            }
+        }
+    }
+
+    <span class="comment">// 2. Map the path to its nearest ancestor package.</span>
+    <span class="kw">for</span> <span class="ident">ancestor</span> <span class="kw">in</span> <span class="ident">path</span>.<span class="ident">ancestors</span>() {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">package</span>) <span class="op">=</span> <span class="ident">workspace</span>.<span class="ident">member_by_path</span>(<span class="ident">ancestor</span>) {
+            <span class="ident">match_cb</span>(<span class="ident">package</span>.<span class="ident">id</span>());
+            <span class="kw">return</span> <span class="ident">PathMatch</span>::<span class="ident">AncestorMatched</span>;
+        }
+    }
+
+    <span class="comment">// 3. If a file didn&#39;t match anything so far, rebuild everything.</span>
+    <span class="ident">PathMatch</span>::<span class="ident">NoMatches</span>
 }
 
 <span class="doccomment">/// Stores a build cache of every package in a workspace.</span>
