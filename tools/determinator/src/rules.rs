@@ -24,6 +24,16 @@
 //!
 //! Determinator rules are a configuration file format and can be read from a TOML file.
 //!
+//! # Default path rules
+//!
+//! The determinator ships with a set of default path rules for common files such as `.gitignore`
+//! and `Cargo.lock`. These rules are applied *after* custom rules, so custom rules matching the
+//! same paths can override them. To disable default rules entirely, set at the top level:
+//!
+//! ```toml
+//! use-default-rules = false
+//! ```
+//!
 //! # Examples for path rules
 //!
 //! To ignore all files named `README.md` and `README.tpl`, and skip all further processing:
@@ -93,6 +103,7 @@
 use crate::errors::{RuleIndex, RulesError};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use guppy::graph::{PackageGraph, PackageMetadata, PackageSet, Workspace};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 /// Rules for the target determinator.
@@ -100,9 +111,15 @@ use serde::{Deserialize, Serialize};
 /// This forms a configuration file format that can be read from a TOML file.
 ///
 /// For more about determinator rules, see [the module-level documentation](index.html).
-#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeterminatorRules {
+    /// Whether to use the default rules, as specified by `DEFAULT_RULES_TOML` and `default_rules`.
+    ///
+    /// This is true by default.
+    #[serde(default = "default_true", rename = "use-default-rules")]
+    use_default_rules: bool,
+
     /// A list of rules that each changed file path is matched against.
     #[serde(default, rename = "path-rule")]
     pub path_rules: Vec<PathRule>,
@@ -115,10 +132,45 @@ pub struct DeterminatorRules {
     pub package_rules: Vec<PackageRule>,
 }
 
+impl Default for DeterminatorRules {
+    fn default() -> Self {
+        Self {
+            use_default_rules: true,
+            path_rules: vec![],
+            package_rules: vec![],
+        }
+    }
+}
+
+#[inline]
+fn default_true() -> bool {
+    true
+}
+
 impl DeterminatorRules {
     /// Deserializes determinator rules from the given TOML string.
     pub fn parse(s: &str) -> Result<Self, toml::de::Error> {
         Ok(toml::from_str(s)?)
+    }
+
+    /// Contains the default rules in a TOML file format.
+    ///
+    /// The latest version of the default rules is available
+    /// [on GitHub](https://github.com/facebookincubator/cargo-guppy/blob/master/tools/determinator/default-rules.toml).
+    /// Note that this may not match the default rules included in this copy of the repository: you
+    /// may wish to browse the history of the `default-rules.toml` file.
+    pub const DEFAULT_RULES_TOML: &'static str = include_str!("../default-rules.toml");
+
+    /// Returns the default rules.
+    ///
+    /// These rules are applied *after* any custom rules, so they can be overridden by custom rules.
+    pub fn default_rules() -> &'static DeterminatorRules {
+        static DEFAULT_RULES: Lazy<DeterminatorRules> = Lazy::new(|| {
+            DeterminatorRules::parse(DeterminatorRules::DEFAULT_RULES_TOML)
+                .expect("default rules should parse")
+        });
+
+        &*DEFAULT_RULES
     }
 }
 
@@ -288,8 +340,7 @@ pub struct PackageRule {
 /// ```
 ///
 /// For more examples, see [the module-level documentation](index.html).
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case", untagged)]
 pub enum DeterminatorMarkChanged {
     /// Mark the workspace packages with the given names as changed.
@@ -322,10 +373,27 @@ impl<'g> RulesImpl<'g> {
     ) -> Result<Self, RulesError> {
         let workspace = graph.workspace();
 
-        let path_rules = options
+        let custom_path_rules = options
             .path_rules
             .iter()
             .enumerate()
+            .map(|(idx, rule)| (RuleIndex::CustomPath(idx), rule));
+
+        let default_path_rules = if options.use_default_rules {
+            let default_rules = DeterminatorRules::default_rules();
+            default_rules.path_rules.as_slice()
+        } else {
+            &[]
+        };
+
+        let default_path_rules = default_path_rules
+            .iter()
+            .enumerate()
+            .map(|(idx, rule)| (RuleIndex::DefaultPath(idx), rule));
+
+        // Default rules come after custom ones.
+        let path_rules = custom_path_rules
+            .chain(default_path_rules)
             .map(
                 |(
                     rule_index,
@@ -335,7 +403,6 @@ impl<'g> RulesImpl<'g> {
                         post_rule,
                     },
                 )| {
-                    let rule_index = RuleIndex::Path(rule_index);
                     // Convert the globs to a globset.
                     let mut builder = GlobSetBuilder::new();
                     for glob in globs {
@@ -502,6 +569,7 @@ mod tests {
         "#;
 
         let expected = DeterminatorRules {
+            use_default_rules: true,
             path_rules: vec![
                 PathRule {
                     globs: vec!["all/*".to_owned()],

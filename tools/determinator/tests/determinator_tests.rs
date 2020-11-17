@@ -63,12 +63,8 @@ fn guppy_path_rules() {
         assert_eq!(determinator_set.affected_set, expected_affected);
     }
 
-    // Cargo.toml or .gitignore should be ignored by default and shouldn't cause any changes.
-    determinator.add_changed_paths(vec![
-        Path::new(".gitignore"),
-        Path::new("Cargo.toml"),
-        Path::new("Cargo.lock"),
-    ]);
+    // Cargo.lock and .gitignore should be ignored by default and shouldn't cause any changes.
+    determinator.add_changed_paths(vec![Path::new(".gitignore"), Path::new("Cargo.lock")]);
     {
         let determinator_set = determinator.compute();
         assert_eq!(determinator_set.path_changed_set, expected_changed);
@@ -176,6 +172,23 @@ fn guppy_package_rules() {
         "no summary changes"
     );
     assert!(determinator_set.affected_set.is_empty(), "no changes");
+
+    {
+        // This ruleset disables default rules, so Cargo.lock changing should cause everything to be
+        // built.
+        let mut determinator = determinator.clone();
+        determinator.add_changed_paths(vec![Path::new("Cargo.lock")]);
+        let determinator_set = determinator.compute();
+        let workspace_set = new.graph().resolve_workspace();
+        assert_eq!(
+            determinator_set.path_changed_set, workspace_set,
+            "everything changed"
+        );
+        assert_eq!(
+            determinator_set.affected_set, workspace_set,
+            "everything changed"
+        );
+    }
 
     // Add a file that doesn't match any of the rules.
     determinator.add_changed_paths(vec![Path::new("cargo-guppy/foo.rs")]);

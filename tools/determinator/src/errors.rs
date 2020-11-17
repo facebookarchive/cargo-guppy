@@ -67,16 +67,21 @@ impl error::Error for RulesError {
 /// Used while returning errors.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum RuleIndex {
-    /// The path rule at this index.
-    Path(usize),
+    /// The custom path rule at this index.
+    CustomPath(usize),
+    /// The default path rule at this index.
+    DefaultPath(usize),
     /// The package rule at this index.
+    ///
+    /// All package rules are custom: there are no default package rules.
     Package(usize),
 }
 
 impl fmt::Display for RuleIndex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RuleIndex::Path(index) => write!(f, "path rule {}", index),
+            RuleIndex::CustomPath(index) => write!(f, "custom path rule {}", index),
+            RuleIndex::DefaultPath(index) => write!(f, "default path rule {}", index),
             RuleIndex::Package(index) => write!(f, "package rule {}", index),
         }
     }

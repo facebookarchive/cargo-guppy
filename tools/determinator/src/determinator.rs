@@ -240,11 +240,12 @@ impl<'g, 'a, 'b> BuildState<'g, 'a, 'b> {
         for ancestor in path.ancestors() {
             if let Ok(package) = new_workspace.member_by_path(ancestor) {
                 self.path_changed_ids.insert(package.id());
-                break;
+                return Some(self);
             }
         }
 
-        Some(self)
+        // 3. If a file didn't match anything so far, rebuild everything.
+        None
     }
 
     fn process_build_summaries(&mut self) {
