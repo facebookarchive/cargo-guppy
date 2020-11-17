@@ -3,6 +3,7 @@
 
 //! Error types returned by the determinator.
 
+use crate::rules::RuleIndex;
 use std::{error, fmt};
 
 /// An error that occurred while resolving a set of determinator rules.
@@ -58,31 +59,6 @@ impl error::Error for RulesError {
         match &self.kind {
             RulesErrorKind::ResolveRef(err) => Some(err),
             RulesErrorKind::GlobParse { err, .. } => Some(&**err),
-        }
-    }
-}
-
-/// The index of a rule.
-///
-/// Used while returning errors.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum RuleIndex {
-    /// The custom path rule at this index.
-    CustomPath(usize),
-    /// The default path rule at this index.
-    DefaultPath(usize),
-    /// The package rule at this index.
-    ///
-    /// All package rules are custom: there are no default package rules.
-    Package(usize),
-}
-
-impl fmt::Display for RuleIndex {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            RuleIndex::CustomPath(index) => write!(f, "custom path rule {}", index),
-            RuleIndex::DefaultPath(index) => write!(f, "default path rule {}", index),
-            RuleIndex::Package(index) => write!(f, "package rule {}", index),
         }
     }
 }

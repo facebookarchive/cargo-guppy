@@ -37,9 +37,8 @@
 //! available in this crate, can help.
 //!
 //! These simple rules may need to be customized for particular scenarios (e.g. if a special file in
-//! the root of the workspace changes, mark the entire workspace changed). For such situations, the
-//! determinator has support for custom rules, including shipping a default set of rules. See the
-//! documentation for the `rules` module for more.
+//! the root of the workspace changes, mark the entire workspace changed). See the
+//! [Customizing behavior](#customizing-behavior) section below for more.
 //!
 //! ## Dependency changes
 //!
@@ -66,10 +65,13 @@
 //! The standard rules followed by the determinator may need to be tweaked in some situations:
 //! * Some files should be ignored.
 //! * If some files or packages change, a full test run may be necessary.
-//! * "Virtual dependencies" that Cargo isn't aware of may need to be inserted.
+//! * *Virtual dependencies* that Cargo isn't aware of may need to be inserted.
 //!
-//! For these situations, the determinator allows for custom *rules* to be specified. For more,
-//! see the documentation for the `rules` module.
+//! For these situations, the determinator allows for custom *rules* to be specified. The
+//! determinator also ships with a default set of rules for common files like `.gitignore` and
+//! `rust-toolchain`.
+//!
+//! For more about custom rules, see the documentation for the `rules` module.
 //!
 //! # Limitations
 //!
