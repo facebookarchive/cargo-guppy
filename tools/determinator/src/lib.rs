@@ -30,15 +30,16 @@
 //! The determinator expects to be passed in a list of file changes between two revisions. For each
 //! file passed in:
 //! * The determinator looks for the package nearest to the file and marks it as changed.
-//! * If the file is outside a package, the determinator ignores the file by default.
+//! * If the file is outside a package, the determinator assumes that everything needs to be
+//!   rebuilt.
 //!
 //! The list of file changes can be obtained from a source control system such as Git. `Paths0`,
 //! available in this crate, can help.
 //!
 //! These simple rules may need to be customized for particular scenarios (e.g. if a special file in
 //! the root of the workspace changes, mark the entire workspace changed). For such situations, the
-//! determinator has support for custom rules. See the documentation for the `rules` module for
-//! more.
+//! determinator has support for custom rules, including shipping a default set of rules. See the
+//! documentation for the `rules` module for more.
 //!
 //! ## Dependency changes
 //!
