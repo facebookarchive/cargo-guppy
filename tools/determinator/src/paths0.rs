@@ -137,6 +137,11 @@ impl<'a> IntoIterator for &'a Paths0 {
     type IntoIter = Box<dyn Iterator<Item = &'a Path> + 'a>;
 
     fn into_iter(self) -> Self::IntoIter {
+        // An empty string means there are no paths -- this has to be handled as a special case.
+        if self.buf.is_empty() {
+            return Box::new(std::iter::empty());
+        }
+
         if cfg!(unix) {
             // Paths are arbitrary byte sequences on Unix.
             use std::os::unix::ffi::OsStrExt;
@@ -162,6 +167,9 @@ mod tests {
 
     #[test]
     fn basic() {
+        // Empty string should return no paths.
+        paths_eq(*b"", &[]);
+
         paths_eq(*b"a/b/c", &["a/b/c"]);
         paths_eq(*b"a/b\0a/c", &["a/b", "a/c"]);
         paths_eq(*b"a/b\0a/c\0", &["a/b", "a/c"]);
