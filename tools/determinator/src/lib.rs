@@ -5,9 +5,9 @@
 
 //! Figure out what packages in a Rust workspace changed between two commits.
 //!
-//! A typical continuous integration system runs every test on every pull request or proposed
-//! change. In large monorepos, most proposed changes have no effect on most packages. A
-//! *target determinator* figures out, given a proposed change, which packages may have had changes
+//! A typical continuous integration system runs every build and every test on every pull request or
+//! proposed change. In large monorepos, most proposed changes have no effect on most packages. A
+//! *target determinator* decides, given a proposed change, which packages may have had changes
 //! to them.
 //!
 //! The determinator is desiged to be used in the
@@ -15,35 +15,42 @@
 //!
 //! # How it works
 //!
-//! A change to a Rust package can come from one of two sources:
-//! * The source code or `Cargo.toml` of the package changing.
-//! * A change to a dependency, which can happen in one of three ways:
-//!   1. The source code of a workspace dependency changing.
-//!   2. A version bump to a third-party dependency.
-//!   3. The feature set of a dependency changing.
+//! A Rust package can behave differently if one or more of the following change:
+//! * The source code or `Cargo.toml` of the package.
+//! * A dependency.
+//! * The build or test environment.
 //!
-//! The determinator gathers data from both of these sources, and processes it through
+//! The determinator gathers data from several sources, and processes it through
 //! [guppy](https://docs.rs/guppy), to figure out which packages need to be re-tested.
 //!
 //! ## File changes
 //!
-//! The determinator expects to be passed in a list of file changes between two revisions. For each
-//! file passed in:
+//! The determinator takes as input a list of file changes between two revisions. For each
+//! file provided:
 //! * The determinator looks for the package nearest to the file and marks it as changed.
 //! * If the file is outside a package, the determinator assumes that everything needs to be
 //!   rebuilt.
 //!
-//! The list of file changes can be obtained from a source control system such as Git. `Paths0`,
-//! available in this crate, can help do this correctly.
+//! The list of file changes can be obtained from a source control system such as Git. This crate
+//! provides a helper which simplifies the process of enumerating file lists while handling some
+//! gnarly edge cases. For more information, see the documentation for [`Paths0`](crate::Paths0).
 //!
 //! These simple rules may need to be customized for particular scenarios (e.g. to ignore certain
-//! files). See the [Customizing behavior](#customizing-behavior) section below for more.
+//! files, or mark a package changed if a file outside of it changes). For those situations, the
+//! determinator lets you specify *custom rules*. See the
+//! [Customizing behavior](#customizing-behavior) section below for more.
 //!
 //! ## Dependency changes
 //!
-//! The determinator uses `guppy` to run Cargo build simulations on every package in the workspace.
-//! For each package, the determinator figures out whether any of its dependencies (including
-//! feature sets) have changed. These simulations are done with:
+//! A dependency is assumed to have changed if one or more of the following change:
+//!
+//! * For a workspace dependency, its source code.
+//! * For a third-party dependency, its version or feature set.
+//! * Something in the environment that it depends on.
+//!
+//! The determinator runs Cargo build simulations on every package in the workspace. For each
+//! package, the determinator figures out whether any of its dependencies (including feature sets)
+//! have changed. These simulations are done with:
 //! * dev-dependencies enabled (by default; this can be customized)
 //! * both the host and target platforms set to the current platform (by default; this can be
 //!   customized)
@@ -53,11 +60,32 @@
 //!   * all features enabled
 //!
 //! If any of these simulated builds indicates that a workspace package has had any dependency
-//! changes through:
-//! * a file change in another workspace dependency, or
-//! * a third-party dependency change (the source, version or feature set changed)
+//! changes, then it is marked changed.
 //!
-//! then it is marked changed.
+//! ## Environment changes
+//!
+//! The *environment* of a build or test run is anything not part of the source code that may
+//! influence it. This includes but is not limited to:
+//!
+//! * the version of the Rust compiler used
+//! * system libraries that a crate depends on
+//! * environment variables that a crate depends on
+//! * external services that a test depends on
+//!
+//! **By default, the determinator assumes that the environment stays the same between runs.**
+//!
+//! To represent changes to the environment, you may need to find ways to represent those changes
+//! as files checked into the repository, and add [custom rules](#customizing-behavior) for them.
+//! For example:
+//!
+//! * Use a [`rust-toolchain` file](https://doc.rust-lang.org/edition-guide/rust-2018/rustup-for-managing-rust-versions.html#managing-versions)
+//!   to represent the version of the Rust compiler. There is a default rule which causes a full
+//!   run if `rust-toolchain` changes.
+//! * Record all environment variables in CI configuration files, such as [GitHub Actions workflow
+//!   files](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions),
+//!   and add a custom rule to do a full run if any of those files change.
+//! * As far as possible, make tests hermetic and not reach out to the network. If you only have a
+//!   few tests that make network calls, run them unconditionally.
 //!
 //! # Customizing behavior
 //!
@@ -67,50 +95,119 @@
 //! * *Virtual dependencies* that Cargo isn't aware of may need to be inserted.
 //!
 //! For these situations, the determinator allows for custom *rules* to be specified. The
-//! determinator also ships with a default set of rules for common files like `.gitignore` and
-//! `rust-toolchain`.
+//! determinator also ships with
+//! [a default set of rules](crate::rules::DeterminatorRules::DEFAULT_RULES_TOML) for common files
+//! like `.gitignore` and `rust-toolchain`.
 //!
-//! For more about custom rules, see the documentation for the `rules` module.
+//! For more about custom rules, see the documentation for the [`rules` module](crate::rules).
 //!
 //! # Limitations
 //!
-//! The determinator may not be able to figure out third-party changes outside the workspace if they
-//! aren't accompanied with a version bump. This is not an issue for third-party crates retrieved
-//! from `crates.io` or a Git repository, but may be one for third-party dependencies on
-//! the file system. A future TODO is to add support for assuming that a third-party package has
-//! changed.
+//! The determinator's model is quite different from Cargo's, and some aspects work quite
+//! differently. **Please understand these limitations before using the determinator.**
 //!
-//! The determinator is also unaware of changes to the build environment---in those cases, a full
-//! build may have to be forced from outside the determinator. In general, it is recommended that
-//! the build environment be checked into the repository (e.g. through [GitHub Actions workflow
-//! files](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions))
-//! and a full build be forced if any of those files change.
+//! For best results, consider doing occasional full runs in addition to determinator-based runs.
+//! You may wish to configure your CI system to use the determinator for pull-requests, and also
+//! schedule full runs every few hours on the main branch in case the determinator misses something.
 //!
-//! # Alternatives
+//! ## Build scripts and include/exclude instructions
 //!
-//! One way to look at the determinator is through the lens of *caching*: test results can be
-//! cached, and changes can be analyzed to
-//! [invalidate cache results](https://martinfowler.com/bliki/TwoHardThings.html).
+//! **The determinator cannot run [build scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html).**
+//! The standard Cargo method for declaring a dependency on a file or environment variable is to
+//! output `rerun-if-changed` or `rerun-if-env-changed` instructions in build scripts. These
+//! instructions must be duplicated through custom rules.
 //!
-//! There are a number of other caching systems in existence, such as:
-//! * [Mozilla's `sccache`](https://github.com/mozilla/sccache) and other "bottom-up" caching build
-//!   systems.
+//! **The determinator doesn't track the [`include` and `exclude` fields in `Cargo.toml`][include].**
+//! This is because the determinator's view of what's changed doesn't always align with these fields.
+//! For example, packages typically include `README` files, but the determinator has a default rule
+//! to ignore them.
+//!
+//! If a package includes a file outside of it, either move it into the package (recommended) or
+//! add a custom rule for it. Exclusions may be duplicated as custom rules that cause those files
+//! to be ignored.
+//!
+//! [include]: https://doc.rust-lang.org/cargo/reference/manifest.html#the-exclude-and-include-fields
+//!
+//! ## Path dependencies outside the workspace
+//!
+//! **The determinator may not be able to figure out changes to path dependencies outside the
+//! workspace.** The determinator relies on metadata to figure out whether a non-workspace
+//! dependency has changed. The metadata includes:
+//! * the version number
+//! * the source, such as `crates.io` or a revision in a Git repository
+//!
+//! This approach works for dependencies on `crates.io` or other package repositories, because a
+//! change to their source code necessarily requires a version change.
+//!
+//! This approach also works for [Git
+//! dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories).
+//! It even works for Git dependencies that aren't pinned to an exact revision in `Cargo.toml`,
+//! because `Cargo.lock` records exact revisions. For example:
+//!
+//! ```toml
+//! # Specifying this in Cargo.toml...
+//! [dependencies]
+//! rand = { git = "https://github.com/rust-random/rand", branch = "master" }
+//!
+//! # ...results in Cargo.lock with:
+//! [[package]]
+//! name = "rand"
+//! version = "0.7.4"
+//! source = "git+https://github.com/rust-random/rand?branch=master#50c34064c80762ddae11447adc6240f42a6bd266"
+//! ```
+//!
+//! The hash at the end is the exact Git revision used, and a change to it is recognized by the
+//! determinator.
+//!
+//! Where this scheme may not work is with path dependencies, because the files on disk can change
+//! without a version bump. `cargo build` can recognize those changes because it compares mtimes of
+//! files on disk, but the determinator cannot do that.
+//!
+//! This is not expected to be a problem for most projects that use workspaces. If
+//! there's future demand, it would be possible to add support for changes to non-workspace path
+//! dependencies if they're in the same repository.
+//!
+//! # Alternatives and tradeoffs
+//!
+//! One way to look at the determinator is through the lens of *cache invalidation*.
+//! Viewed through this lens, the main purpose of a build or test system is to cache results, and
+//! [invalidate those caches](https://martinfowler.com/bliki/TwoHardThings.html) based on certain
+//! parameters. When the determinator marks a package as changed, it invalidates any cached results
+//! for that package.
+//!
+//! There are several other ways to design caching systems:
+//! * The caching built into Cargo and other systems like GNU Make, which is based on file
+//!   modification times.
+//! * [Mozilla's `sccache`](https://github.com/mozilla/sccache) and other "bottom-up" hash-based
+//!   caching build systems.
 //! * [Bazel](https://bazel.build/), [Buck](https://buck.build/) and other "top-down" hash-based
 //!   caching build systems.
 //!
-//! While these systems are great, they may not always be practical (in particular, `sccache`
-//! requires paths to be exact across machines, and Bazel and Buck have stringent requirements
-//! around the environment not affecting build results.) These systems are also geared towards
-//! builds, which tend to be more hermetic than test results.
+//! These other systems end up making different tradeoffs:
+//! * Cargo can use build scripts to track file and environment changes over time. However, it
+//!   relies on a previous build being done on the same machine. Also, as of Rust 1.48, there is no
+//!   way to use Cargo caching for test results, only for builds.
+//! * `sccache` [requires paths to be exact across machines][known-caveats], and is unable to cache
+//!   [some kinds of Rust artifacts][rust-caveats]. Also, just like Cargo's caching, there is no way
+//!   to use it for test results, only for builds.
+//! * Bazel and Buck have stringent requirements around the environment not affecting build results.
+//!   They're also not seamlessly integrated with Cargo.
+//! * The determinator works for both builds and tests, but cannot track file and environment
+//!   changes over time and must rely on custom rules. This scheme may produce both false negatives
+//!   and false positives.
 //!
-//! However, it is quite likely that in many cases one of these other systems may provide better
-//! results. In the [Libra Core workspace](https://github.com/libra/libra), the current plan is to
-//! perform builds with `sccache`, and to use this determinator to figure out which tests to run.
-//! This may change as we learn more about how each of these systems behave in practice.
+//! [known-caveats]: https://github.com/mozilla/sccache#known-caveats
+//! [rust-caveats]: https://github.com/mozilla/sccache/blob/master/docs/Rust.md
+//!
+//! While the determinator is geared towards test runs, it also works for builds. If you wish to
+//! use the determinator for build runs, consider stacking it with another layer of caching:
+//! * Use the determinator as a first pass to filter out packages that haven't changed.
+//! * Then use a system like `sccache` to get hash-based caching for builds.
 //!
 //! # Inspirations
 //!
-//! This determinator is inspired by the one used in Facebook's main source repository.
+//! This determinator is inspired by, and shares its name with, the target determinator used in
+//! Facebook's main source repository.
 
 mod determinator;
 pub mod errors;
