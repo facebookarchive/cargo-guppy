@@ -31,7 +31,7 @@ use std::{collections::HashSet, path::Path};
 pub struct Determinator<'g, 'a> {
     old: &'a PackageGraph,
     new: &'g PackageGraph,
-    rules: Option<RulesImpl<'g>>,
+    rules: RulesImpl<'g>,
     cargo_options: Option<&'a CargoOptions<'a>>,
     changed_paths: Vec<&'a Path>,
 }
@@ -42,7 +42,8 @@ impl<'g, 'a> Determinator<'g, 'a> {
         Self {
             old,
             new,
-            rules: None,
+            rules: RulesImpl::new(new, &DeterminatorRules::default())
+                .expect("default rules should parse"),
             cargo_options: None,
             changed_paths: vec![],
         }
@@ -78,7 +79,7 @@ impl<'g, 'a> Determinator<'g, 'a> {
         process_path(
             path.as_ref(),
             &self.new.workspace(),
-            self.rules.as_ref().map(|rules| rules.path_rules.as_slice()),
+            &self.rules.path_rules,
             match_cb,
         )
     }
@@ -88,7 +89,7 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// Returns an error if the rules were invalid in some way.
     pub fn set_rules(&mut self, rules: &DeterminatorRules) -> Result<&mut Self, RulesError> {
         let rules = RulesImpl::new(self.new, rules)?;
-        self.rules = Some(rules);
+        self.rules = rules;
         Ok(self)
     }
 
@@ -223,10 +224,7 @@ impl<'g, 'a, 'b> BuildState<'g, 'a, 'b> {
         let status = process_path(
             path,
             &self.determinator.new.workspace(),
-            self.determinator
-                .rules
-                .as_ref()
-                .map(|rules| rules.path_rules.as_slice()),
+            &self.determinator.rules.path_rules,
             |id| {
                 self.path_changed_ids.insert(id);
             },
@@ -282,43 +280,41 @@ impl<'g, 'a, 'b> BuildState<'g, 'a, 'b> {
 fn process_path<'g>(
     path: &Path,
     workspace: &Workspace<'g>,
-    path_rules: Option<&[PathRuleImpl<'g>]>,
+    path_rules: &[PathRuleImpl<'g>],
     mut match_cb: impl FnMut(&'g PackageId),
 ) -> PathMatch {
     let candidate = Candidate::new(path);
 
     // 1. Apply any rules that match the path.
-    if let Some(path_rules) = path_rules {
-        for rule in path_rules {
-            if rule.glob_set.is_match_candidate(&candidate) {
-                // This glob matches this rule, so execute it.
-                match &rule.mark_changed {
-                    MarkChangedImpl::Packages(packages) => {
-                        for package in packages {
-                            match_cb(package.id());
-                        }
-                    }
-                    MarkChangedImpl::All => {
-                        // Mark all packages changed.
-                        return PathMatch::RuleMatchedAll;
+    for rule in path_rules {
+        if rule.glob_set.is_match_candidate(&candidate) {
+            // This glob matches this rule, so execute it.
+            match &rule.mark_changed {
+                MarkChangedImpl::Packages(packages) => {
+                    for package in packages {
+                        match_cb(package.id());
                     }
                 }
+                MarkChangedImpl::All => {
+                    // Mark all packages changed.
+                    return PathMatch::RuleMatchedAll;
+                }
+            }
 
-                match &rule.post_rule {
-                    DeterminatorPostRule::Skip => {
-                        // Skip all further processing for this path but continue reading other
-                        // paths.
-                        return PathMatch::RuleMatched(rule.rule_index);
-                    }
-                    DeterminatorPostRule::SkipRules => {
-                        // Skip further rule processing but continue to step 2 to match to the
-                        // nearest package.
-                        break;
-                    }
-                    DeterminatorPostRule::Fallthrough => {
-                        // Continue applying rules.
-                        continue;
-                    }
+            match &rule.post_rule {
+                DeterminatorPostRule::Skip => {
+                    // Skip all further processing for this path but continue reading other
+                    // paths.
+                    return PathMatch::RuleMatched(rule.rule_index);
+                }
+                DeterminatorPostRule::SkipRules => {
+                    // Skip further rule processing but continue to step 2 to match to the
+                    // nearest package.
+                    break;
+                }
+                DeterminatorPostRule::Fallthrough => {
+                    // Continue applying rules.
+                    continue;
                 }
             }
         }
@@ -470,31 +466,29 @@ impl<'g> ReverseIndex<'g> {
 
         // Now, look at all the package rules and add anything in them to the reverse index.
         // IMPORTANT: This comes later so that PackageRule edges overwrite CargoBuild edges.
-        if let Some(rules) = &determinator.rules {
-            for package_rule in &rules.package_rules {
-                for on_affected in package_rule
-                    .on_affected
-                    .package_ids(DependencyDirection::Forward)
-                {
-                    match &package_rule.mark_changed {
-                        MarkChangedImpl::Packages(packages) => {
-                            // Add edges from on_affected to mark_changed.
-                            reverse_index.extend(packages.iter().map(|package| {
-                                (
-                                    Some(on_affected),
-                                    Some(package.id()),
-                                    ReverseIndexEdge::PackageRule,
-                                )
-                            }));
-                        }
-                        MarkChangedImpl::All => {
-                            // Add an edge to the None/"all" sentinel value.
-                            reverse_index.add_edge(
+        for package_rule in &determinator.rules.package_rules {
+            for on_affected in package_rule
+                .on_affected
+                .package_ids(DependencyDirection::Forward)
+            {
+                match &package_rule.mark_changed {
+                    MarkChangedImpl::Packages(packages) => {
+                        // Add edges from on_affected to mark_changed.
+                        reverse_index.extend(packages.iter().map(|package| {
+                            (
                                 Some(on_affected),
-                                None,
+                                Some(package.id()),
                                 ReverseIndexEdge::PackageRule,
-                            );
-                        }
+                            )
+                        }));
+                    }
+                    MarkChangedImpl::All => {
+                        // Add an edge to the None/"all" sentinel value.
+                        reverse_index.add_edge(
+                            Some(on_affected),
+                            None,
+                            ReverseIndexEdge::PackageRule,
+                        );
                     }
                 }
             }
