@@ -20,7 +20,7 @@ use std::{collections::HashSet, path::Path};
 
 /// Determine target dependencies from changed files and packages in a workspace.
 ///
-/// TODO: Fill this out a bit.
+/// For more about how the determinator works, see the [crate-level documentation](crate).
 ///
 /// This struct has two lifetime parameters:
 /// * `'g` stands for the lifetime of the new graph. The `DeterminatorSet` will be bound to this
@@ -173,7 +173,7 @@ impl<'g, 'a> Determinator<'g, 'a> {
 /// The lifetime `'g` is tied to the *new* `PackageGraph` passed to a `Determinator`.
 #[derive(Clone, Debug)]
 pub struct DeterminatorSet<'g> {
-    /// The packages that were affected, directly or indirectly. This is what almost all consumers
+    /// The packages that were affected, directly or indirectly. This set is what most consumers
     /// care about.
     ///
     /// A package is in this set if it was marked changed due to a path or summaries changing, or if
