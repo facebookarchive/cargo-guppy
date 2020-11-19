@@ -30,10 +30,7 @@
 //! and `Cargo.lock`. These rules are applied *after* custom rules, so custom rules matching the
 //! same paths can override them.
 //!
-//! The latest version of the default rules is available
-//! [on GitHub](https://github.com/facebookincubator/cargo-guppy/blob/master/tools/determinator/default-rules.toml).
-//! Note that this may not match the default rules included in this copy of the determinator: you
-//! may wish to browse the history of the `default-rules.toml` file.
+//! The default rules can be [viewed here](DeterminatorRules::DEFAULT_RULES_TOML).
 //!
 //! To disable default rules entirely, set at the top level:
 //!
@@ -159,19 +156,35 @@ fn default_true() -> bool {
     true
 }
 
+/// A hack that lets the contents of default-rules.toml be included.
+macro_rules! doc_comment {
+    ($doc:expr, $($t:tt)*) => (
+        #[doc = $doc]
+        $($t)*
+    );
+}
+
 impl DeterminatorRules {
     /// Deserializes determinator rules from the given TOML string.
     pub fn parse(s: &str) -> Result<Self, toml::de::Error> {
         Ok(toml::from_str(s)?)
     }
 
-    /// Contains the default rules in a TOML file format.
-    ///
-    /// The latest version of the default rules is available
-    /// [on GitHub](https://github.com/facebookincubator/cargo-guppy/blob/master/tools/determinator/default-rules.toml).
-    /// Note that this may not match the default rules included in this copy of the repository: you
-    /// may wish to browse the history of the `default-rules.toml` file.
-    pub const DEFAULT_RULES_TOML: &'static str = include_str!("../default-rules.toml");
+    doc_comment! {
+        concat!("\
+Contains the default rules in a TOML file format.
+
+The default rules included with this copy of the determinator are:
+
+```toml
+", include_str!("../default-rules.toml"), "\
+```
+
+The latest version of the default rules is available
+[on GitHub](https://github.com/facebookincubator/cargo-guppy/blob/master/tools/determinator/default-rules.toml).
+"),
+        pub const DEFAULT_RULES_TOML: &'static str = include_str!("../default-rules.toml");
+    }
 
     /// Returns the default rules.
     ///
