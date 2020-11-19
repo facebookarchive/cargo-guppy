@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/semver-parser-0.10.1/src/lexer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lexer.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../semver_parser/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/semver-parser-0.10.1/src/lexer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lexer.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../semver_parser/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -371,7 +373,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>;
 
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">scan_while</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">slf</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">start</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">first</span>:<span class="ident">pat</span> $(<span class="op">|</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>:<span class="ident">pat</span>)<span class="kw-2">*</span>) <span class="op">=&gt;</span> {{
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">slf</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">start</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">first</span>:<span class="ident">pat</span> $(<span class="op">|</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>:<span class="ident">pat</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {{
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">__end</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">start</span>;
 
         <span class="kw">loop</span> {
@@ -379,8 +381,8 @@
                 <span class="ident">__end</span> <span class="op">=</span> <span class="ident">idx</span>;
 
                 <span class="kw">match</span> <span class="ident">c</span> {
-                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">first</span> $(<span class="op">|</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>)<span class="op">*</span> <span class="op">=&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">slf</span>.<span class="ident">step</span>(),
-                    <span class="kw">_</span> <span class="op">=&gt;</span> <span class="kw">break</span>,
+                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">first</span> $(<span class="op">|</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>)<span class="op">*</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">slf</span>.<span class="ident">step</span>(),
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">break</span>,
                 }
 
                 <span class="kw">continue</span>;
@@ -434,18 +436,18 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span> <span class="ident">Token</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Check if the current token is a whitespace token.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_whitespace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_whitespace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">Whitespace</span>(..) <span class="op">=&gt;</span> <span class="bool-val">true</span>,
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="bool-val">false</span>,
+            <span class="ident">Whitespace</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
     }
 
     <span class="doccomment">/// Check if the current token is a wildcard token.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_wildcard</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_wildcard</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">Star</span> <span class="op">|</span> <span class="ident">AlphaNumeric</span>(<span class="string">&quot;X&quot;</span>) <span class="op">|</span> <span class="ident">AlphaNumeric</span>(<span class="string">&quot;x&quot;</span>) <span class="op">=&gt;</span> <span class="bool-val">true</span>,
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="bool-val">false</span>,
+            <span class="ident">Star</span> <span class="op">|</span> <span class="ident">AlphaNumeric</span>(<span class="string">&quot;X&quot;</span>) <span class="op">|</span> <span class="ident">AlphaNumeric</span>(<span class="string">&quot;x&quot;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
     }
 }
@@ -468,7 +470,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span> <span class="ident">Lexer</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Construct a new lexer for the given input.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-&gt;</span> <span class="ident">Lexer</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Lexer</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chars</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">char_indices</span>();
         <span class="kw">let</span> <span class="ident">c1</span> <span class="op">=</span> <span class="ident">chars</span>.<span class="ident">next</span>();
         <span class="kw">let</span> <span class="ident">c2</span> <span class="op">=</span> <span class="ident">chars</span>.<span class="ident">next</span>();
@@ -494,12 +496,12 @@
     }
 
     <span class="doccomment">/// Access the one character, or set it if it is not set.</span>
-    <span class="kw">fn</span> <span class="ident">one</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="ident">char</span>)<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">one</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="ident">char</span>)<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">c1</span>
     }
 
     <span class="doccomment">/// Access two characters.</span>
-    <span class="kw">fn</span> <span class="ident">two</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="ident">char</span>, <span class="ident">char</span>)<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">two</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="ident">char</span>, <span class="ident">char</span>)<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">c1</span>
             .<span class="ident">and_then</span>(<span class="op">|</span>(<span class="ident">start</span>, <span class="ident">c1</span>)<span class="op">|</span> <span class="self">self</span>.<span class="ident">c2</span>.<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">c2</span>)<span class="op">|</span> (<span class="ident">start</span>, <span class="ident">c1</span>, <span class="ident">c2</span>)))
     }
@@ -508,7 +510,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// A component can either be an alphanumeric or numeric.</span>
     <span class="doccomment">/// Does not permit leading zeroes if numeric.</span>
-    <span class="kw">fn</span> <span class="ident">component</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">component</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="macro">scan_while</span><span class="macro">!</span>(<span class="self">self</span>, <span class="ident">start</span>, <span class="string">&#39;0&#39;</span>..<span class="op">=</span><span class="string">&#39;9&#39;</span> <span class="op">|</span> <span class="string">&#39;A&#39;</span>..<span class="op">=</span><span class="string">&#39;Z&#39;</span> <span class="op">|</span> <span class="string">&#39;a&#39;</span>..<span class="op">=</span><span class="string">&#39;z&#39;</span>);
         <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">input</span>[<span class="ident">start</span>..<span class="ident">end</span>];
 
@@ -516,11 +518,11 @@
         <span class="kw">let</span> (<span class="ident">a</span>, <span class="ident">b</span>) <span class="op">=</span> (<span class="ident">it</span>.<span class="ident">next</span>(), <span class="ident">it</span>.<span class="ident">next</span>());
 
         <span class="comment">// exactly zero</span>
-        <span class="kw">if</span> <span class="ident">a</span> <span class="op">==</span> <span class="prelude-val">Some</span>(<span class="string">&#39;0&#39;</span>) <span class="op">&amp;&amp;</span> <span class="ident">b</span>.<span class="ident">is_none</span>() {
+        <span class="kw">if</span> <span class="ident">a</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="string">&#39;0&#39;</span>) <span class="op">&amp;&amp;</span> <span class="ident">b</span>.<span class="ident">is_none</span>() {
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Numeric</span>(<span class="number">0</span>));
         }
 
-        <span class="kw">if</span> <span class="ident">a</span> <span class="op">!=</span> <span class="prelude-val">Some</span>(<span class="string">&#39;0&#39;</span>) {
+        <span class="kw">if</span> <span class="ident">a</span> <span class="op">!</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="string">&#39;0&#39;</span>) {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">numeric</span>) <span class="op">=</span> <span class="ident">input</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>() {
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Numeric</span>(<span class="ident">numeric</span>));
             }
@@ -530,7 +532,7 @@
     }
 
     <span class="doccomment">/// Consume whitespace.</span>
-    <span class="kw">fn</span> <span class="ident">whitespace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">whitespace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="macro">scan_while</span><span class="macro">!</span>(<span class="self">self</span>, <span class="ident">start</span>, <span class="string">&#39; &#39;</span> <span class="op">|</span> <span class="string">&#39;\t&#39;</span> <span class="op">|</span> <span class="string">&#39;\n&#39;</span> <span class="op">|</span> <span class="string">&#39;\r&#39;</span>);
         <span class="prelude-val">Ok</span>(<span class="ident">Whitespace</span>(<span class="ident">start</span>, <span class="ident">end</span>))
     }
@@ -539,16 +541,16 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Lexer</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&lt;</span><span class="lifetime">&#39;input</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
         <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">never_loop</span>)]</span>
         <span class="kw">loop</span> {
             <span class="comment">// two subsequent char tokens.</span>
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="ident">a</span>, <span class="ident">b</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">two</span>() {
                 <span class="kw">let</span> <span class="ident">two</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">a</span>, <span class="ident">b</span>) {
-                    (<span class="string">&#39;&lt;&#39;</span>, <span class="string">&#39;=&#39;</span>) <span class="op">=&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">LtEq</span>),
-                    (<span class="string">&#39;&gt;&#39;</span>, <span class="string">&#39;=&#39;</span>) <span class="op">=&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">GtEq</span>),
-                    (<span class="string">&#39;|&#39;</span>, <span class="string">&#39;|&#39;</span>) <span class="op">=&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">Or</span>),
-                    <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">None</span>,
+                    (<span class="string">&#39;&lt;&#39;</span>, <span class="string">&#39;=&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">LtEq</span>),
+                    (<span class="string">&#39;&gt;&#39;</span>, <span class="string">&#39;=&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">GtEq</span>),
+                    (<span class="string">&#39;|&#39;</span>, <span class="string">&#39;|&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">Or</span>),
+                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
                 };
 
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">two</span>) <span class="op">=</span> <span class="ident">two</span> {
@@ -560,25 +562,25 @@
             <span class="comment">// single char and start of numeric tokens.</span>
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">start</span>, <span class="ident">c</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">one</span>() {
                 <span class="kw">let</span> <span class="ident">tok</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">c</span> {
-                    <span class="string">&#39; &#39;</span> <span class="op">|</span> <span class="string">&#39;\t&#39;</span> <span class="op">|</span> <span class="string">&#39;\n&#39;</span> <span class="op">|</span> <span class="string">&#39;\r&#39;</span> <span class="op">=&gt;</span> {
+                    <span class="string">&#39; &#39;</span> <span class="op">|</span> <span class="string">&#39;\t&#39;</span> <span class="op">|</span> <span class="string">&#39;\n&#39;</span> <span class="op">|</span> <span class="string">&#39;\r&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="self">self</span>.<span class="ident">step</span>();
                         <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">whitespace</span>(<span class="ident">start</span>));
                     }
-                    <span class="string">&#39;=&#39;</span> <span class="op">=&gt;</span> <span class="ident">Eq</span>,
-                    <span class="string">&#39;&gt;&#39;</span> <span class="op">=&gt;</span> <span class="ident">Gt</span>,
-                    <span class="string">&#39;&lt;&#39;</span> <span class="op">=&gt;</span> <span class="ident">Lt</span>,
-                    <span class="string">&#39;^&#39;</span> <span class="op">=&gt;</span> <span class="ident">Caret</span>,
-                    <span class="string">&#39;~&#39;</span> <span class="op">=&gt;</span> <span class="ident">Tilde</span>,
-                    <span class="string">&#39;*&#39;</span> <span class="op">=&gt;</span> <span class="ident">Star</span>,
-                    <span class="string">&#39;.&#39;</span> <span class="op">=&gt;</span> <span class="ident">Dot</span>,
-                    <span class="string">&#39;,&#39;</span> <span class="op">=&gt;</span> <span class="ident">Comma</span>,
-                    <span class="string">&#39;-&#39;</span> <span class="op">=&gt;</span> <span class="ident">Hyphen</span>,
-                    <span class="string">&#39;+&#39;</span> <span class="op">=&gt;</span> <span class="ident">Plus</span>,
-                    <span class="string">&#39;0&#39;</span>..<span class="op">=</span><span class="string">&#39;9&#39;</span> <span class="op">|</span> <span class="string">&#39;a&#39;</span>..<span class="op">=</span><span class="string">&#39;z&#39;</span> <span class="op">|</span> <span class="string">&#39;A&#39;</span>..<span class="op">=</span><span class="string">&#39;Z&#39;</span> <span class="op">=&gt;</span> {
+                    <span class="string">&#39;=&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Eq</span>,
+                    <span class="string">&#39;&gt;&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Gt</span>,
+                    <span class="string">&#39;&lt;&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Lt</span>,
+                    <span class="string">&#39;^&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Caret</span>,
+                    <span class="string">&#39;~&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tilde</span>,
+                    <span class="string">&#39;*&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Star</span>,
+                    <span class="string">&#39;.&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Dot</span>,
+                    <span class="string">&#39;,&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Comma</span>,
+                    <span class="string">&#39;-&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Hyphen</span>,
+                    <span class="string">&#39;+&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Plus</span>,
+                    <span class="string">&#39;0&#39;</span>..<span class="op">=</span><span class="string">&#39;9&#39;</span> <span class="op">|</span> <span class="string">&#39;a&#39;</span>..<span class="op">=</span><span class="string">&#39;z&#39;</span> <span class="op">|</span> <span class="string">&#39;A&#39;</span>..<span class="op">=</span><span class="string">&#39;Z&#39;</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="self">self</span>.<span class="ident">step</span>();
                         <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">component</span>(<span class="ident">start</span>));
                     }
-                    <span class="ident">c</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">UnexpectedChar</span>(<span class="ident">c</span>))),
+                    <span class="ident">c</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">UnexpectedChar</span>(<span class="ident">c</span>))),
                 };
 
                 <span class="self">self</span>.<span class="ident">step</span>();
@@ -594,8 +596,8 @@
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">fn</span> <span class="ident">lex</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&gt;</span> {
-        <span class="ident">Lexer</span>::<span class="ident">new</span>(<span class="ident">input</span>).<span class="ident">map</span>(<span class="prelude-ty">Result</span>::<span class="ident">unwrap</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;&gt;</span>()
+    <span class="kw">fn</span> <span class="ident">lex</span>(<span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&gt;</span> {
+        <span class="ident">Lexer</span>::<span class="ident">new</span>(<span class="ident">input</span>).<span class="ident">map</span>(<span class="prelude-ty">Result</span>::<span class="ident">unwrap</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -648,7 +650,7 @@
         <span class="kw">let</span> <span class="ident">expected</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Token</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>]
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="ident">Numeric</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;&gt;</span>();
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
         <span class="kw">let</span> <span class="ident">actual</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">lex</span>(<span class="string">&quot;0 1 2 3 4 5 6 7 8 9&quot;</span>)
             .<span class="ident">into_iter</span>()

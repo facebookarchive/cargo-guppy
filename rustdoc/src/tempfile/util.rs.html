@@ -59,7 +59,7 @@
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">error</span>::<span class="ident">IoResultExt</span>;
 
-<span class="kw">fn</span> <span class="ident">tmpname</span>(<span class="ident">prefix</span>: <span class="kw-2">&amp;</span><span class="ident">OsStr</span>, <span class="ident">suffix</span>: <span class="kw-2">&amp;</span><span class="ident">OsStr</span>, <span class="ident">rand_len</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">OsString</span> {
+<span class="kw">fn</span> <span class="ident">tmpname</span>(<span class="ident">prefix</span>: <span class="kw-2">&amp;</span><span class="ident">OsStr</span>, <span class="ident">suffix</span>: <span class="kw-2">&amp;</span><span class="ident">OsStr</span>, <span class="ident">rand_len</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">OsString</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">OsString</span>::<span class="ident">with_capacity</span>(<span class="ident">prefix</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">suffix</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">rand_len</span>);
     <span class="ident">buf</span>.<span class="ident">push</span>(<span class="ident">prefix</span>);
 
@@ -82,17 +82,17 @@
     <span class="ident">suffix</span>: <span class="kw-2">&amp;</span><span class="ident">OsStr</span>,
     <span class="ident">random_len</span>: <span class="ident">usize</span>,
     <span class="ident">f</span>: <span class="ident">F</span>,
-) <span class="op">-&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">PathBuf</span>) <span class="op">-&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">PathBuf</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
 {
-    <span class="kw">let</span> <span class="ident">num_retries</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">random_len</span> <span class="op">!=</span> <span class="number">0</span> { <span class="kw">crate</span>::<span class="ident">NUM_RETRIES</span> } <span class="kw">else</span> { <span class="number">1</span> };
+    <span class="kw">let</span> <span class="ident">num_retries</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">random_len</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> { <span class="kw">crate</span>::<span class="ident">NUM_RETRIES</span> } <span class="kw">else</span> { <span class="number">1</span> };
 
     <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">num_retries</span> {
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">base</span>.<span class="ident">join</span>(<span class="ident">tmpname</span>(<span class="ident">prefix</span>, <span class="ident">suffix</span>, <span class="ident">random_len</span>));
         <span class="kw">return</span> <span class="kw">match</span> <span class="ident">f</span>(<span class="ident">path</span>) {
-            <span class="prelude-val">Err</span>(<span class="kw-2">ref</span> <span class="ident">e</span>) <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">kind</span>() <span class="op">==</span> <span class="ident">io</span>::<span class="ident">ErrorKind</span>::<span class="ident">AlreadyExists</span> <span class="op">=&gt;</span> <span class="kw">continue</span>,
-            <span class="ident">res</span> <span class="op">=&gt;</span> <span class="ident">res</span>,
+            <span class="prelude-val">Err</span>(<span class="kw-2">ref</span> <span class="ident">e</span>) <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">kind</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">io</span>::<span class="ident">ErrorKind</span>::<span class="ident">AlreadyExists</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">continue</span>,
+            <span class="ident">res</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">res</span>,
         };
     }
 
@@ -100,7 +100,7 @@
         <span class="ident">io</span>::<span class="ident">ErrorKind</span>::<span class="ident">AlreadyExists</span>,
         <span class="string">&quot;too many temporary files exist&quot;</span>,
     ))
-    .<span class="ident">with_err_path</span>(<span class="op">||</span> <span class="ident">base</span>)
+    .<span class="ident">with_err_path</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">base</span>)
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "tempfile";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

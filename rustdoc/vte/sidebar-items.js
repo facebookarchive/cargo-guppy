@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Parser","Parser for raw VTE protocol which delegates actions to a [`Perform`]"]],"trait":[["Perform","Performs actions requested by the Parser"]]});
+initSidebarItems({"struct":[["Parser","Parser for raw VTE protocol which delegates actions to a `Perform`"]],"trait":[["Perform","Performs actions requested by the Parser"]]});

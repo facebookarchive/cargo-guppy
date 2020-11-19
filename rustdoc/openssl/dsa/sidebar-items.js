@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Dsa","Object representing DSA keys."],["DsaRef","Reference to [`Dsa`]."]]});
+initSidebarItems({"struct":[["Dsa","Object representing DSA keys."],["DsaRef","Reference to `Dsa`."]]});

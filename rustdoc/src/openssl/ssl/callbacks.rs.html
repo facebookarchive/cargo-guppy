@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.10.30/src/ssl/callbacks.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>callbacks.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../openssl/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.10.30/src/ssl/callbacks.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>callbacks.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../openssl/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -723,9 +725,9 @@
 <span class="kw">use</span> <span class="ident">x509</span>::<span class="ident">X509Ref</span>;
 <span class="kw">use</span> <span class="ident">x509</span>::{<span class="ident">X509StoreContext</span>, <span class="ident">X509StoreContextRef</span>};
 
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">raw_verify</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">preverify_ok</span>: <span class="ident">c_int</span>, <span class="ident">x509_ctx</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">X509_STORE_CTX</span>) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">raw_verify</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">preverify_ok</span>: <span class="ident">c_int</span>, <span class="ident">x509_ctx</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">X509_STORE_CTX</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">bool</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">X509StoreContextRef</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">bool</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">X509StoreContextRef</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">unsafe</span> {
         <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">X509StoreContextRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">x509_ctx</span>);
@@ -741,7 +743,7 @@
             .<span class="ident">ex_data</span>(<span class="ident">verify_idx</span>)
             .<span class="ident">expect</span>(<span class="string">&quot;BUG: verify callback missing&quot;</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">F</span>;
 
-        (<span class="kw-2">*</span><span class="ident">verify</span>)(<span class="ident">preverify_ok</span> <span class="op">!=</span> <span class="number">0</span>, <span class="ident">ctx</span>) <span class="kw">as</span> <span class="ident">c_int</span>
+        (<span class="kw-2">*</span><span class="ident">verify</span>)(<span class="ident">preverify_ok</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="ident">ctx</span>) <span class="kw">as</span> <span class="ident">c_int</span>
     }
 }
 
@@ -753,9 +755,9 @@
     <span class="ident">max_identity_len</span>: <span class="ident">c_uint</span>,
     <span class="ident">psk</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_uchar</span>,
     <span class="ident">max_psk_len</span>: <span class="ident">c_uint</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_uint</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_uint</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span>
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span>
         <span class="op">+</span> <span class="lifetime">&#39;static</span>
         <span class="op">+</span> <span class="ident">Sync</span>
         <span class="op">+</span> <span class="ident">Send</span>,
@@ -777,8 +779,8 @@
         <span class="kw">let</span> <span class="ident">identity_sl</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts_mut</span>(<span class="ident">identity</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">max_identity_len</span> <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">let</span> <span class="ident">psk_sl</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts_mut</span>(<span class="ident">psk</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">max_psk_len</span> <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">hint</span>, <span class="ident">identity_sl</span>, <span class="ident">psk_sl</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">psk_len</span>) <span class="op">=&gt;</span> <span class="ident">psk_len</span> <span class="kw">as</span> <span class="ident">u32</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">psk_len</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">psk_len</span> <span class="kw">as</span> <span class="ident">u32</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">e</span>.<span class="ident">put</span>();
                 <span class="number">0</span>
             }
@@ -792,9 +794,9 @@
     <span class="ident">identity</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_char</span>,
     <span class="ident">psk</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_uchar</span>,
     <span class="ident">max_psk_len</span>: <span class="ident">c_uint</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_uint</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_uint</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span>
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span>
         <span class="op">+</span> <span class="lifetime">&#39;static</span>
         <span class="op">+</span> <span class="ident">Sync</span>
         <span class="op">+</span> <span class="ident">Send</span>,
@@ -815,8 +817,8 @@
         <span class="comment">// Give the callback mutable slices into which it can write the psk.</span>
         <span class="kw">let</span> <span class="ident">psk_sl</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts_mut</span>(<span class="ident">psk</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">max_psk_len</span> <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">identity</span>, <span class="ident">psk_sl</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">psk_len</span>) <span class="op">=&gt;</span> <span class="ident">psk_len</span> <span class="kw">as</span> <span class="ident">u32</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">psk_len</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">psk_len</span> <span class="kw">as</span> <span class="ident">u32</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">e</span>.<span class="ident">put</span>();
                 <span class="number">0</span>
             }
@@ -827,14 +829,14 @@
 <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">ssl_raw_verify</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(
     <span class="ident">preverify_ok</span>: <span class="ident">c_int</span>,
     <span class="ident">x509_ctx</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">X509_STORE_CTX</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">bool</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">X509StoreContextRef</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="ident">bool</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">X509StoreContextRef</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">unsafe</span> {
         <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">X509StoreContextRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">x509_ctx</span>);
         <span class="kw">let</span> <span class="ident">ssl_idx</span> <span class="op">=</span> <span class="ident">X509StoreContext</span>::<span class="ident">ssl_idx</span>().<span class="ident">expect</span>(<span class="string">&quot;BUG: store context ssl index missing&quot;</span>);
-        <span class="kw">let</span> <span class="ident">callback_idx</span> <span class="op">=</span> <span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;&gt;</span>();
+        <span class="kw">let</span> <span class="ident">callback_idx</span> <span class="op">=</span> <span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
         <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ctx</span>
             .<span class="ident">ex_data</span>(<span class="ident">ssl_idx</span>)
@@ -843,13 +845,13 @@
             .<span class="ident">expect</span>(<span class="string">&quot;BUG: ssl verify callback missing&quot;</span>)
             .<span class="ident">clone</span>();
 
-        <span class="ident">callback</span>(<span class="ident">preverify_ok</span> <span class="op">!=</span> <span class="number">0</span>, <span class="ident">ctx</span>) <span class="kw">as</span> <span class="ident">c_int</span>
+        <span class="ident">callback</span>(<span class="ident">preverify_ok</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="ident">ctx</span>) <span class="kw">as</span> <span class="ident">c_int</span>
     }
 }
 
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">raw_sni</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>, <span class="ident">al</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_int</span>, <span class="ident">arg</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">raw_sni</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>, <span class="ident">al</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_int</span>, <span class="ident">arg</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslAlert</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SniError</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslAlert</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SniError</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">unsafe</span> {
         <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
@@ -859,8 +861,8 @@
         <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">alert</span>);
         <span class="kw-2">*</span><span class="ident">al</span> <span class="op">=</span> <span class="ident">alert</span>.<span class="number">0</span>;
         <span class="kw">match</span> <span class="ident">r</span> {
-            <span class="prelude-val">Ok</span>(()) <span class="op">=&gt;</span> <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_OK</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> <span class="ident">e</span>.<span class="number">0</span>,
+            <span class="prelude-val">Ok</span>(()) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_OK</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">e</span>.<span class="number">0</span>,
         }
     }
 }
@@ -873,9 +875,9 @@
     <span class="ident">inbuf</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_uchar</span>,
     <span class="ident">inlen</span>: <span class="ident">c_uint</span>,
     <span class="ident">_arg</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="ident">AlpnError</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="ident">AlpnError</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">unsafe</span> {
         <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
@@ -886,12 +888,12 @@
         <span class="kw">let</span> <span class="ident">protos</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(<span class="ident">inbuf</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">inlen</span> <span class="kw">as</span> <span class="ident">usize</span>);
 
         <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">protos</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">proto</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">proto</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw-2">*</span><span class="ident">out</span> <span class="op">=</span> <span class="ident">proto</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_uchar</span>;
                 <span class="kw-2">*</span><span class="ident">outlen</span> <span class="op">=</span> <span class="ident">proto</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">c_uchar</span>;
                 <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_OK</span>
             }
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> <span class="ident">e</span>.<span class="number">0</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">e</span>.<span class="number">0</span>,
         }
     }
 }
@@ -900,9 +902,9 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">is_export</span>: <span class="ident">c_int</span>,
     <span class="ident">keylength</span>: <span class="ident">c_int</span>,
-) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">DH</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">DH</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Dh</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Dh</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
@@ -910,13 +912,13 @@
         .<span class="ident">ex_data</span>(<span class="ident">SslContext</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>())
         .<span class="ident">expect</span>(<span class="string">&quot;BUG: tmp dh callback missing&quot;</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">F</span>;
 
-    <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">dh</span>) <span class="op">=&gt;</span> {
+    <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
+        <span class="prelude-val">Ok</span>(<span class="ident">dh</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">dh</span>.<span class="ident">as_ptr</span>();
             <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">dh</span>);
             <span class="ident">ptr</span>
         }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">e</span>.<span class="ident">put</span>();
             <span class="ident">ptr</span>::<span class="ident">null_mut</span>()
         }
@@ -928,9 +930,9 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">is_export</span>: <span class="ident">c_int</span>,
     <span class="ident">keylength</span>: <span class="ident">c_int</span>,
-) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">EC_KEY</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">EC_KEY</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EcKey</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EcKey</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
@@ -938,13 +940,13 @@
         .<span class="ident">ex_data</span>(<span class="ident">SslContext</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>())
         .<span class="ident">expect</span>(<span class="string">&quot;BUG: tmp ecdh callback missing&quot;</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">F</span>;
 
-    <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">ec_key</span>) <span class="op">=&gt;</span> {
+    <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
+        <span class="prelude-val">Ok</span>(<span class="ident">ec_key</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">ec_key</span>.<span class="ident">as_ptr</span>();
             <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">ec_key</span>);
             <span class="ident">ptr</span>
         }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">e</span>.<span class="ident">put</span>();
             <span class="ident">ptr</span>::<span class="ident">null_mut</span>()
         }
@@ -955,23 +957,23 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">is_export</span>: <span class="ident">c_int</span>,
     <span class="ident">keylength</span>: <span class="ident">c_int</span>,
-) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">DH</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">DH</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Dh</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Dh</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
-        .<span class="ident">ex_data</span>(<span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;&gt;</span>())
+        .<span class="ident">ex_data</span>(<span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>())
         .<span class="ident">expect</span>(<span class="string">&quot;BUG: ssl tmp dh callback missing&quot;</span>)
         .<span class="ident">clone</span>();
 
-    <span class="kw">match</span> <span class="ident">callback</span>(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">dh</span>) <span class="op">=&gt;</span> {
+    <span class="kw">match</span> <span class="ident">callback</span>(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
+        <span class="prelude-val">Ok</span>(<span class="ident">dh</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">dh</span>.<span class="ident">as_ptr</span>();
             <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">dh</span>);
             <span class="ident">ptr</span>
         }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">e</span>.<span class="ident">put</span>();
             <span class="ident">ptr</span>::<span class="ident">null_mut</span>()
         }
@@ -983,32 +985,32 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">is_export</span>: <span class="ident">c_int</span>,
     <span class="ident">keylength</span>: <span class="ident">c_int</span>,
-) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">EC_KEY</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">EC_KEY</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EcKey</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">bool</span>, <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EcKey</span><span class="op">&lt;</span><span class="ident">Params</span><span class="op">&gt;</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
-        .<span class="ident">ex_data</span>(<span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;&gt;</span>())
+        .<span class="ident">ex_data</span>(<span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>())
         .<span class="ident">expect</span>(<span class="string">&quot;BUG: ssl tmp ecdh callback missing&quot;</span>)
         .<span class="ident">clone</span>();
 
-    <span class="kw">match</span> <span class="ident">callback</span>(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">ec_key</span>) <span class="op">=&gt;</span> {
+    <span class="kw">match</span> <span class="ident">callback</span>(<span class="ident">ssl</span>, <span class="ident">is_export</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="ident">keylength</span> <span class="kw">as</span> <span class="ident">u32</span>) {
+        <span class="prelude-val">Ok</span>(<span class="ident">ec_key</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">ec_key</span>.<span class="ident">as_ptr</span>();
             <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">ec_key</span>);
             <span class="ident">ptr</span>
         }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">e</span>.<span class="ident">put</span>();
             <span class="ident">ptr</span>::<span class="ident">null_mut</span>()
         }
     }
 }
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">raw_tlsext_status</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>, <span class="kw">_</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">raw_tlsext_status</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>, <span class="kw">_</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
@@ -1019,18 +1021,18 @@
 
     <span class="kw">if</span> <span class="ident">ssl</span>.<span class="ident">is_server</span>() {
         <span class="kw">match</span> <span class="ident">ret</span> {
-            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) <span class="op">=&gt;</span> <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_OK</span>,
-            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) <span class="op">=&gt;</span> <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_NOACK</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_OK</span>,
+            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_NOACK</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">e</span>.<span class="ident">put</span>();
                 <span class="ident">ffi</span>::<span class="ident">SSL_TLSEXT_ERR_ALERT_FATAL</span>
             }
         }
     } <span class="kw">else</span> {
         <span class="kw">match</span> <span class="ident">ret</span> {
-            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) <span class="op">=&gt;</span> <span class="number">1</span>,
-            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) <span class="op">=&gt;</span> <span class="number">0</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="number">1</span>,
+            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="number">0</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">e</span>.<span class="ident">put</span>();
                 <span class="op">-</span><span class="number">1</span>
             }
@@ -1041,7 +1043,7 @@
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">raw_new_session</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">session</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL_SESSION</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
     <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">SslSession</span>) <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
@@ -1087,9 +1089,9 @@
     <span class="ident">data</span>: <span class="ident">DataPtr</span>,
     <span class="ident">len</span>: <span class="ident">c_int</span>,
     <span class="ident">copy</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_int</span>,
-) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL_SESSION</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL_SESSION</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SslSession</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SslSession</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
@@ -1100,13 +1102,13 @@
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(<span class="ident">data</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span>);
 
     <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">data</span>) {
-        <span class="prelude-val">Some</span>(<span class="ident">session</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Some</span>(<span class="ident">session</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">session</span>.<span class="ident">as_ptr</span>();
             <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">session</span>);
             <span class="kw-2">*</span><span class="ident">copy</span> <span class="op">=</span> <span class="number">0</span>;
             <span class="ident">p</span>
         }
-        <span class="prelude-val">None</span> <span class="op">=&gt;</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>(),
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>(),
     }
 }
 
@@ -1131,9 +1133,9 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">cookie</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_uchar</span>,
     <span class="ident">cookie_len</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">size_t</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
@@ -1142,11 +1144,11 @@
         .<span class="ident">expect</span>(<span class="string">&quot;BUG: stateless cookie generate callback missing&quot;</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">F</span>;
     <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts_mut</span>(<span class="ident">cookie</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">ffi</span>::<span class="ident">SSL_COOKIE_LENGTH</span> <span class="kw">as</span> <span class="ident">usize</span>);
     <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">slice</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">len</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">len</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw-2">*</span><span class="ident">cookie_len</span> <span class="op">=</span> <span class="ident">len</span> <span class="kw">as</span> <span class="ident">size_t</span>;
             <span class="number">1</span>
         }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">e</span>.<span class="ident">put</span>();
             <span class="number">0</span>
         }
@@ -1158,9 +1160,9 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">cookie</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_uchar</span>,
     <span class="ident">cookie_len</span>: <span class="ident">size_t</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
     <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="ident">ssl</span>
@@ -1175,9 +1177,9 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">cookie</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_uchar</span>,
     <span class="ident">cookie_len</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_uint</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">unsafe</span> {
         <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
@@ -1190,11 +1192,11 @@
         <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span>
             <span class="ident">slice</span>::<span class="ident">from_raw_parts_mut</span>(<span class="ident">cookie</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">ffi</span>::<span class="ident">DTLS1_COOKIE_LENGTH</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="number">1</span>);
         <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">slice</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">len</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">len</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw-2">*</span><span class="ident">cookie_len</span> <span class="op">=</span> <span class="ident">len</span> <span class="kw">as</span> <span class="ident">c_uint</span>;
                 <span class="number">1</span>
             }
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">e</span>.<span class="ident">put</span>();
                 <span class="number">0</span>
             }
@@ -1214,9 +1216,9 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">cookie</span>: <span class="ident">CookiePtr</span>,
     <span class="ident">cookie_len</span>: <span class="ident">c_uint</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
 {
     <span class="kw">unsafe</span> {
         <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
@@ -1244,9 +1246,9 @@
     <span class="ident">chainidx</span>: <span class="ident">size_t</span>,
     <span class="ident">al</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_int</span>,
     <span class="kw">_</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">ExtensionContext</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="ident">X509Ref</span>)<span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">SslAlert</span><span class="op">&gt;</span>
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">ExtensionContext</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="ident">X509Ref</span>)<span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">SslAlert</span><span class="op">&gt;</span>
         <span class="op">+</span> <span class="lifetime">&#39;static</span>
         <span class="op">+</span> <span class="ident">Sync</span>
         <span class="op">+</span> <span class="ident">Send</span>,
@@ -1265,26 +1267,26 @@
             <span class="prelude-val">None</span>
         };
         <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">ectx</span>, <span class="ident">cert</span>) {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="op">=&gt;</span> <span class="number">0</span>,
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">buf</span>)) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="number">0</span>,
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">buf</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw-2">*</span><span class="ident">outlen</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">as_ref</span>().<span class="ident">len</span>();
                 <span class="kw-2">*</span><span class="ident">out</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">as_ref</span>().<span class="ident">as_ptr</span>();
 
-                <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">CustomExtAddState</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;&gt;</span>();
+                <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">CustomExtAddState</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">buf</span>);
                 <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ssl</span>.<span class="ident">ex_data_mut</span>(<span class="ident">idx</span>) {
-                    <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=&gt;</span> {
+                    <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="ident">state</span>.<span class="number">0</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">take</span>();
                         <span class="bool-val">false</span>
                     }
-                    <span class="prelude-val">None</span> <span class="op">=&gt;</span> <span class="bool-val">true</span>,
+                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
                 };
                 <span class="kw">if</span> <span class="ident">new</span> {
                     <span class="ident">ssl</span>.<span class="ident">set_ex_data</span>(<span class="ident">idx</span>, <span class="ident">CustomExtAddState</span>(<span class="ident">buf</span>));
                 }
                 <span class="number">1</span>
             }
-            <span class="prelude-val">Err</span>(<span class="ident">alert</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">alert</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw-2">*</span><span class="ident">al</span> <span class="op">=</span> <span class="ident">alert</span>.<span class="number">0</span>;
                 <span class="op">-</span><span class="number">1</span>
             }
@@ -1304,7 +1306,7 @@
 {
     <span class="kw">unsafe</span> {
         <span class="kw">let</span> <span class="ident">ssl</span> <span class="op">=</span> <span class="ident">SslRef</span>::<span class="ident">from_ptr_mut</span>(<span class="ident">ssl</span>);
-        <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">CustomExtAddState</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;&gt;</span>();
+        <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">Ssl</span>::<span class="ident">cached_ex_index</span>::<span class="op">&lt;</span><span class="ident">CustomExtAddState</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=</span> <span class="ident">ssl</span>.<span class="ident">ex_data_mut</span>(<span class="ident">idx</span>) {
             <span class="ident">state</span>.<span class="number">0</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         }
@@ -1322,9 +1324,9 @@
     <span class="ident">chainidx</span>: <span class="ident">size_t</span>,
     <span class="ident">al</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_int</span>,
     <span class="kw">_</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">ExtensionContext</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="ident">X509Ref</span>)<span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SslAlert</span><span class="op">&gt;</span>
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="ident">ExtensionContext</span>, <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="ident">X509Ref</span>)<span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SslAlert</span><span class="op">&gt;</span>
         <span class="op">+</span> <span class="lifetime">&#39;static</span>
         <span class="op">+</span> <span class="ident">Sync</span>
         <span class="op">+</span> <span class="ident">Send</span>,
@@ -1343,8 +1345,8 @@
             <span class="prelude-val">None</span>
         };
         <span class="kw">match</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="ident">ectx</span>, <span class="ident">slice</span>, <span class="ident">cert</span>) {
-            <span class="prelude-val">Ok</span>(()) <span class="op">=&gt;</span> <span class="number">1</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">alert</span>) <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(()) <span class="op">=</span><span class="op">&gt;</span> <span class="number">1</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">alert</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw-2">*</span><span class="ident">al</span> <span class="op">=</span> <span class="ident">alert</span>.<span class="number">0</span>;
                 <span class="number">0</span>
             }
@@ -1357,9 +1359,9 @@
     <span class="ident">ssl</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">ffi</span>::<span class="ident">SSL</span>,
     <span class="ident">al</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_int</span>,
     <span class="ident">arg</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-) <span class="op">-&gt;</span> <span class="ident">c_int</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslAlert</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ClientHelloResponse</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span>
+    <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslRef</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SslAlert</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ClientHelloResponse</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span>
         <span class="op">+</span> <span class="lifetime">&#39;static</span>
         <span class="op">+</span> <span class="ident">Sync</span>
         <span class="op">+</span> <span class="ident">Send</span>,
@@ -1371,8 +1373,8 @@
     <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">callback</span>)(<span class="ident">ssl</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">alert</span>);
     <span class="kw-2">*</span><span class="ident">al</span> <span class="op">=</span> <span class="ident">alert</span>.<span class="number">0</span>;
     <span class="kw">match</span> <span class="ident">r</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">c</span>) <span class="op">=&gt;</span> <span class="ident">c</span>.<span class="number">0</span>,
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">c</span>.<span class="number">0</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">e</span>.<span class="ident">put</span>();
             <span class="ident">ffi</span>::<span class="ident">SSL_CLIENT_HELLO_ERROR</span>
         }

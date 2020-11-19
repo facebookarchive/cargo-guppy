@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/curl-0.4.33/src/multi.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>multi.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../curl/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/curl-0.4.33/src/multi.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>multi.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../curl/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
@@ -1221,7 +1223,7 @@
 
 <span class="kw">struct</span> <span class="ident">MultiData</span> {
     <span class="ident">socket</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">FnMut</span>(<span class="ident">Socket</span>, <span class="ident">SocketEvents</span>, <span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>,
-    <span class="ident">timer</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">FnMut</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>,
+    <span class="ident">timer</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">FnMut</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Message from the `messages` function of a multi handle.</span>
@@ -1281,7 +1283,7 @@
 <span class="kw">impl</span> <span class="ident">Multi</span> {
     <span class="doccomment">/// Creates a new multi session through which multiple HTTP transfers can be</span>
     <span class="doccomment">/// initiated.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">Multi</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Multi</span> {
         <span class="kw">unsafe</span> {
             ::<span class="ident">init</span>();
             <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">curl_multi_init</span>();
@@ -1310,7 +1312,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// The third `usize` parameter is a custom value set by the `assign` method</span>
     <span class="doccomment">/// below.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">socket_function</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">socket_function</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">Socket</span>, <span class="ident">SocketEvents</span>, <span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
     {
@@ -1320,7 +1322,7 @@
     <span class="kw">fn</span> <span class="ident">_socket_function</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">f</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">FnMut</span>(<span class="ident">Socket</span>, <span class="ident">SocketEvents</span>, <span class="ident">usize</span>) <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">socket</span> <span class="op">=</span> <span class="ident">f</span>;
         <span class="kw">let</span> <span class="ident">cb</span>: <span class="ident">curl_sys</span>::<span class="ident">curl_socket_callback</span> <span class="op">=</span> <span class="ident">cb</span>;
         <span class="self">self</span>.<span class="ident">setopt_ptr</span>(
@@ -1338,8 +1340,8 @@
             <span class="ident">what</span>: <span class="ident">c_int</span>,
             <span class="ident">userptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
             <span class="ident">socketp</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        ) <span class="op">-&gt;</span> <span class="ident">c_int</span> {
-            <span class="ident">panic</span>::<span class="ident">catch</span>(<span class="op">||</span> <span class="kw">unsafe</span> {
+        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span> {
+            <span class="ident">panic</span>::<span class="ident">catch</span>(<span class="op">|</span><span class="op">|</span> <span class="kw">unsafe</span> {
                 <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> (<span class="kw-2">*</span>(<span class="ident">userptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">MultiData</span>)).<span class="ident">socket</span>;
                 <span class="ident">f</span>(<span class="ident">socket</span>, <span class="ident">SocketEvents</span> { <span class="ident">bits</span>: <span class="ident">what</span> }, <span class="ident">socketp</span> <span class="kw">as</span> <span class="ident">usize</span>)
             });
@@ -1379,7 +1381,7 @@
     <span class="doccomment">/// particular data so that when we get updates about this same socket</span>
     <span class="doccomment">/// again, we don&#39;t have to find the struct associated with this socket by</span>
     <span class="doccomment">/// ourselves.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assign</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">socket</span>: <span class="ident">Socket</span>, <span class="ident">token</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assign</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">socket</span>: <span class="ident">Socket</span>, <span class="ident">token</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_assign</span>(
                 <span class="self">self</span>.<span class="ident">raw</span>,
@@ -1409,17 +1411,17 @@
     <span class="doccomment">/// The timer callback should return `true` on success, and `false` on</span>
     <span class="doccomment">/// error. This callback can be used instead of, or in addition to,</span>
     <span class="doccomment">/// `get_timeout`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">timer_function</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">timer_function</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
     {
         <span class="self">self</span>.<span class="ident">_timer_function</span>(<span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">f</span>))
     }
 
     <span class="kw">fn</span> <span class="ident">_timer_function</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">f</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">FnMut</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+        <span class="ident">f</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">FnMut</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">timer</span> <span class="op">=</span> <span class="ident">f</span>;
         <span class="kw">let</span> <span class="ident">cb</span>: <span class="ident">curl_sys</span>::<span class="ident">curl_multi_timer_callback</span> <span class="op">=</span> <span class="ident">cb</span>;
         <span class="self">self</span>.<span class="ident">setopt_ptr</span>(
@@ -1435,10 +1437,10 @@
             <span class="ident">_multi</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">CURLM</span>,
             <span class="ident">timeout_ms</span>: <span class="ident">c_long</span>,
             <span class="ident">user</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        ) <span class="op">-&gt;</span> <span class="ident">c_int</span> {
-            <span class="kw">let</span> <span class="ident">keep_going</span> <span class="op">=</span> <span class="ident">panic</span>::<span class="ident">catch</span>(<span class="op">||</span> <span class="kw">unsafe</span> {
+        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span> {
+            <span class="kw">let</span> <span class="ident">keep_going</span> <span class="op">=</span> <span class="ident">panic</span>::<span class="ident">catch</span>(<span class="op">|</span><span class="op">|</span> <span class="kw">unsafe</span> {
                 <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> (<span class="kw-2">*</span>(<span class="ident">user</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">MultiData</span>)).<span class="ident">timer</span>;
-                <span class="kw">if</span> <span class="ident">timeout_ms</span> <span class="op">==</span> <span class="op">-</span><span class="number">1</span> {
+                <span class="kw">if</span> <span class="ident">timeout_ms</span> <span class="op">=</span><span class="op">=</span> <span class="op">-</span><span class="number">1</span> {
                     <span class="ident">f</span>(<span class="prelude-val">None</span>)
                 } <span class="kw">else</span> {
                     <span class="ident">f</span>(<span class="prelude-val">Some</span>(<span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="ident">timeout_ms</span> <span class="kw">as</span> <span class="ident">u64</span>)))
@@ -1464,7 +1466,7 @@
     <span class="doccomment">/// follow-up requests can re-use an existing connection and send the new</span>
     <span class="doccomment">/// request multiplexed over that at the same time as other transfers are</span>
     <span class="doccomment">/// already using that single connection.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pipelining</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">http_1</span>: <span class="ident">bool</span>, <span class="ident">multiplex</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pipelining</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">http_1</span>: <span class="ident">bool</span>, <span class="ident">multiplex</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">bitmask</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">http_1</span> { <span class="ident">curl_sys</span>::<span class="ident">CURLPIPE_HTTP1</span> } <span class="kw">else</span> { <span class="number">0</span> }
             <span class="op">|</span> <span class="kw">if</span> <span class="ident">multiplex</span> {
                 <span class="ident">curl_sys</span>::<span class="ident">CURLPIPE_MULTIPLEX</span>
@@ -1482,7 +1484,7 @@
     <span class="doccomment">/// limit set by the provided value. When the limit is reached, the sessions will</span>
     <span class="doccomment">/// be pending until a connection becomes available. If pipelining is enabled,</span>
     <span class="doccomment">/// libcurl will try to pipeline if the host is capable of it.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_max_host_connections</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_max_host_connections</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">setopt_long</span>(<span class="ident">curl_sys</span>::<span class="ident">CURLMOPT_MAX_HOST_CONNECTIONS</span>, <span class="ident">val</span> <span class="kw">as</span> <span class="ident">c_long</span>)
     }
 
@@ -1494,7 +1496,7 @@
     <span class="doccomment">/// value. When the limit is reached, the sessions will be pending until</span>
     <span class="doccomment">/// there are available connections. If pipelining is enabled, libcurl will</span>
     <span class="doccomment">/// try to pipeline or use multiplexing if the host is capable of it.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_max_total_connections</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_max_total_connections</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">setopt_long</span>(<span class="ident">curl_sys</span>::<span class="ident">CURLMOPT_MAX_TOTAL_CONNECTIONS</span>, <span class="ident">val</span> <span class="kw">as</span> <span class="ident">c_long</span>)
     }
 
@@ -1513,7 +1515,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// See [`set_max_total_connections`](#method.set_max_total_connections) for</span>
     <span class="doccomment">/// limiting the number of active connections.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_max_connects</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_max_connects</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">setopt_long</span>(<span class="ident">curl_sys</span>::<span class="ident">CURLMOPT_MAXCONNECTS</span>, <span class="ident">val</span> <span class="kw">as</span> <span class="ident">c_long</span>)
     }
 
@@ -1522,11 +1524,11 @@
     <span class="doccomment">/// This sets the max number that will be used as the maximum amount of</span>
     <span class="doccomment">/// outstanding requests in an HTTP/1.1 pipelined connection. This option</span>
     <span class="doccomment">/// is only used for HTTP/1.1 pipelining, and not HTTP/2 multiplexing.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_pipeline_length</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_pipeline_length</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">setopt_long</span>(<span class="ident">curl_sys</span>::<span class="ident">CURLMOPT_MAX_PIPELINE_LENGTH</span>, <span class="ident">val</span> <span class="kw">as</span> <span class="ident">c_long</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">setopt_long</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">opt</span>: <span class="ident">curl_sys</span>::<span class="ident">CURLMoption</span>, <span class="ident">val</span>: <span class="ident">c_long</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">setopt_long</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">opt</span>: <span class="ident">curl_sys</span>::<span class="ident">CURLMoption</span>, <span class="ident">val</span>: <span class="ident">c_long</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> { <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_setopt</span>(<span class="self">self</span>.<span class="ident">raw</span>, <span class="ident">opt</span>, <span class="ident">val</span>)) }
     }
 
@@ -1534,7 +1536,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">opt</span>: <span class="ident">curl_sys</span>::<span class="ident">CURLMoption</span>,
         <span class="ident">val</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_char</span>,
-    ) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> { <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_setopt</span>(<span class="self">self</span>.<span class="ident">raw</span>, <span class="ident">opt</span>, <span class="ident">val</span>)) }
     }
 
@@ -1557,7 +1559,7 @@
     <span class="doccomment">/// The easy handle will remain added to the multi handle until you remove</span>
     <span class="doccomment">/// it again with `remove` on the returned handle - even when a transfer</span>
     <span class="doccomment">/// with that specific easy handle is completed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">easy</span>: <span class="ident">Easy</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EasyHandle</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">easy</span>: <span class="ident">Easy</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EasyHandle</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="comment">// Clear any configuration set by previous transfers because we&#39;re</span>
         <span class="comment">// moving this into a `Send+&#39;static` situation now basically.</span>
         <span class="ident">easy</span>.<span class="ident">transfer</span>();
@@ -1572,7 +1574,7 @@
     }
 
     <span class="doccomment">/// Same as `add`, but works with the `Easy2` type.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">easy</span>: <span class="ident">Easy2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">easy</span>: <span class="ident">Easy2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_add_handle</span>(<span class="self">self</span>.<span class="ident">raw</span>, <span class="ident">easy</span>.<span class="ident">raw</span>()))<span class="question-mark">?</span>;
         }
@@ -1593,7 +1595,7 @@
     <span class="doccomment">/// Removing an easy handle while being used is perfectly legal and will</span>
     <span class="doccomment">/// effectively halt the transfer in progress involving that easy handle.</span>
     <span class="doccomment">/// All other easy handles and transfers will remain unaffected.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">easy</span>: <span class="ident">EasyHandle</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Easy</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">easy</span>: <span class="ident">EasyHandle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Easy</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_remove_handle</span>(
                 <span class="self">self</span>.<span class="ident">raw</span>,
@@ -1604,7 +1606,7 @@
     }
 
     <span class="doccomment">/// Same as `remove`, but for `Easy2Handle`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">easy</span>: <span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Easy2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">easy</span>: <span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Easy2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_remove_handle</span>(
                 <span class="self">self</span>.<span class="ident">raw</span>,
@@ -1664,7 +1666,7 @@
     <span class="doccomment">/// the socket callback function set with the `socket_function` method. They</span>
     <span class="doccomment">/// update the status with changes since the previous time the callback was</span>
     <span class="doccomment">/// called.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">action</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">socket</span>: <span class="ident">Socket</span>, <span class="ident">events</span>: <span class="kw-2">&amp;</span><span class="ident">Events</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">action</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">socket</span>: <span class="ident">Socket</span>, <span class="ident">events</span>: <span class="kw-2">&amp;</span><span class="ident">Events</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remaining</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">unsafe</span> {
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_socket_action</span>(
@@ -1692,7 +1694,7 @@
     <span class="doccomment">/// `timeout` method. You can also use the `get_timeout` function to</span>
     <span class="doccomment">/// poll the value at any given time, but for an event-based system using</span>
     <span class="doccomment">/// the callback is far better than relying on polling the timeout value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">timeout</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">timeout</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remaining</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">unsafe</span> {
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_socket_action</span>(
@@ -1722,11 +1724,11 @@
     <span class="doccomment">/// Note: if libcurl returns a `None` timeout here, it just means that</span>
     <span class="doccomment">/// libcurl currently has no stored timeout value. You must not wait too</span>
     <span class="doccomment">/// long (more than a few seconds perhaps) before you call `perform` again.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_timeout</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_timeout</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ms</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">unsafe</span> {
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_timeout</span>(<span class="self">self</span>.<span class="ident">raw</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ms</span>))<span class="question-mark">?</span>;
-            <span class="kw">if</span> <span class="ident">ms</span> <span class="op">==</span> <span class="op">-</span><span class="number">1</span> {
+            <span class="kw">if</span> <span class="ident">ms</span> <span class="op">=</span><span class="op">=</span> <span class="op">-</span><span class="number">1</span> {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             } <span class="kw">else</span> {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="ident">ms</span> <span class="kw">as</span> <span class="ident">u64</span>)))
@@ -1759,7 +1761,7 @@
     <span class="doccomment">///     m.wait(&amp;mut [], Duration::from_secs(1)).unwrap();</span>
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">waitfds</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">WaitFd</span>], <span class="ident">timeout</span>: <span class="ident">Duration</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">waitfds</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">WaitFd</span>], <span class="ident">timeout</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">timeout_ms</span> <span class="op">=</span> {
             <span class="kw">let</span> <span class="ident">secs</span> <span class="op">=</span> <span class="ident">timeout</span>.<span class="ident">as_secs</span>();
             <span class="kw">if</span> <span class="ident">secs</span> <span class="op">&gt;</span> (<span class="ident">i32</span>::<span class="ident">max_value</span>() <span class="op">/</span> <span class="number">1000</span>) <span class="kw">as</span> <span class="ident">u64</span> {
@@ -1822,7 +1824,7 @@
     <span class="doccomment">/// Problems still might have occurred on individual transfers even when</span>
     <span class="doccomment">/// this function returns `Ok`. Use `info` to figure out how individual</span>
     <span class="doccomment">/// transfers did.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">perform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">perform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="number">0</span>;
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_perform</span>(<span class="self">self</span>.<span class="ident">raw</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ret</span>))<span class="question-mark">?</span>;
@@ -1866,7 +1868,7 @@
         <span class="ident">read</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">fd_set</span><span class="op">&gt;</span>,
         <span class="ident">write</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">fd_set</span><span class="op">&gt;</span>,
         <span class="ident">except</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">fd_set</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>, <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="number">0</span>;
             <span class="kw">let</span> <span class="ident">read</span> <span class="op">=</span> <span class="ident">read</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>).<span class="ident">unwrap_or</span>(<span class="number">0</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>);
@@ -1875,7 +1877,7 @@
             <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_fdset</span>(
                 <span class="self">self</span>.<span class="ident">raw</span>, <span class="ident">read</span>, <span class="ident">write</span>, <span class="ident">except</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ret</span>,
             ))<span class="question-mark">?</span>;
-            <span class="kw">if</span> <span class="ident">ret</span> <span class="op">==</span> <span class="op">-</span><span class="number">1</span> {
+            <span class="kw">if</span> <span class="ident">ret</span> <span class="op">=</span><span class="op">=</span> <span class="op">-</span><span class="number">1</span> {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             } <span class="kw">else</span> {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">ret</span>))
@@ -1893,22 +1895,22 @@
         <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;cannot close safely without consuming self; \
                 will be changed or removed in a future release&quot;</span>
     )]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Get a pointer to the raw underlying CURLM handle.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">CURLM</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">CURLM</span> {
         <span class="self">self</span>.<span class="ident">raw</span>
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">close_impl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">close_impl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
         <span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_multi_cleanup</span>(<span class="self">self</span>.<span class="ident">raw</span>))
     }
 }
 
-<span class="kw">fn</span> <span class="ident">cvt</span>(<span class="ident">code</span>: <span class="ident">curl_sys</span>::<span class="ident">CURLMcode</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">code</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURLM_OK</span> {
+<span class="kw">fn</span> <span class="ident">cvt</span>(<span class="ident">code</span>: <span class="ident">curl_sys</span>::<span class="ident">CURLMcode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiError</span><span class="op">&gt;</span> {
+    <span class="kw">if</span> <span class="ident">code</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURLM_OK</span> {
         <span class="prelude-val">Ok</span>(())
     } <span class="kw">else</span> {
         <span class="prelude-val">Err</span>(<span class="ident">MultiError</span>::<span class="ident">new</span>(<span class="ident">code</span>))
@@ -1916,7 +1918,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Multi</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Multi&quot;</span>).<span class="ident">field</span>(<span class="string">&quot;raw&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">raw</span>).<span class="ident">finish</span>()
     }
 }
@@ -1928,40 +1930,40 @@
 }
 
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">impl_easy_getters</span> {
-    () <span class="op">=&gt;</span> {
+    () <span class="op">=</span><span class="op">&gt;</span> {
         <span class="macro">impl_easy_getters</span><span class="macro">!</span> {
-            <span class="ident">time_condition_unmet</span> <span class="op">-&gt;</span> <span class="ident">bool</span>,
-            <span class="ident">effective_url</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
-            <span class="ident">effective_url_bytes</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-            <span class="ident">response_code</span> <span class="op">-&gt;</span> <span class="ident">u32</span>,
-            <span class="ident">http_connectcode</span> <span class="op">-&gt;</span> <span class="ident">u32</span>,
-            <span class="ident">filetime</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span>,
-            <span class="ident">download_size</span> <span class="op">-&gt;</span> <span class="ident">f64</span>,
-            <span class="ident">content_length_download</span> <span class="op">-&gt;</span> <span class="ident">f64</span>,
-            <span class="ident">total_time</span> <span class="op">-&gt;</span> <span class="ident">Duration</span>,
-            <span class="ident">namelookup_time</span> <span class="op">-&gt;</span> <span class="ident">Duration</span>,
-            <span class="ident">connect_time</span> <span class="op">-&gt;</span> <span class="ident">Duration</span>,
-            <span class="ident">appconnect_time</span> <span class="op">-&gt;</span> <span class="ident">Duration</span>,
-            <span class="ident">pretransfer_time</span> <span class="op">-&gt;</span> <span class="ident">Duration</span>,
-            <span class="ident">starttransfer_time</span> <span class="op">-&gt;</span> <span class="ident">Duration</span>,
-            <span class="ident">redirect_time</span> <span class="op">-&gt;</span> <span class="ident">Duration</span>,
-            <span class="ident">redirect_count</span> <span class="op">-&gt;</span> <span class="ident">u32</span>,
-            <span class="ident">redirect_url</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
-            <span class="ident">redirect_url_bytes</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-            <span class="ident">header_size</span> <span class="op">-&gt;</span> <span class="ident">u64</span>,
-            <span class="ident">request_size</span> <span class="op">-&gt;</span> <span class="ident">u64</span>,
-            <span class="ident">content_type</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
-            <span class="ident">content_type_bytes</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
-            <span class="ident">os_errno</span> <span class="op">-&gt;</span> <span class="ident">i32</span>,
-            <span class="ident">primary_ip</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
-            <span class="ident">primary_port</span> <span class="op">-&gt;</span> <span class="ident">u16</span>,
-            <span class="ident">local_ip</span> <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
-            <span class="ident">local_port</span> <span class="op">-&gt;</span> <span class="ident">u16</span>,
-            <span class="ident">cookies</span> <span class="op">-&gt;</span> <span class="ident">List</span>,
+            <span class="ident">time_condition_unmet</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
+            <span class="ident">effective_url</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
+            <span class="ident">effective_url_bytes</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+            <span class="ident">response_code</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>,
+            <span class="ident">http_connectcode</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>,
+            <span class="ident">filetime</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span>,
+            <span class="ident">download_size</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">f64</span>,
+            <span class="ident">content_length_download</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">f64</span>,
+            <span class="ident">total_time</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span>,
+            <span class="ident">namelookup_time</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span>,
+            <span class="ident">connect_time</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span>,
+            <span class="ident">appconnect_time</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span>,
+            <span class="ident">pretransfer_time</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span>,
+            <span class="ident">starttransfer_time</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span>,
+            <span class="ident">redirect_time</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span>,
+            <span class="ident">redirect_count</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>,
+            <span class="ident">redirect_url</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
+            <span class="ident">redirect_url_bytes</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+            <span class="ident">header_size</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span>,
+            <span class="ident">request_size</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span>,
+            <span class="ident">content_type</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
+            <span class="ident">content_type_bytes</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+            <span class="ident">os_errno</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i32</span>,
+            <span class="ident">primary_ip</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
+            <span class="ident">primary_port</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span>,
+            <span class="ident">local_ip</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
+            <span class="ident">local_port</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span>,
+            <span class="ident">cookies</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">List</span>,
         }
     };
 
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span> <span class="op">-&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret</span>:<span class="ident">ty</span>,)<span class="kw-2">*</span>) <span class="op">=&gt;</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span> <span class="op">-</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret</span>:<span class="ident">ty</span>,)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
         $(
             <span class="macro">impl_easy_getters</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret</span>, <span class="macro">concat</span><span class="macro">!</span>(
                 <span class="string">&quot;Same as [`Easy2::&quot;</span>,
@@ -1973,9 +1975,9 @@
         )<span class="op">*</span>
     };
 
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">doc</span>:<span class="ident">expr</span>) <span class="op">=&gt;</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">doc</span>:<span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
         <span class="attribute">#[<span class="ident">doc</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">doc</span>]</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ret</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
             <span class="self">self</span>.<span class="ident">easy</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>()
         }
     };
@@ -1986,7 +1988,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function will set the `CURLOPT_PRIVATE` field on the underlying</span>
     <span class="doccomment">/// easy handle.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_token</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">token</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_token</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">token</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             ::<span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_easy_setopt</span>(
                 <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">raw</span>(),
@@ -2008,7 +2010,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// The chance is high that you will get your write callback called before</span>
     <span class="doccomment">/// this function returns.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">unpause_read</span>()
     }
 
@@ -2022,35 +2024,35 @@
     <span class="doccomment">/// returns pause signals to the library that it couldn&#39;t take care of any</span>
     <span class="doccomment">/// data at all, and that data will then be delivered again to the callback</span>
     <span class="doccomment">/// when the writing is later unpaused.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">unpause_write</span>()
     }
 
     <span class="doccomment">/// Get a pointer to the raw underlying CURL handle.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">CURL</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">CURL</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">raw</span>()
     }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">EasyHandle</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">fmt</span>(<span class="ident">f</span>)
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> <span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Acquires a reference to the underlying handler for events.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">H</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">H</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">get_ref</span>()
     }
 
     <span class="doccomment">/// Acquires a reference to the underlying handler for events.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">H</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">H</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">get_mut</span>()
     }
 
     <span class="doccomment">/// Same as `EasyHandle::set_token`</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_token</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">token</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_token</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">token</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             ::<span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_easy_setopt</span>(
                 <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">raw</span>(),
@@ -2072,7 +2074,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// The chance is high that you will get your write callback called before</span>
     <span class="doccomment">/// this function returns.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">unpause_read</span>()
     }
 
@@ -2086,18 +2088,18 @@
     <span class="doccomment">/// returns pause signals to the library that it couldn&#39;t take care of any</span>
     <span class="doccomment">/// data at all, and that data will then be delivered again to the callback</span>
     <span class="doccomment">/// when the writing is later unpaused.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpause_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">unpause_write</span>()
     }
 
     <span class="doccomment">/// Get a pointer to the raw underlying CURL handle.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">CURL</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">curl_sys</span>::<span class="ident">CURL</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">raw</span>()
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">fmt</span>::<span class="ident">Debug</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="self">self</span>.<span class="ident">easy</span>.<span class="ident">fmt</span>(<span class="ident">f</span>)
     }
 }
@@ -2112,9 +2114,9 @@
     <span class="doccomment">/// Note that the `result*_for` methods below should be preferred as they</span>
     <span class="doccomment">/// provide better error messages as the associated error data on the</span>
     <span class="doccomment">/// handle can be associated with the error type.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">result</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">result</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
-            <span class="kw">if</span> (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">msg</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURLMSG_DONE</span> {
+            <span class="kw">if</span> (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">msg</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURLMSG_DONE</span> {
                 <span class="prelude-val">Some</span>(::<span class="ident">cvt</span>((<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">data</span> <span class="kw">as</span> <span class="ident">curl_sys</span>::<span class="ident">CURLcode</span>))
             } <span class="kw">else</span> {
                 <span class="prelude-val">None</span>
@@ -2127,7 +2129,7 @@
     <span class="doccomment">/// Note that this function produces better error messages than `result` as</span>
     <span class="doccomment">/// it uses `take_error_buf` to associate error information with the</span>
     <span class="doccomment">/// returned error.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">result_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">EasyHandle</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">result_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">EasyHandle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_for</span>(<span class="ident">handle</span>) {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
@@ -2145,7 +2147,7 @@
     <span class="doccomment">/// Note that this function produces better error messages than `result` as</span>
     <span class="doccomment">/// it uses `take_error_buf` to associate error information with the</span>
     <span class="doccomment">/// returned error.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">result_for2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">result_for2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_for2</span>(<span class="ident">handle</span>) {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
@@ -2160,13 +2162,13 @@
 
     <span class="doccomment">/// Returns whether this easy message was for the specified easy handle or</span>
     <span class="doccomment">/// not.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">EasyHandle</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">easy_handle</span> <span class="op">==</span> <span class="ident">handle</span>.<span class="ident">easy</span>.<span class="ident">raw</span>() }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">EasyHandle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">easy_handle</span> <span class="op">=</span><span class="op">=</span> <span class="ident">handle</span>.<span class="ident">easy</span>.<span class="ident">raw</span>() }
     }
 
     <span class="doccomment">/// Same as `is_for`, but for `Easy2Handle`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_for2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">easy_handle</span> <span class="op">==</span> <span class="ident">handle</span>.<span class="ident">easy</span>.<span class="ident">raw</span>() }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_for2</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">handle</span>: <span class="kw-2">&amp;</span><span class="ident">Easy2Handle</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">easy_handle</span> <span class="op">=</span><span class="op">=</span> <span class="ident">handle</span>.<span class="ident">easy</span>.<span class="ident">raw</span>() }
     }
 
     <span class="doccomment">/// Returns the token associated with the easy handle that this message</span>
@@ -2175,7 +2177,7 @@
     <span class="doccomment">/// This function will return the token assigned with</span>
     <span class="doccomment">/// `EasyHandle::set_token`. This reads the `CURLINFO_PRIVATE` field of the</span>
     <span class="doccomment">/// underlying `*mut CURL`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">token</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">token</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">p</span> <span class="op">=</span> <span class="number">0usize</span>;
             ::<span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_easy_getinfo</span>(
@@ -2189,36 +2191,36 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Message</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Message&quot;</span>).<span class="ident">field</span>(<span class="string">&quot;ptr&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">ptr</span>).<span class="ident">finish</span>()
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Events</span> {
     <span class="doccomment">/// Creates a new blank event bit mask.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">Events</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Events</span> {
         <span class="ident">Events</span> { <span class="ident">bits</span>: <span class="number">0</span> }
     }
 
     <span class="doccomment">/// Set or unset the whether these events indicate that input is ready.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
         <span class="self">self</span>.<span class="ident">flag</span>(<span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_IN</span>, <span class="ident">val</span>)
     }
 
     <span class="doccomment">/// Set or unset the whether these events indicate that output is ready.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">output</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">output</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
         <span class="self">self</span>.<span class="ident">flag</span>(<span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_OUT</span>, <span class="ident">val</span>)
     }
 
     <span class="doccomment">/// Set or unset the whether these events indicate that an error has</span>
     <span class="doccomment">/// happened.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">error</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">error</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
         <span class="self">self</span>.<span class="ident">flag</span>(<span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_ERR</span>, <span class="ident">val</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">flag</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flag</span>: <span class="ident">c_int</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
+    <span class="kw">fn</span> <span class="ident">flag</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flag</span>: <span class="ident">c_int</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Events</span> {
         <span class="kw">if</span> <span class="ident">val</span> {
-            <span class="self">self</span>.<span class="ident">bits</span> <span class="op">|=</span> <span class="ident">flag</span>;
+            <span class="self">self</span>.<span class="ident">bits</span> <span class="op">|</span><span class="op">=</span> <span class="ident">flag</span>;
         } <span class="kw">else</span> {
             <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;=</span> <span class="op">!</span><span class="ident">flag</span>;
         }
@@ -2227,40 +2229,40 @@
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Events</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Events&quot;</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;input&quot;</span>, <span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_IN</span> <span class="op">!=</span> <span class="number">0</span>))
-            .<span class="ident">field</span>(<span class="string">&quot;output&quot;</span>, <span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_IN</span> <span class="op">!=</span> <span class="number">0</span>))
-            .<span class="ident">field</span>(<span class="string">&quot;error&quot;</span>, <span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_IN</span> <span class="op">!=</span> <span class="number">0</span>))
+            .<span class="ident">field</span>(<span class="string">&quot;input&quot;</span>, <span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_IN</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>))
+            .<span class="ident">field</span>(<span class="string">&quot;output&quot;</span>, <span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_IN</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>))
+            .<span class="ident">field</span>(<span class="string">&quot;error&quot;</span>, <span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_CSELECT_IN</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>))
             .<span class="ident">finish</span>()
     }
 }
 
 <span class="kw">impl</span> <span class="ident">SocketEvents</span> {
     <span class="doccomment">/// Wait for incoming data. For the socket to become readable.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_IN</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_IN</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_IN</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_IN</span>
     }
 
     <span class="doccomment">/// Wait for outgoing data. For the socket to become writable.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">output</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_OUT</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_OUT</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">output</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_OUT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_OUT</span>
     }
 
     <span class="doccomment">/// Wait for incoming and outgoing data. For the socket to become readable</span>
     <span class="doccomment">/// or writable.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_and_output</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_INOUT</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_INOUT</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">input_and_output</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_INOUT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_INOUT</span>
     }
 
     <span class="doccomment">/// The specified socket/file descriptor is no longer used by libcurl.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_REMOVE</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_REMOVE</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">bits</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_REMOVE</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_POLL_REMOVE</span>
     }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">SocketEvents</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Events&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;input&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">input</span>())
             .<span class="ident">field</span>(<span class="string">&quot;output&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">output</span>())
@@ -2271,7 +2273,7 @@
 
 <span class="kw">impl</span> <span class="ident">WaitFd</span> {
     <span class="doccomment">/// Constructs an empty (invalid) WaitFd.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">WaitFd</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">WaitFd</span> {
         <span class="ident">WaitFd</span> {
             <span class="ident">inner</span>: <span class="ident">curl_sys</span>::<span class="ident">curl_waitfd</span> {
                 <span class="ident">fd</span>: <span class="number">0</span>,
@@ -2290,7 +2292,7 @@
     <span class="doccomment">/// received.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Corresponds to `CURL_WAIT_POLLIN`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">poll_on_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">poll_on_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
         <span class="self">self</span>.<span class="ident">flag</span>(<span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLIN</span>, <span class="ident">val</span>)
     }
 
@@ -2298,7 +2300,7 @@
     <span class="doccomment">/// as out of band data.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Corresponds to `CURL_WAIT_POLLPRI`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">poll_on_priority_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">poll_on_priority_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
         <span class="self">self</span>.<span class="ident">flag</span>(<span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLPRI</span>, <span class="ident">val</span>)
     }
 
@@ -2306,13 +2308,13 @@
     <span class="doccomment">/// being clear to write without blocking.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Corresponds to `CURL_WAIT_POLLOUT`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">poll_on_write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">poll_on_write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
         <span class="self">self</span>.<span class="ident">flag</span>(<span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLOUT</span>, <span class="ident">val</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">flag</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flag</span>: <span class="ident">c_short</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
+    <span class="kw">fn</span> <span class="ident">flag</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flag</span>: <span class="ident">c_short</span>, <span class="ident">val</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">WaitFd</span> {
         <span class="kw">if</span> <span class="ident">val</span> {
-            <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">events</span> <span class="op">|=</span> <span class="ident">flag</span>;
+            <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">events</span> <span class="op">|</span><span class="op">=</span> <span class="ident">flag</span>;
         } <span class="kw">else</span> {
             <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">events</span> <span class="op">&amp;=</span> <span class="op">!</span><span class="ident">flag</span>;
         }
@@ -2321,35 +2323,35 @@
 
     <span class="doccomment">/// After a call to `wait`, returns `true` if `poll_on_read` was set and a</span>
     <span class="doccomment">/// read event occured.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">received_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">revents</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLIN</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLIN</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">received_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">revents</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLIN</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLIN</span>
     }
 
     <span class="doccomment">/// After a call to `wait`, returns `true` if `poll_on_priority_read` was set and a</span>
     <span class="doccomment">/// priority read event occured.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">received_priority_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">revents</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLPRI</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLPRI</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">received_priority_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">revents</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLPRI</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLPRI</span>
     }
 
     <span class="doccomment">/// After a call to `wait`, returns `true` if `poll_on_write` was set and a</span>
     <span class="doccomment">/// write event occured.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">received_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">revents</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLOUT</span> <span class="op">==</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLOUT</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">received_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">revents</span> <span class="op">&amp;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLOUT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLOUT</span>
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">pollfd</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">WaitFd</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">pfd</span>: <span class="ident">pollfd</span>) <span class="op">-&gt;</span> <span class="ident">WaitFd</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">pfd</span>: <span class="ident">pollfd</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">WaitFd</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">events</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">if</span> <span class="ident">pfd</span>.<span class="ident">events</span> <span class="op">&amp;</span> <span class="ident">POLLIN</span> <span class="op">==</span> <span class="ident">POLLIN</span> {
-            <span class="ident">events</span> <span class="op">|=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLIN</span>;
+        <span class="kw">if</span> <span class="ident">pfd</span>.<span class="ident">events</span> <span class="op">&amp;</span> <span class="ident">POLLIN</span> <span class="op">=</span><span class="op">=</span> <span class="ident">POLLIN</span> {
+            <span class="ident">events</span> <span class="op">|</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLIN</span>;
         }
-        <span class="kw">if</span> <span class="ident">pfd</span>.<span class="ident">events</span> <span class="op">&amp;</span> <span class="ident">POLLPRI</span> <span class="op">==</span> <span class="ident">POLLPRI</span> {
-            <span class="ident">events</span> <span class="op">|=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLPRI</span>;
+        <span class="kw">if</span> <span class="ident">pfd</span>.<span class="ident">events</span> <span class="op">&amp;</span> <span class="ident">POLLPRI</span> <span class="op">=</span><span class="op">=</span> <span class="ident">POLLPRI</span> {
+            <span class="ident">events</span> <span class="op">|</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLPRI</span>;
         }
-        <span class="kw">if</span> <span class="ident">pfd</span>.<span class="ident">events</span> <span class="op">&amp;</span> <span class="ident">POLLOUT</span> <span class="op">==</span> <span class="ident">POLLOUT</span> {
-            <span class="ident">events</span> <span class="op">|=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLOUT</span>;
+        <span class="kw">if</span> <span class="ident">pfd</span>.<span class="ident">events</span> <span class="op">&amp;</span> <span class="ident">POLLOUT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">POLLOUT</span> {
+            <span class="ident">events</span> <span class="op">|</span><span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WAIT_POLLOUT</span>;
         }
         <span class="ident">WaitFd</span> {
             <span class="ident">inner</span>: <span class="ident">curl_sys</span>::<span class="ident">curl_waitfd</span> {
@@ -2362,7 +2364,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">WaitFd</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;WaitFd&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;fd&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">fd</span>)
             .<span class="ident">field</span>(<span class="string">&quot;events&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">fd</span>)

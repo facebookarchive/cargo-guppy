@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/compiler/job_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>job_queue.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="shortcut icon" href="../../../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/compiler/job_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>job_queue.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -1111,7 +1113,7 @@
     <span class="ident">total_units</span>: <span class="ident">usize</span>,
 
     <span class="ident">queue</span>: <span class="ident">DependencyQueue</span><span class="op">&lt;</span><span class="ident">Unit</span>, <span class="ident">Artifact</span>, <span class="ident">Job</span><span class="op">&gt;</span>,
-    <span class="ident">messages</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Queue</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">messages</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Queue</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">active</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">JobId</span>, <span class="ident">Unit</span><span class="op">&gt;</span>,
     <span class="ident">compiled</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
     <span class="ident">documented</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
@@ -1130,11 +1132,11 @@
     <span class="ident">tokens</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Acquired</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// rustc per-thread tokens, when in jobserver-per-rustc mode.</span>
-    <span class="ident">rustc_tokens</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">JobId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Acquired</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">rustc_tokens</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">JobId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Acquired</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// This represents the list of rustc jobs (processes) and associated</span>
     <span class="doccomment">/// clients that are interested in receiving a token.</span>
-    <span class="ident">to_send_clients</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">JobId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">to_send_clients</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">JobId</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Client</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// The list of jobs that we have not yet started executing, but have</span>
     <span class="doccomment">/// retrieved from the `queue`. We eagerly pull jobs off the main queue to</span>
@@ -1150,14 +1152,14 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">JobId</span>(<span class="kw">pub</span> <span class="ident">u32</span>);
 
 <span class="kw">impl</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">JobId</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">JobState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Channel back to the main thread to coordinate messages and such.</span>
-    <span class="ident">messages</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Queue</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;&gt;</span>,
+    <span class="ident">messages</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Queue</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// The job id that this state is associated with, used when sending</span>
     <span class="doccomment">/// messages back to the main thread.</span>
@@ -1195,7 +1197,7 @@
 
 <span class="kw">enum</span> <span class="ident">Message</span> {
     <span class="ident">Run</span>(<span class="ident">JobId</span>, <span class="ident">String</span>),
-    <span class="ident">BuildPlanMsg</span>(<span class="ident">String</span>, <span class="ident">ProcessBuilder</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">OutputFile</span><span class="op">&gt;&gt;</span>),
+    <span class="ident">BuildPlanMsg</span>(<span class="ident">String</span>, <span class="ident">ProcessBuilder</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">OutputFile</span><span class="op">&gt;</span><span class="op">&gt;</span>),
     <span class="ident">Stdout</span>(<span class="ident">String</span>),
     <span class="ident">Stderr</span>(<span class="ident">String</span>),
     <span class="ident">FixDiagnostic</span>(<span class="ident">diagnostic_server</span>::<span class="ident">Message</span>),
@@ -1218,7 +1220,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">module_name</span>: <span class="ident">String</span>,
         <span class="ident">cmd</span>: <span class="ident">ProcessBuilder</span>,
-        <span class="ident">filenames</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">OutputFile</span><span class="op">&gt;&gt;</span>,
+        <span class="ident">filenames</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">OutputFile</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) {
         <span class="self">self</span>.<span class="ident">messages</span>
             .<span class="ident">push</span>(<span class="ident">Message</span>::<span class="ident">BuildPlanMsg</span>(<span class="ident">module_name</span>, <span class="ident">cmd</span>, <span class="ident">filenames</span>));
@@ -1261,7 +1263,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> <span class="ident">JobQueue</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">bcx</span>: <span class="kw-2">&amp;</span><span class="ident">BuildContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">JobQueue</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">bcx</span>: <span class="kw-2">&amp;</span><span class="ident">BuildContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">JobQueue</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> {
         <span class="ident">JobQueue</span> {
             <span class="ident">queue</span>: <span class="ident">DependencyQueue</span>::<span class="ident">new</span>(),
             <span class="ident">counts</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
@@ -1269,7 +1271,7 @@
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enqueue</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>, <span class="ident">job</span>: <span class="ident">Job</span>) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enqueue</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>, <span class="ident">job</span>: <span class="ident">Job</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">dependencies</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">unit_deps</span>(<span class="ident">unit</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">queue_deps</span> <span class="op">=</span> <span class="ident">dependencies</span>
             .<span class="ident">iter</span>()
@@ -1290,7 +1292,7 @@
                 };
                 (<span class="ident">dep</span>.<span class="ident">unit</span>.<span class="ident">clone</span>(), <span class="ident">artifact</span>)
             })
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;&gt;</span>();
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
         <span class="comment">// This is somewhat tricky, but we may need to synthesize some</span>
         <span class="comment">// dependencies for this target if it requires full upstream</span>
@@ -1332,7 +1334,7 @@
         }
 
         <span class="self">self</span>.<span class="ident">queue</span>.<span class="ident">queue</span>(<span class="ident">unit</span>.<span class="ident">clone</span>(), <span class="ident">job</span>, <span class="ident">queue_deps</span>);
-        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">counts</span>.<span class="ident">entry</span>(<span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()).<span class="ident">or_insert</span>(<span class="number">0</span>) <span class="op">+=</span> <span class="number">1</span>;
+        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">counts</span>.<span class="ident">entry</span>(<span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()).<span class="ident">or_insert</span>(<span class="number">0</span>) <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -1341,7 +1343,7 @@
     <span class="doccomment">/// This function will spawn off `config.jobs()` workers to build all of the</span>
     <span class="doccomment">/// necessary dependencies, in order. Freshness is propagated as far as</span>
     <span class="doccomment">/// possible along each dependency chain.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BuildPlan</span>) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BuildPlan</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">_p</span> <span class="op">=</span> <span class="ident">profile</span>::<span class="ident">start</span>(<span class="string">&quot;executing the job graph&quot;</span>);
         <span class="self">self</span>.<span class="ident">queue</span>.<span class="ident">queue_finished</span>();
 
@@ -1377,7 +1379,7 @@
             .<span class="ident">into_helper_thread</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">token</span><span class="op">|</span> {
                 <span class="ident">messages</span>.<span class="ident">push</span>(<span class="ident">Message</span>::<span class="ident">Token</span>(<span class="ident">token</span>));
             })
-            .<span class="ident">chain_err</span>(<span class="op">||</span> <span class="string">&quot;failed to create helper thread for jobserver management&quot;</span>)<span class="question-mark">?</span>;
+            .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;failed to create helper thread for jobserver management&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// Create a helper thread to manage the diagnostics for rustfix if</span>
         <span class="comment">// necessary.</span>
@@ -1395,8 +1397,8 @@
 
         <span class="ident">crossbeam_utils</span>::<span class="ident">thread</span>::<span class="ident">scope</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">scope</span><span class="op">|</span> {
             <span class="kw">match</span> <span class="ident">state</span>.<span class="ident">drain_the_queue</span>(<span class="ident">cx</span>, <span class="ident">plan</span>, <span class="ident">scope</span>, <span class="kw-2">&amp;</span><span class="ident">helper</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">err</span>) <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>),
-                <span class="prelude-val">None</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(()),
+                <span class="prelude-val">Some</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
             }
         })
         .<span class="ident">expect</span>(<span class="string">&quot;child threads shouldn&#39;t panic&quot;</span>)
@@ -1409,7 +1411,7 @@
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">jobserver_helper</span>: <span class="kw-2">&amp;</span><span class="ident">HelperThread</span>,
         <span class="ident">scope</span>: <span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="comment">// Dequeue as much work as we can, learning about everything</span>
         <span class="comment">// possible that can run. Note that this is also the point where we</span>
         <span class="comment">// start requesting job tokens. Each job after the first needs to</span>
@@ -1432,12 +1434,12 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">has_extra_tokens</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">has_extra_tokens</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">active</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">tokens</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="number">1</span>
     }
 
     <span class="comment">// The oldest job (i.e., least job ID) is the one we grant tokens to first.</span>
-    <span class="kw">fn</span> <span class="ident">pop_waiting_client</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> (<span class="ident">JobId</span>, <span class="ident">Client</span>) {
+    <span class="kw">fn</span> <span class="ident">pop_waiting_client</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">JobId</span>, <span class="ident">Client</span>) {
         <span class="comment">// FIXME: replace this with BTreeMap::first_entry when that stabilizes.</span>
         <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span>
             .<span class="ident">to_send_clients</span>
@@ -1453,7 +1455,7 @@
     }
 
     <span class="comment">// If we managed to acquire some extra tokens, send them off to a waiting rustc.</span>
-    <span class="kw">fn</span> <span class="ident">grant_rustc_token_requests</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">grant_rustc_token_requests</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">while</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">to_send_clients</span>.<span class="ident">is_empty</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">has_extra_tokens</span>() {
             <span class="kw">let</span> (<span class="ident">id</span>, <span class="ident">client</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">pop_waiting_client</span>();
             <span class="comment">// This unwrap is guaranteed to succeed. `active` must be at least</span>
@@ -1466,7 +1468,7 @@
                 .<span class="ident">push</span>(<span class="ident">token</span>);
             <span class="ident">client</span>
                 .<span class="ident">release_raw</span>()
-                .<span class="ident">chain_err</span>(<span class="op">||</span> <span class="string">&quot;failed to release jobserver token&quot;</span>)<span class="question-mark">?</span>;
+                .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;failed to release jobserver token&quot;</span>)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -1478,36 +1480,36 @@
         <span class="ident">jobserver_helper</span>: <span class="kw-2">&amp;</span><span class="ident">HelperThread</span>,
         <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BuildPlan</span>,
         <span class="ident">event</span>: <span class="ident">Message</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">event</span> {
-            <span class="ident">Message</span>::<span class="ident">Run</span>(<span class="ident">id</span>, <span class="ident">cmd</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">Run</span>(<span class="ident">id</span>, <span class="ident">cmd</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">cx</span>.<span class="ident">bcx</span>
                     .<span class="ident">config</span>
                     .<span class="ident">shell</span>()
                     .<span class="ident">verbose</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">status</span>(<span class="string">&quot;Running&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">cmd</span>))<span class="question-mark">?</span>;
                 <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">unit_start</span>(<span class="ident">id</span>, <span class="self">self</span>.<span class="ident">active</span>[<span class="kw-2">&amp;</span><span class="ident">id</span>].<span class="ident">clone</span>());
             }
-            <span class="ident">Message</span>::<span class="ident">BuildPlanMsg</span>(<span class="ident">module_name</span>, <span class="ident">cmd</span>, <span class="ident">filenames</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">BuildPlanMsg</span>(<span class="ident">module_name</span>, <span class="ident">cmd</span>, <span class="ident">filenames</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">plan</span>.<span class="ident">update</span>(<span class="kw-2">&amp;</span><span class="ident">module_name</span>, <span class="kw-2">&amp;</span><span class="ident">cmd</span>, <span class="kw-2">&amp;</span><span class="ident">filenames</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">Message</span>::<span class="ident">Stdout</span>(<span class="ident">out</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">Stdout</span>(<span class="ident">out</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">out</span>(), <span class="string">&quot;{}&quot;</span>, <span class="ident">out</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">Message</span>::<span class="ident">Stderr</span>(<span class="ident">err</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">Stderr</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shell</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">shell</span>();
                 <span class="ident">shell</span>.<span class="ident">print_ansi</span>(<span class="ident">err</span>.<span class="ident">as_bytes</span>())<span class="question-mark">?</span>;
                 <span class="ident">shell</span>.<span class="ident">err</span>().<span class="ident">write_all</span>(<span class="string">b&quot;\n&quot;</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">Message</span>::<span class="ident">FixDiagnostic</span>(<span class="ident">msg</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">FixDiagnostic</span>(<span class="ident">msg</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="self">self</span>.<span class="ident">print</span>.<span class="ident">print</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">Message</span>::<span class="ident">Finish</span>(<span class="ident">id</span>, <span class="ident">artifact</span>, <span class="ident">result</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">Finish</span>(<span class="ident">id</span>, <span class="ident">artifact</span>, <span class="ident">result</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">unit</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">artifact</span> {
                     <span class="comment">// If `id` has completely finished we remove it</span>
                     <span class="comment">// from the `active` map ...</span>
-                    <span class="ident">Artifact</span>::<span class="ident">All</span> <span class="op">=&gt;</span> {
+                    <span class="ident">Artifact</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;end: {:?}&quot;</span>, <span class="ident">id</span>);
-                        <span class="self">self</span>.<span class="ident">finished</span> <span class="op">+=</span> <span class="number">1</span>;
+                        <span class="self">self</span>.<span class="ident">finished</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
                         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rustc_tokens</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">rustc_tokens</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>) {
                             <span class="comment">// This puts back the tokens that this rustc</span>
                             <span class="comment">// acquired into our primary token list.</span>
@@ -1525,26 +1527,26 @@
                     }
                     <span class="comment">// ... otherwise if it hasn&#39;t finished we leave it</span>
                     <span class="comment">// in there as we&#39;ll get another `Finish` later on.</span>
-                    <span class="ident">Artifact</span>::<span class="ident">Metadata</span> <span class="op">=&gt;</span> {
+                    <span class="ident">Artifact</span>::<span class="ident">Metadata</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;end (meta): {:?}&quot;</span>, <span class="ident">id</span>);
                         <span class="self">self</span>.<span class="ident">active</span>[<span class="kw-2">&amp;</span><span class="ident">id</span>].<span class="ident">clone</span>()
                     }
                 };
                 <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;end ({:?}): {:?}&quot;</span>, <span class="ident">unit</span>, <span class="ident">result</span>);
                 <span class="kw">match</span> <span class="ident">result</span> {
-                    <span class="prelude-val">Ok</span>(()) <span class="op">=&gt;</span> <span class="self">self</span>.<span class="ident">finish</span>(<span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>, <span class="ident">artifact</span>, <span class="ident">cx</span>)<span class="question-mark">?</span>,
-                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=&gt;</span> {
+                    <span class="prelude-val">Ok</span>(()) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">finish</span>(<span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>, <span class="ident">artifact</span>, <span class="ident">cx</span>)<span class="question-mark">?</span>,
+                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="string">&quot;The following warnings were emitted during compilation:&quot;</span>;
                         <span class="self">self</span>.<span class="ident">emit_warnings</span>(<span class="prelude-val">Some</span>(<span class="ident">msg</span>), <span class="kw-2">&amp;</span><span class="ident">unit</span>, <span class="ident">cx</span>)<span class="question-mark">?</span>;
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>);
                     }
                 }
             }
-            <span class="ident">Message</span>::<span class="ident">Token</span>(<span class="ident">acquired_token</span>) <span class="op">=&gt;</span> {
-                <span class="kw">let</span> <span class="ident">token</span> <span class="op">=</span> <span class="ident">acquired_token</span>.<span class="ident">chain_err</span>(<span class="op">||</span> <span class="string">&quot;failed to acquire jobserver token&quot;</span>)<span class="question-mark">?</span>;
+            <span class="ident">Message</span>::<span class="ident">Token</span>(<span class="ident">acquired_token</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="ident">token</span> <span class="op">=</span> <span class="ident">acquired_token</span>.<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;failed to acquire jobserver token&quot;</span>)<span class="question-mark">?</span>;
                 <span class="self">self</span>.<span class="ident">tokens</span>.<span class="ident">push</span>(<span class="ident">token</span>);
             }
-            <span class="ident">Message</span>::<span class="ident">NeedsToken</span>(<span class="ident">id</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">NeedsToken</span>(<span class="ident">id</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">log</span>::<span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;queue token request&quot;</span>);
                 <span class="ident">jobserver_helper</span>.<span class="ident">request_token</span>();
                 <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">rustc_clients</span>[<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">active</span>[<span class="kw-2">&amp;</span><span class="ident">id</span>]].<span class="ident">clone</span>();
@@ -1553,7 +1555,7 @@
                     .<span class="ident">or_insert_with</span>(<span class="ident">Vec</span>::<span class="ident">new</span>)
                     .<span class="ident">push</span>(<span class="ident">client</span>);
             }
-            <span class="ident">Message</span>::<span class="ident">ReleaseToken</span>(<span class="ident">id</span>) <span class="op">=&gt;</span> {
+            <span class="ident">Message</span>::<span class="ident">ReleaseToken</span>(<span class="ident">id</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// Note that this pops off potentially a completely</span>
                 <span class="comment">// different token, but all tokens of the same job are</span>
                 <span class="comment">// conceptually the same so that&#39;s fine.</span>
@@ -1575,7 +1577,7 @@
     }
 
     <span class="comment">// This will also tick the progress bar as appropriate</span>
-    <span class="kw">fn</span> <span class="ident">wait_for_events</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">wait_for_events</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;</span> {
         <span class="comment">// Drain all events at once to avoid displaying the progress bar</span>
         <span class="comment">// unnecessarily. If there&#39;s no events we actually block waiting for</span>
         <span class="comment">// an event, but we keep a &quot;heartbeat&quot; going to allow `record_cpu`</span>
@@ -1589,11 +1591,11 @@
             <span class="self">self</span>.<span class="ident">rustc_tokens</span>
                 .<span class="ident">iter</span>()
                 .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">j</span>)<span class="op">|</span> (<span class="ident">k</span>, <span class="ident">j</span>.<span class="ident">len</span>()))
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;&gt;</span>(),
+                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
             <span class="self">self</span>.<span class="ident">to_send_clients</span>
                 .<span class="ident">iter</span>()
                 .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">j</span>)<span class="op">|</span> (<span class="ident">k</span>, <span class="ident">j</span>.<span class="ident">len</span>()))
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;&gt;</span>(),
+                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
             <span class="ident">events</span>.<span class="ident">len</span>(),
         );
         <span class="kw">if</span> <span class="ident">events</span>.<span class="ident">is_empty</span>() {
@@ -1601,11 +1603,11 @@
                 <span class="self">self</span>.<span class="ident">tick_progress</span>();
                 <span class="self">self</span>.<span class="ident">tokens</span>.<span class="ident">truncate</span>(<span class="self">self</span>.<span class="ident">active</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>);
                 <span class="kw">match</span> <span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">pop</span>(<span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">500</span>)) {
-                    <span class="prelude-val">Some</span>(<span class="ident">message</span>) <span class="op">=&gt;</span> {
+                    <span class="prelude-val">Some</span>(<span class="ident">message</span>) <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="ident">events</span>.<span class="ident">push</span>(<span class="ident">message</span>);
                         <span class="kw">break</span>;
                     }
-                    <span class="prelude-val">None</span> <span class="op">=&gt;</span> <span class="kw">continue</span>,
+                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">continue</span>,
                 }
             }
         }
@@ -1623,7 +1625,7 @@
         <span class="ident">plan</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BuildPlan</span>,
         <span class="ident">scope</span>: <span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">jobserver_helper</span>: <span class="kw-2">&amp;</span><span class="ident">HelperThread</span>,
-    ) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">anyhow</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;queue: {:#?}&quot;</span>, <span class="self">self</span>.<span class="ident">queue</span>);
 
         <span class="comment">// Iteratively execute the entire dependency graph. Each turn of the</span>
@@ -1679,13 +1681,13 @@
         <span class="comment">// profiles used. However, to keep it simple and compatible with old</span>
         <span class="comment">// behavior, we just display what the base profile is.</span>
         <span class="kw">let</span> <span class="ident">profile</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">profiles</span>.<span class="ident">base_profile</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">opt_type</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="kw">if</span> <span class="ident">profile</span>.<span class="ident">opt_level</span>.<span class="ident">as_str</span>() <span class="op">==</span> <span class="string">&quot;0&quot;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">opt_type</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="kw">if</span> <span class="ident">profile</span>.<span class="ident">opt_level</span>.<span class="ident">as_str</span>() <span class="op">=</span><span class="op">=</span> <span class="string">&quot;0&quot;</span> {
             <span class="string">&quot;unoptimized&quot;</span>
         } <span class="kw">else</span> {
             <span class="string">&quot;optimized&quot;</span>
         });
-        <span class="kw">if</span> <span class="ident">profile</span>.<span class="ident">debuginfo</span>.<span class="ident">unwrap_or</span>(<span class="number">0</span>) <span class="op">!=</span> <span class="number">0</span> {
-            <span class="ident">opt_type</span> <span class="op">+=</span> <span class="string">&quot; + debuginfo&quot;</span>;
+        <span class="kw">if</span> <span class="ident">profile</span>.<span class="ident">debuginfo</span>.<span class="ident">unwrap_or</span>(<span class="number">0</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="ident">opt_type</span> <span class="op">+</span><span class="op">=</span> <span class="string">&quot; + debuginfo&quot;</span>;
         }
 
         <span class="kw">let</span> <span class="ident">time_elapsed</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">elapsed</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>.<span class="ident">creation_time</span>().<span class="ident">elapsed</span>());
@@ -1767,7 +1769,7 @@
             .<span class="ident">active</span>
             .<span class="ident">values</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">u</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">name_for_progress</span>(<span class="ident">u</span>))
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;&gt;</span>();
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="ident">drop</span>(<span class="self">self</span>.<span class="ident">progress</span>.<span class="ident">tick_now</span>(
             <span class="self">self</span>.<span class="ident">finished</span>,
             <span class="self">self</span>.<span class="ident">total_units</span>,
@@ -1775,19 +1777,19 @@
         ));
     }
 
-    <span class="kw">fn</span> <span class="ident">name_for_progress</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-&gt;</span> <span class="ident">String</span> {
+    <span class="kw">fn</span> <span class="ident">name_for_progress</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="kw">let</span> <span class="ident">pkg_name</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">name</span>();
         <span class="kw">match</span> <span class="ident">unit</span>.<span class="ident">mode</span> {
-            <span class="ident">CompileMode</span>::<span class="ident">Doc</span> { .. } <span class="op">=&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}(doc)&quot;</span>, <span class="ident">pkg_name</span>),
-            <span class="ident">CompileMode</span>::<span class="ident">RunCustomBuild</span> <span class="op">=&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}(build)&quot;</span>, <span class="ident">pkg_name</span>),
-            <span class="kw">_</span> <span class="op">=&gt;</span> {
+            <span class="ident">CompileMode</span>::<span class="ident">Doc</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}(doc)&quot;</span>, <span class="ident">pkg_name</span>),
+            <span class="ident">CompileMode</span>::<span class="ident">RunCustomBuild</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}(build)&quot;</span>, <span class="ident">pkg_name</span>),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">annotation</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">kind</span>() {
-                    <span class="ident">TargetKind</span>::<span class="ident">Lib</span>(<span class="kw">_</span>) <span class="op">=&gt;</span> <span class="kw">return</span> <span class="ident">pkg_name</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">TargetKind</span>::<span class="ident">CustomBuild</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}(build.rs)&quot;</span>, <span class="ident">pkg_name</span>),
-                    <span class="ident">TargetKind</span>::<span class="ident">Bin</span> <span class="op">=&gt;</span> <span class="string">&quot;bin&quot;</span>,
-                    <span class="ident">TargetKind</span>::<span class="ident">Test</span> <span class="op">=&gt;</span> <span class="string">&quot;test&quot;</span>,
-                    <span class="ident">TargetKind</span>::<span class="ident">Bench</span> <span class="op">=&gt;</span> <span class="string">&quot;bench&quot;</span>,
-                    <span class="ident">TargetKind</span>::<span class="ident">ExampleBin</span> <span class="op">|</span> <span class="ident">TargetKind</span>::<span class="ident">ExampleLib</span>(<span class="kw">_</span>) <span class="op">=&gt;</span> <span class="string">&quot;example&quot;</span>,
+                    <span class="ident">TargetKind</span>::<span class="ident">Lib</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">pkg_name</span>.<span class="ident">to_string</span>(),
+                    <span class="ident">TargetKind</span>::<span class="ident">CustomBuild</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}(build.rs)&quot;</span>, <span class="ident">pkg_name</span>),
+                    <span class="ident">TargetKind</span>::<span class="ident">Bin</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;bin&quot;</span>,
+                    <span class="ident">TargetKind</span>::<span class="ident">Test</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;test&quot;</span>,
+                    <span class="ident">TargetKind</span>::<span class="ident">Bench</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;bench&quot;</span>,
+                    <span class="ident">TargetKind</span>::<span class="ident">ExampleBin</span> <span class="op">|</span> <span class="ident">TargetKind</span>::<span class="ident">ExampleLib</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;example&quot;</span>,
                 };
                 <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}({})&quot;</span>, <span class="ident">unit</span>.<span class="ident">target</span>.<span class="ident">name</span>(), <span class="ident">annotation</span>)
             }
@@ -1801,14 +1803,14 @@
         <span class="ident">job</span>: <span class="ident">Job</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">scope</span>: <span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">JobId</span>(<span class="self">self</span>.<span class="ident">next_id</span>);
         <span class="self">self</span>.<span class="ident">next_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">next_id</span>.<span class="ident">checked_add</span>(<span class="number">1</span>).<span class="ident">unwrap</span>();
 
         <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;start {}: {:?}&quot;</span>, <span class="ident">id</span>, <span class="ident">unit</span>);
 
         <span class="macro">assert</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">active</span>.<span class="ident">insert</span>(<span class="ident">id</span>, <span class="ident">unit</span>.<span class="ident">clone</span>()).<span class="ident">is_none</span>());
-        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">counts</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()).<span class="ident">unwrap</span>() <span class="op">-=</span> <span class="number">1</span>;
+        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">counts</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()).<span class="ident">unwrap</span>() <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
 
         <span class="kw">let</span> <span class="ident">messages</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">fresh</span> <span class="op">=</span> <span class="ident">job</span>.<span class="ident">freshness</span>();
@@ -1819,7 +1821,7 @@
             <span class="self">self</span>.<span class="ident">note_working_on</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>, <span class="ident">unit</span>, <span class="ident">fresh</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="kw">let</span> <span class="ident">doit</span> <span class="op">=</span> <span class="kw">move</span> <span class="op">||</span> {
+        <span class="kw">let</span> <span class="ident">doit</span> <span class="op">=</span> <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">JobState</span> {
                 <span class="ident">id</span>,
                 <span class="ident">messages</span>: <span class="ident">messages</span>.<span class="ident">clone</span>(),
@@ -1870,8 +1872,8 @@
         };
 
         <span class="kw">match</span> <span class="ident">fresh</span> {
-            <span class="ident">Freshness</span>::<span class="ident">Fresh</span> <span class="op">=&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">add_fresh</span>(),
-            <span class="ident">Freshness</span>::<span class="ident">Dirty</span> <span class="op">=&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">add_dirty</span>(),
+            <span class="ident">Freshness</span>::<span class="ident">Fresh</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">add_fresh</span>(),
+            <span class="ident">Freshness</span>::<span class="ident">Dirty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">add_dirty</span>(),
         }
         <span class="ident">scope</span>.<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">doit</span>());
 
@@ -1883,11 +1885,11 @@
         <span class="ident">msg</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
         <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">outputs</span> <span class="op">=</span> <span class="ident">cx</span>.<span class="ident">build_script_outputs</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">cx</span>.<span class="ident">find_build_script_metadata</span>(<span class="ident">unit</span>.<span class="ident">clone</span>()) {
-            <span class="prelude-val">Some</span>(<span class="ident">metadata</span>) <span class="op">=&gt;</span> <span class="ident">metadata</span>,
-            <span class="prelude-val">None</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(()),
+            <span class="prelude-val">Some</span>(<span class="ident">metadata</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">metadata</span>,
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(()),
         };
         <span class="kw">let</span> <span class="ident">bcx</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cx</span>.<span class="ident">bcx</span>;
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">output</span>) <span class="op">=</span> <span class="ident">outputs</span>.<span class="ident">get</span>(<span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>(), <span class="ident">metadata</span>) {
@@ -1916,14 +1918,14 @@
         <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
         <span class="ident">artifact</span>: <span class="ident">Artifact</span>,
         <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_run_custom_build</span>() <span class="op">&amp;&amp;</span> <span class="ident">unit</span>.<span class="ident">show_warnings</span>(<span class="ident">cx</span>.<span class="ident">bcx</span>.<span class="ident">config</span>) {
             <span class="self">self</span>.<span class="ident">emit_warnings</span>(<span class="prelude-val">None</span>, <span class="ident">unit</span>, <span class="ident">cx</span>)<span class="question-mark">?</span>;
         }
         <span class="kw">let</span> <span class="ident">unlocked</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">queue</span>.<span class="ident">finish</span>(<span class="ident">unit</span>, <span class="kw-2">&amp;</span><span class="ident">artifact</span>);
         <span class="kw">match</span> <span class="ident">artifact</span> {
-            <span class="ident">Artifact</span>::<span class="ident">All</span> <span class="op">=&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">unit_finished</span>(<span class="ident">id</span>, <span class="ident">unlocked</span>),
-            <span class="ident">Artifact</span>::<span class="ident">Metadata</span> <span class="op">=&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">unit_rmeta_finished</span>(<span class="ident">id</span>, <span class="ident">unlocked</span>),
+            <span class="ident">Artifact</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">unit_finished</span>(<span class="ident">id</span>, <span class="ident">unlocked</span>),
+            <span class="ident">Artifact</span>::<span class="ident">Metadata</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">timings</span>.<span class="ident">unit_rmeta_finished</span>(<span class="ident">id</span>, <span class="ident">unlocked</span>),
         }
         <span class="prelude-val">Ok</span>(())
     }
@@ -1942,9 +1944,9 @@
         <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
         <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">Unit</span>,
         <span class="ident">fresh</span>: <span class="ident">Freshness</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">compiled</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()) <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>())
-            <span class="op">||</span> (<span class="self">self</span>.<span class="ident">documented</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()) <span class="op">&amp;&amp;</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>())
+            <span class="op">|</span><span class="op">|</span> (<span class="self">self</span>.<span class="ident">documented</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()) <span class="op">&amp;&amp;</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>())
         {
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
         }
@@ -1952,7 +1954,7 @@
         <span class="kw">match</span> <span class="ident">fresh</span> {
             <span class="comment">// Any dirty stage which runs at least one command gets printed as</span>
             <span class="comment">// being a compiled package.</span>
-            <span class="ident">Dirty</span> <span class="op">=&gt;</span> {
+            <span class="ident">Dirty</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc</span>() {
                     <span class="self">self</span>.<span class="ident">documented</span>.<span class="ident">insert</span>(<span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>());
                     <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">status</span>(<span class="string">&quot;Documenting&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>)<span class="question-mark">?</span>;
@@ -1967,9 +1969,9 @@
                     }
                 }
             }
-            <span class="ident">Fresh</span> <span class="op">=&gt;</span> {
+            <span class="ident">Fresh</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// If doc test are last, only print &quot;Fresh&quot; if nothing has been printed.</span>
-                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">counts</span>[<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()] <span class="op">==</span> <span class="number">0</span>
+                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">counts</span>[<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()] <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
                     <span class="op">&amp;&amp;</span> <span class="op">!</span>(<span class="ident">unit</span>.<span class="ident">mode</span>.<span class="ident">is_doc_test</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">compiled</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>()))
                 {
                     <span class="self">self</span>.<span class="ident">compiled</span>.<span class="ident">insert</span>(<span class="ident">unit</span>.<span class="ident">pkg</span>.<span class="ident">package_id</span>());
