@@ -9,6 +9,40 @@ use fixtures::json::JsonFixture;
 use std::path::Path;
 
 #[test]
+fn guppy_no_rules() {
+    // There are no dependency changes between the old and new fixtures, only file changes.
+    let old = JsonFixture::metadata_guppy_869476c();
+    let new = JsonFixture::metadata_guppy_c9b4f76();
+
+    let mut determinator = Determinator::new(old.graph(), new.graph());
+    // Do not set custom rules -- ensure that default rules are used.
+
+    // README.md is ignored by the default rules.
+    determinator.add_changed_paths(vec![Path::new("README.md")]);
+    let determinator_set = determinator.compute();
+    assert!(
+        determinator_set.path_changed_set.is_empty(),
+        "nothing in workspace changed"
+    );
+    assert!(
+        determinator_set.affected_set.is_empty(),
+        "nothing in workspace affected"
+    );
+
+    // rust-toolchain causes a full build.
+    determinator.add_changed_paths(vec![Path::new("rust-toolchain")]);
+    let workspace_set = new.graph().resolve_workspace();
+    let determinator_set = determinator.compute();
+    assert_eq!(
+        determinator_set.path_changed_set, workspace_set,
+        "everything changed"
+    );
+    assert_eq!(
+        determinator_set.affected_set, workspace_set,
+        "everything changed"
+    );
+}
+#[test]
 fn guppy_path_rules() {
     // There are no dependency changes between the old and new fixtures, only file changes.
     let old = JsonFixture::metadata_guppy_869476c();
@@ -19,14 +53,12 @@ fn guppy_path_rules() {
     determinator.set_rules(&opts).expect("rules set correctly");
 
     let determinator_set = determinator.compute();
-    assert_eq!(
-        determinator_set.path_changed_set.len(),
-        0,
+    assert!(
+        determinator_set.path_changed_set.is_empty(),
         "nothing in workspace changed"
     );
-    assert_eq!(
-        determinator_set.affected_set.len(),
-        0,
+    assert!(
+        determinator_set.affected_set.is_empty(),
         "nothing in workspace affected"
     );
 

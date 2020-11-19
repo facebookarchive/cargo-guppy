@@ -140,6 +140,10 @@ pub struct DeterminatorRules {
     pub package_rules: Vec<PackageRule>,
 }
 
+/// The `Default` impl is the set of custom rules used by the determinator if
+/// [`set_rules`](crate::Determinator::set_rules) isn't called. It is an empty set of determinator
+/// rules, with `use_default_rules` set to true. This means that if `set_rules` isn't
+/// called, the only rules in effect are the default ones.
 impl Default for DeterminatorRules {
     fn default() -> Self {
         Self {
