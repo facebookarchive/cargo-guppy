@@ -24,7 +24,28 @@ use std::str::Utf8Error;
 /// Most source control systems can provide null-separated paths. These examples are expected to be
 /// run from the Cargo workspace root (which is assumed to be the same as the repository root).
 ///
-/// To obtain a list of added and modified paths between two revisions:
+/// In most cases, you'll want to compare the current working directory against the [*merge base*][mb],
+/// or [*nearest/greatest/lowest common ancestor*](https://en.wikipedia.org/wiki/Lowest_common_ancestor),
+/// of the current commit with a specified upstream revision, such as `origin/master`. To do so,
+/// run:
+///
+/// * Git: `git diff -z --diff-filter=d --name-only $(git merge-base <upstream rev> HEAD)`
+/// * Mercurial: `hg status --print0 --modified --added --no-status --rev 'ancestor(<upstream rev>,.)'`
+///
+/// [mb]: https://stackoverflow.com/questions/1549146/git-find-the-most-recent-common-ancestor-of-two-branches
+///
+/// ---
+///
+/// **NOTE:**
+/// * The `$()` syntax in Bash and other shells means "run the command and insert its contents here".
+/// * Git provides a syntax `<upstream rev>...` which purports to use the merge base,
+/// but it ignores uncommitted changes. Executing `git merge-base` as a separate command is the only
+/// way to include uncommitted changes.
+///
+/// ---
+///
+/// In general, to obtain a list of added and modified paths between two revisions (omit `<new rev>`
+/// if comparing against the working directory):
 ///
 /// * Git: `git diff -z --diff-filter=d --name-only <old rev> <new rev>`
 /// * Mercurial: `hg status --print0 --modified --added --no-status <old rev> <new rev>`
