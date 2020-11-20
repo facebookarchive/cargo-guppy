@@ -12,6 +12,36 @@ to them.
 The determinator is desiged to be used in the
 [Libra Core workspace](https://github.com/libra/libra), which is one such monorepo.
 
+## Examples
+
+```rust
+use determinator::{Determinator, rules::DeterminatorRules};
+use guppy::{CargoMetadata, graph::DependencyDirection};
+use std::path::Path;
+
+// guppy accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.
+let old_metadata = CargoMetadata::parse_json(include_str!("../../../fixtures/guppy/metadata_guppy_78cb7e8.json")).unwrap();
+let old = old_metadata.build_graph().unwrap();
+let new_metadata = CargoMetadata::parse_json(include_str!("../../../fixtures/guppy/metadata_guppy_869476c.json")).unwrap();
+let new = new_metadata.build_graph().unwrap();
+
+let mut determinator = Determinator::new(&old, &new);
+
+// The determinator supports custom rules read from a TOML file.
+let rules = DeterminatorRules::parse(include_str!("../../../fixtures/guppy/path-rules.toml")).unwrap();
+determinator.set_rules(&rules).unwrap();
+
+// The determinator expects a list of changed files to be passed in.
+determinator.add_changed_paths(vec![Path::new("guppy/src/lib.rs"), Path::new("tools/determinator/README.md")]);
+
+let determinator_set = determinator.compute();
+// determinator_set.affected_set contains the workspace packages directly or indirectly affected
+// by the change.
+for package in determinator_set.affected_set.packages(DependencyDirection::Forward) {
+    println!("affected: {}", package.name());
+}
+```
+
 ## How it works
 
 A Rust package can behave differently if one or more of the following change:
@@ -102,8 +132,9 @@ For more about custom rules, see the documentation for the [`rules` module](crat
 
 ## Limitations
 
-The determinator's model is quite different from Cargo's, and some aspects work quite
-differently. **Please understand these limitations before using the determinator.**
+While the determinator can bring significant benefits to CI and local workflows, its model is
+quite different from Cargo's. **Please understand these limitations before using the
+determinator for your project.**
 
 For best results, consider doing occasional full runs in addition to determinator-based runs.
 You may wish to configure your CI system to use the determinator for pull-requests, and also
