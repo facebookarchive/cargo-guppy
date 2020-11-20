@@ -219,6 +219,37 @@
 <span id="216">216</span>
 <span id="217">217</span>
 <span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -234,6 +265,36 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The determinator is desiged to be used in the</span>
 <span class="doccomment">//! [Libra Core workspace](https://github.com/libra/libra), which is one such monorepo.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Examples</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use determinator::{Determinator, rules::DeterminatorRules};</span>
+<span class="doccomment">//! use guppy::{CargoMetadata, graph::DependencyDirection};</span>
+<span class="doccomment">//! use std::path::Path;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // guppy accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.</span>
+<span class="doccomment">//! let old_metadata = CargoMetadata::parse_json(include_str!(&quot;../../../fixtures/guppy/metadata_guppy_78cb7e8.json&quot;)).unwrap();</span>
+<span class="doccomment">//! let old = old_metadata.build_graph().unwrap();</span>
+<span class="doccomment">//! let new_metadata = CargoMetadata::parse_json(include_str!(&quot;../../../fixtures/guppy/metadata_guppy_869476c.json&quot;)).unwrap();</span>
+<span class="doccomment">//! let new = new_metadata.build_graph().unwrap();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let mut determinator = Determinator::new(&amp;old, &amp;new);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // The determinator supports custom rules read from a TOML file.</span>
+<span class="doccomment">//! let rules = DeterminatorRules::parse(include_str!(&quot;../../../fixtures/guppy/path-rules.toml&quot;)).unwrap();</span>
+<span class="doccomment">//! determinator.set_rules(&amp;rules).unwrap();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // The determinator expects a list of changed files to be passed in.</span>
+<span class="doccomment">//! determinator.add_changed_paths(vec![Path::new(&quot;guppy/src/lib.rs&quot;), Path::new(&quot;tools/determinator/README.md&quot;)]);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let determinator_set = determinator.compute();</span>
+<span class="doccomment">//! // determinator_set.affected_set contains the workspace packages directly or indirectly affected</span>
+<span class="doccomment">//! // by the change.</span>
+<span class="doccomment">//! for package in determinator_set.affected_set.packages(DependencyDirection::Forward) {</span>
+<span class="doccomment">//!     println!(&quot;affected: {}&quot;, package.name());</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # How it works</span>
 <span class="doccomment">//!</span>
@@ -325,8 +386,9 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Limitations</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! The determinator&#39;s model is quite different from Cargo&#39;s, and some aspects work quite</span>
-<span class="doccomment">//! differently. **Please understand these limitations before using the determinator.**</span>
+<span class="doccomment">//! While the determinator can bring significant benefits to CI and local workflows, its model is</span>
+<span class="doccomment">//! quite different from Cargo&#39;s. **Please understand these limitations before using the</span>
+<span class="doccomment">//! determinator for your project.**</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! For best results, consider doing occasional full runs in addition to determinator-based runs.</span>
 <span class="doccomment">//! You may wish to configure your CI system to use the determinator for pull-requests, and also</span>
