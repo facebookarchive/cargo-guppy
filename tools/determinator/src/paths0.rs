@@ -29,8 +29,8 @@ use std::str::Utf8Error;
 /// of the current commit with a specified upstream revision, such as `origin/master`. To do so,
 /// run:
 ///
-/// * Git: `git diff -z --diff-filter=d --name-only $(git merge-base <upstream rev> HEAD)`
-/// * Mercurial: `hg status --print0 --modified --added --no-status --rev 'ancestor(<upstream rev>,.)'`
+/// * Git: `git diff -z --name-only $(git merge-base <upstream rev> HEAD)`
+/// * Mercurial: `hg status --print0 --no-status --rev 'ancestor(<upstream rev>,.)'`
 ///
 /// [mb]: https://stackoverflow.com/questions/1549146/git-find-the-most-recent-common-ancestor-of-two-branches
 ///
@@ -44,11 +44,11 @@ use std::str::Utf8Error;
 ///
 /// ---
 ///
-/// In general, to obtain a list of added and modified paths between two revisions (omit `<new rev>`
+/// In general, to obtain a list of changed paths between two revisions (omit `<new rev>`
 /// if comparing against the working directory):
 ///
-/// * Git: `git diff -z --diff-filter=d --name-only <old rev> <new rev>`
-/// * Mercurial: `hg status --print0 --modified --added --no-status <old rev> <new rev>`
+/// * Git: `git diff -z --name-only <old rev> <new rev>`
+/// * Mercurial: `hg status --print0 --no-status <old rev> <new rev>`
 ///
 /// To obtain a list of all files in the working directory that are tracked by the source control
 /// system:

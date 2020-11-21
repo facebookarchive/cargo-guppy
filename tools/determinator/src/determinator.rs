@@ -49,14 +49,15 @@ impl<'g, 'a> Determinator<'g, 'a> {
         }
     }
 
-    /// Adds a list of changed paths. This list is used as a source of information for the determinator.
+    /// Adds a list of changed paths. This list is used as a source of information for the
+    /// determinator.
     ///
-    /// This should consist of paths that are added or modified (passing in deleted paths is not
-    /// necessary for correctness), and should use the canonical separator for the platform
-    /// (e.g. `/` on Unix platforms and `\` on Windows).
+    /// This should consist of paths that are changed since the base revision (if comparing
+    /// against the working directory, including new untracked and missing files), and should use
+    /// the canonical separator for the platform (e.g. `/` on Unix platforms and `\` on Windows).
     ///
-    /// `Paths0` in this crate provides a convenient way to handle null-separated paths,
-    /// as produced by tools like source control systems.
+    /// [`Paths0`](crate::Paths0) in this crate provides a convenient way to handle null-separated
+    /// paths as produced by source control systems.
     pub fn add_changed_paths(&mut self, paths: impl IntoIterator<Item = &'a Path>) -> &mut Self {
         self.changed_paths.extend(paths);
         self
