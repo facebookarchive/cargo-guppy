@@ -30,7 +30,7 @@ use std::str::Utf8Error;
 /// run:
 ///
 /// * Git: `git diff -z --name-only $(git merge-base <upstream rev> HEAD)`
-/// * Mercurial: `hg status --print0 --no-status --rev 'ancestor(<upstream rev>,.)'`
+/// * Mercurial: `hg status --print0 -mard --no-status --rev 'ancestor(<upstream rev>,.)'`
 ///
 /// [mb]: https://stackoverflow.com/questions/1549146/git-find-the-most-recent-common-ancestor-of-two-branches
 ///
@@ -41,6 +41,9 @@ use std::str::Utf8Error;
 /// * Git provides a syntax `<upstream rev>...` which purports to use the merge base,
 /// but it ignores uncommitted changes. Executing `git merge-base` as a separate command is the only
 /// way to include uncommitted changes.
+/// * The `-mard` flag to `hg status` means that untracked files are not included. `git diff` does
+///   not have an option to display untracked files. For more discussion, see the documentation for
+///   [`add_changed_paths`](crate::Determinator::add_changed_paths).
 ///
 /// ---
 ///
@@ -48,7 +51,7 @@ use std::str::Utf8Error;
 /// if comparing against the working directory):
 ///
 /// * Git: `git diff -z --name-only <old rev> <new rev>`
-/// * Mercurial: `hg status --print0 --no-status <old rev> <new rev>`
+/// * Mercurial: `hg status --print0 -mard --no-status <old rev> <new rev>`
 ///
 /// To obtain a list of all files in the working directory that are tracked by the source control
 /// system:

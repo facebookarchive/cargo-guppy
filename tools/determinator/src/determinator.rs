@@ -52,12 +52,35 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// Adds a list of changed paths. This list is used as a source of information for the
     /// determinator.
     ///
-    /// This should consist of paths that are changed since the base revision (if comparing
-    /// against the working directory, including new untracked and missing files), and should use
-    /// the canonical separator for the platform (e.g. `/` on Unix platforms and `\` on Windows).
+    /// This should consist of paths that are changed since the base revision, and should use the
+    /// canonical separator for the platform (e.g. `/` on Unix platforms and `\` on Windows).
     ///
     /// [`Paths0`](crate::Paths0) in this crate provides a convenient way to handle null-separated
     /// paths as produced by source control systems.
+    ///
+    /// # Should you include untracked and ignored files?
+    ///
+    /// For comparisons against the working directory, one may or may not wish to include untracked
+    /// files. A few points to consider:
+    ///
+    /// * If your code uses a library like [`datatest`](https://github.com/commure/datatest), simply
+    ///   creating a file in the right place is enough to add a new test. If untracked files are
+    ///   not included, the user may have to run `git add` before the determinator picks the change
+    ///   up.
+    /// * On the other hand, if a user wishes to include a new test in their PR, they're going to
+    ///   have to run `git add` at some point anyway.
+    /// * Some users may have untracked files lying around in their repository for long periods of
+    ///   time, and those files may cause false positives.
+    /// * Git makes it surprisingly hard to list out untracked files, requiring `git status
+    ///   --porcelain -z` with some additional filtering on top to do so. `git diff` doesn't have
+    ///   an option to list untracked files.
+    /// * This is generally moot in CI, since those workflows will likely be comparing against a
+    ///   commit.
+    /// * In most cases, ignored files should not be considered by the determinator, since they
+    ///   don't affect CI builds.
+    ///
+    /// On balance, only considering tracked files appears to be the right approach for most
+    /// situations.
     pub fn add_changed_paths(&mut self, paths: impl IntoIterator<Item = &'a Path>) -> &mut Self {
         self.changed_paths.extend(paths);
         self
