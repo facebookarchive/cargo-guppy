@@ -8,15 +8,6 @@ Track and query Cargo dependency graphs.
 the output of  [`cargo metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html),
 then presents a graph interface over it.
 
-## Usage
-
-Add the following to `Cargo.toml`:
-
-```toml
-[dependencies]
-guppy = "0.5"
-```
-
 ## Optional features
 
 * `proptest010`: Support for [property-based testing](https://jessitron.com/2013/04/25/property-based-testing-what-is-it/)
