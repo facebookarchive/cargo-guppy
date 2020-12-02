@@ -199,11 +199,11 @@ dependencies if they're in the same repository.
 
 ## Alternatives and tradeoffs
 
-One way to look at the determinator is through the lens of *cache invalidation*.
-Viewed through this lens, the main purpose of a build or test system is to cache results, and
-[invalidate those caches](https://martinfowler.com/bliki/TwoHardThings.html) based on certain
-parameters. When the determinator marks a package as changed, it invalidates any cached results
-for that package.
+One way to look at the determinator is as a kind of
+[*cache invalidation*](https://martinfowler.com/bliki/TwoHardThings.html). Viewed through this
+lens, the main purpose of a build or test system is to cache results, and invalidate those
+caches based on certain parameters. When the determinator marks a package as changed, it
+invalidates any cached results for that package.
 
 There are several other ways to design caching systems:
 * The caching built into Cargo and other systems like GNU Make, which is based on file
@@ -241,7 +241,7 @@ Facebook's main source repository.
 
 ## Contributing
 
-See the [CONTRIBUTING](../CONTRIBUTING.md) file for how to help out.
+See the [CONTRIBUTING](../../CONTRIBUTING.md) file for how to help out.
 
 ## License
 
