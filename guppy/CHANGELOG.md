@@ -1,6 +1,14 @@
 # Changelog
 
+## [0.6.1] - 2020-12-02
+
+### Fixed
+
+* Removed "Usage" section from the README, the version number there keeps falling out of sync.
+
 ## [0.6.0] - 2020-12-02
+
+(Version 0.6.0 wasn't released to crates.io.)
 
 ### Added
 
