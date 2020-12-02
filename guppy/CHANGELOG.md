@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.0] - 2020-12-02
+
+### Added
+
+* New feature `rayon1`, which introduces support for parallel iterators with [Rayon](https://github.com/rayon-rs/rayon).
+  Currently, only a few workspace iterators are supported. More methods will be added as required (if you need
+  something, please file an issue or open a PR!)
+* `PackageSet` and `FeatureSet` now have `PartialEq` and `Eq` implementations.
+  * These implementations check for the graph being same through pointer equality. This means that sets that originate
+    from different `PackageGraph` instances will always be unequal, even if they refer to the same packages.
+* Added `PackageSet::to_package_query` to convert a `PackageSet` to a `PackageQuery` starting from the same
+  elements.
+
+### Changed
+
+* Some methods have been renamed for greater fluency:
+  * `FeatureGraph::query_packages` is now `PackageQuery::to_feature_query`.
+  * `FeatureGraph::resolve_packages` is now `PackageSet::to_feature_set`.
+* The `semver` dependency has been updated to 0.11.
+
 ## [0.5.0] - 2020-06-20
 
 This includes the changes in version 0.5.0-rc.1, plus:
@@ -235,6 +255,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.0
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.5.0
 [0.5.0-rc.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.5.0-rc.1
 [0.4.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.4.1
