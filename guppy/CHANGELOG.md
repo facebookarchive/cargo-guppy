@@ -2,6 +2,8 @@
 
 ## [0.6.1] - 2020-12-02
 
+This includes all the changes from version 0.6.0, plus a minor fix:
+
 ### Fixed
 
 * Removed "Usage" section from the README, the version number there keeps falling out of sync.
@@ -263,6 +265,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.0
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.5.0
 [0.5.0-rc.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.5.0-rc.1
