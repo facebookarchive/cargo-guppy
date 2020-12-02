@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0] - 2020-12-02
+
+### Changed
+
+- Updated semver to 0.11.
+
 ## [0.2.0] - 2020-06-20
 
 ### Changed
@@ -12,5 +18,6 @@
 
 Initial release.
 
+[0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.3.0
 [0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.2.0
 [0.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.1.0
