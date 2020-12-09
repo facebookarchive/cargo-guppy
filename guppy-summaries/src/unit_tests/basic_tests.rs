@@ -27,6 +27,13 @@ crates-io = true
 status = 'direct'
 features = ['std']
 
+[[target-package]]
+name = 'no-changes'
+version = '1.5.3'
+crates-io = true
+status = 'transitive'
+features = ['default']
+
 [[host-package]]
 name = 'bar'
 version = '0.1.0'
@@ -64,6 +71,13 @@ version = '0.5.0'
 crates-io = true
 status = 'transitive'
 features = ['std']
+
+[[target-package]]
+name = 'no-changes'
+version = '1.5.3'
+crates-io = true
+status = 'transitive'
+features = ['default']
 
 [[host-package]]
 name = 'bar'
@@ -121,6 +135,15 @@ fn basic_roundtrip() {
             SummaryId::new("dep", Version::new(0, 4, 2), SummarySource::crates_io()),
             PackageStatus::Direct,
             vec!["std"],
+        ),
+        (
+            SummaryId::new(
+                "no-changes",
+                Version::new(1, 5, 3),
+                SummarySource::crates_io(),
+            ),
+            PackageStatus::Transitive,
+            vec!["default"],
         ),
     ];
     let host_packages = vec![
@@ -301,11 +324,90 @@ fn test_serialization() {
 
     let to_serialize = &diff;
 
+    static EXPECTED_JSON: &str = r#"{"target-packages":{"changed":[{"name":"dep","version":"0.4.3","crates-io":true,"change":"added","status":"direct","features":["std"]},{"name":"dep","version":"0.5.0","crates-io":true,"change":"added","status":"transitive","features":["std"]},{"name":"foo","version":"1.2.3","workspace-path":"foo","change":"modified","old-version":null,"old-source":null,"old-status":null,"new-status":"initial","added-features":["feature2"],"removed-features":[],"unchanged-features":["default","feature1"]},{"name":"dep","version":"0.4.2","crates-io":true,"change":"removed","old-status":"direct","old-features":["std"]}],"unchanged":[{"name":"no-changes","version":"1.5.3","crates-io":true,"status":"transitive","features":["default"]}]},"host-packages":{"changed":[{"name":"local-dep","version":"2.0.0","path":"../local-dep-2","change":"added","status":"transitive","features":[]},{"name":"bar","version":"0.2.0","workspace-path":"dir/bar","change":"modified","old-version":"0.1.0","old-source":null,"old-status":"workspace","new-status":"initial","added-features":[],"removed-features":[],"unchanged-features":["default","feature2"]},{"name":"local-dep","version":"1.1.2","path":"../local-dep","change":"modified","old-version":null,"old-source":null,"old-status":null,"new-status":"transitive","added-features":["dep-feature"],"removed-features":[],"unchanged-features":[]}]}}"#;
     let j = serde_json::to_string(&to_serialize).expect("should serialize");
+    println!("json output: {}", j);
+    assert_eq!(j, EXPECTED_JSON);
 
-    static JSON_RESULT: &str = r#"{"target_packages":{"changed":[{"dependency":{"name":"dep","version":"0.4.2","crates-io":true},"changes":{"Removed":{"old_info":{"status":"direct","features":["std"]}}}},{"dependency":{"name":"dep","version":"0.4.3","crates-io":true},"changes":{"Added":{"info":{"status":"direct","features":["std"]}}}},{"dependency":{"name":"dep","version":"0.5.0","crates-io":true},"changes":{"Added":{"info":{"status":"transitive","features":["std"]}}}},{"dependency":{"name":"foo","version":"1.2.3","workspace-path":"foo"},"changes":{"Modified":{"old_version":null,"old_source":null,"old_status":null,"new_status":"initial","added_features":["feature2"],"removed_features":[],"unchanged_features":["default","feature1"]}}}],"unchanged":{}},"host_packages":{"changed":[{"dependency":{"name":"bar","version":"0.2.0","workspace-path":"dir/bar"},"changes":{"Modified":{"old_version":"0.1.0","old_source":null,"old_status":"workspace","new_status":"initial","added_features":[],"removed_features":[],"unchanged_features":["default","feature2"]}}},{"dependency":{"name":"local-dep","version":"1.1.2","path":"../local-dep"},"changes":{"Modified":{"old_version":null,"old_source":null,"old_status":null,"new_status":"transitive","added_features":["dep-feature"],"removed_features":[],"unchanged_features":[]}}},{"dependency":{"name":"local-dep","version":"2.0.0","path":"../local-dep-2"},"changes":{"Added":{"info":{"status":"transitive","features":[]}}}}],"unchanged":{}}}"#;
+    static EXPECTED_TOML: &str = r#"[[target-packages.changed]]
+name = "dep"
+version = "0.4.3"
+crates-io = true
+change = "added"
+status = "direct"
+features = ["std"]
 
-    assert_eq!(j, JSON_RESULT);
+[[target-packages.changed]]
+name = "dep"
+version = "0.5.0"
+crates-io = true
+change = "added"
+status = "transitive"
+features = ["std"]
+
+[[target-packages.changed]]
+name = "foo"
+version = "1.2.3"
+workspace-path = "foo"
+change = "modified"
+new-status = "initial"
+added-features = ["feature2"]
+removed-features = []
+unchanged-features = ["default", "feature1"]
+
+[[target-packages.changed]]
+name = "dep"
+version = "0.4.2"
+crates-io = true
+change = "removed"
+old-status = "direct"
+old-features = ["std"]
+
+[[target-packages.unchanged]]
+name = "no-changes"
+version = "1.5.3"
+crates-io = true
+status = "transitive"
+features = ["default"]
+[[host-packages.changed]]
+name = "local-dep"
+version = "2.0.0"
+path = "../local-dep-2"
+change = "added"
+status = "transitive"
+features = []
+
+[[host-packages.changed]]
+name = "bar"
+version = "0.2.0"
+workspace-path = "dir/bar"
+change = "modified"
+old-version = "0.1.0"
+old-status = "workspace"
+new-status = "initial"
+added-features = []
+removed-features = []
+unchanged-features = ["default", "feature2"]
+
+[[host-packages.changed]]
+name = "local-dep"
+version = "1.1.2"
+path = "../local-dep"
+change = "modified"
+new-status = "transitive"
+added-features = ["dep-feature"]
+removed-features = []
+unchanged-features = []
+"#;
+    let toml_out = toml::to_string(&to_serialize).expect("should serialize");
+    println!("toml output: {}", toml_out);
+    assert_eq!(toml_out, EXPECTED_TOML);
+
+    // TODO: add roundtrip test into the proper data structure. For now we just check that the output is valid TOML.
+    let parsed = toml_out
+        .parse::<toml::Value>()
+        .expect("deserialization from value should work");
+    println!("parsed output: {:?}", parsed);
 }
 
 fn make_summary(list: Vec<(SummaryId, PackageStatus, Vec<&str>)>) -> PackageMap {

@@ -18,8 +18,58 @@ use serde::{ser::SerializeStruct, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::{fmt, mem};
 
-/// A diff of two summaries.
+/// A diff of two package summaries.
+///
+/// This struct contains information on the packages that were changed, as well as those that were
+/// not.
+///
+/// ## Human-readable reports
+///
+/// The [`report`](SummaryDiff::report) method can be used with `fmt::Display` to generate a
+/// friendly, human-readable report.
+///
+/// ## Machine-readable serialization
+///
+/// A `SummaryDiff` can be serialized through `serde`. The output format is part of the API.
+///
+/// An example of TOML-serialized output:
+///
+/// ```toml
+/// [[target-packages.changed]]
+/// name = "dep"
+/// version = "0.4.3"
+/// crates-io = true
+/// change = "added"
+/// status = "direct"
+/// features = ["std"]
+///
+/// [[target-packages.changed]]
+/// name = "foo"
+/// version = "1.2.3"
+/// workspace-path = "foo"
+/// change = "modified"
+/// new-status = "initial"
+/// added-features = ["feature2"]
+/// removed-features = []
+/// unchanged-features = ["default", "feature1"]
+///
+/// [[target-packages.unchanged]]
+/// name = "no-changes"
+/// version = "1.5.3"
+/// crates-io = true
+/// status = "transitive"
+/// features = ["default"]
+///
+/// [[host-packages.changed]]
+/// name = "dep"
+/// version = "0.4.2"
+/// crates-io = true
+/// change = "removed"
+/// old-status = "direct"
+/// old-features = ["std"]
+/// ```
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct SummaryDiff<'a> {
     /// Diff of target packages.
     pub target_packages: PackageDiff<'a>,
@@ -183,6 +233,18 @@ impl<'a> PackageDiff<'a> {
     }
 }
 
+pub(crate) fn changed_sort_key<'a>(
+    summary_id: &'a SummaryId,
+    status: &SummaryDiffStatus<'_>,
+) -> impl Ord + 'a {
+    // The sort order is:
+    // * diff tag (added/modified/removed)
+    // * package status
+    // * summary id
+    // TODO: allow customizing sort order?
+    (status.tag(), status.latest_status(), summary_id)
+}
+
 impl<'a> Serialize for PackageDiff<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -190,44 +252,84 @@ impl<'a> Serialize for PackageDiff<'a> {
     {
         #[derive(Serialize)]
         struct Changed<'a> {
-            dependency: &'a SummaryId,
+            // Flatten both fields so that all the details show up in a single map. (This is
+            // required for TOML.)
+            #[serde(flatten)]
+            package: &'a SummaryId,
+            #[serde(flatten)]
             changes: &'a SummaryDiffStatus<'a>,
         }
 
-        let changed: Vec<Changed> = self
+        let mut changed: Vec<Changed> = self
             .changed
             .iter()
-            .map(|(dependency, changes)| Changed {
-                dependency,
-                changes,
-            })
+            .map(|(package, changes)| Changed { package, changes })
             .collect();
+        // The sorting ensures the order added -> modified -> removed.
+        changed.sort_by_key(|item| changed_sort_key(item.package, item.changes));
 
         let mut state = serializer.serialize_struct("PackageDiff", 2)?;
         state.serialize_field("changed", &changed)?;
-        state.serialize_field("unchanged", &self.unchanged)?;
+
+        #[derive(Serialize)]
+        struct Unchanged<'a> {
+            // This matches the SummaryId format.
+            name: &'a str,
+            version: &'a Version,
+            #[serde(flatten)]
+            source: &'a SummarySource,
+            #[serde(flatten)]
+            info: &'a PackageInfo,
+        }
+
+        // Trying to print out an empty unchanged can cause a ValueAfterTable issue with the TOML
+        // output.
+        if !self.unchanged.is_empty() {
+            let mut unchanged: Vec<_> = self
+                .unchanged
+                .iter()
+                .flat_map(|(&name, info)| {
+                    info.iter().map(move |(version, source, info)| Unchanged {
+                        name,
+                        version,
+                        source,
+                        info,
+                    })
+                })
+                .collect();
+            // Sort by (name, version, source).
+            unchanged.sort_by_key(|item| (item.name, item.version, item.source));
+            state.serialize_field("unchanged", &unchanged)?;
+        }
+
         state.end()
     }
 }
 
 /// The diff status for a particular summary ID and source.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case", tag = "change")]
 pub enum SummaryDiffStatus<'a> {
     /// This package was added.
+    #[serde(rename_all = "kebab-case")]
     Added {
         /// The information for this package.
+        #[serde(flatten)]
         info: &'a PackageInfo,
     },
 
     /// This package was removed.
+    #[serde(rename_all = "kebab-case")]
     Removed {
         /// The information this package used to have.
+        #[serde(flatten, with = "removed_impl")]
         old_info: &'a PackageInfo,
     },
 
     /// Some details about the package changed:
     /// * a feature was added or removed
     /// * the version or source changed.
+    #[serde(rename_all = "kebab-case")]
     Modified {
         /// The old version of this package, if the version changed.
         old_version: Option<&'a Version>,
@@ -339,6 +441,30 @@ impl<'a> SummaryDiffStatus<'a> {
             SummaryDiffStatus::Removed { old_info } => old_info.status,
             SummaryDiffStatus::Modified { new_status, .. } => *new_status,
         }
+    }
+}
+
+mod removed_impl {
+    use super::*;
+    use serde::Serializer;
+
+    pub fn serialize<S>(item: &PackageInfo, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize)]
+        #[serde(rename_all = "kebab-case")]
+        struct OldPackageInfo<'a> {
+            old_status: &'a PackageStatus,
+            old_features: &'a BTreeSet<String>,
+        }
+
+        let old_info = OldPackageInfo {
+            old_status: &item.status,
+            old_features: &item.features,
+        };
+
+        old_info.serialize(serializer)
     }
 }
 

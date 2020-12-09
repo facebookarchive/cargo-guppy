@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::diff::{PackageDiff, SummaryDiff, SummaryDiffStatus};
+use crate::diff::{changed_sort_key, PackageDiff, SummaryDiff, SummaryDiffStatus};
 use crate::SummaryId;
 use std::fmt;
 
@@ -36,14 +36,7 @@ impl<'a, 'b> SummaryReport<'a, 'b> {
             .iter()
             .map(|(summary_id, status)| (*summary_id, status))
             .collect();
-        v.sort_unstable_by_key(|(summary_id, status)| {
-            // The sort order is:
-            // * diff tag (added/modified/removed)
-            // * package status
-            // * summary id
-            // TODO: allow customizing sort order?
-            (status.tag(), status.latest_status(), *summary_id)
-        });
+        v.sort_by_key(|(summary_id, status)| changed_sort_key(summary_id, status));
 
         v
     }
