@@ -186,18 +186,11 @@
 <span id="183">183</span>
 <span id="184">184</span>
 <span id="185">185</span>
-<span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
-<span id="189">189</span>
-<span id="190">190</span>
-<span id="191">191</span>
-<span id="192">192</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">diff</span>::{<span class="ident">PackageDiff</span>, <span class="ident">SummaryDiff</span>, <span class="ident">SummaryDiffStatus</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">diff</span>::{<span class="ident">changed_sort_key</span>, <span class="ident">PackageDiff</span>, <span class="ident">SummaryDiff</span>, <span class="ident">SummaryDiffStatus</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">SummaryId</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 
@@ -232,14 +225,7 @@
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">summary_id</span>, <span class="ident">status</span>)<span class="op">|</span> (<span class="kw-2">*</span><span class="ident">summary_id</span>, <span class="ident">status</span>))
             .<span class="ident">collect</span>();
-        <span class="ident">v</span>.<span class="ident">sort_unstable_by_key</span>(<span class="op">|</span>(<span class="ident">summary_id</span>, <span class="ident">status</span>)<span class="op">|</span> {
-            <span class="comment">// The sort order is:</span>
-            <span class="comment">// * diff tag (added/modified/removed)</span>
-            <span class="comment">// * package status</span>
-            <span class="comment">// * summary id</span>
-            <span class="comment">// TODO: allow customizing sort order?</span>
-            (<span class="ident">status</span>.<span class="ident">tag</span>(), <span class="ident">status</span>.<span class="ident">latest_status</span>(), <span class="kw-2">*</span><span class="ident">summary_id</span>)
-        });
+        <span class="ident">v</span>.<span class="ident">sort_by_key</span>(<span class="op">|</span>(<span class="ident">summary_id</span>, <span class="ident">status</span>)<span class="op">|</span> <span class="ident">changed_sort_key</span>(<span class="ident">summary_id</span>, <span class="ident">status</span>));
 
         <span class="ident">v</span>
     }
