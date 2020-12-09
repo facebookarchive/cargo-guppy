@@ -9,15 +9,6 @@
 //!
 //! `guppy-summaries` is designed to be small and independent of the main `guppy` crate.
 //!
-//! # Usage
-//!
-//! Add the following to your `Cargo.toml`:
-//!
-//! ```toml
-//! [dependencies]
-//! guppy-summaries = "0.3.0"
-//! ```
-//!
 //! # Examples
 //!
 //! ```
