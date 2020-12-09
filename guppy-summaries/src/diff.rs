@@ -14,11 +14,12 @@ use crate::{
 };
 use diffus::{edit, Diffable};
 use semver::Version;
+use serde::{ser::SerializeStruct, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::{fmt, mem};
 
 /// A diff of two summaries.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct SummaryDiff<'a> {
     /// Diff of target packages.
     pub target_packages: PackageDiff<'a>,
@@ -182,8 +183,35 @@ impl<'a> PackageDiff<'a> {
     }
 }
 
+impl<'a> Serialize for PackageDiff<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        #[derive(Serialize)]
+        struct Changed<'a> {
+            dependency: &'a SummaryId,
+            changes: &'a SummaryDiffStatus<'a>,
+        }
+
+        let changed: Vec<Changed> = self
+            .changed
+            .iter()
+            .map(|(dependency, changes)| Changed {
+                dependency,
+                changes,
+            })
+            .collect();
+
+        let mut state = serializer.serialize_struct("PackageDiff", 2)?;
+        state.serialize_field("changed", &changed)?;
+        state.serialize_field("unchanged", &self.unchanged)?;
+        state.end()
+    }
+}
+
 /// The diff status for a particular summary ID and source.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub enum SummaryDiffStatus<'a> {
     /// This package was added.
     Added {
