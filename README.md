@@ -52,10 +52,10 @@ We have ideas for a number of tools on top of guppy, and those are still are und
 
 ## Production users
 
-`cargo-guppy` is extensively used by the [Libra Core](https://github.com/libra/libra) project.
+`cargo-guppy` is extensively used by the [Diem Core](https://github.com/diem/diem) project.
 
-`guppy` is used for [several lint checks](https://github.com/libra/libra/blob/master/devtools/x/src/lint/guppy.rs). This includes basic rules that look at every workspace package separately:
-* every package has fields like `license` specified
+`guppy` is used for [several lint checks](https://github.com/diem/diem/blob/master/devtools/x/src/lint/guppy.rs). This includes basic rules that look at every workspace package separately:
+* every package has fields like `author` and `license` specified
 * crate names and paths should use `-` instead of `_`
 
 to more complex rules about the overall dependency graph, such as:
@@ -68,7 +68,7 @@ to more complex rules about the overall dependency graph, such as:
   * depended on by test-only code in other crates (`#[cfg(test)]` does not allow this)
   * but guaranteed to be excluded from production builds
 
-In addition, `guppy-summaries` is used to generate build summaries of packages and features (particularly for [high-security subsets](https://en.wikipedia.org/wiki/Trusted_computing_base) of the codebase), and changes to these sets are flagged by Libra's CI ([example](https://github.com/libra/libra/pull/5799#issuecomment-682221102)).
+In addition, `guppy-summaries` is used to generate build summaries of packages and features (particularly for [high-security subsets](https://en.wikipedia.org/wiki/Trusted_computing_base) of the codebase), and changes to these sets are flagged by Diem's CI ([example](https://github.com/diem/diem/pull/5799#issuecomment-682221102)).
 
 ## Design
 

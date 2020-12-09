@@ -10,7 +10,7 @@ proposed change. In large monorepos, most proposed changes have no effect on mos
 to them.
 
 The determinator is desiged to be used in the
-[Libra Core workspace](https://github.com/libra/libra), which is one such monorepo.
+[Diem Core workspace](https://github.com/diem/diem), which is one such monorepo.
 
 ## Examples
 
