@@ -10,6 +10,83 @@ use semver::Version;
 use std::collections::BTreeSet;
 
 type Summary = SummaryWithMetadata;
+
+static SERIALIZED_SUMMARY: &str = r#"# This is a test @generated summary.
+
+[[target-package]]
+name = 'foo'
+version = '1.2.3'
+workspace-path = 'foo'
+status = 'initial'
+features = ['default', 'feature1']
+
+[[target-package]]
+name = 'dep'
+version = '0.4.2'
+crates-io = true
+status = 'direct'
+features = ['std']
+
+[[host-package]]
+name = 'bar'
+version = '0.1.0'
+workspace-path = 'dir/bar'
+status = 'workspace'
+features = ['default', 'feature2']
+
+[[host-package]]
+name = 'local-dep'
+version = '1.1.2'
+path = '../local-dep'
+status = 'transitive'
+features = []
+"#;
+
+static SUMMARY2: &str = r#"# This is a test @generated summary.
+
+[[target-package]]
+name = 'foo'
+version = '1.2.3'
+workspace-path = 'foo'
+status = 'initial'
+features = ['default', 'feature1', 'feature2']
+
+[[target-package]]
+name = 'dep'
+version = '0.4.3'
+crates-io = true
+status = 'direct'
+features = ['std']
+
+[[target-package]]
+name = 'dep'
+version = '0.5.0'
+crates-io = true
+status = 'transitive'
+features = ['std']
+
+[[host-package]]
+name = 'bar'
+version = '0.2.0'
+workspace-path = 'dir/bar'
+status = 'initial'
+features = ['default', 'feature2']
+
+[[host-package]]
+name = 'local-dep'
+version = '1.1.2'
+path = '../local-dep'
+status = 'transitive'
+features = ['dep-feature']
+
+[[host-package]]
+name = 'local-dep'
+version = '2.0.0'
+path = '../local-dep-2'
+status = 'transitive'
+features = []
+"#;
+
 #[test]
 fn empty_roundtrip() {
     let summary = Summary::default();
@@ -76,36 +153,6 @@ fn basic_roundtrip() {
     let mut s = "# This is a test @generated summary.\n\n".to_string();
     summary.write_to_string(&mut s).expect("write succeeded");
 
-    static SERIALIZED_SUMMARY: &str = r#"# This is a test @generated summary.
-
-[[target-package]]
-name = 'foo'
-version = '1.2.3'
-workspace-path = 'foo'
-status = 'initial'
-features = ['default', 'feature1']
-
-[[target-package]]
-name = 'dep'
-version = '0.4.2'
-crates-io = true
-status = 'direct'
-features = ['std']
-
-[[host-package]]
-name = 'bar'
-version = '0.1.0'
-workspace-path = 'dir/bar'
-status = 'workspace'
-features = ['default', 'feature2']
-
-[[host-package]]
-name = 'local-dep'
-version = '1.1.2'
-path = '../local-dep'
-status = 'transitive'
-features = []
-"#;
     assert_eq!(&s, SERIALIZED_SUMMARY, "serialized representation matches");
 
     let deserialized = Summary::parse(&s).expect("from_str succeeded");
@@ -115,51 +162,6 @@ features = []
     assert!(diff.is_unchanged(), "diff should be empty");
 
     // Try changing some things.
-    static SUMMARY2: &str = r#"# This is a test @generated summary.
-
-[[target-package]]
-name = 'foo'
-version = '1.2.3'
-workspace-path = 'foo'
-status = 'initial'
-features = ['default', 'feature1', 'feature2']
-
-[[target-package]]
-name = 'dep'
-version = '0.4.3'
-crates-io = true
-status = 'direct'
-features = ['std']
-
-[[target-package]]
-name = 'dep'
-version = '0.5.0'
-crates-io = true
-status = 'transitive'
-features = ['std']
-
-[[host-package]]
-name = 'bar'
-version = '0.2.0'
-workspace-path = 'dir/bar'
-status = 'initial'
-features = ['default', 'feature2']
-
-[[host-package]]
-name = 'local-dep'
-version = '1.1.2'
-path = '../local-dep'
-status = 'transitive'
-features = ['dep-feature']
-
-[[host-package]]
-name = 'local-dep'
-version = '2.0.0'
-path = '../local-dep-2'
-status = 'transitive'
-features = []
-"#;
-
     let summary2 = Summary::parse(SUMMARY2).expect("from_str succeeded");
     let diff = summary.diff(&summary2);
 
@@ -289,6 +291,21 @@ features = []
             },
         },
     );
+}
+
+#[test]
+fn test_serialization() {
+    let summary = Summary::parse(SERIALIZED_SUMMARY).expect("from_str succeeded");
+    let summary2 = Summary::parse(SUMMARY2).expect("from_str succeeded");
+    let diff = summary.diff(&summary2);
+
+    let to_serialize = &diff;
+
+    let j = serde_json::to_string(&to_serialize).expect("should serialize");
+
+    static JSON_RESULT: &str = r#"{"target_packages":{"changed":[{"dependency":{"name":"dep","version":"0.4.2","crates-io":true},"changes":{"Removed":{"old_info":{"status":"direct","features":["std"]}}}},{"dependency":{"name":"dep","version":"0.4.3","crates-io":true},"changes":{"Added":{"info":{"status":"direct","features":["std"]}}}},{"dependency":{"name":"dep","version":"0.5.0","crates-io":true},"changes":{"Added":{"info":{"status":"transitive","features":["std"]}}}},{"dependency":{"name":"foo","version":"1.2.3","workspace-path":"foo"},"changes":{"Modified":{"old_version":null,"old_source":null,"old_status":null,"new_status":"initial","added_features":["feature2"],"removed_features":[],"unchanged_features":["default","feature1"]}}}],"unchanged":{}},"host_packages":{"changed":[{"dependency":{"name":"bar","version":"0.2.0","workspace-path":"dir/bar"},"changes":{"Modified":{"old_version":"0.1.0","old_source":null,"old_status":"workspace","new_status":"initial","added_features":[],"removed_features":[],"unchanged_features":["default","feature2"]}}},{"dependency":{"name":"local-dep","version":"1.1.2","path":"../local-dep"},"changes":{"Modified":{"old_version":null,"old_source":null,"old_status":null,"new_status":"transitive","added_features":["dep-feature"],"removed_features":[],"unchanged_features":[]}}},{"dependency":{"name":"local-dep","version":"2.0.0","path":"../local-dep-2"},"changes":{"Added":{"info":{"status":"transitive","features":[]}}}}],"unchanged":{}}}"#;
+
+    assert_eq!(j, JSON_RESULT);
 }
 
 fn make_summary(list: Vec<(SummaryId, PackageStatus, Vec<&str>)>) -> PackageMap {
