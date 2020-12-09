@@ -369,7 +369,7 @@ mod large {
                 }
             })
             .collect();
-        build_dep_but_no_build_script.sort();
+        build_dep_but_no_build_script.sort_unstable();
         assert_eq!(
             build_dep_but_no_build_script,
             ["libra-mempool", "rusoto_signature"],

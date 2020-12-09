@@ -31,13 +31,12 @@ macro_rules! proptest_suite {
 
 /// Test that there is no diff between guppy and cargo for the same query.
 pub(super) fn compare(graph: &PackageGraph, common: GuppyCargoCommon) -> TestCaseResult {
-    let verbose = match env::var("PROPTEST_VERBOSE")
-        .as_ref()
-        .map(|val| val.as_str())
-    {
-        Ok("true") | Ok("1") => true,
-        _ => false,
-    };
+    let verbose = matches!(
+        env::var("PROPTEST_VERBOSE")
+            .as_ref()
+            .map(|val| val.as_str()),
+        Ok("true") | Ok("1")
+    );
     let diff_opts = DiffOpts { common, verbose };
     let ctx = GlobalContext::new(true, graph).expect("context created");
     let target_host_diff = diff_opts

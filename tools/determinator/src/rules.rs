@@ -812,7 +812,7 @@ mod tests {
 
         for &bad in bads {
             let res = DeterminatorRules::parse(bad);
-            if !res.is_err() {
+            if res.is_ok() {
                 panic!(
                     "parsing should have failed but succeeded:\n\
                      input = {}\n\
