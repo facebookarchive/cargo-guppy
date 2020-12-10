@@ -56,6 +56,12 @@ pub static METADATA_CYCLE2_LOWER_A: &str =
 pub static METADATA_CYCLE2_LOWER_B: &str =
     "lower-b 0.1.0 (path+file:///Users/fakeuser/local/testcrates/cycle2/lower-b)";
 
+pub static METADATA_CYCLE_FEATURES_PATH: &str = "../small/metadata_cycle_features.json";
+pub static METADATA_CYCLE_FEATURES_BASE: &str =
+    "testcycles-base 0.1.0 (path+file:///fakepath/testcycles-features/testcycles-base)";
+pub static METADATA_CYCLE_FEATURES_HELPER: &str =
+    "testcycles-helper 0.1.0 (path+file:///fakepath/testcycles-features/testcycles-helper)";
+
 pub static METADATA_TARGETS1_PATH: &str = "../small/metadata_targets1.json";
 pub static METADATA_TARGETS1_TESTCRATE: &str =
     "testcrate-targets 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-targets)";
@@ -174,6 +180,7 @@ define_fixtures! {
     metadata_dups => METADATA_DUPS_PATH,
     metadata_cycle1 => METADATA_CYCLE1_PATH,
     metadata_cycle2 => METADATA_CYCLE2_PATH,
+    metadata_cycle_features => METADATA_CYCLE_FEATURES_PATH,
     metadata_targets1 => METADATA_TARGETS1_PATH,
     metadata_build_targets1 => METADATA_BUILD_TARGETS1_PATH,
     metadata_proc_macro1 => METADATA_PROC_MACRO1_PATH,
@@ -687,6 +694,20 @@ impl FixtureDetails {
                 vec![METADATA_CYCLE2_UPPER_A, METADATA_CYCLE2_UPPER_B],
                 vec![METADATA_CYCLE2_LOWER_A, METADATA_CYCLE2_LOWER_B],
             ])
+    }
+
+    pub(crate) fn metadata_cycle_features() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details)
+            .with_workspace_members(vec![
+                ("testcycles-base", METADATA_CYCLE_FEATURES_BASE),
+                ("testcycles-helper", METADATA_CYCLE_FEATURES_HELPER),
+            ])
+            .with_cycles(vec![vec![
+                METADATA_CYCLE_FEATURES_BASE,
+                METADATA_CYCLE_FEATURES_HELPER,
+            ]])
     }
 
     pub(crate) fn metadata_targets1() -> Self {

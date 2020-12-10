@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.2] - 2020-12-09
+
+### Fixed
+
+* `FeatureGraph::is_default_feature` no longer follows cross-package links.
+  
+  Cyclic dev-dependencies can enable non-default features (such as testing-only features), and previously
+  `is_default_feature` would have returned true for such features. With this change, `is_default_feature`
+  returns false for such features.
+  
+  The `default_filter` feature filter, which uses `is_default_feature`, has been fixed as well.
+
 ## [0.6.1] - 2020-12-02
 
 This includes all the changes from version 0.6.0, plus a minor fix:

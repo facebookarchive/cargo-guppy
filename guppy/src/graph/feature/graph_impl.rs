@@ -13,7 +13,7 @@ use crate::{DependencyKind, Error, PackageId};
 use once_cell::sync::OnceCell;
 use petgraph::algo::has_path_connecting;
 use petgraph::prelude::*;
-use petgraph::visit::IntoNodeReferences;
+use petgraph::visit::{EdgeFiltered, IntoNodeReferences};
 use std::collections::HashMap;
 use std::fmt;
 use std::iter;
@@ -121,9 +121,13 @@ impl<'g> FeatureGraph<'g> {
 
     /// Returns true if this feature is included in a package's build by default.
     ///
-    /// This includes transitive dependencies of the default feature.
-    ///
     /// Returns an error if this feature ID is unknown.
+    ///
+    /// ## Cycles
+    ///
+    /// A cyclic dev-dependency may cause additional features to be turned on. This computation
+    /// does *not* follow cross-package links and will *not* return true for such additional
+    /// features.
     pub fn is_default_feature<'a>(
         &self,
         feature_id: impl Into<FeatureId<'a>>,
@@ -135,7 +139,8 @@ impl<'g> FeatureGraph<'g> {
                 .default_feature_id(),
         )?;
         let feature_ix = self.feature_ix(feature_id)?;
-        Ok(self.feature_ix_depends_on(default_ix, feature_ix))
+        // Do not follow cross-package links.
+        Ok(self.feature_ix_depends_on_no_cross(default_ix, feature_ix))
     }
 
     /// Returns true if `feature_a` depends (directly or indirectly) on `feature_b`.
@@ -144,6 +149,9 @@ impl<'g> FeatureGraph<'g> {
     /// `feature_a`.
     ///
     /// This also returns true if `feature_a` is the same as `feature_b`.
+    ///
+    /// Note that this returns true if `feature_a` conditionally depends on `feature_b`, such as
+    /// only turning it on for dev builds or only on particular platforms.
     pub fn depends_on<'a>(
         &self,
         feature_a: impl Into<FeatureId<'a>>,
@@ -264,6 +272,18 @@ impl<'g> FeatureGraph<'g> {
         b_ix: NodeIndex<FeatureIx>,
     ) -> bool {
         has_path_connecting(self.dep_graph(), a_ix, b_ix, None)
+    }
+
+    fn feature_ix_depends_on_no_cross(
+        &self,
+        a_ix: NodeIndex<FeatureIx>,
+        b_ix: NodeIndex<FeatureIx>,
+    ) -> bool {
+        // Filter out cross-package edges.
+        let edge_filtered = EdgeFiltered::from_fn(self.dep_graph(), |edge_ref| {
+            !matches!(edge_ref.weight(), FeatureEdge::CrossPackage(_))
+        });
+        has_path_connecting(&edge_filtered, a_ix, b_ix, None)
     }
 
     pub(super) fn feature_ixs_for_package_ix(

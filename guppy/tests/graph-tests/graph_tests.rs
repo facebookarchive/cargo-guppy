@@ -16,6 +16,7 @@ use std::iter;
 mod small {
     use super::*;
     use crate::feature_helpers::assert_features_for_package;
+    use fixtures::json::METADATA_CYCLE_FEATURES_BASE;
     use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
@@ -171,6 +172,59 @@ mod small {
     }
 
     proptest_suite!(metadata_cycle2);
+
+    #[test]
+    fn metadata_cycle_features() {
+        let metadata_cycle_features = JsonFixture::metadata_cycle_features();
+        metadata_cycle_features.verify();
+        let feature_graph = metadata_cycle_features.graph().feature_graph();
+
+        let base_id = package_id(METADATA_CYCLE_FEATURES_BASE);
+        let default_id = FeatureId::new(&base_id, "default");
+
+        // default, default-enable and default-transitive are default features.
+        for &f in &["default", "default-enable", "default-transitive"] {
+            let this_id = FeatureId::new(&base_id, f);
+            assert!(
+                feature_graph
+                    .is_default_feature(this_id)
+                    .expect("valid feature ID"),
+                "{} is a default feature",
+                f,
+            );
+            assert!(
+                feature_graph
+                    .depends_on(default_id, this_id)
+                    .expect("valid feature IDs"),
+                "{} should depend on {} but does not",
+                default_id,
+                this_id,
+            );
+        }
+
+        // helper-enable and helper-transitive are *not* default features even though they are
+        // enabled by the cyclic dev dependency. But the dependency relation is present.
+        for &f in &["helper-enable", "helper-transitive"] {
+            let this_id = FeatureId::new(&base_id, f);
+            assert!(
+                !feature_graph
+                    .is_default_feature(this_id)
+                    .expect("valid feature ID"),
+                "{} is NOT a default feature",
+                f,
+            );
+            assert!(
+                feature_graph
+                    .depends_on(default_id, this_id)
+                    .expect("valid feature IDs"),
+                "{} should depend on {} but does not",
+                default_id,
+                this_id,
+            );
+        }
+    }
+
+    proptest_suite!(metadata_cycle_features);
 
     #[test]
     fn metadata_targets1() {
