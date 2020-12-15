@@ -1,16 +1,19 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+//! Contains `DebugIgnore`, a newtype wrapper that causes a field to be ignored while printing
+//! out `Debug` output.
+
 use std::{
     fmt,
     ops::{Deref, DerefMut},
 };
 
-/// A newtype wrapper that causes this field to be ignored while being debugged.
+/// A newtype wrapper that causes this field to be ignored while printing out `Debug` output.
 ///
 /// Similar to `#[derivative(ignore)]`, but avoids an extra dependency.
 #[derive(Copy, Clone, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub(crate) struct DebugIgnore<T>(pub(crate) T);
+pub struct DebugIgnore<T>(pub T);
 
 impl<T> Deref for DebugIgnore<T> {
     type Target = T;

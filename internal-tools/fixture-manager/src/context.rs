@@ -20,7 +20,11 @@ pub trait ContextImpl<'g> {
 
     fn parse_existing(path: &Path, contents: String) -> Result<Self::Existing>;
     fn is_changed(item: &Self::IterItem, existing: &Self::Existing) -> bool;
-    fn diff(item: &Self::IterItem, existing: Option<&Self::Existing>) -> String;
+    fn diff(
+        fixture: &'g JsonFixture,
+        item: &Self::IterItem,
+        existing: Option<&Self::Existing>,
+    ) -> String;
 
     fn write_to_string(
         fixture: &'g JsonFixture,
@@ -112,7 +116,7 @@ impl<'g, T: ContextImpl<'g>> ContextItem<'g, T> {
     }
 
     pub fn diff(&self) -> String {
-        T::diff(&self.item, self.existing.as_ref())
+        T::diff(self.fixture, &self.item, self.existing.as_ref())
     }
 
     pub fn write_to_path(&self) -> Result<()> {
