@@ -130,7 +130,8 @@ impl<'g, 'a> Determinator<'g, 'a> {
 
     /// Returns the default Cargo options used by the determinator.
     ///
-    /// These are the same as the default `CargoOptions` returned by `CargoOptions::new`, except:
+    /// These are the same as the defaults returned by [`CargoOptions::new`](CargoOptions::new),
+    /// except:
     /// * dev-dependencies are enabled
     /// * the host and target platforms are set to the current platform
     pub fn default_cargo_options() -> CargoOptions<'static> {
