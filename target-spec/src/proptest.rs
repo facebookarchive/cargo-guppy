@@ -3,7 +3,7 @@
 
 use crate::{Platform, TargetFeatures};
 use cfg_expr::targets::ALL_BUILTINS;
-use proptest::collection::hash_set;
+use proptest::collection::btree_set;
 use proptest::prelude::*;
 use proptest::sample::select;
 
@@ -33,7 +33,7 @@ impl<'a> Platform<'a> {
     pub fn strategy(
         target_features: impl Strategy<Value = TargetFeatures<'a>> + 'a,
     ) -> impl Strategy<Value = Platform<'a>> + 'a {
-        let flags = hash_set(flag_strategy(), 0..3);
+        let flags = btree_set(flag_strategy(), 0..3);
         (0..ALL_BUILTINS.len(), target_features, flags).prop_map(|(idx, target_features, flags)| {
             let mut platform =
                 Platform::new(ALL_BUILTINS[idx].triple, target_features).expect("known triple");
@@ -53,7 +53,7 @@ impl<'a> Platform<'a> {
             .iter()
             .filter(|target_info| triple_filter(target_info.triple))
             .collect();
-        let flags = hash_set(flag_strategy(), 0..3);
+        let flags = btree_set(flag_strategy(), 0..3);
         (0..filtered.len(), target_features, flags).prop_map(
             move |(idx, target_features, flags)| {
                 let mut platform =
@@ -85,7 +85,7 @@ impl Arbitrary for TargetFeatures<'static> {
         prop_oneof![
             Just(TargetFeatures::Unknown),
             Just(TargetFeatures::All),
-            hash_set(select(KNOWN_FEATURES), 0..8).prop_map(TargetFeatures::Features),
+            btree_set(select(KNOWN_FEATURES), 0..8).prop_map(TargetFeatures::Features),
         ]
         .boxed()
     }
