@@ -7,7 +7,7 @@
 
 use crate::{
     graph::{
-        cargo::{CargoOptions, CargoResolverVersion, CargoSet},
+        cargo::{CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform},
         feature::FeatureSet,
         DependencyDirection, PackageGraph, PackageMetadata, PackageSet, PackageSource,
     },
@@ -134,8 +134,9 @@ pub struct CargoOptionsSummary {
     /// Whether dev-dependencies are included.
     pub include_dev: bool,
 
-    /// Whether procedural macros specified in initials are included in the target set.
-    pub proc_macros_on_target: bool,
+    /// The platform for which the initials are specified.
+    #[serde(flatten)]
+    pub initials_platform: InitialsPlatformSummary,
 
     /// The host platform.
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -186,7 +187,9 @@ impl CargoOptionsSummary {
         Ok(Self {
             version: opts.version,
             include_dev: opts.include_dev,
-            proc_macros_on_target: opts.proc_macros_on_target,
+            initials_platform: InitialsPlatformSummary::V2 {
+                initials_platform: opts.initials_platform,
+            },
             host_platform: opts
                 .host_platform()
                 .map(PlatformSummary::new)
@@ -223,7 +226,7 @@ impl CargoOptionsSummary {
         options
             .set_version(self.version)
             .set_include_dev(self.include_dev)
-            .set_proc_macros_on_target(self.proc_macros_on_target)
+            .set_initials_platform(self.initials_platform.into())
             .set_host_platform(
                 self.host_platform
                     .as_ref()
@@ -244,6 +247,43 @@ impl CargoOptionsSummary {
             )
             .add_omitted_packages(omitted_packages);
         Ok(options)
+    }
+}
+
+/// Summary information for `InitialsPlatform`.
+#[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(untagged, rename_all = "kebab-case")]
+#[non_exhaustive]
+pub enum InitialsPlatformSummary {
+    /// The first version of this option, which only allowed setting `proc-macros-on-target`.
+    #[serde(rename_all = "kebab-case")]
+    V1 {
+        /// If set to true, this is treated as `InitialsPlatform::ProcMacrosOnTarget`, otherwise as
+        /// `InitialsPlatform::Standard`.
+        proc_macros_on_target: bool,
+    },
+    /// The second and current version of this option.
+    #[serde(rename_all = "kebab-case")]
+    V2 {
+        /// The configuration value.
+        initials_platform: InitialsPlatform,
+    },
+}
+
+impl From<InitialsPlatformSummary> for InitialsPlatform {
+    fn from(s: InitialsPlatformSummary) -> Self {
+        match s {
+            InitialsPlatformSummary::V1 {
+                proc_macros_on_target,
+            } => {
+                if proc_macros_on_target {
+                    InitialsPlatform::ProcMacrosOnTarget
+                } else {
+                    InitialsPlatform::Standard
+                }
+            }
+            InitialsPlatformSummary::V2 { initials_platform } => initials_platform,
+        }
     }
 }
 
@@ -294,5 +334,28 @@ impl<'g> PartialEq<SummarySource> for PackageSource<'g> {
             }
             SummarySource::External { source } => self == &PackageSource::External(source),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_old_metadata() {
+        // Ensure that previous versions of the metadata parse correctly.
+        let metadata = "\
+[metadata]
+version = 'v1'
+include-dev = true
+proc-macros-on-target = false
+";
+
+        let parsed = Summary::parse(metadata).expect("parsed correctly");
+        let metadata = parsed.metadata.expect("metadata is present");
+        assert_eq!(
+            InitialsPlatform::from(metadata.initials_platform),
+            InitialsPlatform::Standard
+        );
     }
 }

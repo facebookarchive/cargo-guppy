@@ -11,7 +11,7 @@ pub mod proptest;
 use anyhow::Result;
 use guppy::{
     graph::{
-        cargo::CargoResolverVersion,
+        cargo::{CargoResolverVersion, InitialsPlatform},
         feature::{feature_filter, FeatureSet, StandardFeatures},
         PackageGraph,
     },
@@ -92,6 +92,14 @@ arg_enum! {
     }
 }
 
+arg_enum! {
+    enum InitialsPlatformCmd {
+        Host,
+        Standard,
+        ProcMacrosOnTarget,
+    }
+}
+
 /// Support for options like the Cargo resolver version.
 #[derive(Clone, Debug, StructOpt)]
 pub struct CargoResolverOpts {
@@ -99,9 +107,10 @@ pub struct CargoResolverOpts {
     /// Include dev-dependencies of initial packages (default: false)
     pub include_dev: bool,
 
-    #[structopt(long = "proc-macros-on-target")]
+    #[structopt(long = "initials-platform", parse(try_from_str = parse_initials_platform))]
+    #[structopt(possible_values = &InitialsPlatformCmd::variants(), case_insensitive = true, default_value = "Standard")]
     /// Include initial proc-macros on target platform (default: false)
-    pub proc_macros_on_target: bool,
+    pub initials_platform: InitialsPlatform,
 
     #[structopt(long = "resolver-version", parse(try_from_str = parse_resolver_version))]
     #[structopt(possible_values = &ResolverVersion::variants(), case_insensitive = true, default_value = "V1")]
@@ -115,6 +124,16 @@ pub fn parse_resolver_version(s: &str) -> Result<CargoResolverVersion, String> {
         ResolverVersion::V1 => Ok(CargoResolverVersion::V1),
         ResolverVersion::V1Install => Ok(CargoResolverVersion::V1Install),
         ResolverVersion::V2 => Ok(CargoResolverVersion::V2),
+    }
+}
+
+/// Parses a named initials platform into an InitialsPlatform.
+pub fn parse_initials_platform(s: &str) -> Result<InitialsPlatform, String> {
+    let p = s.parse::<InitialsPlatformCmd>()?;
+    match p {
+        InitialsPlatformCmd::Host => Ok(InitialsPlatform::Host),
+        InitialsPlatformCmd::Standard => Ok(InitialsPlatform::Standard),
+        InitialsPlatformCmd::ProcMacrosOnTarget => Ok(InitialsPlatform::ProcMacrosOnTarget),
     }
 }
 

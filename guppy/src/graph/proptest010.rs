@@ -3,7 +3,7 @@
 
 use crate::{
     graph::{
-        cargo::{CargoOptions, CargoResolverVersion},
+        cargo::{CargoOptions, CargoResolverVersion, InitialsPlatform},
         PackageGraph, PackageLink, PackageQuery, PackageResolver, Workspace,
     },
     PackageId,
@@ -78,7 +78,7 @@ impl PackageGraph {
         (
             any::<CargoResolverVersion>(),
             any::<bool>(),
-            any::<bool>(),
+            any::<InitialsPlatform>(),
             target_platform,
             host_platform,
             omitted_packages,
@@ -87,7 +87,7 @@ impl PackageGraph {
                 |(
                     version,
                     include_dev,
-                    proc_macros_on_target,
+                    initials_platform,
                     host_platform,
                     target_platform,
                     omitted_packages,
@@ -96,7 +96,7 @@ impl PackageGraph {
                     options
                         .set_version(version)
                         .set_include_dev(include_dev)
-                        .set_proc_macros_on_target(proc_macros_on_target)
+                        .set_initials_platform(initials_platform)
                         .set_host_platform(host_platform)
                         .set_target_platform(target_platform)
                         .add_omitted_packages(omitted_packages);

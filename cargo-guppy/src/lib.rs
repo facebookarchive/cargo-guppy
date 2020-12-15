@@ -213,7 +213,7 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     cargo_opts
         .set_include_dev(opts.resolver_opts.include_dev)
         .set_version(opts.resolver_opts.resolver_version)
-        .set_proc_macros_on_target(opts.resolver_opts.proc_macros_on_target)
+        .set_initials_platform(opts.resolver_opts.initials_platform)
         .set_target_platform(target_platform.as_ref())
         .set_host_platform(host_platform.as_ref())
         .add_omitted_packages(opts.base_filter_opts.omitted_package_ids(&pkg_graph));

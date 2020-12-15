@@ -3,7 +3,9 @@
 
 use crate::{
     graph::{
-        cargo::{CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet},
+        cargo::{
+            CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform,
+        },
         feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures},
         DependencyDirection, EnabledTernary, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
@@ -100,16 +102,29 @@ impl<'a> CargoSetBuildState<'a> {
             .filter_map(|feature_ix| {
                 let metadata = graph.metadata_for_ix(feature_ix);
                 let package_ix = metadata.package_ix();
-                if metadata.package().is_proc_macro() {
-                    // Proc macros are built on the host.
-                    host_ixs.push(package_ix);
-                    if self.opts.proc_macros_on_target {
-                        Some(package_ix)
-                    } else {
+                match self.opts.initials_platform {
+                    InitialsPlatform::Host => {
+                        // Always build on the host.
+                        host_ixs.push(package_ix);
                         None
                     }
-                } else {
-                    Some(package_ix)
+                    InitialsPlatform::Standard => {
+                        // Proc macros on the host platform, everything else on the target platform.
+                        if metadata.package().is_proc_macro() {
+                            host_ixs.push(package_ix);
+                            None
+                        } else {
+                            Some(package_ix)
+                        }
+                    }
+                    InitialsPlatform::ProcMacrosOnTarget => {
+                        // Proc macros on both the host and the target platforms, everything else
+                        // on the target platform.
+                        if metadata.package().is_proc_macro() {
+                            host_ixs.push(package_ix);
+                        }
+                        Some(package_ix)
+                    }
                 }
             })
             .collect();
@@ -336,8 +351,10 @@ impl<'a> CargoSetBuildState<'a> {
             .iter()
             .filter_map(|feature_ix| {
                 let metadata = graph.metadata_for_ix(*feature_ix);
-                if metadata.package().is_proc_macro() {
-                    // Proc macros are built on the host.
+                if self.opts.initials_platform == InitialsPlatform::Host
+                    || metadata.package().is_proc_macro()
+                {
+                    // Proc macros are always unified on the host.
                     Some(metadata.feature_ix())
                 } else {
                     // Everything else is built on the target.
@@ -357,13 +374,20 @@ impl<'a> CargoSetBuildState<'a> {
             }
         };
 
+        let target_query = if self.opts.initials_platform == InitialsPlatform::Host {
+            // Empty query on the target.
+            graph.query_from_parts(SortedSet::new(vec![]), DependencyDirection::Forward)
+        } else {
+            query
+        };
+
         // Keep a copy of the target query for use in step 2.
-        let target_query = query.clone();
+        let target_query_2 = target_query.clone();
 
         // 1. Perform a feature query for the target.
         let target_platform = self.opts.target_platform();
         let host_platform = self.opts.host_platform();
-        let target = query.resolve_with_fn(|query, link| {
+        let target = target_query.resolve_with_fn(|query, link| {
             let (from, to) = link.endpoints();
 
             if self.is_omitted(to.package_ix()) {
@@ -409,7 +433,7 @@ impl<'a> CargoSetBuildState<'a> {
                 // has a build script. It also unifies dev dependencies of initials, even on the
                 // host platform.
                 let consider_dev = self.opts.include_dev
-                    && target_query
+                    && target_query_2
                         .starts_from(from.feature_id())
                         .expect("valid ID");
 
