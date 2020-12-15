@@ -316,6 +316,22 @@ impl<'g> CargoSet<'g> {
         &self.host_features
     }
 
+    /// Returns the feature set enabled on the specified build platform.
+    pub fn platform_features(&self, build_platform: BuildPlatform) -> &FeatureSet<'g> {
+        match build_platform {
+            BuildPlatform::Target => self.target_features(),
+            BuildPlatform::Host => self.host_features(),
+        }
+    }
+
+    /// Returns the feature sets across the target and host build platforms.
+    pub fn all_features(&self) -> [(BuildPlatform, &FeatureSet<'g>); 2] {
+        [
+            (BuildPlatform::Target, self.target_features()),
+            (BuildPlatform::Host, self.host_features()),
+        ]
+    }
+
     /// Returns the set of workspace and direct dependency packages on the target platform.
     ///
     /// The packages in this set are a subset of the packages in `target_features`.
@@ -328,6 +344,23 @@ impl<'g> CargoSet<'g> {
     /// The packages in this set are a subset of the packages in `host_features`.
     pub fn host_direct_deps(&self) -> &PackageSet<'g> {
         &self.host_direct_deps
+    }
+
+    /// Returns the set of workspace and direct dependency packages on the specified build platform.
+    pub fn platform_direct_deps(&self, build_platform: BuildPlatform) -> &PackageSet<'g> {
+        match build_platform {
+            BuildPlatform::Target => self.target_direct_deps(),
+            BuildPlatform::Host => self.host_direct_deps(),
+        }
+    }
+
+    /// Returns the set of workspace and direct dependency packages across the target and host
+    /// build platforms.
+    pub fn all_direct_deps(&self) -> [(BuildPlatform, &PackageSet<'g>); 2] {
+        [
+            (BuildPlatform::Target, self.target_direct_deps()),
+            (BuildPlatform::Host, self.host_direct_deps()),
+        ]
     }
 
     /// Returns `PackageLink` instances for procedural macro dependencies from target packages.
@@ -368,6 +401,45 @@ impl<'g> CargoSet<'g> {
         self.build_dep_edge_ixs
             .iter()
             .map(move |edge_ix| package_graph.edge_ix_to_link(*edge_ix))
+    }
+}
+
+/// Either the target or the host platform.
+///
+/// When Cargo computes the platforms it is building on, it computes two separate build graphs: one
+/// for the target platform and one for the host. This is most useful in cross-compilation
+/// situations where the target is different from the host, but the separate graphs are computed
+/// whether or not a build cross-compiles.
+///
+/// A `cargo check` can be looked at as a kind of cross-compilation as well--machine code is
+/// generated and run for the host platform but not the target platform. This is why `cargo check`
+/// output usually has some lines that say `Compiling` (for the host platform) and some that say
+/// `Checking` (for the target platform).
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum BuildPlatform {
+    /// The target platform.
+    ///
+    /// This represents the packages and features that are included as code in the final build
+    /// artifacts.
+    Target,
+
+    /// The host platform.
+    ///
+    /// This represents build scripts, proc macros and other code that is run on the machine doing
+    /// the compiling.
+    Host,
+}
+
+impl BuildPlatform {
+    /// A list of all possible variants of `BuildPlatform`.
+    pub const VALUES: &'static [Self; 2] = &[BuildPlatform::Target, BuildPlatform::Host];
+
+    /// Returns the build platform that's not `self`.
+    pub fn flip(self) -> Self {
+        match self {
+            BuildPlatform::Host => BuildPlatform::Target,
+            BuildPlatform::Target => BuildPlatform::Host,
+        }
     }
 }
 
