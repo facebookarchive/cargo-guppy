@@ -646,10 +646,19 @@ pub(super) struct WorkspaceImpl {
 /// Most of the metadata is extracted from `Cargo.toml` files. See
 /// [the `Cargo.toml` reference](https://doc.rust-lang.org/cargo/reference/manifest.html) for more
 /// details.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub struct PackageMetadata<'g> {
     graph: &'g PackageGraph,
     inner: &'g PackageMetadataImpl,
+}
+
+impl<'g> fmt::Debug for PackageMetadata<'g> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("PackageMetadata")
+            .field("package_id", &self.id().repr())
+            .field("..", &"..")
+            .finish()
+    }
 }
 
 assert_covariant!(PackageMetadata);
