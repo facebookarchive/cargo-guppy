@@ -1362,13 +1362,17 @@ impl<'g> fmt::Display for ExternalSource<'g> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ExternalSource::Registry(url) => write!(f, "{}{}", Self::REGISTRY_PLUS, url),
-            ExternalSource::Git { repository, req, resolved } => {
+            ExternalSource::Git {
+                repository,
+                req,
+                resolved,
+            } => {
                 write!(f, "{}{}", Self::GIT_PLUS, repository)?;
                 match req {
                     GitReq::Branch(branch) => write!(f, "{}{}", Self::BRANCH_EQ, branch)?,
                     GitReq::Tag(tag) => write!(f, "{}{}", Self::TAG_EQ, tag)?,
                     GitReq::Rev(rev) => write!(f, "{}{}", Self::REV_EQ, rev)?,
-                    GitReq::Default => {},
+                    GitReq::Default => {}
                 };
                 write!(f, "#{}", resolved)
             }

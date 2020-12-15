@@ -86,7 +86,11 @@ impl<'g> ContextImpl<'g> for SummaryContext {
         diff.is_changed() || existing.metadata != summary.metadata
     }
 
-    fn diff((_, summary): &Self::IterItem, existing: Option<&Self::Existing>) -> String {
+    fn diff(
+        _fixture: &'g JsonFixture,
+        (_, summary): &Self::IterItem,
+        existing: Option<&Self::Existing>,
+    ) -> String {
         // Need to make this a static to allow lifetimes to work out.
         static EMPTY_SUMMARY: Lazy<Summary> = Lazy::new(Summary::default);
 

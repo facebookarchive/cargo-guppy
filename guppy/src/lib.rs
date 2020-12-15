@@ -89,7 +89,7 @@
 #[macro_use]
 mod macros;
 
-mod debug_ignore;
+pub mod debug_ignore;
 mod dependency_kind;
 pub mod errors;
 pub mod graph;
