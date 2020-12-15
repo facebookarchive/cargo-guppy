@@ -7,6 +7,45 @@
 //! the output of  [`cargo metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html),
 //! then presents a graph interface over it.
 //!
+//! # Types and lifetimes
+//!
+//! The central structure exposed by `guppy` is [`PackageGraph`](crate::graph::PackageGraph). This
+//! represents a directed (though [not necessarily acyclic](crate::graph::Cycles)) graph where every
+//! node is a package and every edge represents a dependency.
+//!
+//! Other types borrow data from a `PackageGraph` and have a `'g` lifetime parameter indicating
+//! that. A lifetime parameter named `'g` always indicates that data is borrowed from a
+//! `PackageGraph`.
+//!
+//! [`PackageMetadata`](crate::graph::PackageMetadata) contains information about individual
+//! packages, such as the data in
+//! [the `[package]` section](https://doc.rust-lang.org/cargo/reference/manifest.html#the-package-section).
+//!
+//! For traversing the graph, `guppy` provides a few types:
+//! * [`PackageLink`](crate::graph::PackageLink) represents both ends of a dependency edge, along
+//!   with details about the dependency (whether it is dev-only, platform-specific, and so on).
+//! * [`PackageQuery`](crate::graph::PackageQuery) represents the input parameters to a dependency
+//!   traversal: a set of packages and a direction. A traversal is performed with
+//!   [`PackageQuery::resolve`](crate::graph::PackageQuery::resolve), and fine-grained control over
+//!   the traversal is achieved with
+//!   [`PackageQuery::resolve_with_fn`](crate::graph::PackageQuery::resolve_with_fn).
+//! * [`PackageSet`](crate::graph::PackageSet) represents the result of a graph traversal. This
+//!   struct provides several methods to iterate over packages.
+//!
+//! For some operations, `guppy` builds an auxiliary [`FeatureGraph`](crate::graph::feature::FeatureGraph)
+//! the first time it is required. Every node in a `FeatureGraph` is a combination of a package and
+//! a feature declared in it, and every edge is a feature dependency.
+//!
+//! For traversing the feature graph, `guppy` provides the analogous [`FeatureQuery`](crate::graph::feature::FeatureQuery) and
+//! [`FeatureSet`](crate::graph::feature::FeatureSet) types.
+//!
+//! `FeatureQuery` also has a [`resolve_cargo`](crate::graph::FeatureQuery::resolve_cargo) method,
+//! to simulate Cargo builds. This method produces a [`CargoSet`](crate::graph::cargo::CargoSet),
+//! which is essentially two `FeatureSet`s along with some more useful information.
+//!
+//! `guppy`'s data structures are immutable, with some internal caches. All of `guppy`'s types are
+//! `Send + Sync`, and all lifetime parameters are [covariant](https://github.com/sunshowers/lifetime-variance-example/).
+//!
 //! # Optional features
 //!
 //! * `proptest010`: Support for [property-based testing](https://jessitron.com/2013/04/25/property-based-testing-what-is-it/)
