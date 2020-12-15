@@ -75,34 +75,48 @@ where
     }
 }
 
-/// Returns a `FeatureFilter` that selects all features from the given packages.
+/// Describes one of the standard sets of features recognized by Cargo: none, all or default.
 ///
-/// This is equivalent to a build with `--all-features`.
-pub fn all_filter<'g>() -> impl FeatureFilter<'g> {
-    FeatureFilterFn::new(|_, _| true)
+/// `StandardFeatures` implements `FeatureFilter<'g>`, so it can be passed in as a feature filter
+/// wherever necessary.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
+pub enum StandardFeatures {
+    /// No features. Equivalent to a build with `--no-default-features`.
+    None,
+
+    /// Default features. Equivalent to a standard `cargo build`.
+    Default,
+
+    /// All features. Equivalent to `cargo build --all-features`.
+    All,
 }
 
-/// Returns a `FeatureFilter` that selects no features from the given packages.
-///
-/// This is equivalent to a build with `--no-default-features`.
-pub fn none_filter<'g>() -> impl FeatureFilter<'g> {
-    FeatureFilterFn::new(|_, feature_id| {
-        // The only feature ID that should be accepted is the base one.
-        feature_id.is_base()
-    })
+impl StandardFeatures {
+    /// A list of all the possible values of `StandardFeatures`.
+    pub const VALUES: &'static [Self; 3] = &[
+        StandardFeatures::None,
+        StandardFeatures::Default,
+        StandardFeatures::All,
+    ];
 }
 
-/// Returns a `FeatureFilter` that selects default features from the given packages.
-///
-/// This is equivalent to a standard `cargo build`.
-pub fn default_filter<'g>() -> impl FeatureFilter<'g> {
-    FeatureFilterFn::new(|feature_graph, feature_id| {
-        // XXX it kinda sucks that we already know about the exact feature ixs but need to go
-        // through the feature ID over here. Might be worth reorganizing the code to not do that.
-        feature_graph
-            .is_default_feature(feature_id)
-            .expect("feature IDs should be valid")
-    })
+impl<'g> FeatureFilter<'g> for StandardFeatures {
+    fn accept(&mut self, graph: &FeatureGraph<'g>, feature_id: FeatureId<'g>) -> bool {
+        match self {
+            StandardFeatures::None => {
+                // The only feature ID that should be accepted is the base one.
+                feature_id.is_base()
+            }
+            StandardFeatures::Default => {
+                // XXX it kinda sucks that we already know about the exact feature ixs but need to go
+                // through the feature ID over here. Might be worth reorganizing the code to not do that.
+                graph
+                    .is_default_feature(feature_id)
+                    .expect("feature IDs should be valid")
+            }
+            StandardFeatures::All => true,
+        }
+    }
 }
 
 /// Returns a `FeatureFilter` that selects everything from the base filter, plus these additional

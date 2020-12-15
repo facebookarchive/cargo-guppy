@@ -46,7 +46,7 @@ pub use crate::mv::*;
 use anyhow::{bail, Context, Result};
 use clap::arg_enum;
 use guppy::graph::cargo::CargoOptions;
-use guppy::graph::feature::{all_filter, FeatureSet};
+use guppy::graph::feature::{FeatureSet, StandardFeatures};
 use guppy::graph::summaries::Summary;
 use guppy::graph::DependencyDirection;
 use guppy::{
@@ -259,7 +259,7 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
     let proc_macro_features = || {
         let proc_macro_ids = cargo_set.proc_macro_links().map(|link| link.to().id());
         let package_set = pkg_graph.resolve_ids(proc_macro_ids).expect("valid IDs");
-        let feature_set = package_set.to_feature_set(all_filter());
+        let feature_set = package_set.to_feature_set(StandardFeatures::All);
         cargo_set.host_features().intersection(&feature_set)
     };
     match opts.build_kind {

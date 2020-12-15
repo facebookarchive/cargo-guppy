@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::graph::cargo::{CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet};
-use crate::graph::feature::{all_filter, CrossLink, FeatureQuery, FeatureSet};
+use crate::graph::feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures};
 use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageSet};
 use crate::sorted_set::SortedSet;
 use crate::{DependencyKind, Error};
@@ -266,10 +266,10 @@ impl<'a> CargoSetBuildState<'a> {
         // Finally, the features are whatever packages were selected, intersected with whatever
         // features were selected.
         let target_features = target_packages
-            .to_feature_set(all_filter())
+            .to_feature_set(StandardFeatures::All)
             .intersection(target_set);
         let host_features = host_packages
-            .to_feature_set(all_filter())
+            .to_feature_set(StandardFeatures::All)
             .intersection(host_set);
 
         // Also construct the direct dep sets.

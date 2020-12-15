@@ -7,7 +7,7 @@ use crate::rules::{
 };
 use globset::Candidate;
 use guppy::graph::cargo::{CargoOptions, CargoSet};
-use guppy::graph::feature::{all_filter, default_filter, none_filter, FeatureFilter};
+use guppy::graph::feature::{FeatureFilter, StandardFeatures};
 use guppy::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet, Workspace};
 use guppy::{PackageId, Platform};
 use itertools::Itertools;
@@ -392,11 +392,11 @@ struct BuildResult<'g> {
 impl<'g> BuildResult<'g> {
     fn new(package: PackageMetadata<'g>, cargo_options: &CargoOptions<'_>) -> Self {
         let (none, (default, all)) = rayon::join(
-            || make_cargo_set(&package, &mut none_filter(), cargo_options),
+            || make_cargo_set(&package, StandardFeatures::None, cargo_options),
             || {
                 rayon::join(
-                    || make_cargo_set(&package, &mut default_filter(), cargo_options),
-                    || make_cargo_set(&package, &mut all_filter(), cargo_options),
+                    || make_cargo_set(&package, StandardFeatures::Default, cargo_options),
+                    || make_cargo_set(&package, StandardFeatures::All, cargo_options),
                 )
             },
         );
@@ -445,7 +445,7 @@ impl<'g> BuildResult<'g> {
 
 fn make_cargo_set<'x>(
     package: &PackageMetadata<'x>,
-    filter: &mut dyn FeatureFilter<'x>,
+    filter: impl FeatureFilter<'x>,
     cargo_options: &CargoOptions<'_>,
 ) -> CargoSet<'x> {
     let package_query = package.to_package_query(DependencyDirection::Forward);
