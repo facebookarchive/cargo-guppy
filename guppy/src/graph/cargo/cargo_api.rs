@@ -22,7 +22,7 @@ use target_spec::Platform;
 pub struct CargoOptions<'a> {
     pub(crate) version: CargoResolverVersion,
     pub(crate) include_dev: bool,
-    pub(crate) proc_macros_on_target: bool,
+    pub(crate) initials_platform: InitialsPlatform,
     // Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.
     pub(crate) host_platform: Option<Obs<'a, Platform<'a>>>,
     pub(crate) target_platform: Option<Obs<'a, Platform<'a>>>,
@@ -43,7 +43,7 @@ impl<'a> CargoOptions<'a> {
         Self {
             version: CargoResolverVersion::V1,
             include_dev: false,
-            proc_macros_on_target: false,
+            initials_platform: InitialsPlatform::Standard,
             host_platform: None,
             target_platform: None,
             omitted_packages: HashSet::new(),
@@ -69,16 +69,13 @@ impl<'a> CargoOptions<'a> {
         self
     }
 
-    /// If set to true, causes procedural macros (and transitive dependencies) specified in the
-    /// initial set to be built on the host platform as well, not just the target platform.
+    /// Configures the way initials are treated on the target and the host.
     ///
-    /// Procedural macros are typically not built on the target platform, but if they contain binary
-    /// or test targets they will be.
-    ///
-    /// Procedural macros that are dependencies of the initial set will only be built on the host
-    /// platform, regardless of whether this configuration is set.
-    pub fn set_proc_macros_on_target(&mut self, proc_macros_on_target: bool) -> &mut Self {
-        self.proc_macros_on_target = proc_macros_on_target;
+    /// The default is a "standard" build and this does not usually need to be set, but some
+    /// advanced use cases may require it. For more about this option, see the documentation for
+    /// [`InitialsPlatform`](InitialsPlatform).
+    pub fn set_initials_platform(&mut self, initials_platform: InitialsPlatform) -> &mut Self {
+        self.initials_platform = initials_platform;
         self
     }
 
@@ -209,6 +206,39 @@ pub enum CargoResolverVersion {
     /// [Features](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#features) in the
     /// Cargo reference.
     V2,
+}
+
+/// For a given Cargo build simulation, what platform to assume the initials are being built on.
+#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[cfg_attr(feature = "proptest010", derive(proptest_derive::Arbitrary))]
+#[serde(rename_all = "kebab-case")]
+pub enum InitialsPlatform {
+    /// Assume that the initials are being built on the host platform.
+    ///
+    /// This is most useful for "continuing" simulations, where it is already known that some
+    /// packages are being built on the host and one wishes to find their dependencies.
+    Host,
+
+    /// Assume a standard build.
+    ///
+    /// In this mode, all initials other than proc-macros are built on the target platform. Proc-
+    /// macros, being compiler plugins, are built on the host.
+    ///
+    /// This is the default for `InitialsPlatform`.
+    Standard,
+
+    /// Perform a standard build, and also build proc-macros on the target.
+    ///
+    /// Proc-macro crates may include tests, which are run on the target platform. This option is
+    /// most useful for such situations.
+    ProcMacrosOnTarget,
+}
+
+/// The default for `InitialsPlatform`: the `Standard` option.
+impl Default for InitialsPlatform {
+    fn default() -> Self {
+        InitialsPlatform::Standard
+    }
 }
 
 /// A set of packages and features, as would be built by Cargo.
