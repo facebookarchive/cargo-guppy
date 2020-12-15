@@ -40,6 +40,21 @@ impl<'g> FeatureGraph<'g> {
             core: ResolveCore::empty(),
         }
     }
+
+    /// Creates a new `FeatureSet` consisting of the specified feature IDs.
+    ///
+    /// Returns an error if any feature IDs are unknown.
+    pub fn resolve_ids<'a>(
+        &self,
+        feature_ids: impl IntoIterator<Item = impl Into<FeatureId<'a>>>,
+    ) -> Result<FeatureSet<'g>, Error> {
+        Ok(FeatureSet {
+            graph: DebugIgnore(*self),
+            core: ResolveCore::from_included::<IxBitSet>(
+                self.feature_ixs(feature_ids.into_iter().map(|feature| feature.into()))?,
+            ),
+        })
+    }
 }
 
 /// A set of resolved feature IDs in a feature graph.
