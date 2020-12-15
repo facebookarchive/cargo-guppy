@@ -110,7 +110,7 @@ pub use package_id::PackageId;
 // Public re-exports for upstream crates used in APIs. The no_inline ensures that they show up as
 // re-exports in documentation.
 #[doc(no_inline)]
-pub use semver::Version;
+pub use semver::{Version, VersionReq};
 #[doc(no_inline)]
 pub use serde_json::Value as JsonValue;
 // These are inlined -- generally, treat target_spec as a private dependency so expose these types
