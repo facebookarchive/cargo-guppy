@@ -9,7 +9,6 @@ use crate::{Error, Obs, PackageId};
 use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use supercow::Supercow;
 use target_spec::Platform;
 
 /// Options for queries which simulate what Cargo does.
@@ -21,8 +20,8 @@ pub struct CargoOptions<'a> {
     pub(crate) include_dev: bool,
     pub(crate) proc_macros_on_target: bool,
     // Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.
-    pub(crate) host_platform: Option<Supercow<'a, Platform<'a>>>,
-    pub(crate) target_platform: Option<Supercow<'a, Platform<'a>>>,
+    pub(crate) host_platform: Option<Obs<'a, Platform<'a>>>,
+    pub(crate) target_platform: Option<Obs<'a, Platform<'a>>>,
     pub(crate) omitted_packages: HashSet<&'a PackageId>,
 }
 
@@ -103,7 +102,7 @@ impl<'a> CargoOptions<'a> {
     /// // Shared platform.
     /// let _ = CargoOptions::new().with_platform(platform.map(Arc::new));
     /// ```
-    pub fn with_platform(mut self, platform: Option<impl Obs<'a, Platform<'a>>>) -> Self {
+    pub fn with_platform(mut self, platform: Option<impl Into<Obs<'a, Platform<'a>>>>) -> Self {
         let platform = Self::convert_platform(platform);
         self.target_platform = platform.clone();
         self.host_platform = platform;
@@ -116,7 +115,7 @@ impl<'a> CargoOptions<'a> {
     /// `Arc<Platform<'static>>`.
     pub fn with_target_platform(
         mut self,
-        target_platform: Option<impl Obs<'a, Platform<'a>>>,
+        target_platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
     ) -> Self {
         self.target_platform = Self::convert_platform(target_platform);
         self
@@ -126,7 +125,10 @@ impl<'a> CargoOptions<'a> {
     ///
     /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
     /// `Arc<Platform<'static>>`.
-    pub fn with_host_platform(mut self, host_platform: Option<impl Obs<'a, Platform<'a>>>) -> Self {
+    pub fn with_host_platform(
+        mut self,
+        host_platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
+    ) -> Self {
         self.host_platform = Self::convert_platform(host_platform);
         self
     }
@@ -158,9 +160,9 @@ impl<'a> CargoOptions<'a> {
     }
 
     fn convert_platform(
-        platform: Option<impl Obs<'a, Platform<'a>>>,
-    ) -> Option<Supercow<'a, Platform<'a>>> {
-        platform.map(|platform| platform.into_supercow())
+        platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
+    ) -> Option<Obs<'a, Platform<'a>>> {
+        platform.map(|platform| platform.into())
     }
 }
 
