@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use fixtures::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphQuery, GraphSet};
-use guppy::graph::feature::{all_filter, none_filter, FeatureId, FeatureSet};
+use guppy::graph::feature::{FeatureId, FeatureSet, StandardFeatures};
 use guppy::graph::{DependencyDirection, PackageGraph, Prop010Resolver};
 use guppy::PackageId;
 use pretty_assertions::assert_eq;
@@ -509,8 +509,8 @@ pub(super) fn package_feature_set_roundtrip(
         .query_directed(query_ids.iter().copied(), query_direction)
         .expect("valid package IDs")
         .resolve_with(&mut resolver);
-    let all_feature_set = package_set.to_feature_set(all_filter());
-    let no_feature_set = package_set.to_feature_set(none_filter());
+    let all_feature_set = package_set.to_feature_set(StandardFeatures::All);
+    let no_feature_set = package_set.to_feature_set(StandardFeatures::None);
 
     for test_id in test_ids {
         assert_eq!(
@@ -518,7 +518,7 @@ pub(super) fn package_feature_set_roundtrip(
                 .contains(test_id.package_id())
                 .expect("valid package ID"),
             all_feature_set.contains(test_id).expect("valid feature ID"),
-            "all_filter => package ID present == feature ID present"
+            "all => package ID present == feature ID present"
         );
 
         assert_eq!(
@@ -528,7 +528,7 @@ pub(super) fn package_feature_set_roundtrip(
             no_feature_set
                 .contains((test_id.package_id(), None))
                 .expect("valid feature ID"),
-            "none_filter => package ID present == base feature ID present"
+            "none => package ID present == base feature ID present"
         );
     }
 

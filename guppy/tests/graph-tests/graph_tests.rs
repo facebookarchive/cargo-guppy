@@ -5,7 +5,7 @@ use fixtures::{
     json::{self, JsonFixture},
     package_id,
 };
-use guppy::graph::feature::{all_filter, default_filter, feature_filter, none_filter, FeatureId};
+use guppy::graph::feature::{feature_filter, FeatureId};
 use guppy::graph::{
     BuildTargetId, BuildTargetKind, DependencyDirection, DotWrite, PackageDotVisitor, PackageLink,
     PackageMetadata,
@@ -17,6 +17,7 @@ mod small {
     use super::*;
     use crate::feature_helpers::assert_features_for_package;
     use fixtures::json::METADATA_CYCLE_FEATURES_BASE;
+    use guppy::graph::feature::StandardFeatures;
     use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
@@ -120,7 +121,9 @@ mod small {
         let feature_graph = graph.feature_graph();
         assert_eq!(feature_graph.feature_count(), 492, "feature count");
         assert_eq!(feature_graph.link_count(), 610, "link count");
-        let feature_set = feature_graph.query_workspace(all_filter()).resolve();
+        let feature_set = feature_graph
+            .query_workspace(StandardFeatures::All)
+            .resolve();
         let root_ids: Vec<_> = feature_set.root_ids(DependencyDirection::Forward).collect();
         let testcrate_id = package_id(json::METADATA1_TESTCRATE);
         let expected = vec![FeatureId::new(&testcrate_id, "datatest")];
@@ -138,7 +141,7 @@ mod small {
         assert_eq!(feature_graph.feature_count(), 472, "feature count");
         assert_eq!(feature_graph.link_count(), 572, "link count");
         let root_ids: Vec<_> = feature_graph
-            .query_workspace(none_filter())
+            .query_workspace(StandardFeatures::None)
             .resolve()
             .root_ids(DependencyDirection::Forward)
             .collect();
@@ -262,7 +265,7 @@ mod small {
 
         // Check that resolve_packages + a feature filter works.
         let feature_set = package_set.to_feature_set(feature_filter(
-            default_filter(),
+            StandardFeatures::Default,
             ["foo", "bar"].iter().copied(),
         ));
         let dep_a_id = package_id(json::METADATA_TARGETS1_DEP_A);

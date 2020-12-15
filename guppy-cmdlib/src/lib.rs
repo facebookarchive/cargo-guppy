@@ -10,9 +10,7 @@ pub mod proptest;
 
 use anyhow::Result;
 use guppy::graph::cargo::CargoResolverVersion;
-use guppy::graph::feature::{
-    all_filter, default_filter, feature_filter, none_filter, FeatureFilter, FeatureQuery,
-};
+use guppy::graph::feature::{feature_filter, FeatureQuery, StandardFeatures};
 use guppy::graph::PackageGraph;
 use guppy::{MetadataCommand, Platform, TargetFeatures};
 use std::env;
@@ -52,12 +50,11 @@ impl PackagesAndFeatures {
             graph.query_workspace_names(self.packages.iter().map(|s| s.as_str()))?
         };
 
-        let base_filter: Box<dyn FeatureFilter> =
-            match (self.all_features, self.no_default_features) {
-                (true, _) => Box::new(all_filter()),
-                (false, false) => Box::new(default_filter()),
-                (false, true) => Box::new(none_filter()),
-            };
+        let base_filter = match (self.all_features, self.no_default_features) {
+            (true, _) => StandardFeatures::All,
+            (false, false) => StandardFeatures::Default,
+            (false, true) => StandardFeatures::None,
+        };
         // TODO: support package/feature format
         // TODO: support feature name validation similar to cargo
         let feature_filter = feature_filter(base_filter, self.features.iter().map(|s| s.as_str()));
