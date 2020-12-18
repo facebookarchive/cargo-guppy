@@ -373,6 +373,20 @@
 <span id="370">370</span>
 <span id="371">371</span>
 <span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -451,34 +465,48 @@
     }
 }
 
-<span class="doccomment">/// Returns a `FeatureFilter` that selects all features from the given packages.</span>
+<span class="doccomment">/// Describes one of the standard sets of features recognized by Cargo: none, all or default.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This is equivalent to a build with `--all-features`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">all_filter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">FeatureFilterFn</span>::<span class="ident">new</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="bool-val">true</span>)
+<span class="doccomment">/// `StandardFeatures` implements `FeatureFilter&lt;&#39;g&gt;`, so it can be passed in as a feature filter</span>
+<span class="doccomment">/// wherever necessary.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialOrd</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StandardFeatures</span> {
+    <span class="doccomment">/// No features. Equivalent to a build with `--no-default-features`.</span>
+    <span class="prelude-val">None</span>,
+
+    <span class="doccomment">/// Default features. Equivalent to a standard `cargo build`.</span>
+    <span class="ident">Default</span>,
+
+    <span class="doccomment">/// All features. Equivalent to `cargo build --all-features`.</span>
+    <span class="ident">All</span>,
 }
 
-<span class="doccomment">/// Returns a `FeatureFilter` that selects no features from the given packages.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is equivalent to a build with `--no-default-features`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">none_filter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">FeatureFilterFn</span>::<span class="ident">new</span>(<span class="op">|</span><span class="kw">_</span>, <span class="ident">feature_id</span><span class="op">|</span> {
-        <span class="comment">// The only feature ID that should be accepted is the base one.</span>
-        <span class="ident">feature_id</span>.<span class="ident">is_base</span>()
-    })
+<span class="kw">impl</span> <span class="ident">StandardFeatures</span> {
+    <span class="doccomment">/// A list of all the possible values of `StandardFeatures`.</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">VALUES</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [<span class="self">Self</span>; <span class="number">3</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[
+        <span class="ident">StandardFeatures</span>::<span class="prelude-val">None</span>,
+        <span class="ident">StandardFeatures</span>::<span class="ident">Default</span>,
+        <span class="ident">StandardFeatures</span>::<span class="ident">All</span>,
+    ];
 }
 
-<span class="doccomment">/// Returns a `FeatureFilter` that selects default features from the given packages.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is equivalent to a standard `cargo build`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_filter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">FeatureFilterFn</span>::<span class="ident">new</span>(<span class="op">|</span><span class="ident">feature_graph</span>, <span class="ident">feature_id</span><span class="op">|</span> {
-        <span class="comment">// XXX it kinda sucks that we already know about the exact feature ixs but need to go</span>
-        <span class="comment">// through the feature ID over here. Might be worth reorganizing the code to not do that.</span>
-        <span class="ident">feature_graph</span>
-            .<span class="ident">is_default_feature</span>(<span class="ident">feature_id</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;feature IDs should be valid&quot;</span>)
-    })
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StandardFeatures</span> {
+    <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">feature_id</span>: <span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">StandardFeatures</span>::<span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="comment">// The only feature ID that should be accepted is the base one.</span>
+                <span class="ident">feature_id</span>.<span class="ident">is_base</span>()
+            }
+            <span class="ident">StandardFeatures</span>::<span class="ident">Default</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="comment">// XXX it kinda sucks that we already know about the exact feature ixs but need to go</span>
+                <span class="comment">// through the feature ID over here. Might be worth reorganizing the code to not do that.</span>
+                <span class="ident">graph</span>
+                    .<span class="ident">is_default_feature</span>(<span class="ident">feature_id</span>)
+                    .<span class="ident">expect</span>(<span class="string">&quot;feature IDs should be valid&quot;</span>)
+            }
+            <span class="ident">StandardFeatures</span>::<span class="ident">All</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+        }
+    }
 }
 
 <span class="doccomment">/// Returns a `FeatureFilter` that selects everything from the base filter, plus these additional</span>

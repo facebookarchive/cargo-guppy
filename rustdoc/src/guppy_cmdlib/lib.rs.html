@@ -152,9 +152,6 @@
 <span id="149">149</span>
 <span id="150">150</span>
 <span id="151">151</span>
-<span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -168,9 +165,7 @@
 
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::<span class="ident">CargoResolverVersion</span>;
-<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{
-    <span class="ident">all_filter</span>, <span class="ident">default_filter</span>, <span class="ident">feature_filter</span>, <span class="ident">none_filter</span>, <span class="ident">FeatureFilter</span>, <span class="ident">FeatureQuery</span>,
-};
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">feature_filter</span>, <span class="ident">FeatureQuery</span>, <span class="ident">StandardFeatures</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">PackageGraph</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::{<span class="ident">MetadataCommand</span>, <span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">env</span>;
@@ -210,12 +205,11 @@
             <span class="ident">graph</span>.<span class="ident">query_workspace_names</span>(<span class="self">self</span>.<span class="ident">packages</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">as_str</span>()))<span class="question-mark">?</span>
         };
 
-        <span class="kw">let</span> <span class="ident">base_filter</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">FeatureFilter</span><span class="op">&gt;</span> <span class="op">=</span>
-            <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">all_features</span>, <span class="self">self</span>.<span class="ident">no_default_features</span>) {
-                (<span class="bool-val">true</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">all_filter</span>()),
-                (<span class="bool-val">false</span>, <span class="bool-val">false</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">default_filter</span>()),
-                (<span class="bool-val">false</span>, <span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">none_filter</span>()),
-            };
+        <span class="kw">let</span> <span class="ident">base_filter</span> <span class="op">=</span> <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">all_features</span>, <span class="self">self</span>.<span class="ident">no_default_features</span>) {
+            (<span class="bool-val">true</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">StandardFeatures</span>::<span class="ident">All</span>,
+            (<span class="bool-val">false</span>, <span class="bool-val">false</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">StandardFeatures</span>::<span class="ident">Default</span>,
+            (<span class="bool-val">false</span>, <span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">StandardFeatures</span>::<span class="prelude-val">None</span>,
+        };
         <span class="comment">// TODO: support package/feature format</span>
         <span class="comment">// TODO: support feature name validation similar to cargo</span>
         <span class="kw">let</span> <span class="ident">feature_filter</span> <span class="op">=</span> <span class="ident">feature_filter</span>(<span class="ident">base_filter</span>, <span class="self">self</span>.<span class="ident">features</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">as_str</span>()));

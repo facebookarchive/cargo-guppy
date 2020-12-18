@@ -624,6 +624,7 @@
 <span id="621">621</span>
 <span id="622">622</span>
 <span id="623">623</span>
+<span id="624">624</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -634,7 +635,7 @@
 };
 <span class="kw">use</span> <span class="ident">globset</span>::<span class="ident">Candidate</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoSet</span>};
-<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">all_filter</span>, <span class="ident">default_filter</span>, <span class="ident">none_filter</span>, <span class="ident">FeatureFilter</span>};
+<span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureFilter</span>, <span class="ident">StandardFeatures</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::<span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{<span class="ident">PackageId</span>, <span class="ident">Platform</span>};
 <span class="kw">use</span> <span class="ident">itertools</span>::<span class="ident">Itertools</span>;
@@ -757,7 +758,8 @@
 
     <span class="doccomment">/// Returns the default Cargo options used by the determinator.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// These are the same as the default `CargoOptions` returned by `CargoOptions::new`, except:</span>
+    <span class="doccomment">/// These are the same as the defaults returned by [`CargoOptions::new`](CargoOptions::new),</span>
+    <span class="doccomment">/// except:</span>
     <span class="doccomment">/// * dev-dependencies are enabled</span>
     <span class="doccomment">/// * the host and target platforms are set to the current platform</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_cargo_options</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
@@ -1019,11 +1021,11 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">BuildResult</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">cargo_options</span>: <span class="kw-2">&amp;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">none</span>, (<span class="ident">default</span>, <span class="ident">all</span>)) <span class="op">=</span> <span class="ident">rayon</span>::<span class="ident">join</span>(
-            <span class="op">|</span><span class="op">|</span> <span class="ident">make_cargo_set</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">none_filter</span>(), <span class="ident">cargo_options</span>),
+            <span class="op">|</span><span class="op">|</span> <span class="ident">make_cargo_set</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>, <span class="ident">StandardFeatures</span>::<span class="prelude-val">None</span>, <span class="ident">cargo_options</span>),
             <span class="op">|</span><span class="op">|</span> {
                 <span class="ident">rayon</span>::<span class="ident">join</span>(
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">make_cargo_set</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">default_filter</span>(), <span class="ident">cargo_options</span>),
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">make_cargo_set</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">all_filter</span>(), <span class="ident">cargo_options</span>),
+                    <span class="op">|</span><span class="op">|</span> <span class="ident">make_cargo_set</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>, <span class="ident">StandardFeatures</span>::<span class="ident">Default</span>, <span class="ident">cargo_options</span>),
+                    <span class="op">|</span><span class="op">|</span> <span class="ident">make_cargo_set</span>(<span class="kw-2">&amp;</span><span class="ident">package</span>, <span class="ident">StandardFeatures</span>::<span class="ident">All</span>, <span class="ident">cargo_options</span>),
                 )
             },
         );
@@ -1072,7 +1074,7 @@
 
 <span class="kw">fn</span> <span class="ident">make_cargo_set</span><span class="op">&lt;</span><span class="lifetime">&#39;x</span><span class="op">&gt;</span>(
     <span class="ident">package</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;x</span><span class="op">&gt;</span>,
-    <span class="ident">filter</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">dyn</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;x</span><span class="op">&gt;</span>,
+    <span class="ident">filter</span>: <span class="kw">impl</span> <span class="ident">FeatureFilter</span><span class="op">&lt;</span><span class="lifetime">&#39;x</span><span class="op">&gt;</span>,
     <span class="ident">cargo_options</span>: <span class="kw-2">&amp;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoSet</span><span class="op">&lt;</span><span class="lifetime">&#39;x</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">package_query</span> <span class="op">=</span> <span class="ident">package</span>.<span class="ident">to_package_query</span>(<span class="ident">DependencyDirection</span>::<span class="ident">Forward</span>);

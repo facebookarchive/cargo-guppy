@@ -8,6 +8,7 @@ implementors["crossbeam_epoch"] = [{"text":"impl&lt;T:&nbsp;?Sized + Pointable&g
 implementors["crossbeam_utils"] = [{"text":"impl&lt;T&gt; Deref for CachePadded&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;?Sized, '_&gt; Deref for ShardedLockReadGuard&lt;'_, T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;?Sized, '_&gt; Deref for ShardedLockWriteGuard&lt;'_, T&gt;","synthetic":false,"types":[]}];
 implementors["either"] = [{"text":"impl&lt;L, R&gt; Deref for Either&lt;L, R&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;L: Deref,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: Deref&lt;Target = L::Target&gt;,&nbsp;</span>","synthetic":false,"types":[]}];
 implementors["git2"] = [{"text":"impl Deref for OidArray","synthetic":false,"types":[]},{"text":"impl Deref for Buf","synthetic":false,"types":[]}];
+implementors["guppy"] = [{"text":"impl&lt;'a, T&gt; Deref for Obs&lt;'a, T&gt;","synthetic":false,"types":[]}];
 implementors["humantime"] = [{"text":"impl Deref for Duration","synthetic":false,"types":[]},{"text":"impl Deref for Timestamp","synthetic":false,"types":[]}];
 implementors["libssh2_sys"] = [{"text":"impl Deref for libssh2_struct_stat","synthetic":false,"types":[]}];
 implementors["once_cell"] = [{"text":"impl&lt;T, F:&nbsp;FnOnce() -&gt; T&gt; Deref for Lazy&lt;T, F&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T, F:&nbsp;FnOnce() -&gt; T&gt; Deref for Lazy&lt;T, F&gt;","synthetic":false,"types":[]}];
