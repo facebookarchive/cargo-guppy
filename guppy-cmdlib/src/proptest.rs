@@ -41,9 +41,6 @@ pub fn triple_strategy() -> impl Strategy<Value = Option<&'static str>> {
             // Filter out Apple platforms because rustc requires the Apple SDKs to be set up for
             // them.
             !triple.contains("-apple-")
-            // Filter out avr-unknown-unknown because of a change from Rust 1.47 to Rust 1.48.
-            // TODO: remove once https://github.com/EmbarkStudios/cfg-expr/pull/12 lands upstream.
-            && triple != "avr-unknown-unknown"
         },
         Just(TargetFeatures::Unknown),
     );
