@@ -12,7 +12,7 @@ use anyhow::Result;
 use guppy::{
     graph::{
         cargo::CargoResolverVersion,
-        feature::{feature_filter, FeatureQuery, StandardFeatures},
+        feature::{feature_filter, FeatureSet, StandardFeatures},
         PackageGraph,
     },
     MetadataCommand, Platform, TargetFeatures,
@@ -44,12 +44,12 @@ pub struct PackagesAndFeatures {
 }
 
 impl PackagesAndFeatures {
-    /// Evaluates this struct against the given graph, and converts it into a `FeatureQuery`.
-    pub fn make_feature_query<'g>(&self, graph: &'g PackageGraph) -> Result<FeatureQuery<'g>> {
-        let package_query = if self.packages.is_empty() {
-            graph.query_workspace()
+    /// Evaluates this struct against the given graph, and converts it into a `FeatureSet`.
+    pub fn make_feature_set<'g>(&self, graph: &'g PackageGraph) -> Result<FeatureSet<'g>> {
+        let package_set = if self.packages.is_empty() {
+            graph.resolve_workspace()
         } else {
-            graph.query_workspace_names(self.packages.iter().map(|s| s.as_str()))?
+            graph.resolve_workspace_names(self.packages.iter().map(|s| s.as_str()))?
         };
 
         let base_filter = match (self.all_features, self.no_default_features) {
@@ -61,7 +61,7 @@ impl PackagesAndFeatures {
         // TODO: support feature name validation similar to cargo
         let feature_filter = feature_filter(base_filter, self.features.iter().map(|s| s.as_str()));
 
-        Ok(package_query.to_feature_query(feature_filter))
+        Ok(package_set.to_feature_set(feature_filter))
     }
 }
 

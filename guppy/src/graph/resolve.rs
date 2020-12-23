@@ -146,7 +146,7 @@ impl<'g> PackageSet<'g> {
         }
     }
 
-    pub(super) fn from_included(graph: &'g PackageGraph, included: FixedBitSet) -> Self {
+    pub(super) fn from_included(graph: &'g PackageGraph, included: impl Into<FixedBitSet>) -> Self {
         Self {
             graph: DebugIgnore(graph),
             core: ResolveCore::from_included(included),
@@ -408,6 +408,12 @@ impl<'g> PackageSet<'g> {
     // ---
     // Helper methods
     // ---
+
+    /// Returns all the package ixs without topologically sorting them.
+    #[allow(dead_code)]
+    pub(super) fn ixs_unordered<'a>(&'a self) -> impl Iterator<Item = NodeIndex<PackageIx>> + 'a {
+        self.core.included.ones().map(NodeIndex::new)
+    }
 
     pub(super) fn contains_ix(&self, package_ix: NodeIndex<PackageIx>) -> bool {
         self.core.contains(package_ix)

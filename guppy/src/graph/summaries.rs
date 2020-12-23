@@ -8,7 +8,7 @@
 use crate::{
     graph::{
         cargo::{CargoOptions, CargoResolverVersion, CargoSet},
-        feature::{FeatureQuery, FeatureSet},
+        feature::FeatureSet,
         DependencyDirection, PackageGraph, PackageMetadata, PackageSet, PackageSource,
     },
     Error,
@@ -26,16 +26,15 @@ impl<'g> CargoSet<'g> {
     ///
     /// Requires the `summaries` feature to be enabled.
     pub fn to_summary(&self, opts: &CargoOptions<'_>) -> Result<Summary, Error> {
-        let original_query = self.original_query();
-        let metadata = CargoOptionsSummary::new(original_query.graph().package_graph, opts)?;
+        let initials = self.initials();
+        let metadata = CargoOptionsSummary::new(initials.graph().package_graph, opts)?;
         let target_features = self.target_features();
         let host_features = self.host_features();
 
         Ok(Summary {
             metadata: Some(metadata),
-            target_packages: target_features
-                .to_package_map(original_query, self.target_direct_deps()),
-            host_packages: host_features.to_package_map(original_query, self.host_direct_deps()),
+            target_packages: target_features.to_package_map(initials, self.target_direct_deps()),
+            host_packages: host_features.to_package_map(initials, self.host_direct_deps()),
         })
     }
 }
@@ -46,14 +45,14 @@ impl<'g> FeatureSet<'g> {
     /// `original_query` and `direct_deps` are used to assign a PackageStatus.
     fn to_package_map(
         &self,
-        original_query: &FeatureQuery<'g>,
+        initials: &FeatureSet<'g>,
         direct_deps: &PackageSet<'g>,
     ) -> PackageMap {
         self.packages_with_features(DependencyDirection::Forward)
             .map(|feature_list| {
                 let package = feature_list.package();
 
-                let status = if original_query.starts_from_package_ix(package.package_ix()) {
+                let status = if initials.contains_package_ix(package.package_ix()) {
                     PackageStatus::Initial
                 } else if package.in_workspace() {
                     PackageStatus::Workspace

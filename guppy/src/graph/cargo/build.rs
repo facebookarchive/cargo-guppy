@@ -21,16 +21,10 @@ pub(super) struct CargoSetBuildState<'a> {
 
 impl<'a> CargoSetBuildState<'a> {
     pub(super) fn new<'g>(
-        query: &FeatureQuery<'g>,
+        initials: &FeatureSet<'g>,
         opts: &'a CargoOptions<'a>,
     ) -> Result<Self, Error> {
-        if query.direction() == DependencyDirection::Reverse {
-            return Err(Error::CargoSetError(
-                "attempted to compute for reverse query".into(),
-            ));
-        }
-
-        let omitted_packages: SortedSet<_> = query
+        let omitted_packages: SortedSet<_> = initials
             .graph()
             .package_graph
             .package_ixs(opts.omitted_packages.iter().copied())?;
@@ -41,14 +35,14 @@ impl<'a> CargoSetBuildState<'a> {
         })
     }
 
-    pub(super) fn build(self, query: FeatureQuery) -> CargoSet {
+    pub(super) fn build<'g>(self, initials: FeatureSet<'g>) -> CargoSet<'g> {
         match self.opts.version {
-            CargoResolverVersion::V1 => self.new_v1(query, false),
+            CargoResolverVersion::V1 => self.new_v1(initials, false),
             CargoResolverVersion::V1Install => {
                 let avoid_dev_deps = !self.opts.include_dev;
-                self.new_v1(query, avoid_dev_deps)
+                self.new_v1(initials, avoid_dev_deps)
             }
-            CargoResolverVersion::V2 => self.new_v2(query),
+            CargoResolverVersion::V2 => self.new_v2(initials),
         }
     }
 
@@ -63,14 +57,14 @@ impl<'a> CargoSetBuildState<'a> {
         }
     }
 
-    fn new_v1(self, query: FeatureQuery, avoid_dev_deps: bool) -> CargoSet {
-        self.build_set(query, |query| {
+    fn new_v1<'g>(self, initials: FeatureSet<'g>, avoid_dev_deps: bool) -> CargoSet<'g> {
+        self.build_set(initials, |query| {
             self.new_v1_intermediate(query, avoid_dev_deps)
         })
     }
 
-    fn new_v2(self, query: FeatureQuery) -> CargoSet {
-        self.build_set(query, |query| self.new_v2_intermediate(query))
+    fn new_v2<'g>(self, initials: FeatureSet<'g>) -> CargoSet<'g> {
+        self.build_set(initials, |query| self.new_v2_intermediate(query))
     }
 
     // ---
@@ -83,20 +77,18 @@ impl<'a> CargoSetBuildState<'a> {
 
     fn build_set<'g>(
         &self,
-        original_query: FeatureQuery<'g>,
+        initials: FeatureSet<'g>,
         intermediate_fn: impl FnOnce(FeatureQuery<'g>) -> CargoIntermediateSet<'g>,
     ) -> CargoSet<'g> {
         // Prepare a package query for step 2.
-        let graph = *original_query.graph();
+        let graph = *initials.graph();
         // Note that currently, proc macros specified in initials are built on both the target and
         // the host.
         let mut host_ixs = Vec::new();
-        let target_ixs: Vec<_> = original_query
-            .params
-            .initials()
-            .iter()
+        let target_ixs: Vec<_> = initials
+            .ixs_unordered()
             .filter_map(|feature_ix| {
-                let metadata = graph.metadata_for_ix(*feature_ix);
+                let metadata = graph.metadata_for_ix(feature_ix);
                 let package_ix = metadata.package_ix();
                 if metadata.package().is_proc_macro() {
                     // Proc macros are built on the host.
@@ -117,7 +109,8 @@ impl<'a> CargoSetBuildState<'a> {
 
         // 1. Build the intermediate set containing the features for any possible package that can
         // be built.
-        let intermediate_set = intermediate_fn(original_query.clone());
+        let intermediate_set =
+            intermediate_fn(initials.to_feature_query(DependencyDirection::Forward));
         let (target_set, host_set) = intermediate_set.target_host_sets();
 
         // While doing traversal 2 below, record any packages discovered along build edges for use
@@ -281,7 +274,7 @@ impl<'a> CargoSetBuildState<'a> {
         let host_direct_deps = PackageSet::from_included(graph.package_graph, host_direct_deps);
 
         CargoSet {
-            original_query,
+            initials,
             target_features,
             host_features,
             target_direct_deps,

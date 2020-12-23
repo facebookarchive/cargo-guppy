@@ -3,7 +3,6 @@
 
 use crate::{
     graph::{
-        cargo::{CargoOptions, CargoSet},
         feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet},
         query_core::QueryParams,
         DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata,
@@ -325,14 +324,6 @@ impl<'g> FeatureQuery<'g> {
         resolver_fn: impl FnMut(&FeatureQuery<'g>, CrossLink<'g>) -> bool,
     ) -> FeatureSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
-    }
-
-    /// Resolves this query, simulating what Cargo would do if asked to build the specified
-    /// features.
-    ///
-    /// There is some flexibility in how packages are built in the end.
-    pub fn resolve_cargo(self, opts: &CargoOptions<'_>) -> Result<CargoSet<'g>, Error> {
-        CargoSet::new(self, opts)
     }
 
     // ---

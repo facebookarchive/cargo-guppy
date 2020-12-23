@@ -47,14 +47,14 @@ impl<'g> ContextImpl<'g> for SummaryContext {
 
         let iter = (0..count).map(move |idx| {
             let packages_features = generator.generate(&packages_features_strategy);
-            let feature_query = packages_features
-                .make_feature_query(graph)
-                .expect("valid feature query");
+            let initials = packages_features
+                .make_feature_set(graph)
+                .expect("valid feature set");
 
             let cargo_opts = generator.generate(&cargo_opts_strategy);
-            let cargo_set = feature_query
-                .resolve_cargo(&cargo_opts)
-                .expect("resolve_cargo succeeded");
+            let cargo_set = initials
+                .into_cargo_set(&cargo_opts)
+                .expect("into_cargo_set succeeded");
 
             (
                 idx,
