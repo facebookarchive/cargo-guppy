@@ -29,6 +29,10 @@ pub struct PackagesAndFeatures {
     /// Packages to start the query from (default: entire workspace)
     pub packages: Vec<String>,
 
+    #[structopt(long = "features-only", number_of_values = 1)]
+    /// Packages that take part in feature unification but aren't in the result set (default: none)
+    pub features_only: Vec<String>,
+
     // TODO: support --workspace and --exclude
     /// List of features to activate across all packages
     #[structopt(long = "features", use_delimiter = true)]
@@ -44,12 +48,21 @@ pub struct PackagesAndFeatures {
 }
 
 impl PackagesAndFeatures {
-    /// Evaluates this struct against the given graph, and converts it into a `FeatureSet`.
-    pub fn make_feature_set<'g>(&self, graph: &'g PackageGraph) -> Result<FeatureSet<'g>> {
+    /// Evaluates this struct against the given graph, and converts it into the initials and
+    /// features-only `FeatureSet`s.
+    pub fn make_feature_sets<'g>(
+        &self,
+        graph: &'g PackageGraph,
+    ) -> Result<(FeatureSet<'g>, FeatureSet<'g>)> {
         let package_set = if self.packages.is_empty() {
             graph.resolve_workspace()
         } else {
-            graph.resolve_workspace_names(self.packages.iter().map(|s| s.as_str()))?
+            graph.resolve_workspace_names(self.packages.iter())?
+        };
+        let features_only_set = if self.features_only.is_empty() {
+            graph.resolve_none()
+        } else {
+            graph.resolve_workspace_names(self.features_only.iter())?
         };
 
         let base_filter = match (self.all_features, self.no_default_features) {
@@ -59,9 +72,13 @@ impl PackagesAndFeatures {
         };
         // TODO: support package/feature format
         // TODO: support feature name validation similar to cargo
-        let feature_filter = feature_filter(base_filter, self.features.iter().map(|s| s.as_str()));
+        let mut feature_filter =
+            feature_filter(base_filter, self.features.iter().map(|s| s.as_str()));
 
-        Ok(package_set.to_feature_set(feature_filter))
+        Ok((
+            package_set.to_feature_set(&mut feature_filter),
+            features_only_set.to_feature_set(&mut feature_filter),
+        ))
     }
 }
 

@@ -5,7 +5,7 @@ use crate::{
     graph::{
         cargo::{CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet},
         feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures},
-        DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageSet,
+        DependencyDirection, EnabledTernary, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
     sorted_set::SortedSet,
     DependencyKind, Error,
@@ -21,13 +21,11 @@ pub(super) struct CargoSetBuildState<'a> {
 
 impl<'a> CargoSetBuildState<'a> {
     pub(super) fn new<'g>(
-        initials: &FeatureSet<'g>,
+        graph: &'g PackageGraph,
         opts: &'a CargoOptions<'a>,
     ) -> Result<Self, Error> {
-        let omitted_packages: SortedSet<_> = initials
-            .graph()
-            .package_graph
-            .package_ixs(opts.omitted_packages.iter().copied())?;
+        let omitted_packages: SortedSet<_> =
+            graph.package_ixs(opts.omitted_packages.iter().copied())?;
 
         Ok(Self {
             opts,
@@ -35,14 +33,18 @@ impl<'a> CargoSetBuildState<'a> {
         })
     }
 
-    pub(super) fn build<'g>(self, initials: FeatureSet<'g>) -> CargoSet<'g> {
+    pub(super) fn build<'g>(
+        self,
+        initials: FeatureSet<'g>,
+        features_only: FeatureSet<'g>,
+    ) -> CargoSet<'g> {
         match self.opts.version {
-            CargoResolverVersion::V1 => self.new_v1(initials, false),
+            CargoResolverVersion::V1 => self.new_v1(initials, features_only, false),
             CargoResolverVersion::V1Install => {
                 let avoid_dev_deps = !self.opts.include_dev;
-                self.new_v1(initials, avoid_dev_deps)
+                self.new_v1(initials, features_only, avoid_dev_deps)
             }
-            CargoResolverVersion::V2 => self.new_v2(initials),
+            CargoResolverVersion::V2 => self.new_v2(initials, features_only),
         }
     }
 
@@ -57,14 +59,21 @@ impl<'a> CargoSetBuildState<'a> {
         }
     }
 
-    fn new_v1<'g>(self, initials: FeatureSet<'g>, avoid_dev_deps: bool) -> CargoSet<'g> {
-        self.build_set(initials, |query| {
+    fn new_v1<'g>(
+        self,
+        initials: FeatureSet<'g>,
+        features_only: FeatureSet<'g>,
+        avoid_dev_deps: bool,
+    ) -> CargoSet<'g> {
+        self.build_set(initials, features_only, |query| {
             self.new_v1_intermediate(query, avoid_dev_deps)
         })
     }
 
-    fn new_v2<'g>(self, initials: FeatureSet<'g>) -> CargoSet<'g> {
-        self.build_set(initials, |query| self.new_v2_intermediate(query))
+    fn new_v2<'g>(self, initials: FeatureSet<'g>, features_only: FeatureSet<'g>) -> CargoSet<'g> {
+        self.build_set(initials, features_only, |query| {
+            self.new_v2_intermediate(query)
+        })
     }
 
     // ---
@@ -78,6 +87,7 @@ impl<'a> CargoSetBuildState<'a> {
     fn build_set<'g>(
         &self,
         initials: FeatureSet<'g>,
+        features_only: FeatureSet<'g>,
         intermediate_fn: impl FnOnce(FeatureQuery<'g>) -> CargoIntermediateSet<'g>,
     ) -> CargoSet<'g> {
         // Prepare a package query for step 2.
@@ -108,9 +118,11 @@ impl<'a> CargoSetBuildState<'a> {
             .query_from_parts(SortedSet::new(target_ixs), DependencyDirection::Forward);
 
         // 1. Build the intermediate set containing the features for any possible package that can
-        // be built.
-        let intermediate_set =
-            intermediate_fn(initials.to_feature_query(DependencyDirection::Forward));
+        // be built, including features-only packages.
+        let initials_plus_features_only = initials.union(&features_only);
+        let intermediate_set = intermediate_fn(
+            initials_plus_features_only.to_feature_query(DependencyDirection::Forward),
+        );
         let (target_set, host_set) = intermediate_set.target_host_sets();
 
         // While doing traversal 2 below, record any packages discovered along build edges for use
@@ -275,6 +287,7 @@ impl<'a> CargoSetBuildState<'a> {
 
         CargoSet {
             initials,
+            features_only,
             target_features,
             host_features,
             target_direct_deps,

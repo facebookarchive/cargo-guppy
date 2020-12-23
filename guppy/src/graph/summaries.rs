@@ -27,7 +27,8 @@ impl<'g> CargoSet<'g> {
     /// Requires the `summaries` feature to be enabled.
     pub fn to_summary(&self, opts: &CargoOptions<'_>) -> Result<Summary, Error> {
         let initials = self.initials();
-        let metadata = CargoOptionsSummary::new(initials.graph().package_graph, opts)?;
+        let metadata =
+            CargoOptionsSummary::new(initials.graph().package_graph, self.features_only(), opts)?;
         let target_features = self.target_features();
         let host_features = self.host_features();
 
@@ -42,7 +43,7 @@ impl<'g> CargoSet<'g> {
 impl<'g> FeatureSet<'g> {
     /// Creates a `PackageMap` from this `FeatureSet`.
     ///
-    /// `original_query` and `direct_deps` are used to assign a PackageStatus.
+    /// `initials` and `direct_deps` are used to assign a PackageStatus.
     fn to_package_map(
         &self,
         initials: &FeatureSet<'g>,
@@ -79,6 +80,8 @@ impl<'g> FeatureSet<'g> {
 
 impl<'g> PackageMetadata<'g> {
     /// Converts this metadata to a `SummaryId`.
+    ///
+    /// Requires the `summaries` feature to be enabled.
     fn to_summary_id(&self) -> SummaryId {
         SummaryId {
             name: self.name().to_string(),
@@ -115,11 +118,19 @@ pub struct CargoOptionsSummary {
     /// The set of packages omitted from computations.
     #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
     pub omitted_packages: BTreeSet<SummaryId>,
+
+    /// The packages that formed the features-only set.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub features_only: Vec<FeaturesOnlySummary>,
 }
 
 impl CargoOptionsSummary {
     /// Creates a new `CargoOptionsSummary` from the given Cargo options.
-    pub fn new(graph: &PackageGraph, opts: &CargoOptions<'_>) -> Result<Self, Error> {
+    pub fn new(
+        graph: &PackageGraph,
+        features_only: &FeatureSet<'_>,
+        opts: &CargoOptions<'_>,
+    ) -> Result<Self, Error> {
         let omitted_summary_ids = opts
             .omitted_packages
             .iter()
@@ -128,6 +139,20 @@ impl CargoOptionsSummary {
                 metadata.to_summary_id()
             })
             .collect();
+
+        let mut features_only = features_only
+            .packages_with_features(DependencyDirection::Forward)
+            .map(|features| FeaturesOnlySummary {
+                summary_id: features.package().to_summary_id(),
+                features: features
+                    .features()
+                    .iter()
+                    .map(|&feature| feature.to_owned())
+                    .collect(),
+            })
+            .collect::<Vec<_>>();
+        features_only.sort_unstable();
+
         Ok(Self {
             version: opts.version,
             include_dev: opts.include_dev,
@@ -147,6 +172,7 @@ impl CargoOptionsSummary {
                     Error::TargetSpecError("while serializing target platform".to_string(), err)
                 })?,
             omitted_packages: omitted_summary_ids,
+            features_only,
         })
     }
 
@@ -169,6 +195,8 @@ impl CargoOptionsSummary {
                 ),
             })
             .collect::<Result<Vec<_>, _>>()?;
+
+        // TODO: return the features-only set
 
         let mut options = CargoOptions::new();
         options
@@ -196,6 +224,22 @@ impl CargoOptionsSummary {
             .add_omitted_packages(omitted_packages);
         Ok(options)
     }
+}
+
+/// Summary information for a features-only package.
+///
+/// These packages are stored in `CargoOptionsSummary` because they may or may not be in the final
+/// build set.
+#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+#[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
+pub struct FeaturesOnlySummary {
+    /// The summary ID for this feature.
+    #[serde(flatten)]
+    pub summary_id: SummaryId,
+
+    /// The features built for this package.
+    pub features: BTreeSet<String>,
 }
 
 impl<'g> PackageSource<'g> {

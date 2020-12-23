@@ -4,7 +4,10 @@
 use crate::context::ContextImpl;
 use anyhow::Result;
 use fixtures::json::JsonFixture;
-use guppy::graph::summaries::{diff::SummaryDiff, Summary};
+use guppy::graph::{
+    cargo::CargoSet,
+    summaries::{diff::SummaryDiff, Summary},
+};
 use guppy_cmdlib::PackagesAndFeatures;
 use once_cell::sync::Lazy;
 use proptest_ext::ValueGenerator;
@@ -53,15 +56,14 @@ impl<'g> ContextImpl<'g> for SummaryContext {
             let packages_features = iter_generator
                 .partial_clone()
                 .generate(&packages_features_strategy);
-            let initials = packages_features
-                .make_feature_set(graph)
+            let (initials, features_only) = packages_features
+                .make_feature_sets(graph)
                 .expect("valid feature set");
 
             let cargo_opts = iter_generator
                 .partial_clone()
                 .generate(&cargo_opts_strategy);
-            let cargo_set = initials
-                .into_cargo_set(&cargo_opts)
+            let cargo_set = CargoSet::new(initials, features_only, &cargo_opts)
                 .expect("into_cargo_set succeeded");
 
             (

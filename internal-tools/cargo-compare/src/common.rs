@@ -131,7 +131,9 @@ impl GuppyCargoCommon {
 
     /// Resolves data for this query using Guppy.
     pub fn resolve_guppy(&self, ctx: &GlobalContext<'_>) -> Result<FeatureMap> {
-        let initials = self.pf.make_feature_set(ctx.graph())?;
+        // Ignore the features-only set for now.
+        // TODO: It would be interesting to test against it in the future.
+        let (initials, _) = self.pf.make_feature_sets(ctx.graph())?;
 
         // Note that guppy is more flexible than cargo here -- with the v1 feature resolver, it can
         // evaluate dependencies one of three ways:

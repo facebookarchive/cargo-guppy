@@ -46,7 +46,7 @@ use anyhow::{bail, Context, Result};
 use clap::arg_enum;
 use guppy::{
     graph::{
-        cargo::CargoOptions,
+        cargo::{CargoOptions, CargoSet},
         feature::{FeatureSet, StandardFeatures},
         summaries::Summary,
         DependencyDirection, DotWrite, PackageDotVisitor, PackageGraph, PackageLink,
@@ -218,10 +218,8 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
         .set_host_platform(host_platform.as_ref())
         .add_omitted_packages(opts.base_filter_opts.omitted_package_ids(&pkg_graph));
 
-    let cargo_set = opts
-        .pf
-        .make_feature_set(&pkg_graph)?
-        .into_cargo_set(&cargo_opts)?;
+    let (initials, features_only) = opts.pf.make_feature_sets(&pkg_graph)?;
+    let cargo_set = CargoSet::new(initials, features_only, &cargo_opts)?;
 
     // Note that for the target+proc macro case, we unify direct deps here. This means that
     // direct deps of workspace proc macros (e.g. quote) will be included. This feels like it's
