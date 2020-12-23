@@ -92,13 +92,15 @@ impl PackageGraph {
                     target_platform,
                     omitted_packages,
                 )| {
-                    CargoOptions::new()
-                        .with_version(version)
-                        .with_dev_deps(include_dev)
-                        .with_proc_macros_on_target(proc_macros_on_target)
-                        .with_host_platform(host_platform)
-                        .with_target_platform(target_platform)
-                        .with_omitted_packages(omitted_packages)
+                    let mut options = CargoOptions::new();
+                    options
+                        .set_version(version)
+                        .set_include_dev(include_dev)
+                        .set_proc_macros_on_target(proc_macros_on_target)
+                        .set_host_platform(host_platform)
+                        .set_target_platform(target_platform)
+                        .add_omitted_packages(omitted_packages);
+                    options
                 },
             )
     }
