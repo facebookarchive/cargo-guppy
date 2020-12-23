@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use anyhow::{bail, Result};
-use fixture_manager::{summaries::GenerateSummaryContext, GenerateSummariesOpts};
+use fixture_manager::{context::GenerateContext, summaries::SummaryContext, GenerateSummariesOpts};
 use fixtures::json::JsonFixture;
 
 /// Test that no checked in summaries have changed.
@@ -15,17 +15,17 @@ fn summaries_unchanged() -> Result<()> {
 
         println!("generating {} summaries for {}...", count, name);
 
-        let context = GenerateSummaryContext::new(fixture, count, false)?;
+        let context: GenerateContext<SummaryContext> = GenerateContext::new(fixture, &count, false)?;
 
         for summary_pair in context {
-            let summary_pair = summary_pair?;
-            let is_changed = summary_pair.is_changed();
+            let item = summary_pair?;
+            let is_changed = item.is_changed();
             if is_changed {
                 num_changed += 1;
                 println!(
                     "** {}:\n{}",
-                    summary_pair.summary_path.display(),
-                    summary_pair.diff().report()
+                    item.path().display(),
+                    item.diff()
                 );
             }
         }
