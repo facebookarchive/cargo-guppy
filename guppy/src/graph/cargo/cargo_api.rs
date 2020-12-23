@@ -53,7 +53,7 @@ impl<'a> CargoOptions<'a> {
     /// Sets the Cargo feature resolver version.
     ///
     /// For more about feature resolution, see the documentation for `CargoResolverVersion`.
-    pub fn with_version(mut self, version: CargoResolverVersion) -> Self {
+    pub fn set_version(&mut self, version: CargoResolverVersion) -> &mut Self {
         self.version = version;
         self
     }
@@ -64,7 +64,7 @@ impl<'a> CargoOptions<'a> {
     /// further dev-dependencies are never followed.
     ///
     /// The default is true, which matches what a plain `cargo build` does.
-    pub fn with_dev_deps(mut self, include_dev: bool) -> Self {
+    pub fn set_include_dev(&mut self, include_dev: bool) -> &mut Self {
         self.include_dev = include_dev;
         self
     }
@@ -77,7 +77,7 @@ impl<'a> CargoOptions<'a> {
     ///
     /// Procedural macros that are dependencies of the initial set will only be built on the host
     /// platform, regardless of whether this configuration is set.
-    pub fn with_proc_macros_on_target(mut self, proc_macros_on_target: bool) -> Self {
+    pub fn set_proc_macros_on_target(&mut self, proc_macros_on_target: bool) -> &mut Self {
         self.proc_macros_on_target = proc_macros_on_target;
         self
     }
@@ -98,15 +98,18 @@ impl<'a> CargoOptions<'a> {
     /// let platform = Platform::current();
     ///
     /// // Borrowed platform.
-    /// let _ = CargoOptions::new().with_platform(platform.as_ref());
+    /// let _ = CargoOptions::new().set_platform(platform.as_ref());
     ///
     /// // Owned platform.
-    /// let _ = CargoOptions::new().with_platform(platform.clone());
+    /// let _ = CargoOptions::new().set_platform(platform.clone());
     ///
     /// // Shared platform.
-    /// let _ = CargoOptions::new().with_platform(platform.map(Arc::new));
+    /// let _ = CargoOptions::new().set_platform(platform.map(Arc::new));
     /// ```
-    pub fn with_platform(mut self, platform: Option<impl Into<Obs<'a, Platform<'a>>>>) -> Self {
+    pub fn set_platform(
+        &mut self,
+        platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
+    ) -> &mut Self {
         let platform = Self::convert_platform(platform);
         self.target_platform = platform.clone();
         self.host_platform = platform;
@@ -117,10 +120,10 @@ impl<'a> CargoOptions<'a> {
     ///
     /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
     /// `Arc<Platform<'static>>`.
-    pub fn with_target_platform(
-        mut self,
+    pub fn set_target_platform(
+        &mut self,
         target_platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
-    ) -> Self {
+    ) -> &mut Self {
         self.target_platform = Self::convert_platform(target_platform);
         self
     }
@@ -129,10 +132,10 @@ impl<'a> CargoOptions<'a> {
     ///
     /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
     /// `Arc<Platform<'static>>`.
-    pub fn with_host_platform(
-        mut self,
+    pub fn set_host_platform(
+        &mut self,
         host_platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
-    ) -> Self {
+    ) -> &mut Self {
         self.host_platform = Self::convert_platform(host_platform);
         self
     }
@@ -143,10 +146,10 @@ impl<'a> CargoOptions<'a> {
     /// particular set of packages pulls in.
     ///
     /// This method is additive.
-    pub fn with_omitted_packages(
-        mut self,
+    pub fn add_omitted_packages(
+        &mut self,
         package_ids: impl IntoIterator<Item = &'a PackageId>,
-    ) -> Self {
+    ) -> &mut Self {
         self.omitted_packages.extend(package_ids);
         self
     }

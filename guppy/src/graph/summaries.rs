@@ -171,11 +171,12 @@ impl CargoOptionsSummary {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(CargoOptions::new()
-            .with_version(self.version)
-            .with_dev_deps(self.include_dev)
-            .with_proc_macros_on_target(self.proc_macros_on_target)
-            .with_host_platform(
+        let mut options = CargoOptions::new();
+        options
+            .set_version(self.version)
+            .set_include_dev(self.include_dev)
+            .set_proc_macros_on_target(self.proc_macros_on_target)
+            .set_host_platform(
                 self.host_platform
                     .as_ref()
                     .map(|platform| platform.to_platform())
@@ -184,7 +185,7 @@ impl CargoOptionsSummary {
                         Error::TargetSpecError("parsing host platform".to_string(), err)
                     })?,
             )
-            .with_target_platform(
+            .set_target_platform(
                 self.target_platform
                     .as_ref()
                     .map(|platform| platform.to_platform())
@@ -193,7 +194,8 @@ impl CargoOptionsSummary {
                         Error::TargetSpecError("parsing target platform".to_string(), err)
                     })?,
             )
-            .with_omitted_packages(omitted_packages))
+            .add_omitted_packages(omitted_packages);
+        Ok(options)
     }
 }
 

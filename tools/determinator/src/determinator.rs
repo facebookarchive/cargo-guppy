@@ -142,9 +142,11 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// * dev-dependencies are enabled
     /// * the host and target platforms are set to the current platform
     pub fn default_cargo_options() -> CargoOptions<'static> {
-        CargoOptions::new()
-            .with_dev_deps(true)
-            .with_platform(Platform::current())
+        let mut options = CargoOptions::new();
+        options
+            .set_include_dev(true)
+            .set_platform(Platform::current());
+        options
     }
 
     /// Uses the old and new sets and the list of changed files to compute the list
