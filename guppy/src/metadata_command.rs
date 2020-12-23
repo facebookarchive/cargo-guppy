@@ -1,13 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::PackageGraph;
-use crate::Error;
+use crate::{graph::PackageGraph, Error};
 use cargo_metadata::CargoOpt;
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::io;
-use std::path::PathBuf;
+use std::{convert::TryFrom, io, path::PathBuf};
 
 /// A builder for configuring `cargo metadata` invocations.
 ///

@@ -2,17 +2,21 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::details::PackageDetails;
-use guppy::graph::feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet};
-use guppy::graph::{
-    DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkPtrs,
-    PackageMetadata, PackageQuery, PackageSet,
+use guppy::{
+    graph::{
+        feature::{FeatureGraph, FeatureId, FeatureMetadata, FeatureQuery, FeatureSet},
+        DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkPtrs,
+        PackageMetadata, PackageQuery, PackageSet,
+    },
+    DependencyKind, Error, PackageId, Platform,
 };
-use guppy::{DependencyKind, Error, PackageId, Platform};
 use pretty_assertions::assert_eq;
-use std::collections::{BTreeSet, HashSet};
-use std::fmt;
-use std::hash::Hash;
-use std::iter;
+use std::{
+    collections::{BTreeSet, HashSet},
+    fmt,
+    hash::Hash,
+    iter,
+};
 
 fn __from_metadata<'a>(link: &PackageLink<'a>) -> PackageMetadata<'a> {
     link.from()

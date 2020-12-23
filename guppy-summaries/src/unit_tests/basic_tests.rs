@@ -1,9 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::diff::SummaryDiffStatus;
 use crate::{
-    PackageInfo, PackageMap, PackageStatus, SummaryId, SummarySource, SummaryWithMetadata,
+    diff::SummaryDiffStatus, PackageInfo, PackageMap, PackageStatus, SummaryId, SummarySource,
+    SummaryWithMetadata,
 };
 use pretty_assertions::assert_eq;
 use semver::Version;

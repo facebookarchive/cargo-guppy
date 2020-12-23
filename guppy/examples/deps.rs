@@ -3,8 +3,7 @@
 
 //! Print out direct and transitive dependencies of a package.
 
-use guppy::graph::DependencyDirection;
-use guppy::{CargoMetadata, Error, PackageId};
+use guppy::{graph::DependencyDirection, CargoMetadata, Error, PackageId};
 use std::iter;
 
 fn main() -> Result<(), Error> {

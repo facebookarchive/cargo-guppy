@@ -1,19 +1,26 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::dep_helpers::{
-    assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
-    assert_transitive_deps_internal,
+use crate::{
+    dep_helpers::{
+        assert_all_links, assert_deps_internal, assert_topo_ids, assert_topo_metadatas,
+        assert_transitive_deps_internal,
+    },
+    package_id,
 };
-use crate::package_id;
-use guppy::graph::{
-    BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
-    PackageGraph, PackageLink, PackageMetadata, PackageSource, Workspace,
+use guppy::{
+    errors::FeatureGraphWarning,
+    graph::{
+        BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
+        PackageGraph, PackageLink, PackageMetadata, PackageSource, Workspace,
+    },
+    DependencyKind, PackageId, Platform, Version,
 };
-use guppy::{errors::FeatureGraphWarning, DependencyKind, PackageId, Platform, Version};
 use pretty_assertions::assert_eq;
-use std::collections::{BTreeMap, HashMap};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::{Path, PathBuf},
+};
 
 /// This captures metadata fields that are relevant for tests. They are meant to be written out
 /// lazily as tests are filled out -- feel free to add more details as necessary!

@@ -1,18 +1,21 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::debug_ignore::DebugIgnore;
-use crate::graph::feature::{
-    CrossLink, FeatureEdge, FeatureGraph, FeatureId, FeatureList, FeatureMetadata, FeatureQuery,
-    FeatureResolver,
+use crate::{
+    debug_ignore::DebugIgnore,
+    graph::{
+        feature::{
+            CrossLink, FeatureEdge, FeatureGraph, FeatureId, FeatureList, FeatureMetadata,
+            FeatureQuery, FeatureResolver,
+        },
+        resolve_core::ResolveCore,
+        DependencyDirection, FeatureGraphSpec, PackageMetadata, PackageSet,
+    },
+    petgraph_support::IxBitSet,
+    Error, PackageId,
 };
-use crate::graph::resolve_core::ResolveCore;
-use crate::graph::{DependencyDirection, FeatureGraphSpec, PackageMetadata, PackageSet};
-use crate::petgraph_support::IxBitSet;
-use crate::{Error, PackageId};
 use fixedbitset::FixedBitSet;
-use petgraph::graph::NodeIndex;
-use petgraph::visit::EdgeRef;
+use petgraph::{graph::NodeIndex, visit::EdgeRef};
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.

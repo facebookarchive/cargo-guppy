@@ -6,8 +6,10 @@
 //! Dev-only dependencies are typically not included in release builds, so it's useful to be able
 //! to filter out those links.
 
-use guppy::graph::{DependencyDirection, PackageLink};
-use guppy::{CargoMetadata, Error};
+use guppy::{
+    graph::{DependencyDirection, PackageLink},
+    CargoMetadata, Error,
+};
 use std::iter;
 
 fn main() -> Result<(), Error> {

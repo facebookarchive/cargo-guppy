@@ -6,8 +6,7 @@ use guppy::graph::PackageGraph;
 use guppy_cmdlib::CargoMetadataOptions;
 use once_cell::sync::Lazy;
 use proptest::prelude::*;
-use std::env;
-use std::path::Path;
+use std::{env, path::Path};
 
 // ---
 // Paths to fixtures, relative to the cargo-compare directory (the one with Cargo.toml)

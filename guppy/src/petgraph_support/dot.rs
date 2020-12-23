@@ -1,8 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use petgraph::prelude::*;
-use petgraph::visit::{GraphProp, IntoEdgeReferences, IntoNodeReferences, NodeIndexable, NodeRef};
+use petgraph::{
+    prelude::*,
+    visit::{GraphProp, IntoEdgeReferences, IntoNodeReferences, NodeIndexable, NodeRef},
+};
 use std::fmt::{self, Write};
 
 static INDENT: &str = "    ";

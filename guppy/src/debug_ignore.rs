@@ -1,8 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::fmt;
-use std::ops::{Deref, DerefMut};
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+};
 
 /// A newtype wrapper that causes this field to be ignored while being debugged.
 ///

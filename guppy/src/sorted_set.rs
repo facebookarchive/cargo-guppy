@@ -1,9 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::fmt;
-use std::iter::FromIterator;
-use std::ops::Deref;
+use std::{fmt, iter::FromIterator, ops::Deref};
 
 /// An immutable set stored as a sorted vector.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

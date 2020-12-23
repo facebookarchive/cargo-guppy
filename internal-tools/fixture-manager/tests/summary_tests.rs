@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use anyhow::{bail, Result};
-use fixture_manager::summaries::GenerateSummaryContext;
-use fixture_manager::GenerateSummariesOpts;
+use fixture_manager::{summaries::GenerateSummaryContext, GenerateSummariesOpts};
 use fixtures::json::JsonFixture;
 
 /// Test that no checked in summaries have changed.

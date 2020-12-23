@@ -3,10 +3,11 @@
 
 //! Code for handling cycles in dependency graphs.
 
-use crate::graph::{PackageGraph, PackageIx};
-use crate::petgraph_support::scc::Sccs;
-use crate::Error;
-use crate::PackageId;
+use crate::{
+    graph::{PackageGraph, PackageIx},
+    petgraph_support::scc::Sccs,
+    Error, PackageId,
+};
 
 /// Contains information about dependency cycles.
 ///

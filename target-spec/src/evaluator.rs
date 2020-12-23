@@ -1,9 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::platform::{Platform, TargetFeatures};
-use crate::TargetSpec;
-use crate::{Error, Target};
+use crate::{
+    platform::{Platform, TargetFeatures},
+    Error, Target, TargetSpec,
+};
 use cfg_expr::{Expression, Predicate};
 use std::sync::Arc;
 

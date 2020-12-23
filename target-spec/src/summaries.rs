@@ -102,8 +102,7 @@ impl TargetFeaturesSummary {
 
 mod target_features_impl {
     use super::*;
-    use serde::de::Error;
-    use serde::{Deserializer, Serializer};
+    use serde::{de::Error, Deserializer, Serializer};
 
     pub fn serialize<S>(
         target_features: &TargetFeaturesSummary,

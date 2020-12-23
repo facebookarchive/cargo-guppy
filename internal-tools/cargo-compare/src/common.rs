@@ -1,24 +1,32 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::type_conversions::ToGuppy;
-use crate::GlobalContext;
+use crate::{type_conversions::ToGuppy, GlobalContext};
 use anyhow::Result;
-use cargo::core::compiler::{CompileKind, CompileTarget, RustcTargetData};
-use cargo::core::resolver::features::FeaturesFor;
-use cargo::core::resolver::{ForceAllTargets, HasDevUnits, ResolveOpts};
-use cargo::core::{enable_nightly_features, PackageIdSpec, Workspace};
-use cargo::ops::resolve_ws_with_opts;
-use cargo::Config;
-use guppy::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
-use guppy::graph::feature::FeatureSet;
-use guppy::graph::{DependencyDirection, PackageGraph};
-use guppy::{PackageId, Platform, TargetFeatures};
-use guppy_cmdlib::proptest::triple_strategy;
-use guppy_cmdlib::{CargoMetadataOptions, PackagesAndFeatures};
+use cargo::{
+    core::{
+        compiler::{CompileKind, CompileTarget, RustcTargetData},
+        enable_nightly_features,
+        resolver::{features::FeaturesFor, ForceAllTargets, HasDevUnits, ResolveOpts},
+        PackageIdSpec, Workspace,
+    },
+    ops::resolve_ws_with_opts,
+    Config,
+};
+use guppy::{
+    graph::{
+        cargo::{CargoOptions, CargoResolverVersion, CargoSet},
+        feature::FeatureSet,
+        DependencyDirection, PackageGraph,
+    },
+    PackageId, Platform, TargetFeatures,
+};
+use guppy_cmdlib::{proptest::triple_strategy, CargoMetadataOptions, PackagesAndFeatures};
 use proptest::prelude::*;
-use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::{Path, PathBuf},
+};
 use structopt::StructOpt;
 
 /// Options that are common to Guppy and Cargo.

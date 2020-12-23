@@ -1,8 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::error;
-use std::fmt;
+use std::{error, fmt};
 
 /// An error that happened during `target-spec` parsing or evaluation.
 #[derive(Debug, PartialEq)]

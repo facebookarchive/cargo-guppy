@@ -1,8 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::ops::Deref;
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 use supercow::Supercow;
 
 /// Represents an owned, borrowed or shared instance of `T`.

@@ -1,19 +1,23 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{
-    cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
-    DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
-    PackageLinkImpl, PackageMetadataImpl, PackageSourceImpl, PlatformStatusImpl, WorkspaceImpl,
+use crate::{
+    graph::{
+        cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
+        DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
+        PackageLinkImpl, PackageMetadataImpl, PackageSourceImpl, PlatformStatusImpl, WorkspaceImpl,
+    },
+    sorted_set::SortedSet,
+    Error, PackageId,
 };
-use crate::sorted_set::SortedSet;
-use crate::{Error, PackageId};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, Resolve, Target};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
-use std::collections::{BTreeMap, HashMap, HashSet};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    path::{Path, PathBuf},
+};
 use target_spec::TargetSpec;
 
 impl PackageGraph {

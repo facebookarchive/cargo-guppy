@@ -1,13 +1,17 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::{DependencyDirection, GraphSpec};
-use crate::petgraph_support::dfs::dfs_next_filtered;
-use crate::sorted_set::SortedSet;
+use crate::{
+    graph::{DependencyDirection, GraphSpec},
+    petgraph_support::dfs::dfs_next_filtered,
+    sorted_set::SortedSet,
+};
 use fixedbitset::FixedBitSet;
-use petgraph::graph::IndexType;
-use petgraph::prelude::*;
-use petgraph::visit::{IntoEdges, IntoNeighbors, Visitable};
+use petgraph::{
+    graph::IndexType,
+    prelude::*,
+    visit::{IntoEdges, IntoNeighbors, Visitable},
+};
 use std::fmt;
 
 pub(super) enum QueryParams<G: GraphSpec> {

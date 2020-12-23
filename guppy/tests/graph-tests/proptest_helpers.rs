@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use fixtures::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphQuery, GraphSet};
-use guppy::graph::feature::{FeatureId, FeatureSet, StandardFeatures};
-use guppy::graph::{DependencyDirection, PackageGraph, Prop010Resolver};
-use guppy::PackageId;
+use guppy::{
+    graph::{
+        feature::{FeatureId, FeatureSet, StandardFeatures},
+        DependencyDirection, PackageGraph, Prop010Resolver,
+    },
+    PackageId,
+};
 use pretty_assertions::assert_eq;
-use proptest::collection::vec;
-use proptest::prelude::*;
-use proptest::sample::Index;
+use proptest::{collection::vec, prelude::*, sample::Index};
 use std::collections::HashSet;
 
 macro_rules! proptest_suite {

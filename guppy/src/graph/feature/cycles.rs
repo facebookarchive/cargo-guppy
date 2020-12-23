@@ -3,10 +3,14 @@
 
 //! Code for handling cycles in feature graphs.
 
-use crate::graph::feature::{FeatureGraph, FeatureId};
-use crate::graph::FeatureIx;
-use crate::petgraph_support::scc::Sccs;
-use crate::Error;
+use crate::{
+    graph::{
+        feature::{FeatureGraph, FeatureId},
+        FeatureIx,
+    },
+    petgraph_support::scc::Sccs,
+    Error,
+};
 
 /// Contains information about dependency cycles in feature graphs.
 ///

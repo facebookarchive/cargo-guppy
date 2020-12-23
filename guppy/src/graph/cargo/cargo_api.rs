@@ -1,11 +1,15 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::cargo::build::CargoSetBuildState;
-use crate::graph::feature::{FeatureGraph, FeatureQuery, FeatureSet};
-use crate::graph::{PackageGraph, PackageIx, PackageLink, PackageSet};
-use crate::sorted_set::SortedSet;
-use crate::{Error, Obs, PackageId};
+use crate::{
+    graph::{
+        cargo::build::CargoSetBuildState,
+        feature::{FeatureGraph, FeatureQuery, FeatureSet},
+        PackageGraph, PackageIx, PackageLink, PackageSet,
+    },
+    sorted_set::SortedSet,
+    Error, Obs, PackageId,
+};
 use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;

@@ -6,8 +6,7 @@
 //! The into_iter_ids and into_iter_metadatas iterators return packages in topological order. Note
 //! that into_iter_links returns links in "link order" -- see its documentation for more.
 
-use guppy::graph::DependencyDirection;
-use guppy::{CargoMetadata, Error};
+use guppy::{graph::DependencyDirection, CargoMetadata, Error};
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.

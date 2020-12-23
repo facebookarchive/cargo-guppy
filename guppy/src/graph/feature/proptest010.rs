@@ -1,8 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraph, FeatureId, FeatureSet};
-use crate::graph::fixedbitset_strategy;
+use crate::graph::{
+    feature::{FeatureGraph, FeatureId, FeatureSet},
+    fixedbitset_strategy,
+};
 use petgraph::prelude::*;
 use proptest::prelude::*;
 

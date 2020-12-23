@@ -3,13 +3,14 @@
 
 //! Support for comparing Cargo and Guppy.
 
-use crate::check::CheckOpts;
-use crate::diff::DiffOpts;
+use crate::{check::CheckOpts, diff::DiffOpts};
 use anyhow::Result;
 use either::Either;
 use guppy::graph::PackageGraph;
-use std::env;
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 use structopt::StructOpt;
 use tempfile::TempDir;
 

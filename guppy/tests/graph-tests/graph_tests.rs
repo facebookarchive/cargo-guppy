@@ -5,13 +5,12 @@ use fixtures::{
     json::{self, JsonFixture},
     package_id,
 };
-use guppy::graph::feature::{feature_filter, FeatureId};
 use guppy::graph::{
+    feature::{feature_filter, FeatureId},
     BuildTargetId, BuildTargetKind, DependencyDirection, DotWrite, PackageDotVisitor, PackageLink,
     PackageMetadata,
 };
-use std::fmt;
-use std::iter;
+use std::{fmt, iter};
 
 mod small {
     use super::*;

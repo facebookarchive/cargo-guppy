@@ -7,8 +7,10 @@
 //! don't want that, you can maintain a 'seen' set.
 
 use guppy::{CargoMetadata, Error};
-use std::collections::BTreeMap;
-use std::io::{stdout, Write};
+use std::{
+    collections::BTreeMap,
+    io::{stdout, Write},
+};
 
 fn main() -> Result<(), Error> {
     // `guppy` accepts `cargo metadata` JSON output. Use a pre-existing fixture for these examples.

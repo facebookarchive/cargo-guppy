@@ -5,10 +5,12 @@
 
 use anyhow::{anyhow, ensure};
 use clap::arg_enum;
-use guppy::graph::{
-    DependencyDirection, DependencyReq, EnabledTernary, PackageGraph, PackageLink, PackageQuery,
+use guppy::{
+    graph::{
+        DependencyDirection, DependencyReq, EnabledTernary, PackageGraph, PackageLink, PackageQuery,
+    },
+    PackageId, Platform, TargetFeatures,
 };
-use guppy::{PackageId, Platform, TargetFeatures};
 use std::collections::HashSet;
 use structopt::StructOpt;
 
