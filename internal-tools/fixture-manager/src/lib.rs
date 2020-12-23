@@ -1,9 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+pub mod context;
 pub mod summaries;
 
-use crate::summaries::*;
+use crate::{context::GenerateContext, summaries::*};
 use anyhow::{anyhow, bail, Result};
 use clap::arg_enum;
 use fixtures::json::JsonFixture;
@@ -49,8 +50,8 @@ pub struct GenerateSummariesOpts {
     pub count: usize,
 
     /// Execution mode (check, force or generate)
-    #[structopt(long, short, possible_values = &GenerateSummariesMode::variants(), case_insensitive = true, default_value = "generate")]
-    pub mode: GenerateSummariesMode,
+    #[structopt(long, short, possible_values = &GenerateMode::variants(), case_insensitive = true, default_value = "generate")]
+    pub mode: GenerateMode,
 
     /// Only generate summaries for these fixtures
     #[structopt(long)]
@@ -71,7 +72,7 @@ impl GenerateSummariesOpts {
 
 arg_enum! {
     #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-    pub enum GenerateSummariesMode {
+    pub enum GenerateMode {
         Generate,
         Check,
         Force,
@@ -102,46 +103,33 @@ impl GenerateSummariesOpts {
         let mut num_changed = 0;
 
         for (name, fixture) in fixtures {
-            println!("generating {} summaries for {}...", self.count, name);
+            println!("generating {} outputs for {}...", self.count, name);
 
-            let context = GenerateSummaryContext::new(
-                fixture,
-                self.count,
-                self.mode == GenerateSummariesMode::Force,
-            )?;
-            for summary_pair in context {
-                let summary_pair = summary_pair?;
-                let is_changed = summary_pair.is_changed();
+            let context: GenerateContext<'_, SummaryContext> =
+                GenerateContext::new(fixture, &self.count, self.mode == GenerateMode::Force)?;
+            for item in context {
+                let item = item?;
+                let is_changed = item.is_changed();
 
                 if is_changed {
                     num_changed += 1;
                 }
 
-                if self.mode == GenerateSummariesMode::Check {
+                if self.mode == GenerateMode::Check {
                     if is_changed {
-                        println!(
-                            "** {}:\n{}",
-                            summary_pair.summary_path.display(),
-                            summary_pair.diff().report()
-                        );
+                        println!("** {}:\n{}", item.path().display(), item.diff());
                     }
 
                     continue;
                 }
 
-                if is_changed || self.mode == GenerateSummariesMode::Force {
-                    // Write the summary to a string.
-                    let header = format!(
-                        "# This summary was @generated. To regenerate, run:\n\
-                         #   cargo run -p fixture-manager -- generate-summaries --fixture {}\n\n",
-                        name
-                    );
-                    summary_pair.write(header)?;
+                if is_changed || self.mode == GenerateMode::Force {
+                    item.write_to_path()?;
                 }
             }
         }
 
-        if self.mode == GenerateSummariesMode::Check && num_changed > 0 {
+        if self.mode == GenerateMode::Check && num_changed > 0 {
             bail!("{} summaries changed", num_changed);
         }
 
