@@ -15,19 +15,29 @@ impl PackagesAndFeatures {
             hash_set(workspace.prop010_name_strategy(), 0..8),
             any::<bool>(),
             any::<bool>(),
+            // The lower bound of 0 is important here as well, because 0 means none.
+            // (This is at the end to avoid perturbing previously-generated values of all_features
+            // and no_default_features.)
+            hash_set(workspace.prop010_name_strategy(), 0..4),
         )
-            .prop_map(move |(packages, all_features, no_default_features)| {
-                // TODO: select features from these packages (probably requires flat_map :/ )
-                Self {
-                    packages: packages
-                        .into_iter()
-                        .map(|package| package.to_string())
-                        .collect(),
-                    features: vec![],
-                    all_features,
-                    no_default_features,
-                }
-            })
+            .prop_map(
+                move |(packages, all_features, no_default_features, features_only)| {
+                    // TODO: select features from these packages (probably requires flat_map :/ )
+                    Self {
+                        packages: packages
+                            .into_iter()
+                            .map(|package| package.to_string())
+                            .collect(),
+                        features_only: features_only
+                            .into_iter()
+                            .map(|package| package.to_string())
+                            .collect(),
+                        features: vec![],
+                        all_features,
+                        no_default_features,
+                    }
+                },
+            )
     }
 }
 

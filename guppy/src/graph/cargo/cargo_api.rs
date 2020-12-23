@@ -218,6 +218,7 @@ pub enum CargoResolverVersion {
 #[derive(Clone, Debug)]
 pub struct CargoSet<'g> {
     pub(super) initials: FeatureSet<'g>,
+    pub(super) features_only: FeatureSet<'g>,
     pub(super) target_features: FeatureSet<'g>,
     pub(super) host_features: FeatureSet<'g>,
     pub(super) target_direct_deps: PackageSet<'g>,
@@ -231,14 +232,31 @@ assert_covariant!(CargoSet);
 impl<'g> CargoSet<'g> {
     /// Simulates a Cargo build of this feature set, with the given options.
     ///
-    /// The feature set is expected to be entirely within the workspace. Its behavior outside the
+    /// The feature sets are expected to be entirely within the workspace. Its behavior outside the
     /// workspace isn't defined and may be surprising.
     ///
-    /// This is also accessible through `FeatureSet::into_cargo_set()`, and it may be more
-    /// convenient to use that if the code is written in a "fluent" style.
-    pub fn new(initials: FeatureSet<'g>, opts: &CargoOptions<'_>) -> Result<Self, Error> {
-        let build_state = CargoSetBuildState::new(&initials, opts)?;
-        Ok(build_state.build(initials))
+    /// `CargoSet::new` takes two `FeatureSet` instances:
+    /// * `initials`, from which dependencies are followed to build the `CargoSet`.
+    /// * `features_only`, which are additional inputs that are used to discover feature
+    ///   unification. This may be used to simulate, e.g. `cargo build --package foo --package bar`,
+    ///   when you only care about the results of `foo` but specifying `bar` influences the build.
+    ///
+    /// Note that even if a package is in `features_only`, it may be included in the final build set
+    /// through other means (for example, if it is also in `initials` or it is a dependency of one
+    /// of them).
+    ///
+    /// In many cases `features_only` is empty -- in that case you may wish to use
+    /// `FeatureSet::into_cargo_set()`, and it may be more convenient to use that if the code is
+    /// written in a "fluent" style.
+    ///
+    ///
+    pub fn new(
+        initials: FeatureSet<'g>,
+        features_only: FeatureSet<'g>,
+        opts: &CargoOptions<'_>,
+    ) -> Result<Self, Error> {
+        let build_state = CargoSetBuildState::new(initials.graph().package_graph, opts)?;
+        Ok(build_state.build(initials, features_only))
     }
 
     /// Creates a new `CargoIntermediateSet` based on the given query and options.
@@ -251,7 +269,7 @@ impl<'g> CargoSet<'g> {
         initials: &FeatureSet<'g>,
         opts: &CargoOptions<'_>,
     ) -> Result<CargoIntermediateSet<'g>, Error> {
-        let build_state = CargoSetBuildState::new(initials, opts)?;
+        let build_state = CargoSetBuildState::new(initials.graph().package_graph, opts)?;
         Ok(build_state.build_intermediate(initials.to_feature_query(DependencyDirection::Forward)))
     }
 
@@ -269,6 +287,15 @@ impl<'g> CargoSet<'g> {
     /// constructed.
     pub fn initials(&self) -> &FeatureSet<'g> {
         &self.initials
+    }
+
+    /// Returns the packages and features that took part in feature unification but were not
+    /// considered part of the final result.
+    ///
+    /// For more about `features_only` and how it influences the build, see the documentation for
+    /// [`CargoSet::new`](CargoSet::new).
+    pub fn features_only(&self) -> &FeatureSet<'g> {
+        &self.features_only
     }
 
     /// Returns the feature set enabled on the target platform.
