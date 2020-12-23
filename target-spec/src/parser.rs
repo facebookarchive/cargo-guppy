@@ -1,12 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::custom_platforms::TargetInfo;
-use crate::{eval_target, Error, Platform};
-use cfg_expr::targets::get_builtin_target_by_triple;
-use cfg_expr::{Expression, Predicate};
-use std::str::FromStr;
-use std::sync::Arc;
+use crate::{custom_platforms::TargetInfo, eval_target, Error, Platform};
+use cfg_expr::{targets::get_builtin_target_by_triple, Expression, Predicate};
+use std::{str::FromStr, sync::Arc};
 
 /// A parsed target specification or triple, as found in a `Cargo.toml` file.
 ///
@@ -108,8 +105,10 @@ impl<'a> Target<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cfg_expr::targets::{Family, Os};
-    use cfg_expr::{Predicate, TargetPredicate};
+    use cfg_expr::{
+        targets::{Family, Os},
+        Predicate, TargetPredicate,
+    };
 
     #[test]
     fn test_triple() {

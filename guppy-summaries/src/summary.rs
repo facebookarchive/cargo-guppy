@@ -4,9 +4,11 @@
 use crate::diff::SummaryDiff;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
-use std::path::PathBuf;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt,
+    path::PathBuf,
+};
 use toml::{Serializer, Value};
 
 /// A type representing a package map as used in `Summary` instances.
@@ -292,9 +294,7 @@ mod package_map_impl {
 /// Serialization and deserialization for the `CratesIo` variant.
 mod crates_io_impl {
     use super::*;
-    use serde::de::Error;
-    use serde::ser::SerializeMap;
-    use serde::{Deserializer, Serializer};
+    use serde::{de::Error, ser::SerializeMap, Deserializer, Serializer};
 
     pub fn serialize<S>(serializer: S) -> Result<S::Ok, S::Error>
     where

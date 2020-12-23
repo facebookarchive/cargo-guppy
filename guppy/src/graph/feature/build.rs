@@ -1,19 +1,21 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::errors::{FeatureBuildStage, FeatureGraphWarning};
-use crate::graph::feature::{
-    CrossLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode, FeatureType,
-};
-use crate::graph::{
-    DepRequiredOrOptional, DependencyReq, FeatureIx, PackageGraph, PackageIx, PackageLink,
-    PackageMetadata, PlatformStatusImpl,
+use crate::{
+    errors::{FeatureBuildStage, FeatureGraphWarning},
+    graph::{
+        feature::{
+            CrossLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode,
+            FeatureType,
+        },
+        DepRequiredOrOptional, DependencyReq, FeatureIx, PackageGraph, PackageIx, PackageLink,
+        PackageMetadata, PlatformStatusImpl,
+    },
 };
 use cargo_metadata::DependencyKind;
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
-use std::collections::HashMap;
-use std::iter;
+use std::{collections::HashMap, iter};
 
 #[derive(Debug)]
 pub(super) struct FeatureGraphBuildState<'g> {

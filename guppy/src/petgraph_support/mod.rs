@@ -7,8 +7,7 @@
 //! desirable.
 
 use fixedbitset::FixedBitSet;
-use petgraph::graph::IndexType;
-use petgraph::prelude::*;
+use petgraph::{graph::IndexType, prelude::*};
 use std::iter::FromIterator;
 
 pub mod dfs;

@@ -1,12 +1,16 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::cargo::{CargoOptions, CargoSet};
-use crate::graph::feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet};
-use crate::graph::query_core::QueryParams;
-use crate::graph::{DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata};
-use crate::sorted_set::SortedSet;
-use crate::{Error, PackageId};
+use crate::{
+    graph::{
+        cargo::{CargoOptions, CargoSet},
+        feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet},
+        query_core::QueryParams,
+        DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata,
+    },
+    sorted_set::SortedSet,
+    Error, PackageId,
+};
 use itertools::Itertools;
 use petgraph::graph::NodeIndex;
 use std::collections::HashSet;

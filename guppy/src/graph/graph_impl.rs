@@ -1,28 +1,32 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureGraphImpl, FeatureId, FeatureNode};
-use crate::graph::{
-    cargo_version_matches, BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind, Cycles,
-    DependencyDirection, OwnedBuildTargetId, PackageIx, PackageQuery,
-};
-use crate::petgraph_support::scc::Sccs;
 use crate::{
+    graph::{
+        cargo_version_matches,
+        feature::{FeatureGraphImpl, FeatureId, FeatureNode},
+        BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind, Cycles, DependencyDirection,
+        OwnedBuildTargetId, PackageIx, PackageQuery,
+    },
+    petgraph_support::scc::Sccs,
     CargoMetadata, DependencyKind, Error, JsonValue, MetadataCommand, PackageId, Platform,
 };
 use cargo_metadata::NodeDep;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
-use petgraph::algo::{has_path_connecting, DfsSpace};
-use petgraph::graph::EdgeReference;
-use petgraph::prelude::*;
+use petgraph::{
+    algo::{has_path_connecting, DfsSpace},
+    graph::EdgeReference,
+    prelude::*,
+};
 use semver::{Version, VersionReq};
-use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fmt;
-use std::iter;
-use std::iter::FromIterator;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    fmt, iter,
+    iter::FromIterator,
+    path::{Path, PathBuf},
+};
 use target_spec::TargetSpec;
 
 /// A graph of packages and dependencies between them, parsed from metadata returned by `cargo

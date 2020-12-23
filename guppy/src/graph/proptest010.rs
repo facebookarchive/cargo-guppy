@@ -1,15 +1,20 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::cargo::{CargoOptions, CargoResolverVersion};
-use crate::graph::{PackageGraph, PackageLink, PackageQuery, PackageResolver, Workspace};
-use crate::PackageId;
+use crate::{
+    graph::{
+        cargo::{CargoOptions, CargoResolverVersion},
+        PackageGraph, PackageLink, PackageQuery, PackageResolver, Workspace,
+    },
+    PackageId,
+};
 use fixedbitset::FixedBitSet;
-use petgraph::prelude::*;
-use petgraph::visit::VisitMap;
-use proptest::collection::{hash_set, vec};
-use proptest::option;
-use proptest::prelude::*;
+use petgraph::{prelude::*, visit::VisitMap};
+use proptest::{
+    collection::{hash_set, vec},
+    option,
+    prelude::*,
+};
 use target_spec::{Platform, TargetFeatures};
 
 /// ## Helpers for property testing

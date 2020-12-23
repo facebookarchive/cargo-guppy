@@ -4,8 +4,7 @@
 //! Contains types that describe errors and warnings that `guppy` methods can return.
 
 use crate::PackageId;
-use std::error;
-use std::fmt;
+use std::{error, fmt};
 
 use crate::graph::feature::FeatureId;
 use std::path::PathBuf;

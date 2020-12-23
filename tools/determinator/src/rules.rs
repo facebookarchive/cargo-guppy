@@ -569,8 +569,7 @@ impl<'g> MarkChangedImpl<'g> {
 
 mod mark_changed_impl {
     use super::*;
-    use serde::de::Error;
-    use serde::{Deserializer, Serializer};
+    use serde::{de::Error, Deserializer, Serializer};
 
     pub fn serialize<S>(
         mark_changed: &DeterminatorMarkChanged,

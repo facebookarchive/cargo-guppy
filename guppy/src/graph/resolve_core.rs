@@ -1,15 +1,23 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::debug_ignore::DebugIgnore;
-use crate::graph::query_core::{all_visit_map, reachable_map, reachable_map_filtered, QueryParams};
-use crate::graph::{DependencyDirection, GraphSpec};
-use crate::petgraph_support::scc::{NodeIter, Sccs};
-use crate::petgraph_support::walk::EdgeDfs;
+use crate::{
+    debug_ignore::DebugIgnore,
+    graph::{
+        query_core::{all_visit_map, reachable_map, reachable_map_filtered, QueryParams},
+        DependencyDirection, GraphSpec,
+    },
+    petgraph_support::{
+        scc::{NodeIter, Sccs},
+        walk::EdgeDfs,
+    },
+};
 use fixedbitset::FixedBitSet;
-use petgraph::graph::EdgeReference;
-use petgraph::prelude::*;
-use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
+use petgraph::{
+    graph::EdgeReference,
+    prelude::*,
+    visit::{NodeFiltered, Reversed, VisitMap},
+};
 use serde::export::PhantomData;
 
 /// Core logic for queries that have been resolved into a known set of packages.

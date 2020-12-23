@@ -15,8 +15,10 @@ use crate::{
 use diffus::{edit, Diffable};
 use semver::Version;
 use serde::{ser::SerializeStruct, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashMap};
-use std::{fmt, mem};
+use std::{
+    collections::{BTreeMap, BTreeSet, HashMap},
+    fmt, mem,
+};
 
 /// A diff of two package summaries.
 ///

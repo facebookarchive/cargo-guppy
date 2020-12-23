@@ -7,8 +7,10 @@ use guppy::graph::summaries::{diff::SummaryDiff, Summary};
 use guppy_cmdlib::PackagesAndFeatures;
 use once_cell::sync::Lazy;
 use proptest_ext::ValueGenerator;
-use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 pub struct GenerateSummaryContext<'g> {
     fixture: &'g JsonFixture,

@@ -1,16 +1,16 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::common::GuppyCargoCommon;
-use crate::GlobalContext;
+use crate::{common::GuppyCargoCommon, GlobalContext};
 use anyhow::{bail, Result};
 use diffus::{edit, Diffable};
-use guppy::graph::PackageGraph;
-use guppy::PackageId;
+use guppy::{graph::PackageGraph, PackageId};
 use itertools::Itertools;
 use once_cell::sync::OnceCell;
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt,
+};
 use structopt::StructOpt;
 
 /// Options for cargo/guppy comparisons.

@@ -1,13 +1,17 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::common::GuppyCargoCommon;
-use crate::diff::{FeatureDiff, TargetHostDiff};
-use crate::GlobalContext;
+use crate::{
+    common::GuppyCargoCommon,
+    diff::{FeatureDiff, TargetHostDiff},
+    GlobalContext,
+};
 use anyhow::{Error, Result};
 use guppy_cmdlib::CargoMetadataOptions;
-use proptest::prelude::*;
-use proptest::test_runner::{Config, TestError, TestRunner};
+use proptest::{
+    prelude::*,
+    test_runner::{Config, TestError, TestRunner},
+};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use structopt::StructOpt;
 

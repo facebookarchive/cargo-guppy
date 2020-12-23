@@ -1,22 +1,28 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::debug_ignore::DebugIgnore;
-use crate::graph::feature::{FeatureFilter, FeatureSet};
-use crate::graph::resolve_core::{ResolveCore, Topo};
-use crate::graph::{
-    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageLinkImpl, PackageMetadata,
-    PackageQuery,
+use crate::{
+    debug_ignore::DebugIgnore,
+    graph::{
+        feature::{FeatureFilter, FeatureSet},
+        resolve_core::{ResolveCore, Topo},
+        DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageLinkImpl,
+        PackageMetadata, PackageQuery,
+    },
+    petgraph_support::{
+        dot::{DotFmt, DotVisitor, DotWrite},
+        edge_ref::GraphEdgeRef,
+        IxBitSet,
+    },
+    sorted_set::SortedSet,
+    Error, PackageId,
 };
-use crate::petgraph_support::dot::{DotFmt, DotVisitor, DotWrite};
-use crate::petgraph_support::edge_ref::GraphEdgeRef;
-use crate::petgraph_support::IxBitSet;
-use crate::{sorted_set::SortedSet, Error, PackageId};
 use fixedbitset::FixedBitSet;
-use petgraph::prelude::*;
-use petgraph::visit::{NodeFiltered, NodeRef};
-use std::fmt;
-use std::path::Path;
+use petgraph::{
+    prelude::*,
+    visit::{NodeFiltered, NodeRef},
+};
+use std::{fmt, path::Path};
 
 impl PackageGraph {
     /// Creates a new `PackageSet` consisting of all members of this package graph.

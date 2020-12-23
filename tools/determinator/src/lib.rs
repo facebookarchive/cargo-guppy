@@ -245,5 +245,4 @@ pub mod errors;
 mod paths0;
 pub mod rules;
 
-pub use crate::determinator::*;
-pub use crate::paths0::*;
+pub use crate::{determinator::*, paths0::*};

@@ -1,14 +1,17 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::cargo::{CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet};
-use crate::graph::feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures};
-use crate::graph::{DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageSet};
-use crate::sorted_set::SortedSet;
-use crate::{DependencyKind, Error};
+use crate::{
+    graph::{
+        cargo::{CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet},
+        feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures},
+        DependencyDirection, EnabledTernary, PackageIx, PackageLink, PackageSet,
+    },
+    sorted_set::SortedSet,
+    DependencyKind, Error,
+};
 use fixedbitset::FixedBitSet;
-use petgraph::prelude::*;
-use petgraph::visit::VisitMap;
+use petgraph::{prelude::*, visit::VisitMap};
 use target_spec::Platform;
 
 pub(super) struct CargoSetBuildState<'a> {

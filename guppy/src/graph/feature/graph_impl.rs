@@ -1,23 +1,23 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::errors::FeatureGraphWarning;
-use crate::graph::feature::build::FeatureGraphBuildState;
-use crate::graph::feature::{Cycles, FeatureFilter, FeatureList};
-use crate::graph::{
-    DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
-    PlatformStatus, PlatformStatusImpl,
+use crate::{
+    errors::FeatureGraphWarning,
+    graph::{
+        feature::{build::FeatureGraphBuildState, Cycles, FeatureFilter, FeatureList},
+        DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
+        PlatformStatus, PlatformStatusImpl,
+    },
+    petgraph_support::scc::Sccs,
+    DependencyKind, Error, PackageId,
 };
-use crate::petgraph_support::scc::Sccs;
-use crate::{DependencyKind, Error, PackageId};
 use once_cell::sync::OnceCell;
-use petgraph::algo::has_path_connecting;
-use petgraph::prelude::*;
-use petgraph::visit::{EdgeFiltered, IntoNodeReferences};
-use std::collections::HashMap;
-use std::fmt;
-use std::iter;
-use std::iter::FromIterator;
+use petgraph::{
+    algo::has_path_connecting,
+    prelude::*,
+    visit::{EdgeFiltered, IntoNodeReferences},
+};
+use std::{collections::HashMap, fmt, iter, iter::FromIterator};
 
 // Some general notes about feature graphs:
 //

@@ -40,30 +40,32 @@ mod core;
 mod diff;
 mod mv;
 
-pub use crate::core::*;
-pub use crate::mv::*;
+pub use crate::{core::*, mv::*};
 
 use anyhow::{bail, Context, Result};
 use clap::arg_enum;
-use guppy::graph::cargo::CargoOptions;
-use guppy::graph::feature::{FeatureSet, StandardFeatures};
-use guppy::graph::summaries::Summary;
-use guppy::graph::DependencyDirection;
 use guppy::{
-    graph::{DotWrite, PackageDotVisitor, PackageGraph, PackageLink, PackageMetadata},
+    graph::{
+        cargo::CargoOptions,
+        feature::{FeatureSet, StandardFeatures},
+        summaries::Summary,
+        DependencyDirection, DotWrite, PackageDotVisitor, PackageGraph, PackageLink,
+        PackageMetadata,
+    },
     PackageId,
 };
 use guppy_cmdlib::{
     triple_to_platform, CargoMetadataOptions, CargoResolverOpts, PackagesAndFeatures,
 };
-use std::borrow::Cow;
-use std::cmp;
-use std::collections::{HashMap, HashSet};
-use std::fmt;
-use std::fs;
-use std::io::Write;
-use std::iter;
-use std::path::PathBuf;
+use std::{
+    borrow::Cow,
+    cmp,
+    collections::{HashMap, HashSet},
+    fmt, fs,
+    io::Write,
+    iter,
+    path::PathBuf,
+};
 use structopt::StructOpt;
 
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {

@@ -3,12 +3,13 @@
 
 use fixedbitset::FixedBitSet;
 use nested::Nested;
-use petgraph::algo::kosaraju_scc;
-use petgraph::graph::IndexType;
-use petgraph::prelude::*;
-use petgraph::visit::{IntoNeighborsDirected, IntoNodeIdentifiers, VisitMap, Visitable};
-use std::collections::HashMap;
-use std::slice;
+use petgraph::{
+    algo::kosaraju_scc,
+    graph::IndexType,
+    prelude::*,
+    visit::{IntoNeighborsDirected, IntoNodeIdentifiers, VisitMap, Visitable},
+};
+use std::{collections::HashMap, slice};
 
 #[derive(Clone, Debug)]
 pub(crate) struct Sccs<Ix: IndexType> {

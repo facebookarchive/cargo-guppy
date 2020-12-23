@@ -4,10 +4,8 @@
 //! Proptest support.
 
 use crate::PackagesAndFeatures;
-use guppy::graph::PackageGraph;
-use guppy::{Platform, TargetFeatures};
-use proptest::collection::hash_set;
-use proptest::prelude::*;
+use guppy::{graph::PackageGraph, Platform, TargetFeatures};
+use proptest::{collection::hash_set, prelude::*};
 
 impl PackagesAndFeatures {
     pub fn strategy<'g>(graph: &'g PackageGraph) -> impl Strategy<Value = Self> + 'g {

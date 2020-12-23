@@ -5,10 +5,14 @@
 //!
 //! Requires the `summaries` feature to be enabled.
 
-use crate::graph::cargo::{CargoOptions, CargoResolverVersion, CargoSet};
-use crate::graph::feature::{FeatureQuery, FeatureSet};
-use crate::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet, PackageSource};
-use crate::Error;
+use crate::{
+    graph::{
+        cargo::{CargoOptions, CargoResolverVersion, CargoSet},
+        feature::{FeatureQuery, FeatureSet},
+        DependencyDirection, PackageGraph, PackageMetadata, PackageSet, PackageSource,
+    },
+    Error,
+};
 pub use guppy_summaries::*;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;

@@ -3,13 +3,12 @@
 
 //! A sorted, deduplicated list of features from a single package.
 
-use crate::graph::feature::FeatureId;
-use crate::graph::PackageMetadata;
-use crate::sorted_set::SortedSet;
-use crate::PackageId;
-use std::fmt;
-use std::slice;
-use std::vec;
+use crate::{
+    graph::{feature::FeatureId, PackageMetadata},
+    sorted_set::SortedSet,
+    PackageId,
+};
+use std::{fmt, slice, vec};
 
 /// A sorted, deduplicated list of features from a single package.
 ///

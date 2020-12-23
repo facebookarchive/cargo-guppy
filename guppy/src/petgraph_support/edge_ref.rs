@@ -1,9 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use petgraph::graph::{EdgeReference, IndexType};
-use petgraph::prelude::*;
-use petgraph::visit::ReversedEdgeReference;
+use petgraph::{
+    graph::{EdgeReference, IndexType},
+    prelude::*,
+    visit::ReversedEdgeReference,
+};
 
 /// Provides a way to obtain graph::EdgeReference instances from arbitrary EdgeRef ones.
 pub trait GraphEdgeRef<'a, E, Ix: IndexType>: EdgeRef {

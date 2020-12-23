@@ -9,14 +9,16 @@
 pub mod proptest;
 
 use anyhow::Result;
-use guppy::graph::cargo::CargoResolverVersion;
-use guppy::graph::feature::{feature_filter, FeatureQuery, StandardFeatures};
-use guppy::graph::PackageGraph;
-use guppy::{MetadataCommand, Platform, TargetFeatures};
-use std::env;
-use std::path::PathBuf;
-use structopt::clap::arg_enum;
-use structopt::StructOpt;
+use guppy::{
+    graph::{
+        cargo::CargoResolverVersion,
+        feature::{feature_filter, FeatureQuery, StandardFeatures},
+        PackageGraph,
+    },
+    MetadataCommand, Platform, TargetFeatures,
+};
+use std::{env, path::PathBuf};
+use structopt::{clap::arg_enum, StructOpt};
 
 /// Support for packages and features.
 ///

@@ -1,15 +1,21 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::details::{FixtureDetails, LinkDetails, PackageDetails, PlatformResults};
-use crate::package_id;
-use guppy::errors::FeatureBuildStage;
-use guppy::graph::{BuildTargetId, BuildTargetKind, EnabledTernary, PackageGraph};
-use guppy::{errors::FeatureGraphWarning, CargoMetadata, DependencyKind, Platform, TargetFeatures};
+use crate::{
+    details::{FixtureDetails, LinkDetails, PackageDetails, PlatformResults},
+    package_id,
+};
+use guppy::{
+    errors::{FeatureBuildStage, FeatureGraphWarning},
+    graph::{BuildTargetId, BuildTargetKind, EnabledTernary, PackageGraph},
+    CargoMetadata, DependencyKind, Platform, TargetFeatures,
+};
 use once_cell::sync::{Lazy, OnceCell};
-use std::collections::{BTreeMap, HashMap};
-use std::fs;
-use std::path::{Component, Path, PathBuf};
+use std::{
+    collections::{BTreeMap, HashMap},
+    fs,
+    path::{Component, Path, PathBuf},
+};
 
 // Metadata along with interesting crate names.
 pub static METADATA1_PATH: &str = "../small/metadata1.json";

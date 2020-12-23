@@ -1,8 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::diff::{changed_sort_key, PackageDiff, SummaryDiff, SummaryDiffStatus};
-use crate::SummaryId;
+use crate::{
+    diff::{changed_sort_key, PackageDiff, SummaryDiff, SummaryDiffStatus},
+    SummaryId,
+};
 use std::fmt;
 
 /// A report of a diff between two summaries.

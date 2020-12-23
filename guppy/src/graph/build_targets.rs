@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::sorted_set::SortedSet;
-use std::borrow::Borrow;
-use std::cmp::Ordering;
-use std::path::Path;
+use std::{borrow::Borrow, cmp::Ordering, path::Path};
 
 /// A build target in a package.
 ///

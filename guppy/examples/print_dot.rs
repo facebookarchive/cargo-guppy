@@ -13,8 +13,10 @@
 //! dot -Tpng graph.dot -o graph.png
 //! ```
 
-use guppy::graph::{DotWrite, PackageDotVisitor, PackageLink, PackageMetadata};
-use guppy::{CargoMetadata, Error};
+use guppy::{
+    graph::{DotWrite, PackageDotVisitor, PackageLink, PackageMetadata},
+    CargoMetadata, Error,
+};
 use std::fmt;
 
 // Define a visitor, which specifies what strings to print out for the graph.

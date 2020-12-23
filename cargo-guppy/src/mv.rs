@@ -6,13 +6,13 @@ use dialoguer::Confirm;
 use guppy::graph::{PackageGraph, PackageLink, PackageMetadata};
 use guppy_cmdlib::CargoMetadataOptions;
 use pathdiff::diff_paths;
-use std::collections::btree_map::Entry;
-use std::collections::{BTreeMap, HashSet};
-use std::fmt;
-use std::fs;
-use std::io::{self, Write};
-use std::mem;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR};
+use std::{
+    collections::{btree_map::Entry, BTreeMap, HashSet},
+    fmt, fs,
+    io::{self, Write},
+    mem,
+    path::{Path, PathBuf, MAIN_SEPARATOR},
+};
 use structopt::StructOpt;
 use toml_edit::{decorated, Document, Item, Table, Value};
 

@@ -1,14 +1,16 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::graph::feature::{FeatureFilter, FeatureQuery};
-use crate::graph::query_core::QueryParams;
-use crate::graph::{
-    DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageMetadata, PackageResolver,
-    PackageSet, ResolverFn,
+use crate::{
+    graph::{
+        feature::{FeatureFilter, FeatureQuery},
+        query_core::QueryParams,
+        DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageMetadata,
+        PackageResolver, PackageSet, ResolverFn,
+    },
+    sorted_set::SortedSet,
+    Error, PackageId,
 };
-use crate::sorted_set::SortedSet;
-use crate::{Error, PackageId};
 use petgraph::prelude::*;
 use std::path::Path;
 

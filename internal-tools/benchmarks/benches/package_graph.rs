@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use guppy::graph::{DependencyDirection, PackageGraph};
-use guppy::PackageId;
-use proptest::collection::vec;
-use proptest::prelude::*;
+use guppy::{
+    graph::{DependencyDirection, PackageGraph},
+    PackageId,
+};
+use proptest::{collection::vec, prelude::*};
 use proptest_ext::ValueGenerator;
 
 pub fn benchmarks(c: &mut Criterion) {

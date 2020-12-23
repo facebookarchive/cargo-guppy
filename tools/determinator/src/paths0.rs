@@ -1,9 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::ffi::OsStr;
-use std::path::Path;
-use std::str::Utf8Error;
+use std::{ffi::OsStr, path::Path, str::Utf8Error};
 
 /// A store for null-separated paths.
 ///

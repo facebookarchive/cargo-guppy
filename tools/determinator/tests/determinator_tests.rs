@@ -3,8 +3,10 @@
 
 //! Higher-level unit tests for the target determinator.
 
-use determinator::rules::{DeterminatorRules, PathMatch, RuleIndex};
-use determinator::Determinator;
+use determinator::{
+    rules::{DeterminatorRules, PathMatch, RuleIndex},
+    Determinator,
+};
 use fixtures::json::JsonFixture;
 use std::path::Path;
 

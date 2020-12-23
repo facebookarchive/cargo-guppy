@@ -1,8 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use petgraph::prelude::*;
-use petgraph::visit::{DfsPostOrder, IntoEdges, VisitMap};
+use petgraph::{
+    prelude::*,
+    visit::{DfsPostOrder, IntoEdges, VisitMap},
+};
 
 /// `DfsPostOrder::next`, adapted for a filter that's a `FnMut`.
 pub fn dfs_next_filtered<N, VM, G>(

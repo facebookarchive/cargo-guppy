@@ -3,8 +3,7 @@
 
 use guppy::{graph::PackageMetadata, PackageId};
 use serde::{ser::SerializeStruct, Serialize, Serializer};
-use std::collections::HashMap;
-use std::ops::Deref;
+use std::{collections::HashMap, ops::Deref};
 
 #[derive(Debug, Default)]
 pub struct DiffOptions;

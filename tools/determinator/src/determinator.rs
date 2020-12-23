@@ -1,22 +1,29 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::errors::RulesError;
-use crate::rules::{
-    DeterminatorPostRule, DeterminatorRules, MarkChangedImpl, PathMatch, PathRuleImpl, RulesImpl,
+use crate::{
+    errors::RulesError,
+    rules::{
+        DeterminatorPostRule, DeterminatorRules, MarkChangedImpl, PathMatch, PathRuleImpl,
+        RulesImpl,
+    },
 };
 use globset::Candidate;
-use guppy::graph::cargo::{CargoOptions, CargoSet};
-use guppy::graph::feature::{FeatureFilter, StandardFeatures};
-use guppy::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet, Workspace};
-use guppy::{PackageId, Platform};
+use guppy::{
+    graph::{
+        cargo::{CargoOptions, CargoSet},
+        feature::{FeatureFilter, StandardFeatures},
+        DependencyDirection, PackageGraph, PackageMetadata, PackageSet, Workspace,
+    },
+    PackageId, Platform,
+};
 use itertools::Itertools;
-use petgraph::graphmap::GraphMap;
-use petgraph::Directed;
+use petgraph::{graphmap::GraphMap, Directed};
 use rayon::prelude::*;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
-use std::{collections::HashSet, path::Path};
+use std::{
+    collections::{hash_map::Entry, HashMap, HashSet},
+    path::Path,
+};
 
 /// Determine target dependencies from changed files and packages in a workspace.
 ///

@@ -3,9 +3,7 @@
 
 use crate::{Platform, TargetFeatures};
 use cfg_expr::targets::ALL_BUILTINS;
-use proptest::collection::btree_set;
-use proptest::prelude::*;
-use proptest::sample::select;
+use proptest::{collection::btree_set, prelude::*, sample::select};
 
 /// ## Helpers for property testing
 ///
