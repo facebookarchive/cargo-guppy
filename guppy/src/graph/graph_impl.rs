@@ -6,9 +6,9 @@ use crate::{
         cargo_version_matches,
         feature::{FeatureGraphImpl, FeatureId, FeatureNode},
         BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind, Cycles, DependencyDirection,
-        OwnedBuildTargetId, PackageIx, PackageQuery,
+        OwnedBuildTargetId, PackageIx, PackageQuery, PackageSet,
     },
-    petgraph_support::scc::Sccs,
+    petgraph_support::{scc::Sccs, IxBitSet},
     CargoMetadata, DependencyKind, Error, JsonValue, MetadataCommand, PackageId, Platform,
 };
 use cargo_metadata::NodeDep;
@@ -660,6 +660,12 @@ impl<'g> PackageMetadata<'g> {
     pub fn to_package_query(&self, direction: DependencyDirection) -> PackageQuery<'g> {
         self.graph
             .query_from_parts(iter::once(self.inner.package_ix).collect(), direction)
+    }
+
+    /// Creates a `PackageSet` consisting of just this package.
+    pub fn to_package_set(&self) -> PackageSet<'g> {
+        let included: IxBitSet = iter::once(self.package_ix()).collect();
+        PackageSet::from_included(self.graph, included)
     }
 
     // ---

@@ -220,8 +220,8 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
 
     let cargo_set = opts
         .pf
-        .make_feature_query(&pkg_graph)?
-        .resolve_cargo(&cargo_opts)?;
+        .make_feature_set(&pkg_graph)?
+        .into_cargo_set(&cargo_opts)?;
 
     // Note that for the target+proc macro case, we unify direct deps here. This means that
     // direct deps of workspace proc macros (e.g. quote) will be included. This feels like it's

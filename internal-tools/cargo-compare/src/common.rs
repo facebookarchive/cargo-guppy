@@ -131,7 +131,7 @@ impl GuppyCargoCommon {
 
     /// Resolves data for this query using Guppy.
     pub fn resolve_guppy(&self, ctx: &GlobalContext<'_>) -> Result<FeatureMap> {
-        let feature_query = self.pf.make_feature_query(ctx.graph())?;
+        let initials = self.pf.make_feature_set(ctx.graph())?;
 
         // Note that guppy is more flexible than cargo here -- with the v1 feature resolver, it can
         // evaluate dependencies one of three ways:
@@ -166,7 +166,7 @@ impl GuppyCargoCommon {
             .set_include_dev(self.include_dev)
             .set_target_platform(Some(&target_platform))
             .set_host_platform(Some(&host_platform));
-        let intermediate_set = CargoSet::new_intermediate(feature_query, &cargo_opts)?;
+        let intermediate_set = CargoSet::new_intermediate(&initials, &cargo_opts)?;
         let (target_features, host_features) = intermediate_set.target_host_sets();
 
         Ok(FeatureMap::from_guppy(target_features, host_features))

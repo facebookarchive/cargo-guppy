@@ -40,8 +40,8 @@ a feature declared in it, and every edge is a feature dependency.
 For traversing the feature graph, `guppy` provides the analogous [`FeatureQuery`](crate::graph::feature::FeatureQuery) and
 [`FeatureSet`](crate::graph::feature::FeatureSet) types.
 
-`FeatureQuery` also has a [`resolve_cargo`](crate::graph::FeatureQuery::resolve_cargo) method,
-to simulate Cargo builds. This method produces a [`CargoSet`](crate::graph::cargo::CargoSet),
+`FeatureSet` also has an [`into_cargo_set`](crate::graph::feature::FeatureSet::into_cargo_set)
+method, to simulate Cargo builds. This method produces a [`CargoSet`](crate::graph::cargo::CargoSet),
 which is essentially two `FeatureSet`s along with some more useful information.
 
 `guppy`'s data structures are immutable, with some internal caches. All of `guppy`'s types are

@@ -4,8 +4,8 @@
 use crate::{
     graph::{
         cargo::build::CargoSetBuildState,
-        feature::{FeatureGraph, FeatureQuery, FeatureSet},
-        PackageGraph, PackageIx, PackageLink, PackageSet,
+        feature::{FeatureGraph, FeatureSet},
+        DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
     sorted_set::SortedSet,
     Error, Obs, PackageId,
@@ -217,7 +217,7 @@ pub enum CargoResolverVersion {
 /// a given situation. `guppy` implements those algorithms.
 #[derive(Clone, Debug)]
 pub struct CargoSet<'g> {
-    pub(super) original_query: FeatureQuery<'g>,
+    pub(super) initials: FeatureSet<'g>,
     pub(super) target_features: FeatureSet<'g>,
     pub(super) host_features: FeatureSet<'g>,
     pub(super) target_direct_deps: PackageSet<'g>,
@@ -229,13 +229,16 @@ pub struct CargoSet<'g> {
 assert_covariant!(CargoSet);
 
 impl<'g> CargoSet<'g> {
-    /// Creates a new `CargoSet` based on the given query and options.
+    /// Simulates a Cargo build of this feature set, with the given options.
     ///
-    /// This is also accessible through `FeatureQuery::resolve_cargo()`, and it may be more
+    /// The feature set is expected to be entirely within the workspace. Its behavior outside the
+    /// workspace isn't defined and may be surprising.
+    ///
+    /// This is also accessible through `FeatureSet::into_cargo_set()`, and it may be more
     /// convenient to use that if the code is written in a "fluent" style.
-    pub fn new(query: FeatureQuery<'g>, opts: &CargoOptions<'_>) -> Result<Self, Error> {
-        let build_state = CargoSetBuildState::new(&query, opts)?;
-        Ok(build_state.build(query))
+    pub fn new(initials: FeatureSet<'g>, opts: &CargoOptions<'_>) -> Result<Self, Error> {
+        let build_state = CargoSetBuildState::new(&initials, opts)?;
+        Ok(build_state.build(initials))
     }
 
     /// Creates a new `CargoIntermediateSet` based on the given query and options.
@@ -245,16 +248,16 @@ impl<'g> CargoSet<'g> {
     /// Not part of the stable API, exposed for testing.
     #[doc(hidden)]
     pub fn new_intermediate(
-        query: FeatureQuery<'g>,
+        initials: &FeatureSet<'g>,
         opts: &CargoOptions<'_>,
     ) -> Result<CargoIntermediateSet<'g>, Error> {
-        let build_state = CargoSetBuildState::new(&query, opts)?;
-        Ok(build_state.build_intermediate(query))
+        let build_state = CargoSetBuildState::new(initials, opts)?;
+        Ok(build_state.build_intermediate(initials.to_feature_query(DependencyDirection::Forward)))
     }
 
     /// Returns the feature graph for this `CargoSet` instance.
     pub fn feature_graph(&self) -> &FeatureGraph<'g> {
-        &self.original_query.graph()
+        &self.initials.graph()
     }
 
     /// Returns the package graph for this `CargoSet` instance.
@@ -262,9 +265,10 @@ impl<'g> CargoSet<'g> {
         self.feature_graph().package_graph
     }
 
-    /// Returns the original query from which the `CargoSet` instance was constructed.
-    pub fn original_query(&self) -> &FeatureQuery<'g> {
-        &self.original_query
+    /// Returns the initial packages and features from which the `CargoSet` instance was
+    /// constructed.
+    pub fn initials(&self) -> &FeatureSet<'g> {
+        &self.initials
     }
 
     /// Returns the feature set enabled on the target platform.

@@ -15,18 +15,15 @@ fn summaries_unchanged() -> Result<()> {
 
         println!("generating {} summaries for {}...", count, name);
 
-        let context: GenerateContext<SummaryContext> = GenerateContext::new(fixture, &count, false)?;
+        let context: GenerateContext<SummaryContext> =
+            GenerateContext::new(fixture, &count, false)?;
 
         for summary_pair in context {
             let item = summary_pair?;
             let is_changed = item.is_changed();
             if is_changed {
                 num_changed += 1;
-                println!(
-                    "** {}:\n{}",
-                    item.path().display(),
-                    item.diff()
-                );
+                println!("** {}:\n{}", item.path().display(), item.diff());
             }
         }
     }

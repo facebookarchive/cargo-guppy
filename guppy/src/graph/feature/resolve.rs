@@ -4,14 +4,16 @@
 use crate::{
     debug_ignore::DebugIgnore,
     graph::{
+        cargo::{CargoOptions, CargoSet},
         feature::{
             CrossLink, FeatureEdge, FeatureGraph, FeatureId, FeatureList, FeatureMetadata,
             FeatureQuery, FeatureResolver,
         },
         resolve_core::ResolveCore,
-        DependencyDirection, FeatureGraphSpec, PackageMetadata, PackageSet,
+        DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata, PackageSet,
     },
     petgraph_support::IxBitSet,
+    sorted_set::SortedSet,
     Error, PackageId,
 };
 use fixedbitset::FixedBitSet;
@@ -121,6 +123,20 @@ impl<'g> FeatureSet<'g> {
             .contains(self.graph.feature_ix(feature_id.into())?))
     }
 
+    /// Creates a new `FeatureQuery` from this set in the specified direction.
+    ///
+    /// This is equivalent to constructing a query from all the feature IDs in this set.
+    pub fn to_feature_query(&self, direction: DependencyDirection) -> FeatureQuery<'g> {
+        let feature_ixs = SortedSet::new(
+            self.core
+                .included
+                .ones()
+                .map(NodeIndex::new)
+                .collect::<Vec<_>>(),
+        );
+        self.graph.query_from_parts(feature_ixs, direction)
+    }
+
     // ---
     // Set operations
     // ---
@@ -214,6 +230,21 @@ impl<'g> FeatureSet<'g> {
             })
             .collect();
         PackageSet::from_included(self.graph.package_graph, included.0)
+    }
+
+    // ---
+    // Cargo set creation
+    // ---
+
+    /// Converts this feature set into a Cargo set, simulating a Cargo build for it.
+    ///
+    /// The feature set is expected to be entirely within the workspace. Its behavior outside the
+    /// workspace isn't defined and may be surprising.
+    ///
+    /// Returns an error if the `CargoOptions` weren't valid in some way (for example if an omitted
+    /// package ID wasn't known to this graph.)
+    pub fn into_cargo_set(self, opts: &CargoOptions<'_>) -> Result<CargoSet<'g>, Error> {
+        CargoSet::new(self, opts)
     }
 
     // ---
@@ -378,6 +409,21 @@ impl<'g> FeatureSet<'g> {
         } else {
             None
         }
+    }
+
+    /// Returns all the package ixs without topologically sorting them.
+    pub(in crate::graph) fn ixs_unordered<'a>(
+        &'a self,
+    ) -> impl Iterator<Item = NodeIndex<FeatureIx>> + 'a {
+        self.core.included.ones().map(NodeIndex::new)
+    }
+
+    /// Returns true if this feature set contains the given package ix.
+    #[allow(dead_code)]
+    pub(in crate::graph) fn contains_package_ix(&self, package_ix: NodeIndex<PackageIx>) -> bool {
+        self.graph
+            .feature_ixs_for_package_ix(package_ix)
+            .any(|feature_ix| self.core.contains(feature_ix))
     }
 
     // Currently a helper for debugging -- will be made public in the future.

@@ -458,12 +458,12 @@ fn make_cargo_set<'x>(
     filter: impl FeatureFilter<'x>,
     cargo_options: &CargoOptions<'_>,
 ) -> CargoSet<'x> {
-    let package_query = package.to_package_query(DependencyDirection::Forward);
-    let feature_query = package_query.to_feature_query(filter);
+    let package_set = package.to_package_set();
+    let feature_set = package_set.to_feature_set(filter);
 
-    feature_query
-        .resolve_cargo(cargo_options)
-        .expect("query is in forward direction")
+    feature_set
+        .into_cargo_set(cargo_options)
+        .expect("valid cargo options")
 }
 
 /// A reverse index of if a package is affected -> what else gets marked changed or affected.
