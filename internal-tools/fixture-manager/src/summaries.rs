@@ -46,12 +46,20 @@ impl<'g> ContextImpl<'g> for SummaryContext {
         let cargo_opts_strategy = graph.prop010_cargo_options_strategy();
 
         let iter = (0..count).map(move |idx| {
-            let packages_features = generator.generate(&packages_features_strategy);
+            // The partial clones mean that e.g. a change to the algorithm in
+            // packages_features_strategy won't affect generation of cargo_opts.
+            let mut iter_generator = generator.partial_clone();
+
+            let packages_features = iter_generator
+                .partial_clone()
+                .generate(&packages_features_strategy);
             let initials = packages_features
                 .make_feature_set(graph)
                 .expect("valid feature set");
 
-            let cargo_opts = generator.generate(&cargo_opts_strategy);
+            let cargo_opts = iter_generator
+                .partial_clone()
+                .generate(&cargo_opts_strategy);
             let cargo_set = initials
                 .into_cargo_set(&cargo_opts)
                 .expect("into_cargo_set succeeded");
