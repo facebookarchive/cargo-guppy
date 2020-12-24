@@ -8,6 +8,7 @@ use determinator::{
     Determinator,
 };
 use fixtures::json::JsonFixture;
+use guppy::graph::feature::StandardFeatures;
 use std::path::Path;
 
 #[test]
@@ -355,6 +356,35 @@ fn guppy_deps() {
     );
     assert_eq!(
         determinator_set.affected_set, expected,
+        "some packages affected"
+    );
+
+    // Try setting fixture-manager as features-only. This should cause guppy's summaries feature to
+    // always be enabled, which means that fixtures, guppy-cmdlib and guppy-benchmarks should be
+    // added to the expected set.
+    determinator
+        .set_features_only(
+            ["fixture-manager"].iter().copied(),
+            StandardFeatures::Default,
+        )
+        .expect("fixture-manager is a valid package name");
+
+    let determinator_set = determinator.compute();
+    let features_only_expected = expected.union(
+        &new.graph()
+            .resolve_workspace_names(vec!["fixtures", "guppy-cmdlib", "guppy-benchmarks"])
+            .expect("workspace names resolved"),
+    );
+    assert!(
+        determinator_set.path_changed_set.is_empty(),
+        "no path changes"
+    );
+    assert_eq!(
+        determinator_set.summary_changed_set, features_only_expected,
+        "some summary changes"
+    );
+    assert_eq!(
+        determinator_set.affected_set, features_only_expected,
         "some packages affected"
     );
 }
