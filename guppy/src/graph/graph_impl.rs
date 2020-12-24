@@ -472,6 +472,16 @@ impl<'g> Workspace<'g> {
         self.inner.members_by_path.len()
     }
 
+    /// Returns true if the workspace contains a package by the given name.
+    pub fn contains_name(&self, name: impl AsRef<str>) -> bool {
+        self.inner.members_by_name.contains_key(name.as_ref())
+    }
+
+    /// Returns true if the workspace contains a package by the given workspace path.
+    pub fn contains_path(&self, path: impl AsRef<Path>) -> bool {
+        self.inner.members_by_path.contains_key(path.as_ref())
+    }
+
     /// Returns an iterator over package metadatas, sorted by the path they're in.
     pub fn iter(&self) -> impl Iterator<Item = PackageMetadata<'g>> + ExactSizeIterator {
         self.iter_by_path().map(|(_, package)| package)
