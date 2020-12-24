@@ -34,6 +34,14 @@ impl ValueGenerator {
         }
     }
 
+    /// Does a "partial clone" of the `ValueGenerator`, creating a new independent but deterministic
+    /// RNG.
+    pub fn partial_clone(&mut self) -> Self {
+        Self {
+            runner: TestRunner::new_with_rng(Config::default(), self.runner.new_rng()),
+        }
+    }
+
     /// Generates a single value for this strategy.
     ///
     /// Panics if generating the new value fails. The only situation in which this can happen is if
