@@ -123,6 +123,17 @@ impl<'g> FeatureSet<'g> {
             .contains(self.graph.feature_ix(feature_id.into())?))
     }
 
+    /// Returns true if this set contains this package.
+    ///
+    /// Returns an error if this package ID was unknown.
+    pub fn contains_package(&self, package_id: &PackageId) -> Result<bool, Error> {
+        let package = self.graph.package_graph.metadata(package_id)?;
+        Ok(self
+            .graph
+            .feature_ixs_for_package_ix(package.package_ix())
+            .any(|feature_ix| self.core.contains(feature_ix)))
+    }
+
     /// Creates a new `FeatureQuery` from this set in the specified direction.
     ///
     /// This is equivalent to constructing a query from all the feature IDs in this set.
