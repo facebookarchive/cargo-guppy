@@ -24,6 +24,19 @@ macro_rules! proptest_suite {
             use proptest::sample::Index;
 
             #[test]
+            fn proptest_summary_id_roundtrip() {
+                let fixture = JsonFixture::$name();
+                let graph = fixture.graph();
+
+                proptest!(|(package_id in graph.prop010_id_strategy())| {
+                    let package = graph.metadata(package_id).expect("valid package ID");
+                    let summary_id = package.to_summary_id();
+                    let package2 = graph.metadata_by_summary_id(&summary_id).expect("summary ID is valid");
+                    prop_assert_eq!(package_id, package2.id(), "roundtrip successful");
+                })
+            }
+
+            #[test]
             fn proptest_query_depends_on() {
                 let fixture = JsonFixture::$name();
                 let graph = fixture.graph();

@@ -78,11 +78,41 @@ impl<'g> FeatureSet<'g> {
     }
 }
 
+impl PackageGraph {
+    /// Converts this `SummaryId` to a `PackageMetadata`.
+    ///
+    /// Returns an error if the summary ID could not be matched.
+    ///
+    /// Requires the `summaries` feature to be enabled.
+    pub fn metadata_by_summary_id(&self, summary_id: &SummaryId) -> Result<PackageMetadata, Error> {
+        match &summary_id.source {
+            SummarySource::Workspace { workspace_path } => {
+                self.workspace().member_by_path(workspace_path)
+            }
+            _ => {
+                // Do a linear search for now -- this appears to be the easiest thing to do and is
+                // pretty fast. This could potentially be sped up by building an index by name, but
+                // at least for reasonably-sized graphs it's really fast.
+                //
+                // TODO: consider optimizing this in the future.
+                let mut filter = self.packages().filter(|package| {
+                    package.name() == summary_id.name
+                        && package.version() == &summary_id.version
+                        && package.source() == summary_id.source
+                });
+                filter
+                    .next()
+                    .ok_or_else(|| Error::UnknownSummaryId(summary_id.clone()))
+            }
+        }
+    }
+}
+
 impl<'g> PackageMetadata<'g> {
     /// Converts this metadata to a `SummaryId`.
     ///
     /// Requires the `summaries` feature to be enabled.
-    fn to_summary_id(&self) -> SummaryId {
+    pub fn to_summary_id(&self) -> SummaryId {
         SummaryId {
             name: self.name().to_string(),
             version: self.version().clone(),
@@ -184,16 +214,7 @@ impl CargoOptionsSummary {
         let omitted_packages = self
             .omitted_packages
             .iter()
-            .map(|summary_id| match &summary_id.source {
-                SummarySource::Workspace { workspace_path } => package_graph
-                    .workspace()
-                    .member_by_path(workspace_path)
-                    .map(|package| package.id()),
-                other => unimplemented!(
-                    "conversion from non-workspace sources ({:?}) is currently unsupported",
-                    other
-                ),
-            })
+            .map(|summary_id| Ok(package_graph.metadata_by_summary_id(summary_id)?.id()))
             .collect::<Result<Vec<_>, _>>()?;
 
         // TODO: return the features-only set
@@ -257,6 +278,21 @@ impl<'g> PackageSource<'g> {
                     SummarySource::external(*source)
                 }
             }
+        }
+    }
+}
+
+impl<'g> PartialEq<SummarySource> for PackageSource<'g> {
+    fn eq(&self, summary_source: &SummarySource) -> bool {
+        match summary_source {
+            SummarySource::Workspace { workspace_path } => {
+                self == &PackageSource::Workspace(workspace_path)
+            }
+            SummarySource::Path { path } => self == &PackageSource::Path(path),
+            SummarySource::CratesIo => {
+                self == &PackageSource::External(PackageSource::CRATES_IO_REGISTRY)
+            }
+            SummarySource::External { source } => self == &PackageSource::External(source),
         }
     }
 }

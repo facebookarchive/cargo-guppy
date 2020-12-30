@@ -34,6 +34,11 @@ pub enum Error {
     PackageGraphInternalError(String),
     /// An internal error occurred within this `FeatureGraph`.
     FeatureGraphInternalError(String),
+    /// A summary ID was unknown to this `PackageGraph`.
+    ///
+    /// This is present if the `summaries` feature is enabled.
+    #[cfg(feature = "summaries")]
+    UnknownSummaryId(guppy_summaries::SummaryId),
 }
 
 impl Error {
@@ -74,6 +79,8 @@ impl fmt::Display for Error {
             TargetSpecError(msg, _) => write!(f, "Target spec error while {}", msg),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
             FeatureGraphInternalError(msg) => write!(f, "Internal error in feature graph: {}", msg),
+            #[cfg(feature = "summaries")]
+            UnknownSummaryId(summary_id) => write!(f, "Unknown summary ID: {:?}", summary_id),
         }
     }
 }
@@ -92,6 +99,8 @@ impl error::Error for Error {
             TargetSpecError(_, err) => Some(err),
             PackageGraphInternalError(_) => None,
             FeatureGraphInternalError(_) => None,
+            #[cfg(feature = "summaries")]
+            UnknownSummaryId(_) => None,
         }
     }
 }

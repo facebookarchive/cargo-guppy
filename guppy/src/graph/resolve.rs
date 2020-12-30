@@ -124,6 +124,29 @@ impl PackageGraph {
             core: ResolveCore::from_included(included),
         })
     }
+
+    /// Creates a new `PackageSet` consisting of packages with the given name.
+    ///
+    /// The result is empty if there are no packages with the given name.
+    pub fn resolve_package_name(&self, name: impl AsRef<str>) -> PackageSet {
+        // Turns out that for reasonably-sized graphs, a linear search across package names is
+        // extremely fast: much faster than trying to do something fancy like use an FST or trie.
+        //
+        // TODO: optimize this in the future, possibly through some sort of hashmap variant that
+        // doesn't require a borrow.
+        let name = name.as_ref();
+        let included: IxBitSet = self
+            .packages()
+            .filter_map(|package| {
+                if package.name() == name {
+                    Some(package.package_ix())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        PackageSet::from_included(self, included)
+    }
 }
 
 /// A set of resolved packages in a package graph.
