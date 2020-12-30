@@ -4,6 +4,7 @@
 use crate::{Platform, TargetFeatures};
 use cfg_expr::targets::ALL_BUILTINS;
 use proptest::{collection::btree_set, prelude::*, sample::select};
+use std::borrow::Cow;
 
 /// ## Helpers for property testing
 ///
@@ -12,7 +13,7 @@ use proptest::{collection::btree_set, prelude::*, sample::select};
 ///
 /// Currently, [proptest 0.10](https://docs.rs/proptest/0.10) is supported if the `proptest010`
 /// feature is enabled.
-impl<'a> Platform<'a> {
+impl Platform<'static> {
     /// Given a way to generate `TargetFeatures` instances, this returns a `Strategy` that generates
     /// a platform at random.
     ///
@@ -29,8 +30,8 @@ impl<'a> Platform<'a> {
     /// let strategy = Platform::strategy(target_features);
     /// ```
     pub fn strategy(
-        target_features: impl Strategy<Value = TargetFeatures<'a>> + 'a,
-    ) -> impl Strategy<Value = Platform<'a>> + 'a {
+        target_features: impl Strategy<Value = TargetFeatures>,
+    ) -> impl Strategy<Value = Platform<'static>> {
         let flags = btree_set(flag_strategy(), 0..3);
         (0..ALL_BUILTINS.len(), target_features, flags).prop_map(|(idx, target_features, flags)| {
             let mut platform =
@@ -45,8 +46,8 @@ impl<'a> Platform<'a> {
     /// Requires the `proptest010` feature to be enabled.
     pub fn filtered_strategy(
         triple_filter: impl Fn(&'static str) -> bool,
-        target_features: impl Strategy<Value = TargetFeatures<'a>> + 'a,
-    ) -> impl Strategy<Value = Platform<'a>> + 'a {
+        target_features: impl Strategy<Value = TargetFeatures>,
+    ) -> impl Strategy<Value = Platform<'static>> {
         let filtered: Vec<_> = ALL_BUILTINS
             .iter()
             .filter(|target_info| triple_filter(target_info.triple))
@@ -70,7 +71,7 @@ pub fn flag_strategy() -> impl Strategy<Value = &'static str> {
 }
 
 /// The `Arbitrary` implementation for `TargetFeatures` uses a predefined list of features.
-impl Arbitrary for TargetFeatures<'static> {
+impl Arbitrary for TargetFeatures {
     type Parameters = ();
     type Strategy = BoxedStrategy<Self>;
 
@@ -80,10 +81,11 @@ impl Arbitrary for TargetFeatures<'static> {
             "aes", "avx", "avx2", "bmi1", "bmi2", "fma", "rdrand", "sha", "sse", "sse2", "sse3",
             "sse4.1", "sse4.2", "ssse3", "xsave", "xsavec", "xsaveopt", "xsaves",
         ];
+        let known_features_strategy = select(KNOWN_FEATURES).prop_map(Cow::Borrowed);
         prop_oneof![
             Just(TargetFeatures::Unknown),
             Just(TargetFeatures::All),
-            btree_set(select(KNOWN_FEATURES), 0..8).prop_map(TargetFeatures::Features),
+            btree_set(known_features_strategy, 0..8).prop_map(TargetFeatures::Features),
         ]
         .boxed()
     }
