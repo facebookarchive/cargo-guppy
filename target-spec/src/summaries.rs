@@ -10,7 +10,7 @@
 
 use crate::{Error, Platform, TargetFeatures};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::{borrow::Cow, collections::BTreeSet};
 
 /// An owned, serializable version of `Platform`.
 ///
@@ -51,9 +51,9 @@ impl PlatformSummary {
     /// Converts `self` to a `Platform`.
     ///
     /// Returns an `Error` if the platform was unknown.
-    pub fn to_platform(&self) -> Result<Platform, Error> {
+    pub fn to_platform(&self) -> Result<Platform<'static>, Error> {
         let mut platform = Platform::new(&self.triple, self.target_features.to_target_features())?;
-        platform.add_flags(self.flags.iter().map(|flag| flag.as_str()));
+        platform.add_flags(self.flags.iter().cloned());
         Ok(platform)
     }
 }
@@ -77,7 +77,7 @@ pub enum TargetFeaturesSummary {
 
 impl TargetFeaturesSummary {
     /// Creates a new `TargetFeaturesSummary` from a `TargetFeatures`.
-    pub fn new(target_features: &TargetFeatures<'_>) -> Self {
+    pub fn new(target_features: &TargetFeatures) -> Self {
         match target_features {
             TargetFeatures::Unknown => TargetFeaturesSummary::Unknown,
             TargetFeatures::Features(features) => TargetFeaturesSummary::Features(
@@ -93,8 +93,11 @@ impl TargetFeaturesSummary {
             TargetFeaturesSummary::Unknown => TargetFeatures::Unknown,
             TargetFeaturesSummary::All => TargetFeatures::All,
             TargetFeaturesSummary::Features(features) => {
-                let hash_set = features.iter().map(|feature| feature.as_str()).collect();
-                TargetFeatures::Features(hash_set)
+                let features = features
+                    .iter()
+                    .map(|feature| Cow::Owned(feature.clone()))
+                    .collect();
+                TargetFeatures::Features(features)
             }
         }
     }
@@ -154,7 +157,7 @@ mod tests {
 
     proptest! {
         #[test]
-        fn summary_roundtrip(platform in Platform::strategy(any::<TargetFeatures<'static>>())) {
+        fn summary_roundtrip(platform in Platform::strategy(any::<TargetFeatures>())) {
             let summary = PlatformSummary::new(&platform).expect("Platform::strategy does not generate custom platforms");
             let serialized = toml::ser::to_string(&summary).expect("serialization succeeded");
 

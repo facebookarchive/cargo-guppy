@@ -188,8 +188,11 @@ mod tests {
         );
 
         fn eval_unknown(spec: &str, platform: &str) -> Option<bool> {
-            let platform = Platform::new(platform, TargetFeatures::features(&["sse", "sse2"]))
-                .expect("platform should be found");
+            let platform = Platform::new(
+                platform,
+                TargetFeatures::features(["sse", "sse2"].iter().copied()),
+            )
+            .expect("platform should be found");
             let spec: TargetSpec = spec.parse().unwrap();
             spec.eval(&platform)
         }

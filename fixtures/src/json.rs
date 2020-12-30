@@ -788,7 +788,7 @@ impl FixtureDetails {
             Platform::new("x86_64-unknown-linux-gnu", TargetFeatures::Unknown).unwrap();
         let i686_windows = Platform::new(
             "i686-pc-windows-msvc",
-            TargetFeatures::features(&["sse", "sse2"]),
+            TargetFeatures::features(["sse", "sse2"].iter().copied()),
         )
         .unwrap();
         let x86_64_windows =
