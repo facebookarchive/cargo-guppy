@@ -9,7 +9,11 @@ use guppy::{
 use proptest::{collection::vec, prelude::*};
 use proptest_ext::ValueGenerator;
 
-pub fn benchmarks(c: &mut Criterion) {
+pub fn construct_benchmarks(c: &mut Criterion) {
+    c.bench_function("make_package_graph", |b| b.iter(|| make_package_graph()));
+}
+
+pub fn query_benchmarks(c: &mut Criterion) {
     let package_graph = make_package_graph();
     let mut cache = package_graph.new_depends_cache();
     let mut gen = ValueGenerator::deterministic();
@@ -86,5 +90,5 @@ fn ids_directions_strategy<'g>(
     )
 }
 
-criterion_group!(benches, benchmarks);
+criterion_group!(benches, construct_benchmarks, query_benchmarks);
 criterion_main!(benches);
