@@ -3,11 +3,9 @@
 
 //! Contains types that describe errors and warnings that `guppy` methods can return.
 
-use crate::PackageId;
-use std::{error, fmt};
-
-use crate::graph::feature::FeatureId;
-use std::path::PathBuf;
+use crate::{graph::feature::FeatureId, PackageId};
+use std::{error, fmt, path::PathBuf};
+pub use target_spec::Error as TargetSpecError;
 use Error::*;
 
 /// Error type describing the sorts of errors `guppy` can return.
@@ -31,7 +29,7 @@ pub enum Error {
     /// A package specified by name was unknown to this workspace.
     UnknownWorkspaceName(String),
     /// An error was returned by `target-spec`.
-    TargetSpecError(String, target_spec::Error),
+    TargetSpecError(String, TargetSpecError),
     /// An internal error occurred within this `PackageGraph`.
     PackageGraphInternalError(String),
     /// An internal error occurred within this `FeatureGraph`.
