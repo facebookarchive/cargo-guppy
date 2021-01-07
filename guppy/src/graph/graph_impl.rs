@@ -1122,6 +1122,19 @@ impl<'g> PackageSource<'g> {
             _ => None,
         }
     }
+
+    /// Attempts to parse an external source.
+    ///
+    /// Returns `None` if the external dependency could not be recognized, or if it is a local
+    /// dependency.
+    ///
+    /// For more about external sources, see the documentation for [`ExternalSource`](ExternalSource).
+    pub fn parse_external(&self) -> Option<ExternalSource<'g>> {
+        match self {
+            PackageSource::External(source) => ExternalSource::new(source),
+            _ => None,
+        }
+    }
 }
 
 impl<'g> fmt::Display for PackageSource<'g> {
@@ -1132,6 +1145,280 @@ impl<'g> fmt::Display for PackageSource<'g> {
             PackageSource::External(source) => write!(f, "{}", source),
         }
     }
+}
+
+/// More information about an external source.
+///
+/// This provides information about whether an external dependency is a Git dependency or fetched
+/// from a registry.
+///
+/// Returned by [`PackageSource::parse_external`](PackageSource::parse_external).
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum ExternalSource<'g> {
+    /// This is a registry source, e.g. `"registry+https://github.com/rust-lang/crates.io-index"`.
+    ///
+    /// The associated data is the part of the string after the initial `"registry+"`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use guppy::graph::ExternalSource;
+    ///
+    /// let source = "registry+https://github.com/rust-lang/crates.io-index";
+    /// let parsed = ExternalSource::new(source).expect("this source is understood by guppy");
+    ///
+    /// assert_eq!(
+    ///     parsed,
+    ///     ExternalSource::Registry("https://github.com/rust-lang/crates.io-index"),
+    /// );
+    /// ```
+    Registry(&'g str),
+
+    /// This is a Git source.
+    ///
+    /// An example of a Git source string is `"git+https://github.com/rust-lang/cargo.git?branch=main#0227f048fcb7c798026ede6cc20c92befc84c3a4"`.
+    /// In this case, the `Cargo.toml` would have contained:
+    ///
+    /// ```toml
+    /// cargo = { git = "https://github.com/rust-lang/cargo.git", branch = "main" }
+    /// ```
+    ///
+    /// and the `Cargo.lock` would have contained:
+    ///
+    /// ```toml
+    /// [[package]]
+    /// name = "cargo"
+    /// version = "0.46.0"
+    /// source = "git+https://github.com/rust-lang/cargo.git?branch=main#0227f048fcb7c798026ede6cc20c92befc84c3a4
+    /// dependencies = [ ... ]
+    /// ```
+    ///
+    /// For more, see [Specifying dependencies from `git` repositories](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies-from-git-repositories)
+    /// in the Cargo book.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use guppy::graph::{ExternalSource, GitReq};
+    ///
+    /// // A branch source.
+    /// let source = "git+https://github.com/rust-lang/cargo.git?branch=main#0227f048fcb7c798026ede6cc20c92befc84c3a4";
+    /// let parsed = ExternalSource::new(source).expect("this source is understood by guppy");
+    ///
+    /// assert_eq!(
+    ///     parsed,
+    ///     ExternalSource::Git {
+    ///         repository: "https://github.com/rust-lang/cargo.git",
+    ///         req: GitReq::Branch("main"),
+    ///         resolved: "0227f048fcb7c798026ede6cc20c92befc84c3a4",
+    ///     }
+    /// );
+    ///
+    /// // A tag source.
+    /// let source = "git+https://github.com/rust-lang/cargo.git?tag=v0.46.0#0227f048fcb7c798026ede6cc20c92befc84c3a4";
+    /// let parsed = ExternalSource::new(source).expect("this source is understood by guppy");
+    ///
+    /// assert_eq!(
+    ///     parsed,
+    ///     ExternalSource::Git {
+    ///         repository: "https://github.com/rust-lang/cargo.git",
+    ///         req: GitReq::Tag("v0.46.0"),
+    ///         resolved: "0227f048fcb7c798026ede6cc20c92befc84c3a4",
+    ///     }
+    /// );
+    ///
+    /// // A revision source.
+    /// let source = "git+https://github.com/rust-lang/cargo.git?rev=0227f048fcb7c798026ede6cc20c92befc84c3a4#0227f048fcb7c798026ede6cc20c92befc84c3a4";
+    /// let parsed = ExternalSource::new(source).expect("this source is understood by guppy");
+    ///
+    /// assert_eq!(
+    ///     parsed,
+    ///     ExternalSource::Git {
+    ///         repository: "https://github.com/rust-lang/cargo.git",
+    ///         req: GitReq::Rev("0227f048fcb7c798026ede6cc20c92befc84c3a4"),
+    ///         resolved: "0227f048fcb7c798026ede6cc20c92befc84c3a4",
+    ///     }
+    /// );
+    ///
+    /// // A default source.
+    /// let source = "git+https://github.com/gyscos/zstd-rs.git#bc874a57298bdb500cdb5aeac5f23878b6480d0b";
+    /// let parsed = ExternalSource::new(source).expect("this source is understood by guppy");
+    ///
+    /// assert_eq!(
+    ///     parsed,
+    ///     ExternalSource::Git {
+    ///         repository: "https://github.com/gyscos/zstd-rs.git",
+    ///         req: GitReq::Default,
+    ///         resolved: "bc874a57298bdb500cdb5aeac5f23878b6480d0b",
+    ///     }
+    /// );
+    /// ```
+    Git {
+        /// The repository for this Git source. For the above example, this would be
+        /// `"https://github.com/rust-lang/cargo.git"`.
+        repository: &'g str,
+
+        /// The revision requested in `Cargo.toml`. This may be a tag, a branch or a specific
+        /// revision (commit hash).
+        ///
+        /// For the above example, `req` would be `GitSource::Branch("main")`.
+        req: GitReq<'g>,
+
+        /// The resolved revision, as specified in `Cargo.lock`.
+        ///
+        /// For the above example, `resolved_hash` would be `"0227f048fcb7c798026ede6cc20c92befc84c3a4"`.
+        ///
+        /// This is always a commit hash, and if `req` is `GitReq::Rev` then it is expected
+        /// to be the same hash. (However, this is not verified by guppy.)
+        resolved: &'g str,
+    },
+}
+
+impl<'g> ExternalSource<'g> {
+    /// The string `"registry+"`.
+    ///
+    /// Used for matching with the `Registry` variant.
+    pub const REGISTRY_PLUS: &'static str = "registry+";
+
+    /// The string `"git+"`.
+    ///
+    /// Used for matching with the `Git` variant.
+    pub const GIT_PLUS: &'static str = "git+";
+
+    /// The string `"?branch="`.
+    ///
+    /// Used for matching with the `Git` variant.
+    pub const BRANCH_EQ: &'static str = "?branch=";
+
+    /// The string `"?tag="`.
+    ///
+    /// Used for matching with the `Git` variant.
+    pub const TAG_EQ: &'static str = "?tag=";
+
+    /// The string `"?rev="`.
+    ///
+    /// Used for matching with the `Git` variant.
+    pub const REV_EQ: &'static str = "?rev=";
+
+    /// Attempts to parse the given string as an external source.
+    ///
+    /// Returns `None` if the string could not be recognized as an external source.
+    pub fn new(source: &'g str) -> Option<Self> {
+        // We *could* pull in a URL parsing library, but Cargo's sources are so limited that it
+        // seems like a waste to.
+        if let Some(registry) = source.strip_prefix(Self::REGISTRY_PLUS) {
+            // A registry source.
+            Some(ExternalSource::Registry(registry))
+        } else if let Some(rest) = source.strip_prefix(Self::GIT_PLUS) {
+            // A Git source.
+            // Look for a trailing #, which indicates the resolved revision.
+            let mut split_rev = rest.rsplitn(2, '#');
+            let resolved = split_rev.next()?;
+            let rest = split_rev.next()?;
+            let (repository, req) = if let Some(idx) = rest.find(Self::BRANCH_EQ) {
+                (
+                    &rest[..idx],
+                    GitReq::Branch(&rest[idx + Self::BRANCH_EQ.len()..]),
+                )
+            } else if let Some(idx) = rest.find(Self::TAG_EQ) {
+                (&rest[..idx], GitReq::Tag(&rest[idx + Self::TAG_EQ.len()..]))
+            } else if let Some(idx) = rest.find(Self::REV_EQ) {
+                (&rest[..idx], GitReq::Rev(&rest[idx + Self::TAG_EQ.len()..]))
+            } else {
+                (rest, GitReq::Default)
+            };
+
+            Some(ExternalSource::Git {
+                repository,
+                req,
+                resolved,
+            })
+        } else {
+            None
+        }
+    }
+}
+
+/// The `Display` implementation for `ExternalSource` returns the string it was constructed from.
+///
+/// # Examples
+///
+/// ```
+/// use guppy::graph::{ExternalSource, GitReq};
+///
+/// let source = ExternalSource::Git {
+///     repository: "https://github.com/rust-lang/cargo.git",
+///     req: GitReq::Branch("main"),
+///     resolved: "0227f048fcb7c798026ede6cc20c92befc84c3a4",
+/// };
+///
+/// assert_eq!(
+///     format!("{}", source),
+///     "git+https://github.com/rust-lang/cargo.git?branch=main#0227f048fcb7c798026ede6cc20c92befc84c3a4",
+/// );
+/// ```
+impl<'g> fmt::Display for ExternalSource<'g> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ExternalSource::Registry(url) => write!(f, "{}{}", Self::REGISTRY_PLUS, url),
+            ExternalSource::Git { repository, req, resolved } => {
+                write!(f, "{}{}", Self::GIT_PLUS, repository)?;
+                match req {
+                    GitReq::Branch(branch) => write!(f, "{}{}", Self::BRANCH_EQ, branch)?,
+                    GitReq::Tag(tag) => write!(f, "{}{}", Self::TAG_EQ, tag)?,
+                    GitReq::Rev(rev) => write!(f, "{}{}", Self::REV_EQ, rev)?,
+                    GitReq::Default => {},
+                };
+                write!(f, "#{}", resolved)
+            }
+        }
+    }
+}
+
+/// A `Cargo.toml` specification for a Git branch, tag, or revision.
+///
+/// For more, including examples, see the documentation for [`ExternalSource::Git`](ExternalSource::Git).
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum GitReq<'g> {
+    /// A branch, e.g. `"main"`.
+    ///
+    /// This is specified in `Cargo.toml` as:
+    ///
+    /// ```toml
+    /// [dependencies]
+    /// cargo = { git = "...", branch = "main" }
+    /// ```
+    Branch(&'g str),
+
+    /// A tag, e.g. `"guppy-0.5.0"`.
+    ///
+    /// This is specified in `Cargo.toml` as:
+    ///
+    /// ```toml
+    /// [dependencies]
+    /// guppy = { git = "...", tag = "guppy-0.5.0" }
+    /// ```
+    Tag(&'g str),
+
+    /// A revision (commit hash), e.g. `"0227f048fcb7c798026ede6cc20c92befc84c3a4"`.
+    ///
+    /// This is specified in `Cargo.toml` as:
+    ///
+    /// ```toml
+    /// [dependencies]
+    /// cargo = { git = "...", rev = "0227f048fcb7c798026ede6cc20c92befc84c3a4" }
+    /// ```
+    Rev(&'g str),
+
+    /// Not specified in `Cargo.toml`. Cargo treats this as the main branch by default.
+    ///
+    /// ```toml
+    /// [dependencies]
+    /// cargo = { git = "..." }
+    /// ```
+    Default,
 }
 
 /// Internal representation of the source of a package.
