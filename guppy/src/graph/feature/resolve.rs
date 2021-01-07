@@ -439,9 +439,9 @@ impl<'g> FeatureSet<'g> {
     }
 
     /// Returns all the package ixs without topologically sorting them.
-    pub(in crate::graph) fn ixs_unordered<'a>(
-        &'a self,
-    ) -> impl Iterator<Item = NodeIndex<FeatureIx>> + 'a {
+    pub(in crate::graph) fn ixs_unordered(
+        &self,
+    ) -> impl Iterator<Item = NodeIndex<FeatureIx>> + '_ {
         self.core.included.ones().map(NodeIndex::new)
     }
 
