@@ -434,7 +434,7 @@ impl<'g> PackageSet<'g> {
 
     /// Returns all the package ixs without topologically sorting them.
     #[allow(dead_code)]
-    pub(super) fn ixs_unordered<'a>(&'a self) -> impl Iterator<Item = NodeIndex<PackageIx>> + 'a {
+    pub(super) fn ixs_unordered(&self) -> impl Iterator<Item = NodeIndex<PackageIx>> + '_ {
         self.core.included.ones().map(NodeIndex::new)
     }
 

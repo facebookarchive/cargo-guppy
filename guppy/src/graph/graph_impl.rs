@@ -314,11 +314,11 @@ impl PackageGraph {
     // Helper methods
     // ---
 
-    fn dep_links_ixs_directed<'g>(
-        &'g self,
+    fn dep_links_ixs_directed(
+        &self,
         package_ix: NodeIndex<PackageIx>,
         dir: Direction,
-    ) -> impl Iterator<Item = PackageLink<'g>> + 'g {
+    ) -> impl Iterator<Item = PackageLink<'_>> {
         self.dep_graph
             .edges_directed(package_ix, dir)
             .map(move |edge| self.edge_ref_to_link(edge))
@@ -358,7 +358,7 @@ impl PackageGraph {
     }
 
     /// Maps an edge index to a dependency link.
-    pub(super) fn edge_ix_to_link<'g>(&'g self, edge_ix: EdgeIndex<PackageIx>) -> PackageLink<'g> {
+    pub(super) fn edge_ix_to_link(&self, edge_ix: EdgeIndex<PackageIx>) -> PackageLink {
         let (source_ix, target_ix) = self
             .dep_graph
             .edge_endpoints(edge_ix)

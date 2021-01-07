@@ -8,7 +8,7 @@ use guppy::{graph::PackageGraph, Platform, TargetFeatures};
 use proptest::{collection::hash_set, prelude::*};
 
 impl PackagesAndFeatures {
-    pub fn strategy<'g>(graph: &'g PackageGraph) -> impl Strategy<Value = Self> + 'g {
+    pub fn strategy(graph: &PackageGraph) -> impl Strategy<Value = Self> + '_ {
         let workspace = graph.workspace();
         (
             // The lower bound of 0 is important because 0 means the whole workspace.

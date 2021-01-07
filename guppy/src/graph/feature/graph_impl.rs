@@ -739,9 +739,7 @@ impl FeatureNode {
         }
     }
 
-    pub(super) fn named_features<'g>(
-        package: PackageMetadata<'g>,
-    ) -> impl Iterator<Item = Self> + 'g {
+    pub(super) fn named_features(package: PackageMetadata<'_>) -> impl Iterator<Item = Self> + '_ {
         let package_ix = package.package_ix();
         package.named_features_full().map(move |(n, _, _)| Self {
             package_ix,

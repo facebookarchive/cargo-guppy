@@ -138,11 +138,10 @@ impl Paths0 {
 
     fn validate_utf8(buf: &[u8]) -> Result<(), (Vec<u8>, Utf8Error)> {
         buf.split(|b| *b == 0)
-            .map(|path| match std::str::from_utf8(path) {
+            .try_for_each(|path| match std::str::from_utf8(path) {
                 Ok(_) => Ok(()),
                 Err(utf8_error) => Err((path.to_vec(), utf8_error)),
             })
-            .collect()
     }
 
     fn strip_trailing_null_byte(mut buf: Vec<u8>) -> Self {

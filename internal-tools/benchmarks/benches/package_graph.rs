@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use guppy::{
     graph::{DependencyDirection, PackageGraph, PackageMetadata},
     PackageId,
@@ -11,7 +11,7 @@ use proptest_ext::ValueGenerator;
 use std::{collections::HashMap, time::Instant};
 
 pub fn construct_benchmarks(c: &mut Criterion) {
-    c.bench_function("make_package_graph", |b| b.iter(|| make_package_graph()));
+    c.bench_function("make_package_graph", |b| b.iter(make_package_graph));
 }
 
 pub fn query_benchmarks(c: &mut Criterion) {
@@ -65,10 +65,8 @@ pub fn query_benchmarks(c: &mut Criterion) {
             package_graph.invalidate_caches();
             let start = Instant::now();
             for _ in 0..iters {
-                black_box({
-                    let package_set = package_graph.resolve_package_name("syn");
-                    assert_eq!(package_set.len(), 2, "2 versions of syn");
-                });
+                let package_set = package_graph.resolve_package_name("syn");
+                assert_eq!(package_set.len(), 2, "2 versions of syn");
             }
             start.elapsed()
         })
@@ -106,9 +104,7 @@ fn make_package_name_hashmap<'g>(
 }
 
 /// Generate pairs of IDs for benchmarks.
-fn id_pairs_strategy<'g>(
-    graph: &'g PackageGraph,
-) -> impl Strategy<Value = Vec<(&'g PackageId, &'g PackageId)>> + 'g {
+fn id_pairs_strategy(graph: &PackageGraph) -> impl Strategy<Value = Vec<(&PackageId, &PackageId)>> {
     vec(
         (graph.prop010_id_strategy(), graph.prop010_id_strategy()),
         256,
@@ -116,10 +112,9 @@ fn id_pairs_strategy<'g>(
 }
 
 /// Generate IDs and directions for benchmarks.
-fn ids_directions_strategy<'g>(
-    graph: &'g PackageGraph,
-) -> impl Strategy<Value = Vec<(Vec<&'g PackageId>, DependencyDirection, DependencyDirection)>> + 'g
-{
+fn ids_directions_strategy(
+    graph: &PackageGraph,
+) -> impl Strategy<Value = Vec<(Vec<&PackageId>, DependencyDirection, DependencyDirection)>> {
     vec(
         (
             vec(graph.prop010_id_strategy(), 32),

@@ -88,7 +88,7 @@ impl Fixture {
         }
     }
 
-    pub fn common_strategy<'a>(&'a self) -> impl Strategy<Value = GuppyCargoCommon> + 'a {
+    pub fn common_strategy(&self) -> impl Strategy<Value = GuppyCargoCommon> + '_ {
         GuppyCargoCommon::strategy(&self.metadata_opts, self.graph())
     }
 }

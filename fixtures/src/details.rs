@@ -84,7 +84,7 @@ impl FixtureDetails {
         self
     }
 
-    pub fn known_ids<'a>(&'a self) -> impl Iterator<Item = &'a PackageId> + 'a {
+    pub fn known_ids(&self) -> impl Iterator<Item = &PackageId> {
         self.package_details.keys()
     }
 
