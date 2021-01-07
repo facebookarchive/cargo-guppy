@@ -271,6 +271,21 @@ impl JsonFixture {
 
         graph.verify().expect("graph verification should succeed");
 
+        // Check that all external sources parse correctly in all graphs.
+        for package in graph.packages() {
+            let source = package.source();
+            if source.is_external() {
+                let external = source.parse_external().unwrap_or_else(|| {
+                    panic!("cannot parse external source {}", source)
+                });
+                assert_eq!(
+                    format!("{}", external),
+                    source.external_source().expect("is_external is true"),
+                    "roundtrip with ExternalSource"
+                );
+            }
+        }
+
         self.details.assert_cycles(graph, "cycles");
 
         self.details.assert_workspace(graph.workspace());
