@@ -1,11 +1,10 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use atomicwrites::{AtomicFile, OverwriteBehavior};
 use diffy::Patch;
 use std::{
-    error, fmt,
-    fs::File,
-    io,
+    error, fmt, io,
     path::{Path, PathBuf},
 };
 
@@ -193,17 +192,24 @@ impl HakariCargoToml {
     ///
     /// `self` is consumed because the contents of the file are now assumed to be invalid.
     pub fn write_to_file(self, toml: &str) -> Result<(), CargoTomlError> {
+        if !self.is_changed(toml) {
+            // Don't write out the file if it hasn't changed to avoid bumping mtimes.
+            return Ok(());
+        }
+
         let try_block = || {
-            let f = File::create(&self.toml_path)?;
-            self.write(toml, f)
+            let atomic_file = AtomicFile::new(&self.toml_path, OverwriteBehavior::AllowOverwrite);
+            atomic_file.write(|f| self.write(toml, f))
         };
 
         match (try_block)() {
             Ok(()) => Ok(()),
-            Err(error) => Err(CargoTomlError::Io {
-                toml_path: self.toml_path,
-                error,
-            }),
+            Err(atomicwrites::Error::Internal(error)) | Err(atomicwrites::Error::User(error)) => {
+                Err(CargoTomlError::Io {
+                    toml_path: self.toml_path,
+                    error,
+                })
+            }
         }
     }
 
