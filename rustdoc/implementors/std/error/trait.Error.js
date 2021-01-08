@@ -1,6 +1,7 @@
 (function() {var implementors = {};
 implementors["aho_corasick"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["ascii"] = [{"text":"impl Error for ToAsciiCharError","synthetic":false,"types":[]},{"text":"impl Error for AsAsciiStrError","synthetic":false,"types":[]},{"text":"impl&lt;O:&nbsp;Any&gt; Error for FromAsciiError&lt;O&gt;","synthetic":false,"types":[]}];
+implementors["atomicwrites"] = [{"text":"impl&lt;E:&nbsp;ErrorTrait&gt; Error for Error&lt;E&gt;","synthetic":false,"types":[]}];
 implementors["bstr"] = [{"text":"impl Error for FromUtf8Error","synthetic":false,"types":[]},{"text":"impl Error for Utf8Error","synthetic":false,"types":[]}];
 implementors["cargo"] = [{"text":"impl Error for ResolveError","synthetic":false,"types":[]},{"text":"impl Error for ConfigError","synthetic":false,"types":[]},{"text":"impl Error for HttpNot200","synthetic":false,"types":[]},{"text":"impl Error for VerboseError","synthetic":false,"types":[]},{"text":"impl Error for InternalError","synthetic":false,"types":[]},{"text":"impl Error for ManifestError","synthetic":false,"types":[]},{"text":"impl Error for ProcessError","synthetic":false,"types":[]},{"text":"impl Error for CargoTestError","synthetic":false,"types":[]}];
 implementors["cargo_metadata"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
@@ -26,6 +27,7 @@ implementors["humantime"] = [{"text":"impl Error for Error","synthetic":false,"t
 implementors["ignore"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["itertools"] = [{"text":"impl&lt;I&gt; Error for ExactlyOneError&lt;I&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;I: Iterator + Debug,<br>&nbsp;&nbsp;&nbsp;&nbsp;I::Item: Debug,&nbsp;</span>","synthetic":false,"types":[]}];
 implementors["log"] = [{"text":"impl Error for SetLoggerError","synthetic":false,"types":[]},{"text":"impl Error for ParseLevelError","synthetic":false,"types":[]}];
+implementors["nix"] = [{"text":"impl Error for Errno","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["opener"] = [{"text":"impl Error for OpenError","synthetic":false,"types":[]}];
 implementors["openssl"] = [{"text":"impl Error for ErrorStack","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl&lt;S:&nbsp;Debug&gt; Error for HandshakeError&lt;S&gt;","synthetic":false,"types":[]},{"text":"impl Error for X509VerifyResult","synthetic":false,"types":[]}];
 implementors["pest"] = [{"text":"impl&lt;'i, R:&nbsp;RuleType&gt; Error for Error&lt;R&gt;","synthetic":false,"types":[]}];
@@ -49,5 +51,6 @@ implementors["toml"] = [{"text":"impl Error for DatetimeParseError","synthetic":
 implementors["toml_edit"] = [{"text":"impl Error for TomlError","synthetic":false,"types":[]}];
 implementors["ucd_trie"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["url"] = [{"text":"impl Error for ParseError","synthetic":false,"types":[]}];
+implementors["void"] = [{"text":"impl Error for Void","synthetic":false,"types":[]}];
 implementors["walkdir"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

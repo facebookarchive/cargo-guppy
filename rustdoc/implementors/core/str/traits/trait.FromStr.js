@@ -12,6 +12,7 @@ implementors["glob"] = [{"text":"impl FromStr for Pattern","synthetic":false,"ty
 implementors["globset"] = [{"text":"impl FromStr for Glob","synthetic":false,"types":[]}];
 implementors["humantime"] = [{"text":"impl FromStr for Duration","synthetic":false,"types":[]},{"text":"impl FromStr for Timestamp","synthetic":false,"types":[]}];
 implementors["log"] = [{"text":"impl FromStr for Level","synthetic":false,"types":[]},{"text":"impl FromStr for LevelFilter","synthetic":false,"types":[]}];
+implementors["nix"] = [{"text":"impl FromStr for Signal","synthetic":false,"types":[]}];
 implementors["proc_macro2"] = [{"text":"impl FromStr for TokenStream","synthetic":false,"types":[]}];
 implementors["proptest"] = [{"text":"impl FromStr for PersistedSeed","synthetic":false,"types":[]},{"text":"impl FromStr for RngAlgorithm","synthetic":false,"types":[]}];
 implementors["regex"] = [{"text":"impl FromStr for Regex","synthetic":false,"types":[]},{"text":"impl FromStr for Regex","synthetic":false,"types":[]}];
