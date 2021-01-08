@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["HakariBuilderSummary","A `HakariBuilder` in serializable form."]]});

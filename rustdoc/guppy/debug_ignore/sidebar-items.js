@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["DebugIgnore","A newtype wrapper that causes this field to be ignored while printing out `Debug` output."]]});

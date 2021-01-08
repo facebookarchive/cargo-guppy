@@ -1,6 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `guppy/src/graph/proptest010.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>proptest010.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `guppy/src/graph/proptest010.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>proptest010.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../guppy/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../guppy/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -199,19 +199,29 @@
 <span id="196">196</span>
 <span id="197">197</span>
 <span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoResolverVersion</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{<span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageQuery</span>, <span class="ident">PackageResolver</span>, <span class="ident">Workspace</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PackageId</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">graph</span>::{
+        <span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoResolverVersion</span>, <span class="ident">InitialsPlatform</span>},
+        <span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageQuery</span>, <span class="ident">PackageResolver</span>, <span class="ident">Workspace</span>,
+    },
+    <span class="ident">PackageId</span>,
+};
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::<span class="ident">VisitMap</span>;
-<span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">collection</span>::{<span class="ident">hash_set</span>, <span class="ident">vec</span>};
-<span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">option</span>;
-<span class="kw">use</span> <span class="ident">proptest</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">petgraph</span>::{<span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">visit</span>::<span class="ident">VisitMap</span>};
+<span class="kw">use</span> <span class="ident">proptest</span>::{
+    <span class="ident">collection</span>::{<span class="ident">hash_set</span>, <span class="ident">vec</span>},
+    <span class="ident">option</span>,
+    <span class="ident">prelude</span>::<span class="kw-2">*</span>,
+};
 <span class="kw">use</span> <span class="ident">target_spec</span>::{<span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>};
 
 <span class="doccomment">/// ## Helpers for property testing</span>
@@ -229,7 +239,7 @@
     <span class="doccomment">/// ## Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Panics if there are no packages in this `PackageGraph`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_id_strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_id_strategy</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">dep_graph</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>;
         <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">prop</span>::<span class="ident">sample</span>::<span class="ident">Index</span><span class="op">&gt;</span>().<span class="ident">prop_map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">index</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">package_ix</span> <span class="op">=</span> <span class="ident">NodeIndex</span>::<span class="ident">new</span>(<span class="ident">index</span>.<span class="ident">index</span>(<span class="ident">dep_graph</span>.<span class="ident">node_count</span>()));
@@ -244,7 +254,7 @@
     <span class="doccomment">/// ## Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Panics if there are no dependency edges in this `PackageGraph`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_link_strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_link_strategy</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">prop</span>::<span class="ident">sample</span>::<span class="ident">Index</span><span class="op">&gt;</span>().<span class="ident">prop_map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">index</span><span class="op">|</span> {
             <span class="comment">// Note that this works because PackageGraph uses petgraph::Graph, not StableGraph. If</span>
             <span class="comment">// PackageGraph used StableGraph, a retain_edges call would create holes -- invalid</span>
@@ -258,7 +268,7 @@
     <span class="doccomment">/// Returns a `Strategy` that generates a random `PackageResolver` instance from this graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Requires the `proptest010` feature to be enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_resolver_strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">Prop010Resolver</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_resolver_strategy</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">Prop010Resolver</span><span class="op">&gt;</span> {
         <span class="comment">// Generate a FixedBitSet to filter based off of.</span>
         <span class="ident">fixedbitset_strategy</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">edge_count</span>()).<span class="ident">prop_map</span>(<span class="ident">Prop010Resolver</span>::<span class="ident">new</span>)
     }
@@ -266,16 +276,14 @@
     <span class="doccomment">/// Returns a `Strategy` that generates a random `CargoOptions` from this graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Requires the `proptest010` feature to be enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_cargo_options_strategy</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
-        <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">option</span>::<span class="ident">of</span>(<span class="ident">Platform</span>::<span class="ident">strategy</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
-        <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">option</span>::<span class="ident">of</span>(<span class="ident">Platform</span>::<span class="ident">strategy</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span><span class="op">&gt;</span>()));
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prop010_cargo_options_strategy</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">option</span>::<span class="ident">of</span>(<span class="ident">Platform</span>::<span class="ident">strategy</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">TargetFeatures</span><span class="op">&gt;</span>()));
+        <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">option</span>::<span class="ident">of</span>(<span class="ident">Platform</span>::<span class="ident">strategy</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">TargetFeatures</span><span class="op">&gt;</span>()));
         <span class="kw">let</span> <span class="ident">omitted_packages</span> <span class="op">=</span> <span class="ident">hash_set</span>(<span class="self">self</span>.<span class="ident">prop010_id_strategy</span>(), <span class="number">0</span>..<span class="number">4</span>);
         (
             <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">CargoResolverVersion</span><span class="op">&gt;</span>(),
             <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>(),
-            <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>(),
+            <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">InitialsPlatform</span><span class="op">&gt;</span>(),
             <span class="ident">target_platform</span>,
             <span class="ident">host_platform</span>,
             <span class="ident">omitted_packages</span>,
@@ -284,18 +292,20 @@
                 <span class="op">|</span>(
                     <span class="ident">version</span>,
                     <span class="ident">include_dev</span>,
-                    <span class="ident">proc_macros_on_target</span>,
+                    <span class="ident">initials_platform</span>,
                     <span class="ident">host_platform</span>,
                     <span class="ident">target_platform</span>,
                     <span class="ident">omitted_packages</span>,
                 )<span class="op">|</span> {
-                    <span class="ident">CargoOptions</span>::<span class="ident">new</span>()
-                        .<span class="ident">with_version</span>(<span class="ident">version</span>)
-                        .<span class="ident">with_dev_deps</span>(<span class="ident">include_dev</span>)
-                        .<span class="ident">with_proc_macros_on_target</span>(<span class="ident">proc_macros_on_target</span>)
-                        .<span class="ident">with_host_platform</span>(<span class="ident">host_platform</span>)
-                        .<span class="ident">with_target_platform</span>(<span class="ident">target_platform</span>)
-                        .<span class="ident">with_omitted_packages</span>(<span class="ident">omitted_packages</span>)
+                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">CargoOptions</span>::<span class="ident">new</span>();
+                    <span class="ident">options</span>
+                        .<span class="ident">set_version</span>(<span class="ident">version</span>)
+                        .<span class="ident">set_include_dev</span>(<span class="ident">include_dev</span>)
+                        .<span class="ident">set_initials_platform</span>(<span class="ident">initials_platform</span>)
+                        .<span class="ident">set_host_platform</span>(<span class="ident">host_platform</span>)
+                        .<span class="ident">set_target_platform</span>(<span class="ident">target_platform</span>)
+                        .<span class="ident">add_omitted_packages</span>(<span class="ident">omitted_packages</span>);
+                    <span class="ident">options</span>
                 },
             )
     }

@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["GenerateSummariesMode",""]],"fn":[["list",""]],"mod":[["summaries",""]],"struct":[["FixtureManager",""],["GenerateSummariesOpts",""]]});
+initSidebarItems({"enum":[["GenerateMode",""]],"fn":[["list",""]],"mod":[["context",""],["hakari_toml",""],["summaries",""]],"struct":[["FixtureManager",""],["GenerateHakariOpts",""],["GenerateOpts",""],["GenerateSummariesOpts",""]]});

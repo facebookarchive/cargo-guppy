@@ -12,6 +12,7 @@ implementors["combine"] = [{"text":"impl&lt;I, R, P&gt; Error for Errors&lt;I, R
 implementors["crossbeam_channel"] = [{"text":"impl&lt;T:&nbsp;Send&gt; Error for SendError&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;Send&gt; Error for TrySendError&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;Send&gt; Error for SendTimeoutError&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl Error for RecvError","synthetic":false,"types":[]},{"text":"impl Error for TryRecvError","synthetic":false,"types":[]},{"text":"impl Error for RecvTimeoutError","synthetic":false,"types":[]},{"text":"impl Error for TrySelectError","synthetic":false,"types":[]},{"text":"impl Error for SelectTimeoutError","synthetic":false,"types":[]}];
 implementors["curl"] = [{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for ShareError","synthetic":false,"types":[]},{"text":"impl Error for MultiError","synthetic":false,"types":[]},{"text":"impl Error for FormError","synthetic":false,"types":[]}];
 implementors["determinator"] = [{"text":"impl Error for RulesError","synthetic":false,"types":[]}];
+implementors["diffy"] = [{"text":"impl Error for ApplyError","synthetic":false,"types":[]},{"text":"impl Error for ParsePatchError","synthetic":false,"types":[]}];
 implementors["either"] = [{"text":"impl&lt;L, R&gt; Error for Either&lt;L, R&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;L: Error,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: Error,&nbsp;</span>","synthetic":false,"types":[]}];
 implementors["flate2"] = [{"text":"impl Error for DecompressError","synthetic":false,"types":[]},{"text":"impl Error for CompressError","synthetic":false,"types":[]}];
 implementors["getrandom"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
@@ -19,9 +20,11 @@ implementors["git2"] = [{"text":"impl Error for Error","synthetic":false,"types"
 implementors["glob"] = [{"text":"impl Error for GlobError","synthetic":false,"types":[]},{"text":"impl Error for PatternError","synthetic":false,"types":[]}];
 implementors["globset"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["guppy"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
+implementors["hakari"] = [{"text":"impl Error for CargoTomlError","synthetic":false,"types":[]},{"text":"impl Error for TomlOutError","synthetic":false,"types":[]}];
 implementors["hex"] = [{"text":"impl Error for FromHexError","synthetic":false,"types":[]}];
 implementors["humantime"] = [{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["ignore"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
+implementors["itertools"] = [{"text":"impl&lt;I&gt; Error for ExactlyOneError&lt;I&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;I: Iterator + Debug,<br>&nbsp;&nbsp;&nbsp;&nbsp;I::Item: Debug,&nbsp;</span>","synthetic":false,"types":[]}];
 implementors["log"] = [{"text":"impl Error for SetLoggerError","synthetic":false,"types":[]},{"text":"impl Error for ParseLevelError","synthetic":false,"types":[]}];
 implementors["opener"] = [{"text":"impl Error for OpenError","synthetic":false,"types":[]}];
 implementors["openssl"] = [{"text":"impl Error for ErrorStack","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl&lt;S:&nbsp;Debug&gt; Error for HandshakeError&lt;S&gt;","synthetic":false,"types":[]},{"text":"impl Error for X509VerifyResult","synthetic":false,"types":[]}];

@@ -1,6 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `target-spec/src/platform.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>platform.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `target-spec/src/platform.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>platform.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../target_spec/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../target_spec/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -152,7 +152,6 @@
 <span id="149">149</span>
 <span id="150">150</span>
 <span id="151">151</span>
-<span id="152">152</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -160,7 +159,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Error</span>;
 <span class="kw">use</span> <span class="ident">cfg_expr</span>::<span class="ident">targets</span>::<span class="ident">get_builtin_target_by_triple</span>;
 <span class="kw">use</span> <span class="ident">custom_platforms</span>::<span class="ident">TargetInfo</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">borrow</span>::<span class="ident">Cow</span>, <span class="ident">collections</span>::<span class="ident">BTreeSet</span>, <span class="ident">ops</span>::<span class="ident">Deref</span>};
 
 <span class="comment">// This is generated by the build script.</span>
 <span class="macro">include</span><span class="macro">!</span>(<span class="macro">concat</span><span class="macro">!</span>(<span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;OUT_DIR&quot;</span>), <span class="string">&quot;/current_platform.rs&quot;</span>));
@@ -178,19 +177,16 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="ident">target_info</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">TargetInfo</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">target_features</span>: <span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    <span class="ident">flags</span>: <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
+    <span class="ident">target_features</span>: <span class="ident">TargetFeatures</span>,
+    <span class="ident">flags</span>: <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">is_custom</span>: <span class="ident">bool</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Creates a new `Platform` from the given built-in triple and target features.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns `None` if this platform wasn&#39;t known to `target-spec`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">triple</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
-        <span class="ident">target_features</span>: <span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">triple</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="ident">target_features</span>: <span class="ident">TargetFeatures</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">triple</span> <span class="op">=</span> <span class="ident">triple</span>.<span class="ident">as_ref</span>();
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">target_info</span>: <span class="ident">get_builtin_target_by_triple</span>(<span class="ident">triple</span>)
@@ -200,12 +196,14 @@
             <span class="ident">is_custom</span>: <span class="bool-val">false</span>,
         })
     }
+}
 
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Creates a new, custom platform from a `TargetInfo` and target features.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Custom platforms are often found in embedded and similar environments. For built-in</span>
     <span class="doccomment">/// platforms, `new` is recommended instead.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">custom</span>(<span class="ident">target_info</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">TargetInfo</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">target_features</span>: <span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">custom</span>(<span class="ident">target_info</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">TargetInfo</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">target_features</span>: <span class="ident">TargetFeatures</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">target_info</span>,
             <span class="ident">target_features</span>,
@@ -221,8 +219,8 @@
     <span class="doccomment">/// A default `cargo build` will always evaluate flags to false, but custom wrappers may cause</span>
     <span class="doccomment">/// some flags to evaluate to true. For example, as of version 0.6, `cargo web build` will cause</span>
     <span class="doccomment">/// `cargo_web` to evaluate to true.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_flags</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flags</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>) {
-        <span class="self">self</span>.<span class="ident">flags</span>.<span class="ident">extend</span>(<span class="ident">flags</span>);
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_flags</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flags</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
+        <span class="self">self</span>.<span class="ident">flags</span>.<span class="ident">extend</span>(<span class="ident">flags</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()));
     }
 
     <span class="doccomment">/// Returns the target triple for this platform.</span>
@@ -231,8 +229,8 @@
     }
 
     <span class="doccomment">/// Returns the set of flags enabled for this platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flags</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
-        <span class="self">self</span>.<span class="ident">flags</span>.<span class="ident">iter</span>().<span class="ident">copied</span>()
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flags</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">flags</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">flag</span><span class="op">|</span> <span class="ident">flag</span>.<span class="ident">deref</span>())
     }
 
     <span class="doccomment">/// Returns true if this flag was set with `add_flags`.</span>
@@ -246,7 +244,7 @@
     }
 
     <span class="doccomment">/// Returns the set of target features for this platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">target_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">TargetFeatures</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_features</span>
     }
 
@@ -263,7 +261,7 @@
     <span class="doccomment">/// `target-spec`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">current</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">target_info</span> <span class="op">=</span> <span class="ident">get_builtin_target_by_triple</span>(<span class="ident">CURRENT_TARGET</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">target_features</span> <span class="op">=</span> <span class="ident">TargetFeatures</span>::<span class="ident">features</span>(<span class="ident">CURRENT_TARGET_FEATURES</span>);
+        <span class="kw">let</span> <span class="ident">target_features</span> <span class="op">=</span> <span class="ident">TargetFeatures</span>::<span class="ident">features</span>(<span class="ident">CURRENT_TARGET_FEATURES</span>.<span class="ident">iter</span>().<span class="ident">copied</span>());
         <span class="prelude-val">Some</span>(<span class="self">Self</span> {
             <span class="ident">target_info</span>,
             <span class="ident">target_features</span>,
@@ -276,19 +274,19 @@
 <span class="doccomment">/// A set of target features to match.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>)]</span>
 <span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TargetFeatures</span> {
     <span class="doccomment">/// The target features are unknown.</span>
     <span class="ident">Unknown</span>,
     <span class="doccomment">/// Only match the specified features.</span>
-    <span class="ident">Features</span>(<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>),
+    <span class="ident">Features</span>(<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>),
     <span class="doccomment">/// Match all features.</span>
     <span class="ident">All</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">TargetFeatures</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">TargetFeatures</span> {
     <span class="doccomment">/// Creates a new `TargetFeatures` which matches some features.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="ident">features</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">TargetFeatures</span>::<span class="ident">Features</span>(<span class="ident">features</span>.<span class="ident">iter</span>().<span class="ident">copied</span>().<span class="ident">collect</span>())
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="ident">features</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident">TargetFeatures</span>::<span class="ident">Features</span>(<span class="ident">features</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()).<span class="ident">collect</span>())
     }
 
     <span class="doccomment">/// Creates a new `TargetFeatures` which doesn&#39;t match any features.</span>

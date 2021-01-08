@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["GenerateSummaryContext",""],["SummaryPair",""]]});
+initSidebarItems({"struct":[["SummaryContext",""]]});

@@ -1,6 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `guppy/src/graph/resolve.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>resolve.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `guppy/src/graph/resolve.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>resolve.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../guppy/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../guppy/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -502,26 +502,67 @@
 <span id="499">499</span>
 <span id="500">500</span>
 <span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">debug_ignore</span>::<span class="ident">DebugIgnore</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">feature</span>::{<span class="ident">FeatureFilter</span>, <span class="ident">FeatureSet</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::<span class="ident">resolve_core</span>::{<span class="ident">ResolveCore</span>, <span class="ident">Topo</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">graph</span>::{
-    <span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">PackageMetadata</span>,
-    <span class="ident">PackageQuery</span>,
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">debug_ignore</span>::<span class="ident">DebugIgnore</span>,
+    <span class="ident">graph</span>::{
+        <span class="ident">feature</span>::{<span class="ident">FeatureFilter</span>, <span class="ident">FeatureSet</span>},
+        <span class="ident">resolve_core</span>::{<span class="ident">ResolveCore</span>, <span class="ident">Topo</span>},
+        <span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageLinkImpl</span>,
+        <span class="ident">PackageMetadata</span>, <span class="ident">PackageQuery</span>,
+    },
+    <span class="ident">petgraph_support</span>::{
+        <span class="ident">dot</span>::{<span class="ident">DotFmt</span>, <span class="ident">DotVisitor</span>, <span class="ident">DotWrite</span>},
+        <span class="ident">edge_ref</span>::<span class="ident">GraphEdgeRef</span>,
+        <span class="ident">IxBitSet</span>,
+    },
+    <span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>,
+    <span class="ident">Error</span>, <span class="ident">PackageId</span>,
 };
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">dot</span>::{<span class="ident">DotFmt</span>, <span class="ident">DotVisitor</span>, <span class="ident">DotWrite</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">edge_ref</span>::<span class="ident">GraphEdgeRef</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">petgraph_support</span>::<span class="ident">IxBitSet</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>, <span class="ident">Error</span>, <span class="ident">PackageId</span>};
 <span class="kw">use</span> <span class="ident">fixedbitset</span>::<span class="ident">FixedBitSet</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">visit</span>::{<span class="ident">NodeFiltered</span>, <span class="ident">NodeRef</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
+<span class="kw">use</span> <span class="ident">petgraph</span>::{
+    <span class="ident">prelude</span>::<span class="kw-2">*</span>,
+    <span class="ident">visit</span>::{<span class="ident">NodeFiltered</span>, <span class="ident">NodeRef</span>},
+};
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fmt</span>, <span class="ident">path</span>::<span class="ident">Path</span>};
 
 <span class="kw">impl</span> <span class="ident">PackageGraph</span> {
     <span class="doccomment">/// Creates a new `PackageSet` consisting of all members of this package graph.</span>
@@ -623,6 +664,29 @@
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
         })
     }
+
+    <span class="doccomment">/// Creates a new `PackageSet` consisting of packages with the given name.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The result is empty if there are no packages with the given name.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_package_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span> {
+        <span class="comment">// Turns out that for reasonably-sized graphs, a linear search across package names is</span>
+        <span class="comment">// extremely fast: much faster than trying to do something fancy like use an FST or trie.</span>
+        <span class="comment">//</span>
+        <span class="comment">// TODO: optimize this in the future, possibly through some sort of hashmap variant that</span>
+        <span class="comment">// doesn&#39;t require a borrow.</span>
+        <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">as_ref</span>();
+        <span class="kw">let</span> <span class="ident">included</span>: <span class="ident">IxBitSet</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">packages</span>()
+            .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> {
+                <span class="kw">if</span> <span class="ident">package</span>.<span class="ident">name</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">name</span> {
+                    <span class="prelude-val">Some</span>(<span class="ident">package</span>.<span class="ident">package_ix</span>())
+                } <span class="kw">else</span> {
+                    <span class="prelude-val">None</span>
+                }
+            })
+            .<span class="ident">collect</span>();
+        <span class="ident">PackageSet</span>::<span class="ident">from_included</span>(<span class="self">self</span>, <span class="ident">included</span>)
+    }
 }
 
 <span class="doccomment">/// A set of resolved packages in a package graph.</span>
@@ -645,7 +709,7 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">included</span>: <span class="ident">FixedBitSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">included</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">graph</span>: <span class="ident">DebugIgnore</span>(<span class="ident">graph</span>),
             <span class="ident">core</span>: <span class="ident">ResolveCore</span>::<span class="ident">from_included</span>(<span class="ident">included</span>),
@@ -907,6 +971,12 @@
     <span class="comment">// ---</span>
     <span class="comment">// Helper methods</span>
     <span class="comment">// ---</span>
+
+    <span class="doccomment">/// Returns all the package ixs without topologically sorting them.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">ixs_unordered</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;_</span> {
+        <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">included</span>.<span class="ident">ones</span>().<span class="ident">map</span>(<span class="ident">NodeIndex</span>::<span class="ident">new</span>)
+    }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">contains_ix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">core</span>.<span class="ident">contains</span>(<span class="ident">package_ix</span>)
