@@ -303,7 +303,7 @@ pub(crate) fn write_toml(
                                 repository, req, ..
                             } => {
                                 let mut out = String::new();
-                                write!(out, "repository = \"{}\", ", repository)?;
+                                write!(out, "git = \"{}\", ", repository)?;
                                 match req {
                                     GitReq::Branch(branch) => {
                                         write!(out, "branch = \"{}\", ", branch)?
