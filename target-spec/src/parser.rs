@@ -16,7 +16,10 @@ use std::{str::FromStr, sync::Arc};
 ///
 /// let i686_windows = Platform::new("i686-pc-windows-gnu", TargetFeatures::Unknown).unwrap();
 /// let x86_64_mac = Platform::new("x86_64-apple-darwin", TargetFeatures::none()).unwrap();
-/// let i686_linux = Platform::new("i686-unknown-linux-gnu", TargetFeatures::features(&["sse2"])).unwrap();
+/// let i686_linux = Platform::new(
+///     "i686-unknown-linux-gnu",
+///     TargetFeatures::features(["sse2"].iter().copied()),
+/// ).unwrap();
 ///
 /// let spec: TargetSpec = "cfg(any(windows, target_arch = \"x86_64\"))".parse().unwrap();
 /// assert_eq!(spec.eval(&i686_windows), Some(true), "i686 Windows");
