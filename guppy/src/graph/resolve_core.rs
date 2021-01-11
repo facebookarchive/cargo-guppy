@@ -18,7 +18,7 @@ use petgraph::{
     prelude::*,
     visit::{NodeFiltered, Reversed, VisitMap},
 };
-use serde::export::PhantomData;
+use std::marker::PhantomData;
 
 /// Core logic for queries that have been resolved into a known set of packages.
 ///
