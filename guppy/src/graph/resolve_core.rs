@@ -10,7 +10,7 @@ use fixedbitset::FixedBitSet;
 use petgraph::graph::EdgeReference;
 use petgraph::prelude::*;
 use petgraph::visit::{NodeFiltered, Reversed, VisitMap};
-use serde::export::PhantomData;
+use std::marker::PhantomData;
 
 /// Core logic for queries that have been resolved into a known set of packages.
 ///
