@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/cargo_metadata-0.12.0/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/cargo_metadata-0.12.2/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../cargo_metadata/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -600,6 +600,16 @@
 <span id="597">597</span>
 <span id="598">598</span>
 <span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="doccomment">//! Structured access to the output of `cargo metadata` and `cargo --message-format=json`.</span>
@@ -654,7 +664,7 @@
 <span class="doccomment">//! use cargo_metadata::Message;</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! let mut command = Command::new(&quot;cargo&quot;)</span>
-<span class="doccomment">//!     .args(&amp;[&quot;build&quot;, &quot;--message-format=json&quot;])</span>
+<span class="doccomment">//!     .args(&amp;[&quot;build&quot;, &quot;--message-format=json-render-diagnostics&quot;])</span>
 <span class="doccomment">//!     .stdout(Stdio::piped())</span>
 <span class="doccomment">//!     .spawn()</span>
 <span class="doccomment">//!     .unwrap();</span>
@@ -842,7 +852,7 @@
     <span class="doccomment">/// graph. Use Cargo&#39;s `--filter-platform` flag if you only want to</span>
     <span class="doccomment">/// include dependencies for a specific platform.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html</span>
+    <span class="doccomment">/// [`Display`]: std::fmt::Display</span>
     <span class="kw">pub</span> <span class="ident">target</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">dependency</span>::<span class="ident">Platform</span><span class="op">&gt;</span>,
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
@@ -850,7 +860,10 @@
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
-<span class="doccomment">/// A crate</span>
+<span class="doccomment">/// One or more crates described by a single `Cargo.toml`</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Each [`target`][Package::targets] of a `Package` will be built as a crate.</span>
+<span class="doccomment">/// For more information, see &lt;https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html&gt;.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Package</span> {
     <span class="doccomment">/// Name as given in the `Cargo.toml`</span>
     <span class="kw">pub</span> <span class="ident">name</span>: <span class="ident">String</span>,
@@ -890,10 +903,18 @@
     <span class="doccomment">/// Repository as given in the `Cargo.toml`</span>
     <span class="comment">// can&#39;t use `url::Url` because that requires a more recent stable compiler</span>
     <span class="kw">pub</span> <span class="ident">repository</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Homepage as given in the `Cargo.toml`</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// On versions of cargo before 1.49, this will always be [`None`].</span>
+    <span class="kw">pub</span> <span class="ident">homepage</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Documentation URL as given in the `Cargo.toml`</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// On versions of cargo before 1.49, this will always be [`None`].</span>
+    <span class="kw">pub</span> <span class="ident">documentation</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Default Rust edition for the package</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Beware that individual targets may specify their own edition in</span>
-    <span class="doccomment">/// [`Target::edition`](struct.Target.html#structfield.edition).</span>
+    <span class="doccomment">/// [`Target::edition`].</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;edition_default&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">edition</span>: <span class="ident">String</span>,
     <span class="doccomment">/// Contents of the free form package.metadata section</span>
@@ -1142,7 +1163,7 @@
 
     <span class="doccomment">/// Builds a command for `cargo metadata`.  This is the first</span>
     <span class="doccomment">/// part of the work of `exec`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cargo_command</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Command</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cargo_command</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Command</span> {
         <span class="kw">let</span> <span class="ident">cargo</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">cargo_path</span>
             .<span class="ident">clone</span>()
@@ -1174,7 +1195,7 @@
         }
         <span class="ident">cmd</span>.<span class="ident">args</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">other_options</span>);
 
-        <span class="prelude-val">Ok</span>(<span class="ident">cmd</span>)
+        <span class="ident">cmd</span>
     }
 
     <span class="doccomment">/// Parses `cargo metadata` output.  `data` must have been</span>
@@ -1186,8 +1207,7 @@
 
     <span class="doccomment">/// Runs configured `cargo metadata` and returns parsed `Metadata`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Metadata</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cargo_command</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">cmd</span>.<span class="ident">output</span>()<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cargo_command</span>().<span class="ident">output</span>()<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="op">!</span><span class="ident">output</span>.<span class="ident">status</span>.<span class="ident">success</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">CargoMetadata</span> {
                 <span class="ident">stderr</span>: <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">output</span>.<span class="ident">stderr</span>)<span class="question-mark">?</span>,
