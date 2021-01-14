@@ -1,3 +1,4 @@
 (function() {var implementors = {};
 implementors["guppy"] = [{"text":"impl TryFrom&lt;MetadataCommand&gt; for PackageGraph","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; TryFrom&lt;&amp;'a MetadataCommand&gt; for PackageGraph","synthetic":false,"types":[]},{"text":"impl TryFrom&lt;CargoMetadata&gt; for PackageGraph","synthetic":false,"types":[]}];
+implementors["url"] = [{"text":"impl&lt;'a&gt; TryFrom&lt;&amp;'a str&gt; for Url","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

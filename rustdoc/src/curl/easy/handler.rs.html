@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/curl-0.4.33/src/easy/handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>handler.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/curl-0.4.34/src/easy/handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>handler.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../curl/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
@@ -3348,41 +3348,13 @@
 <span id="3345">3345</span>
 <span id="3346">3346</span>
 <span id="3347">3347</span>
-<span id="3348">3348</span>
-<span id="3349">3349</span>
-<span id="3350">3350</span>
-<span id="3351">3351</span>
-<span id="3352">3352</span>
-<span id="3353">3353</span>
-<span id="3354">3354</span>
-<span id="3355">3355</span>
-<span id="3356">3356</span>
-<span id="3357">3357</span>
-<span id="3358">3358</span>
-<span id="3359">3359</span>
-<span id="3360">3360</span>
-<span id="3361">3361</span>
-<span id="3362">3362</span>
-<span id="3363">3363</span>
-<span id="3364">3364</span>
-<span id="3365">3365</span>
-<span id="3366">3366</span>
-<span id="3367">3367</span>
-<span id="3368">3368</span>
-<span id="3369">3369</span>
-<span id="3370">3370</span>
-<span id="3371">3371</span>
-<span id="3372">3372</span>
-<span id="3373">3373</span>
-<span id="3374">3374</span>
-<span id="3375">3375</span>
-<span id="3376">3376</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cell</span>::<span class="ident">RefCell</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::{<span class="ident">CStr</span>, <span class="ident">CString</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>::{<span class="self">self</span>, <span class="ident">SeekFrom</span>, <span class="ident">Write</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">slice</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">Duration</span>;
@@ -3686,13 +3658,12 @@
         <span class="ident">InfoType</span>::<span class="ident">HeaderOut</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;&gt;&quot;</span>,
         <span class="ident">InfoType</span>::<span class="ident">DataIn</span> <span class="op">|</span> <span class="ident">InfoType</span>::<span class="ident">SslDataIn</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;{&quot;</span>,
         <span class="ident">InfoType</span>::<span class="ident">DataOut</span> <span class="op">|</span> <span class="ident">InfoType</span>::<span class="ident">SslDataOut</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;}&quot;</span>,
-        <span class="ident">InfoType</span>::<span class="ident">__Nonexhaustive</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot; &quot;</span>,
     };
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">out</span>.<span class="ident">lock</span>();
     <span class="ident">drop</span>(<span class="macro">write</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;{} &quot;</span>, <span class="ident">prefix</span>));
     <span class="kw">match</span> <span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">data</span>) {
         <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">drop</span>(<span class="ident">out</span>.<span class="ident">write_all</span>(<span class="ident">s</span>.<span class="ident">as_bytes</span>())),
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">drop</span>(<span class="macro">write</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;({} bytes of data)\n&quot;</span>, <span class="ident">data</span>.<span class="ident">len</span>())),
+        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">drop</span>(<span class="macro">writeln</span><span class="macro">!</span>(<span class="ident">out</span>, <span class="string">&quot;({} bytes of data)&quot;</span>, <span class="ident">data</span>.<span class="ident">len</span>())),
     }
 }
 
@@ -3772,6 +3743,7 @@
 <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">Inner</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span> {}
 
 <span class="doccomment">/// Possible proxy types that libcurl currently understands.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ProxyType</span> {
@@ -3781,14 +3753,10 @@
     <span class="ident">Socks5</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURLPROXY_SOCKS5</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">Socks4a</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURLPROXY_SOCKS4A</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">Socks5Hostname</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURLPROXY_SOCKS5_HOSTNAME</span> <span class="kw">as</span> <span class="ident">isize</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span>,
 }
 
 <span class="doccomment">/// Possible conditions for the `time_condition` method.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TimeCondition</span> {
@@ -3796,28 +3764,20 @@
     <span class="ident">IfModifiedSince</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_TIMECOND_IFMODSINCE</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">IfUnmodifiedSince</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_TIMECOND_IFUNMODSINCE</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">LastModified</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_TIMECOND_LASTMOD</span> <span class="kw">as</span> <span class="ident">isize</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span>,
 }
 
 <span class="doccomment">/// Possible values to pass to the `ip_resolve` method.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">IpResolve</span> {
     <span class="ident">V4</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_IPRESOLVE_V4</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">V6</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_IPRESOLVE_V6</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">Any</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_IPRESOLVE_WHATEVER</span> <span class="kw">as</span> <span class="ident">isize</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span> <span class="op">=</span> <span class="number">500</span>,
 }
 
 <span class="doccomment">/// Possible values to pass to the `http_version` method.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">HttpVersion</span> {
     <span class="doccomment">/// We don&#39;t care what http version to use, and we&#39;d like the library to</span>
@@ -3852,14 +3812,10 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// (Added in CURL 7.66.0)</span>
     <span class="ident">V3</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_HTTP_VERSION_3</span> <span class="kw">as</span> <span class="ident">isize</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span> <span class="op">=</span> <span class="number">500</span>,
 }
 
 <span class="doccomment">/// Possible values to pass to the `ssl_version` and `ssl_min_max_version` method.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SslVersion</span> {
@@ -3871,14 +3827,10 @@
     <span class="ident">Tlsv11</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_SSLVERSION_TLSv1_1</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">Tlsv12</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_SSLVERSION_TLSv1_2</span> <span class="kw">as</span> <span class="ident">isize</span>,
     <span class="ident">Tlsv13</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_SSLVERSION_TLSv1_3</span> <span class="kw">as</span> <span class="ident">isize</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span> <span class="op">=</span> <span class="number">500</span>,
 }
 
 <span class="doccomment">/// Possible return values from the `seek_function` callback.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SeekResult</span> {
     <span class="doccomment">/// Indicates that the seek operation was a success</span>
@@ -3891,15 +3843,11 @@
     <span class="doccomment">/// Indicates that although the seek failed libcurl should attempt to keep</span>
     <span class="doccomment">/// working if possible (for example &quot;seek&quot; through reading).</span>
     <span class="ident">CantSeek</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_SEEKFUNC_CANTSEEK</span> <span class="kw">as</span> <span class="ident">isize</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span> <span class="op">=</span> <span class="number">500</span>,
 }
 
 <span class="doccomment">/// Possible data chunks that can be witnessed as part of the `debug_function`</span>
 <span class="doccomment">/// callback.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">InfoType</span> {
     <span class="doccomment">/// The data is informational text.</span>
@@ -3922,14 +3870,10 @@
 
     <span class="doccomment">/// The data is SSL/TLS (binary) data sent to the peer.</span>
     <span class="ident">SslDataOut</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span>,
 }
 
 <span class="doccomment">/// Possible error codes that can be returned from the `read_function` callback.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ReadError</span> {
     <span class="doccomment">/// Indicates that the connection should be aborted immediately</span>
@@ -3937,23 +3881,14 @@
 
     <span class="doccomment">/// Indicates that reading should be paused until `unpause` is called.</span>
     <span class="ident">Pause</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span>,
 }
 
 <span class="doccomment">/// Possible error codes that can be returned from the `write_function` callback.</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">WriteError</span> {
     <span class="doccomment">/// Indicates that reading should be paused until `unpause` is called.</span>
     <span class="ident">Pause</span>,
-
-    <span class="doccomment">/// Hidden variant to indicate that this enum should not be matched on, it</span>
-    <span class="doccomment">/// may grow over time.</span>
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">__Nonexhaustive</span>,
 }
 
 <span class="doccomment">/// Options for `.netrc` parsing.</span>
@@ -4003,17 +3938,17 @@
             <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">handle</span>.<span class="ident">is_null</span>());
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">Easy2</span> {
                 <span class="ident">inner</span>: <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">Inner</span> {
-                    <span class="ident">handle</span>: <span class="ident">handle</span>,
+                    <span class="ident">handle</span>,
                     <span class="ident">header_list</span>: <span class="prelude-val">None</span>,
                     <span class="ident">resolve_list</span>: <span class="prelude-val">None</span>,
                     <span class="ident">connect_to_list</span>: <span class="prelude-val">None</span>,
                     <span class="ident">form</span>: <span class="prelude-val">None</span>,
                     <span class="ident">error_buf</span>: <span class="ident">RefCell</span>::<span class="ident">new</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="number">0</span>; <span class="ident">curl_sys</span>::<span class="ident">CURL_ERROR_SIZE</span>]),
-                    <span class="ident">handler</span>: <span class="ident">handler</span>,
+                    <span class="ident">handler</span>,
                 }),
             };
             <span class="ident">ret</span>.<span class="ident">default_configure</span>();
-            <span class="kw">return</span> <span class="ident">ret</span>;
+            <span class="ident">ret</span>
         }
     }
 
@@ -5157,6 +5092,17 @@
         <span class="self">self</span>.<span class="ident">setopt_long</span>(<span class="ident">curl_sys</span>::<span class="ident">CURLOPT_MAXCONNECTS</span>, <span class="ident">max</span> <span class="kw">as</span> <span class="ident">c_long</span>)
     }
 
+    <span class="doccomment">/// Set the maximum idle time allowed for a connection.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This configuration sets the maximum time that a connection inside of the connection cache</span>
+    <span class="doccomment">/// can be reused. Any connection older than this value will be considered stale and will</span>
+    <span class="doccomment">/// be closed.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// By default, a value of 118 seconds is used.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maxage_conn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">max_age</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">setopt_long</span>(<span class="ident">curl_sys</span>::<span class="ident">CURLOPT_MAXAGE_CONN</span>, <span class="ident">max_age</span>.<span class="ident">as_secs</span>() <span class="kw">as</span> <span class="ident">c_long</span>)
+    }
+
     <span class="doccomment">/// Force a new connection to be used.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Makes the next transfer use a new (fresh) connection by force instead of</span>
@@ -6038,7 +5984,7 @@
     <span class="doccomment">/// if the option isn&#39;t supported.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cookies</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">List</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">list</span> <span class="op">=</span> <span class="number">0</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>;
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">list</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
             <span class="kw">let</span> <span class="ident">rc</span> <span class="op">=</span> <span class="ident">curl_sys</span>::<span class="ident">curl_easy_getinfo</span>(
                 <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">handle</span>,
                 <span class="ident">curl_sys</span>::<span class="ident">CURLINFO_COOKIELIST</span>,
@@ -6101,7 +6047,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">perform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">cvt</span>(<span class="ident">curl_sys</span>::<span class="ident">curl_easy_perform</span>(<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">handle</span>)) };
         <span class="ident">panic</span>::<span class="ident">propagate</span>();
-        <span class="kw">return</span> <span class="ident">ret</span>;
+        <span class="ident">ret</span>
     }
 
     <span class="doccomment">/// Unpause reading on a connection.</span>
@@ -6161,7 +6107,7 @@
             <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="ident">p</span>).<span class="ident">to_bytes</span>()).<span class="ident">unwrap</span>();
             <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="ident">ret</span>);
             <span class="ident">curl_sys</span>::<span class="ident">curl_free</span>(<span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>);
-            <span class="kw">return</span> <span class="ident">ret</span>;
+            <span class="ident">ret</span>
         }
     }
 
@@ -6195,7 +6141,7 @@
             <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(<span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span>);
             <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">to_vec</span>();
             <span class="ident">curl_sys</span>::<span class="ident">curl_free</span>(<span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>);
-            <span class="kw">return</span> <span class="ident">ret</span>;
+            <span class="ident">ret</span>
         }
     }
 
@@ -6391,7 +6337,7 @@
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">msg</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">take_error_buf</span>() {
             <span class="ident">err</span>.<span class="ident">set_extra</span>(<span class="ident">msg</span>);
         }
-        <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">new</span>(<span class="ident">rc</span>))
+        <span class="prelude-val">Err</span>(<span class="ident">err</span>)
     }
 }
 
@@ -6399,7 +6345,7 @@
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Easy&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;handle&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">handle</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;handler&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">handle</span>)
+            .<span class="ident">field</span>(<span class="string">&quot;handler&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">handler</span>)
             .<span class="ident">finish</span>()
     }
 }
@@ -6440,9 +6386,7 @@
         <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">slice</span>::<span class="ident">from_raw_parts</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>, <span class="ident">size</span> <span class="op">*</span> <span class="ident">nmemb</span>);
         <span class="kw">match</span> (<span class="kw-2">*</span>(<span class="ident">data</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Inner</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>)).<span class="ident">handler</span>.<span class="ident">write</span>(<span class="ident">input</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">WriteError</span>::<span class="ident">Pause</span>) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">WriteError</span>::<span class="ident">__Nonexhaustive</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">curl_sys</span>::<span class="ident">CURL_WRITEFUNC_PAUSE</span>
-            }
+            <span class="prelude-val">Err</span>(<span class="ident">WriteError</span>::<span class="ident">Pause</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_WRITEFUNC_PAUSE</span>,
         }
     })
     .<span class="ident">unwrap_or</span>(<span class="op">!</span><span class="number">0</span>)
@@ -6459,9 +6403,7 @@
         <span class="kw">match</span> (<span class="kw-2">*</span>(<span class="ident">data</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Inner</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>)).<span class="ident">handler</span>.<span class="ident">read</span>(<span class="ident">input</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>,
             <span class="prelude-val">Err</span>(<span class="ident">ReadError</span>::<span class="ident">Pause</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_READFUNC_PAUSE</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">ReadError</span>::<span class="ident">__Nonexhaustive</span>) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">ReadError</span>::<span class="ident">Abort</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">curl_sys</span>::<span class="ident">CURL_READFUNC_ABORT</span>
-            }
+            <span class="prelude-val">Err</span>(<span class="ident">ReadError</span>::<span class="ident">Abort</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">curl_sys</span>::<span class="ident">CURL_READFUNC_ABORT</span>,
         }
     })
     .<span class="ident">unwrap_or</span>(<span class="op">!</span><span class="number">0</span>)
@@ -6525,7 +6467,7 @@
         };
         (<span class="kw-2">*</span>(<span class="ident">userptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Inner</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>)).<span class="ident">handler</span>.<span class="ident">debug</span>(<span class="ident">kind</span>, <span class="ident">data</span>)
     });
-    <span class="kw">return</span> <span class="number">0</span>;
+    <span class="number">0</span>
 }
 
 <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">ssl_ctx_cb</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Handler</span><span class="op">&gt;</span>(

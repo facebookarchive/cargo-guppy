@@ -1,1 +1,1 @@
-initSidebarItems({"attr":[["const_fn","An attribute for easy generation of const functions with conditional compilations. See crate level documentation for details."]]});
+initSidebarItems({"attr":[["const_fn","An attribute for easy generation of const functions with conditional compilations."]]});

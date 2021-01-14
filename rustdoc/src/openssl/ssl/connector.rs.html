@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.10.30/src/ssl/connector.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>connector.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/openssl-0.10.32/src/ssl/connector.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>connector.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../openssl/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -576,6 +576,20 @@
 <span id="573">573</span>
 <span id="574">574</span>
 <span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>::{<span class="ident">Read</span>, <span class="ident">Write</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
@@ -747,13 +761,10 @@ ssbzSibBsu/6iGtCOGEoXJf//////////wIBAg==
         <span class="self">self</span>.<span class="ident">verify_hostname</span> <span class="op">=</span> <span class="ident">verify_hostname</span>;
     }
 
-    <span class="doccomment">/// Initiates a client-side TLS session on a stream.</span>
+    <span class="doccomment">/// Returns an `Ssl` configured to connect to the provided domain.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The domain is used for SNI and hostname verification if enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">connect</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">domain</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">stream</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SslStream</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">HandshakeError</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">Read</span> <span class="op">+</span> <span class="ident">Write</span>,
-    {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_ssl</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">domain</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Ssl</span>, <span class="ident">ErrorStack</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">sni</span> {
             <span class="self">self</span>.<span class="ident">ssl</span>.<span class="ident">set_hostname</span>(<span class="ident">domain</span>)<span class="question-mark">?</span>;
         }
@@ -762,7 +773,17 @@ ssbzSibBsu/6iGtCOGEoXJf//////////wIBAg==
             <span class="ident">setup_verify_hostname</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">ssl</span>, <span class="ident">domain</span>)<span class="question-mark">?</span>;
         }
 
-        <span class="self">self</span>.<span class="ident">ssl</span>.<span class="ident">connect</span>(<span class="ident">stream</span>)
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">ssl</span>)
+    }
+
+    <span class="doccomment">/// Initiates a client-side TLS session on a stream.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The domain is used for SNI and hostname verification if enabled.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">connect</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">domain</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">stream</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SslStream</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">HandshakeError</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">S</span>: <span class="ident">Read</span> <span class="op">+</span> <span class="ident">Write</span>,
+    {
+        <span class="self">self</span>.<span class="ident">into_ssl</span>(<span class="ident">domain</span>)<span class="question-mark">?</span>.<span class="ident">connect</span>(<span class="ident">stream</span>)
     }
 }
 
@@ -1077,15 +1098,10 @@ ssbzSibBsu/6iGtCOGEoXJf//////////wIBAg==
                     <span class="ident">hostname</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">hostname</span>[..<span class="ident">hostname</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>];
                 }
 
-                <span class="ident">matches_wildcard</span>(<span class="ident">pattern</span>, <span class="ident">hostname</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">pattern</span> <span class="op">=</span><span class="op">=</span> <span class="ident">hostname</span>)
+                <span class="ident">matches_wildcard</span>(<span class="ident">pattern</span>, <span class="ident">hostname</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">pattern</span>.<span class="ident">eq_ignore_ascii_case</span>(<span class="ident">hostname</span>))
             }
 
             <span class="kw">fn</span> <span class="ident">matches_wildcard</span>(<span class="ident">pattern</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">hostname</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-                <span class="comment">// internationalized domains can&#39;t involved in wildcards</span>
-                <span class="kw">if</span> <span class="ident">pattern</span>.<span class="ident">starts_with</span>(<span class="string">&quot;xn--&quot;</span>) {
-                    <span class="kw">return</span> <span class="prelude-val">None</span>;
-                }
-
                 <span class="kw">let</span> <span class="ident">wildcard_location</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">pattern</span>.<span class="ident">find</span>(<span class="string">&#39;*&#39;</span>) {
                     <span class="prelude-val">Some</span>(<span class="ident">l</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">l</span>,
                     <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
@@ -1110,8 +1126,8 @@ ssbzSibBsu/6iGtCOGEoXJf//////////wIBAg==
                     <span class="kw">return</span> <span class="prelude-val">None</span>;
                 }
 
-                <span class="comment">// Wildcards can only be in the first component</span>
-                <span class="kw">if</span> <span class="ident">wildcard_location</span> <span class="op">&gt;</span> <span class="ident">wildcard_end</span> {
+                <span class="comment">// Wildcards can only be in the first component, and must be the entire first label</span>
+                <span class="kw">if</span> <span class="ident">wildcard_location</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">wildcard_end</span> <span class="op">!</span><span class="op">=</span> <span class="ident">wildcard_location</span> <span class="op">+</span> <span class="number">1</span> {
                     <span class="kw">return</span> <span class="prelude-val">None</span>;
                 }
 
@@ -1120,27 +1136,10 @@ ssbzSibBsu/6iGtCOGEoXJf//////////wIBAg==
                     <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
                 };
 
-                <span class="comment">// check that the non-wildcard parts are identical</span>
-                <span class="kw">if</span> <span class="ident">pattern</span>[<span class="ident">wildcard_end</span>..] <span class="op">!</span><span class="op">=</span> <span class="ident">hostname</span>[<span class="ident">hostname_label_end</span>..] {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="bool-val">false</span>);
-                }
+                <span class="kw">let</span> <span class="ident">pattern_after_wildcard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">pattern</span>[<span class="ident">wildcard_end</span>..];
+                <span class="kw">let</span> <span class="ident">hostname_after_wildcard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">hostname</span>[<span class="ident">hostname_label_end</span>..];
 
-                <span class="kw">let</span> <span class="ident">wildcard_prefix</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">pattern</span>[..<span class="ident">wildcard_location</span>];
-                <span class="kw">let</span> <span class="ident">wildcard_suffix</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">pattern</span>[<span class="ident">wildcard_location</span> <span class="op">+</span> <span class="number">1</span>..<span class="ident">wildcard_end</span>];
-
-                <span class="kw">let</span> <span class="ident">hostname_label</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">hostname</span>[..<span class="ident">hostname_label_end</span>];
-
-                <span class="comment">// check the prefix of the first label</span>
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">hostname_label</span>.<span class="ident">starts_with</span>(<span class="ident">wildcard_prefix</span>) {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="bool-val">false</span>);
-                }
-
-                <span class="comment">// and the suffix</span>
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">hostname_label</span>[<span class="ident">wildcard_prefix</span>.<span class="ident">len</span>()..].<span class="ident">ends_with</span>(<span class="ident">wildcard_suffix</span>) {
-                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="bool-val">false</span>);
-                }
-
-                <span class="prelude-val">Some</span>(<span class="bool-val">true</span>)
+                <span class="prelude-val">Some</span>(<span class="ident">pattern_after_wildcard</span>.<span class="ident">eq_ignore_ascii_case</span>(<span class="ident">hostname_after_wildcard</span>))
             }
 
             <span class="kw">fn</span> <span class="ident">matches_ip</span>(<span class="ident">expected</span>: <span class="kw-2">&amp;</span><span class="ident">IpAddr</span>, <span class="ident">actual</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
@@ -1148,6 +1147,35 @@ ssbzSibBsu/6iGtCOGEoXJf//////////wIBAg==
                     <span class="ident">IpAddr</span>::<span class="ident">V4</span>(<span class="kw-2">ref</span> <span class="ident">addr</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">actual</span> <span class="op">=</span><span class="op">=</span> <span class="ident">addr</span>.<span class="ident">octets</span>(),
                     <span class="ident">IpAddr</span>::<span class="ident">V6</span>(<span class="kw-2">ref</span> <span class="ident">addr</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">actual</span> <span class="op">=</span><span class="op">=</span> <span class="ident">addr</span>.<span class="ident">octets</span>(),
                 }
+            }
+
+            <span class="attribute">#[<span class="ident">test</span>]</span>
+            <span class="kw">fn</span> <span class="ident">test_dns_match</span>() {
+                <span class="kw">use</span> <span class="ident">ssl</span>::<span class="ident">connector</span>::<span class="ident">verify</span>::<span class="ident">matches_dns</span>;
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;website.tld&quot;</span>, <span class="string">&quot;website.tld&quot;</span>)); <span class="comment">// A name should match itself.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;website.tld&quot;</span>, <span class="string">&quot;wEbSiTe.tLd&quot;</span>)); <span class="comment">// DNS name matching ignores case of hostname.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;wEbSiTe.TlD&quot;</span>, <span class="string">&quot;website.tld&quot;</span>)); <span class="comment">// DNS name matching ignores case of subject.</span>
+
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;xn--bcher-kva.tld&quot;</span>, <span class="string">&quot;xn--bcher-kva.tld&quot;</span>)); <span class="comment">// Likewise, nothing special to punycode names.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;xn--bcher-kva.tld&quot;</span>, <span class="string">&quot;xn--BcHer-Kva.tLd&quot;</span>)); <span class="comment">// And punycode must be compared similarly case-insensitively.</span>
+
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;*.example.com&quot;</span>, <span class="string">&quot;subdomain.example.com&quot;</span>)); <span class="comment">// Wildcard matching works.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;*.eXaMpLe.cOm&quot;</span>, <span class="string">&quot;subdomain.example.com&quot;</span>)); <span class="comment">// Wildcard matching ignores case of subject.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches_dns</span>(<span class="string">&quot;*.example.com&quot;</span>, <span class="string">&quot;sUbDoMaIn.eXaMpLe.cOm&quot;</span>)); <span class="comment">// Wildcard matching ignores case of hostname.</span>
+
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;prefix*.example.com&quot;</span>, <span class="string">&quot;p.example.com&quot;</span>)); <span class="comment">// Prefix longer than the label works and does not match.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;*suffix.example.com&quot;</span>, <span class="string">&quot;s.example.com&quot;</span>)); <span class="comment">// Suffix longer than the label works and does not match.</span>
+
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;prefix*.example.com&quot;</span>, <span class="string">&quot;prefix.example.com&quot;</span>)); <span class="comment">// Partial wildcards do not work.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;*suffix.example.com&quot;</span>, <span class="string">&quot;suffix.example.com&quot;</span>)); <span class="comment">// Partial wildcards do not work.</span>
+
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;prefix*.example.com&quot;</span>, <span class="string">&quot;prefixdomain.example.com&quot;</span>)); <span class="comment">// Partial wildcards do not work.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;*suffix.example.com&quot;</span>, <span class="string">&quot;domainsuffix.example.com&quot;</span>)); <span class="comment">// Partial wildcards do not work.</span>
+
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;xn--*.example.com&quot;</span>, <span class="string">&quot;subdomain.example.com&quot;</span>)); <span class="comment">// Punycode domains with wildcard parts do not match.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;xN--*.example.com&quot;</span>, <span class="string">&quot;subdomain.example.com&quot;</span>)); <span class="comment">// And we can&#39;t bypass a punycode test with weird casing.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;Xn--*.example.com&quot;</span>, <span class="string">&quot;subdomain.example.com&quot;</span>)); <span class="comment">// And we can&#39;t bypass a punycode test with weird casing.</span>
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">matches_dns</span>(<span class="string">&quot;XN--*.example.com&quot;</span>, <span class="string">&quot;subdomain.example.com&quot;</span>)); <span class="comment">// And we can&#39;t bypass a punycode test with weird casing.</span>
             }
         }
     }
