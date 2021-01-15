@@ -430,7 +430,7 @@ impl<'g, 'a> Hakari<'g, 'a> {
 
     fn build(builder: HakariBuilder<'g, 'a>) -> Self {
         let graph = *builder.graph;
-        let computed_map_build = HakariFullMapBuild::new(&builder);
+        let computed_map_build = ComputedMapBuild::new(&builder);
 
         // Collect all the dependencies that need to be unified, by platform and build type.
         let mut map_build: OutputMapBuild<'g> = OutputMapBuild::new(graph);
@@ -565,8 +565,9 @@ pub type ComputedMap<'g> = BTreeMap<(Option<usize>, &'g PackageId), ComputedValu
 
 /// The values of a [`ComputedMap`](ComputedMap).
 ///
-/// This represents a pair of `HakariFullInner` instances: one for the target and one for the host.
-/// For more about the values, see the documentation for [`ComputedInnerMap`](ComputedInnerMap).
+/// This represents a pair of `ComputedInnerMap` instances: one for the target platform and one for
+/// the host. For more about the values, see the documentation for
+/// [`ComputedInnerMap`](ComputedInnerMap).
 #[derive(Clone, Debug, Default)]
 pub struct ComputedValue<'g> {
     /// The feature sets built on the target platform.
@@ -603,12 +604,12 @@ impl<'g, 'b> HakariOmitted<'g, 'b> {
 
 /// Intermediate build state used by Hakari.
 #[derive(Debug)]
-struct HakariFullMapBuild<'g, 'b> {
+struct ComputedMapBuild<'g, 'b> {
     hakari_omitted: HakariOmitted<'g, 'b>,
     computed_map: ComputedMap<'g>,
 }
 
-impl<'g, 'b> HakariFullMapBuild<'g, 'b> {
+impl<'g, 'b> ComputedMapBuild<'g, 'b> {
     fn new(builder: &'b HakariBuilder<'g, '_>) -> Self {
         let platforms_features: Vec<_> = if builder.platforms.is_empty() {
             StandardFeatures::VALUES
