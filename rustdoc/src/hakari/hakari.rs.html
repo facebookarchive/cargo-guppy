@@ -1039,6 +1039,7 @@
 <span id="1036">1036</span>
 <span id="1037">1037</span>
 <span id="1038">1038</span>
+<span id="1039">1039</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1472,7 +1473,7 @@
 
     <span class="kw">fn</span> <span class="ident">build</span>(<span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">builder</span>.<span class="ident">graph</span>;
-        <span class="kw">let</span> <span class="ident">computed_map_build</span> <span class="op">=</span> <span class="ident">HakariFullMapBuild</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">builder</span>);
+        <span class="kw">let</span> <span class="ident">computed_map_build</span> <span class="op">=</span> <span class="ident">ComputedMapBuild</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">builder</span>);
 
         <span class="comment">// Collect all the dependencies that need to be unified, by platform and build type.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map_build</span>: <span class="ident">OutputMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">OutputMapBuild</span>::<span class="ident">new</span>(<span class="ident">graph</span>);
@@ -1607,8 +1608,9 @@
 
 <span class="doccomment">/// The values of a [`ComputedMap`](ComputedMap).</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This represents a pair of `HakariFullInner` instances: one for the target and one for the host.</span>
-<span class="doccomment">/// For more about the values, see the documentation for [`ComputedInnerMap`](ComputedInnerMap).</span>
+<span class="doccomment">/// This represents a pair of `ComputedInnerMap` instances: one for the target platform and one for</span>
+<span class="doccomment">/// the host. For more about the values, see the documentation for</span>
+<span class="doccomment">/// [`ComputedInnerMap`](ComputedInnerMap).</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// The feature sets built on the target platform.</span>
@@ -1645,12 +1647,12 @@
 
 <span class="doccomment">/// Intermediate build state used by Hakari.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">struct</span> <span class="ident">HakariFullMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
+<span class="kw">struct</span> <span class="ident">ComputedMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
     <span class="ident">hakari_omitted</span>: <span class="ident">HakariOmitted</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span>,
     <span class="ident">computed_map</span>: <span class="ident">ComputedMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">HakariFullMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">ComputedMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">builder</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">platforms_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">builder</span>.<span class="ident">platforms</span>.<span class="ident">is_empty</span>() {
             <span class="ident">StandardFeatures</span>::<span class="ident">VALUES</span>
