@@ -158,7 +158,7 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
     /// In verify mode, the goal is to ensure that Cargo builds actually produce a unique set of
     /// features. In this mode, instead of being omitted, the Hakari package is always *included*
     /// in feature resolution (default features), through the `features_only` argument to
-    /// [`CargoSet::new`](CargoSet::new). If, in the result, [`hakari_map`](Hakari::hakari_map)
+    /// [`CargoSet::new`](CargoSet::new). If, in the result, [`output_map`](Hakari::output_map)
     /// is empty, then features were unified.
     ///
     /// Setting this to true has no effect if the Hakari package is not specified at construction
@@ -347,7 +347,7 @@ impl Default for UnifyTargetHost {
 
 /// A key representing a platform and host/target. Returned by `Hakari`.
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct HakariKey {
+pub struct OutputKey {
     /// The index of the build platform for this key, or `None` if the computation was done in a
     /// platform-independent manner.
     pub platform_idx: Option<usize>,
@@ -364,22 +364,26 @@ pub struct HakariKey {
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct Hakari<'g, 'a> {
-    /// The builder used to generate this `Hakari` instance.
-    pub builder: HakariBuilder<'g, 'a>,
+    builder: HakariBuilder<'g, 'a>,
 
     /// The map built by Hakari of dependencies that need to be unified.
     ///
-    /// This map is used to build the TOML output. Public access is provided in case some
+    /// This map is used to construct the TOML output. Public access is provided in case some
     /// post-processing needs to be done.
-    pub hakari_map: HakariMap<'g>,
+    pub output_map: OutputMap<'g>,
 
-    /// The complete map built by Hakari.
+    /// The complete map of dependency build results built by Hakari.
     ///
-    /// This map is not used to generate the TOML output. However, public access is provided
-    pub full_map: HakariFullMap<'g>,
+    /// This map is not used to generate the TOML output.
+    pub computed_map: ComputedMap<'g>,
 }
 
 impl<'g, 'a> Hakari<'g, 'a> {
+    /// Returns the `HakariBuilder` used to create this instance.
+    pub fn builder(&self) -> &HakariBuilder<'g, 'a> {
+        &self.builder
+    }
+
     /// Reads the existing TOML file from disk, returning a `HakariCargoToml`.
     ///
     /// This can be used with [`to_toml_string`](Self::to_toml_string) to manage the contents of
@@ -407,7 +411,7 @@ impl<'g, 'a> Hakari<'g, 'a> {
         options: &TomlOptions,
         out: impl fmt::Write,
     ) -> Result<(), TomlOutError> {
-        write_toml(&self.builder, &self.hakari_map, options, out)
+        write_toml(&self.builder, &self.output_map, options, out)
     }
 
     /// A convenience method around `write_toml` that returns a new string with `Cargo.toml` lines.
@@ -426,12 +430,12 @@ impl<'g, 'a> Hakari<'g, 'a> {
 
     fn build(builder: HakariBuilder<'g, 'a>) -> Self {
         let graph = *builder.graph;
-        let full_map_build = HakariFullMapBuild::new(&builder);
+        let computed_map_build = HakariFullMapBuild::new(&builder);
 
         // Collect all the dependencies that need to be unified, by platform and build type.
-        let mut map_build: HakariMapBuild<'g> = HakariMapBuild::new(graph);
+        let mut map_build: OutputMapBuild<'g> = OutputMapBuild::new(graph);
         map_build.insert_all(
-            full_map_build.iter(),
+            computed_map_build.iter(),
             builder.unify_all,
             builder.unify_target_host,
         );
@@ -442,8 +446,8 @@ impl<'g, 'a> Hakari<'g, 'a> {
             // extra features that need to be considered.
             loop {
                 let mut add_extra = HashMap::new();
-                for (hakari_key, features) in map_build.iter_feature_sets() {
-                    let initials_platform = match hakari_key.build_platform {
+                for (output_key, features) in map_build.iter_feature_sets() {
+                    let initials_platform = match output_key.build_platform {
                         BuildPlatform::Target => InitialsPlatform::Standard,
                         BuildPlatform::Host => InitialsPlatform::Host,
                     };
@@ -454,12 +458,12 @@ impl<'g, 'a> Hakari<'g, 'a> {
                         .set_include_dev(false)
                         .set_initials_platform(initials_platform)
                         .set_platform(
-                            hakari_key
+                            output_key
                                 .platform_idx
                                 .map(|platform_idx| &builder.platforms[platform_idx]),
                         )
                         .set_version(builder.version)
-                        .add_omitted_packages(full_map_build.hakari_omitted.iter());
+                        .add_omitted_packages(computed_map_build.hakari_omitted.iter());
                     let cargo_set = features
                         .into_cargo_set(&cargo_opts)
                         .expect("into_cargo_set processed successfully");
@@ -473,11 +477,11 @@ impl<'g, 'a> Hakari<'g, 'a> {
                         {
                             let dep = feature_list.package();
                             let dep_id = dep.id();
-                            let v = full_map_build
-                                .get(hakari_key.platform_idx, dep_id)
+                            let v = computed_map_build
+                                .get(output_key.platform_idx, dep_id)
                                 .expect("full value should be present");
-                            let new_key = HakariKey {
-                                platform_idx: hakari_key.platform_idx,
+                            let new_key = OutputKey {
+                                platform_idx: output_key.platform_idx,
                                 build_platform,
                             };
 
@@ -505,7 +509,7 @@ impl<'g, 'a> Hakari<'g, 'a> {
                                     != to_insert.iter().copied().collect::<Vec<_>>()
                             {
                                 // The feature list added by this dependency is non-unique.
-                                add_extra.insert((hakari_key.platform_idx, dep_id), v);
+                                add_extra.insert((output_key.platform_idx, dep_id), v);
                             }
                         }
                     }
@@ -526,60 +530,59 @@ impl<'g, 'a> Hakari<'g, 'a> {
             }
         }
 
-        let full_map = full_map_build.full_map;
+        let computed_map = computed_map_build.computed_map;
 
         Self {
             builder,
-            hakari_map: map_build.hakari_map,
-            full_map,
+            output_map: map_build.output_map,
+            computed_map,
         }
     }
 }
 
-/// The internal data structure used by Hakari.
+/// The map used by Hakari to generate output TOML.
 ///
 /// This is a two-level `BTreeMap`, where:
-/// * the top-level keys are [`HakariKey`](HakariKey) instances.
+/// * the top-level keys are [`OutputKey`](OutputKey) instances.
 /// * the inner map is keyed by dependency [`PackageId`](PackageId) instances, and the values are
 ///   the corresponding [`PackageMetadata`](PackageMetadata) for this dependency, and the set of
 ///   features enabled for this package.
 ///
-/// This is an alias for the type of [`Hakari::hakari_map`](Hakari::hakari_map).
-pub type HakariMap<'g> =
-    BTreeMap<HakariKey, BTreeMap<&'g PackageId, (PackageMetadata<'g>, BTreeSet<&'g str>)>>;
+/// This is an alias for the type of [`Hakari::output_map`](Hakari::output_map).
+pub type OutputMap<'g> =
+    BTreeMap<OutputKey, BTreeMap<&'g PackageId, (PackageMetadata<'g>, BTreeSet<&'g str>)>>;
 
-/// The full internal data structure used by Hakari.
+/// The map of all build results computed by Hakari.
 ///
 /// The keys are the platform index and the dependency's package ID, and the values are
-/// [`HakariFullValue`](HakariFullValue) instances that represent the different feature sets this
-/// dependency is built with.
+/// [`ComputedValue`](ComputedValue) instances that represent the different feature sets this
+/// dependency is built with on both the host and target platforms.
 ///
-/// The values that are most interesting are the ones where the `HakariFullValue` value has two
-/// elements or more: they indicate features that need to be unified.
+/// The values that are most interesting are the ones where maps have two elements or more: they indicate dependencies with features that need to be unified.
 ///
-/// This is an alias for the type of [`Hakari::full_map`](Hakari::full_map).
-pub type HakariFullMap<'g> = BTreeMap<(Option<usize>, &'g PackageId), HakariFullValue<'g>>;
+/// This is an alias for the type of [`Hakari::computed_map`](Hakari::computed_map).
+pub type ComputedMap<'g> = BTreeMap<(Option<usize>, &'g PackageId), ComputedValue<'g>>;
 
-/// The values of a [`HakariFullMap`](HakariFullMap).
+/// The values of a [`ComputedMap`](ComputedMap).
 ///
 /// This represents a pair of `HakariFullInner` instances: one for the target and one for the host.
-/// For more about the values, see the documentation for [`HakariFullInner`](HakariFullInner).
+/// For more about the values, see the documentation for [`ComputedInnerMap`](ComputedInnerMap).
 #[derive(Clone, Debug, Default)]
-pub struct HakariFullValue<'g> {
+pub struct ComputedValue<'g> {
     /// The feature sets built on the target platform.
-    pub target_inner: HakariFullInner<'g>,
+    pub target_inner: ComputedInnerMap<'g>,
 
     /// The feature sets built on the host platform.
-    pub host_inner: HakariFullInner<'g>,
+    pub host_inner: ComputedInnerMap<'g>,
 }
 
-/// The inner map that forms the values in [`HakariFullMap`](HakariFullMap).
+/// A target map or a host map in a [`ComputedValue`](ComputedValue).
 ///
 /// * The keys are sets of feature names (or empty for no features).
-/// * The inner values are the workspace packages + selected features that cause the dependency in
-///   `HakariKey` to be built with the given feature set. They are not defined to be in any
+/// * The values are the workspace packages and selected features that cause the key in
+///   `ComputedMap` to be built with the given feature set. They are not defined to be in any
 ///   particular order.
-pub type HakariFullInner<'g> =
+pub type ComputedInnerMap<'g> =
     BTreeMap<BTreeSet<&'g str>, Vec<(PackageMetadata<'g>, StandardFeatures)>>;
 
 #[derive(Debug)]
@@ -602,7 +605,7 @@ impl<'g, 'b> HakariOmitted<'g, 'b> {
 #[derive(Debug)]
 struct HakariFullMapBuild<'g, 'b> {
     hakari_omitted: HakariOmitted<'g, 'b>,
-    full_map: HakariFullMap<'g>,
+    computed_map: ComputedMap<'g>,
 }
 
 impl<'g, 'b> HakariFullMapBuild<'g, 'b> {
@@ -630,7 +633,7 @@ impl<'g, 'b> HakariFullMapBuild<'g, 'b> {
         let hakari_omitted_ref = &hakari_omitted;
         let features_only_ref = &features_only;
 
-        let full_map: HakariFullMap<'g> = platforms_features
+        let computed_map: ComputedMap<'g> = platforms_features
             .into_par_iter()
             // The cargo_set computation in the inner iterator is the most expensive part of the
             // process, so use flat_map instead of flat_map_iter.
@@ -680,7 +683,7 @@ impl<'g, 'b> HakariFullMapBuild<'g, 'b> {
                             })
                     });
 
-                    let mut map = HakariFullMap::new();
+                    let mut map = ComputedMap::new();
                     for (
                         platform_idx,
                         build_platform,
@@ -702,7 +705,7 @@ impl<'g, 'b> HakariFullMapBuild<'g, 'b> {
                     map
                 })
             })
-            .reduce(HakariFullMap::new, |mut acc, map| {
+            .reduce(ComputedMap::new, |mut acc, map| {
                 // Accumulate across all threads.
                 for (k, v) in map {
                     acc.entry(k).or_default().merge(v);
@@ -712,7 +715,7 @@ impl<'g, 'b> HakariFullMapBuild<'g, 'b> {
 
         Self {
             hakari_omitted,
-            full_map,
+            computed_map,
         }
     }
 
@@ -720,22 +723,22 @@ impl<'g, 'b> HakariFullMapBuild<'g, 'b> {
         &self,
         platform_idx: Option<usize>,
         package_id: &'g PackageId,
-    ) -> Option<&HakariFullValue<'g>> {
-        self.full_map.get(&(platform_idx, package_id))
+    ) -> Option<&ComputedValue<'g>> {
+        self.computed_map.get(&(platform_idx, package_id))
     }
 
     fn iter<'a>(
         &'a self,
-    ) -> impl Iterator<Item = (Option<usize>, &'g PackageId, &'a HakariFullValue<'g>)> + 'a {
-        self.full_map
+    ) -> impl Iterator<Item = (Option<usize>, &'g PackageId, &'a ComputedValue<'g>)> + 'a {
+        self.computed_map
             .iter()
             .map(move |(&(platform_idx, package_id), v)| (platform_idx, package_id, v))
     }
 }
 
-impl<'g> HakariFullValue<'g> {
+impl<'g> ComputedValue<'g> {
     /// Returns both the inner maps along with the build platforms they represent.
-    pub fn inner_maps(&self) -> [(BuildPlatform, &HakariFullInner<'g>); 2] {
+    pub fn inner_maps(&self) -> [(BuildPlatform, &ComputedInnerMap<'g>); 2] {
         [
             (BuildPlatform::Target, &self.target_inner),
             (BuildPlatform::Host, &self.host_inner),
@@ -743,7 +746,7 @@ impl<'g> HakariFullValue<'g> {
     }
 
     /// Returns a mutable reference to the inner map corresponding to the given build platform.
-    pub fn get_inner_mut(&mut self, build_platform: BuildPlatform) -> &mut HakariFullInner<'g> {
+    pub fn get_inner_mut(&mut self, build_platform: BuildPlatform) -> &mut ComputedInnerMap<'g> {
         match build_platform {
             BuildPlatform::Target => &mut self.target_inner,
             BuildPlatform::Host => &mut self.host_inner,
@@ -751,7 +754,7 @@ impl<'g> HakariFullValue<'g> {
     }
 
     /// Adds all the instances in `other` to `self`.
-    fn merge(&mut self, other: HakariFullValue<'g>) {
+    fn merge(&mut self, other: ComputedValue<'g>) {
         for (features, details) in other.target_inner {
             self.target_inner
                 .entry(features)
@@ -817,29 +820,29 @@ impl<'g> HakariFullValue<'g> {
 #[derive(Copy, Clone, Debug)]
 enum ValueDescribe<'g, 'a> {
     None,
-    SingleTarget(&'a HakariFullInner<'g>),
-    SingleHost(&'a HakariFullInner<'g>),
-    MultiTarget(&'a HakariFullInner<'g>),
-    MultiHost(&'a HakariFullInner<'g>),
+    SingleTarget(&'a ComputedInnerMap<'g>),
+    SingleHost(&'a ComputedInnerMap<'g>),
+    MultiTarget(&'a ComputedInnerMap<'g>),
+    MultiHost(&'a ComputedInnerMap<'g>),
     SingleMatchingBoth {
-        target_inner: &'a HakariFullInner<'g>,
-        host_inner: &'a HakariFullInner<'g>,
+        target_inner: &'a ComputedInnerMap<'g>,
+        host_inner: &'a ComputedInnerMap<'g>,
     },
     SingleNonMatchingBoth {
-        target_inner: &'a HakariFullInner<'g>,
-        host_inner: &'a HakariFullInner<'g>,
+        target_inner: &'a ComputedInnerMap<'g>,
+        host_inner: &'a ComputedInnerMap<'g>,
     },
     MultiTargetSingleHost {
-        target_inner: &'a HakariFullInner<'g>,
-        host_inner: &'a HakariFullInner<'g>,
+        target_inner: &'a ComputedInnerMap<'g>,
+        host_inner: &'a ComputedInnerMap<'g>,
     },
     MultiHostSingleTarget {
-        target_inner: &'a HakariFullInner<'g>,
-        host_inner: &'a HakariFullInner<'g>,
+        target_inner: &'a ComputedInnerMap<'g>,
+        host_inner: &'a ComputedInnerMap<'g>,
     },
     MultiBoth {
-        target_inner: &'a HakariFullInner<'g>,
-        host_inner: &'a HakariFullInner<'g>,
+        target_inner: &'a ComputedInnerMap<'g>,
+        host_inner: &'a ComputedInnerMap<'g>,
     },
 }
 
@@ -848,7 +851,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
         self,
         unify_all: bool,
         unify_target_host: UnifyTargetHost,
-        mut insert_cb: impl FnMut(BuildPlatform, &'a HakariFullInner<'g>),
+        mut insert_cb: impl FnMut(BuildPlatform, &'a ComputedInnerMap<'g>),
     ) {
         use BuildPlatform::*;
 
@@ -945,21 +948,21 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
 }
 
 #[derive(Debug)]
-struct HakariMapBuild<'g> {
+struct OutputMapBuild<'g> {
     graph: &'g PackageGraph,
-    hakari_map: HakariMap<'g>,
+    output_map: OutputMap<'g>,
 }
 
-impl<'g> HakariMapBuild<'g> {
+impl<'g> OutputMapBuild<'g> {
     fn new(graph: &'g PackageGraph) -> Self {
         Self {
             graph,
-            hakari_map: HakariMap::new(),
+            output_map: OutputMap::new(),
         }
     }
 
-    fn is_inserted(&self, hakari_key: HakariKey, package_id: &'g PackageId) -> bool {
-        match self.hakari_map.get(&hakari_key) {
+    fn is_inserted(&self, output_key: OutputKey, package_id: &'g PackageId) -> bool {
+        match self.output_map.get(&output_key) {
             Some(inner_map) => inner_map.contains_key(package_id),
             None => false,
         }
@@ -967,7 +970,7 @@ impl<'g> HakariMapBuild<'g> {
 
     fn insert_all<'a>(
         &mut self,
-        values: impl IntoIterator<Item = (Option<usize>, &'g PackageId, &'a HakariFullValue<'g>)>,
+        values: impl IntoIterator<Item = (Option<usize>, &'g PackageId, &'a ComputedValue<'g>)>,
         unify_all: bool,
         unify_target_host: UnifyTargetHost,
     ) where
@@ -986,14 +989,14 @@ impl<'g> HakariMapBuild<'g> {
         platform_idx: Option<usize>,
         build_platform: BuildPlatform,
         package_id: &'g PackageId,
-        inner: &HakariFullInner<'g>,
+        inner: &ComputedInnerMap<'g>,
     ) {
-        let hakari_key = HakariKey {
+        let output_key = OutputKey {
             platform_idx,
             build_platform,
         };
         self.insert(
-            hakari_key,
+            output_key,
             package_id,
             inner.keys().flat_map(|f| f.iter().copied()),
         )
@@ -1001,11 +1004,11 @@ impl<'g> HakariMapBuild<'g> {
 
     fn insert(
         &mut self,
-        hakari_key: HakariKey,
+        output_key: OutputKey,
         package_id: &'g PackageId,
         features: impl IntoIterator<Item = &'g str>,
     ) {
-        let map = self.hakari_map.entry(hakari_key).or_default();
+        let map = self.output_map.entry(output_key).or_default();
         let graph = self.graph;
         let (_, inner) = map.entry(package_id).or_insert_with(|| {
             (
@@ -1016,15 +1019,15 @@ impl<'g> HakariMapBuild<'g> {
         inner.extend(features);
     }
 
-    fn iter_feature_sets<'a>(&'a self) -> impl Iterator<Item = (HakariKey, FeatureSet<'g>)> + 'a {
-        self.hakari_map.iter().map(move |(&hakari_key, deps)| {
+    fn iter_feature_sets<'a>(&'a self) -> impl Iterator<Item = (OutputKey, FeatureSet<'g>)> + 'a {
+        self.output_map.iter().map(move |(&output_key, deps)| {
             let feature_ids = deps.iter().flat_map(|(&package_id, (_, features))| {
                 features
                     .iter()
                     .map(move |&feature| FeatureId::new(package_id, feature))
             });
             (
-                hakari_key,
+                output_key,
                 self.graph
                     .feature_graph()
                     .resolve_ids(feature_ids)
