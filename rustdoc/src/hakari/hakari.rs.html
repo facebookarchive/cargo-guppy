@@ -1036,6 +1036,9 @@
 <span id="1033">1033</span>
 <span id="1034">1034</span>
 <span id="1035">1035</span>
+<span id="1036">1036</span>
+<span id="1037">1037</span>
+<span id="1038">1038</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1197,7 +1200,7 @@
     <span class="doccomment">/// In verify mode, the goal is to ensure that Cargo builds actually produce a unique set of</span>
     <span class="doccomment">/// features. In this mode, instead of being omitted, the Hakari package is always *included*</span>
     <span class="doccomment">/// in feature resolution (default features), through the `features_only` argument to</span>
-    <span class="doccomment">/// [`CargoSet::new`](CargoSet::new). If, in the result, [`hakari_map`](Hakari::hakari_map)</span>
+    <span class="doccomment">/// [`CargoSet::new`](CargoSet::new). If, in the result, [`output_map`](Hakari::output_map)</span>
     <span class="doccomment">/// is empty, then features were unified.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Setting this to true has no effect if the Hakari package is not specified at construction</span>
@@ -1386,7 +1389,7 @@
 
 <span class="doccomment">/// A key representing a platform and host/target. Returned by `Hakari`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Ord</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HakariKey</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OutputKey</span> {
     <span class="doccomment">/// The index of the build platform for this key, or `None` if the computation was done in a</span>
     <span class="doccomment">/// platform-independent manner.</span>
     <span class="kw">pub</span> <span class="ident">platform_idx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
@@ -1403,22 +1406,26 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Hakari</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The builder used to generate this `Hakari` instance.</span>
-    <span class="kw">pub</span> <span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    <span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// The map built by Hakari of dependencies that need to be unified.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// This map is used to build the TOML output. Public access is provided in case some</span>
+    <span class="doccomment">/// This map is used to construct the TOML output. Public access is provided in case some</span>
     <span class="doccomment">/// post-processing needs to be done.</span>
-    <span class="kw">pub</span> <span class="ident">hakari_map</span>: <span class="ident">HakariMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">output_map</span>: <span class="ident">OutputMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// The complete map built by Hakari.</span>
+    <span class="doccomment">/// The complete map of dependency build results built by Hakari.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// This map is not used to generate the TOML output. However, public access is provided</span>
-    <span class="kw">pub</span> <span class="ident">full_map</span>: <span class="ident">HakariFullMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// This map is not used to generate the TOML output.</span>
+    <span class="kw">pub</span> <span class="ident">computed_map</span>: <span class="ident">ComputedMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Hakari</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Returns the `HakariBuilder` used to create this instance.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">builder</span>
+    }
+
     <span class="doccomment">/// Reads the existing TOML file from disk, returning a `HakariCargoToml`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This can be used with [`to_toml_string`](Self::to_toml_string) to manage the contents of</span>
@@ -1446,7 +1453,7 @@
         <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TomlOptions</span>,
         <span class="ident">out</span>: <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Write</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TomlOutError</span><span class="op">&gt;</span> {
-        <span class="ident">write_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">builder</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">hakari_map</span>, <span class="ident">options</span>, <span class="ident">out</span>)
+        <span class="ident">write_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">builder</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">output_map</span>, <span class="ident">options</span>, <span class="ident">out</span>)
     }
 
     <span class="doccomment">/// A convenience method around `write_toml` that returns a new string with `Cargo.toml` lines.</span>
@@ -1465,12 +1472,12 @@
 
     <span class="kw">fn</span> <span class="ident">build</span>(<span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">builder</span>.<span class="ident">graph</span>;
-        <span class="kw">let</span> <span class="ident">full_map_build</span> <span class="op">=</span> <span class="ident">HakariFullMapBuild</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">builder</span>);
+        <span class="kw">let</span> <span class="ident">computed_map_build</span> <span class="op">=</span> <span class="ident">HakariFullMapBuild</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">builder</span>);
 
         <span class="comment">// Collect all the dependencies that need to be unified, by platform and build type.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map_build</span>: <span class="ident">HakariMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">HakariMapBuild</span>::<span class="ident">new</span>(<span class="ident">graph</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map_build</span>: <span class="ident">OutputMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">OutputMapBuild</span>::<span class="ident">new</span>(<span class="ident">graph</span>);
         <span class="ident">map_build</span>.<span class="ident">insert_all</span>(
-            <span class="ident">full_map_build</span>.<span class="ident">iter</span>(),
+            <span class="ident">computed_map_build</span>.<span class="ident">iter</span>(),
             <span class="ident">builder</span>.<span class="ident">unify_all</span>,
             <span class="ident">builder</span>.<span class="ident">unify_target_host</span>,
         );
@@ -1481,8 +1488,8 @@
             <span class="comment">// extra features that need to be considered.</span>
             <span class="kw">loop</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">add_extra</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
-                <span class="kw">for</span> (<span class="ident">hakari_key</span>, <span class="ident">features</span>) <span class="kw">in</span> <span class="ident">map_build</span>.<span class="ident">iter_feature_sets</span>() {
-                    <span class="kw">let</span> <span class="ident">initials_platform</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">hakari_key</span>.<span class="ident">build_platform</span> {
+                <span class="kw">for</span> (<span class="ident">output_key</span>, <span class="ident">features</span>) <span class="kw">in</span> <span class="ident">map_build</span>.<span class="ident">iter_feature_sets</span>() {
+                    <span class="kw">let</span> <span class="ident">initials_platform</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">output_key</span>.<span class="ident">build_platform</span> {
                         <span class="ident">BuildPlatform</span>::<span class="ident">Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">InitialsPlatform</span>::<span class="ident">Standard</span>,
                         <span class="ident">BuildPlatform</span>::<span class="ident">Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">InitialsPlatform</span>::<span class="ident">Host</span>,
                     };
@@ -1493,12 +1500,12 @@
                         .<span class="ident">set_include_dev</span>(<span class="bool-val">false</span>)
                         .<span class="ident">set_initials_platform</span>(<span class="ident">initials_platform</span>)
                         .<span class="ident">set_platform</span>(
-                            <span class="ident">hakari_key</span>
+                            <span class="ident">output_key</span>
                                 .<span class="ident">platform_idx</span>
                                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">platform_idx</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">builder</span>.<span class="ident">platforms</span>[<span class="ident">platform_idx</span>]),
                         )
                         .<span class="ident">set_version</span>(<span class="ident">builder</span>.<span class="ident">version</span>)
-                        .<span class="ident">add_omitted_packages</span>(<span class="ident">full_map_build</span>.<span class="ident">hakari_omitted</span>.<span class="ident">iter</span>());
+                        .<span class="ident">add_omitted_packages</span>(<span class="ident">computed_map_build</span>.<span class="ident">hakari_omitted</span>.<span class="ident">iter</span>());
                     <span class="kw">let</span> <span class="ident">cargo_set</span> <span class="op">=</span> <span class="ident">features</span>
                         .<span class="ident">into_cargo_set</span>(<span class="kw-2">&amp;</span><span class="ident">cargo_opts</span>)
                         .<span class="ident">expect</span>(<span class="string">&quot;into_cargo_set processed successfully&quot;</span>);
@@ -1512,11 +1519,11 @@
                         {
                             <span class="kw">let</span> <span class="ident">dep</span> <span class="op">=</span> <span class="ident">feature_list</span>.<span class="ident">package</span>();
                             <span class="kw">let</span> <span class="ident">dep_id</span> <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">id</span>();
-                            <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">full_map_build</span>
-                                .<span class="ident">get</span>(<span class="ident">hakari_key</span>.<span class="ident">platform_idx</span>, <span class="ident">dep_id</span>)
+                            <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">computed_map_build</span>
+                                .<span class="ident">get</span>(<span class="ident">output_key</span>.<span class="ident">platform_idx</span>, <span class="ident">dep_id</span>)
                                 .<span class="ident">expect</span>(<span class="string">&quot;full value should be present&quot;</span>);
-                            <span class="kw">let</span> <span class="ident">new_key</span> <span class="op">=</span> <span class="ident">HakariKey</span> {
-                                <span class="ident">platform_idx</span>: <span class="ident">hakari_key</span>.<span class="ident">platform_idx</span>,
+                            <span class="kw">let</span> <span class="ident">new_key</span> <span class="op">=</span> <span class="ident">OutputKey</span> {
+                                <span class="ident">platform_idx</span>: <span class="ident">output_key</span>.<span class="ident">platform_idx</span>,
                                 <span class="ident">build_platform</span>,
                             };
 
@@ -1544,7 +1551,7 @@
                                     <span class="op">!</span><span class="op">=</span> <span class="ident">to_insert</span>.<span class="ident">iter</span>().<span class="ident">copied</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
                             {
                                 <span class="comment">// The feature list added by this dependency is non-unique.</span>
-                                <span class="ident">add_extra</span>.<span class="ident">insert</span>((<span class="ident">hakari_key</span>.<span class="ident">platform_idx</span>, <span class="ident">dep_id</span>), <span class="ident">v</span>);
+                                <span class="ident">add_extra</span>.<span class="ident">insert</span>((<span class="ident">output_key</span>.<span class="ident">platform_idx</span>, <span class="ident">dep_id</span>), <span class="ident">v</span>);
                             }
                         }
                     }
@@ -1565,60 +1572,59 @@
             }
         }
 
-        <span class="kw">let</span> <span class="ident">full_map</span> <span class="op">=</span> <span class="ident">full_map_build</span>.<span class="ident">full_map</span>;
+        <span class="kw">let</span> <span class="ident">computed_map</span> <span class="op">=</span> <span class="ident">computed_map_build</span>.<span class="ident">computed_map</span>;
 
         <span class="self">Self</span> {
             <span class="ident">builder</span>,
-            <span class="ident">hakari_map</span>: <span class="ident">map_build</span>.<span class="ident">hakari_map</span>,
-            <span class="ident">full_map</span>,
+            <span class="ident">output_map</span>: <span class="ident">map_build</span>.<span class="ident">output_map</span>,
+            <span class="ident">computed_map</span>,
         }
     }
 }
 
-<span class="doccomment">/// The internal data structure used by Hakari.</span>
+<span class="doccomment">/// The map used by Hakari to generate output TOML.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This is a two-level `BTreeMap`, where:</span>
-<span class="doccomment">/// * the top-level keys are [`HakariKey`](HakariKey) instances.</span>
+<span class="doccomment">/// * the top-level keys are [`OutputKey`](OutputKey) instances.</span>
 <span class="doccomment">/// * the inner map is keyed by dependency [`PackageId`](PackageId) instances, and the values are</span>
 <span class="doccomment">///   the corresponding [`PackageMetadata`](PackageMetadata) for this dependency, and the set of</span>
 <span class="doccomment">///   features enabled for this package.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This is an alias for the type of [`Hakari::hakari_map`](Hakari::hakari_map).</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">HakariMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span>
-    <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">HakariKey</span>, <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, (<span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">/// This is an alias for the type of [`Hakari::output_map`](Hakari::output_map).</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">OutputMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span>
+    <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">OutputKey</span>, <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, (<span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span>;
 
-<span class="doccomment">/// The full internal data structure used by Hakari.</span>
+<span class="doccomment">/// The map of all build results computed by Hakari.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The keys are the platform index and the dependency&#39;s package ID, and the values are</span>
-<span class="doccomment">/// [`HakariFullValue`](HakariFullValue) instances that represent the different feature sets this</span>
-<span class="doccomment">/// dependency is built with.</span>
+<span class="doccomment">/// [`ComputedValue`](ComputedValue) instances that represent the different feature sets this</span>
+<span class="doccomment">/// dependency is built with on both the host and target platforms.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// The values that are most interesting are the ones where the `HakariFullValue` value has two</span>
-<span class="doccomment">/// elements or more: they indicate features that need to be unified.</span>
+<span class="doccomment">/// The values that are most interesting are the ones where maps have two elements or more: they indicate dependencies with features that need to be unified.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This is an alias for the type of [`Hakari::full_map`](Hakari::full_map).</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">HakariFullMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>), <span class="ident">HakariFullValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">/// This is an alias for the type of [`Hakari::computed_map`](Hakari::computed_map).</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ComputedMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>), <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
-<span class="doccomment">/// The values of a [`HakariFullMap`](HakariFullMap).</span>
+<span class="doccomment">/// The values of a [`ComputedMap`](ComputedMap).</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This represents a pair of `HakariFullInner` instances: one for the target and one for the host.</span>
-<span class="doccomment">/// For more about the values, see the documentation for [`HakariFullInner`](HakariFullInner).</span>
+<span class="doccomment">/// For more about the values, see the documentation for [`ComputedInnerMap`](ComputedInnerMap).</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HakariFullValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// The feature sets built on the target platform.</span>
-    <span class="kw">pub</span> <span class="ident">target_inner</span>: <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">target_inner</span>: <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// The feature sets built on the host platform.</span>
-    <span class="kw">pub</span> <span class="ident">host_inner</span>: <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">host_inner</span>: <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 }
 
-<span class="doccomment">/// The inner map that forms the values in [`HakariFullMap`](HakariFullMap).</span>
+<span class="doccomment">/// A target map or a host map in a [`ComputedValue`](ComputedValue).</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * The keys are sets of feature names (or empty for no features).</span>
-<span class="doccomment">/// * The inner values are the workspace packages + selected features that cause the dependency in</span>
-<span class="doccomment">///   `HakariKey` to be built with the given feature set. They are not defined to be in any</span>
+<span class="doccomment">/// * The values are the workspace packages and selected features that cause the key in</span>
+<span class="doccomment">///   `ComputedMap` to be built with the given feature set. They are not defined to be in any</span>
 <span class="doccomment">///   particular order.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span>
     <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">StandardFeatures</span>)<span class="op">&gt;</span><span class="op">&gt;</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
@@ -1641,7 +1647,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">struct</span> <span class="ident">HakariFullMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
     <span class="ident">hakari_omitted</span>: <span class="ident">HakariOmitted</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span>,
-    <span class="ident">full_map</span>: <span class="ident">HakariFullMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    <span class="ident">computed_map</span>: <span class="ident">ComputedMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">HakariFullMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
@@ -1669,7 +1675,7 @@
         <span class="kw">let</span> <span class="ident">hakari_omitted_ref</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">hakari_omitted</span>;
         <span class="kw">let</span> <span class="ident">features_only_ref</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">features_only</span>;
 
-        <span class="kw">let</span> <span class="ident">full_map</span>: <span class="ident">HakariFullMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">platforms_features</span>
+        <span class="kw">let</span> <span class="ident">computed_map</span>: <span class="ident">ComputedMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">platforms_features</span>
             .<span class="ident">into_par_iter</span>()
             <span class="comment">// The cargo_set computation in the inner iterator is the most expensive part of the</span>
             <span class="comment">// process, so use flat_map instead of flat_map_iter.</span>
@@ -1719,7 +1725,7 @@
                             })
                     });
 
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">HakariFullMap</span>::<span class="ident">new</span>();
+                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">ComputedMap</span>::<span class="ident">new</span>();
                     <span class="kw">for</span> (
                         <span class="ident">platform_idx</span>,
                         <span class="ident">build_platform</span>,
@@ -1741,7 +1747,7 @@
                     <span class="ident">map</span>
                 })
             })
-            .<span class="ident">reduce</span>(<span class="ident">HakariFullMap</span>::<span class="ident">new</span>, <span class="op">|</span><span class="kw-2">mut</span> <span class="ident">acc</span>, <span class="ident">map</span><span class="op">|</span> {
+            .<span class="ident">reduce</span>(<span class="ident">ComputedMap</span>::<span class="ident">new</span>, <span class="op">|</span><span class="kw-2">mut</span> <span class="ident">acc</span>, <span class="ident">map</span><span class="op">|</span> {
                 <span class="comment">// Accumulate across all threads.</span>
                 <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="ident">map</span> {
                     <span class="ident">acc</span>.<span class="ident">entry</span>(<span class="ident">k</span>).<span class="ident">or_default</span>().<span class="ident">merge</span>(<span class="ident">v</span>);
@@ -1751,7 +1757,7 @@
 
         <span class="self">Self</span> {
             <span class="ident">hakari_omitted</span>,
-            <span class="ident">full_map</span>,
+            <span class="ident">computed_map</span>,
         }
     }
 
@@ -1759,22 +1765,22 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">platform_idx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">HakariFullValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">full_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">platform_idx</span>, <span class="ident">package_id</span>))
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">computed_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">platform_idx</span>, <span class="ident">package_id</span>))
     }
 
     <span class="kw">fn</span> <span class="ident">iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="self">self</span>.<span class="ident">full_map</span>
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="self">self</span>.<span class="ident">computed_map</span>
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="kw-2">&amp;</span>(<span class="ident">platform_idx</span>, <span class="ident">package_id</span>), <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">platform_idx</span>, <span class="ident">package_id</span>, <span class="ident">v</span>))
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">HakariFullValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns both the inner maps along with the build platforms they represent.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inner_maps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> [(<span class="ident">BuildPlatform</span>, <span class="kw-2">&amp;</span><span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>); <span class="number">2</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inner_maps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> [(<span class="ident">BuildPlatform</span>, <span class="kw-2">&amp;</span><span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>); <span class="number">2</span>] {
         [
             (<span class="ident">BuildPlatform</span>::<span class="ident">Target</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>),
             (<span class="ident">BuildPlatform</span>::<span class="ident">Host</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>),
@@ -1782,7 +1788,7 @@
     }
 
     <span class="doccomment">/// Returns a mutable reference to the inner map corresponding to the given build platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_inner_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_inner_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">build_platform</span> {
             <span class="ident">BuildPlatform</span>::<span class="ident">Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">target_inner</span>,
             <span class="ident">BuildPlatform</span>::<span class="ident">Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">host_inner</span>,
@@ -1790,7 +1796,7 @@
     }
 
     <span class="doccomment">/// Adds all the instances in `other` to `self`.</span>
-    <span class="kw">fn</span> <span class="ident">merge</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="ident">HakariFullValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) {
+    <span class="kw">fn</span> <span class="ident">merge</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) {
         <span class="kw">for</span> (<span class="ident">features</span>, <span class="ident">details</span>) <span class="kw">in</span> <span class="ident">other</span>.<span class="ident">target_inner</span> {
             <span class="self">self</span>.<span class="ident">target_inner</span>
                 .<span class="ident">entry</span>(<span class="ident">features</span>)
@@ -1856,29 +1862,29 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">enum</span> <span class="ident">ValueDescribe</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="prelude-val">None</span>,
-    <span class="ident">SingleTarget</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
-    <span class="ident">SingleHost</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
-    <span class="ident">MultiTarget</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
-    <span class="ident">MultiHost</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
+    <span class="ident">SingleTarget</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
+    <span class="ident">SingleHost</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
+    <span class="ident">MultiTarget</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
+    <span class="ident">MultiHost</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
     <span class="ident">SingleMatchingBoth</span> {
-        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     },
     <span class="ident">SingleNonMatchingBoth</span> {
-        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     },
     <span class="ident">MultiTargetSingleHost</span> {
-        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     },
     <span class="ident">MultiHostSingleTarget</span> {
-        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     },
     <span class="ident">MultiBoth</span> {
-        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     },
 }
 
@@ -1887,7 +1893,7 @@
         <span class="self">self</span>,
         <span class="ident">unify_all</span>: <span class="ident">bool</span>,
         <span class="ident">unify_target_host</span>: <span class="ident">UnifyTargetHost</span>,
-        <span class="kw-2">mut</span> <span class="ident">insert_cb</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">BuildPlatform</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
+        <span class="kw-2">mut</span> <span class="ident">insert_cb</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">BuildPlatform</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>),
     ) {
         <span class="kw">use</span> <span class="ident">BuildPlatform</span>::<span class="kw-2">*</span>;
 
@@ -1984,21 +1990,21 @@
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">struct</span> <span class="ident">HakariMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+<span class="kw">struct</span> <span class="ident">OutputMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
-    <span class="ident">hakari_map</span>: <span class="ident">HakariMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+    <span class="ident">output_map</span>: <span class="ident">OutputMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">HakariMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">OutputMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">graph</span>,
-            <span class="ident">hakari_map</span>: <span class="ident">HakariMap</span>::<span class="ident">new</span>(),
+            <span class="ident">output_map</span>: <span class="ident">OutputMap</span>::<span class="ident">new</span>(),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">is_inserted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">hakari_key</span>: <span class="ident">HakariKey</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">hakari_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">hakari_key</span>) {
+    <span class="kw">fn</span> <span class="ident">is_inserted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">output_key</span>: <span class="ident">OutputKey</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">output_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">output_key</span>) {
             <span class="prelude-val">Some</span>(<span class="ident">inner_map</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">inner_map</span>.<span class="ident">contains_key</span>(<span class="ident">package_id</span>),
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
@@ -2006,7 +2012,7 @@
 
     <span class="kw">fn</span> <span class="ident">insert_all</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">values</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HakariFullValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+        <span class="ident">values</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
         <span class="ident">unify_all</span>: <span class="ident">bool</span>,
         <span class="ident">unify_target_host</span>: <span class="ident">UnifyTargetHost</span>,
     ) <span class="kw">where</span>
@@ -2025,14 +2031,14 @@
         <span class="ident">platform_idx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
         <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>,
-        <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="ident">HakariFullInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
+        <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     ) {
-        <span class="kw">let</span> <span class="ident">hakari_key</span> <span class="op">=</span> <span class="ident">HakariKey</span> {
+        <span class="kw">let</span> <span class="ident">output_key</span> <span class="op">=</span> <span class="ident">OutputKey</span> {
             <span class="ident">platform_idx</span>,
             <span class="ident">build_platform</span>,
         };
         <span class="self">self</span>.<span class="ident">insert</span>(
-            <span class="ident">hakari_key</span>,
+            <span class="ident">output_key</span>,
             <span class="ident">package_id</span>,
             <span class="ident">inner</span>.<span class="ident">keys</span>().<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">iter</span>().<span class="ident">copied</span>()),
         )
@@ -2040,11 +2046,11 @@
 
     <span class="kw">fn</span> <span class="ident">insert</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">hakari_key</span>: <span class="ident">HakariKey</span>,
+        <span class="ident">output_key</span>: <span class="ident">OutputKey</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>,
         <span class="ident">features</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>,
     ) {
-        <span class="kw">let</span> <span class="ident">map</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">hakari_map</span>.<span class="ident">entry</span>(<span class="ident">hakari_key</span>).<span class="ident">or_default</span>();
+        <span class="kw">let</span> <span class="ident">map</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">output_map</span>.<span class="ident">entry</span>(<span class="ident">output_key</span>).<span class="ident">or_default</span>();
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
         <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">inner</span>) <span class="op">=</span> <span class="ident">map</span>.<span class="ident">entry</span>(<span class="ident">package_id</span>).<span class="ident">or_insert_with</span>(<span class="op">|</span><span class="op">|</span> {
             (
@@ -2055,15 +2061,15 @@
         <span class="ident">inner</span>.<span class="ident">extend</span>(<span class="ident">features</span>);
     }
 
-    <span class="kw">fn</span> <span class="ident">iter_feature_sets</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">HakariKey</span>, <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
-        <span class="self">self</span>.<span class="ident">hakari_map</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="kw-2">&amp;</span><span class="ident">hakari_key</span>, <span class="ident">deps</span>)<span class="op">|</span> {
+    <span class="kw">fn</span> <span class="ident">iter_feature_sets</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">OutputKey</span>, <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="self">self</span>.<span class="ident">output_map</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="kw-2">&amp;</span><span class="ident">output_key</span>, <span class="ident">deps</span>)<span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">feature_ids</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">iter</span>().<span class="ident">flat_map</span>(<span class="op">|</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>, (<span class="kw">_</span>, <span class="ident">features</span>))<span class="op">|</span> {
                 <span class="ident">features</span>
                     .<span class="ident">iter</span>()
                     .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">feature</span><span class="op">|</span> <span class="ident">FeatureId</span>::<span class="ident">new</span>(<span class="ident">package_id</span>, <span class="ident">feature</span>))
             });
             (
-                <span class="ident">hakari_key</span>,
+                <span class="ident">output_key</span>,
                 <span class="self">self</span>.<span class="ident">graph</span>
                     .<span class="ident">feature_graph</span>()
                     .<span class="ident">resolve_ids</span>(<span class="ident">feature_ids</span>)
