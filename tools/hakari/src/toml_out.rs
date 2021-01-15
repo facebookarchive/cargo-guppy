@@ -3,9 +3,9 @@
 
 //! Facilities for writing out TOML data from a Hakari map.
 
+use crate::hakari::{HakariBuilder, OutputMap};
 #[cfg(feature = "summaries")]
 use crate::summaries::HakariBuilderSummary;
-use crate::{HakariBuilder, HakariMap};
 use guppy::{
     graph::{cargo::BuildPlatform, ExternalSource, GitReq, PackageMetadata, PackageSource},
     PackageId, TargetSpecError, Version,
@@ -212,7 +212,7 @@ impl error::Error for TomlOutError {
 
 pub(crate) fn write_toml(
     builder: &HakariBuilder<'_, '_>,
-    hakari_map: &HakariMap<'_>,
+    output_map: &OutputMap<'_>,
     options: &TomlOptions,
     mut out: impl fmt::Write,
 ) -> Result<(), TomlOutError> {
@@ -227,7 +227,7 @@ pub(crate) fn write_toml(
     }
 
     let mut packages_by_name: HashMap<&str, HashSet<_>> = HashMap::new();
-    for vals in hakari_map.values() {
+    for vals in output_map.values() {
         for (&package_id, (package, _)) in vals {
             packages_by_name
                 .entry(package.name())
@@ -243,7 +243,7 @@ pub(crate) fn write_toml(
             .expect("hakari package is in workspace")
     });
 
-    for (key, vals) in hakari_map {
+    for (key, vals) in output_map {
         let cfg_str = match key.platform_idx {
             Some(idx) => builder.platforms()[idx].triple(),
             None => "'cfg(all())'",

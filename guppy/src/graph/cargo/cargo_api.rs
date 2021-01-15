@@ -184,20 +184,27 @@ impl<'a> Default for CargoOptions<'a> {
 pub enum CargoResolverVersion {
     /// The default "classic" feature resolver in Rust.
     ///
-    /// This feature resolver unifies features across inactive targets, and also unifies features
+    /// This feature resolver unifies features across inactive platforms, and also unifies features
     /// across normal, build and dev dependencies for initials. This may produce results that are
     /// surprising at times.
     V1,
+
     /// The "classic" feature resolver in Rust, as used by commands like `cargo install`.
     ///
-    /// This resolver avoids unifying features across dev dependencies for initials. However, if
-    /// `CargoOptions::with_dev_deps` is set to true, it behaves identically to the V1 resolver.
+    /// This resolver is the same as `V1`, except it doesn't unify features across dev dependencies
+    /// for initials. However, if `CargoOptions::with_dev_deps` is set to true, it behaves
+    /// identically to the V1 resolver.
     ///
     /// For more, see
     /// [avoid-dev-deps](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#avoid-dev-deps)
     /// in the Cargo reference.
     V1Install,
-    /// The new feature resolver.
+
+    /// The new feature resolver. This feature resolver does not unify features:
+    ///
+    /// * across host (build) and target (regular) dependencies
+    /// * with dev-dependencies for initials, if tests aren't currently being built
+    /// * with [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies) that are currently inactive
     ///
     /// This is currently available as `-Zfeatures=all`, and is expected to be released in a future
     /// version of Cargo.
