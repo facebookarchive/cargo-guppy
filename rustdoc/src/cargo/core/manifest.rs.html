@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/manifest.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>manifest.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/core/manifest.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>manifest.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -942,6 +942,11 @@
 <span id="939">939</span>
 <span id="940">940</span>
 <span id="941">941</span>
+<span id="942">942</span>
+<span id="943">943</span>
+<span id="944">944</span>
+<span id="945">945</span>
+<span id="946">946</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
@@ -956,11 +961,11 @@
 <span class="kw">use</span> <span class="ident">url</span>::<span class="ident">Url</span>;
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">CrateType</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::<span class="ident">ResolveBehavior</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Dependency</span>, <span class="ident">PackageId</span>, <span class="ident">PackageIdSpec</span>, <span class="ident">SourceId</span>, <span class="ident">Summary</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Edition</span>, <span class="ident">Feature</span>, <span class="ident">Features</span>, <span class="ident">WorkspaceConfig</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">toml</span>::{<span class="ident">TomlManifest</span>, <span class="ident">TomlProfiles</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">short_hash</span>, <span class="ident">Config</span>, <span class="ident">Filesystem</span>};
 
@@ -970,6 +975,8 @@
 }
 
 <span class="doccomment">/// Contains all the information about a package, as loaded from a `Cargo.toml`.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This is deserialized using the [`TomlManifest`] type.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Manifest</span> {
     <span class="ident">summary</span>: <span class="ident">Summary</span>,
@@ -987,7 +994,7 @@
     <span class="ident">patch</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Url</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Dependency</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">workspace</span>: <span class="ident">WorkspaceConfig</span>,
     <span class="ident">original</span>: <span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">TomlManifest</span><span class="op">&gt;</span>,
-    <span class="ident">features</span>: <span class="ident">Features</span>,
+    <span class="ident">unstable_features</span>: <span class="ident">Features</span>,
     <span class="ident">edition</span>: <span class="ident">Edition</span>,
     <span class="ident">im_a_teapot</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
     <span class="ident">default_run</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -1165,10 +1172,7 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">TargetSourcePath</span>::<span class="ident">Path</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-        }
+        <span class="macro">matches</span><span class="macro">!</span>(<span class="self">self</span>, <span class="ident">TargetSourcePath</span>::<span class="ident">Path</span>(<span class="kw">_</span>))
     }
 }
 
@@ -1207,7 +1211,12 @@
     <span class="ident">edition</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>,
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;required-features&quot;</span>, <span class="ident">skip_serializing_if</span> <span class="op">=</span> <span class="string">&quot;Option::is_none&quot;</span>)]</span>
     <span class="ident">required_features</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Whether docs should be built for the target via `cargo doc`</span>
+    <span class="doccomment">/// See https://doc.rust-lang.org/cargo/commands/cargo-doc.html#target-selection</span>
+    <span class="ident">doc</span>: <span class="ident">bool</span>,
     <span class="ident">doctest</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// Whether tests should be run for the target (`test` field in `Cargo.toml`)</span>
+    <span class="ident">test</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">ser</span>::<span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">Target</span> {
@@ -1227,7 +1236,9 @@
             <span class="ident">required_features</span>: <span class="self">self</span>
                 .<span class="ident">required_features</span>()
                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">rf</span><span class="op">|</span> <span class="ident">rf</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">s</span>).<span class="ident">collect</span>()),
+            <span class="ident">doc</span>: <span class="self">self</span>.<span class="ident">documented</span>(),
             <span class="ident">doctest</span>: <span class="self">self</span>.<span class="ident">doctested</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">doctestable</span>(),
+            <span class="ident">test</span>: <span class="self">self</span>.<span class="ident">tested</span>(),
         }
         .<span class="ident">serialize</span>(<span class="ident">s</span>)
     }
@@ -1316,7 +1327,7 @@
         <span class="ident">replace</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">PackageIdSpec</span>, <span class="ident">Dependency</span>)<span class="op">&gt;</span>,
         <span class="ident">patch</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Url</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Dependency</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">workspace</span>: <span class="ident">WorkspaceConfig</span>,
-        <span class="ident">features</span>: <span class="ident">Features</span>,
+        <span class="ident">unstable_features</span>: <span class="ident">Features</span>,
         <span class="ident">edition</span>: <span class="ident">Edition</span>,
         <span class="ident">im_a_teapot</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
         <span class="ident">default_run</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -1338,7 +1349,7 @@
             <span class="ident">replace</span>,
             <span class="ident">patch</span>,
             <span class="ident">workspace</span>,
-            <span class="ident">features</span>,
+            <span class="ident">unstable_features</span>,
             <span class="ident">edition</span>,
             <span class="ident">original</span>,
             <span class="ident">im_a_teapot</span>,
@@ -1376,6 +1387,10 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">targets</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">Target</span>] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">targets</span>
     }
+    <span class="comment">// It is used by cargo-c, please do not remove it</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">targets_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">Target</span>] {
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">targets</span>
+    }
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Version</span> {
         <span class="self">self</span>.<span class="ident">package_id</span>().<span class="ident">version</span>()
     }
@@ -1408,8 +1423,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">workspace</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Features</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">features</span>
+    <span class="doccomment">/// Unstable, nightly features that are enabled in this manifest.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unstable_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Features</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">unstable_features</span>
     }
 
     <span class="doccomment">/// The style of resolver behavior to use, declared with the `resolver` field.</span>
@@ -1428,7 +1444,7 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">feature_gate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">im_a_teapot</span>.<span class="ident">is_some</span>() {
-            <span class="self">self</span>.<span class="ident">features</span>
+            <span class="self">self</span>.<span class="ident">unstable_features</span>
                 .<span class="ident">require</span>(<span class="ident">Feature</span>::<span class="ident">test_dummy_unstable</span>())
                 .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
                     <span class="ident">anyhow</span>::<span class="macro">format_err</span><span class="macro">!</span>(
@@ -1519,7 +1535,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">warnings</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Features</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unstable_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Features</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">features</span>
     }
 
@@ -1715,10 +1731,7 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_lib</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">kind</span>() {
-            <span class="ident">TargetKind</span>::<span class="ident">Lib</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-        }
+        <span class="macro">matches</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">kind</span>(), <span class="ident">TargetKind</span>::<span class="ident">Lib</span>(<span class="kw">_</span>))
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_dylib</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
@@ -1751,10 +1764,10 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_example</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">kind</span>() {
-            <span class="ident">TargetKind</span>::<span class="ident">ExampleBin</span> <span class="op">|</span> <span class="ident">TargetKind</span>::<span class="ident">ExampleLib</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-        }
+        <span class="macro">matches</span><span class="macro">!</span>(
+            <span class="self">self</span>.<span class="ident">kind</span>(),
+            <span class="ident">TargetKind</span>::<span class="ident">ExampleBin</span> <span class="op">|</span> <span class="ident">TargetKind</span>::<span class="ident">ExampleLib</span>(..)
+        )
     }
 
     <span class="doccomment">/// Returns `true` if it is a binary or executable example.</span>
@@ -1766,10 +1779,7 @@
     <span class="doccomment">/// Returns `true` if it is an executable example.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_exe_example</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="comment">// Needed for --all-examples in contexts where only runnable examples make sense</span>
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">kind</span>() {
-            <span class="ident">TargetKind</span>::<span class="ident">ExampleBin</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-        }
+        <span class="macro">matches</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">kind</span>(), <span class="ident">TargetKind</span>::<span class="ident">ExampleBin</span>)
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_test</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {

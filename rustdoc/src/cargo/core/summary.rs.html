@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/summary.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>summary.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/core/summary.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>summary.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -419,21 +419,80 @@
 <span id="416">416</span>
 <span id="417">417</span>
 <span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">borrow</span>::<span class="ident">Borrow</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Display</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Dependency</span>, <span class="ident">PackageId</span>, <span class="ident">SourceId</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">CargoResult</span>, <span class="ident">Config</span>};
+<span class="kw">use</span> <span class="ident">anyhow</span>::<span class="ident">bail</span>;
+<span class="kw">use</span> <span class="ident">semver</span>::<span class="ident">Version</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">rc</span>::<span class="ident">Rc</span>;
-
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Serialize</span>, <span class="ident">Serializer</span>};
-
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Dependency</span>, <span class="ident">PackageId</span>, <span class="ident">SourceId</span>};
-<span class="kw">use</span> <span class="ident">semver</span>::<span class="ident">Version</span>;
-
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">CargoResult</span>;
 
 <span class="doccomment">/// Subset of a `Manifest`. Contains only the most important information about</span>
 <span class="doccomment">/// a package.</span>
@@ -449,39 +508,35 @@
     <span class="ident">package_id</span>: <span class="ident">PackageId</span>,
     <span class="ident">dependencies</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Dependency</span><span class="op">&gt;</span>,
     <span class="ident">features</span>: <span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">FeatureMap</span><span class="op">&gt;</span>,
+    <span class="ident">has_namespaced_features</span>: <span class="ident">bool</span>,
+    <span class="ident">has_overlapping_features</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span>,
     <span class="ident">checksum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">links</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span>,
-    <span class="ident">namespaced_features</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Summary</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
         <span class="ident">pkg_id</span>: <span class="ident">PackageId</span>,
         <span class="ident">dependencies</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Dependency</span><span class="op">&gt;</span>,
-        <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InternedString</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">links</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">namespaced_features</span>: <span class="ident">bool</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Summary</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">K</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Display</span>,
-    {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Summary</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">has_overlapping_features</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">dependencies</span>.<span class="ident">iter</span>() {
-            <span class="kw">let</span> <span class="ident">feature</span> <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">name_in_toml</span>();
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">namespaced_features</span> <span class="op">&amp;&amp;</span> <span class="ident">features</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">feature</span>).<span class="ident">is_some</span>() {
-                <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                    <span class="string">&quot;Features and dependencies cannot have the \
-                     same name: `{}`&quot;</span>,
-                    <span class="ident">feature</span>
-                )
+            <span class="kw">let</span> <span class="ident">dep_name</span> <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">name_in_toml</span>();
+            <span class="kw">if</span> <span class="ident">features</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">dep_name</span>) {
+                <span class="ident">has_overlapping_features</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>);
             }
             <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">is_optional</span>() <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">dep</span>.<span class="ident">is_transitive</span>() {
-                <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                    <span class="string">&quot;Dev-dependencies are not allowed to be optional: `{}`&quot;</span>,
-                    <span class="ident">feature</span>
+                <span class="macro">bail</span><span class="macro">!</span>(
+                    <span class="string">&quot;dev-dependencies are not allowed to be optional: `{}`&quot;</span>,
+                    <span class="ident">dep_name</span>
                 )
             }
         }
-        <span class="kw">let</span> <span class="ident">feature_map</span> <span class="op">=</span> <span class="ident">build_feature_map</span>(<span class="ident">features</span>, <span class="kw-2">&amp;</span><span class="ident">dependencies</span>, <span class="ident">namespaced_features</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> (<span class="ident">feature_map</span>, <span class="ident">has_namespaced_features</span>) <span class="op">=</span>
+            <span class="ident">build_feature_map</span>(<span class="ident">config</span>, <span class="ident">pkg_id</span>, <span class="ident">features</span>, <span class="kw-2">&amp;</span><span class="ident">dependencies</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">Summary</span> {
             <span class="ident">inner</span>: <span class="ident">Rc</span>::<span class="ident">new</span>(<span class="ident">Inner</span> {
                 <span class="ident">package_id</span>: <span class="ident">pkg_id</span>,
@@ -489,7 +544,8 @@
                 <span class="ident">features</span>: <span class="ident">Rc</span>::<span class="ident">new</span>(<span class="ident">feature_map</span>),
                 <span class="ident">checksum</span>: <span class="prelude-val">None</span>,
                 <span class="ident">links</span>: <span class="ident">links</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span>.<span class="ident">into</span>()),
-                <span class="ident">namespaced_features</span>,
+                <span class="ident">has_namespaced_features</span>,
+                <span class="ident">has_overlapping_features</span>,
             }),
         })
     }
@@ -512,14 +568,52 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">FeatureMap</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">features</span>
     }
+
+    <span class="doccomment">/// Returns an error if this Summary is using an unstable feature that is</span>
+    <span class="doccomment">/// not enabled.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unstable_gate</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">namespaced_features</span>: <span class="ident">bool</span>,
+        <span class="ident">weak_dep_features</span>: <span class="ident">bool</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">namespaced_features</span> {
+            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">has_namespaced_features</span> {
+                <span class="macro">bail</span><span class="macro">!</span>(
+                    <span class="string">&quot;namespaced features with the `dep:` prefix are only allowed on \
+                     the nightly channel and requires the `-Z namespaced-features` flag on the command-line&quot;</span>
+                );
+            }
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">has_overlapping_features</span> {
+                <span class="macro">bail</span><span class="macro">!</span>(
+                    <span class="string">&quot;features and dependencies cannot have the same name: `{}`&quot;</span>,
+                    <span class="ident">dep_name</span>
+                )
+            }
+        }
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">weak_dep_features</span> {
+            <span class="kw">for</span> (<span class="ident">feat_name</span>, <span class="ident">features</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">features</span>() {
+                <span class="kw">for</span> <span class="ident">fv</span> <span class="kw">in</span> <span class="ident">features</span> {
+                    <span class="kw">if</span> <span class="macro">matches</span><span class="macro">!</span>(<span class="ident">fv</span>, <span class="ident">FeatureValue</span>::<span class="ident">DepFeature</span> { <span class="ident">weak</span>: <span class="bool-val">true</span>, .. }) {
+                        <span class="macro">bail</span><span class="macro">!</span>(
+                            <span class="string">&quot;optional dependency features with `?` syntax are only \
+                             allowed on the nightly channel and requires the \
+                             `-Z weak-dep-features` flag on the command line\n\
+                             Feature `{}` had feature value `{}`.&quot;</span>,
+                            <span class="ident">feat_name</span>,
+                            <span class="ident">fv</span>
+                        );
+                    }
+                }
+            }
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">checksum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">checksum</span>.<span class="ident">as_deref</span>()
     }
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">links</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">links</span>
-    }
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">namespaced_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">namespaced_features</span>
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">override_id</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">id</span>: <span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Summary</span> {
@@ -567,16 +661,18 @@
     }
 }
 
-<span class="comment">// Checks features for errors, bailing out a CargoResult:Err if invalid,</span>
-<span class="comment">// and creates FeatureValues for each feature.</span>
-<span class="kw">fn</span> <span class="ident">build_feature_map</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>(
-    <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Checks features for errors, bailing out a CargoResult:Err if invalid,</span>
+<span class="doccomment">/// and creates FeatureValues for each feature.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The returned `bool` indicates whether or not the `[features]` table</span>
+<span class="doccomment">/// included a `dep:` prefixed namespaced feature (used for gating on</span>
+<span class="doccomment">/// nightly).</span>
+<span class="kw">fn</span> <span class="ident">build_feature_map</span>(
+    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
+    <span class="ident">pkg_id</span>: <span class="ident">PackageId</span>,
+    <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InternedString</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">dependencies</span>: <span class="kw-2">&amp;</span>[<span class="ident">Dependency</span>],
-    <span class="ident">namespaced</span>: <span class="ident">bool</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">FeatureMap</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Display</span>,
-{
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">FeatureMap</span>, <span class="ident">bool</span>)<span class="op">&gt;</span> {
     <span class="kw">use</span> <span class="self">self</span>::<span class="ident">FeatureValue</span>::<span class="kw-2">*</span>;
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dep_map</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
     <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">dependencies</span>.<span class="ident">iter</span>() {
@@ -586,54 +682,63 @@
             .<span class="ident">push</span>(<span class="ident">dep</span>);
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">BTreeMap</span>::<span class="ident">new</span>();
-    <span class="kw">for</span> (<span class="ident">feature</span>, <span class="ident">list</span>) <span class="kw">in</span> <span class="ident">features</span>.<span class="ident">iter</span>() {
-        <span class="comment">// If namespaced features is active and the key is the same as that of an</span>
-        <span class="comment">// optional dependency, that dependency must be included in the values.</span>
-        <span class="comment">// Thus, if a `feature` is found that has the same name as a dependency, we</span>
-        <span class="comment">// (a) bail out if the dependency is non-optional, and (b) we track if the</span>
-        <span class="comment">// feature requirements include the dependency `crate:feature` in the list.</span>
-        <span class="comment">// This is done with the `dependency_found` variable, which can only be</span>
-        <span class="comment">// false if features are namespaced and the current feature key is the same</span>
-        <span class="comment">// as the name of an optional dependency. If so, it gets set to true during</span>
-        <span class="comment">// iteration over the list if the dependency is found in the list.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_found</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">namespaced</span> {
-            <span class="kw">match</span> <span class="ident">dep_map</span>.<span class="ident">get</span>(<span class="ident">feature</span>.<span class="ident">borrow</span>()) {
-                <span class="prelude-val">Some</span>(<span class="ident">dep_data</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">dep_data</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> <span class="ident">d</span>.<span class="ident">is_optional</span>()) {
-                        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                            <span class="string">&quot;Feature `{}` includes the dependency of the same name, but this is \
-                             left implicit in the features included by this feature.\n\
-                             Additionally, the dependency must be marked as optional to be \
-                             included in the feature definition.\n\
-                             Consider adding `crate:{}` to this feature&#39;s requirements \
-                             and marking the dependency as `optional = true`&quot;</span>,
-                            <span class="ident">feature</span>,
-                            <span class="ident">feature</span>
-                        )
-                    } <span class="kw">else</span> {
-                        <span class="bool-val">false</span>
-                    }
-                }
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            }
-        } <span class="kw">else</span> {
-            <span class="bool-val">true</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span>: <span class="ident">FeatureMap</span> <span class="op">=</span> <span class="ident">features</span>
+        .<span class="ident">iter</span>()
+        .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">feature</span>, <span class="ident">list</span>)<span class="op">|</span> {
+            <span class="kw">let</span> <span class="ident">fvs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">list</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feat_value</span><span class="op">|</span> <span class="ident">FeatureValue</span>::<span class="ident">new</span>(<span class="kw-2">*</span><span class="ident">feat_value</span>))
+                .<span class="ident">collect</span>();
+            (<span class="kw-2">*</span><span class="ident">feature</span>, <span class="ident">fvs</span>)
+        })
+        .<span class="ident">collect</span>();
+    <span class="kw">let</span> <span class="ident">has_namespaced_features</span> <span class="op">=</span> <span class="ident">map</span>.<span class="ident">values</span>().<span class="ident">flatten</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">fv</span><span class="op">|</span> <span class="ident">fv</span>.<span class="ident">has_dep_prefix</span>());
+
+    <span class="comment">// Add implicit features for optional dependencies if they weren&#39;t</span>
+    <span class="comment">// explicitly listed anywhere.</span>
+    <span class="kw">let</span> <span class="ident">explicitly_listed</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">map</span>
+        .<span class="ident">values</span>()
+        .<span class="ident">flatten</span>()
+        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">fv</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">fv</span> {
+            <span class="ident">Dep</span> { <span class="ident">dep_name</span> }
+            <span class="op">|</span> <span class="ident">DepFeature</span> {
+                <span class="ident">dep_name</span>,
+                <span class="ident">dep_prefix</span>: <span class="bool-val">true</span>,
+                ..
+            } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">dep_name</span>),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+        })
+        .<span class="ident">collect</span>();
+    <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">dependencies</span> {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">dep</span>.<span class="ident">is_optional</span>() {
+            <span class="kw">continue</span>;
+        }
+        <span class="kw">let</span> <span class="ident">dep_name_in_toml</span> <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">name_in_toml</span>();
+        <span class="kw">if</span> <span class="ident">features</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">dep_name_in_toml</span>) <span class="op">|</span><span class="op">|</span> <span class="ident">explicitly_listed</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">dep_name_in_toml</span>)
+        {
+            <span class="kw">continue</span>;
+        }
+        <span class="kw">let</span> <span class="ident">fv</span> <span class="op">=</span> <span class="ident">Dep</span> {
+            <span class="ident">dep_name</span>: <span class="ident">dep_name_in_toml</span>,
         };
+        <span class="ident">map</span>.<span class="ident">insert</span>(<span class="ident">dep_name_in_toml</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">fv</span>]);
+    }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[];
-        <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">list</span> {
-            <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">FeatureValue</span>::<span class="ident">build</span>(
-                <span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">dep</span>.<span class="ident">as_ref</span>()),
-                <span class="op">|</span><span class="ident">fs</span><span class="op">|</span> <span class="ident">features</span>.<span class="ident">contains_key</span>(<span class="ident">fs</span>.<span class="ident">as_str</span>()),
-                <span class="ident">namespaced</span>,
+    <span class="comment">// Validate features are listed properly.</span>
+    <span class="kw">for</span> (<span class="ident">feature</span>, <span class="ident">fvs</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">map</span> {
+        <span class="kw">if</span> <span class="ident">feature</span>.<span class="ident">starts_with</span>(<span class="string">&quot;dep:&quot;</span>) {
+            <span class="macro">bail</span><span class="macro">!</span>(
+                <span class="string">&quot;feature named `{}` is not allowed to start with `dep:`&quot;</span>,
+                <span class="ident">feature</span>
             );
-
+        }
+        <span class="ident">validate_feature_name</span>(<span class="ident">config</span>, <span class="ident">pkg_id</span>, <span class="ident">feature</span>)<span class="question-mark">?</span>;
+        <span class="kw">for</span> <span class="ident">fv</span> <span class="kw">in</span> <span class="ident">fvs</span> {
             <span class="comment">// Find data for the referenced dependency...</span>
             <span class="kw">let</span> <span class="ident">dep_data</span> <span class="op">=</span> {
-                <span class="kw">match</span> <span class="ident">val</span> {
-                    <span class="ident">Feature</span>(<span class="kw-2">ref</span> <span class="ident">dep_name</span>) <span class="op">|</span> <span class="ident">Crate</span>(<span class="kw-2">ref</span> <span class="ident">dep_name</span>) <span class="op">|</span> <span class="ident">CrateFeature</span>(<span class="kw-2">ref</span> <span class="ident">dep_name</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                        <span class="ident">dep_map</span>.<span class="ident">get</span>(<span class="ident">dep_name</span>.<span class="ident">as_str</span>())
+                <span class="kw">match</span> <span class="ident">fv</span> {
+                    <span class="ident">Feature</span>(<span class="ident">dep_name</span>) <span class="op">|</span> <span class="ident">Dep</span> { <span class="ident">dep_name</span>, .. } <span class="op">|</span> <span class="ident">DepFeature</span> { <span class="ident">dep_name</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="ident">dep_map</span>.<span class="ident">get</span>(<span class="ident">dep_name</span>)
                     }
                 }
             };
@@ -641,202 +746,223 @@
                 .<span class="ident">iter</span>()
                 .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> <span class="ident">d</span>.<span class="ident">iter</span>())
                 .<span class="ident">any</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> <span class="ident">d</span>.<span class="ident">is_optional</span>());
-            <span class="kw">if</span> <span class="kw">let</span> <span class="ident">FeatureValue</span>::<span class="ident">Crate</span>(<span class="kw-2">ref</span> <span class="ident">dep_name</span>) <span class="op">=</span> <span class="ident">val</span> {
-                <span class="comment">// If we have a dependency value, check if this is the dependency named</span>
-                <span class="comment">// the same as the feature that we were looking for.</span>
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">dependency_found</span> <span class="op">&amp;&amp;</span> <span class="ident">feature</span>.<span class="ident">borrow</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">dep_name</span>.<span class="ident">as_str</span>() {
-                    <span class="ident">dependency_found</span> <span class="op">=</span> <span class="bool-val">true</span>;
-                }
-            }
-
-            <span class="kw">match</span> (<span class="kw-2">&amp;</span><span class="ident">val</span>, <span class="ident">dep_data</span>.<span class="ident">is_some</span>(), <span class="ident">is_optional_dep</span>) {
-                <span class="comment">// The value is a feature. If features are namespaced, this just means</span>
-                <span class="comment">// it&#39;s not prefixed with `crate:`, so we have to check whether the</span>
-                <span class="comment">// feature actually exist. If the feature is not defined *and* an optional</span>
-                <span class="comment">// dependency of the same name exists, the feature is defined implicitly</span>
-                <span class="comment">// here by adding it to the feature map, pointing to the dependency.</span>
-                <span class="comment">// If features are not namespaced, it&#39;s been validated as a feature already</span>
-                <span class="comment">// while instantiating the `FeatureValue` in `FeatureValue::build()`, so</span>
-                <span class="comment">// we don&#39;t have to do so here.</span>
-                (<span class="kw-2">&amp;</span><span class="ident">Feature</span>(<span class="ident">feat</span>), <span class="kw">_</span>, <span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="ident">namespaced</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">features</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">feat</span>) {
-                        <span class="ident">map</span>.<span class="ident">insert</span>(<span class="ident">feat</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">FeatureValue</span>::<span class="ident">Crate</span>(<span class="ident">feat</span>)]);
-                    }
-                }
-                <span class="comment">// If features are namespaced and the value is not defined as a feature</span>
-                <span class="comment">// and there is no optional dependency of the same name, error out.</span>
-                <span class="comment">// If features are not namespaced, there must be an existing feature</span>
-                <span class="comment">// here (checked by `FeatureValue::build()`), so it will always be defined.</span>
-                (<span class="kw-2">&amp;</span><span class="ident">Feature</span>(<span class="ident">feat</span>), <span class="ident">dep_exists</span>, <span class="bool-val">false</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="ident">namespaced</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">features</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">feat</span>) {
-                        <span class="kw">if</span> <span class="ident">dep_exists</span> {
-                            <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                                <span class="string">&quot;Feature `{}` includes `{}` which is not defined as a feature.\n\
-                                 A non-optional dependency of the same name is defined; consider \
-                                 adding `optional = true` to its definition&quot;</span>,
+            <span class="kw">let</span> <span class="ident">is_any_dep</span> <span class="op">=</span> <span class="ident">dep_data</span>.<span class="ident">is_some</span>();
+            <span class="kw">match</span> <span class="ident">fv</span> {
+                <span class="ident">Feature</span>(<span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">if</span> <span class="op">!</span><span class="ident">features</span>.<span class="ident">contains_key</span>(<span class="ident">f</span>) {
+                        <span class="kw">if</span> <span class="op">!</span><span class="ident">is_any_dep</span> {
+                            <span class="macro">bail</span><span class="macro">!</span>(
+                                <span class="string">&quot;feature `{}` includes `{}` which is neither a dependency \
+                                 nor another feature&quot;</span>,
                                 <span class="ident">feature</span>,
-                                <span class="ident">feat</span>
-                            )
+                                <span class="ident">fv</span>
+                            );
+                        }
+                        <span class="kw">if</span> <span class="ident">is_optional_dep</span> {
+                            <span class="kw">if</span> <span class="op">!</span><span class="ident">map</span>.<span class="ident">contains_key</span>(<span class="ident">f</span>) {
+                                <span class="macro">bail</span><span class="macro">!</span>(
+                                    <span class="string">&quot;feature `{}` includes `{}`, but `{}` is an \
+                                     optional dependency without an implicit feature\n\
+                                     Use `dep:{}` to enable the dependency.&quot;</span>,
+                                    <span class="ident">feature</span>,
+                                    <span class="ident">fv</span>,
+                                    <span class="ident">f</span>,
+                                    <span class="ident">f</span>
+                                );
+                            }
                         } <span class="kw">else</span> {
-                            <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                                <span class="string">&quot;Feature `{}` includes `{}` which is not defined as a feature&quot;</span>,
-                                <span class="ident">feature</span>,
-                                <span class="ident">feat</span>
-                            )
+                            <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;feature `{}` includes `{}`, but `{}` is not an optional dependency\n\
+                                A non-optional dependency of the same name is defined; \
+                                consider adding `optional = true` to its definition.&quot;</span>,
+                                <span class="ident">feature</span>, <span class="ident">fv</span>, <span class="ident">f</span>);
                         }
                     }
                 }
-                <span class="comment">// The value is a dependency. If features are namespaced, it is explicitly</span>
-                <span class="comment">// tagged as such (`crate:value`). If features are not namespaced, any value</span>
-                <span class="comment">// not recognized as a feature is pegged as a `Crate`. Here we handle the case</span>
-                <span class="comment">// where the dependency exists but is non-optional. It branches on namespaced</span>
-                <span class="comment">// just to provide the correct string for the crate dependency in the error.</span>
-                (<span class="kw-2">&amp;</span><span class="ident">Crate</span>(<span class="kw-2">ref</span> <span class="ident">dep</span>), <span class="bool-val">true</span>, <span class="bool-val">false</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="ident">namespaced</span> {
-                        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                            <span class="string">&quot;Feature `{}` includes `crate:{}` which is not an \
-                             optional dependency.\nConsider adding \
-                             `optional = true` to the dependency&quot;</span>,
+                <span class="ident">Dep</span> { <span class="ident">dep_name</span> } <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">if</span> <span class="op">!</span><span class="ident">is_any_dep</span> {
+                        <span class="macro">bail</span><span class="macro">!</span>(
+                            <span class="string">&quot;feature `{}` includes `{}`, but `{}` is not listed as a dependency&quot;</span>,
                             <span class="ident">feature</span>,
-                            <span class="ident">dep</span>
-                        )
-                    } <span class="kw">else</span> {
-                        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                            <span class="string">&quot;Feature `{}` depends on `{}` which is not an \
-                             optional dependency.\nConsider adding \
-                             `optional = true` to the dependency&quot;</span>,
+                            <span class="ident">fv</span>,
+                            <span class="ident">dep_name</span>
+                        );
+                    }
+                    <span class="kw">if</span> <span class="op">!</span><span class="ident">is_optional_dep</span> {
+                        <span class="macro">bail</span><span class="macro">!</span>(
+                            <span class="string">&quot;feature `{}` includes `{}`, but `{}` is not an optional dependency\n\
+                             A non-optional dependency of the same name is defined; \
+                             consider adding `optional = true` to its definition.&quot;</span>,
                             <span class="ident">feature</span>,
-                            <span class="ident">dep</span>
-                        )
+                            <span class="ident">fv</span>,
+                            <span class="ident">dep_name</span>
+                        );
                     }
                 }
-                <span class="comment">// If namespaced, the value was tagged as a dependency; if not namespaced,</span>
-                <span class="comment">// this could be anything not defined as a feature. This handles the case</span>
-                <span class="comment">// where no such dependency is actually defined; again, the branch on</span>
-                <span class="comment">// namespaced here is just to provide the correct string in the error.</span>
-                (<span class="kw-2">&amp;</span><span class="ident">Crate</span>(<span class="kw-2">ref</span> <span class="ident">dep</span>), <span class="bool-val">false</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="ident">namespaced</span> {
-                        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                            <span class="string">&quot;Feature `{}` includes `crate:{}` which is not a known \
-                             dependency&quot;</span>,
+                <span class="ident">DepFeature</span> { <span class="ident">dep_name</span>, <span class="ident">weak</span>, .. } <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="comment">// Validation of the feature name will be performed in the resolver.</span>
+                    <span class="kw">if</span> <span class="op">!</span><span class="ident">is_any_dep</span> {
+                        <span class="macro">bail</span><span class="macro">!</span>(
+                            <span class="string">&quot;feature `{}` includes `{}`, but `{}` is not a dependency&quot;</span>,
                             <span class="ident">feature</span>,
-                            <span class="ident">dep</span>
-                        )
-                    } <span class="kw">else</span> {
-                        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                            <span class="string">&quot;Feature `{}` includes `{}` which is neither a dependency nor \
-                             another feature&quot;</span>,
-                            <span class="ident">feature</span>,
-                            <span class="ident">dep</span>
-                        )
+                            <span class="ident">fv</span>,
+                            <span class="ident">dep_name</span>
+                        );
+                    }
+                    <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">weak</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">is_optional_dep</span> {
+                        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;feature `{}` includes `{}` with a `?`, but `{}` is not an optional dependency\n\
+                            A non-optional dependency of the same name is defined; \
+                            consider removing the `?` or changing the dependency to be optional&quot;</span>,
+                            <span class="ident">feature</span>, <span class="ident">fv</span>, <span class="ident">dep_name</span>);
                     }
                 }
-                (<span class="kw-2">&amp;</span><span class="ident">Crate</span>(<span class="kw">_</span>), <span class="bool-val">true</span>, <span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> {}
-                <span class="comment">// If the value is a feature for one of the dependencies, bail out if no such</span>
-                <span class="comment">// dependency is actually defined in the manifest.</span>
-                (<span class="kw-2">&amp;</span><span class="ident">CrateFeature</span>(<span class="kw-2">ref</span> <span class="ident">dep</span>, <span class="kw">_</span>), <span class="bool-val">false</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                    <span class="string">&quot;Feature `{}` requires a feature of `{}` which is not a \
-                     dependency&quot;</span>,
-                    <span class="ident">feature</span>,
-                    <span class="ident">dep</span>
-                ),
-                (<span class="kw-2">&amp;</span><span class="ident">CrateFeature</span>(<span class="kw">_</span>, <span class="kw">_</span>), <span class="bool-val">true</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {}
             }
-            <span class="ident">values</span>.<span class="ident">push</span>(<span class="ident">val</span>);
         }
-
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">dependency_found</span> {
-            <span class="comment">// If we have not found the dependency of the same-named feature, we should</span>
-            <span class="comment">// bail here.</span>
-            <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                <span class="string">&quot;Feature `{}` includes the optional dependency of the \
-                 same name, but this is left implicit in the features \
-                 included by this feature.\nConsider adding \
-                 `crate:{}` to this feature&#39;s requirements.&quot;</span>,
-                <span class="ident">feature</span>,
-                <span class="ident">feature</span>
-            )
-        }
-
-        <span class="ident">map</span>.<span class="ident">insert</span>(<span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">feature</span>.<span class="ident">borrow</span>()), <span class="ident">values</span>);
     }
-    <span class="prelude-val">Ok</span>(<span class="ident">map</span>)
+
+    <span class="comment">// Make sure every optional dep is mentioned at least once.</span>
+    <span class="kw">let</span> <span class="ident">used</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">map</span>
+        .<span class="ident">values</span>()
+        .<span class="ident">flatten</span>()
+        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">fv</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">fv</span> {
+            <span class="ident">Dep</span> { <span class="ident">dep_name</span> } <span class="op">|</span> <span class="ident">DepFeature</span> { <span class="ident">dep_name</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+        })
+        .<span class="ident">collect</span>();
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dep</span>) <span class="op">=</span> <span class="ident">dependencies</span>
+        .<span class="ident">iter</span>()
+        .<span class="ident">find</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> <span class="ident">dep</span>.<span class="ident">is_optional</span>() <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">used</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">dep</span>.<span class="ident">name_in_toml</span>()))
+    {
+        <span class="macro">bail</span><span class="macro">!</span>(
+            <span class="string">&quot;optional dependency `{}` is not included in any feature\n\
+            Make sure that `dep:{}` is included in one of features in the [features] table.&quot;</span>,
+            <span class="ident">dep</span>.<span class="ident">name_in_toml</span>(),
+            <span class="ident">dep</span>.<span class="ident">name_in_toml</span>(),
+        );
+    }
+
+    <span class="prelude-val">Ok</span>((<span class="ident">map</span>, <span class="ident">has_namespaced_features</span>))
 }
 
-<span class="doccomment">/// FeatureValue represents the types of dependencies a feature can have:</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// * Another feature</span>
-<span class="doccomment">/// * An optional dependency</span>
-<span class="doccomment">/// * A feature in a dependency</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The selection between these 3 things happens as part of the construction of the FeatureValue.</span>
+<span class="doccomment">/// FeatureValue represents the types of dependencies a feature can have.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">FeatureValue</span> {
+    <span class="doccomment">/// A feature enabling another feature.</span>
     <span class="ident">Feature</span>(<span class="ident">InternedString</span>),
-    <span class="ident">Crate</span>(<span class="ident">InternedString</span>),
-    <span class="ident">CrateFeature</span>(<span class="ident">InternedString</span>, <span class="ident">InternedString</span>),
+    <span class="doccomment">/// A feature enabling a dependency with `dep:dep_name` syntax.</span>
+    <span class="ident">Dep</span> { <span class="ident">dep_name</span>: <span class="ident">InternedString</span> },
+    <span class="doccomment">/// A feature enabling a feature on a dependency with `crate_name/feat_name` syntax.</span>
+    <span class="ident">DepFeature</span> {
+        <span class="ident">dep_name</span>: <span class="ident">InternedString</span>,
+        <span class="ident">dep_feature</span>: <span class="ident">InternedString</span>,
+        <span class="doccomment">/// If this is true, then the feature used the `dep:` prefix, which</span>
+        <span class="doccomment">/// prevents enabling the feature named `dep_name`.</span>
+        <span class="ident">dep_prefix</span>: <span class="ident">bool</span>,
+        <span class="doccomment">/// If `true`, indicates the `?` syntax is used, which means this will</span>
+        <span class="doccomment">/// not automatically enable the dependency unless the dependency is</span>
+        <span class="doccomment">/// activated through some other means.</span>
+        <span class="ident">weak</span>: <span class="ident">bool</span>,
+    },
 }
 
 <span class="kw">impl</span> <span class="ident">FeatureValue</span> {
-    <span class="kw">fn</span> <span class="ident">build</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">feature</span>: <span class="ident">InternedString</span>, <span class="ident">is_feature</span>: <span class="ident">T</span>, <span class="ident">namespaced</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureValue</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">Fn</span>(<span class="ident">InternedString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
-    {
-        <span class="kw">match</span> (<span class="ident">feature</span>.<span class="ident">find</span>(<span class="string">&#39;/&#39;</span>), <span class="ident">namespaced</span>) {
-            (<span class="prelude-val">Some</span>(<span class="ident">pos</span>), <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">feature</span>: <span class="ident">InternedString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureValue</span> {
+        <span class="kw">match</span> <span class="ident">feature</span>.<span class="ident">find</span>(<span class="string">&#39;/&#39;</span>) {
+            <span class="prelude-val">Some</span>(<span class="ident">pos</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> (<span class="ident">dep</span>, <span class="ident">dep_feat</span>) <span class="op">=</span> <span class="ident">feature</span>.<span class="ident">split_at</span>(<span class="ident">pos</span>);
                 <span class="kw">let</span> <span class="ident">dep_feat</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">dep_feat</span>[<span class="number">1</span>..];
-                <span class="ident">FeatureValue</span>::<span class="ident">CrateFeature</span>(<span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">dep</span>), <span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">dep_feat</span>))
-            }
-            (<span class="prelude-val">None</span>, <span class="bool-val">true</span>) <span class="kw">if</span> <span class="ident">feature</span>.<span class="ident">starts_with</span>(<span class="string">&quot;crate:&quot;</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">FeatureValue</span>::<span class="ident">Crate</span>(<span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">feature</span>[<span class="number">6</span>..]))
-            }
-            (<span class="prelude-val">None</span>, <span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">FeatureValue</span>::<span class="ident">Feature</span>(<span class="ident">feature</span>),
-            (<span class="prelude-val">None</span>, <span class="bool-val">false</span>) <span class="kw">if</span> <span class="ident">is_feature</span>(<span class="ident">feature</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">FeatureValue</span>::<span class="ident">Feature</span>(<span class="ident">feature</span>),
-            (<span class="prelude-val">None</span>, <span class="bool-val">false</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">FeatureValue</span>::<span class="ident">Crate</span>(<span class="ident">feature</span>),
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">feature</span>: <span class="ident">InternedString</span>, <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">Summary</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureValue</span> {
-        <span class="self">Self</span>::<span class="ident">build</span>(
-            <span class="ident">feature</span>,
-            <span class="op">|</span><span class="ident">fs</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">features</span>().<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">fs</span>),
-            <span class="ident">s</span>.<span class="ident">namespaced_features</span>(),
-        )
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">Summary</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="kw">use</span> <span class="self">self</span>::<span class="ident">FeatureValue</span>::<span class="kw-2">*</span>;
-        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">Feature</span>(<span class="kw-2">ref</span> <span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">to_string</span>(),
-            <span class="ident">Crate</span>(<span class="kw-2">ref</span> <span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">if</span> <span class="ident">s</span>.<span class="ident">namespaced_features</span>() {
-                    <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;crate:{}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">c</span>)
+                <span class="kw">let</span> (<span class="ident">dep</span>, <span class="ident">dep_prefix</span>) <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dep</span>) <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">strip_prefix</span>(<span class="string">&quot;dep:&quot;</span>) {
+                    (<span class="ident">dep</span>, <span class="bool-val">true</span>)
                 } <span class="kw">else</span> {
-                    <span class="ident">c</span>.<span class="ident">to_string</span>()
+                    (<span class="ident">dep</span>, <span class="bool-val">false</span>)
+                };
+                <span class="kw">let</span> (<span class="ident">dep</span>, <span class="ident">weak</span>) <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dep</span>) <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">strip_suffix</span>(<span class="string">&#39;?&#39;</span>) {
+                    (<span class="ident">dep</span>, <span class="bool-val">true</span>)
+                } <span class="kw">else</span> {
+                    (<span class="ident">dep</span>, <span class="bool-val">false</span>)
+                };
+                <span class="ident">FeatureValue</span>::<span class="ident">DepFeature</span> {
+                    <span class="ident">dep_name</span>: <span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">dep</span>),
+                    <span class="ident">dep_feature</span>: <span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">dep_feat</span>),
+                    <span class="ident">dep_prefix</span>,
+                    <span class="ident">weak</span>,
                 }
             }
-            <span class="ident">CrateFeature</span>(<span class="kw-2">ref</span> <span class="ident">c</span>, <span class="kw-2">ref</span> <span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> [<span class="ident">c</span>.<span class="ident">as_ref</span>(), <span class="ident">f</span>.<span class="ident">as_ref</span>()].<span class="ident">join</span>(<span class="string">&quot;/&quot;</span>),
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>) <span class="op">=</span> <span class="ident">feature</span>.<span class="ident">strip_prefix</span>(<span class="string">&quot;dep:&quot;</span>) {
+                    <span class="ident">FeatureValue</span>::<span class="ident">Dep</span> {
+                        <span class="ident">dep_name</span>: <span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">dep_name</span>),
+                    }
+                } <span class="kw">else</span> {
+                    <span class="ident">FeatureValue</span>::<span class="ident">Feature</span>(<span class="ident">feature</span>)
+                }
+            }
         }
+    }
+
+    <span class="doccomment">/// Returns `true` if this feature explicitly used `dep:` syntax.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_dep_prefix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="macro">matches</span><span class="macro">!</span>(
+            <span class="self">self</span>,
+            <span class="ident">FeatureValue</span>::<span class="ident">Dep</span> { .. }
+                <span class="op">|</span> <span class="ident">FeatureValue</span>::<span class="ident">DepFeature</span> {
+                    <span class="ident">dep_prefix</span>: <span class="bool-val">true</span>,
+                    ..
+                }
+        )
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">FeatureValue</span> {
-    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S</span>::<span class="prelude-val">Ok</span>, <span class="ident">S</span>::<span class="ident">Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">Serializer</span>,
-    {
+<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">FeatureValue</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="kw">use</span> <span class="self">self</span>::<span class="ident">FeatureValue</span>::<span class="kw-2">*</span>;
-        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">Feature</span>(<span class="kw-2">ref</span> <span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">serializer</span>.<span class="ident">serialize_str</span>(<span class="ident">f</span>),
-            <span class="ident">Crate</span>(<span class="kw-2">ref</span> <span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">serializer</span>.<span class="ident">serialize_str</span>(<span class="ident">c</span>),
-            <span class="ident">CrateFeature</span>(<span class="kw-2">ref</span> <span class="ident">c</span>, <span class="kw-2">ref</span> <span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">serializer</span>.<span class="ident">serialize_str</span>(<span class="kw-2">&amp;</span>[<span class="ident">c</span>.<span class="ident">as_ref</span>(), <span class="ident">f</span>.<span class="ident">as_ref</span>()].<span class="ident">join</span>(<span class="string">&quot;/&quot;</span>))
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">Feature</span>(<span class="ident">feat</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">feat</span>),
+            <span class="ident">Dep</span> { <span class="ident">dep_name</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;dep:{}&quot;</span>, <span class="ident">dep_name</span>),
+            <span class="ident">DepFeature</span> {
+                <span class="ident">dep_name</span>,
+                <span class="ident">dep_feature</span>,
+                <span class="ident">dep_prefix</span>,
+                <span class="ident">weak</span>,
+            } <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="ident">dep_prefix</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">dep_prefix</span> { <span class="string">&quot;dep:&quot;</span> } <span class="kw">else</span> { <span class="string">&quot;&quot;</span> };
+                <span class="kw">let</span> <span class="ident">weak</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">weak</span> { <span class="string">&quot;?&quot;</span> } <span class="kw">else</span> { <span class="string">&quot;&quot;</span> };
+                <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}{}/{}&quot;</span>, <span class="ident">dep_prefix</span>, <span class="ident">dep_name</span>, <span class="ident">weak</span>, <span class="ident">dep_feature</span>)
             }
         }
     }
 }
 
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">FeatureMap</span> <span class="op">=</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InternedString</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FeatureValue</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+
+<span class="kw">fn</span> <span class="ident">validate_feature_name</span>(<span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>, <span class="ident">pkg_id</span>: <span class="ident">PackageId</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chars</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">chars</span>();
+    <span class="kw">const</span> <span class="ident">FUTURE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;This was previously accepted but is being phased out; \
+        it will become a hard error in a future release.\n\
+        For more information, see issue #8813 &lt;https://github.com/rust-lang/cargo/issues/8813&gt;, \
+        and please leave a comment if this will be a problem for your project.&quot;</span>;
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">ch</span>) <span class="op">=</span> <span class="ident">chars</span>.<span class="ident">next</span>() {
+        <span class="kw">if</span> <span class="op">!</span>(<span class="ident">unicode_xid</span>::<span class="ident">UnicodeXID</span>::<span class="ident">is_xid_start</span>(<span class="ident">ch</span>) <span class="op">|</span><span class="op">|</span> <span class="ident">ch</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;_&#39;</span> <span class="op">|</span><span class="op">|</span> <span class="ident">ch</span>.<span class="ident">is_digit</span>(<span class="number">10</span>)) {
+            <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">warn</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;invalid character `{}` in feature `{}` in package {}, \
+                the first character must be a Unicode XID start character or digit \
+                (most letters or `_` or `0` to `9`)\n\
+                {}&quot;</span>,
+                <span class="ident">ch</span>, <span class="ident">name</span>, <span class="ident">pkg_id</span>, <span class="ident">FUTURE</span>
+            ))<span class="question-mark">?</span>;
+        }
+    }
+    <span class="kw">for</span> <span class="ident">ch</span> <span class="kw">in</span> <span class="ident">chars</span> {
+        <span class="kw">if</span> <span class="op">!</span>(<span class="ident">unicode_xid</span>::<span class="ident">UnicodeXID</span>::<span class="ident">is_xid_continue</span>(<span class="ident">ch</span>) <span class="op">|</span><span class="op">|</span> <span class="ident">ch</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;-&#39;</span> <span class="op">|</span><span class="op">|</span> <span class="ident">ch</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;+&#39;</span> <span class="op">|</span><span class="op">|</span> <span class="ident">ch</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;.&#39;</span>) {
+            <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">warn</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;invalid character `{}` in feature `{}` in package {}, \
+                characters must be Unicode XID characters, `+`, or `.` \
+                (numbers, `+`, `-`, `_`, `.`, or most letters)\n\
+                {}&quot;</span>,
+                <span class="ident">ch</span>, <span class="ident">name</span>, <span class="ident">pkg_id</span>, <span class="ident">FUTURE</span>
+            ))<span class="question-mark">?</span>;
+        }
+    }
+    <span class="prelude-val">Ok</span>(())
+}
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

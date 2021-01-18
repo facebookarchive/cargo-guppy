@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/ops/cargo_output_metadata.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_output_metadata.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/ops/cargo_output_metadata.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_output_metadata.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -222,16 +222,47 @@
 <span id="219">219</span>
 <span id="220">220</span>
 <span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">CompileKind</span>, <span class="ident">RustcTargetData</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">dependency</span>::<span class="ident">DepKind</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::{<span class="ident">HasDevUnits</span>, <span class="ident">Resolve</span>, <span class="ident">ResolveOpts</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Dependency</span>, <span class="ident">InternedString</span>, <span class="ident">Package</span>, <span class="ident">PackageId</span>, <span class="ident">Workspace</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">package</span>::<span class="ident">SerializedPackage</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::{<span class="ident">features</span>::<span class="ident">RequestedFeatures</span>, <span class="ident">HasDevUnits</span>, <span class="ident">Resolve</span>, <span class="ident">ResolveOpts</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Dependency</span>, <span class="ident">Package</span>, <span class="ident">PackageId</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ops</span>::{<span class="self">self</span>, <span class="ident">Packages</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">CargoResult</span>;
 <span class="kw">use</span> <span class="ident">cargo_platform</span>::<span class="ident">Platform</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Serialize</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashMap</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">BTreeMap</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>;
 
 <span class="kw">const</span> <span class="ident">VERSION</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1</span>;
@@ -256,8 +287,9 @@
             <span class="ident">VERSION</span>
         );
     }
+    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>();
     <span class="kw">let</span> (<span class="ident">packages</span>, <span class="ident">resolve</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">opt</span>.<span class="ident">no_deps</span> {
-        <span class="kw">let</span> <span class="ident">packages</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">members</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>();
+        <span class="kw">let</span> <span class="ident">packages</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">members</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">pkg</span><span class="op">|</span> <span class="ident">pkg</span>.<span class="ident">serialized</span>(<span class="ident">config</span>)).<span class="ident">collect</span>();
         (<span class="ident">packages</span>, <span class="prelude-val">None</span>)
     } <span class="kw">else</span> {
         <span class="kw">let</span> (<span class="ident">packages</span>, <span class="ident">resolve</span>) <span class="op">=</span> <span class="ident">build_resolve_graph</span>(<span class="ident">ws</span>, <span class="ident">opt</span>)<span class="question-mark">?</span>;
@@ -271,6 +303,7 @@
         <span class="ident">target_directory</span>: <span class="ident">ws</span>.<span class="ident">target_dir</span>().<span class="ident">into_path_unlocked</span>(),
         <span class="ident">version</span>: <span class="ident">VERSION</span>,
         <span class="ident">workspace_root</span>: <span class="ident">ws</span>.<span class="ident">root</span>().<span class="ident">to_path_buf</span>(),
+        <span class="ident">metadata</span>: <span class="ident">ws</span>.<span class="ident">custom_metadata</span>().<span class="ident">cloned</span>(),
     })
 }
 
@@ -279,12 +312,13 @@
 <span class="doccomment">/// See cargo-metadata.adoc for detailed documentation of the format.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ExportInfo</span> {
-    <span class="ident">packages</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Package</span><span class="op">&gt;</span>,
+    <span class="ident">packages</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SerializedPackage</span><span class="op">&gt;</span>,
     <span class="ident">workspace_members</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
     <span class="ident">resolve</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MetadataResolve</span><span class="op">&gt;</span>,
     <span class="ident">target_directory</span>: <span class="ident">PathBuf</span>,
     <span class="ident">version</span>: <span class="ident">u32</span>,
     <span class="ident">workspace_root</span>: <span class="ident">PathBuf</span>,
+    <span class="ident">metadata</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">toml</span>::<span class="ident">Value</span><span class="op">&gt;</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>)]</span>
@@ -327,7 +361,7 @@
 <span class="kw">fn</span> <span class="ident">build_resolve_graph</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">metadata_opts</span>: <span class="kw-2">&amp;</span><span class="ident">OutputMetadataOptions</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Package</span><span class="op">&gt;</span>, <span class="ident">MetadataResolve</span>)<span class="op">&gt;</span> {
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SerializedPackage</span><span class="op">&gt;</span>, <span class="ident">MetadataResolve</span>)<span class="op">&gt;</span> {
     <span class="comment">// TODO: Without --filter-platform, features are being resolved for `host` only.</span>
     <span class="comment">// How should this work?</span>
     <span class="kw">let</span> <span class="ident">requested_kinds</span> <span class="op">=</span>
@@ -335,12 +369,20 @@
     <span class="kw">let</span> <span class="ident">target_data</span> <span class="op">=</span> <span class="ident">RustcTargetData</span>::<span class="ident">new</span>(<span class="ident">ws</span>, <span class="kw-2">&amp;</span><span class="ident">requested_kinds</span>)<span class="question-mark">?</span>;
     <span class="comment">// Resolve entire workspace.</span>
     <span class="kw">let</span> <span class="ident">specs</span> <span class="op">=</span> <span class="ident">Packages</span>::<span class="ident">All</span>.<span class="ident">to_package_id_specs</span>(<span class="ident">ws</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">resolve_opts</span> <span class="op">=</span> <span class="ident">ResolveOpts</span>::<span class="ident">new</span>(
-        <span class="comment">/*dev_deps*/</span> <span class="bool-val">true</span>,
+    <span class="kw">let</span> <span class="ident">requested_features</span> <span class="op">=</span> <span class="ident">RequestedFeatures</span>::<span class="ident">from_command_line</span>(
         <span class="kw-2">&amp;</span><span class="ident">metadata_opts</span>.<span class="ident">features</span>,
         <span class="ident">metadata_opts</span>.<span class="ident">all_features</span>,
         <span class="op">!</span><span class="ident">metadata_opts</span>.<span class="ident">no_default_features</span>,
     );
+    <span class="kw">let</span> <span class="ident">resolve_opts</span> <span class="op">=</span> <span class="ident">ResolveOpts</span>::<span class="ident">new</span>(<span class="comment">/*dev_deps*/</span> <span class="bool-val">true</span>, <span class="ident">requested_features</span>);
+    <span class="kw">let</span> <span class="ident">force_all</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">metadata_opts</span>.<span class="ident">filter_platforms</span>.<span class="ident">is_empty</span>() {
+        <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::<span class="ident">features</span>::<span class="ident">ForceAllTargets</span>::<span class="ident">Yes</span>
+    } <span class="kw">else</span> {
+        <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::<span class="ident">features</span>::<span class="ident">ForceAllTargets</span>::<span class="ident">No</span>
+    };
+
+    <span class="comment">// Note that even with --filter-platform we end up downloading host dependencies as well,</span>
+    <span class="comment">// as that is the behavior of download_accessible.</span>
     <span class="kw">let</span> <span class="ident">ws_resolve</span> <span class="op">=</span> <span class="ident">ops</span>::<span class="ident">resolve_ws_with_opts</span>(
         <span class="ident">ws</span>,
         <span class="kw-2">&amp;</span><span class="ident">target_data</span>,
@@ -348,22 +390,19 @@
         <span class="kw-2">&amp;</span><span class="ident">resolve_opts</span>,
         <span class="kw-2">&amp;</span><span class="ident">specs</span>,
         <span class="ident">HasDevUnits</span>::<span class="ident">Yes</span>,
-        <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::<span class="ident">features</span>::<span class="ident">ForceAllTargets</span>::<span class="ident">No</span>,
+        <span class="ident">force_all</span>,
     )<span class="question-mark">?</span>;
-    <span class="comment">// Download all Packages. This is needed to serialize the information</span>
-    <span class="comment">// for every package. In theory this could honor target filtering,</span>
-    <span class="comment">// but that would be somewhat complex.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">package_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">Package</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ws_resolve</span>
+
+    <span class="kw">let</span> <span class="ident">package_map</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">Package</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">ws_resolve</span>
         .<span class="ident">pkg_set</span>
-        .<span class="ident">get_many</span>(<span class="ident">ws_resolve</span>.<span class="ident">pkg_set</span>.<span class="ident">package_ids</span>())<span class="question-mark">?</span>
-        .<span class="ident">into_iter</span>()
+        .<span class="ident">packages</span>()
         <span class="comment">// This is a little lazy, but serde doesn&#39;t handle Rc fields very well.</span>
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">pkg</span><span class="op">|</span> (<span class="ident">pkg</span>.<span class="ident">package_id</span>(), <span class="ident">Package</span>::<span class="ident">clone</span>(<span class="ident">pkg</span>)))
         .<span class="ident">collect</span>();
 
     <span class="comment">// Start from the workspace roots, and recurse through filling out the</span>
     <span class="comment">// map, filtering targets as necessary.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">node_map</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">node_map</span> <span class="op">=</span> <span class="ident">BTreeMap</span>::<span class="ident">new</span>();
     <span class="kw">for</span> <span class="ident">member_pkg</span> <span class="kw">in</span> <span class="ident">ws</span>.<span class="ident">members</span>() {
         <span class="ident">build_resolve_graph_r</span>(
             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">node_map</span>,
@@ -375,28 +414,46 @@
         );
     }
     <span class="comment">// Get a Vec of Packages.</span>
+    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>();
     <span class="kw">let</span> <span class="ident">actual_packages</span> <span class="op">=</span> <span class="ident">package_map</span>
-        .<span class="ident">drain</span>()
+        .<span class="ident">into_iter</span>()
         .<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="ident">pkg_id</span>, <span class="ident">pkg</span>)<span class="op">|</span> <span class="ident">node_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_id</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">pkg</span>))
+        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">pkg</span><span class="op">|</span> <span class="ident">pkg</span>.<span class="ident">serialized</span>(<span class="ident">config</span>))
         .<span class="ident">collect</span>();
+
     <span class="kw">let</span> <span class="ident">mr</span> <span class="op">=</span> <span class="ident">MetadataResolve</span> {
-        <span class="ident">nodes</span>: <span class="ident">node_map</span>.<span class="ident">drain</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_pkg_id</span>, <span class="ident">node</span>)<span class="op">|</span> <span class="ident">node</span>).<span class="ident">collect</span>(),
+        <span class="ident">nodes</span>: <span class="ident">node_map</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_pkg_id</span>, <span class="ident">node</span>)<span class="op">|</span> <span class="ident">node</span>).<span class="ident">collect</span>(),
         <span class="ident">root</span>: <span class="ident">ws</span>.<span class="ident">current_opt</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">pkg</span><span class="op">|</span> <span class="ident">pkg</span>.<span class="ident">package_id</span>()),
     };
     <span class="prelude-val">Ok</span>((<span class="ident">actual_packages</span>, <span class="ident">mr</span>))
 }
 
 <span class="kw">fn</span> <span class="ident">build_resolve_graph_r</span>(
-    <span class="ident">node_map</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">MetadataResolveNode</span><span class="op">&gt;</span>,
+    <span class="ident">node_map</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">MetadataResolveNode</span><span class="op">&gt;</span>,
     <span class="ident">pkg_id</span>: <span class="ident">PackageId</span>,
     <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="ident">Resolve</span>,
-    <span class="ident">package_map</span>: <span class="kw-2">&amp;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">Package</span><span class="op">&gt;</span>,
+    <span class="ident">package_map</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">Package</span><span class="op">&gt;</span>,
     <span class="ident">target_data</span>: <span class="kw-2">&amp;</span><span class="ident">RustcTargetData</span>,
     <span class="ident">requested_kinds</span>: <span class="kw-2">&amp;</span>[<span class="ident">CompileKind</span>],
 ) {
     <span class="kw">if</span> <span class="ident">node_map</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_id</span>) {
         <span class="kw">return</span>;
     }
+    <span class="comment">// This normalizes the IDs so that they are consistent between the</span>
+    <span class="comment">// `packages` array and the `resolve` map. This is a bit of a hack to</span>
+    <span class="comment">// compensate for the fact that</span>
+    <span class="comment">// SourceKind::Git(GitReference::Branch(&quot;master&quot;)) is the same as</span>
+    <span class="comment">// SourceKind::Git(GitReference::DefaultBranch). We want IDs in the JSON</span>
+    <span class="comment">// to be opaque, and compare with basic string equality, so this will</span>
+    <span class="comment">// always prefer the style of ID in the Package instead of the resolver.</span>
+    <span class="comment">// Cargo generally only exposes PackageIds from the Package struct, and</span>
+    <span class="comment">// AFAIK this is the only place where the resolver variant is exposed.</span>
+    <span class="comment">//</span>
+    <span class="comment">// This diverges because the SourceIds created for Packages are built</span>
+    <span class="comment">// based on the Dependency declaration, but the SourceIds in the resolver</span>
+    <span class="comment">// are deserialized from Cargo.lock. Cargo.lock may have been generated by</span>
+    <span class="comment">// an older (or newer!) version of Cargo which uses a different style.</span>
+    <span class="kw">let</span> <span class="ident">normalize_id</span> <span class="op">=</span> <span class="op">|</span><span class="ident">id</span><span class="op">|</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageId</span> { <span class="kw-2">*</span><span class="ident">package_map</span>.<span class="ident">get_key_value</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>).<span class="ident">unwrap</span>().<span class="number">0</span> };
     <span class="kw">let</span> <span class="ident">features</span> <span class="op">=</span> <span class="ident">resolve</span>.<span class="ident">features</span>(<span class="ident">pkg_id</span>).<span class="ident">to_vec</span>();
 
     <span class="kw">let</span> <span class="ident">deps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Dep</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">resolve</span>
@@ -412,22 +469,23 @@
             }
         })
         .<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="ident">dep_id</span>, <span class="ident">deps</span>)<span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">dep_kinds</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">DepKindInfo</span>::<span class="ident">from</span>).<span class="ident">collect</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dep_kinds</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">DepKindInfo</span>::<span class="ident">from</span>).<span class="ident">collect</span>();
+            <span class="ident">dep_kinds</span>.<span class="ident">sort</span>();
             <span class="ident">package_map</span>
                 .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">dep_id</span>)
                 .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">pkg</span><span class="op">|</span> <span class="ident">pkg</span>.<span class="ident">targets</span>().<span class="ident">iter</span>().<span class="ident">find</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">is_lib</span>()))
                 .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">lib_target</span><span class="op">|</span> <span class="ident">resolve</span>.<span class="ident">extern_crate_name</span>(<span class="ident">pkg_id</span>, <span class="ident">dep_id</span>, <span class="ident">lib_target</span>).<span class="ident">ok</span>())
                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">name</span><span class="op">|</span> <span class="ident">Dep</span> {
                     <span class="ident">name</span>,
-                    <span class="ident">pkg</span>: <span class="ident">dep_id</span>,
+                    <span class="ident">pkg</span>: <span class="ident">normalize_id</span>(<span class="ident">dep_id</span>),
                     <span class="ident">dep_kinds</span>,
                 })
         })
         .<span class="ident">collect</span>();
-    <span class="kw">let</span> <span class="ident">dumb_deps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> <span class="ident">dep</span>.<span class="ident">pkg</span>).<span class="ident">collect</span>();
+    <span class="kw">let</span> <span class="ident">dumb_deps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> <span class="ident">normalize_id</span>(<span class="ident">dep</span>.<span class="ident">pkg</span>)).<span class="ident">collect</span>();
     <span class="kw">let</span> <span class="ident">to_visit</span> <span class="op">=</span> <span class="ident">dumb_deps</span>.<span class="ident">clone</span>();
     <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="ident">MetadataResolveNode</span> {
-        <span class="ident">id</span>: <span class="ident">pkg_id</span>,
+        <span class="ident">id</span>: <span class="ident">normalize_id</span>(<span class="ident">pkg_id</span>),
         <span class="ident">dependencies</span>: <span class="ident">dumb_deps</span>,
         <span class="ident">deps</span>,
         <span class="ident">features</span>,

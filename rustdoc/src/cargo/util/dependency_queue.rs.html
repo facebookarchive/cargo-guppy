@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/util/dependency_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dependency_queue.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/util/dependency_queue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dependency_queue.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -218,6 +218,48 @@
 <span id="215">215</span>
 <span id="216">216</span>
 <span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! A graph-like structure used to represent a set of dependencies and in what</span>
 <span class="doccomment">//! order they should be built.</span>
@@ -252,8 +294,11 @@
     <span class="doccomment">/// easily indexable with just an `N`</span>
     <span class="ident">reverse_dep_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// The total number of packages that are transitively waiting on this package</span>
+    <span class="doccomment">/// The relative priority of this package. Higher values should be scheduled sooner.</span>
     <span class="ident">priority</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">usize</span><span class="op">&gt;</span>,
+
+    <span class="doccomment">/// An expected cost for building this package. Used to determine priority.</span>
+    <span class="ident">cost</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">usize</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span>, <span class="ident">E</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DependencyQueue</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">E</span>, <span class="ident">V</span><span class="op">&gt;</span> {
@@ -269,6 +314,7 @@
             <span class="ident">dep_map</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
             <span class="ident">reverse_dep_map</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
             <span class="ident">priority</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
+            <span class="ident">cost</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
         }
     }
 }
@@ -284,7 +330,18 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// An optional `value` can also be associated with `key` which is reclaimed</span>
     <span class="doccomment">/// when the node is ready to go.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">queue</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="ident">N</span>, <span class="ident">value</span>: <span class="ident">V</span>, <span class="ident">dependencies</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">N</span>, <span class="ident">E</span>)<span class="op">&gt;</span>) {
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The cost parameter can be used to hint at the relative cost of building</span>
+    <span class="doccomment">/// this node. This implementation does not care about the units of this value, so</span>
+    <span class="doccomment">/// the calling code is free to use whatever they&#39;d like. In general, higher cost</span>
+    <span class="doccomment">/// nodes are expected to take longer to build.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">queue</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">key</span>: <span class="ident">N</span>,
+        <span class="ident">value</span>: <span class="ident">V</span>,
+        <span class="ident">dependencies</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">N</span>, <span class="ident">E</span>)<span class="op">&gt;</span>,
+        <span class="ident">cost</span>: <span class="ident">usize</span>,
+    ) {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">dep_map</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>));
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">my_dependencies</span> <span class="op">=</span> <span class="ident">HashSet</span>::<span class="ident">new</span>();
@@ -297,7 +354,8 @@
                 .<span class="ident">or_insert_with</span>(<span class="ident">HashSet</span>::<span class="ident">new</span>)
                 .<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">clone</span>());
         }
-        <span class="self">self</span>.<span class="ident">dep_map</span>.<span class="ident">insert</span>(<span class="ident">key</span>, (<span class="ident">my_dependencies</span>, <span class="ident">value</span>));
+        <span class="self">self</span>.<span class="ident">dep_map</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">clone</span>(), (<span class="ident">my_dependencies</span>, <span class="ident">value</span>));
+        <span class="self">self</span>.<span class="ident">cost</span>.<span class="ident">insert</span>(<span class="ident">key</span>, <span class="ident">cost</span>);
     }
 
     <span class="doccomment">/// All nodes have been added, calculate some internal metadata and prepare</span>
@@ -307,8 +365,19 @@
         <span class="kw">for</span> <span class="ident">key</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">dep_map</span>.<span class="ident">keys</span>() {
             <span class="ident">depth</span>(<span class="ident">key</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">reverse_dep_map</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>);
         }
-        <span class="self">self</span>.<span class="ident">priority</span> <span class="op">=</span> <span class="ident">out</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">n</span>, <span class="ident">set</span>)<span class="op">|</span> (<span class="ident">n</span>, <span class="ident">set</span>.<span class="ident">len</span>())).<span class="ident">collect</span>();
+        <span class="self">self</span>.<span class="ident">priority</span> <span class="op">=</span> <span class="ident">out</span>
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">n</span>, <span class="ident">set</span>)<span class="op">|</span> {
+                <span class="kw">let</span> <span class="ident">total_cost</span> <span class="op">=</span>
+                    <span class="self">self</span>.<span class="ident">cost</span>[<span class="kw-2">&amp;</span><span class="ident">n</span>] <span class="op">+</span> <span class="ident">set</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">key</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">cost</span>[<span class="ident">key</span>]).<span class="ident">sum</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>();
+                (<span class="ident">n</span>, <span class="ident">total_cost</span>)
+            })
+            .<span class="ident">collect</span>();
 
+        <span class="doccomment">/// Creates a flattened reverse dependency list. For a given key, finds the</span>
+        <span class="doccomment">/// set of nodes which depend on it, including transitively. This is different</span>
+        <span class="doccomment">/// from self.reverse_dep_map because self.reverse_dep_map only maps one level</span>
+        <span class="doccomment">/// of reverse dependencies.</span>
         <span class="kw">fn</span> <span class="ident">depth</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">N</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Clone</span>, <span class="ident">E</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Clone</span><span class="op">&gt;</span>(
             <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">N</span>,
             <span class="ident">map</span>: <span class="kw-2">&amp;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
@@ -344,16 +413,6 @@
     <span class="doccomment">/// A package is ready to be built when it has 0 un-built dependencies. If</span>
     <span class="doccomment">/// `None` is returned then no packages are ready to be built.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dequeue</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">N</span>, <span class="ident">V</span>)<span class="op">&gt;</span> {
-        <span class="comment">// Look at all our crates and find everything that&#39;s ready to build (no</span>
-        <span class="comment">// deps). After we&#39;ve got that candidate set select the one which has</span>
-        <span class="comment">// the maximum priority in the dependency graph. This way we should</span>
-        <span class="comment">// hopefully keep CPUs hottest the longest by ensuring that long</span>
-        <span class="comment">// dependency chains are scheduled early on in the build process and the</span>
-        <span class="comment">// leafs higher in the tree can fill in the cracks later.</span>
-        <span class="comment">//</span>
-        <span class="comment">// TODO: it&#39;d be best here to throw in a heuristic of crate size as</span>
-        <span class="comment">//       well. For example how long did this crate historically take to</span>
-        <span class="comment">//       compile? How large is its source code? etc.</span>
         <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dep_map</span>
             .<span class="ident">iter</span>()
@@ -411,14 +470,14 @@
     <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">DependencyQueue</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">deep_first</span>() {
+    <span class="kw">fn</span> <span class="ident">deep_first_equal_cost</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">q</span> <span class="op">=</span> <span class="ident">DependencyQueue</span>::<span class="ident">new</span>();
 
-        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">1</span>, (), <span class="macro">vec</span><span class="macro">!</span>[]);
-        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">2</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">1</span>, ())]);
-        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">3</span>, (), <span class="macro">vec</span><span class="macro">!</span>[]);
-        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">4</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">2</span>, ()), (<span class="number">3</span>, ())]);
-        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">5</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">4</span>, ()), (<span class="number">3</span>, ())]);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">1</span>, (), <span class="macro">vec</span><span class="macro">!</span>[], <span class="number">1</span>);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">2</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">1</span>, ())], <span class="number">1</span>);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">3</span>, (), <span class="macro">vec</span><span class="macro">!</span>[], <span class="number">1</span>);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">4</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">2</span>, ()), (<span class="number">3</span>, ())], <span class="number">1</span>);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">5</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">4</span>, ()), (<span class="number">3</span>, ())], <span class="number">1</span>);
         <span class="ident">q</span>.<span class="ident">queue_finished</span>();
 
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">Some</span>((<span class="number">1</span>, ())));
@@ -434,6 +493,31 @@
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">None</span>);
         <span class="ident">q</span>.<span class="ident">finish</span>(<span class="kw-2">&amp;</span><span class="number">4</span>, <span class="kw-2">&amp;</span>());
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">Some</span>((<span class="number">5</span>, ())));
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">sort_by_highest_cost</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">q</span> <span class="op">=</span> <span class="ident">DependencyQueue</span>::<span class="ident">new</span>();
+
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">1</span>, (), <span class="macro">vec</span><span class="macro">!</span>[], <span class="number">1</span>);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">2</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">1</span>, ())], <span class="number">1</span>);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">3</span>, (), <span class="macro">vec</span><span class="macro">!</span>[], <span class="number">4</span>);
+        <span class="ident">q</span>.<span class="ident">queue</span>(<span class="number">4</span>, (), <span class="macro">vec</span><span class="macro">!</span>[(<span class="number">2</span>, ()), (<span class="number">3</span>, ())], <span class="number">1</span>);
+        <span class="ident">q</span>.<span class="ident">queue_finished</span>();
+
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">Some</span>((<span class="number">3</span>, ())));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">Some</span>((<span class="number">1</span>, ())));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">None</span>);
+        <span class="ident">q</span>.<span class="ident">finish</span>(<span class="kw-2">&amp;</span><span class="number">3</span>, <span class="kw-2">&amp;</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">None</span>);
+        <span class="ident">q</span>.<span class="ident">finish</span>(<span class="kw-2">&amp;</span><span class="number">1</span>, <span class="kw-2">&amp;</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">Some</span>((<span class="number">2</span>, ())));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">None</span>);
+        <span class="ident">q</span>.<span class="ident">finish</span>(<span class="kw-2">&amp;</span><span class="number">2</span>, <span class="kw-2">&amp;</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">Some</span>((<span class="number">4</span>, ())));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">None</span>);
+        <span class="ident">q</span>.<span class="ident">finish</span>(<span class="kw-2">&amp;</span><span class="number">4</span>, <span class="kw-2">&amp;</span>());
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">q</span>.<span class="ident">dequeue</span>(), <span class="prelude-val">None</span>);
     }
 }
 </pre></div>

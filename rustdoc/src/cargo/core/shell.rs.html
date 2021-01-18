@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/shell.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>shell.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/core/shell.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>shell.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -501,6 +501,35 @@
 <span id="498">498</span>
 <span id="499">499</span>
 <span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
@@ -509,6 +538,31 @@
 <span class="kw">use</span> <span class="ident">termcolor</span>::{<span class="self">self</span>, <span class="ident">Color</span>, <span class="ident">ColorSpec</span>, <span class="ident">StandardStream</span>, <span class="ident">WriteColor</span>};
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::<span class="ident">CargoResult</span>;
+
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TtyWidth</span> {
+    <span class="ident">NoTty</span>,
+    <span class="ident">Known</span>(<span class="ident">usize</span>),
+    <span class="ident">Guess</span>(<span class="ident">usize</span>),
+}
+
+<span class="kw">impl</span> <span class="ident">TtyWidth</span> {
+    <span class="doccomment">/// Returns the width provided with `-Z terminal-width` to rustc to truncate diagnostics with</span>
+    <span class="doccomment">/// long lines.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">diagnostic_terminal_width</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
+            <span class="ident">TtyWidth</span>::<span class="ident">NoTty</span> <span class="op">|</span> <span class="ident">TtyWidth</span>::<span class="ident">Guess</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">TtyWidth</span>::<span class="ident">Known</span>(<span class="ident">width</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">width</span>),
+        }
+    }
+
+    <span class="doccomment">/// Returns the width used by progress bars for the tty.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">progress_max_width</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
+            <span class="ident">TtyWidth</span>::<span class="ident">NoTty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">TtyWidth</span>::<span class="ident">Known</span>(<span class="ident">width</span>) <span class="op">|</span> <span class="ident">TtyWidth</span>::<span class="ident">Guess</span>(<span class="ident">width</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">width</span>),
+        }
+    }
+}
 
 <span class="doccomment">/// The requested verbosity of output.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>)]</span>
@@ -629,12 +683,12 @@
     }
 
     <span class="doccomment">/// Returns the width of the terminal in spaces, if any.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">err_width</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">err_width</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TtyWidth</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">output</span> {
             <span class="ident">ShellOut</span>::<span class="ident">Stream</span> {
                 <span class="ident">stderr_tty</span>: <span class="bool-val">true</span>, ..
             } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">imp</span>::<span class="ident">stderr_width</span>(),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">TtyWidth</span>::<span class="ident">NoTty</span>,
         }
     }
 
@@ -912,21 +966,21 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
 <span class="kw">mod</span> <span class="ident">imp</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">Shell</span>;
+    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Shell</span>, <span class="ident">TtyWidth</span>};
     <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stderr_width</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stderr_width</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TtyWidth</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">winsize</span>: <span class="ident">libc</span>::<span class="ident">winsize</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">zeroed</span>();
             <span class="comment">// The .into() here is needed for FreeBSD which defines TIOCGWINSZ</span>
             <span class="comment">// as c_uint but ioctl wants c_ulong.</span>
             <span class="kw">if</span> <span class="ident">libc</span>::<span class="ident">ioctl</span>(<span class="ident">libc</span>::<span class="ident">STDERR_FILENO</span>, <span class="ident">libc</span>::<span class="ident">TIOCGWINSZ</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">winsize</span>) <span class="op">&lt;</span> <span class="number">0</span> {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+                <span class="kw">return</span> <span class="ident">TtyWidth</span>::<span class="ident">NoTty</span>;
             }
             <span class="kw">if</span> <span class="ident">winsize</span>.<span class="ident">ws_col</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">winsize</span>.<span class="ident">ws_col</span> <span class="kw">as</span> <span class="ident">usize</span>)
+                <span class="ident">TtyWidth</span>::<span class="ident">Known</span>(<span class="ident">winsize</span>.<span class="ident">ws_col</span> <span class="kw">as</span> <span class="ident">usize</span>)
             } <span class="kw">else</span> {
-                <span class="prelude-val">None</span>
+                <span class="ident">TtyWidth</span>::<span class="ident">NoTty</span>
             }
         }
     }
@@ -949,14 +1003,14 @@
     <span class="kw">use</span> <span class="ident">winapi</span>::<span class="ident">um</span>::<span class="ident">wincon</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">winapi</span>::<span class="ident">um</span>::<span class="ident">winnt</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">default_err_erase_line</span> <span class="kw">as</span> <span class="ident">err_erase_line</span>;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">default_err_erase_line</span> <span class="kw">as</span> <span class="ident">err_erase_line</span>, <span class="ident">TtyWidth</span>};
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stderr_width</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stderr_width</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TtyWidth</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="ident">stdout</span> <span class="op">=</span> <span class="ident">GetStdHandle</span>(<span class="ident">STD_ERROR_HANDLE</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">csbi</span>: <span class="ident">CONSOLE_SCREEN_BUFFER_INFO</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">zeroed</span>();
             <span class="kw">if</span> <span class="ident">GetConsoleScreenBufferInfo</span>(<span class="ident">stdout</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">csbi</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-                <span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="ident">csbi</span>.<span class="ident">srWindow</span>.<span class="ident">Right</span> <span class="op">-</span> <span class="ident">csbi</span>.<span class="ident">srWindow</span>.<span class="ident">Left</span>) <span class="kw">as</span> <span class="ident">usize</span>);
+                <span class="kw">return</span> <span class="ident">TtyWidth</span>::<span class="ident">Known</span>((<span class="ident">csbi</span>.<span class="ident">srWindow</span>.<span class="ident">Right</span> <span class="op">-</span> <span class="ident">csbi</span>.<span class="ident">srWindow</span>.<span class="ident">Left</span>) <span class="kw">as</span> <span class="ident">usize</span>);
             }
 
             <span class="comment">// On mintty/msys/cygwin based terminals, the above fails with</span>
@@ -972,7 +1026,7 @@
                 <span class="ident">ptr</span>::<span class="ident">null_mut</span>(),
             );
             <span class="kw">if</span> <span class="ident">h</span> <span class="op">=</span><span class="op">=</span> <span class="ident">INVALID_HANDLE_VALUE</span> {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+                <span class="kw">return</span> <span class="ident">TtyWidth</span>::<span class="ident">NoTty</span>;
             }
 
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">csbi</span>: <span class="ident">CONSOLE_SCREEN_BUFFER_INFO</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">zeroed</span>();
@@ -988,18 +1042,22 @@
                 <span class="comment">// resize the console correctly, but there&#39;s no reasonable way</span>
                 <span class="comment">// to detect which kind of terminal we are running in, or if</span>
                 <span class="comment">// GetConsoleScreenBufferInfo returns accurate information.</span>
-                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">cmp</span>::<span class="ident">min</span>(<span class="number">60</span>, <span class="ident">width</span>));
+                <span class="kw">return</span> <span class="ident">TtyWidth</span>::<span class="ident">Guess</span>(<span class="ident">cmp</span>::<span class="ident">min</span>(<span class="number">60</span>, <span class="ident">width</span>));
             }
-            <span class="prelude-val">None</span>
+
+            <span class="ident">TtyWidth</span>::<span class="ident">NoTty</span>
         }
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
 <span class="kw">fn</span> <span class="ident">default_err_erase_line</span>(<span class="ident">shell</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Shell</span>) {
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">max_width</span>) <span class="op">=</span> <span class="ident">imp</span>::<span class="ident">stderr_width</span>() {
-        <span class="kw">let</span> <span class="ident">blank</span> <span class="op">=</span> <span class="string">&quot; &quot;</span>.<span class="ident">repeat</span>(<span class="ident">max_width</span>);
-        <span class="ident">drop</span>(<span class="macro">write</span><span class="macro">!</span>(<span class="ident">shell</span>.<span class="ident">output</span>.<span class="ident">stderr</span>(), <span class="string">&quot;{}\r&quot;</span>, <span class="ident">blank</span>));
+    <span class="kw">match</span> <span class="ident">imp</span>::<span class="ident">stderr_width</span>() {
+        <span class="ident">TtyWidth</span>::<span class="ident">Known</span>(<span class="ident">max_width</span>) <span class="op">|</span> <span class="ident">TtyWidth</span>::<span class="ident">Guess</span>(<span class="ident">max_width</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">blank</span> <span class="op">=</span> <span class="string">&quot; &quot;</span>.<span class="ident">repeat</span>(<span class="ident">max_width</span>);
+            <span class="ident">drop</span>(<span class="macro">write</span><span class="macro">!</span>(<span class="ident">shell</span>.<span class="ident">output</span>.<span class="ident">stderr</span>(), <span class="string">&quot;{}\r&quot;</span>, <span class="ident">blank</span>));
+        }
+        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> (),
     }
 }
 </pre></div>

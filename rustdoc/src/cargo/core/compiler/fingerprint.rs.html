@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/compiler/fingerprint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fingerprint.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/core/compiler/fingerprint.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fingerprint.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
@@ -1819,6 +1819,222 @@
 <span id="1816">1816</span>
 <span id="1817">1817</span>
 <span id="1818">1818</span>
+<span id="1819">1819</span>
+<span id="1820">1820</span>
+<span id="1821">1821</span>
+<span id="1822">1822</span>
+<span id="1823">1823</span>
+<span id="1824">1824</span>
+<span id="1825">1825</span>
+<span id="1826">1826</span>
+<span id="1827">1827</span>
+<span id="1828">1828</span>
+<span id="1829">1829</span>
+<span id="1830">1830</span>
+<span id="1831">1831</span>
+<span id="1832">1832</span>
+<span id="1833">1833</span>
+<span id="1834">1834</span>
+<span id="1835">1835</span>
+<span id="1836">1836</span>
+<span id="1837">1837</span>
+<span id="1838">1838</span>
+<span id="1839">1839</span>
+<span id="1840">1840</span>
+<span id="1841">1841</span>
+<span id="1842">1842</span>
+<span id="1843">1843</span>
+<span id="1844">1844</span>
+<span id="1845">1845</span>
+<span id="1846">1846</span>
+<span id="1847">1847</span>
+<span id="1848">1848</span>
+<span id="1849">1849</span>
+<span id="1850">1850</span>
+<span id="1851">1851</span>
+<span id="1852">1852</span>
+<span id="1853">1853</span>
+<span id="1854">1854</span>
+<span id="1855">1855</span>
+<span id="1856">1856</span>
+<span id="1857">1857</span>
+<span id="1858">1858</span>
+<span id="1859">1859</span>
+<span id="1860">1860</span>
+<span id="1861">1861</span>
+<span id="1862">1862</span>
+<span id="1863">1863</span>
+<span id="1864">1864</span>
+<span id="1865">1865</span>
+<span id="1866">1866</span>
+<span id="1867">1867</span>
+<span id="1868">1868</span>
+<span id="1869">1869</span>
+<span id="1870">1870</span>
+<span id="1871">1871</span>
+<span id="1872">1872</span>
+<span id="1873">1873</span>
+<span id="1874">1874</span>
+<span id="1875">1875</span>
+<span id="1876">1876</span>
+<span id="1877">1877</span>
+<span id="1878">1878</span>
+<span id="1879">1879</span>
+<span id="1880">1880</span>
+<span id="1881">1881</span>
+<span id="1882">1882</span>
+<span id="1883">1883</span>
+<span id="1884">1884</span>
+<span id="1885">1885</span>
+<span id="1886">1886</span>
+<span id="1887">1887</span>
+<span id="1888">1888</span>
+<span id="1889">1889</span>
+<span id="1890">1890</span>
+<span id="1891">1891</span>
+<span id="1892">1892</span>
+<span id="1893">1893</span>
+<span id="1894">1894</span>
+<span id="1895">1895</span>
+<span id="1896">1896</span>
+<span id="1897">1897</span>
+<span id="1898">1898</span>
+<span id="1899">1899</span>
+<span id="1900">1900</span>
+<span id="1901">1901</span>
+<span id="1902">1902</span>
+<span id="1903">1903</span>
+<span id="1904">1904</span>
+<span id="1905">1905</span>
+<span id="1906">1906</span>
+<span id="1907">1907</span>
+<span id="1908">1908</span>
+<span id="1909">1909</span>
+<span id="1910">1910</span>
+<span id="1911">1911</span>
+<span id="1912">1912</span>
+<span id="1913">1913</span>
+<span id="1914">1914</span>
+<span id="1915">1915</span>
+<span id="1916">1916</span>
+<span id="1917">1917</span>
+<span id="1918">1918</span>
+<span id="1919">1919</span>
+<span id="1920">1920</span>
+<span id="1921">1921</span>
+<span id="1922">1922</span>
+<span id="1923">1923</span>
+<span id="1924">1924</span>
+<span id="1925">1925</span>
+<span id="1926">1926</span>
+<span id="1927">1927</span>
+<span id="1928">1928</span>
+<span id="1929">1929</span>
+<span id="1930">1930</span>
+<span id="1931">1931</span>
+<span id="1932">1932</span>
+<span id="1933">1933</span>
+<span id="1934">1934</span>
+<span id="1935">1935</span>
+<span id="1936">1936</span>
+<span id="1937">1937</span>
+<span id="1938">1938</span>
+<span id="1939">1939</span>
+<span id="1940">1940</span>
+<span id="1941">1941</span>
+<span id="1942">1942</span>
+<span id="1943">1943</span>
+<span id="1944">1944</span>
+<span id="1945">1945</span>
+<span id="1946">1946</span>
+<span id="1947">1947</span>
+<span id="1948">1948</span>
+<span id="1949">1949</span>
+<span id="1950">1950</span>
+<span id="1951">1951</span>
+<span id="1952">1952</span>
+<span id="1953">1953</span>
+<span id="1954">1954</span>
+<span id="1955">1955</span>
+<span id="1956">1956</span>
+<span id="1957">1957</span>
+<span id="1958">1958</span>
+<span id="1959">1959</span>
+<span id="1960">1960</span>
+<span id="1961">1961</span>
+<span id="1962">1962</span>
+<span id="1963">1963</span>
+<span id="1964">1964</span>
+<span id="1965">1965</span>
+<span id="1966">1966</span>
+<span id="1967">1967</span>
+<span id="1968">1968</span>
+<span id="1969">1969</span>
+<span id="1970">1970</span>
+<span id="1971">1971</span>
+<span id="1972">1972</span>
+<span id="1973">1973</span>
+<span id="1974">1974</span>
+<span id="1975">1975</span>
+<span id="1976">1976</span>
+<span id="1977">1977</span>
+<span id="1978">1978</span>
+<span id="1979">1979</span>
+<span id="1980">1980</span>
+<span id="1981">1981</span>
+<span id="1982">1982</span>
+<span id="1983">1983</span>
+<span id="1984">1984</span>
+<span id="1985">1985</span>
+<span id="1986">1986</span>
+<span id="1987">1987</span>
+<span id="1988">1988</span>
+<span id="1989">1989</span>
+<span id="1990">1990</span>
+<span id="1991">1991</span>
+<span id="1992">1992</span>
+<span id="1993">1993</span>
+<span id="1994">1994</span>
+<span id="1995">1995</span>
+<span id="1996">1996</span>
+<span id="1997">1997</span>
+<span id="1998">1998</span>
+<span id="1999">1999</span>
+<span id="2000">2000</span>
+<span id="2001">2001</span>
+<span id="2002">2002</span>
+<span id="2003">2003</span>
+<span id="2004">2004</span>
+<span id="2005">2005</span>
+<span id="2006">2006</span>
+<span id="2007">2007</span>
+<span id="2008">2008</span>
+<span id="2009">2009</span>
+<span id="2010">2010</span>
+<span id="2011">2011</span>
+<span id="2012">2012</span>
+<span id="2013">2013</span>
+<span id="2014">2014</span>
+<span id="2015">2015</span>
+<span id="2016">2016</span>
+<span id="2017">2017</span>
+<span id="2018">2018</span>
+<span id="2019">2019</span>
+<span id="2020">2020</span>
+<span id="2021">2021</span>
+<span id="2022">2022</span>
+<span id="2023">2023</span>
+<span id="2024">2024</span>
+<span id="2025">2025</span>
+<span id="2026">2026</span>
+<span id="2027">2027</span>
+<span id="2028">2028</span>
+<span id="2029">2029</span>
+<span id="2030">2030</span>
+<span id="2031">2031</span>
+<span id="2032">2032</span>
+<span id="2033">2033</span>
+<span id="2034">2034</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # Fingerprints</span>
 <span class="doccomment">//!</span>
@@ -1894,7 +2110,7 @@
 <span class="doccomment">//! -C incremental=… flag                      | ✓           |</span>
 <span class="doccomment">//! mtime of sources                           | ✓[^3]       |</span>
 <span class="doccomment">//! RUSTFLAGS/RUSTDOCFLAGS                     | ✓           |</span>
-<span class="doccomment">//! LTO flags                                  | ✓           |</span>
+<span class="doccomment">//! LTO flags                                  | ✓           | ✓</span>
 <span class="doccomment">//! config settings[^5]                        | ✓           |</span>
 <span class="doccomment">//! is_std                                     |             | ✓</span>
 <span class="doccomment">//!</span>
@@ -1928,8 +2144,9 @@
 <span class="doccomment">//!   used to log details about *why* a fingerprint is considered dirty.</span>
 <span class="doccomment">//!   `CARGO_LOG=cargo::core::compiler::fingerprint=trace cargo build` can be</span>
 <span class="doccomment">//!   used to display this log information.</span>
-<span class="doccomment">//! - A &quot;dep-info&quot; file which contains a list of source filenames for the</span>
-<span class="doccomment">//!   target. See below for details.</span>
+<span class="doccomment">//! - A &quot;dep-info&quot; file which is a translation of rustc&#39;s `*.d` dep-info files</span>
+<span class="doccomment">//!   to a Cargo-specific format that tweaks file names and is optimized for</span>
+<span class="doccomment">//!   reading quickly.</span>
 <span class="doccomment">//! - An `invoked.timestamp` file whose filesystem mtime is updated every time</span>
 <span class="doccomment">//!   the Unit is built. This is used for capturing the time when the build</span>
 <span class="doccomment">//!   starts, to detect if files are changed in the middle of the build. See</span>
@@ -1968,7 +2185,10 @@
 <span class="doccomment">//! directory (`translate_dep_info`). The mtime of the fingerprint dep-info</span>
 <span class="doccomment">//! file itself is used as the reference for comparing the source files to</span>
 <span class="doccomment">//! determine if any of the source files have been modified (see below for</span>
-<span class="doccomment">//! more detail).</span>
+<span class="doccomment">//! more detail). Note that Cargo parses the special `# env-var:...` comments in</span>
+<span class="doccomment">//! dep-info files to learn about environment variables that the rustc compile</span>
+<span class="doccomment">//! depends on. Cargo then later uses this to trigger a recompile if a</span>
+<span class="doccomment">//! referenced env var changes (even if the source didn&#39;t change).</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! There is also a third dep-info file. Cargo will extend the file created by</span>
 <span class="doccomment">//! rustc with some additional information and saves this into the output</span>
@@ -2131,9 +2351,11 @@
 <span class="doccomment">//! &lt;https://github.com/rust-lang/cargo/issues?q=is%3Aissue+is%3Aopen+label%3AA-rebuild-detection&gt;</span>
 
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">hash_map</span>::{<span class="ident">Entry</span>, <span class="ident">HashMap</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">convert</span>::<span class="ident">TryInto</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">env</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>::{<span class="self">self</span>, <span class="ident">Hasher</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">SystemTime</span>;
 
@@ -2145,17 +2367,15 @@
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">unit_graph</span>::<span class="ident">UnitDep</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">InternedString</span>, <span class="ident">Package</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">Package</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">paths</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">internal</span>, <span class="ident">profile</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">internal</span>, <span class="ident">profile</span>, <span class="ident">ProcessBuilder</span>};
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">custom_build</span>::<span class="ident">BuildDeps</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">job</span>::{
-    <span class="ident">Freshness</span>::{<span class="ident">Dirty</span>, <span class="ident">Fresh</span>},
-    <span class="ident">Job</span>, <span class="ident">Work</span>,
-};
+<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">job</span>::{<span class="ident">Job</span>, <span class="ident">Work</span>};
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">BuildContext</span>, <span class="ident">Context</span>, <span class="ident">FileFlavor</span>, <span class="ident">Unit</span>};
 
 <span class="doccomment">/// Determines if a `unit` is up-to-date, and if not prepares necessary work to</span>
@@ -2211,7 +2431,7 @@
     }
 
     <span class="kw">if</span> <span class="ident">compare</span>.<span class="ident">is_ok</span>() <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">force</span> {
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Job</span>::<span class="ident">new</span>(<span class="ident">Work</span>::<span class="ident">noop</span>(), <span class="ident">Fresh</span>));
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Job</span>::<span class="ident">new_fresh</span>());
     }
 
     <span class="comment">// Clear out the old fingerprint file if it exists. This protects when</span>
@@ -2284,7 +2504,7 @@
         <span class="ident">Work</span>::<span class="ident">new</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">write_fingerprint</span>(<span class="kw-2">&amp;</span><span class="ident">loc</span>, <span class="kw-2">&amp;</span><span class="ident">fingerprint</span>))
     };
 
-    <span class="prelude-val">Ok</span>(<span class="ident">Job</span>::<span class="ident">new</span>(<span class="ident">write_fingerprint</span>, <span class="ident">Dirty</span>))
+    <span class="prelude-val">Ok</span>(<span class="ident">Job</span>::<span class="ident">new_dirty</span>(<span class="ident">write_fingerprint</span>))
 }
 
 <span class="doccomment">/// Dependency edge information for fingerprints. This is generated for each</span>
@@ -2496,40 +2716,64 @@
     <span class="ident">RerunIfEnvChanged</span> { <span class="ident">var</span>: <span class="ident">String</span>, <span class="ident">val</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> },
 }
 
-<span class="kw">enum</span> <span class="ident">StaleFile</span> {
-    <span class="ident">Missing</span>(<span class="ident">PathBuf</span>),
-    <span class="ident">Changed</span> {
+<span class="kw">enum</span> <span class="ident">StaleItem</span> {
+    <span class="ident">MissingFile</span>(<span class="ident">PathBuf</span>),
+    <span class="ident">ChangedFile</span> {
         <span class="ident">reference</span>: <span class="ident">PathBuf</span>,
         <span class="ident">reference_mtime</span>: <span class="ident">FileTime</span>,
         <span class="ident">stale</span>: <span class="ident">PathBuf</span>,
         <span class="ident">stale_mtime</span>: <span class="ident">FileTime</span>,
     },
+    <span class="ident">ChangedEnv</span> {
+        <span class="ident">var</span>: <span class="ident">String</span>,
+        <span class="ident">previous</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+        <span class="ident">current</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    },
 }
 
 <span class="kw">impl</span> <span class="ident">LocalFingerprint</span> {
     <span class="doccomment">/// Checks dynamically at runtime if this `LocalFingerprint` has a stale</span>
-    <span class="doccomment">/// file.</span>
+    <span class="doccomment">/// item inside of it.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// This will use the absolute root paths passed in if necessary to guide</span>
-    <span class="doccomment">/// file accesses.</span>
-    <span class="kw">fn</span> <span class="ident">find_stale_file</span>(
+    <span class="doccomment">/// The main purpose of this function is to handle two different ways</span>
+    <span class="doccomment">/// fingerprints can be invalidated:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * One is a dependency listed in rustc&#39;s dep-info files is invalid. Note</span>
+    <span class="doccomment">///   that these could either be env vars or files. We check both here.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * Another is the `rerun-if-changed` directive from build scripts. This</span>
+    <span class="doccomment">///   is where we&#39;ll find whether files have actually changed</span>
+    <span class="kw">fn</span> <span class="ident">find_stale_item</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">mtime_cache</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PathBuf</span>, <span class="ident">FileTime</span><span class="op">&gt;</span>,
         <span class="ident">pkg_root</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
         <span class="ident">target_root</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StaleFile</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StaleItem</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="comment">// We need to parse `dep_info`, learn about all the files the crate</span>
-            <span class="comment">// depends on, and then see if any of them are newer than the</span>
-            <span class="comment">// dep_info file itself. If the `dep_info` file is missing then this</span>
-            <span class="comment">// unit has never been compiled!</span>
+            <span class="comment">// We need to parse `dep_info`, learn about the crate&#39;s dependencies.</span>
+            <span class="comment">//</span>
+            <span class="comment">// For each env var we see if our current process&#39;s env var still</span>
+            <span class="comment">// matches, and for each file we see if any of them are newer than</span>
+            <span class="comment">// the `dep_info` file itself whose mtime represents the start of</span>
+            <span class="comment">// rustc.</span>
             <span class="ident">LocalFingerprint</span>::<span class="ident">CheckDepInfo</span> { <span class="ident">dep_info</span> } <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">dep_info</span> <span class="op">=</span> <span class="ident">target_root</span>.<span class="ident">join</span>(<span class="ident">dep_info</span>);
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">paths</span>) <span class="op">=</span> <span class="ident">parse_dep_info</span>(<span class="ident">pkg_root</span>, <span class="ident">target_root</span>, <span class="kw-2">&amp;</span><span class="ident">dep_info</span>)<span class="question-mark">?</span> {
-                    <span class="prelude-val">Ok</span>(<span class="ident">find_stale_file</span>(<span class="ident">mtime_cache</span>, <span class="kw-2">&amp;</span><span class="ident">dep_info</span>, <span class="ident">paths</span>.<span class="ident">iter</span>()))
-                } <span class="kw">else</span> {
-                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">StaleFile</span>::<span class="ident">Missing</span>(<span class="ident">dep_info</span>)))
+                <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">parse_dep_info</span>(<span class="ident">pkg_root</span>, <span class="ident">target_root</span>, <span class="kw-2">&amp;</span><span class="ident">dep_info</span>)<span class="question-mark">?</span> {
+                    <span class="prelude-val">Some</span>(<span class="ident">info</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">info</span>,
+                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">StaleItem</span>::<span class="ident">MissingFile</span>(<span class="ident">dep_info</span>))),
+                };
+                <span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">previous</span>) <span class="kw">in</span> <span class="ident">info</span>.<span class="ident">env</span>.<span class="ident">iter</span>() {
+                    <span class="kw">let</span> <span class="ident">current</span> <span class="op">=</span> <span class="ident">env</span>::<span class="ident">var</span>(<span class="ident">key</span>).<span class="ident">ok</span>();
+                    <span class="kw">if</span> <span class="ident">current</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">previous</span> {
+                        <span class="kw">continue</span>;
+                    }
+                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">StaleItem</span>::<span class="ident">ChangedEnv</span> {
+                        <span class="ident">var</span>: <span class="ident">key</span>.<span class="ident">clone</span>(),
+                        <span class="ident">previous</span>: <span class="ident">previous</span>.<span class="ident">clone</span>(),
+                        <span class="ident">current</span>,
+                    }));
                 }
+                <span class="prelude-val">Ok</span>(<span class="ident">find_stale_file</span>(<span class="ident">mtime_cache</span>, <span class="kw-2">&amp;</span><span class="ident">dep_info</span>, <span class="ident">info</span>.<span class="ident">files</span>.<span class="ident">iter</span>()))
             }
 
             <span class="comment">// We need to verify that no paths listed in `paths` are newer than</span>
@@ -2611,9 +2855,9 @@
         }
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">features</span> <span class="op">!</span><span class="op">=</span> <span class="ident">old</span>.<span class="ident">features</span> {
             <span class="macro">bail</span><span class="macro">!</span>(
-                <span class="string">&quot;features have changed: {} != {}&quot;</span>,
-                <span class="self">self</span>.<span class="ident">features</span>,
-                <span class="ident">old</span>.<span class="ident">features</span>
+                <span class="string">&quot;features have changed: previously {}, now {}&quot;</span>,
+                <span class="ident">old</span>.<span class="ident">features</span>,
+                <span class="self">self</span>.<span class="ident">features</span>
             )
         }
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">target</span> <span class="op">!</span><span class="op">=</span> <span class="ident">old</span>.<span class="ident">target</span> {
@@ -2627,9 +2871,9 @@
         }
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">rustflags</span> <span class="op">!</span><span class="op">=</span> <span class="ident">old</span>.<span class="ident">rustflags</span> {
             <span class="macro">bail</span><span class="macro">!</span>(
-                <span class="string">&quot;RUSTFLAGS has changed: {:?} != {:?}&quot;</span>,
-                <span class="self">self</span>.<span class="ident">rustflags</span>,
-                <span class="ident">old</span>.<span class="ident">rustflags</span>
+                <span class="string">&quot;RUSTFLAGS has changed: previously {:?}, now {:?}&quot;</span>,
+                <span class="ident">old</span>.<span class="ident">rustflags</span>,
+                <span class="self">self</span>.<span class="ident">rustflags</span>
             )
         }
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">metadata</span> <span class="op">!</span><span class="op">=</span> <span class="ident">old</span>.<span class="ident">metadata</span> {
@@ -2647,7 +2891,11 @@
             <span class="kw">match</span> (<span class="ident">new</span>, <span class="ident">old</span>) {
                 (<span class="ident">LocalFingerprint</span>::<span class="ident">Precalculated</span>(<span class="ident">a</span>), <span class="ident">LocalFingerprint</span>::<span class="ident">Precalculated</span>(<span class="ident">b</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">if</span> <span class="ident">a</span> <span class="op">!</span><span class="op">=</span> <span class="ident">b</span> {
-                        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;precalculated components have changed: {} != {}&quot;</span>, <span class="ident">a</span>, <span class="ident">b</span>)
+                        <span class="macro">bail</span><span class="macro">!</span>(
+                            <span class="string">&quot;precalculated components have changed: previously {}, now {}&quot;</span>,
+                            <span class="ident">b</span>,
+                            <span class="ident">a</span>
+                        )
                     }
                 }
                 (
@@ -2655,7 +2903,11 @@
                     <span class="ident">LocalFingerprint</span>::<span class="ident">CheckDepInfo</span> { <span class="ident">dep_info</span>: <span class="ident">bdep</span> },
                 ) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">if</span> <span class="ident">adep</span> <span class="op">!</span><span class="op">=</span> <span class="ident">bdep</span> {
-                        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;dep info output changed: {:?} != {:?}&quot;</span>, <span class="ident">adep</span>, <span class="ident">bdep</span>)
+                        <span class="macro">bail</span><span class="macro">!</span>(
+                            <span class="string">&quot;dep info output changed: previously {:?}, now {:?}&quot;</span>,
+                            <span class="ident">bdep</span>,
+                            <span class="ident">adep</span>
+                        )
                     }
                 }
                 (
@@ -2669,13 +2921,17 @@
                     },
                 ) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">if</span> <span class="ident">aout</span> <span class="op">!</span><span class="op">=</span> <span class="ident">bout</span> {
-                        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;rerun-if-changed output changed: {:?} != {:?}&quot;</span>, <span class="ident">aout</span>, <span class="ident">bout</span>)
+                        <span class="macro">bail</span><span class="macro">!</span>(
+                            <span class="string">&quot;rerun-if-changed output changed: previously {:?}, now {:?}&quot;</span>,
+                            <span class="ident">bout</span>,
+                            <span class="ident">aout</span>
+                        )
                     }
                     <span class="kw">if</span> <span class="ident">apaths</span> <span class="op">!</span><span class="op">=</span> <span class="ident">bpaths</span> {
                         <span class="macro">bail</span><span class="macro">!</span>(
-                            <span class="string">&quot;rerun-if-changed output changed: {:?} != {:?}&quot;</span>,
-                            <span class="ident">apaths</span>,
+                            <span class="string">&quot;rerun-if-changed output changed: previously {:?}, now {:?}&quot;</span>,
                             <span class="ident">bpaths</span>,
+                            <span class="ident">apaths</span>,
                         )
                     }
                 }
@@ -2690,11 +2946,11 @@
                     },
                 ) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">akey</span> <span class="op">!</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">bkey</span> {
-                        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;env vars changed: {} != {}&quot;</span>, <span class="ident">akey</span>, <span class="ident">bkey</span>);
+                        <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;env vars changed: previously {}, now {}&quot;</span>, <span class="ident">bkey</span>, <span class="ident">akey</span>);
                     }
                     <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">avalue</span> <span class="op">!</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">bvalue</span> {
                         <span class="macro">bail</span><span class="macro">!</span>(
-                            <span class="string">&quot;env var `{}` changed: previously {:?} now {:?}&quot;</span>,
+                            <span class="string">&quot;env var `{}` changed: previously {:?}, now {:?}&quot;</span>,
                             <span class="ident">akey</span>,
                             <span class="ident">bvalue</span>,
                             <span class="ident">avalue</span>
@@ -2716,7 +2972,7 @@
             <span class="kw">if</span> <span class="ident">a</span>.<span class="ident">name</span> <span class="op">!</span><span class="op">=</span> <span class="ident">b</span>.<span class="ident">name</span> {
                 <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> <span class="macro">format_err</span><span class="macro">!</span>(<span class="string">&quot;`{}` != `{}`&quot;</span>, <span class="ident">a</span>.<span class="ident">name</span>, <span class="ident">b</span>.<span class="ident">name</span>)
                     .<span class="ident">context</span>(<span class="string">&quot;unit dependency name changed&quot;</span>);
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>.<span class="ident">into</span>());
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>);
             }
 
             <span class="kw">if</span> <span class="ident">a</span>.<span class="ident">fingerprint</span>.<span class="ident">hash</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">b</span>.<span class="ident">fingerprint</span>.<span class="ident">hash</span>() {
@@ -2728,7 +2984,7 @@
                     <span class="ident">b</span>.<span class="ident">fingerprint</span>.<span class="ident">hash</span>()
                 )
                 .<span class="ident">context</span>(<span class="string">&quot;unit dependency information changed&quot;</span>);
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>.<span class="ident">into</span>());
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>);
             }
         }
 
@@ -2847,8 +3103,8 @@
         <span class="comment">// files for this package itself. If we do find something log a helpful</span>
         <span class="comment">// message and bail out so we stay stale.</span>
         <span class="kw">for</span> <span class="ident">local</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">local</span>.<span class="ident">get_mut</span>().<span class="ident">unwrap</span>().<span class="ident">iter</span>() {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">file</span>) <span class="op">=</span> <span class="ident">local</span>.<span class="ident">find_stale_file</span>(<span class="ident">mtime_cache</span>, <span class="ident">pkg_root</span>, <span class="ident">target_root</span>)<span class="question-mark">?</span> {
-                <span class="ident">file</span>.<span class="ident">log</span>();
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">item</span>) <span class="op">=</span> <span class="ident">local</span>.<span class="ident">find_stale_item</span>(<span class="ident">mtime_cache</span>, <span class="ident">pkg_root</span>, <span class="ident">target_root</span>)<span class="question-mark">?</span> {
+                <span class="ident">item</span>.<span class="ident">log</span>();
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
             }
         }
@@ -2960,7 +3216,7 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">StaleFile</span> {
+<span class="kw">impl</span> <span class="ident">StaleItem</span> {
     <span class="doccomment">/// Use the `log` crate to log a hopefully helpful message in diagnosing</span>
     <span class="doccomment">/// what file is considered stale and why. This is intended to be used in</span>
     <span class="doccomment">/// conjunction with `CARGO_LOG` to determine why Cargo is recompiling</span>
@@ -2968,10 +3224,10 @@
     <span class="doccomment">/// that.</span>
     <span class="kw">fn</span> <span class="ident">log</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">StaleFile</span>::<span class="ident">Missing</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">StaleItem</span>::<span class="ident">MissingFile</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;stale: missing {:?}&quot;</span>, <span class="ident">path</span>);
             }
-            <span class="ident">StaleFile</span>::<span class="ident">Changed</span> {
+            <span class="ident">StaleItem</span>::<span class="ident">ChangedFile</span> {
                 <span class="ident">reference</span>,
                 <span class="ident">reference_mtime</span>,
                 <span class="ident">stale</span>,
@@ -2980,6 +3236,14 @@
                 <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;stale: changed {:?}&quot;</span>, <span class="ident">stale</span>);
                 <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;          (vs) {:?}&quot;</span>, <span class="ident">reference</span>);
                 <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;               {:?} != {:?}&quot;</span>, <span class="ident">reference_mtime</span>, <span class="ident">stale_mtime</span>);
+            }
+            <span class="ident">StaleItem</span>::<span class="ident">ChangedEnv</span> {
+                <span class="ident">var</span>,
+                <span class="ident">previous</span>,
+                <span class="ident">current</span>,
+            } <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;stale: changed env {:?}&quot;</span>, <span class="ident">var</span>);
+                <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;       {:?} != {:?}&quot;</span>, <span class="ident">previous</span>, <span class="ident">current</span>);
             }
         }
     }
@@ -3417,33 +3681,44 @@
     <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;    err: {:?}&quot;</span>, <span class="ident">ce</span>);
 }
 
-<span class="comment">// Parse the dep-info into a list of paths</span>
+<span class="doccomment">/// Parses Cargo&#39;s internal `EncodedDepInfo` structure that was previously</span>
+<span class="doccomment">/// serialized to disk.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Note that this is not rustc&#39;s `*.d` files.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Also note that rustc&#39;s `*.d` files are translated to Cargo-specific</span>
+<span class="doccomment">/// `EncodedDepInfo` files after compilations have finished in</span>
+<span class="doccomment">/// `translate_dep_info`.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Returns `None` if the file is corrupt or couldn&#39;t be read from disk. This</span>
+<span class="doccomment">/// indicates that the crate should likely be rebuilt.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_dep_info</span>(
     <span class="ident">pkg_root</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">target_root</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">dep_info</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RustcDepInfo</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">paths</span>::<span class="ident">read_bytes</span>(<span class="ident">dep_info</span>) {
         <span class="prelude-val">Ok</span>(<span class="ident">data</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">data</span>,
         <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
     };
-    <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">data</span>
-        .<span class="ident">split</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>)
-        .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="op">!</span><span class="ident">x</span>.<span class="ident">is_empty</span>())
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">ty</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">DepInfoPathType</span>::<span class="ident">from_byte</span>(<span class="ident">p</span>[<span class="number">0</span>]) {
-                <span class="prelude-val">Some</span>(<span class="ident">ty</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ty</span>,
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">internal</span>(<span class="string">&quot;dep-info invalid&quot;</span>)),
-            };
-            <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">bytes2path</span>(<span class="kw-2">&amp;</span><span class="ident">p</span>[<span class="number">1</span>..])<span class="question-mark">?</span>;
-            <span class="kw">match</span> <span class="ident">ty</span> {
-                <span class="ident">DepInfoPathType</span>::<span class="ident">PackageRootRelative</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">pkg_root</span>.<span class="ident">join</span>(<span class="ident">path</span>)),
-                <span class="comment">// N.B. path might be absolute here in which case the join will have no effect</span>
-                <span class="ident">DepInfoPathType</span>::<span class="ident">TargetRootRelative</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">target_root</span>.<span class="ident">join</span>(<span class="ident">path</span>)),
-            }
-        })
-        .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">paths</span>))
+    <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">EncodedDepInfo</span>::<span class="ident">parse</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>) {
+        <span class="prelude-val">Some</span>(<span class="ident">info</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">info</span>,
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">log</span>::<span class="macro">warn</span><span class="macro">!</span>(<span class="string">&quot;failed to parse cargo&#39;s dep-info at {:?}&quot;</span>, <span class="ident">dep_info</span>);
+            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        }
+    };
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">RustcDepInfo</span>::<span class="ident">default</span>();
+    <span class="ident">ret</span>.<span class="ident">env</span> <span class="op">=</span> <span class="ident">info</span>.<span class="ident">env</span>;
+    <span class="kw">for</span> (<span class="ident">ty</span>, <span class="ident">path</span>) <span class="kw">in</span> <span class="ident">info</span>.<span class="ident">files</span> {
+        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ty</span> {
+            <span class="ident">DepInfoPathType</span>::<span class="ident">PackageRootRelative</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pkg_root</span>.<span class="ident">join</span>(<span class="ident">path</span>),
+            <span class="comment">// N.B. path might be absolute here in which case the join will have no effect</span>
+            <span class="ident">DepInfoPathType</span>::<span class="ident">TargetRootRelative</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">target_root</span>.<span class="ident">join</span>(<span class="ident">path</span>),
+        };
+        <span class="ident">ret</span>.<span class="ident">files</span>.<span class="ident">push</span>(<span class="ident">path</span>);
+    }
+    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">ret</span>))
 }
 
 <span class="kw">fn</span> <span class="ident">pkg_fingerprint</span>(<span class="ident">bcx</span>: <span class="kw-2">&amp;</span><span class="ident">BuildContext</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">pkg</span>: <span class="kw-2">&amp;</span><span class="ident">Package</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
@@ -3460,14 +3735,14 @@
     <span class="ident">mtime_cache</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PathBuf</span>, <span class="ident">FileTime</span><span class="op">&gt;</span>,
     <span class="ident">reference</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">paths</span>: <span class="ident">I</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StaleFile</span><span class="op">&gt;</span>
+) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StaleItem</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">I</span>: <span class="ident">IntoIterator</span>,
     <span class="ident">I</span>::<span class="ident">Item</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>,
 {
     <span class="kw">let</span> <span class="ident">reference_mtime</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">paths</span>::<span class="ident">mtime</span>(<span class="ident">reference</span>) {
         <span class="prelude-val">Ok</span>(<span class="ident">mtime</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">mtime</span>,
-        <span class="prelude-val">Err</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">StaleFile</span>::<span class="ident">Missing</span>(<span class="ident">reference</span>.<span class="ident">to_path_buf</span>())),
+        <span class="prelude-val">Err</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">StaleItem</span>::<span class="ident">MissingFile</span>(<span class="ident">reference</span>.<span class="ident">to_path_buf</span>())),
     };
 
     <span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="ident">paths</span> {
@@ -3475,9 +3750,9 @@
         <span class="kw">let</span> <span class="ident">path_mtime</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">mtime_cache</span>.<span class="ident">entry</span>(<span class="ident">path</span>.<span class="ident">to_path_buf</span>()) {
             <span class="ident">Entry</span>::<span class="ident">Occupied</span>(<span class="ident">o</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">o</span>.<span class="ident">get</span>(),
             <span class="ident">Entry</span>::<span class="ident">Vacant</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">mtime</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">paths</span>::<span class="ident">mtime</span>(<span class="ident">path</span>) {
+                <span class="kw">let</span> <span class="ident">mtime</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">paths</span>::<span class="ident">mtime_recursive</span>(<span class="ident">path</span>) {
                     <span class="prelude-val">Ok</span>(<span class="ident">mtime</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">mtime</span>,
-                    <span class="prelude-val">Err</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">StaleFile</span>::<span class="ident">Missing</span>(<span class="ident">path</span>.<span class="ident">to_path_buf</span>())),
+                    <span class="prelude-val">Err</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">StaleItem</span>::<span class="ident">MissingFile</span>(<span class="ident">path</span>.<span class="ident">to_path_buf</span>())),
                 };
                 <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">insert</span>(<span class="ident">mtime</span>)
             }
@@ -3505,7 +3780,7 @@
             <span class="kw">continue</span>;
         }
 
-        <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">StaleFile</span>::<span class="ident">Changed</span> {
+        <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">StaleItem</span>::<span class="ident">ChangedFile</span> {
             <span class="ident">reference</span>: <span class="ident">reference</span>.<span class="ident">to_path_buf</span>(),
             <span class="ident">reference_mtime</span>,
             <span class="ident">stale</span>: <span class="ident">path</span>.<span class="ident">to_path_buf</span>(),
@@ -3520,23 +3795,12 @@
     <span class="prelude-val">None</span>
 }
 
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
 <span class="kw">enum</span> <span class="ident">DepInfoPathType</span> {
     <span class="comment">// src/, e.g. src/lib.rs</span>
-    <span class="ident">PackageRootRelative</span> <span class="op">=</span> <span class="number">1</span>,
+    <span class="ident">PackageRootRelative</span>,
     <span class="comment">// target/debug/deps/lib...</span>
     <span class="comment">// or an absolute path /.../sysroot/...</span>
-    <span class="ident">TargetRootRelative</span> <span class="op">=</span> <span class="number">2</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">DepInfoPathType</span> {
-    <span class="kw">fn</span> <span class="ident">from_byte</span>(<span class="ident">b</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">DepInfoPathType</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">b</span> {
-            <span class="number">1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">DepInfoPathType</span>::<span class="ident">PackageRootRelative</span>),
-            <span class="number">2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">DepInfoPathType</span>::<span class="ident">TargetRootRelative</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-        }
-    }
+    <span class="ident">TargetRootRelative</span>,
 }
 
 <span class="doccomment">/// Parses the dep-info file coming out of rustc into a Cargo-specific format.</span>
@@ -3568,18 +3832,45 @@
     <span class="ident">rustc_cwd</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">pkg_root</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">target_root</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
+    <span class="ident">rustc_cmd</span>: <span class="kw-2">&amp;</span><span class="ident">ProcessBuilder</span>,
     <span class="ident">allow_package</span>: <span class="ident">bool</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">target</span> <span class="op">=</span> <span class="ident">parse_rustc_dep_info</span>(<span class="ident">rustc_dep_info</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">target</span>
-        .<span class="ident">get</span>(<span class="number">0</span>)
-        .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">internal</span>(<span class="string">&quot;malformed dep-info format, no targets&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>
-        .<span class="number">1</span>;
+    <span class="kw">let</span> <span class="ident">depinfo</span> <span class="op">=</span> <span class="ident">parse_rustc_dep_info</span>(<span class="ident">rustc_dep_info</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">target_root</span> <span class="op">=</span> <span class="ident">target_root</span>.<span class="ident">canonicalize</span>()<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">pkg_root</span> <span class="op">=</span> <span class="ident">pkg_root</span>.<span class="ident">canonicalize</span>()<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_contents</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
-    <span class="kw">for</span> <span class="ident">file</span> <span class="kw">in</span> <span class="ident">deps</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">on_disk_info</span> <span class="op">=</span> <span class="ident">EncodedDepInfo</span>::<span class="ident">default</span>();
+    <span class="ident">on_disk_info</span>.<span class="ident">env</span> <span class="op">=</span> <span class="ident">depinfo</span>.<span class="ident">env</span>;
+
+    <span class="comment">// This is a bit of a tricky statement, but here we&#39;re *removing* the</span>
+    <span class="comment">// dependency on environment variables that were defined specifically for</span>
+    <span class="comment">// the command itself. Environment variables returend by `get_envs` includes</span>
+    <span class="comment">// environment variables like:</span>
+    <span class="comment">//</span>
+    <span class="comment">// * `OUT_DIR` if applicable</span>
+    <span class="comment">// * env vars added by a build script, if any</span>
+    <span class="comment">//</span>
+    <span class="comment">// The general idea here is that the dep info file tells us what, when</span>
+    <span class="comment">// changed, should cause us to rebuild the crate. These environment</span>
+    <span class="comment">// variables are synthesized by Cargo and/or the build script, and the</span>
+    <span class="comment">// intention is that their values are tracked elsewhere for whether the</span>
+    <span class="comment">// crate needs to be rebuilt.</span>
+    <span class="comment">//</span>
+    <span class="comment">// For example a build script says when it needs to be rerun and otherwise</span>
+    <span class="comment">// it&#39;s assumed to produce the same output, so we&#39;re guaranteed that env</span>
+    <span class="comment">// vars defined by the build script will always be the same unless the build</span>
+    <span class="comment">// script itself reruns, in which case the crate will rerun anyway.</span>
+    <span class="comment">//</span>
+    <span class="comment">// For things like `OUT_DIR` it&#39;s a bit sketchy for now. Most of the time</span>
+    <span class="comment">// that&#39;s used for code generation but this is technically buggy where if</span>
+    <span class="comment">// you write a binary that does `println!(&quot;{}&quot;, env!(&quot;OUT_DIR&quot;))` we won&#39;t</span>
+    <span class="comment">// recompile that if you move the target directory. Hopefully that&#39;s not too</span>
+    <span class="comment">// bad of an issue for now...</span>
+    <span class="ident">on_disk_info</span>
+        .<span class="ident">env</span>
+        .<span class="ident">retain</span>(<span class="op">|</span>(<span class="ident">key</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="op">!</span><span class="ident">rustc_cmd</span>.<span class="ident">get_envs</span>().<span class="ident">contains_key</span>(<span class="ident">key</span>));
+
+    <span class="kw">for</span> <span class="ident">file</span> <span class="kw">in</span> <span class="ident">depinfo</span>.<span class="ident">files</span> {
         <span class="comment">// The path may be absolute or relative, canonical or not. Make sure</span>
         <span class="comment">// it is canonicalized so we are comparing the same kinds of paths.</span>
         <span class="kw">let</span> <span class="ident">abs_file</span> <span class="op">=</span> <span class="ident">rustc_cwd</span>.<span class="ident">join</span>(<span class="ident">file</span>);
@@ -3601,28 +3892,147 @@
             <span class="comment">// effect.</span>
             (<span class="ident">DepInfoPathType</span>::<span class="ident">TargetRootRelative</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">abs_file</span>)
         };
-        <span class="ident">new_contents</span>.<span class="ident">push</span>(<span class="ident">ty</span> <span class="kw">as</span> <span class="ident">u8</span>);
-        <span class="ident">new_contents</span>.<span class="ident">extend</span>(<span class="ident">util</span>::<span class="ident">path2bytes</span>(<span class="ident">path</span>)<span class="question-mark">?</span>);
-        <span class="ident">new_contents</span>.<span class="ident">push</span>(<span class="number">0</span>);
+        <span class="ident">on_disk_info</span>.<span class="ident">files</span>.<span class="ident">push</span>((<span class="ident">ty</span>, <span class="ident">path</span>.<span class="ident">to_owned</span>()));
     }
-    <span class="ident">paths</span>::<span class="ident">write</span>(<span class="ident">cargo_dep_info</span>, <span class="kw-2">&amp;</span><span class="ident">new_contents</span>)<span class="question-mark">?</span>;
+    <span class="ident">paths</span>::<span class="ident">write</span>(<span class="ident">cargo_dep_info</span>, <span class="ident">on_disk_info</span>.<span class="ident">serialize</span>()<span class="question-mark">?</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RustcDepInfo</span> {
+    <span class="doccomment">/// The list of files that the main target in the dep-info file depends on.</span>
+    <span class="kw">pub</span> <span class="ident">files</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The list of environment variables we found that the rustc compilation</span>
+    <span class="doccomment">/// depends on.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The first element of the pair is the name of the env var and the second</span>
+    <span class="doccomment">/// item is the value. `Some` means that the env var was set, and `None`</span>
+    <span class="doccomment">/// means that the env var wasn&#39;t actually set and the compilation depends</span>
+    <span class="doccomment">/// on it not being set.</span>
+    <span class="kw">pub</span> <span class="ident">env</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+}
+
+<span class="comment">// Same as `RustcDepInfo` except avoids absolute paths as much as possible to</span>
+<span class="comment">// allow moving around the target directory.</span>
+<span class="comment">//</span>
+<span class="comment">// This is also stored in an optimized format to make parsing it fast because</span>
+<span class="comment">// Cargo will read it for crates on all future compilations.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
+<span class="kw">struct</span> <span class="ident">EncodedDepInfo</span> {
+    <span class="ident">files</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">DepInfoPathType</span>, <span class="ident">PathBuf</span>)<span class="op">&gt;</span>,
+    <span class="ident">env</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">EncodedDepInfo</span> {
+    <span class="kw">fn</span> <span class="ident">parse</span>(<span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EncodedDepInfo</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">bytes</span>;
+        <span class="kw">let</span> <span class="ident">nfiles</span> <span class="op">=</span> <span class="ident">read_usize</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">files</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">nfiles</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nfiles</span> {
+            <span class="kw">let</span> <span class="ident">ty</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">read_u8</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span> {
+                <span class="number">0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">DepInfoPathType</span>::<span class="ident">PackageRootRelative</span>,
+                <span class="number">1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">DepInfoPathType</span>::<span class="ident">TargetRootRelative</span>,
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
+            };
+            <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">read_bytes</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span>;
+            <span class="ident">files</span>.<span class="ident">push</span>((<span class="ident">ty</span>, <span class="ident">util</span>::<span class="ident">bytes2path</span>(<span class="ident">bytes</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>));
+        }
+
+        <span class="kw">let</span> <span class="ident">nenv</span> <span class="op">=</span> <span class="ident">read_usize</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">env</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">nenv</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nenv</span> {
+            <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">read_bytes</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>.<span class="ident">to_string</span>();
+            <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">read_u8</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span> {
+                <span class="number">0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+                <span class="number">1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">read_bytes</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>.<span class="ident">to_string</span>()),
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
+            };
+            <span class="ident">env</span>.<span class="ident">push</span>((<span class="ident">key</span>, <span class="ident">val</span>));
+        }
+        <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">EncodedDepInfo</span> { <span class="ident">files</span>, <span class="ident">env</span> });
+
+        <span class="kw">fn</span> <span class="ident">read_usize</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">bytes</span>.<span class="ident">get</span>(..<span class="number">4</span>)<span class="question-mark">?</span>;
+            <span class="kw-2">*</span><span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">4</span>..];
+            <span class="prelude-val">Some</span>(<span class="ident">u32</span>::<span class="ident">from_le_bytes</span>(<span class="ident">ret</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>()) <span class="kw">as</span> <span class="ident">usize</span>)
+        }
+
+        <span class="kw">fn</span> <span class="ident">read_u8</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">bytes</span>.<span class="ident">get</span>(<span class="number">0</span>)<span class="question-mark">?</span>;
+            <span class="kw-2">*</span><span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">1</span>..];
+            <span class="prelude-val">Some</span>(<span class="ident">ret</span>)
+        }
+
+        <span class="kw">fn</span> <span class="ident">read_bytes</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]<span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">read_usize</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span> <span class="kw">as</span> <span class="ident">usize</span>;
+            <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">bytes</span>.<span class="ident">get</span>(..<span class="ident">n</span>)<span class="question-mark">?</span>;
+            <span class="kw-2">*</span><span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="ident">n</span>..];
+            <span class="prelude-val">Some</span>(<span class="ident">ret</span>)
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">dst</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ret</span>;
+        <span class="ident">write_usize</span>(<span class="ident">dst</span>, <span class="self">self</span>.<span class="ident">files</span>.<span class="ident">len</span>());
+        <span class="kw">for</span> (<span class="ident">ty</span>, <span class="ident">file</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">files</span>.<span class="ident">iter</span>() {
+            <span class="kw">match</span> <span class="ident">ty</span> {
+                <span class="ident">DepInfoPathType</span>::<span class="ident">PackageRootRelative</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">dst</span>.<span class="ident">push</span>(<span class="number">0</span>),
+                <span class="ident">DepInfoPathType</span>::<span class="ident">TargetRootRelative</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">dst</span>.<span class="ident">push</span>(<span class="number">1</span>),
+            }
+            <span class="ident">write_bytes</span>(<span class="ident">dst</span>, <span class="ident">util</span>::<span class="ident">path2bytes</span>(<span class="ident">file</span>)<span class="question-mark">?</span>);
+        }
+
+        <span class="ident">write_usize</span>(<span class="ident">dst</span>, <span class="self">self</span>.<span class="ident">env</span>.<span class="ident">len</span>());
+        <span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">val</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">env</span>.<span class="ident">iter</span>() {
+            <span class="ident">write_bytes</span>(<span class="ident">dst</span>, <span class="ident">key</span>);
+            <span class="kw">match</span> <span class="ident">val</span> {
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">dst</span>.<span class="ident">push</span>(<span class="number">0</span>),
+                <span class="prelude-val">Some</span>(<span class="ident">val</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">dst</span>.<span class="ident">push</span>(<span class="number">1</span>);
+                    <span class="ident">write_bytes</span>(<span class="ident">dst</span>, <span class="ident">val</span>);
+                }
+            }
+        }
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ret</span>);
+
+        <span class="kw">fn</span> <span class="ident">write_bytes</span>(<span class="ident">dst</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">val</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>) {
+            <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">val</span>.<span class="ident">as_ref</span>();
+            <span class="ident">write_usize</span>(<span class="ident">dst</span>, <span class="ident">val</span>.<span class="ident">len</span>());
+            <span class="ident">dst</span>.<span class="ident">extend_from_slice</span>(<span class="ident">val</span>);
+        }
+
+        <span class="kw">fn</span> <span class="ident">write_usize</span>(<span class="ident">dst</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">val</span>: <span class="ident">usize</span>) {
+            <span class="ident">dst</span>.<span class="ident">extend</span>(<span class="kw-2">&amp;</span><span class="ident">u32</span>::<span class="ident">to_le_bytes</span>(<span class="ident">val</span> <span class="kw">as</span> <span class="ident">u32</span>));
+        }
+    }
+}
+
 <span class="doccomment">/// Parse the `.d` dep-info file generated by rustc.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Result is a Vec of `(target, prerequisites)` tuples where `target` is the</span>
-<span class="doccomment">/// rule name, and `prerequisites` is a list of files that it depends on.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_rustc_dep_info</span>(<span class="ident">rustc_dep_info</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_rustc_dep_info</span>(<span class="ident">rustc_dep_info</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">RustcDepInfo</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">contents</span> <span class="op">=</span> <span class="ident">paths</span>::<span class="ident">read</span>(<span class="ident">rustc_dep_info</span>)<span class="question-mark">?</span>;
-    <span class="ident">contents</span>
-        .<span class="ident">lines</span>()
-        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span>.<span class="ident">find</span>(<span class="string">&quot;: &quot;</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> (<span class="ident">l</span>, <span class="ident">i</span>)))
-        .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">line</span>, <span class="ident">pos</span>)<span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">target</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">line</span>[..<span class="ident">pos</span>];
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">RustcDepInfo</span>::<span class="ident">default</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">found_deps</span> <span class="op">=</span> <span class="bool-val">false</span>;
+
+    <span class="kw">for</span> <span class="ident">line</span> <span class="kw">in</span> <span class="ident">contents</span>.<span class="ident">lines</span>() {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rest</span>) <span class="op">=</span> <span class="ident">line</span>.<span class="ident">strip_prefix</span>(<span class="string">&quot;# env-dep:&quot;</span>) {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">parts</span> <span class="op">=</span> <span class="ident">rest</span>.<span class="ident">splitn</span>(<span class="number">2</span>, <span class="string">&#39;=&#39;</span>);
+            <span class="kw">let</span> <span class="ident">env_var</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">parts</span>.<span class="ident">next</span>() {
+                <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>,
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">continue</span>,
+            };
+            <span class="kw">let</span> <span class="ident">env_val</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">parts</span>.<span class="ident">next</span>() {
+                <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">unescape_env</span>(<span class="ident">s</span>)<span class="question-mark">?</span>),
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            };
+            <span class="ident">ret</span>.<span class="ident">env</span>.<span class="ident">push</span>((<span class="ident">unescape_env</span>(<span class="ident">env_var</span>)<span class="question-mark">?</span>, <span class="ident">env_val</span>));
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pos</span>) <span class="op">=</span> <span class="ident">line</span>.<span class="ident">find</span>(<span class="string">&quot;: &quot;</span>) {
+            <span class="kw">if</span> <span class="ident">found_deps</span> {
+                <span class="kw">continue</span>;
+            }
+            <span class="ident">found_deps</span> <span class="op">=</span> <span class="bool-val">true</span>;
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">line</span>[<span class="ident">pos</span> <span class="op">+</span> <span class="number">2</span>..].<span class="ident">split_whitespace</span>();
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
             <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">next</span>() {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">s</span>.<span class="ident">to_string</span>();
                 <span class="kw">while</span> <span class="ident">file</span>.<span class="ident">ends_with</span>(<span class="string">&#39;\\&#39;</span>) {
@@ -3632,11 +4042,33 @@
                         <span class="ident">internal</span>(<span class="string">&quot;malformed dep-info format, trailing \\&quot;</span>.<span class="ident">to_string</span>())
                     })<span class="question-mark">?</span>);
                 }
-                <span class="ident">ret</span>.<span class="ident">push</span>(<span class="ident">file</span>);
+                <span class="ident">ret</span>.<span class="ident">files</span>.<span class="ident">push</span>(<span class="ident">file</span>.<span class="ident">into</span>());
             }
-            <span class="prelude-val">Ok</span>((<span class="ident">target</span>.<span class="ident">to_string</span>(), <span class="ident">ret</span>))
-        })
-        .<span class="ident">collect</span>()
+        }
+    }
+    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">ret</span>);
+
+    <span class="comment">// rustc tries to fit env var names and values all on a single line, which</span>
+    <span class="comment">// means it needs to escape `\r` and `\n`. The escape syntax used is &quot;\n&quot;</span>
+    <span class="comment">// which means that `\` also needs to be escaped.</span>
+    <span class="kw">fn</span> <span class="ident">unescape_env</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">with_capacity</span>(<span class="ident">s</span>.<span class="ident">len</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">chars</span> <span class="op">=</span> <span class="ident">s</span>.<span class="ident">chars</span>();
+        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">chars</span>.<span class="ident">next</span>() {
+            <span class="kw">if</span> <span class="ident">c</span> <span class="op">!</span><span class="op">=</span> <span class="string">&#39;\\&#39;</span> {
+                <span class="ident">ret</span>.<span class="ident">push</span>(<span class="ident">c</span>);
+                <span class="kw">continue</span>;
+            }
+            <span class="kw">match</span> <span class="ident">chars</span>.<span class="ident">next</span>() {
+                <span class="prelude-val">Some</span>(<span class="string">&#39;\\&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ret</span>.<span class="ident">push</span>(<span class="string">&#39;\\&#39;</span>),
+                <span class="prelude-val">Some</span>(<span class="string">&#39;n&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ret</span>.<span class="ident">push</span>(<span class="string">&#39;\n&#39;</span>),
+                <span class="prelude-val">Some</span>(<span class="string">&#39;r&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ret</span>.<span class="ident">push</span>(<span class="string">&#39;\r&#39;</span>),
+                <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;unknown escape character `{}`&quot;</span>, <span class="ident">c</span>),
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;unterminated escape character&quot;</span>),
+            }
+        }
+        <span class="prelude-val">Ok</span>(<span class="ident">ret</span>)
+    }
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../../";window.currentCrate = "cargo";</script><script src="../../../../main.js"></script><script src="../../../../source-script.js"></script><script src="../../../../source-files.js"></script><script defer src="../../../../search-index.js"></script></body></html>

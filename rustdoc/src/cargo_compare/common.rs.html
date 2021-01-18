@@ -294,6 +294,20 @@
 <span id="291">291</span>
 <span id="292">292</span>
 <span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -304,10 +318,14 @@
     <span class="ident">core</span>::{
         <span class="ident">compiler</span>::{<span class="ident">CompileKind</span>, <span class="ident">CompileTarget</span>, <span class="ident">RustcTargetData</span>},
         <span class="ident">enable_nightly_features</span>,
-        <span class="ident">resolver</span>::{<span class="ident">features</span>::<span class="ident">FeaturesFor</span>, <span class="ident">ForceAllTargets</span>, <span class="ident">HasDevUnits</span>, <span class="ident">ResolveOpts</span>},
+        <span class="ident">resolver</span>::{
+            <span class="ident">features</span>::{<span class="ident">FeaturesFor</span>, <span class="ident">RequestedFeatures</span>},
+            <span class="ident">ForceAllTargets</span>, <span class="ident">HasDevUnits</span>, <span class="ident">ResolveOpts</span>,
+        },
         <span class="ident">PackageIdSpec</span>, <span class="ident">Workspace</span>,
     },
     <span class="ident">ops</span>::<span class="ident">resolve_ws_with_opts</span>,
+    <span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>,
     <span class="ident">Config</span>,
 };
 <span class="kw">use</span> <span class="ident">guppy</span>::{
@@ -323,6 +341,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>},
     <span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>},
+    <span class="ident">rc</span>::<span class="ident">Rc</span>,
 };
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;
 
@@ -363,12 +382,7 @@
         };
         <span class="kw">let</span> <span class="ident">target_data</span> <span class="op">=</span> <span class="ident">RustcTargetData</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">workspace</span>, <span class="kw-2">&amp;</span>[<span class="ident">compile_kind</span>])<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">resolve_opts</span> <span class="op">=</span> <span class="ident">ResolveOpts</span>::<span class="ident">new</span>(
-            <span class="self">self</span>.<span class="ident">include_dev</span>,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pf</span>.<span class="ident">features</span>,
-            <span class="self">self</span>.<span class="ident">pf</span>.<span class="ident">all_features</span>,
-            <span class="op">!</span><span class="self">self</span>.<span class="ident">pf</span>.<span class="ident">no_default_features</span>,
-        );
+        <span class="kw">let</span> <span class="ident">resolve_opts</span> <span class="op">=</span> <span class="ident">ResolveOpts</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">include_dev</span>, <span class="self">self</span>.<span class="ident">cargo_make_requested_features</span>());
         <span class="kw">let</span> <span class="ident">packages</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pf</span>.<span class="ident">packages</span>;
         <span class="kw">let</span> <span class="ident">specs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">packages</span>.<span class="ident">is_empty</span>() {
             <span class="comment">// Pass in the entire workspace.</span>
@@ -550,6 +564,20 @@
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="comment">// Now create another workspace with the root that was found.</span>
         <span class="ident">Workspace</span>::<span class="ident">new</span>(<span class="ident">root_manifest</span>, <span class="ident">config</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">cargo_make_requested_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RequestedFeatures</span> {
+        <span class="kw">let</span> <span class="ident">features</span>: <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">pf</span>
+            .<span class="ident">features</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature</span><span class="op">|</span> <span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">feature</span>))
+            .<span class="ident">collect</span>();
+        <span class="ident">RequestedFeatures</span> {
+            <span class="ident">features</span>: <span class="ident">Rc</span>::<span class="ident">new</span>(<span class="ident">features</span>),
+            <span class="ident">all_features</span>: <span class="self">self</span>.<span class="ident">pf</span>.<span class="ident">all_features</span>,
+            <span class="ident">uses_default_features</span>: <span class="op">!</span><span class="self">self</span>.<span class="ident">pf</span>.<span class="ident">no_default_features</span>,
+        }
     }
 
     <span class="kw">fn</span> <span class="ident">guppy_current_platform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Platform</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span><span class="op">&gt;</span> {

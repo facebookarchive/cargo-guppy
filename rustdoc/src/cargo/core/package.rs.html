@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/package.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>package.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/core/package.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>package.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
@@ -1096,10 +1096,34 @@
 <span id="1093">1093</span>
 <span id="1094">1094</span>
 <span id="1095">1095</span>
+<span id="1096">1096</span>
+<span id="1097">1097</span>
+<span id="1098">1098</span>
+<span id="1099">1099</span>
+<span id="1100">1100</span>
+<span id="1101">1101</span>
+<span id="1102">1102</span>
+<span id="1103">1103</span>
+<span id="1104">1104</span>
+<span id="1105">1105</span>
+<span id="1106">1106</span>
+<span id="1107">1107</span>
+<span id="1108">1108</span>
+<span id="1109">1109</span>
+<span id="1110">1110</span>
+<span id="1111">1111</span>
+<span id="1112">1112</span>
+<span id="1113">1113</span>
+<span id="1114">1114</span>
+<span id="1115">1115</span>
+<span id="1116">1116</span>
+<span id="1117">1117</span>
+<span id="1118">1118</span>
+<span id="1119">1119</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cell</span>::{<span class="ident">Cell</span>, <span class="ident">Ref</span>, <span class="ident">RefCell</span>, <span class="ident">RefMut</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>::<span class="ident">Ordering</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeSet</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
@@ -1114,19 +1138,19 @@
 <span class="kw">use</span> <span class="ident">lazycell</span>::<span class="ident">LazyCell</span>;
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">semver</span>::<span class="ident">Version</span>;
-<span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">ser</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Serialize</span>;
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">CompileKind</span>, <span class="ident">RustcTargetData</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">dependency</span>::<span class="ident">DepKind</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::<span class="ident">features</span>::<span class="ident">ForceAllTargets</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::{<span class="ident">HasDevUnits</span>, <span class="ident">Resolve</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">source</span>::<span class="ident">MaybePackage</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Dependency</span>, <span class="ident">Manifest</span>, <span class="ident">PackageId</span>, <span class="ident">SourceId</span>, <span class="ident">Target</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">FeatureMap</span>, <span class="ident">SourceMap</span>, <span class="ident">Summary</span>, <span class="ident">Workspace</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">SourceMap</span>, <span class="ident">Summary</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ops</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">config</span>::<span class="ident">PackageCacheLock</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>, <span class="ident">HttpNot200</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">network</span>::<span class="ident">Retry</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="self">self</span>, <span class="ident">internal</span>, <span class="ident">Config</span>, <span class="ident">Progress</span>, <span class="ident">ProgressStyle</span>};
 
@@ -1176,82 +1200,31 @@
 
 <span class="doccomment">/// A Package in a form where `Serialize` can be derived.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>)]</span>
-<span class="kw">struct</span> <span class="ident">SerializedPackage</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>,
-    <span class="ident">version</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Version</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SerializedPackage</span> {
+    <span class="ident">name</span>: <span class="ident">InternedString</span>,
+    <span class="ident">version</span>: <span class="ident">Version</span>,
     <span class="ident">id</span>: <span class="ident">PackageId</span>,
-    <span class="ident">license</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
-    <span class="ident">license_file</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
-    <span class="ident">description</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
+    <span class="ident">license</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">license_file</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">description</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">source</span>: <span class="ident">SourceId</span>,
-    <span class="ident">dependencies</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">Dependency</span>],
-    <span class="ident">targets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Target</span><span class="op">&gt;</span>,
-    <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">FeatureMap</span>,
-    <span class="ident">manifest_path</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>,
-    <span class="ident">metadata</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">toml</span>::<span class="ident">Value</span><span class="op">&gt;</span>,
-    <span class="ident">publish</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">authors</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">String</span>],
-    <span class="ident">categories</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">String</span>],
-    <span class="ident">keywords</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">String</span>],
-    <span class="ident">readme</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
-    <span class="ident">repository</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
-    <span class="ident">edition</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>,
-    <span class="ident">links</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
+    <span class="ident">dependencies</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Dependency</span><span class="op">&gt;</span>,
+    <span class="ident">targets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Target</span><span class="op">&gt;</span>,
+    <span class="ident">features</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InternedString</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">manifest_path</span>: <span class="ident">PathBuf</span>,
+    <span class="ident">metadata</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">toml</span>::<span class="ident">Value</span><span class="op">&gt;</span>,
+    <span class="ident">publish</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">authors</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">categories</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">keywords</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">readme</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">repository</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">homepage</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">documentation</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="ident">edition</span>: <span class="ident">String</span>,
+    <span class="ident">links</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip_serializing_if</span> <span class="op">=</span> <span class="string">&quot;Option::is_none&quot;</span>)]</span>
-    <span class="ident">metabuild</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">ser</span>::<span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">Package</span> {
-    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">s</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S</span>::<span class="prelude-val">Ok</span>, <span class="ident">S</span>::<span class="ident">Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">ser</span>::<span class="ident">Serializer</span>,
-    {
-        <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">summary</span>();
-        <span class="kw">let</span> <span class="ident">package_id</span> <span class="op">=</span> <span class="ident">summary</span>.<span class="ident">package_id</span>();
-        <span class="kw">let</span> <span class="ident">manmeta</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">metadata</span>();
-        <span class="kw">let</span> <span class="ident">license</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">license</span>.<span class="ident">as_deref</span>();
-        <span class="kw">let</span> <span class="ident">license_file</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">license_file</span>.<span class="ident">as_deref</span>();
-        <span class="kw">let</span> <span class="ident">description</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">description</span>.<span class="ident">as_deref</span>();
-        <span class="kw">let</span> <span class="ident">authors</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">authors</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">categories</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">categories</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">keywords</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">keywords</span>.<span class="ident">as_ref</span>();
-        <span class="kw">let</span> <span class="ident">readme</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">readme</span>.<span class="ident">as_deref</span>();
-        <span class="kw">let</span> <span class="ident">repository</span> <span class="op">=</span> <span class="ident">manmeta</span>.<span class="ident">repository</span>.<span class="ident">as_deref</span>();
-        <span class="comment">// Filter out metabuild targets. They are an internal implementation</span>
-        <span class="comment">// detail that is probably not relevant externally. There&#39;s also not a</span>
-        <span class="comment">// real path to show in `src_path`, and this avoids changing the format.</span>
-        <span class="kw">let</span> <span class="ident">targets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Target</span><span class="op">&gt;</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">manifest</span>()
-            .<span class="ident">targets</span>()
-            .<span class="ident">iter</span>()
-            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">src_path</span>().<span class="ident">is_path</span>())
-            .<span class="ident">collect</span>();
-
-        <span class="ident">SerializedPackage</span> {
-            <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">package_id</span>.<span class="ident">name</span>(),
-            <span class="ident">version</span>: <span class="ident">package_id</span>.<span class="ident">version</span>(),
-            <span class="ident">id</span>: <span class="ident">package_id</span>,
-            <span class="ident">license</span>,
-            <span class="ident">license_file</span>,
-            <span class="ident">description</span>,
-            <span class="ident">source</span>: <span class="ident">summary</span>.<span class="ident">source_id</span>(),
-            <span class="ident">dependencies</span>: <span class="ident">summary</span>.<span class="ident">dependencies</span>(),
-            <span class="ident">targets</span>,
-            <span class="ident">features</span>: <span class="ident">summary</span>.<span class="ident">features</span>(),
-            <span class="ident">manifest_path</span>: <span class="self">self</span>.<span class="ident">manifest_path</span>(),
-            <span class="ident">metadata</span>: <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">custom_metadata</span>(),
-            <span class="ident">authors</span>,
-            <span class="ident">categories</span>,
-            <span class="ident">keywords</span>,
-            <span class="ident">readme</span>,
-            <span class="ident">repository</span>,
-            <span class="ident">edition</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">edition</span>().<span class="ident">to_string</span>(),
-            <span class="ident">links</span>: <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">links</span>(),
-            <span class="ident">metabuild</span>: <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">metabuild</span>(),
-            <span class="ident">publish</span>: <span class="self">self</span>.<span class="ident">publish</span>().<span class="ident">as_ref</span>(),
-        }
-        .<span class="ident">serialize</span>(<span class="ident">s</span>)
-    }
+    <span class="ident">metabuild</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Package</span> {
@@ -1309,7 +1282,10 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">authors</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">metadata</span>().<span class="ident">authors</span>
     }
-    <span class="doccomment">/// Returns `true` if the package is set to publish.</span>
+
+    <span class="doccomment">/// Returns `None` if the package is set to publish.</span>
+    <span class="doccomment">/// Returns `Some(allowed_registries)` if publishing is limited to specified</span>
+    <span class="doccomment">/// registries or if package is set to not publish.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">publish</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">publish</span>()
     }
@@ -1344,6 +1320,69 @@
     <span class="doccomment">/// Returns if package should include `Cargo.lock`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">include_lockfile</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">targets</span>().<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">is_example</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">is_bin</span>())
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">serialized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SerializedPackage</span> {
+        <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">summary</span>();
+        <span class="kw">let</span> <span class="ident">package_id</span> <span class="op">=</span> <span class="ident">summary</span>.<span class="ident">package_id</span>();
+        <span class="kw">let</span> <span class="ident">manmeta</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">metadata</span>();
+        <span class="comment">// Filter out metabuild targets. They are an internal implementation</span>
+        <span class="comment">// detail that is probably not relevant externally. There&#39;s also not a</span>
+        <span class="comment">// real path to show in `src_path`, and this avoids changing the format.</span>
+        <span class="kw">let</span> <span class="ident">targets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Target</span><span class="op">&gt;</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">manifest</span>()
+            .<span class="ident">targets</span>()
+            .<span class="ident">iter</span>()
+            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">src_path</span>().<span class="ident">is_path</span>())
+            .<span class="ident">cloned</span>()
+            .<span class="ident">collect</span>();
+        <span class="kw">let</span> <span class="ident">features</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">config</span>.<span class="ident">cli_unstable</span>().<span class="ident">namespaced_features</span> {
+            <span class="comment">// Convert Vec&lt;FeatureValue&gt; to Vec&lt;InternedString&gt;</span>
+            <span class="ident">summary</span>
+                .<span class="ident">features</span>()
+                .<span class="ident">iter</span>()
+                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> {
+                    (
+                        <span class="kw-2">*</span><span class="ident">k</span>,
+                        <span class="ident">v</span>.<span class="ident">iter</span>()
+                            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">fv</span><span class="op">|</span> <span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">fv</span>.<span class="ident">to_string</span>()))
+                            .<span class="ident">collect</span>(),
+                    )
+                })
+                .<span class="ident">collect</span>()
+        } <span class="kw">else</span> {
+            <span class="self">self</span>.<span class="ident">manifest</span>()
+                .<span class="ident">original</span>()
+                .<span class="ident">features</span>()
+                .<span class="ident">cloned</span>()
+                .<span class="ident">unwrap_or_default</span>()
+        };
+
+        <span class="ident">SerializedPackage</span> {
+            <span class="ident">name</span>: <span class="ident">package_id</span>.<span class="ident">name</span>(),
+            <span class="ident">version</span>: <span class="ident">package_id</span>.<span class="ident">version</span>().<span class="ident">clone</span>(),
+            <span class="ident">id</span>: <span class="ident">package_id</span>,
+            <span class="ident">license</span>: <span class="ident">manmeta</span>.<span class="ident">license</span>.<span class="ident">clone</span>(),
+            <span class="ident">license_file</span>: <span class="ident">manmeta</span>.<span class="ident">license_file</span>.<span class="ident">clone</span>(),
+            <span class="ident">description</span>: <span class="ident">manmeta</span>.<span class="ident">description</span>.<span class="ident">clone</span>(),
+            <span class="ident">source</span>: <span class="ident">summary</span>.<span class="ident">source_id</span>(),
+            <span class="ident">dependencies</span>: <span class="ident">summary</span>.<span class="ident">dependencies</span>().<span class="ident">to_vec</span>(),
+            <span class="ident">targets</span>,
+            <span class="ident">features</span>,
+            <span class="ident">manifest_path</span>: <span class="self">self</span>.<span class="ident">manifest_path</span>().<span class="ident">to_path_buf</span>(),
+            <span class="ident">metadata</span>: <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">custom_metadata</span>().<span class="ident">cloned</span>(),
+            <span class="ident">authors</span>: <span class="ident">manmeta</span>.<span class="ident">authors</span>.<span class="ident">clone</span>(),
+            <span class="ident">categories</span>: <span class="ident">manmeta</span>.<span class="ident">categories</span>.<span class="ident">clone</span>(),
+            <span class="ident">keywords</span>: <span class="ident">manmeta</span>.<span class="ident">keywords</span>.<span class="ident">clone</span>(),
+            <span class="ident">readme</span>: <span class="ident">manmeta</span>.<span class="ident">readme</span>.<span class="ident">clone</span>(),
+            <span class="ident">repository</span>: <span class="ident">manmeta</span>.<span class="ident">repository</span>.<span class="ident">clone</span>(),
+            <span class="ident">homepage</span>: <span class="ident">manmeta</span>.<span class="ident">homepage</span>.<span class="ident">clone</span>(),
+            <span class="ident">documentation</span>: <span class="ident">manmeta</span>.<span class="ident">documentation</span>.<span class="ident">clone</span>(),
+            <span class="ident">edition</span>: <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">edition</span>().<span class="ident">to_string</span>(),
+            <span class="ident">links</span>: <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">links</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">to_owned</span>()),
+            <span class="ident">metabuild</span>: <span class="self">self</span>.<span class="ident">manifest</span>().<span class="ident">metabuild</span>().<span class="ident">cloned</span>(),
+            <span class="ident">publish</span>: <span class="self">self</span>.<span class="ident">publish</span>().<span class="ident">as_ref</span>().<span class="ident">cloned</span>(),
+        }
     }
 }
 
@@ -1518,6 +1557,10 @@
         <span class="self">self</span>.<span class="ident">packages</span>.<span class="ident">keys</span>().<span class="ident">cloned</span>()
     }
 
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">packages</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Package</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+        <span class="self">self</span>.<span class="ident">packages</span>.<span class="ident">values</span>().<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">borrow</span>())
+    }
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enable_download</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Downloads</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cfg</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">downloading</span>.<span class="ident">replace</span>(<span class="bool-val">true</span>));
         <span class="kw">let</span> <span class="ident">timeout</span> <span class="op">=</span> <span class="ident">ops</span>::<span class="ident">HttpTimeout</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">config</span>)<span class="question-mark">?</span>;
@@ -1573,6 +1616,7 @@
         <span class="ident">has_dev_units</span>: <span class="ident">HasDevUnits</span>,
         <span class="ident">requested_kinds</span>: <span class="kw-2">&amp;</span>[<span class="ident">CompileKind</span>],
         <span class="ident">target_data</span>: <span class="kw-2">&amp;</span><span class="ident">RustcTargetData</span>,
+        <span class="ident">force_all_targets</span>: <span class="ident">ForceAllTargets</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">fn</span> <span class="ident">collect_used_deps</span>(
             <span class="ident">used</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
@@ -1581,6 +1625,7 @@
             <span class="ident">has_dev_units</span>: <span class="ident">HasDevUnits</span>,
             <span class="ident">requested_kinds</span>: <span class="kw-2">&amp;</span>[<span class="ident">CompileKind</span>],
             <span class="ident">target_data</span>: <span class="kw-2">&amp;</span><span class="ident">RustcTargetData</span>,
+            <span class="ident">force_all_targets</span>: <span class="ident">ForceAllTargets</span>,
         ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
             <span class="kw">if</span> <span class="op">!</span><span class="ident">used</span>.<span class="ident">insert</span>(<span class="ident">pkg_id</span>) {
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
@@ -1594,12 +1639,14 @@
                     <span class="comment">// dependencies are used both for target and host. To tighten this</span>
                     <span class="comment">// up, this function would need to track &quot;for_host&quot; similar to how</span>
                     <span class="comment">// unit dependencies handles it.</span>
-                    <span class="kw">let</span> <span class="ident">activated</span> <span class="op">=</span> <span class="ident">requested_kinds</span>
-                        .<span class="ident">iter</span>()
-                        .<span class="ident">chain</span>(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">CompileKind</span>::<span class="ident">Host</span>))
-                        .<span class="ident">any</span>(<span class="op">|</span><span class="ident">kind</span><span class="op">|</span> <span class="ident">target_data</span>.<span class="ident">dep_platform_activated</span>(<span class="ident">dep</span>, <span class="kw-2">*</span><span class="ident">kind</span>));
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">activated</span> {
-                        <span class="kw">return</span> <span class="bool-val">false</span>;
+                    <span class="kw">if</span> <span class="ident">force_all_targets</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ForceAllTargets</span>::<span class="ident">No</span> {
+                        <span class="kw">let</span> <span class="ident">activated</span> <span class="op">=</span> <span class="ident">requested_kinds</span>
+                            .<span class="ident">iter</span>()
+                            .<span class="ident">chain</span>(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">CompileKind</span>::<span class="ident">Host</span>))
+                            .<span class="ident">any</span>(<span class="op">|</span><span class="ident">kind</span><span class="op">|</span> <span class="ident">target_data</span>.<span class="ident">dep_platform_activated</span>(<span class="ident">dep</span>, <span class="kw-2">*</span><span class="ident">kind</span>));
+                        <span class="kw">if</span> <span class="op">!</span><span class="ident">activated</span> {
+                            <span class="kw">return</span> <span class="bool-val">false</span>;
+                        }
                     }
                     <span class="bool-val">true</span>
                 })
@@ -1612,6 +1659,7 @@
                     <span class="ident">has_dev_units</span>,
                     <span class="ident">requested_kinds</span>,
                     <span class="ident">target_data</span>,
+                    <span class="ident">force_all_targets</span>,
                 )<span class="question-mark">?</span>;
             }
             <span class="prelude-val">Ok</span>(())
@@ -1630,6 +1678,7 @@
                 <span class="ident">has_dev_units</span>,
                 <span class="ident">requested_kinds</span>,
                 <span class="ident">target_data</span>,
+                <span class="ident">force_all_targets</span>,
             )<span class="question-mark">?</span>;
         }
         <span class="self">self</span>.<span class="ident">get_many</span>(<span class="ident">to_download</span>.<span class="ident">into_iter</span>())<span class="question-mark">?</span>;
@@ -1681,9 +1730,8 @@
     <span class="doccomment">/// eventually be returned from `wait_for_download`. Returns `Some(pkg)` if</span>
     <span class="doccomment">/// the package is ready and doesn&#39;t need to be downloaded.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">start</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">id</span>: <span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Package</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>
-            .<span class="ident">start_inner</span>(<span class="ident">id</span>)
-            .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;failed to download `{}`&quot;</span>, <span class="ident">id</span>))<span class="question-mark">?</span>)
+        <span class="self">self</span>.<span class="ident">start_inner</span>(<span class="ident">id</span>)
+            .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;failed to download `{}`&quot;</span>, <span class="ident">id</span>))
     }
 
     <span class="kw">fn</span> <span class="ident">start_inner</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">id</span>: <span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Package</span><span class="op">&gt;</span><span class="op">&gt;</span> {

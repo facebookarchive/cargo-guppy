@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/ops/cargo_new.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_new.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/ops/cargo_new.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_new.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -852,6 +852,23 @@
 <span id="849">849</span>
 <span id="850">850</span>
 <span id="851">851</span>
+<span id="852">852</span>
+<span id="853">853</span>
+<span id="854">854</span>
+<span id="855">855</span>
+<span id="856">856</span>
+<span id="857">857</span>
+<span id="858">858</span>
+<span id="859">859</span>
+<span id="860">860</span>
+<span id="861">861</span>
+<span id="862">862</span>
+<span id="863">863</span>
+<span id="864">864</span>
+<span id="865">865</span>
+<span id="866">866</span>
+<span id="867">867</span>
+<span id="868">868</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Shell</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>};
@@ -1009,7 +1026,19 @@
     })
 }
 
-<span class="kw">fn</span> <span class="ident">check_name</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">name_help</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">has_bin</span>: <span class="ident">bool</span>, <span class="ident">shell</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Shell</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">check_name</span>(
+    <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+    <span class="ident">show_name_help</span>: <span class="ident">bool</span>,
+    <span class="ident">has_bin</span>: <span class="ident">bool</span>,
+    <span class="ident">shell</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Shell</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="comment">// If --name is already used to override, no point in suggesting it</span>
+    <span class="comment">// again as a fix.</span>
+    <span class="kw">let</span> <span class="ident">name_help</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">show_name_help</span> {
+        <span class="string">&quot;\nIf you need a crate name to not match the directory name, consider using --name flag.&quot;</span>
+    } <span class="kw">else</span> {
+        <span class="string">&quot;&quot;</span>
+    };
     <span class="ident">restricted_names</span>::<span class="ident">validate_package_name</span>(<span class="ident">name</span>, <span class="string">&quot;crate name&quot;</span>, <span class="ident">name_help</span>)<span class="question-mark">?</span>;
 
     <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_keyword</span>(<span class="ident">name</span>) {
@@ -1218,7 +1247,12 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
     }
 
     <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">get_name</span>(<span class="ident">path</span>, <span class="ident">opts</span>)<span class="question-mark">?</span>;
-    <span class="ident">check_name</span>(<span class="ident">name</span>, <span class="string">&quot;&quot;</span>, <span class="ident">opts</span>.<span class="ident">kind</span>.<span class="ident">is_bin</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>())<span class="question-mark">?</span>;
+    <span class="ident">check_name</span>(
+        <span class="ident">name</span>,
+        <span class="ident">opts</span>.<span class="ident">name</span>.<span class="ident">is_none</span>(),
+        <span class="ident">opts</span>.<span class="ident">kind</span>.<span class="ident">is_bin</span>(),
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>(),
+    )<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">mkopts</span> <span class="op">=</span> <span class="ident">MkOptions</span> {
         <span class="ident">version_control</span>: <span class="ident">opts</span>.<span class="ident">version_control</span>,
@@ -1266,13 +1300,7 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
         <span class="comment">// user may mean &quot;initialize for library, but also add binary target&quot;</span>
     }
     <span class="kw">let</span> <span class="ident">has_bin</span> <span class="op">=</span> <span class="ident">src_paths_types</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">bin</span>);
-    <span class="comment">// If --name is already used to override, no point in suggesting it</span>
-    <span class="comment">// again as a fix.</span>
-    <span class="kw">let</span> <span class="ident">name_help</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">opts</span>.<span class="ident">name</span> {
-        <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;&quot;</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;\nuse --name to override crate name&quot;</span>,
-    };
-    <span class="ident">check_name</span>(<span class="ident">name</span>, <span class="ident">name_help</span>, <span class="ident">has_bin</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>())<span class="question-mark">?</span>;
+    <span class="ident">check_name</span>(<span class="ident">name</span>, <span class="ident">opts</span>.<span class="ident">name</span>.<span class="ident">is_none</span>(), <span class="ident">has_bin</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>())<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">version_control</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">version_control</span>;
 
@@ -1379,12 +1407,12 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">ignore</span>,
         };
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="string">&quot;\n\n#Added by cargo\n&quot;</span>.<span class="ident">to_string</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="string">&quot;\n\n# Added by cargo\n&quot;</span>.<span class="ident">to_string</span>();
         <span class="kw">if</span> <span class="ident">ignore_items</span>
             .<span class="ident">iter</span>()
             .<span class="ident">any</span>(<span class="op">|</span><span class="ident">item</span><span class="op">|</span> <span class="ident">existing_items</span>.<span class="ident">contains</span>(<span class="ident">item</span>))
         {
-            <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="string">&quot;#\n#already existing elements were commented out\n&quot;</span>);
+            <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="string">&quot;#\n# already existing elements were commented out\n&quot;</span>);
         }
         <span class="ident">out</span>.<span class="ident">push</span>(<span class="string">&#39;\n&#39;</span>);
 
@@ -1489,19 +1517,30 @@ cannot automatically generate Cargo.toml as the main target would be ambiguous&q
     <span class="ident">init_vcs</span>(<span class="ident">path</span>, <span class="ident">vcs</span>, <span class="ident">config</span>)<span class="question-mark">?</span>;
     <span class="ident">write_ignore_file</span>(<span class="ident">path</span>, <span class="kw-2">&amp;</span><span class="ident">ignore</span>, <span class="ident">vcs</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> (<span class="ident">author_name</span>, <span class="ident">email</span>) <span class="op">=</span> <span class="ident">discover_author</span>()<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">author</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">cfg</span>.<span class="ident">name</span>, <span class="ident">cfg</span>.<span class="ident">email</span>, <span class="ident">author_name</span>, <span class="ident">email</span>) {
-        (<span class="prelude-val">Some</span>(<span class="ident">name</span>), <span class="prelude-val">Some</span>(<span class="ident">email</span>), <span class="kw">_</span>, <span class="kw">_</span>)
-        <span class="op">|</span> (<span class="prelude-val">Some</span>(<span class="ident">name</span>), <span class="prelude-val">None</span>, <span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="ident">email</span>))
-        <span class="op">|</span> (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="ident">email</span>), <span class="ident">name</span>, <span class="kw">_</span>)
-        <span class="op">|</span> (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">name</span>, <span class="prelude-val">Some</span>(<span class="ident">email</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> (<span class="ident">discovered_name</span>, <span class="ident">discovered_email</span>) <span class="op">=</span> <span class="ident">discover_author</span>(<span class="ident">path</span>);
+
+    <span class="comment">// &quot;Name &lt;email&gt;&quot; or &quot;Name&quot; or &quot;&lt;email&gt;&quot; or None if neither name nor email is obtained</span>
+    <span class="comment">// cfg takes priority over the discovered ones</span>
+    <span class="kw">let</span> <span class="ident">author_name</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">name</span>.<span class="ident">or</span>(<span class="ident">discovered_name</span>);
+    <span class="kw">let</span> <span class="ident">author_email</span> <span class="op">=</span> <span class="ident">cfg</span>.<span class="ident">email</span>.<span class="ident">or</span>(<span class="ident">discovered_email</span>);
+
+    <span class="kw">let</span> <span class="ident">author</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">author_name</span>, <span class="ident">author_email</span>) {
+        (<span class="prelude-val">Some</span>(<span class="ident">name</span>), <span class="prelude-val">Some</span>(<span class="ident">email</span>)) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="kw">if</span> <span class="ident">email</span>.<span class="ident">is_empty</span>() {
-                <span class="ident">name</span>
+                <span class="prelude-val">Some</span>(<span class="ident">name</span>)
             } <span class="kw">else</span> {
-                <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{} &lt;{}&gt;&quot;</span>, <span class="ident">name</span>, <span class="ident">email</span>)
+                <span class="prelude-val">Some</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{} &lt;{}&gt;&quot;</span>, <span class="ident">name</span>, <span class="ident">email</span>))
             }
         }
-        (<span class="prelude-val">Some</span>(<span class="ident">name</span>), <span class="prelude-val">None</span>, <span class="kw">_</span>, <span class="prelude-val">None</span>) <span class="op">|</span> (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">name</span>, <span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">name</span>,
+        (<span class="prelude-val">Some</span>(<span class="ident">name</span>), <span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">name</span>),
+        (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="ident">email</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">if</span> <span class="ident">email</span>.<span class="ident">is_empty</span>() {
+                <span class="prelude-val">None</span>
+            } <span class="kw">else</span> {
+                <span class="prelude-val">Some</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;&lt;{}&gt;&quot;</span>, <span class="ident">email</span>))
+            }
+        }
+        (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
     };
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cargotoml_path_specifier</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">new</span>();
@@ -1550,7 +1589,10 @@ edition = {}
 [dependencies]
 {}&quot;#</span>,
             <span class="ident">name</span>,
-            <span class="ident">toml</span>::<span class="ident">Value</span>::<span class="ident">String</span>(<span class="ident">author</span>),
+            <span class="kw">match</span> <span class="ident">author</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">toml</span>::<span class="ident">Value</span>::<span class="ident">String</span>(<span class="ident">value</span>)),
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;&quot;</span>),
+            },
             <span class="kw">match</span> <span class="ident">opts</span>.<span class="ident">edition</span> {
                 <span class="prelude-val">Some</span>(<span class="ident">edition</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">toml</span>::<span class="ident">Value</span>::<span class="ident">String</span>(<span class="ident">edition</span>.<span class="ident">to_string</span>()),
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">toml</span>::<span class="ident">Value</span>::<span class="ident">String</span>(<span class="string">&quot;2018&quot;</span>.<span class="ident">to_string</span>()),
@@ -1625,8 +1667,8 @@ mod tests {
     <span class="ident">variables</span>.<span class="ident">iter</span>().<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">var</span><span class="op">|</span> <span class="ident">env</span>::<span class="ident">var</span>(<span class="ident">var</span>).<span class="ident">ok</span>()).<span class="ident">next</span>()
 }
 
-<span class="kw">fn</span> <span class="ident">discover_author</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">git_config</span> <span class="op">=</span> <span class="ident">find_git_config</span>();
+<span class="kw">fn</span> <span class="ident">discover_author</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) {
+    <span class="kw">let</span> <span class="ident">git_config</span> <span class="op">=</span> <span class="ident">find_git_config</span>(<span class="ident">path</span>);
     <span class="kw">let</span> <span class="ident">git_config</span> <span class="op">=</span> <span class="ident">git_config</span>.<span class="ident">as_ref</span>();
 
     <span class="kw">let</span> <span class="ident">name_variables</span> <span class="op">=</span> [
@@ -1642,15 +1684,10 @@ mod tests {
         .<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">get_environment_variable</span>(<span class="kw-2">&amp;</span><span class="ident">name_variables</span>[<span class="number">3</span>..]));
 
     <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">name</span> {
-        <span class="prelude-val">Some</span>(<span class="ident">name</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">name</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">username_var</span> <span class="op">=</span> <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">windows</span>) { <span class="string">&quot;USERNAME&quot;</span> } <span class="kw">else</span> { <span class="string">&quot;USER&quot;</span> };
-            <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                <span class="string">&quot;could not determine the current user, please set ${}&quot;</span>,
-                <span class="ident">username_var</span>
-            )
-        }
+        <span class="prelude-val">Some</span>(<span class="ident">namestr</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">namestr</span>.<span class="ident">trim</span>().<span class="ident">to_string</span>()),
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
     };
+
     <span class="kw">let</span> <span class="ident">email_variables</span> <span class="op">=</span> [
         <span class="string">&quot;CARGO_EMAIL&quot;</span>,
         <span class="string">&quot;GIT_AUTHOR_EMAIL&quot;</span>,
@@ -1661,7 +1698,6 @@ mod tests {
         .<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">git_config</span>.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">g</span><span class="op">|</span> <span class="ident">g</span>.<span class="ident">get_string</span>(<span class="string">&quot;user.email&quot;</span>).<span class="ident">ok</span>()))
         .<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">get_environment_variable</span>(<span class="kw-2">&amp;</span><span class="ident">email_variables</span>[<span class="number">3</span>..]));
 
-    <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">trim</span>().<span class="ident">to_string</span>();
     <span class="kw">let</span> <span class="ident">email</span> <span class="op">=</span> <span class="ident">email</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">s</span>.<span class="ident">trim</span>();
 
@@ -1674,35 +1710,33 @@ mod tests {
         <span class="ident">s</span>.<span class="ident">to_string</span>()
     });
 
-    <span class="prelude-val">Ok</span>((<span class="ident">name</span>, <span class="ident">email</span>))
+    (<span class="ident">name</span>, <span class="ident">email</span>)
 }
 
-<span class="kw">fn</span> <span class="ident">find_git_config</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">GitConfig</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">find_git_config</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">GitConfig</span><span class="op">&gt;</span> {
     <span class="kw">match</span> <span class="ident">env</span>::<span class="ident">var</span>(<span class="string">&quot;__CARGO_TEST_ROOT&quot;</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">test_root</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">find_tests_git_config</span>(<span class="ident">test_root</span>),
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">find_real_git_config</span>(),
+        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">find_tests_git_config</span>(<span class="ident">path</span>),
+        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">find_real_git_config</span>(<span class="ident">path</span>),
     }
 }
 
-<span class="kw">fn</span> <span class="ident">find_tests_git_config</span>(<span class="ident">cargo_test_root</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">GitConfig</span><span class="op">&gt;</span> {
-    <span class="comment">// Path where &#39;git config --local&#39; puts variables when run from inside a test</span>
-    <span class="kw">let</span> <span class="ident">test_git_config</span> <span class="op">=</span> <span class="ident">PathBuf</span>::<span class="ident">from</span>(<span class="ident">cargo_test_root</span>).<span class="ident">join</span>(<span class="string">&quot;.git&quot;</span>).<span class="ident">join</span>(<span class="string">&quot;config&quot;</span>);
-
-    <span class="kw">if</span> <span class="ident">test_git_config</span>.<span class="ident">exists</span>() {
-        <span class="ident">GitConfig</span>::<span class="ident">open</span>(<span class="kw-2">&amp;</span><span class="ident">test_git_config</span>).<span class="ident">ok</span>()
-    } <span class="kw">else</span> {
-        <span class="ident">GitConfig</span>::<span class="ident">open_default</span>().<span class="ident">ok</span>()
+<span class="kw">fn</span> <span class="ident">find_tests_git_config</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">GitConfig</span><span class="op">&gt;</span> {
+    <span class="comment">// Don&#39;t escape the test sandbox when looking for a git repository.</span>
+    <span class="comment">// NOTE: libgit2 has support to define the path ceiling in</span>
+    <span class="comment">// git_repository_discover, but the git2 bindings do not expose that.</span>
+    <span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="ident">paths</span>::<span class="ident">ancestors</span>(<span class="ident">path</span>) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">repo</span>) <span class="op">=</span> <span class="ident">GitRepository</span>::<span class="ident">open</span>(<span class="ident">path</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">repo</span>.<span class="ident">config</span>().<span class="ident">expect</span>(<span class="string">&quot;test repo should have valid config&quot;</span>));
+        }
     }
+    <span class="ident">GitConfig</span>::<span class="ident">open_default</span>().<span class="ident">ok</span>()
 }
 
-<span class="kw">fn</span> <span class="ident">find_real_git_config</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">GitConfig</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="ident">env</span>::<span class="ident">current_dir</span>() {
-        <span class="prelude-val">Ok</span>(<span class="ident">cwd</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">GitRepository</span>::<span class="ident">discover</span>(<span class="ident">cwd</span>)
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">repo</span><span class="op">|</span> <span class="ident">repo</span>.<span class="ident">config</span>())
-            .<span class="ident">or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">GitConfig</span>::<span class="ident">open_default</span>())
-            .<span class="ident">ok</span>(),
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">GitConfig</span>::<span class="ident">open_default</span>().<span class="ident">ok</span>(),
-    }
+<span class="kw">fn</span> <span class="ident">find_real_git_config</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">GitConfig</span><span class="op">&gt;</span> {
+    <span class="ident">GitRepository</span>::<span class="ident">discover</span>(<span class="ident">path</span>)
+        .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">repo</span><span class="op">|</span> <span class="ident">repo</span>.<span class="ident">config</span>())
+        .<span class="ident">or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">GitConfig</span>::<span class="ident">open_default</span>())
+        .<span class="ident">ok</span>()
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

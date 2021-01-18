@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/compiler/rustdoc.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>rustdoc.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/core/compiler/rustdoc.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>rustdoc.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -173,6 +173,26 @@
 <span id="170">170</span>
 <span id="171">171</span>
 <span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Utilities for building with rustdoc.</span>
 
@@ -192,7 +212,7 @@
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RustdocExternMode</span> {
     <span class="doccomment">/// Use a local `file://` URL.</span>
     <span class="ident">Local</span>,
-    <span class="doccomment">/// Use a remote URL to https://doc.rust-lang.org/ (default).</span>
+    <span class="doccomment">/// Use a remote URL to &lt;https://doc.rust-lang.org/&gt; (default).</span>
     <span class="ident">Remote</span>,
     <span class="doccomment">/// An arbitrary URL.</span>
     <span class="ident">Url</span>(<span class="ident">String</span>),
@@ -229,9 +249,33 @@
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">serde</span>::<span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RustdocExternMap</span> {
-    <span class="ident">registries</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">deserialize_with</span> <span class="op">=</span> <span class="string">&quot;default_crates_io_to_docs_rs&quot;</span>)]</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">registries</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">std</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RustdocExternMode</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">RustdocExternMap</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">registries</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="ident">registries</span>.<span class="ident">insert</span>(<span class="string">&quot;crates-io&quot;</span>.<span class="ident">into</span>(), <span class="string">&quot;https://docs.rs/&quot;</span>.<span class="ident">into</span>());
+        <span class="self">Self</span> {
+            <span class="ident">registries</span>,
+            <span class="ident">std</span>: <span class="prelude-val">None</span>,
+        }
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">default_crates_io_to_docs_rs</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">D</span>: <span class="ident">serde</span>::<span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span>(
+    <span class="ident">de</span>: <span class="ident">D</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">D</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Deserialize</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">registries</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">deserialize</span>(<span class="ident">de</span>)<span class="question-mark">?</span>;
+    <span class="kw">if</span> <span class="op">!</span><span class="ident">registries</span>.<span class="ident">contains_key</span>(<span class="string">&quot;crates-io&quot;</span>) {
+        <span class="ident">registries</span>.<span class="ident">insert</span>(<span class="string">&quot;crates-io&quot;</span>.<span class="ident">into</span>(), <span class="string">&quot;https://docs.rs/&quot;</span>.<span class="ident">into</span>());
+    }
+    <span class="prelude-val">Ok</span>(<span class="ident">registries</span>)
 }
 
 <span class="kw">impl</span> <span class="ident">hash</span>::<span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">RustdocExternMap</span> {
@@ -255,10 +299,6 @@
         <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
     }
     <span class="kw">let</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">doc_extern_map</span>()<span class="question-mark">?</span>;
-    <span class="kw">if</span> <span class="ident">map</span>.<span class="ident">registries</span>.<span class="ident">len</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">map</span>.<span class="ident">std</span>.<span class="ident">is_none</span>() {
-        <span class="comment">// Skip doing unnecessary work.</span>
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
-    }
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unstable_opts</span> <span class="op">=</span> <span class="bool-val">false</span>;
     <span class="comment">// Collect mapping of registry name -&gt; index url.</span>
     <span class="kw">let</span> <span class="ident">name2url</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">String</span>, <span class="ident">Url</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">map</span>
@@ -266,13 +306,13 @@
         .<span class="ident">keys</span>()
         .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">name</span><span class="op">|</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">index_url</span>) <span class="op">=</span> <span class="ident">config</span>.<span class="ident">get_registry_index</span>(<span class="ident">name</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="ident">name</span>, <span class="ident">index_url</span>));
+                <span class="prelude-val">Some</span>((<span class="ident">name</span>, <span class="ident">index_url</span>))
             } <span class="kw">else</span> {
                 <span class="ident">log</span>::<span class="macro">warn</span><span class="macro">!</span>(
                     <span class="string">&quot;`doc.extern-map.{}` specifies a registry that is not defined&quot;</span>,
                     <span class="ident">name</span>
                 );
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
+                <span class="prelude-val">None</span>
             }
         })
         .<span class="ident">collect</span>();

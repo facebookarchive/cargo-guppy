@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/ops/lockfile.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lockfile.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/ops/lockfile.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lockfile.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -221,6 +221,7 @@
 <span id="218">218</span>
 <span id="219">219</span>
 <span id="220">220</span>
+<span id="221">221</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 
@@ -251,17 +252,17 @@
 }
 
 <span class="doccomment">/// Generate a toml String of Cargo.lock from a Resolve.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_to_string</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="ident">Resolve</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">_orig</span>, <span class="ident">out</span>, <span class="ident">_ws_root</span>) <span class="op">=</span> <span class="ident">resolve_to_string_orig</span>(<span class="ident">ws</span>, <span class="ident">resolve</span>)<span class="question-mark">?</span>;
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolve_to_string</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Resolve</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> (<span class="ident">_orig</span>, <span class="ident">out</span>, <span class="ident">_ws_root</span>) <span class="op">=</span> <span class="ident">resolve_to_string_orig</span>(<span class="ident">ws</span>, <span class="ident">resolve</span>);
     <span class="prelude-val">Ok</span>(<span class="ident">out</span>)
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_pkg_lockfile</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="ident">Resolve</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">orig</span>, <span class="ident">out</span>, <span class="ident">ws_root</span>) <span class="op">=</span> <span class="ident">resolve_to_string_orig</span>(<span class="ident">ws</span>, <span class="ident">resolve</span>)<span class="question-mark">?</span>;
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_pkg_lockfile</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Resolve</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> (<span class="ident">orig</span>, <span class="kw-2">mut</span> <span class="ident">out</span>, <span class="ident">ws_root</span>) <span class="op">=</span> <span class="ident">resolve_to_string_orig</span>(<span class="ident">ws</span>, <span class="ident">resolve</span>);
 
     <span class="comment">// If the lock file contents haven&#39;t changed so don&#39;t rewrite it. This is</span>
     <span class="comment">// helpful on read-only filesystems.</span>
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">orig</span>) <span class="op">=</span> <span class="ident">orig</span> {
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">orig</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">orig</span> {
         <span class="kw">if</span> <span class="ident">are_equal_lockfiles</span>(<span class="ident">orig</span>, <span class="kw-2">&amp;</span><span class="ident">out</span>, <span class="ident">ws</span>) {
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
         }
@@ -286,6 +287,16 @@
         );
     }
 
+    <span class="comment">// While we&#39;re updating the lock file anyway go ahead and update its</span>
+    <span class="comment">// encoding to whatever the latest default is. That way we can slowly roll</span>
+    <span class="comment">// out lock file updates as they&#39;re otherwise already updated, and changes</span>
+    <span class="comment">// which don&#39;t touch dependencies won&#39;t seemingly spuriously update the lock</span>
+    <span class="comment">// file.</span>
+    <span class="kw">if</span> <span class="ident">resolve</span>.<span class="ident">version</span>() <span class="op">&lt;</span> <span class="ident">ResolveVersion</span>::<span class="ident">default</span>() {
+        <span class="ident">resolve</span>.<span class="ident">set_version</span>(<span class="ident">ResolveVersion</span>::<span class="ident">default</span>());
+        <span class="ident">out</span> <span class="op">=</span> <span class="ident">serialize_resolve</span>(<span class="ident">resolve</span>, <span class="ident">orig</span>.<span class="ident">as_deref</span>());
+    }
+
     <span class="comment">// Ok, if that didn&#39;t work just write it out</span>
     <span class="ident">ws_root</span>
         .<span class="ident">open_rw</span>(<span class="string">&quot;Cargo.lock&quot;</span>, <span class="ident">ws</span>.<span class="ident">config</span>(), <span class="string">&quot;Cargo.lock file&quot;</span>)
@@ -300,8 +311,8 @@
 
 <span class="kw">fn</span> <span class="ident">resolve_to_string_orig</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="ident">Resolve</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Filesystem</span>)<span class="op">&gt;</span> {
+    <span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Resolve</span>,
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">String</span>, <span class="ident">Filesystem</span>) {
     <span class="comment">// Load the original lock file if it exists.</span>
     <span class="kw">let</span> <span class="ident">ws_root</span> <span class="op">=</span> <span class="ident">Filesystem</span>::<span class="ident">new</span>(<span class="ident">ws</span>.<span class="ident">root</span>().<span class="ident">to_path_buf</span>());
     <span class="kw">let</span> <span class="ident">orig</span> <span class="op">=</span> <span class="ident">ws_root</span>.<span class="ident">open_ro</span>(<span class="string">&quot;Cargo.lock&quot;</span>, <span class="ident">ws</span>.<span class="ident">config</span>(), <span class="string">&quot;Cargo.lock file&quot;</span>);
@@ -310,7 +321,11 @@
         <span class="ident">f</span>.<span class="ident">read_to_string</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">s</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">s</span>)
     });
+    <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">serialize_resolve</span>(<span class="ident">resolve</span>, <span class="ident">orig</span>.<span class="ident">as_ref</span>().<span class="ident">ok</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">s</span>));
+    (<span class="ident">orig</span>.<span class="ident">ok</span>(), <span class="ident">out</span>, <span class="ident">ws_root</span>)
+}
 
+<span class="kw">fn</span> <span class="ident">serialize_resolve</span>(<span class="ident">resolve</span>: <span class="kw-2">&amp;</span><span class="ident">Resolve</span>, <span class="ident">orig</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
     <span class="kw">let</span> <span class="ident">toml</span> <span class="op">=</span> <span class="ident">toml</span>::<span class="ident">Value</span>::<span class="ident">try_from</span>(<span class="ident">resolve</span>).<span class="ident">unwrap</span>();
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">new</span>();
@@ -324,7 +339,7 @@
     <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="ident">extra_line</span>);
     <span class="ident">out</span>.<span class="ident">push</span>(<span class="string">&#39;\n&#39;</span>);
     <span class="comment">// and preserve any other top comments</span>
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">orig</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">orig</span> {
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">orig</span>) <span class="op">=</span> <span class="ident">orig</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">comments</span> <span class="op">=</span> <span class="ident">orig</span>.<span class="ident">lines</span>().<span class="ident">take_while</span>(<span class="op">|</span><span class="ident">line</span><span class="op">|</span> <span class="ident">line</span>.<span class="ident">starts_with</span>(<span class="string">&#39;#&#39;</span>));
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">first</span>) <span class="op">=</span> <span class="ident">comments</span>.<span class="ident">next</span>() {
             <span class="kw">if</span> <span class="ident">first</span> <span class="op">!</span><span class="op">=</span> <span class="ident">marker_line</span> {
@@ -344,6 +359,10 @@
         }
     }
 
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">version</span>) <span class="op">=</span> <span class="ident">toml</span>.<span class="ident">get</span>(<span class="string">&quot;version&quot;</span>) {
+        <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;version = {}\n\n&quot;</span>, <span class="ident">version</span>));
+    }
+
     <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">toml</span>[<span class="string">&quot;package&quot;</span>].<span class="ident">as_array</span>().<span class="ident">unwrap</span>();
     <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">deps</span> {
         <span class="kw">let</span> <span class="ident">dep</span> <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">as_table</span>().<span class="ident">unwrap</span>();
@@ -357,7 +376,7 @@
         <span class="kw">for</span> <span class="ident">entry</span> <span class="kw">in</span> <span class="ident">list</span> {
             <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="string">&quot;[[patch.unused]]\n&quot;</span>);
             <span class="ident">emit_package</span>(<span class="ident">entry</span>.<span class="ident">as_table</span>().<span class="ident">unwrap</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>);
-            <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="string">&quot;\n&quot;</span>);
+            <span class="ident">out</span>.<span class="ident">push</span>(<span class="string">&#39;\n&#39;</span>);
         }
     }
 
@@ -371,47 +390,30 @@
     <span class="comment">// encodings going forward, though, we want to be sure that our encoded lock</span>
     <span class="comment">// file doesn&#39;t contain any trailing newlines so trim out the extra if</span>
     <span class="comment">// necessary.</span>
-    <span class="kw">match</span> <span class="ident">resolve</span>.<span class="ident">version</span>() {
-        <span class="ident">ResolveVersion</span>::<span class="ident">V1</span> <span class="op">=</span><span class="op">&gt;</span> {}
-        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="kw">while</span> <span class="ident">out</span>.<span class="ident">ends_with</span>(<span class="string">&quot;\n\n&quot;</span>) {
-                <span class="ident">out</span>.<span class="ident">pop</span>();
-            }
+    <span class="kw">if</span> <span class="ident">resolve</span>.<span class="ident">version</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="ident">ResolveVersion</span>::<span class="ident">V2</span> {
+        <span class="kw">while</span> <span class="ident">out</span>.<span class="ident">ends_with</span>(<span class="string">&quot;\n\n&quot;</span>) {
+            <span class="ident">out</span>.<span class="ident">pop</span>();
         }
     }
-
-    <span class="prelude-val">Ok</span>((<span class="ident">orig</span>.<span class="ident">ok</span>(), <span class="ident">out</span>, <span class="ident">ws_root</span>))
+    <span class="ident">out</span>
 }
 
-<span class="kw">fn</span> <span class="ident">are_equal_lockfiles</span>(<span class="kw-2">mut</span> <span class="ident">orig</span>: <span class="ident">String</span>, <span class="ident">current</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-    <span class="kw">if</span> <span class="ident">has_crlf_line_endings</span>(<span class="kw-2">&amp;</span><span class="ident">orig</span>) {
-        <span class="ident">orig</span> <span class="op">=</span> <span class="ident">orig</span>.<span class="ident">replace</span>(<span class="string">&quot;\r\n&quot;</span>, <span class="string">&quot;\n&quot;</span>);
-    }
-
+<span class="kw">fn</span> <span class="ident">are_equal_lockfiles</span>(<span class="ident">orig</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">current</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
     <span class="comment">// If we want to try and avoid updating the lock file, parse both and</span>
     <span class="comment">// compare them; since this is somewhat expensive, don&#39;t do it in the</span>
     <span class="comment">// common case where we can update lock files.</span>
     <span class="kw">if</span> <span class="op">!</span><span class="ident">ws</span>.<span class="ident">config</span>().<span class="ident">lock_update_allowed</span>() {
         <span class="kw">let</span> <span class="ident">res</span>: <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="op">|</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">old</span>: <span class="ident">resolver</span>::<span class="ident">EncodableResolve</span> <span class="op">=</span> <span class="ident">toml</span>::<span class="ident">from_str</span>(<span class="kw-2">&amp;</span><span class="ident">orig</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">old</span>: <span class="ident">resolver</span>::<span class="ident">EncodableResolve</span> <span class="op">=</span> <span class="ident">toml</span>::<span class="ident">from_str</span>(<span class="ident">orig</span>)<span class="question-mark">?</span>;
             <span class="kw">let</span> <span class="ident">new</span>: <span class="ident">resolver</span>::<span class="ident">EncodableResolve</span> <span class="op">=</span> <span class="ident">toml</span>::<span class="ident">from_str</span>(<span class="ident">current</span>)<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(<span class="ident">old</span>.<span class="ident">into_resolve</span>(<span class="kw-2">&amp;</span><span class="ident">orig</span>, <span class="ident">ws</span>)<span class="question-mark">?</span> <span class="op">=</span><span class="op">=</span> <span class="ident">new</span>.<span class="ident">into_resolve</span>(<span class="ident">current</span>, <span class="ident">ws</span>)<span class="question-mark">?</span>)
+            <span class="prelude-val">Ok</span>(<span class="ident">old</span>.<span class="ident">into_resolve</span>(<span class="ident">orig</span>, <span class="ident">ws</span>)<span class="question-mark">?</span> <span class="op">=</span><span class="op">=</span> <span class="ident">new</span>.<span class="ident">into_resolve</span>(<span class="ident">current</span>, <span class="ident">ws</span>)<span class="question-mark">?</span>)
         })();
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) <span class="op">=</span> <span class="ident">res</span> {
             <span class="kw">return</span> <span class="bool-val">true</span>;
         }
     }
 
-    <span class="ident">current</span> <span class="op">=</span><span class="op">=</span> <span class="ident">orig</span>
-}
-
-<span class="kw">fn</span> <span class="ident">has_crlf_line_endings</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-    <span class="comment">// Only check the first line.</span>
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">lf</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">find</span>(<span class="string">&#39;\n&#39;</span>) {
-        <span class="ident">s</span>[..<span class="ident">lf</span>].<span class="ident">ends_with</span>(<span class="string">&#39;\r&#39;</span>)
-    } <span class="kw">else</span> {
-        <span class="bool-val">false</span>
-    }
+    <span class="ident">orig</span>.<span class="ident">lines</span>().<span class="ident">eq</span>(<span class="ident">current</span>.<span class="ident">lines</span>())
 }
 
 <span class="kw">fn</span> <span class="ident">emit_package</span>(<span class="ident">dep</span>: <span class="kw-2">&amp;</span><span class="ident">toml</span>::<span class="ident">value</span>::<span class="ident">Table</span>, <span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">String</span>) {
@@ -437,7 +439,7 @@
 
             <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="string">&quot;]\n&quot;</span>);
         }
-        <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="string">&quot;\n&quot;</span>);
+        <span class="ident">out</span>.<span class="ident">push</span>(<span class="string">&#39;\n&#39;</span>);
     } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">dep</span>.<span class="ident">contains_key</span>(<span class="string">&quot;replace&quot;</span>) {
         <span class="ident">out</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;replace = {}\n\n&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">dep</span>[<span class="string">&quot;replace&quot;</span>]));
     }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/sources/registry/remote.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>remote.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/sources/registry/remote.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>remote.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -317,12 +317,55 @@
 <span id="314">314</span>
 <span id="315">315</span>
 <span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">InternedString</span>, <span class="ident">PackageId</span>, <span class="ident">SourceId</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">GitReference</span>, <span class="ident">PackageId</span>, <span class="ident">SourceId</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sources</span>::<span class="ident">git</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sources</span>::<span class="ident">registry</span>::<span class="ident">MaybeLock</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sources</span>::<span class="ident">registry</span>::{<span class="ident">RegistryConfig</span>, <span class="ident">RegistryData</span>, <span class="ident">CRATE_TEMPLATE</span>, <span class="ident">VERSION_TEMPLATE</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sources</span>::<span class="ident">registry</span>::{
+    <span class="ident">RegistryConfig</span>, <span class="ident">RegistryData</span>, <span class="ident">CRATE_TEMPLATE</span>, <span class="ident">LOWER_PREFIX_TEMPLATE</span>, <span class="ident">PREFIX_TEMPLATE</span>,
+    <span class="ident">VERSION_TEMPLATE</span>,
+};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">paths</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">Config</span>, <span class="ident">Filesystem</span>, <span class="ident">Sha256</span>};
 <span class="kw">use</span> <span class="ident">lazycell</span>::<span class="ident">LazyCell</span>;
@@ -336,10 +379,20 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>;
 
+<span class="kw">fn</span> <span class="ident">make_dep_prefix</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+    <span class="kw">match</span> <span class="ident">name</span>.<span class="ident">len</span>() {
+        <span class="number">1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="string">&quot;1&quot;</span>),
+        <span class="number">2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="string">&quot;2&quot;</span>),
+        <span class="number">3</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;3/{}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">name</span>[..<span class="number">1</span>]),
+        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}/{}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">name</span>[<span class="number">0</span>..<span class="number">2</span>], <span class="kw-2">&amp;</span><span class="ident">name</span>[<span class="number">2</span>..<span class="number">4</span>]),
+    }
+}
+
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RemoteRegistry</span><span class="op">&lt;</span><span class="lifetime">&#39;cfg</span><span class="op">&gt;</span> {
     <span class="ident">index_path</span>: <span class="ident">Filesystem</span>,
     <span class="ident">cache_path</span>: <span class="ident">Filesystem</span>,
     <span class="ident">source_id</span>: <span class="ident">SourceId</span>,
+    <span class="ident">index_git_ref</span>: <span class="ident">GitReference</span>,
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;cfg</span> <span class="ident">Config</span>,
     <span class="ident">tree</span>: <span class="ident">RefCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">git2</span>::<span class="ident">Tree</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">repo</span>: <span class="ident">LazyCell</span><span class="op">&lt;</span><span class="ident">git2</span>::<span class="ident">Repository</span><span class="op">&gt;</span>,
@@ -354,6 +407,8 @@
             <span class="ident">cache_path</span>: <span class="ident">config</span>.<span class="ident">registry_cache_path</span>().<span class="ident">join</span>(<span class="ident">name</span>),
             <span class="ident">source_id</span>,
             <span class="ident">config</span>,
+            <span class="comment">// TODO: we should probably make this configurable</span>
+            <span class="ident">index_git_ref</span>: <span class="ident">GitReference</span>::<span class="ident">DefaultBranch</span>,
             <span class="ident">tree</span>: <span class="ident">RefCell</span>::<span class="ident">new</span>(<span class="prelude-val">None</span>),
             <span class="ident">repo</span>: <span class="ident">LazyCell</span>::<span class="ident">new</span>(),
             <span class="ident">head</span>: <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="prelude-val">None</span>),
@@ -405,7 +460,8 @@
 
     <span class="kw">fn</span> <span class="ident">head</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">git2</span>::<span class="ident">Oid</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">get</span>().<span class="ident">is_none</span>() {
-            <span class="kw">let</span> <span class="ident">oid</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">repo</span>()<span class="question-mark">?</span>.<span class="ident">refname_to_id</span>(<span class="string">&quot;refs/remotes/origin/master&quot;</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">repo</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">repo</span>()<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">oid</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">index_git_ref</span>.<span class="ident">resolve</span>(<span class="ident">repo</span>, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
             <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">set</span>(<span class="prelude-val">Some</span>(<span class="ident">oid</span>));
         }
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">head</span>.<span class="ident">get</span>().<span class="ident">unwrap</span>())
@@ -535,11 +591,11 @@
             .<span class="ident">shell</span>()
             .<span class="ident">status</span>(<span class="string">&quot;Updating&quot;</span>, <span class="self">self</span>.<span class="ident">source_id</span>.<span class="ident">display_index</span>())<span class="question-mark">?</span>;
 
-        <span class="comment">// git fetch origin master</span>
+        <span class="comment">// Fetch the latest version of our `index_git_ref` into the index</span>
+        <span class="comment">// checkout.</span>
         <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">source_id</span>.<span class="ident">url</span>();
-        <span class="kw">let</span> <span class="ident">refspec</span> <span class="op">=</span> <span class="string">&quot;refs/heads/master:refs/remotes/origin/master&quot;</span>;
         <span class="kw">let</span> <span class="ident">repo</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">repo</span>.<span class="ident">borrow_mut</span>().<span class="ident">unwrap</span>();
-        <span class="ident">git</span>::<span class="ident">fetch</span>(<span class="ident">repo</span>, <span class="ident">url</span>.<span class="ident">as_str</span>(), <span class="ident">refspec</span>, <span class="self">self</span>.<span class="ident">config</span>)
+        <span class="ident">git</span>::<span class="ident">fetch</span>(<span class="ident">repo</span>, <span class="ident">url</span>.<span class="ident">as_str</span>(), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">index_git_ref</span>, <span class="self">self</span>.<span class="ident">config</span>)
             .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;failed to fetch `{}`&quot;</span>, <span class="ident">url</span>))<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">updated_sources</span>().<span class="ident">insert</span>(<span class="self">self</span>.<span class="ident">source_id</span>);
 
@@ -570,12 +626,19 @@
 
         <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">config</span>()<span class="question-mark">?</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">url</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">dl</span>;
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">url</span>.<span class="ident">contains</span>(<span class="ident">CRATE_TEMPLATE</span>) <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">url</span>.<span class="ident">contains</span>(<span class="ident">VERSION_TEMPLATE</span>) {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">url</span>.<span class="ident">contains</span>(<span class="ident">CRATE_TEMPLATE</span>)
+            <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">url</span>.<span class="ident">contains</span>(<span class="ident">VERSION_TEMPLATE</span>)
+            <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">url</span>.<span class="ident">contains</span>(<span class="ident">PREFIX_TEMPLATE</span>)
+            <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">url</span>.<span class="ident">contains</span>(<span class="ident">LOWER_PREFIX_TEMPLATE</span>)
+        {
             <span class="macro">write</span><span class="macro">!</span>(<span class="ident">url</span>, <span class="string">&quot;/{}/{}/download&quot;</span>, <span class="ident">CRATE_TEMPLATE</span>, <span class="ident">VERSION_TEMPLATE</span>).<span class="ident">unwrap</span>();
         }
+        <span class="kw">let</span> <span class="ident">prefix</span> <span class="op">=</span> <span class="ident">make_dep_prefix</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">pkg</span>.<span class="ident">name</span>());
         <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="ident">url</span>
             .<span class="ident">replace</span>(<span class="ident">CRATE_TEMPLATE</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">pkg</span>.<span class="ident">name</span>())
-            .<span class="ident">replace</span>(<span class="ident">VERSION_TEMPLATE</span>, <span class="kw-2">&amp;</span><span class="ident">pkg</span>.<span class="ident">version</span>().<span class="ident">to_string</span>());
+            .<span class="ident">replace</span>(<span class="ident">VERSION_TEMPLATE</span>, <span class="kw-2">&amp;</span><span class="ident">pkg</span>.<span class="ident">version</span>().<span class="ident">to_string</span>())
+            .<span class="ident">replace</span>(<span class="ident">PREFIX_TEMPLATE</span>, <span class="kw-2">&amp;</span><span class="ident">prefix</span>)
+            .<span class="ident">replace</span>(<span class="ident">LOWER_PREFIX_TEMPLATE</span>, <span class="kw-2">&amp;</span><span class="ident">prefix</span>.<span class="ident">to_lowercase</span>());
 
         <span class="prelude-val">Ok</span>(<span class="ident">MaybeLock</span>::<span class="ident">Download</span> {
             <span class="ident">url</span>,
@@ -632,6 +695,21 @@
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="comment">// Just be sure to drop this before our other fields</span>
         <span class="self">self</span>.<span class="ident">tree</span>.<span class="ident">borrow_mut</span>().<span class="ident">take</span>();
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">make_dep_prefix</span>;
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">dep_prefix</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">make_dep_prefix</span>(<span class="string">&quot;a&quot;</span>), <span class="string">&quot;1&quot;</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">make_dep_prefix</span>(<span class="string">&quot;ab&quot;</span>), <span class="string">&quot;2&quot;</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">make_dep_prefix</span>(<span class="string">&quot;abc&quot;</span>), <span class="string">&quot;3/a&quot;</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">make_dep_prefix</span>(<span class="string">&quot;Abc&quot;</span>), <span class="string">&quot;3/A&quot;</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">make_dep_prefix</span>(<span class="string">&quot;AbCd&quot;</span>), <span class="string">&quot;Ab/Cd&quot;</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">make_dep_prefix</span>(<span class="string">&quot;aBcDe&quot;</span>), <span class="string">&quot;aB/cD&quot;</span>);
     }
 }
 </pre></div>

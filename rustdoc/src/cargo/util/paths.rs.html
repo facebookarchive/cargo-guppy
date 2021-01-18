@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/util/paths.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>paths.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/util/paths.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>paths.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -460,6 +460,177 @@
 <span id="457">457</span>
 <span id="458">458</span>
 <span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">env</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::{<span class="ident">OsStr</span>, <span class="ident">OsString</span>};
@@ -470,6 +641,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::{<span class="ident">Component</span>, <span class="ident">Path</span>, <span class="ident">PathBuf</span>};
 
 <span class="kw">use</span> <span class="ident">filetime</span>::<span class="ident">FileTime</span>;
+<span class="kw">use</span> <span class="ident">tempfile</span>::<span class="ident">Builder</span> <span class="kw">as</span> <span class="ident">TempFileBuilder</span>;
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>};
 
@@ -552,7 +724,7 @@
         <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">env</span>::<span class="ident">var_os</span>(<span class="string">&quot;PATH&quot;</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">anyhow</span>::<span class="macro">format_err</span><span class="macro">!</span>(<span class="string">&quot;no PATH&quot;</span>))<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">candidates</span> <span class="op">=</span> <span class="ident">env</span>::<span class="ident">split_paths</span>(<span class="kw-2">&amp;</span><span class="ident">paths</span>).<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">candidate</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">join</span>(<span class="kw-2">&amp;</span><span class="ident">exec</span>);
-            <span class="kw">let</span> <span class="ident">with_exe</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">env</span>::<span class="ident">consts</span>::<span class="ident">EXE_EXTENSION</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;&quot;</span> {
+            <span class="kw">let</span> <span class="ident">with_exe</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">env</span>::<span class="ident">consts</span>::<span class="ident">EXE_EXTENSION</span>.<span class="ident">is_empty</span>() {
                 <span class="prelude-val">None</span>
             } <span class="kw">else</span> {
                 <span class="prelude-val">Some</span>(<span class="ident">candidate</span>.<span class="ident">with_extension</span>(<span class="ident">env</span>::<span class="ident">consts</span>::<span class="ident">EXE_EXTENSION</span>))
@@ -640,6 +812,87 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mtime</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">FileTime</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">meta</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="ident">path</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;failed to stat `{}`&quot;</span>, <span class="ident">path</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(<span class="ident">FileTime</span>::<span class="ident">from_last_modification_time</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>))
+}
+
+<span class="doccomment">/// Returns the maximum mtime of the given path, recursing into</span>
+<span class="doccomment">/// subdirectories, and following symlinks.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mtime_recursive</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">FileTime</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">meta</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">metadata</span>(<span class="ident">path</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;failed to stat `{}`&quot;</span>, <span class="ident">path</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
+    <span class="kw">if</span> <span class="op">!</span><span class="ident">meta</span>.<span class="ident">is_dir</span>() {
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">FileTime</span>::<span class="ident">from_last_modification_time</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>));
+    }
+    <span class="kw">let</span> <span class="ident">max_meta</span> <span class="op">=</span> <span class="ident">walkdir</span>::<span class="ident">WalkDir</span>::<span class="ident">new</span>(<span class="ident">path</span>)
+        .<span class="ident">follow_links</span>(<span class="bool-val">true</span>)
+        .<span class="ident">into_iter</span>()
+        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">e</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">e</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="comment">// Ignore errors while walking. If Cargo can&#39;t access it, the</span>
+                <span class="comment">// build script probably can&#39;t access it, either.</span>
+                <span class="ident">log</span>::<span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;failed to determine mtime while walking directory: {}&quot;</span>, <span class="ident">e</span>);
+                <span class="prelude-val">None</span>
+            }
+        })
+        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+            <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">path_is_symlink</span>() {
+                <span class="comment">// Use the mtime of both the symlink and its target, to</span>
+                <span class="comment">// handle the case where the symlink is modified to a</span>
+                <span class="comment">// different target.</span>
+                <span class="kw">let</span> <span class="ident">sym_meta</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">std</span>::<span class="ident">fs</span>::<span class="ident">symlink_metadata</span>(<span class="ident">e</span>.<span class="ident">path</span>()) {
+                    <span class="prelude-val">Ok</span>(<span class="ident">m</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">m</span>,
+                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="comment">// I&#39;m not sure when this is really possible (maybe a</span>
+                        <span class="comment">// race with unlinking?). Regardless, if Cargo can&#39;t</span>
+                        <span class="comment">// read it, the build script probably can&#39;t either.</span>
+                        <span class="ident">log</span>::<span class="macro">debug</span><span class="macro">!</span>(
+                            <span class="string">&quot;failed to determine mtime while fetching symlink metdata of {}: {}&quot;</span>,
+                            <span class="ident">e</span>.<span class="ident">path</span>().<span class="ident">display</span>(),
+                            <span class="ident">err</span>
+                        );
+                        <span class="kw">return</span> <span class="prelude-val">None</span>;
+                    }
+                };
+                <span class="kw">let</span> <span class="ident">sym_mtime</span> <span class="op">=</span> <span class="ident">FileTime</span>::<span class="ident">from_last_modification_time</span>(<span class="kw-2">&amp;</span><span class="ident">sym_meta</span>);
+                <span class="comment">// Walkdir follows symlinks.</span>
+                <span class="kw">match</span> <span class="ident">e</span>.<span class="ident">metadata</span>() {
+                    <span class="prelude-val">Ok</span>(<span class="ident">target_meta</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="kw">let</span> <span class="ident">target_mtime</span> <span class="op">=</span> <span class="ident">FileTime</span>::<span class="ident">from_last_modification_time</span>(<span class="kw-2">&amp;</span><span class="ident">target_meta</span>);
+                        <span class="prelude-val">Some</span>(<span class="ident">sym_mtime</span>.<span class="ident">max</span>(<span class="ident">target_mtime</span>))
+                    }
+                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="comment">// Can&#39;t access the symlink target. If Cargo can&#39;t</span>
+                        <span class="comment">// access it, the build script probably can&#39;t access</span>
+                        <span class="comment">// it either.</span>
+                        <span class="ident">log</span>::<span class="macro">debug</span><span class="macro">!</span>(
+                            <span class="string">&quot;failed to determine mtime of symlink target for {}: {}&quot;</span>,
+                            <span class="ident">e</span>.<span class="ident">path</span>().<span class="ident">display</span>(),
+                            <span class="ident">err</span>
+                        );
+                        <span class="prelude-val">Some</span>(<span class="ident">sym_mtime</span>)
+                    }
+                }
+            } <span class="kw">else</span> {
+                <span class="kw">let</span> <span class="ident">meta</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">e</span>.<span class="ident">metadata</span>() {
+                    <span class="prelude-val">Ok</span>(<span class="ident">m</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">m</span>,
+                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="comment">// I&#39;m not sure when this is really possible (maybe a</span>
+                        <span class="comment">// race with unlinking?). Regardless, if Cargo can&#39;t</span>
+                        <span class="comment">// read it, the build script probably can&#39;t either.</span>
+                        <span class="ident">log</span>::<span class="macro">debug</span><span class="macro">!</span>(
+                            <span class="string">&quot;failed to determine mtime while fetching metadata of {}: {}&quot;</span>,
+                            <span class="ident">e</span>.<span class="ident">path</span>().<span class="ident">display</span>(),
+                            <span class="ident">err</span>
+                        );
+                        <span class="kw">return</span> <span class="prelude-val">None</span>;
+                    }
+                };
+                <span class="prelude-val">Some</span>(<span class="ident">FileTime</span>::<span class="ident">from_last_modification_time</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>))
+            }
+        })
+        .<span class="ident">max</span>()
+        <span class="comment">// or_else handles the case where there are no files in the directory.</span>
+        .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">FileTime</span>::<span class="ident">from_last_modification_time</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>));
+    <span class="prelude-val">Ok</span>(<span class="ident">max_meta</span>)
 }
 
 <span class="doccomment">/// Record the current time on the filesystem (using the filesystem&#39;s clock)</span>
@@ -919,6 +1172,95 @@
     <span class="kw">let</span> <span class="ident">canon_path</span> <span class="op">=</span> <span class="ident">safe_canonicalize</span>(<span class="ident">path</span>.<span class="ident">as_ref</span>());
     <span class="kw">let</span> <span class="ident">canon_base</span> <span class="op">=</span> <span class="ident">safe_canonicalize</span>(<span class="ident">base</span>.<span class="ident">as_ref</span>());
     <span class="ident">canon_path</span>.<span class="ident">strip_prefix</span>(<span class="ident">canon_base</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">to_path_buf</span>())
+}
+
+<span class="doccomment">/// Creates an excluded from cache directory atomically with its parents as needed.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The atomicity only covers creating the leaf directory and exclusion from cache. Any missing</span>
+<span class="doccomment">/// parent directories will not be created in an atomic manner.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This function is idempotent and in addition to that it won&#39;t exclude ``p`` from cache if it</span>
+<span class="doccomment">/// already exists.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_dir_all_excluded_from_backups_atomic</span>(<span class="ident">p</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">p</span>.<span class="ident">as_ref</span>();
+    <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">is_dir</span>() {
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+    }
+
+    <span class="kw">let</span> <span class="ident">parent</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>();
+    <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">file_name</span>().<span class="ident">unwrap</span>();
+    <span class="ident">create_dir_all</span>(<span class="ident">parent</span>)<span class="question-mark">?</span>;
+    <span class="comment">// We do this in two steps (first create a temporary directory and exlucde</span>
+    <span class="comment">// it from backups, then rename it to the desired name. If we created the</span>
+    <span class="comment">// directory directly where it should be and then excluded it from backups</span>
+    <span class="comment">// we would risk a situation where cargo is interrupted right after the directory</span>
+    <span class="comment">// creation but before the exclusion the the directory would remain non-excluded from</span>
+    <span class="comment">// backups because we only perform exclusion right after we created the directory</span>
+    <span class="comment">// ourselves.</span>
+    <span class="comment">//</span>
+    <span class="comment">// We need the tempdir created in parent instead of $TMP, because only then we can be</span>
+    <span class="comment">// easily sure that rename() will succeed (the new name needs to be on the same mount</span>
+    <span class="comment">// point as the old one).</span>
+    <span class="kw">let</span> <span class="ident">tempdir</span> <span class="op">=</span> <span class="ident">TempFileBuilder</span>::<span class="ident">new</span>().<span class="ident">prefix</span>(<span class="ident">base</span>).<span class="ident">tempdir_in</span>(<span class="ident">parent</span>)<span class="question-mark">?</span>;
+    <span class="ident">exclude_from_backups</span>(<span class="ident">tempdir</span>.<span class="ident">path</span>());
+    <span class="comment">// Previously std::fs::create_dir_all() (through paths::create_dir_all()) was used</span>
+    <span class="comment">// here to create the directory directly and fs::create_dir_all() explicitly treats</span>
+    <span class="comment">// the directory being created concurrently by another thread or process as success,</span>
+    <span class="comment">// hence the check below to follow the existing behavior. If we get an error at</span>
+    <span class="comment">// rename() and suddently the directory (which didn&#39;t exist a moment earlier) exists</span>
+    <span class="comment">// we can infer from it it&#39;s another cargo process doing work.</span>
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">rename</span>(<span class="ident">tempdir</span>.<span class="ident">path</span>(), <span class="ident">path</span>) {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">path</span>.<span class="ident">exists</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">anyhow</span>::<span class="ident">Error</span>::<span class="ident">from</span>(<span class="ident">e</span>));
+        }
+    }
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="doccomment">/// Marks the directory as excluded from archives/backups.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// This is recommended to prevent derived/temporary files from bloating backups. There are two</span>
+<span class="doccomment">/// mechanisms used to achieve this right now:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// * A dedicated resource property excluding from Time Machine backups on macOS</span>
+<span class="doccomment">/// * CACHEDIR.TAG files supported by various tools in a platform-independent way</span>
+<span class="kw">fn</span> <span class="ident">exclude_from_backups</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) {
+    <span class="ident">exclude_from_time_machine</span>(<span class="ident">path</span>);
+    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">fs</span>::<span class="ident">write</span>(
+        <span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;CACHEDIR.TAG&quot;</span>),
+        <span class="string">&quot;Signature: 8a477f597d28d172789f06886806bc55
+# This file is a cache directory tag created by cargo.
+# For information about cache directory tags see https://bford.info/cachedir/
+&quot;</span>,
+    );
+    <span class="comment">// Similarly to exclude_from_time_machine() we ignore errors here as it&#39;s an optional feature.</span>
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>))]</span>
+<span class="kw">fn</span> <span class="ident">exclude_from_time_machine</span>(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) {}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>)]</span>
+<span class="doccomment">/// Marks files or directories as excluded from Time Machine on macOS</span>
+<span class="kw">fn</span> <span class="ident">exclude_from_time_machine</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) {
+    <span class="kw">use</span> <span class="ident">core_foundation</span>::<span class="ident">base</span>::<span class="ident">TCFType</span>;
+    <span class="kw">use</span> <span class="ident">core_foundation</span>::{<span class="ident">number</span>, <span class="ident">string</span>, <span class="ident">url</span>};
+    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>;
+
+    <span class="comment">// For compatibility with 10.7 a string is used instead of global kCFURLIsExcludedFromBackupKey</span>
+    <span class="kw">let</span> <span class="ident">is_excluded_key</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">string</span>::<span class="ident">CFString</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="string">&quot;NSURLIsExcludedFromBackupKey&quot;</span>.<span class="ident">parse</span>();
+    <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">url</span>::<span class="ident">CFURL</span>::<span class="ident">from_path</span>(<span class="ident">path</span>, <span class="bool-val">false</span>);
+    <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">path</span>), <span class="prelude-val">Ok</span>(<span class="ident">is_excluded_key</span>)) <span class="op">=</span> (<span class="ident">path</span>, <span class="ident">is_excluded_key</span>) {
+        <span class="kw">unsafe</span> {
+            <span class="ident">url</span>::<span class="ident">CFURLSetResourcePropertyForKey</span>(
+                <span class="ident">path</span>.<span class="ident">as_concrete_TypeRef</span>(),
+                <span class="ident">is_excluded_key</span>.<span class="ident">as_concrete_TypeRef</span>(),
+                <span class="ident">number</span>::<span class="ident">kCFBooleanTrue</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>,
+                <span class="ident">ptr</span>::<span class="ident">null_mut</span>(),
+            );
+        }
+    }
+    <span class="comment">// Errors are ignored, since it&#39;s an optional feature and failure</span>
+    <span class="comment">// doesn&#39;t prevent Cargo from working</span>
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

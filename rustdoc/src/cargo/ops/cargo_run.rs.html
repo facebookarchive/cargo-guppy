@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/ops/cargo_run.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_run.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/ops/cargo_run.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_run.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1"> 1</span>
@@ -97,9 +97,6 @@
 <span id="94">94</span>
 <span id="95">95</span>
 <span id="96">96</span>
-<span id="97">97</span>
-<span id="98">98</span>
-<span id="99">99</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::<span class="ident">OsString</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>;
@@ -107,14 +104,18 @@
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">TargetKind</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ops</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">CargoResult</span>, <span class="ident">ProcessError</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">CargoResult</span>;
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">run</span>(
     <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">ops</span>::<span class="ident">CompileOptions</span>,
     <span class="ident">args</span>: <span class="kw-2">&amp;</span>[<span class="ident">OsString</span>],
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProcessError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>();
+
+    <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">filter</span>.<span class="ident">contains_glob_patterns</span>() {
+        <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;`cargo run` does not support glob patterns on target selection&quot;</span>)
+    }
 
     <span class="comment">// We compute the `bins` here *just for diagnosis*. The actual set of</span>
     <span class="comment">// packages to be run is determined by the `ops::compile` call below.</span>
@@ -154,10 +155,11 @@
 
     <span class="kw">if</span> <span class="ident">bins</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="ident">options</span>.<span class="ident">filter</span>.<span class="ident">is_specific</span>() {
-            <span class="kw">let</span> <span class="ident">names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bins</span>
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bins</span>
                 .<span class="ident">into_iter</span>()
                 .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_pkg</span>, <span class="ident">target</span>)<span class="op">|</span> <span class="ident">target</span>.<span class="ident">name</span>())
                 .<span class="ident">collect</span>();
+            <span class="ident">names</span>.<span class="ident">sort</span>();
             <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
                 <span class="string">&quot;`cargo run` could not determine which binary to run. \
                  Use the `--bin` option to specify a binary, \
@@ -190,15 +192,7 @@
 
     <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">status</span>(<span class="string">&quot;Running&quot;</span>, <span class="ident">process</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">process</span>.<span class="ident">exec_replace</span>();
-
-    <span class="kw">match</span> <span class="ident">result</span> {
-        <span class="prelude-val">Ok</span>(()) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">downcast</span>::<span class="op">&lt;</span><span class="ident">ProcessError</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">err</span>))
-        }
-    }
+    <span class="ident">process</span>.<span class="ident">exec_replace</span>()
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "cargo";</script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

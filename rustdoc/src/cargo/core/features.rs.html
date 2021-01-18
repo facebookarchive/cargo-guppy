@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/0227f04/src/cargo/core/features.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>features.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/f13cb7f/src/cargo/core/features.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>features.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -538,6 +538,41 @@
 <span id="535">535</span>
 <span id="536">536</span>
 <span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Support for nightly features in Cargo itself.</span>
 <span class="doccomment">//!</span>
@@ -566,7 +601,7 @@
 <span class="doccomment">//! use core::{Feature, Features};</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! let feature = Feature::launch_into_space();</span>
-<span class="doccomment">//! package.manifest().features().require(feature).chain_err(|| {</span>
+<span class="doccomment">//! package.manifest().unstable_features().require(feature).chain_err(|| {</span>
 <span class="doccomment">//!     &quot;launching Cargo into space right now is unstable and may result in \</span>
 <span class="doccomment">//!      unintended damage to your codebase, use with caution&quot;</span>
 <span class="doccomment">//! })?;</span>
@@ -607,6 +642,8 @@
     <span class="ident">Edition2015</span>,
     <span class="doccomment">/// The 2018 edition</span>
     <span class="ident">Edition2018</span>,
+    <span class="doccomment">/// The 2021 edition</span>
+    <span class="ident">Edition2021</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">Edition</span> {
@@ -614,6 +651,7 @@
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
             <span class="ident">Edition</span>::<span class="ident">Edition2015</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;2015&quot;</span>),
             <span class="ident">Edition</span>::<span class="ident">Edition2018</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;2018&quot;</span>),
+            <span class="ident">Edition</span>::<span class="ident">Edition2021</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;2021&quot;</span>),
         }
     }
 }
@@ -623,14 +661,15 @@
         <span class="kw">match</span> <span class="ident">s</span> {
             <span class="string">&quot;2015&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Edition</span>::<span class="ident">Edition2015</span>),
             <span class="string">&quot;2018&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Edition</span>::<span class="ident">Edition2018</span>),
-            <span class="ident">s</span> <span class="kw">if</span> <span class="ident">s</span>.<span class="ident">parse</span>().<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">y</span>: <span class="ident">u16</span><span class="op">|</span> <span class="ident">y</span> <span class="op">&gt;</span> <span class="number">2020</span> <span class="op">&amp;&amp;</span> <span class="ident">y</span> <span class="op">&lt;</span> <span class="number">2050</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(
+            <span class="string">&quot;2021&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Edition</span>::<span class="ident">Edition2021</span>),
+            <span class="ident">s</span> <span class="kw">if</span> <span class="ident">s</span>.<span class="ident">parse</span>().<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">y</span>: <span class="ident">u16</span><span class="op">|</span> <span class="ident">y</span> <span class="op">&gt;</span> <span class="number">2021</span> <span class="op">&amp;&amp;</span> <span class="ident">y</span> <span class="op">&lt;</span> <span class="number">2050</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(
                 <span class="string">&quot;this version of Cargo is older than the `{}` edition, \
-                 and only supports `2015` and `2018` editions.&quot;</span>,
+                 and only supports `2015`, `2018`, and `2021` editions.&quot;</span>,
                 <span class="ident">s</span>
             ),
             <span class="ident">s</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(
-                <span class="string">&quot;supported edition values are `2015` or `2018`, but `{}` \
-                 is unknown&quot;</span>,
+                <span class="string">&quot;supported edition values are `2015`, `2018`, or `2021`, \
+                 but `{}` is unknown&quot;</span>,
                 <span class="ident">s</span>
             ),
         }
@@ -738,9 +777,6 @@
         <span class="comment">// Overriding profiles for dependencies.</span>
         [<span class="ident">stable</span>] <span class="ident">profile_overrides</span>: <span class="ident">bool</span>,
 
-        <span class="comment">// Separating the namespaces for features and dependencies</span>
-        [<span class="ident">unstable</span>] <span class="ident">namespaced_features</span>: <span class="ident">bool</span>,
-
         <span class="comment">// &quot;default-run&quot; manifest option,</span>
         [<span class="ident">stable</span>] <span class="ident">default_run</span>: <span class="ident">bool</span>,
 
@@ -754,7 +790,7 @@
         [<span class="ident">unstable</span>] <span class="ident">named_profiles</span>: <span class="ident">bool</span>,
 
         <span class="comment">// Opt-in new-resolver behavior.</span>
-        [<span class="ident">unstable</span>] <span class="ident">resolver</span>: <span class="ident">bool</span>,
+        [<span class="ident">stable</span>] <span class="ident">resolver</span>: <span class="ident">bool</span>,
 
         <span class="comment">// Allow to specify whether binaries should be stripped.</span>
         [<span class="ident">unstable</span>] <span class="ident">strip</span>: <span class="ident">bool</span>,
@@ -874,30 +910,50 @@
 <span class="doccomment">///    and then test for your flag or your value and act accordingly.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// If you have any trouble with this, please let us know!</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>, <span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;kebab-case&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CliUnstable</span> {
     <span class="kw">pub</span> <span class="ident">print_im_a_teapot</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">unstable_options</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">no_index_update</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">avoid_dev_deps</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">minimal_versions</span>: <span class="ident">bool</span>,
-    <span class="kw">pub</span> <span class="ident">package_features</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">advanced_env</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">config_include</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">dual_proc_macros</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">mtime_on_use</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">named_profiles</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">binary_dep_depinfo</span>: <span class="ident">bool</span>,
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">deserialize_with</span> <span class="op">=</span> <span class="string">&quot;deserialize_build_std&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">build_std</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">build_std_features</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">timings</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">doctest_xcompile</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">panic_abort_tests</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">jobserver_per_rustc</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">features</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">crate_versions</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">separate_nightlies</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">multitarget</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">rustdoc_map</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">terminal_width</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">namespaced_features</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">weak_dep_features</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">extra_link_arg</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span> <span class="ident">credential_process</span>: <span class="ident">bool</span>,
+}
+
+<span class="kw">fn</span> <span class="ident">deserialize_build_std</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">D</span><span class="op">&gt;</span>(<span class="ident">deserializer</span>: <span class="ident">D</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">D</span>::<span class="ident">Error</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">D</span>: <span class="ident">serde</span>::<span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+{
+    <span class="kw">let</span> <span class="ident">crates</span> <span class="op">=</span> <span class="kw">match</span> <span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>::<span class="ident">deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span> {
+        <span class="prelude-val">Some</span>(<span class="ident">list</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">list</span>,
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+    };
+    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">crates</span>.<span class="ident">join</span>(<span class="string">&quot;,&quot;</span>);
+    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
+        <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">standard_lib</span>::<span class="ident">parse_unstable_flag</span>(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>)),
+    ))
 }
 
 <span class="kw">impl</span> <span class="ident">CliUnstable</span> {
@@ -950,7 +1006,17 @@
                 <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;flag -Z{} does not take a value, found: `{}`&quot;</span>, <span class="ident">key</span>, <span class="ident">v</span>);
             }
             <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
-        };
+        }
+
+        <span class="kw">fn</span> <span class="ident">parse_usize_opt</span>(<span class="ident">value</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">value</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">value</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>() {
+                    <span class="prelude-val">Ok</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>),
+                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;expected a number, found: {}&quot;</span>, <span class="ident">e</span>),
+                },
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            })
+        }
 
         <span class="kw">match</span> <span class="ident">k</span> {
             <span class="string">&quot;print-im-a-teapot&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">print_im_a_teapot</span> <span class="op">=</span> <span class="ident">parse_bool</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
@@ -958,7 +1024,6 @@
             <span class="string">&quot;no-index-update&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">no_index_update</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;avoid-dev-deps&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">avoid_dev_deps</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;minimal-versions&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">minimal_versions</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
-            <span class="string">&quot;package-features&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">package_features</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;advanced-env&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">advanced_env</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;config-include&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">config_include</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;dual-proc-macros&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">dual_proc_macros</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
@@ -969,15 +1034,20 @@
             <span class="string">&quot;build-std&quot;</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="self">self</span>.<span class="ident">build_std</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::<span class="ident">standard_lib</span>::<span class="ident">parse_unstable_flag</span>(<span class="ident">v</span>))
             }
+            <span class="string">&quot;build-std-features&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">build_std_features</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">parse_features</span>(<span class="ident">v</span>)),
             <span class="string">&quot;timings&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">timings</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">parse_timings</span>(<span class="ident">v</span>)),
             <span class="string">&quot;doctest-xcompile&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">doctest_xcompile</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;panic-abort-tests&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">panic_abort_tests</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;jobserver-per-rustc&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">jobserver_per_rustc</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;features&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">features</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">parse_features</span>(<span class="ident">v</span>)),
-            <span class="string">&quot;crate-versions&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">crate_versions</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;separate-nightlies&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">separate_nightlies</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;multitarget&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">multitarget</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="string">&quot;rustdoc-map&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">rustdoc_map</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
+            <span class="string">&quot;terminal-width&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">terminal_width</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">parse_usize_opt</span>(<span class="ident">v</span>)<span class="question-mark">?</span>),
+            <span class="string">&quot;namespaced-features&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">namespaced_features</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
+            <span class="string">&quot;weak-dep-features&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">weak_dep_features</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
+            <span class="string">&quot;extra-link-arg&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">extra_link_arg</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
+            <span class="string">&quot;credential-process&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">credential_process</span> <span class="op">=</span> <span class="ident">parse_empty</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="question-mark">?</span>,
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">bail</span><span class="macro">!</span>(<span class="string">&quot;unknown `-Z` flag specified: {}&quot;</span>, <span class="ident">k</span>),
         }
 
