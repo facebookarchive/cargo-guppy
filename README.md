@@ -10,6 +10,7 @@ This repository contains the source code for:
   * [`target-spec`](target-spec): an evaluator for `Cargo.toml` target specifications [![target-spec on crates.io](https://img.shields.io/crates/v/target-spec)](https://crates.io/crates/target-spec) [![Documentation (latest release)](https://docs.rs/target-spec/badge.svg)](https://docs.rs/target-spec/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/target_spec/)
 * tools built on top of guppy:
   * [`determinator`](tools/determinator): figure out what packages changed between two revisions [![determinator on crates.io](https://img.shields.io/crates/v/determinator)](https://crates.io/crates/determinator) [![Documentation (latest release)](https://docs.rs/determinator/badge.svg)](https://docs.rs/determinator/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/determinator/)
+  * [`hakari`](tools/hakari): manage workspace-hack packages [![hakari on crates.io](https://img.shields.io/crates/v/hakari)](https://crates.io/crates/hakari) [![Documentation (latest release)](https://docs.rs/hakari/badge.svg)](https://docs.rs/hakari/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/hakari/)
   * [`cargo-guppy`](cargo-guppy): a command-line frontend for the `guppy` library [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_guppy/)
 * and a number of [internal tools](internal-tools) and [test fixtures](fixtures) used to verify that `guppy` behaves correctly.
 
@@ -44,11 +45,13 @@ Still to come:
 
 The core `guppy` code in this repository is considered **mostly complete** and the API is mostly stable.
 
-We have ideas for a number of tools on top of guppy, and those are still are under **active development**. Tool requirements may cause further changes in the API, but the goal will be to avoid extensive overhauls.
+We're building a number of tools on top of guppy, and those are still are under **active development**. Tool requirements may cause further changes in the API, but the goal will be to avoid extensive overhauls.
 
-`guppy`'s simulation of Cargo builds is almost perfect. The known differences that remain are minor, and are mostly internal inconsistencies in Cargo. Comparison testing with `guppy` has already found several bugs in Cargo, for example:
-* [v2 resolver: a proc macro being specified with the key "proc_macro" vs "proc-macro" causes different results](https://github.com/rust-lang/cargo/issues/8315)
+`guppy`'s simulation of Cargo builds is [extensively tested](https://github.com/facebookincubator/cargo-guppy/blob/master/internal-tools/cargo-compare/src/lib.rs) against upstream Cargo, and there are no known differences.
+Comparison testing has found a number of bugs in upstream Cargo, for example:
 * [v2 resolver: different handling for inactive, optional dependencies based on how they're specified](https://github.com/rust-lang/cargo/issues/8316)
+* [v2 resolver: a proc macro being specified with the key "proc_macro" vs "proc-macro" causes different results](https://github.com/rust-lang/cargo/issues/8315)
+* [specifying different versions in unconditional and target-specific dependency sections causes "multiple rmeta candidates" error](https://github.com/rust-lang/cargo/issues/8032)
 
 ## Production users
 
