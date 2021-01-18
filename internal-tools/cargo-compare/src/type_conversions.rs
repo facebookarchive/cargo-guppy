@@ -20,12 +20,12 @@ impl ToGuppy for cargo::core::PackageId {
             "{} {} ({})",
             self.name(),
             self.version(),
-            self.source_id().into_url()
+            self.source_id().as_url(),
         ))
     }
 }
 
-impl ToGuppy for Vec<cargo::core::InternedString> {
+impl ToGuppy for Vec<cargo::util::interning::InternedString> {
     type Guppy = BTreeSet<String>;
 
     fn to_guppy(&self) -> Self::Guppy {
