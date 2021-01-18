@@ -7,10 +7,14 @@ use cargo::{
     core::{
         compiler::{CompileKind, CompileTarget, RustcTargetData},
         enable_nightly_features,
-        resolver::{features::FeaturesFor, ForceAllTargets, HasDevUnits, ResolveOpts},
+        resolver::{
+            features::{FeaturesFor, RequestedFeatures},
+            ForceAllTargets, HasDevUnits, ResolveOpts,
+        },
         PackageIdSpec, Workspace,
     },
     ops::resolve_ws_with_opts,
+    util::interning::InternedString,
     Config,
 };
 use guppy::{
@@ -26,6 +30,7 @@ use proptest::prelude::*;
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
+    rc::Rc,
 };
 use structopt::StructOpt;
 
@@ -66,12 +71,7 @@ impl GuppyCargoCommon {
         };
         let target_data = RustcTargetData::new(&workspace, &[compile_kind])?;
 
-        let resolve_opts = ResolveOpts::new(
-            self.include_dev,
-            &self.pf.features,
-            self.pf.all_features,
-            !self.pf.no_default_features,
-        );
+        let resolve_opts = ResolveOpts::new(self.include_dev, self.cargo_make_requested_features());
         let packages = &self.pf.packages;
         let specs: Vec<_> = if packages.is_empty() {
             // Pass in the entire workspace.
@@ -253,6 +253,20 @@ impl GuppyCargoCommon {
     ) -> Result<Workspace<'cfg>> {
         // Now create another workspace with the root that was found.
         Workspace::new(root_manifest, config)
+    }
+
+    fn cargo_make_requested_features(&self) -> RequestedFeatures {
+        let features: BTreeSet<_> = self
+            .pf
+            .features
+            .iter()
+            .map(|feature| InternedString::new(feature))
+            .collect();
+        RequestedFeatures {
+            features: Rc::new(features),
+            all_features: self.pf.all_features,
+            uses_default_features: !self.pf.no_default_features,
+        }
     }
 
     fn guppy_current_platform(&self) -> Result<Platform<'static>> {
