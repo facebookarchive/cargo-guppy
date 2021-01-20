@@ -71,7 +71,14 @@ impl GuppyCargoCommon {
         };
         let target_data = RustcTargetData::new(&workspace, &[compile_kind])?;
 
-        let resolve_opts = ResolveOpts::new(self.include_dev, self.cargo_make_requested_features());
+        // TODO: last three arguments will become self.cargo_make_requested_features() in a future
+        // Cargo release.
+        let resolve_opts = ResolveOpts::new(
+            self.include_dev,
+            &self.pf.features,
+            self.pf.all_features,
+            !self.pf.no_default_features,
+        );
         let packages = &self.pf.packages;
         let specs: Vec<_> = if packages.is_empty() {
             // Pass in the entire workspace.
@@ -255,6 +262,7 @@ impl GuppyCargoCommon {
         Workspace::new(root_manifest, config)
     }
 
+    #[allow(dead_code)]
     fn cargo_make_requested_features(&self) -> RequestedFeatures {
         let features: BTreeSet<_> = self
             .pf
