@@ -1,6 +1,6 @@
 # guppy
 
-[![guppy on crates.io](https://img.shields.io/crates/v/guppy)](https://crates.io/crates/guppy) [![Documentation (latest release)](https://docs.rs/guppy/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-brightgreen)](https://facebookincubator.github.io/cargo-guppy/rustdoc/guppy/) [![License](https://img.shields.io/badge/license-Apache-green.svg)](../LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](../LICENSE-MIT)
+[![guppy on crates.io](https://img.shields.io/crates/v/guppy)](https://crates.io/crates/guppy) [![Documentation (latest release)](https://docs.rs/guppy/badge.svg)](https://docs.rs/guppy/) [![Documentation (main)](https://img.shields.io/badge/docs-main-brightgreen)](https://facebookincubator.github.io/cargo-guppy/rustdoc/guppy/) [![License](https://img.shields.io/badge/license-Apache-green.svg)](../LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](../LICENSE-MIT)
 
 Track and query Cargo dependency graphs.
 
@@ -53,7 +53,7 @@ which is essentially two `FeatureSet`s along with some more useful information.
   using the [`proptest`](https://altsysrq.github.io/proptest-book/intro.html) framework.
 * `rayon1`: Support for parallel iterators through [Rayon](docs.rs/rayon/1) (preliminary work
   so far, more parallel iterators to be added in the future).
-* `summaries`: Support for writing out [build summaries](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy-summaries).
+* `summaries`: Support for writing out [build summaries](https://github.com/facebookincubator/cargo-guppy/tree/main/guppy-summaries).
 
 ## Examples
 
@@ -83,7 +83,7 @@ for link in package.direct_links() {
 ```
 
 For more examples, see
-[the `examples` directory](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy/examples).
+[the `examples` directory](https://github.com/facebookincubator/cargo-guppy/tree/main/guppy/examples).
 
 ## Contributing
 

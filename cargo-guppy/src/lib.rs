@@ -30,7 +30,7 @@
 //! ## Diff commands
 //!
 //! * `diff`: perform a diff of two `cargo metadata` JSON outputs
-//! * `diff-summaries`: perform a diff of two [summaries](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy-summaries)
+//! * `diff-summaries`: perform a diff of two [summaries](https://github.com/facebookincubator/cargo-guppy/tree/main/guppy-summaries)
 //!
 //! ## Workspace manipulations
 //!

@@ -24,7 +24,7 @@ use std::{ffi::OsStr, path::Path, str::Utf8Error};
 ///
 /// In most cases, you'll want to compare the current working directory against the [*merge base*][mb],
 /// or [*nearest/greatest/lowest common ancestor*](https://en.wikipedia.org/wiki/Lowest_common_ancestor),
-/// of the current commit with a specified upstream revision, such as `origin/master`. To do so,
+/// of the current commit with a specified upstream revision, such as `origin/main`. To do so,
 /// run:
 ///
 /// * Git: `git diff -z --name-only $(git merge-base <upstream rev> HEAD)`

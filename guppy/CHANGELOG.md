@@ -96,7 +96,7 @@ This includes the changes in version 0.5.0-rc.1, plus:
 * In `FeatureQuery<'g>` and `FeatureSet<'g>`, the lifetime parameter `'g` is now [covariant].
   Compile-time assertions ensure that all lifetime parameters in `guppy` are covariant.
 
-[covariant]: https://github.com/sunshowers/lifetime-variance-example/blob/master/src/lib.rs
+[covariant]: https://github.com/sunshowers/lifetime-variance-example/blob/main/src/lib.rs
 
 ### Upcoming
 

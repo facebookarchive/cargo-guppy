@@ -33,7 +33,7 @@ use target_spec::TargetSpec;
 /// metadata`.
 ///
 /// For examples on how to use `PackageGraph`, see
-/// [the `examples` directory](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy/examples)
+/// [the `examples` directory](https://github.com/facebookincubator/cargo-guppy/tree/main/guppy/examples)
 /// in this crate.
 #[derive(Clone, Debug)]
 pub struct PackageGraph {
