@@ -181,7 +181,7 @@ The default rules included with this copy of the determinator are:
 ```
 
 The latest version of the default rules is available
-[on GitHub](https://github.com/facebookincubator/cargo-guppy/blob/master/tools/determinator/default-rules.toml).
+[on GitHub](https://github.com/facebookincubator/cargo-guppy/blob/main/tools/determinator/default-rules.toml).
 "),
         pub const DEFAULT_RULES_TOML: &'static str = include_str!("../default-rules.toml");
     }

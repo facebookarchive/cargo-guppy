@@ -1,17 +1,17 @@
 # cargo-guppy: track and query dependency graphs
 
-[![Build Status](https://github.com/facebookincubator/cargo-guppy/workflows/CI/badge.svg?branch=master)]((https://github.com/facebookincubator/cargo-guppy/actions?query=workflow%3ACI+branch%3Amaster))
+[![Build Status](https://github.com/facebookincubator/cargo-guppy/workflows/CI/badge.svg?branch=main)]((https://github.com/facebookincubator/cargo-guppy/actions?query=workflow%3ACI+branch%3Amain))
 [![License](https://img.shields.io/badge/license-Apache-green.svg)](LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE-MIT)
 
 This repository contains the source code for:
-* [`guppy`](guppy): a library for performing queries on Cargo dependency graphs [![guppy on crates.io](https://img.shields.io/crates/v/guppy)](https://crates.io/crates/guppy) [![Documentation (latest release)](https://docs.rs/guppy/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/guppy/)
+* [`guppy`](guppy): a library for performing queries on Cargo dependency graphs [![guppy on crates.io](https://img.shields.io/crates/v/guppy)](https://crates.io/crates/guppy) [![Documentation (latest release)](https://docs.rs/guppy/badge.svg)](https://docs.rs/guppy/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/guppy/)
 * libraries used by guppy:
-  * [`guppy-summaries`](guppy-summaries): a library for managing build summaries listing packages and features [![guppy-summaries on crates.io](https://img.shields.io/crates/v/guppy-summaries)](https://crates.io/crates/guppy-summaries) [![Documentation (latest release)](https://docs.rs/guppy-summaries/badge.svg)](https://docs.rs/guppy/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/guppy_summaries/)
-  * [`target-spec`](target-spec): an evaluator for `Cargo.toml` target specifications [![target-spec on crates.io](https://img.shields.io/crates/v/target-spec)](https://crates.io/crates/target-spec) [![Documentation (latest release)](https://docs.rs/target-spec/badge.svg)](https://docs.rs/target-spec/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/target_spec/)
+  * [`guppy-summaries`](guppy-summaries): a library for managing build summaries listing packages and features [![guppy-summaries on crates.io](https://img.shields.io/crates/v/guppy-summaries)](https://crates.io/crates/guppy-summaries) [![Documentation (latest release)](https://docs.rs/guppy-summaries/badge.svg)](https://docs.rs/guppy/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/guppy_summaries/)
+  * [`target-spec`](target-spec): an evaluator for `Cargo.toml` target specifications [![target-spec on crates.io](https://img.shields.io/crates/v/target-spec)](https://crates.io/crates/target-spec) [![Documentation (latest release)](https://docs.rs/target-spec/badge.svg)](https://docs.rs/target-spec/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/target_spec/)
 * tools built on top of guppy:
-  * [`determinator`](tools/determinator): figure out what packages changed between two revisions [![determinator on crates.io](https://img.shields.io/crates/v/determinator)](https://crates.io/crates/determinator) [![Documentation (latest release)](https://docs.rs/determinator/badge.svg)](https://docs.rs/determinator/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/determinator/)
-  * [`hakari`](tools/hakari): manage workspace-hack packages [![hakari on crates.io](https://img.shields.io/crates/v/hakari)](https://crates.io/crates/hakari) [![Documentation (latest release)](https://docs.rs/hakari/badge.svg)](https://docs.rs/hakari/) [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/hakari/)
-  * [`cargo-guppy`](cargo-guppy): a command-line frontend for the `guppy` library [![Documentation (master)](https://img.shields.io/badge/docs-master-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_guppy/)
+  * [`determinator`](tools/determinator): figure out what packages changed between two revisions [![determinator on crates.io](https://img.shields.io/crates/v/determinator)](https://crates.io/crates/determinator) [![Documentation (latest release)](https://docs.rs/determinator/badge.svg)](https://docs.rs/determinator/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/determinator/)
+  * [`hakari`](tools/hakari): manage workspace-hack packages [![hakari on crates.io](https://img.shields.io/crates/v/hakari)](https://crates.io/crates/hakari) [![Documentation (latest release)](https://docs.rs/hakari/badge.svg)](https://docs.rs/hakari/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/hakari/)
+  * [`cargo-guppy`](cargo-guppy): a command-line frontend for the `guppy` library [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_guppy/)
 * and a number of [internal tools](internal-tools) and [test fixtures](fixtures) used to verify that `guppy` behaves correctly.
 
 ## Use cases
@@ -47,7 +47,7 @@ The core `guppy` code in this repository is considered **mostly complete** and t
 
 We're building a number of tools on top of guppy, and those are still are under **active development**. Tool requirements may cause further changes in the API, but the goal will be to avoid extensive overhauls.
 
-`guppy`'s simulation of Cargo builds is [extensively tested](https://github.com/facebookincubator/cargo-guppy/blob/master/internal-tools/cargo-compare/src/lib.rs) against upstream Cargo, and there are no known differences.
+`guppy`'s simulation of Cargo builds is [extensively tested](https://github.com/facebookincubator/cargo-guppy/blob/main/internal-tools/cargo-compare/src/lib.rs) against upstream Cargo, and there are no known differences.
 Comparison testing has found a number of bugs in upstream Cargo, for example:
 * [v2 resolver: different handling for inactive, optional dependencies based on how they're specified](https://github.com/rust-lang/cargo/issues/8316)
 * [v2 resolver: a proc macro being specified with the key "proc_macro" vs "proc-macro" causes different results](https://github.com/rust-lang/cargo/issues/8315)
@@ -57,13 +57,13 @@ Comparison testing has found a number of bugs in upstream Cargo, for example:
 
 `cargo-guppy` is extensively used by the [Diem Core](https://github.com/diem/diem) project.
 
-`guppy` is used for [several lint checks](https://github.com/diem/diem/blob/master/devtools/x/src/lint/guppy.rs). This includes basic rules that look at every workspace package separately:
+`guppy` is used for [several lint checks](https://github.com/diem/diem/blob/main/devtools/x/src/lint/guppy.rs). This includes basic rules that look at every workspace package separately:
 * every package has fields like `author` and `license` specified
 * crate names and paths should use `-` instead of `_`
 
 to more complex rules about the overall dependency graph, such as:
 * some third-party dependencies are banned from the workspace entirely, or only from default builds
-* every workspace package depends on a `workspace-hack` crate (similar to [rustc-workspace-hack](https://github.com/rust-lang/rust/tree/master/src/tools/rustc-workspace-hack))
+* every workspace package depends on a `workspace-hack` crate (similar to [rustc-workspace-hack](https://github.com/rust-lang/rust/tree/main/src/tools/rustc-workspace-hack))
 * for any given third-party dependency, the workspace only depends on one version of it directly (transitive dependencies to other versions are still allowed)
 * every workspace package is categorized as either *production* or *test-only*, and the linter checks that test-only crates are not included in production builds
 * support for *overlay features*, which allow test-only code to be:

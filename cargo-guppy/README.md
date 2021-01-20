@@ -1,6 +1,6 @@
 # cargo-guppy
 
-[![Documentation (master)](https://img.shields.io/badge/docs-master-brightgreen)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_guppy/)
+[![Documentation (main)](https://img.shields.io/badge/docs-main-brightgreen)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_guppy/)
 [![License](https://img.shields.io/badge/license-Apache-green.svg)](../LICENSE-APACHE)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](../LICENSE-MIT)
 
@@ -33,7 +33,7 @@ The list of commands is not currently stable and is subject to change.
 ### Diff commands
 
 * `diff`: perform a diff of two `cargo metadata` JSON outputs
-* `diff-summaries`: perform a diff of two [summaries](https://github.com/facebookincubator/cargo-guppy/tree/master/guppy-summaries)
+* `diff-summaries`: perform a diff of two [summaries](https://github.com/facebookincubator/cargo-guppy/tree/main/guppy-summaries)
 
 ### Workspace manipulations
 
