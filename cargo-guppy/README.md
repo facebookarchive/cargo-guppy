@@ -14,7 +14,7 @@ A command-line frontend for `guppy`.
 you have `cargo` installed (preferably through [rustup](https://rustup.rs/)), then run:
 
 ```bash
-cargo install --git https://github.com/facebookincubator/cargo-guppy cargo-guppy
+cargo install --git https://github.com/facebookincubator/cargo-guppy --branch main cargo-guppy
 ```
 
 This will make the `cargo guppy` command available.
