@@ -333,10 +333,10 @@ pub(crate) fn write_toml(
                 }
             };
 
-            let default_features = if all_features.contains("default") {
-                "true"
+            let default_features_kv = if all_features.contains("default") {
+                ""
             } else {
-                "false"
+                "default-features = false, "
             };
             let all_features: Vec<_> = all_features
                 .iter()
@@ -346,8 +346,8 @@ pub(crate) fn write_toml(
 
             writeln!(
                 out,
-                "{} = {{ {}{}default-features = {}, features = [{}] }}",
-                name, package_kv, source_kv, default_features, all_features_str,
+                "{} = {{ {}{}{}features = [{}] }}",
+                name, package_kv, source_kv, default_features_kv, all_features_str,
             )?;
         }
 
