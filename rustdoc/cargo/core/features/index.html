@@ -1,53 +1,91 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `features` mod in crate `cargo`."><meta name="keywords" content="rust, rustlang, rust-lang, features"><title>cargo::core::features - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a><p class="location">Module features</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#functions">Functions</a></li></ul></div><p class="location"><a href="../../index.html">cargo</a>::<wbr><a href="../index.html">core</a></p><script>window.sidebarCurrent = {name: "features", ty: "mod", relpath: "../"};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../../src/cargo/core/features.rs.html#1-586" title="goto source code">[src]</a></span><span class="in-band">Module <a href="../../index.html">cargo</a>::<wbr><a href="../index.html">core</a>::<wbr><a class="mod" href="">features</a></span></h1><div class="docblock"><p>Support for nightly features in Cargo itself.</p>
+                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../../src/cargo/core/features.rs.html#1-734" title="goto source code">[src]</a></span><span class="in-band">Module <a href="../../index.html">cargo</a>::<wbr><a href="../index.html">core</a>::<wbr><a class="mod" href="">features</a></span></h1><div class="docblock"><p>Support for nightly features in Cargo itself.</p>
 <p>This file is the version of <code>feature_gate.rs</code> in upstream Rust for Cargo
 itself and is intended to be the avenue for which new features in Cargo are
 gated by default and then eventually stabilized. All known stable and
 unstable features are tracked in this file.</p>
 <p>If you're reading this then you're likely interested in adding a feature to
-Cargo, and the good news is that it shouldn't be too hard! To do this you'll
-want to follow these steps:</p>
+Cargo, and the good news is that it shouldn't be too hard! First determine
+how the feature should be gated:</p>
+<ul>
+<li>New syntax in Cargo.toml should use <code>cargo-features</code>.</li>
+<li>New CLI options should use <code>-Z unstable-options</code>.</li>
+<li>New functionality that may not have an interface, or the interface has
+not yet been designed, or for more complex features that affect multiple
+parts of Cargo should use a new <code>-Z</code> flag.</li>
+</ul>
+<p>See below for more details.</p>
+<p>When adding new tests for your feature, usually the tests should go into a
+new module of the testsuite. See
+<a href="https://doc.crates.io/contrib/tests/writing.html">https://doc.crates.io/contrib/tests/writing.html</a> for more information on
+writing tests. Particularly, check out the &quot;Testing Nightly Features&quot;
+section for testing unstable features.</p>
+<p>After you have added your feature, be sure to update the unstable
+documentation at <code>src/doc/src/reference/unstable.md</code> to include a short
+description of how to use your new feature.</p>
+<p>And hopefully that's it!</p>
+<h2 id="new-cargotoml-syntax" class="section-header"><a href="#new-cargotoml-syntax">New Cargo.toml syntax</a></h2>
+<p>The steps for adding new Cargo.toml syntax are:</p>
 <ol>
 <li>
-<p>Add your feature. Do this by searching for &quot;look here&quot; in this file and
-expanding the macro invocation that lists all features with your new
-feature.</p>
+<p>Add the cargo-features unstable gate. Search below for &quot;look here&quot; to
+find the <code>features!</code> macro and add your feature to the list.</p>
 </li>
 <li>
-<p>Find the appropriate place to place the feature gate in Cargo itself. If
-you're extending the manifest format you'll likely just want to modify
-the <code>Manifest::feature_gate</code> function, but otherwise you may wish to
-place the feature gate elsewhere in Cargo.</p>
+<p>Update the Cargo.toml parsing code to handle your new feature.</p>
 </li>
 <li>
-<p>To actually perform the feature gate, you'll want to have code that looks
-like:</p>
+<p>Wherever you added the new parsing code, call
+<code>features.require(Feature::my_feature_name())?</code> if the new syntax is
+used. This will return an error if the user hasn't listed the feature
+in <code>cargo-features</code> or this is not the nightly channel.</p>
 </li>
 </ol>
-
-<div class='information'><div class='tooltip compile_fail'>ⓘ<span class='tooltiptext'>This example deliberately fails to compile</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">Feature</span>, <span class="ident">Features</span>};
-
-<span class="kw">let</span> <span class="ident">feature</span> <span class="op">=</span> <span class="ident">Feature</span>::<span class="ident">launch_into_space</span>();
-<span class="ident">package</span>.<span class="ident">manifest</span>().<span class="ident">unstable_features</span>().<span class="ident">require</span>(<span class="ident">feature</span>).<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
-    <span class="string">&quot;launching Cargo into space right now is unstable and may result in \
-     unintended damage to your codebase, use with caution&quot;</span>
-})<span class="question-mark">?</span>;</pre></div>
-<p>Notably you'll notice the <code>require</code> function called with your <code>Feature</code>, and
-then you use <code>chain_err</code> to tack on more context for why the feature was
-required when the feature isn't activated.</p>
-<ol start="4">
-<li>Update the unstable documentation at
-<code>src/doc/src/reference/unstable.md</code> to include a short description of
-how to use your new feature. When the feature is stabilized, be sure
-that the Cargo Guide or Reference is updated to fully document the
-feature and remove the entry from the Unstable section.</li>
+<h2 id="-z-unstable-options" class="section-header"><a href="#-z-unstable-options"><code>-Z unstable-options</code></a></h2>
+<p><code>-Z unstable-options</code> is intended to force the user to opt-in to new CLI
+flags, options, and new subcommands.</p>
+<p>The steps to add a new command-line option are:</p>
+<ol>
+<li>Add the option to the CLI parsing code. In the help text, be sure to
+include <code>(unstable)</code> to note that this is an unstable option.</li>
+<li>Where the CLI option is loaded, be sure to call
+<a href="../../../cargo/core/features/struct.CliUnstable.html#method.fail_if_stable_opt" title="CliUnstable::fail_if_stable_opt"><code>CliUnstable::fail_if_stable_opt</code></a>. This will return an error if <code>-Z unstable options</code> was not passed.</li>
 </ol>
-<p>And hopefully that's it! Bear with us though that this is, at the time of
-this writing, a very new feature in Cargo. If the process differs from this
-we'll be sure to update this documentation!</p>
+<h2 id="-z-options" class="section-header"><a href="#-z-options"><code>-Z</code> options</a></h2>
+<p>The steps to add a new <code>-Z</code> option are:</p>
+<ol>
+<li>Add the option to the <a href="../../../cargo/core/features/struct.CliUnstable.html" title="CliUnstable"><code>CliUnstable</code></a> struct below. Flags can take an
+optional value if you want.</li>
+<li>Update the <a href="../../../cargo/core/features/struct.CliUnstable.html#method.add" title="CliUnstable::add"><code>CliUnstable::add</code></a> function to parse the flag.</li>
+<li>Wherever the new functionality is implemented, call
+<a href="../../../cargo/util/config/struct.Config.html#method.cli_unstable" title="crate::util::config::Config::cli_unstable"><code>Config::cli_unstable</code></a> to
+get an instance of <code>CliUnstable</code> and check if the option has been
+enabled on the <code>CliUnstable</code> instance. Nightly gating is already
+handled, so no need to worry about that.</li>
+<li>Update the <code>-Z help</code> documentation in the <code>main</code> function.</li>
+</ol>
+<h2 id="stabilization" class="section-header"><a href="#stabilization">Stabilization</a></h2>
+<p>For the stabilization process, see
+<a href="https://doc.crates.io/contrib/process/unstable.html#stabilization">https://doc.crates.io/contrib/process/unstable.html#stabilization</a>.</p>
+<p>The steps for stabilizing are roughly:</p>
+<ol>
+<li>Update the feature to be stable, based on the kind of feature:</li>
+<li><code>cargo-features</code>: Change the feature to <code>stable</code> in the <code>features!</code>
+macro below.</li>
+<li><code>-Z unstable-options</code>: Find the call to <code>fail_if_stable_opt</code> and
+remove it. Be sure to update the man pages if necessary.</li>
+<li><code>-Z</code> flag: Change the parsing code in <a href="../../../cargo/core/features/struct.CliUnstable.html#method.add" title="CliUnstable::add"><code>CliUnstable::add</code></a> to call
+<code>stabilized_warn</code> or <code>stabilized_err</code>. Remove it from the <code>-Z help</code>
+docs in the <code>main</code> function. Remove the <code>(unstable)</code> note in the
+clap help text if necessary.</li>
+<li>Remove <code>masquerade_as_nightly_cargo</code> from any tests, and remove
+<code>cargo-features</code> from <code>Cargo.toml</code> test files if any.</li>
+<li>Remove the docs from unstable.md and update the redirect at the bottom
+of that page. Update the rest of the documentation to add the new
+feature.</li>
+</ol>
 </div><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
 <table><tr class="module-item"><td><a class="struct" href="struct.CliUnstable.html" title="cargo::core::features::CliUnstable struct">CliUnstable</a></td><td class="docblock-short"><p>A parsed representation of all unstable flags that Cargo accepts.</p>
 </td></tr><tr class="module-item"><td><a class="struct" href="struct.Feature.html" title="cargo::core::features::Feature struct">Feature</a></td><td class="docblock-short"></td></tr><tr class="module-item"><td><a class="struct" href="struct.Features.html" title="cargo::core::features::Features struct">Features</a></td><td class="docblock-short"></td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>

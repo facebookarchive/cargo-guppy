@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/783bc43/src/cargo/util/toml/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/ba3311e/src/cargo/util/toml/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
@@ -1921,10 +1921,6 @@
 <span id="1918">1918</span>
 <span id="1919">1919</span>
 <span id="1920">1920</span>
-<span id="1921">1921</span>
-<span id="1922">1922</span>
-<span id="1923">1923</span>
-<span id="1924">1924</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
@@ -1996,6 +1992,17 @@
             .<span class="ident">unwrap_or</span>(<span class="ident">manifest_file</span>);
         <span class="ident">parse</span>(<span class="ident">contents</span>, <span class="ident">pretty_filename</span>, <span class="ident">config</span>)<span class="question-mark">?</span>
     };
+
+    <span class="comment">// Provide a helpful error message for a common user error.</span>
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">package</span>) <span class="op">=</span> <span class="ident">toml</span>.<span class="ident">get</span>(<span class="string">&quot;package&quot;</span>).<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">toml</span>.<span class="ident">get</span>(<span class="string">&quot;project&quot;</span>)) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">feats</span>) <span class="op">=</span> <span class="ident">package</span>.<span class="ident">get</span>(<span class="string">&quot;cargo-features&quot;</span>) {
+            <span class="macro">bail</span><span class="macro">!</span>(
+                <span class="string">&quot;cargo-features = {} was found in the wrong location, it \
+                 should be set at the top of Cargo.toml before any tables&quot;</span>,
+                <span class="ident">toml</span>::<span class="ident">to_string</span>(<span class="ident">feats</span>).<span class="ident">unwrap</span>()
+            );
+        }
+    }
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unused</span> <span class="op">=</span> <span class="ident">BTreeSet</span>::<span class="ident">new</span>();
     <span class="kw">let</span> <span class="ident">manifest</span>: <span class="ident">TomlManifest</span> <span class="op">=</span> <span class="ident">serde_ignored</span>::<span class="ident">deserialize</span>(<span class="ident">toml</span>, <span class="op">|</span><span class="ident">path</span><span class="op">|</span> {
@@ -2742,7 +2749,6 @@ and this will become a hard error in the future.&quot;</span>,
     <span class="ident">exclude</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">include</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">publish</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VecStringOrBool</span><span class="op">&gt;</span>,
-    <span class="ident">publish_lockfile</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
     <span class="ident">workspace</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">im_a_teapot</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
     <span class="ident">autobins</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
@@ -3221,19 +3227,6 @@ and this will become a hard error in the future.&quot;</span>,
             <span class="prelude-val">None</span> <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">VecStringOrBool</span>::<span class="ident">Bool</span>(<span class="bool-val">true</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
         };
 
-        <span class="kw">let</span> <span class="ident">publish_lockfile</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">project</span>.<span class="ident">publish_lockfile</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">features</span>.<span class="ident">require</span>(<span class="ident">Feature</span>::<span class="ident">publish_lockfile</span>())<span class="question-mark">?</span>;
-                <span class="ident">warnings</span>.<span class="ident">push</span>(
-                    <span class="string">&quot;The `publish-lockfile` feature is deprecated and currently \
-                     has no effect. It may be removed in a future version.&quot;</span>
-                        .<span class="ident">to_string</span>(),
-                );
-                <span class="ident">b</span>
-            }
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">features</span>.<span class="ident">is_enabled</span>(<span class="ident">Feature</span>::<span class="ident">publish_lockfile</span>()),
-        };
-
         <span class="kw">if</span> <span class="ident">summary</span>.<span class="ident">features</span>().<span class="ident">contains_key</span>(<span class="string">&quot;default-features&quot;</span>) {
             <span class="ident">warnings</span>.<span class="ident">push</span>(
                 <span class="string">&quot;`default-features = [\&quot;..\&quot;]` was found in [features]. \
@@ -3265,7 +3258,6 @@ and this will become a hard error in the future.&quot;</span>,
             <span class="ident">custom_metadata</span>,
             <span class="ident">profiles</span>,
             <span class="ident">publish</span>,
-            <span class="ident">publish_lockfile</span>,
             <span class="ident">replace</span>,
             <span class="ident">patch</span>,
             <span class="ident">workspace_config</span>,
