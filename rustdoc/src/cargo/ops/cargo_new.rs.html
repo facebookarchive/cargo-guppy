@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/b52fc0a/src/cargo/ops/cargo_new.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_new.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/c3abcfe/src/cargo/ops/cargo_new.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cargo_new.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -869,6 +869,26 @@
 <span id="866">866</span>
 <span id="867">867</span>
 <span id="868">868</span>
+<span id="869">869</span>
+<span id="870">870</span>
+<span id="871">871</span>
+<span id="872">872</span>
+<span id="873">873</span>
+<span id="874">874</span>
+<span id="875">875</span>
+<span id="876">876</span>
+<span id="877">877</span>
+<span id="878">878</span>
+<span id="879">879</span>
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Shell</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::{<span class="ident">CargoResult</span>, <span class="ident">CargoResultExt</span>};
@@ -1035,23 +1055,42 @@
     <span class="comment">// If --name is already used to override, no point in suggesting it</span>
     <span class="comment">// again as a fix.</span>
     <span class="kw">let</span> <span class="ident">name_help</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">show_name_help</span> {
-        <span class="string">&quot;\nIf you need a crate name to not match the directory name, consider using --name flag.&quot;</span>
+        <span class="string">&quot;\nIf you need a package name to not match the directory name, consider using --name flag.&quot;</span>
     } <span class="kw">else</span> {
         <span class="string">&quot;&quot;</span>
     };
-    <span class="ident">restricted_names</span>::<span class="ident">validate_package_name</span>(<span class="ident">name</span>, <span class="string">&quot;crate name&quot;</span>, <span class="ident">name_help</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">bin_help</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">help</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="ident">name_help</span>);
+        <span class="kw">if</span> <span class="ident">has_bin</span> {
+            <span class="ident">help</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;\n\
+                If you need a binary with the name \&quot;{name}\&quot;, use a valid package \
+                name, and set the binary name to be different from the package. \
+                This can be done by setting the binary filename to `src/bin/{name}.rs` \
+                or change the name in Cargo.toml with:\n\
+                \n    \
+                [bin]\n    \
+                name = \&quot;{name}\&quot;\n    \
+                path = \&quot;src/main.rs\&quot;\n\
+            &quot;</span>,
+                <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>
+            ));
+        }
+        <span class="ident">help</span>
+    };
+    <span class="ident">restricted_names</span>::<span class="ident">validate_package_name</span>(<span class="ident">name</span>, <span class="string">&quot;package name&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">bin_help</span>())<span class="question-mark">?</span>;
 
     <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_keyword</span>(<span class="ident">name</span>) {
         <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-            <span class="string">&quot;the name `{}` cannot be used as a crate name, it is a Rust keyword{}&quot;</span>,
+            <span class="string">&quot;the name `{}` cannot be used as a package name, it is a Rust keyword{}&quot;</span>,
             <span class="ident">name</span>,
-            <span class="ident">name_help</span>
+            <span class="ident">bin_help</span>()
         );
     }
     <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_conflicting_artifact_name</span>(<span class="ident">name</span>) {
         <span class="kw">if</span> <span class="ident">has_bin</span> {
             <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-                <span class="string">&quot;the name `{}` cannot be used as a crate name, \
+                <span class="string">&quot;the name `{}` cannot be used as a package name, \
                 it conflicts with cargo&#39;s build directory names{}&quot;</span>,
                 <span class="ident">name</span>,
                 <span class="ident">name_help</span>
@@ -1067,16 +1106,17 @@
     }
     <span class="kw">if</span> <span class="ident">name</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;test&quot;</span> {
         <span class="ident">anyhow</span>::<span class="macro">bail</span><span class="macro">!</span>(
-            <span class="string">&quot;the name `test` cannot be used as a crate name, \
+            <span class="string">&quot;the name `test` cannot be used as a package name, \
             it conflicts with Rust&#39;s built-in test library{}&quot;</span>,
-            <span class="ident">name_help</span>
+            <span class="ident">bin_help</span>()
         );
     }
     <span class="kw">if</span> [<span class="string">&quot;core&quot;</span>, <span class="string">&quot;std&quot;</span>, <span class="string">&quot;alloc&quot;</span>, <span class="string">&quot;proc_macro&quot;</span>, <span class="string">&quot;proc-macro&quot;</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
         <span class="ident">shell</span>.<span class="ident">warn</span>(<span class="macro">format</span><span class="macro">!</span>(
             <span class="string">&quot;the name `{}` is part of Rust&#39;s standard library\n\
-            It is recommended to use a different name to avoid problems.&quot;</span>,
-            <span class="ident">name</span>
+            It is recommended to use a different name to avoid problems.{}&quot;</span>,
+            <span class="ident">name</span>,
+            <span class="ident">bin_help</span>()
         ))<span class="question-mark">?</span>;
     }
     <span class="kw">if</span> <span class="ident">restricted_names</span>::<span class="ident">is_windows_reserved</span>(<span class="ident">name</span>) {
@@ -1653,7 +1693,7 @@ mod tests {
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">Workspace</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">join</span>(<span class="string">&quot;Cargo.toml&quot;</span>), <span class="ident">config</span>) {
         <span class="kw">crate</span>::<span class="ident">display_warning_with_error</span>(
-            <span class="string">&quot;compiling this new crate may not work due to invalid \
+            <span class="string">&quot;compiling this new package may not work due to invalid \
              workspace configuration&quot;</span>,
             <span class="kw-2">&amp;</span><span class="ident">e</span>,
             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">config</span>.<span class="ident">shell</span>(),
