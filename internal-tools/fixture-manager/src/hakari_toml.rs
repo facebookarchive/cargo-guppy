@@ -6,6 +6,7 @@ use anyhow::Result;
 use fixtures::json::JsonFixture;
 use hakari::{diffy::PatchFormatter, Hakari, HakariBuilder, HakariCargoToml, TomlOptions};
 use once_cell::sync::Lazy;
+use proptest::prelude::*;
 use proptest_ext::ValueGenerator;
 use std::path::{Path, PathBuf};
 
@@ -39,7 +40,7 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
         let graph = fixture.graph();
         // TODO: add tests for hakari id -- none of our fixtures appear to have a
         // workspace-hack or other Hakari package
-        let hakari_builder_strategy = HakariBuilder::prop010_strategy(graph, None);
+        let hakari_builder_strategy = HakariBuilder::prop010_strategy(graph, Just(None));
 
         let iter = (0..count).map(move |idx| {
             // The partial clones mean that a change to the algorithm in part of the strategy won't
