@@ -149,6 +149,14 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
         self.omitted_packages.iter().copied()
     }
 
+    /// Returns true if a package ID is currently omitted from the set.
+    ///
+    /// Returns an error if this package ID isn't known to the underlying graph.
+    pub fn omits_package(&self, package_id: &PackageId) -> Result<bool, guppy::Error> {
+        self.graph.metadata(package_id)?;
+        Ok(self.omitted_packages.contains(package_id))
+    }
+
     /// If set to true, runs Hakari in verify mode.
     ///
     /// By default, Hakari runs in generate mode: the goal of this mode is to update an existing
