@@ -1048,6 +1048,20 @@
 <span id="1045">1045</span>
 <span id="1046">1046</span>
 <span id="1047">1047</span>
+<span id="1048">1048</span>
+<span id="1049">1049</span>
+<span id="1050">1050</span>
+<span id="1051">1051</span>
+<span id="1052">1052</span>
+<span id="1053">1053</span>
+<span id="1054">1054</span>
+<span id="1055">1055</span>
+<span id="1056">1056</span>
+<span id="1057">1057</span>
+<span id="1058">1058</span>
+<span id="1059">1059</span>
+<span id="1060">1060</span>
+<span id="1061">1061</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1194,18 +1208,25 @@
     }
 
     <span class="doccomment">/// Returns the currently omitted packages.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">omitted_packages</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
-        <span class="self">self</span>.<span class="ident">omitted_packages</span>.<span class="ident">iter</span>().<span class="ident">copied</span>()
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If `verify_mode` is currently false (the default), also returns the Hakari package if</span>
+    <span class="doccomment">/// specified. This is because the Hakari package is treated as omitted by the algorithm.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">omitted_packages</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
+        <span class="kw">let</span> <span class="ident">hakari_omitted</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_hakari_omitted</span>();
+        <span class="ident">hakari_omitted</span>.<span class="ident">iter</span>()
     }
 
     <span class="doccomment">/// Returns true if a package ID is currently omitted from the set.</span>
     <span class="doccomment">///</span>
+    <span class="doccomment">/// If `verify_mode` is currently false (the default), also returns true for the Hakari package</span>
+    <span class="doccomment">/// if specified. This is because the Hakari package is treated as omitted by the algorithm.</span>
+    <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if this package ID isn&#39;t known to the underlying graph.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">omits_package</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">guppy</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">omitted_packages</span>.<span class="ident">contains</span>(<span class="ident">package_id</span>))
+
+        <span class="kw">let</span> <span class="ident">hakari_omitted</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_hakari_omitted</span>();
+        <span class="prelude-val">Ok</span>(<span class="ident">hakari_omitted</span>.<span class="ident">is_omitted</span>(<span class="ident">package_id</span>))
     }
 
     <span class="doccomment">/// If set to true, runs Hakari in verify mode.</span>
@@ -1277,28 +1298,34 @@
     <span class="comment">// Helper methods</span>
     <span class="comment">// ---</span>
 
-    <span class="kw">fn</span> <span class="ident">make_omitted_features_only</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">HakariOmitted</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span>, <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> (<span class="ident">hakari_package</span>, <span class="ident">features_only</span>) <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">verify_mode</span> {
-            <span class="kw">let</span> <span class="ident">features_only</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">hakari_package</span> {
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">omitted_packages_only</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
+        <span class="self">self</span>.<span class="ident">omitted_packages</span>.<span class="ident">iter</span>().<span class="ident">copied</span>()
+    }
+
+    <span class="kw">fn</span> <span class="ident">make_hakari_omitted</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HakariOmitted</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">verify_mode</span> {
+            <span class="prelude-val">None</span>
+        } <span class="kw">else</span> {
+            <span class="self">self</span>.<span class="ident">hakari_package</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> <span class="ident">package</span>.<span class="ident">id</span>())
+        };
+
+        <span class="ident">HakariOmitted</span> {
+            <span class="ident">omitted</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">omitted_packages</span>,
+            <span class="ident">hakari_package</span>,
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">make_features_only</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">verify_mode</span> {
+            <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">hakari_package</span> {
                 <span class="prelude-val">Some</span>(<span class="ident">package</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">package</span>.<span class="ident">to_package_set</span>(),
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">resolve_none</span>(),
             }
-            .<span class="ident">to_feature_set</span>(<span class="ident">StandardFeatures</span>::<span class="ident">Default</span>);
-            (<span class="prelude-val">None</span>, <span class="ident">features_only</span>)
+            .<span class="ident">to_feature_set</span>(<span class="ident">StandardFeatures</span>::<span class="ident">Default</span>)
         } <span class="kw">else</span> {
-            (
-                <span class="self">self</span>.<span class="ident">hakari_package</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> <span class="ident">package</span>.<span class="ident">id</span>()),
-                <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">feature_graph</span>().<span class="ident">resolve_none</span>(),
-            )
-        };
-
-        (
-            <span class="ident">HakariOmitted</span> {
-                <span class="ident">omitted</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">omitted_packages</span>,
-                <span class="ident">hakari_package</span>,
-            },
-            <span class="ident">features_only</span>,
-        )
+            <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">feature_graph</span>().<span class="ident">resolve_none</span>()
+        }
     }
 }
 
@@ -1689,7 +1716,8 @@
         };
 
         <span class="kw">let</span> <span class="ident">workspace</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">graph</span>.<span class="ident">workspace</span>();
-        <span class="kw">let</span> (<span class="ident">hakari_omitted</span>, <span class="ident">features_only</span>) <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">make_omitted_features_only</span>();
+        <span class="kw">let</span> <span class="ident">hakari_omitted</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">make_hakari_omitted</span>();
+        <span class="kw">let</span> <span class="ident">features_only</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">make_features_only</span>();
         <span class="kw">let</span> <span class="ident">hakari_omitted_ref</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">hakari_omitted</span>;
         <span class="kw">let</span> <span class="ident">features_only_ref</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">features_only</span>;
 
