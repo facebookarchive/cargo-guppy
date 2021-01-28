@@ -69,7 +69,7 @@ impl HakariBuilderSummary {
             version: builder.resolver_version(),
             verify_mode: builder.verify_mode(),
             omitted_packages: builder
-                .omitted_packages()
+                .omitted_packages_only()
                 .map(|package_id| {
                     builder
                         .graph()

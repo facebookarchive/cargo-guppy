@@ -143,18 +143,25 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
     }
 
     /// Returns the currently omitted packages.
-    pub fn omitted_packages<'b>(
-        &'b self,
-    ) -> impl Iterator<Item = &'g PackageId> + ExactSizeIterator + 'b {
-        self.omitted_packages.iter().copied()
+    ///
+    /// If `verify_mode` is currently false (the default), also returns the Hakari package if
+    /// specified. This is because the Hakari package is treated as omitted by the algorithm.
+    pub fn omitted_packages<'b>(&'b self) -> impl Iterator<Item = &'g PackageId> + 'b {
+        let hakari_omitted = self.make_hakari_omitted();
+        hakari_omitted.iter()
     }
 
     /// Returns true if a package ID is currently omitted from the set.
     ///
+    /// If `verify_mode` is currently false (the default), also returns true for the Hakari package
+    /// if specified. This is because the Hakari package is treated as omitted by the algorithm.
+    ///
     /// Returns an error if this package ID isn't known to the underlying graph.
     pub fn omits_package(&self, package_id: &PackageId) -> Result<bool, guppy::Error> {
         self.graph.metadata(package_id)?;
-        Ok(self.omitted_packages.contains(package_id))
+
+        let hakari_omitted = self.make_hakari_omitted();
+        Ok(hakari_omitted.is_omitted(package_id))
     }
 
     /// If set to true, runs Hakari in verify mode.
@@ -226,28 +233,34 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
     // Helper methods
     // ---
 
-    fn make_omitted_features_only<'b>(&'b self) -> (HakariOmitted<'g, 'b>, FeatureSet<'g>) {
-        let (hakari_package, features_only) = if self.verify_mode {
-            let features_only = match &self.hakari_package {
+    #[cfg(feature = "summaries")]
+    pub(crate) fn omitted_packages_only<'b>(&'b self) -> impl Iterator<Item = &'g PackageId> + 'b {
+        self.omitted_packages.iter().copied()
+    }
+
+    fn make_hakari_omitted<'b>(&'b self) -> HakariOmitted<'g, 'b> {
+        let hakari_package = if self.verify_mode {
+            None
+        } else {
+            self.hakari_package.map(|package| package.id())
+        };
+
+        HakariOmitted {
+            omitted: &self.omitted_packages,
+            hakari_package,
+        }
+    }
+
+    fn make_features_only<'b>(&'b self) -> FeatureSet<'g> {
+        if self.verify_mode {
+            match &self.hakari_package {
                 Some(package) => package.to_package_set(),
                 None => self.graph.resolve_none(),
             }
-            .to_feature_set(StandardFeatures::Default);
-            (None, features_only)
+            .to_feature_set(StandardFeatures::Default)
         } else {
-            (
-                self.hakari_package.map(|package| package.id()),
-                self.graph.feature_graph().resolve_none(),
-            )
-        };
-
-        (
-            HakariOmitted {
-                omitted: &self.omitted_packages,
-                hakari_package,
-            },
-            features_only,
-        )
+            self.graph.feature_graph().resolve_none()
+        }
     }
 }
 
@@ -638,7 +651,8 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
         };
 
         let workspace = builder.graph.workspace();
-        let (hakari_omitted, features_only) = builder.make_omitted_features_only();
+        let hakari_omitted = builder.make_hakari_omitted();
+        let features_only = builder.make_features_only();
         let hakari_omitted_ref = &hakari_omitted;
         let features_only_ref = &features_only;
 

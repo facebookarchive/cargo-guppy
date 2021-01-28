@@ -29,9 +29,10 @@ impl<'g> HakariBuilder<'g, 'static> {
     /// * `hakari_id` is specified but it isn't known to the graph, or isn't in the workspace.
     pub fn prop010_strategy(
         graph: &'g PackageGraph,
-        hakari_id: Option<&'g PackageId>,
+        hakari_id_strategy: impl Strategy<Value = Option<&'g PackageId>> + 'g,
     ) -> impl Strategy<Value = HakariBuilder<'g, 'static>> + 'g {
         (
+            hakari_id_strategy,
             vec(Platform::strategy(any::<TargetFeatures>()), 0..4),
             any::<CargoResolverVersion>(),
             any::<bool>(),
@@ -41,6 +42,7 @@ impl<'g> HakariBuilder<'g, 'static> {
         )
             .prop_map(
                 move |(
+                    hakari_id,
                     platforms,
                     version,
                     verify_mode,
@@ -68,13 +70,17 @@ impl<'g> HakariBuilder<'g, 'static> {
 mod test {
     use super::*;
     use fixtures::json::JsonFixture;
+    use proptest::option;
+    use std::collections::HashSet;
 
     /// Ensure that HakariBuilder roundtrips to its summary format.
     #[test]
     fn builder_summary_roundtrip() {
         for (&name, fixture) in JsonFixture::all_fixtures() {
             let graph = fixture.graph();
-            let strategy = HakariBuilder::prop010_strategy(graph, None);
+            let workspace = graph.workspace();
+            let strategy =
+                HakariBuilder::prop010_strategy(graph, option::of(workspace.prop010_id_strategy()));
             proptest!(|(builder in strategy)| {
                 let summary = builder.to_summary().unwrap_or_else(|err| {
                     panic!("for fixture {}, builder -> summary conversion failed: {}", name, err);
@@ -87,6 +93,39 @@ mod test {
                 });
                 assert_eq!(builder, builder2, "builder roundtripped correctly");
                 assert_eq!(summary, summary2, "summary roundtripped correctly");
+            });
+        }
+    }
+
+    /// Ensure that HakariBuilder's omitted packages and is_omitted match up.
+    #[test]
+    fn omitted_packages() {
+        for (&name, fixture) in JsonFixture::all_fixtures() {
+            let graph = fixture.graph();
+            let workspace = graph.workspace();
+            let strategy =
+                HakariBuilder::prop010_strategy(graph, option::of(workspace.prop010_id_strategy()));
+            proptest!(|(builder in strategy, queries in vec(graph.prop010_id_strategy(), 0..64))| {
+                // Ensure that if verify mode is set to false, the hakari package is omitted.
+                if !builder.verify_mode() {
+                    if let Some(package) = builder.hakari_package() {
+                        assert!(
+                            builder.omits_package(package.id()).expect("valid package ID"),
+                            "for fixture {}, verify mode is false => hakari package is omitted",
+                            name,
+                        );
+                    }
+                }
+                // Ensure that omits_package and omitted_packages match.
+                let omitted_packages: HashSet<_> = builder.omitted_packages().collect();
+                for query_id in queries {
+                    assert_eq!(
+                        omitted_packages.contains(query_id),
+                        builder.omits_package(query_id).expect("valid package ID"),
+                        "for fixture {}, omitted_packages and omits_package match",
+                        name,
+                    );
+                }
             });
         }
     }
