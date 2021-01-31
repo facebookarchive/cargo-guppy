@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/serde-1.0.120/src/de/impls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>impls.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/serde-1.0.121/src/de/impls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>impls.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../serde/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
@@ -2574,6 +2574,19 @@
 <span id="2571">2571</span>
 <span id="2572">2572</span>
 <span id="2573">2573</span>
+<span id="2574">2574</span>
+<span id="2575">2575</span>
+<span id="2576">2576</span>
+<span id="2577">2577</span>
+<span id="2578">2578</span>
+<span id="2579">2579</span>
+<span id="2580">2580</span>
+<span id="2581">2581</span>
+<span id="2582">2582</span>
+<span id="2583">2583</span>
+<span id="2584">2584</span>
+<span id="2585">2585</span>
+<span id="2586">2586</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">lib</span>::<span class="kw-2">*</span>;
 
@@ -4426,6 +4439,17 @@
             }
         }
 
+        <span class="kw">fn</span> <span class="ident">check_overflow</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>(<span class="ident">secs</span>: <span class="ident">u64</span>, <span class="ident">nanos</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">E</span><span class="op">&gt;</span>
+        <span class="kw">where</span>
+            <span class="ident">E</span>: <span class="ident">Error</span>,
+        {
+            <span class="kw">static</span> <span class="ident">NANOS_PER_SEC</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1_000_000_000</span>;
+            <span class="kw">match</span> <span class="ident">secs</span>.<span class="ident">checked_add</span>((<span class="ident">nanos</span> <span class="op">/</span> <span class="ident">NANOS_PER_SEC</span>) <span class="kw">as</span> <span class="ident">u64</span>) {
+                <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">E</span>::<span class="ident">custom</span>(<span class="string">&quot;overflow deserializing Duration&quot;</span>)),
+            }
+        }
+
         <span class="kw">struct</span> <span class="ident">DurationVisitor</span>;
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Visitor</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">DurationVisitor</span> {
@@ -4451,6 +4475,7 @@
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">invalid_length</span>(<span class="number">1</span>, <span class="kw-2">&amp;</span><span class="self">self</span>));
                     }
                 };
+                <span class="macro">try</span><span class="macro">!</span>(<span class="ident">check_overflow</span>(<span class="ident">secs</span>, <span class="ident">nanos</span>));
                 <span class="prelude-val">Ok</span>(<span class="ident">Duration</span>::<span class="ident">new</span>(<span class="ident">secs</span>, <span class="ident">nanos</span>))
             }
 
@@ -4484,6 +4509,7 @@
                     <span class="prelude-val">Some</span>(<span class="ident">nanos</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">nanos</span>,
                     <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="op">&lt;</span><span class="ident">A</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">Error</span><span class="op">&gt;</span>::<span class="ident">missing_field</span>(<span class="string">&quot;nanos&quot;</span>)),
                 };
+                <span class="macro">try</span><span class="macro">!</span>(<span class="ident">check_overflow</span>(<span class="ident">secs</span>, <span class="ident">nanos</span>));
                 <span class="prelude-val">Ok</span>(<span class="ident">Duration</span>::<span class="ident">new</span>(<span class="ident">secs</span>, <span class="ident">nanos</span>))
             }
         }
