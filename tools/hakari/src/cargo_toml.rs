@@ -191,10 +191,14 @@ impl HakariCargoToml {
     /// left unmodified.
     ///
     /// `self` is consumed because the contents of the file are now assumed to be invalid.
-    pub fn write_to_file(self, toml: &str) -> Result<(), CargoTomlError> {
+    ///
+    /// Returns true if the contents were different and the file was written out, false if the
+    /// contents were the same and the file was *not* written out, and an error if there was an
+    /// issue while writing the file out.
+    pub fn write_to_file(self, toml: &str) -> Result<bool, CargoTomlError> {
         if !self.is_changed(toml) {
             // Don't write out the file if it hasn't changed to avoid bumping mtimes.
-            return Ok(());
+            return Ok(false);
         }
 
         let try_block = || {
@@ -203,7 +207,7 @@ impl HakariCargoToml {
         };
 
         match (try_block)() {
-            Ok(()) => Ok(()),
+            Ok(()) => Ok(true),
             Err(atomicwrites::Error::Internal(error)) | Err(atomicwrites::Error::User(error)) => {
                 Err(CargoTomlError::Io {
                     toml_path: self.toml_path,
