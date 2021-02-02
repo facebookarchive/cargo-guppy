@@ -1062,6 +1062,19 @@
 <span id="1059">1059</span>
 <span id="1060">1060</span>
 <span id="1061">1061</span>
+<span id="1062">1062</span>
+<span id="1063">1063</span>
+<span id="1064">1064</span>
+<span id="1065">1065</span>
+<span id="1066">1066</span>
+<span id="1067">1067</span>
+<span id="1068">1068</span>
+<span id="1069">1069</span>
+<span id="1070">1070</span>
+<span id="1071">1071</span>
+<span id="1072">1072</span>
+<span id="1073">1073</span>
+<span id="1074">1074</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1145,6 +1158,26 @@
     <span class="doccomment">/// Returns the Hakari package, or `None` if it wasn&#39;t passed into [`new`](Self::new).</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hakari_package</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">hakari_package</span>.<span class="ident">as_ref</span>()
+    }
+
+    <span class="doccomment">/// Reads the existing TOML file for the Hakari package from disk, returning a</span>
+    <span class="doccomment">/// `HakariCargoToml`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This can be used with [`Hakari::to_toml_string`](Hakari::to_toml_string) to manage the</span>
+    <span class="doccomment">/// contents of the Hakari package&#39;s TOML file on disk.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns an error if there was an issue reading the TOML file from disk, or `None` if</span>
+    <span class="doccomment">/// this builder was created without a Hakari package.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HakariCargoToml</span>, <span class="ident">CargoTomlError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">hakari_package</span>()<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">hakari_package</span>
+            .<span class="ident">source</span>()
+            .<span class="ident">workspace_path</span>()
+            .<span class="ident">expect</span>(<span class="string">&quot;hakari_package is in workspace&quot;</span>);
+        <span class="prelude-val">Some</span>(<span class="ident">HakariCargoToml</span>::<span class="ident">new_relative</span>(
+            <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">workspace</span>().<span class="ident">root</span>(),
+            <span class="ident">workspace_path</span>,
+        ))
     }
 
     <span class="doccomment">/// Sets a list of platforms for `hakari` to use.</span>
@@ -1470,7 +1503,8 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">builder</span>
     }
 
-    <span class="doccomment">/// Reads the existing TOML file from disk, returning a `HakariCargoToml`.</span>
+    <span class="doccomment">/// Reads the existing TOML file for the Hakari package from disk, returning a</span>
+    <span class="doccomment">/// `HakariCargoToml`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This can be used with [`to_toml_string`](Self::to_toml_string) to manage the contents of</span>
     <span class="doccomment">/// the given TOML file on disk.</span>
@@ -1478,15 +1512,7 @@
     <span class="doccomment">/// Returns an error if there was an issue reading the TOML file from disk, or `None` if</span>
     <span class="doccomment">/// the builder&#39;s [`hakari_package`](HakariBuilder::hakari_package) is `None`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HakariCargoToml</span>, <span class="ident">CargoTomlError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">builder</span>.<span class="ident">hakari_package</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">hakari_package</span>
-            .<span class="ident">source</span>()
-            .<span class="ident">workspace_path</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;hakari_package is in workspace&quot;</span>);
-        <span class="prelude-val">Some</span>(<span class="ident">HakariCargoToml</span>::<span class="ident">new_relative</span>(
-            <span class="self">self</span>.<span class="ident">builder</span>.<span class="ident">graph</span>.<span class="ident">workspace</span>().<span class="ident">root</span>(),
-            <span class="ident">workspace_path</span>,
-        ))
+        <span class="self">self</span>.<span class="ident">builder</span>.<span class="ident">read_toml</span>()
     }
 
     <span class="doccomment">/// Writes `[dependencies]` and other `Cargo.toml` lines to the given `fmt::Write` instance.</span>
