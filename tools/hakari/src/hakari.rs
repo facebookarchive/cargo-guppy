@@ -82,6 +82,26 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
         self.hakari_package.as_ref()
     }
 
+    /// Reads the existing TOML file for the Hakari package from disk, returning a
+    /// `HakariCargoToml`.
+    ///
+    /// This can be used with [`Hakari::to_toml_string`](Hakari::to_toml_string) to manage the
+    /// contents of the Hakari package's TOML file on disk.
+    ///
+    /// Returns an error if there was an issue reading the TOML file from disk, or `None` if
+    /// this builder was created without a Hakari package.
+    pub fn read_toml(&self) -> Option<Result<HakariCargoToml, CargoTomlError>> {
+        let hakari_package = self.hakari_package()?;
+        let workspace_path = hakari_package
+            .source()
+            .workspace_path()
+            .expect("hakari_package is in workspace");
+        Some(HakariCargoToml::new_relative(
+            self.graph.workspace().root(),
+            workspace_path,
+        ))
+    }
+
     /// Sets a list of platforms for `hakari` to use.
     ///
     /// By default, `hakari` unifies features across all platforms. This may not always be desired,
@@ -405,7 +425,8 @@ impl<'g, 'a> Hakari<'g, 'a> {
         &self.builder
     }
 
-    /// Reads the existing TOML file from disk, returning a `HakariCargoToml`.
+    /// Reads the existing TOML file for the Hakari package from disk, returning a
+    /// `HakariCargoToml`.
     ///
     /// This can be used with [`to_toml_string`](Self::to_toml_string) to manage the contents of
     /// the given TOML file on disk.
@@ -413,15 +434,7 @@ impl<'g, 'a> Hakari<'g, 'a> {
     /// Returns an error if there was an issue reading the TOML file from disk, or `None` if
     /// the builder's [`hakari_package`](HakariBuilder::hakari_package) is `None`.
     pub fn read_toml(&self) -> Option<Result<HakariCargoToml, CargoTomlError>> {
-        let hakari_package = self.builder.hakari_package()?;
-        let workspace_path = hakari_package
-            .source()
-            .workspace_path()
-            .expect("hakari_package is in workspace");
-        Some(HakariCargoToml::new_relative(
-            self.builder.graph.workspace().root(),
-            workspace_path,
-        ))
+        self.builder.read_toml()
     }
 
     /// Writes `[dependencies]` and other `Cargo.toml` lines to the given `fmt::Write` instance.
