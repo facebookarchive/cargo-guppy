@@ -274,7 +274,7 @@ impl<'g> CargoSet<'g> {
     ///
     /// `CargoSet::new` takes two `FeatureSet` instances:
     /// * `initials`, from which dependencies are followed to build the `CargoSet`.
-    /// * `features_only`, which are additional inputs that are used to discover feature
+    /// * `features_only`, which are additional inputs that are only used for feature
     ///   unification. This may be used to simulate, e.g. `cargo build --package foo --package bar`,
     ///   when you only care about the results of `foo` but specifying `bar` influences the build.
     ///

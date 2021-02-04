@@ -163,8 +163,8 @@ impl<'g, 'a> Determinator<'g, 'a> {
     ///
     /// The package names are expected to be present in the new graph, but may not be present in the
     /// old `PackageGraph`.
-    /// * If a package names isn't in the *new* graph, this method returns an error.
-    /// * If a package names isn't in the *old* graph, it is ignored.
+    /// * If a package name isn't in the *new* graph, this method returns an error.
+    /// * If a package name isn't in the *old* graph, it is ignored.
     pub fn set_features_only<'b>(
         &mut self,
         workspace_names: impl IntoIterator<Item = &'b str>,

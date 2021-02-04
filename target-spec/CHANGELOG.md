@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0] - 2020-02-03
+
+### Added
+
+- `Platform` now implements `Hash + Eq + Ord`.
+
+### Changed
+
+- `TargetFeatures` and `Platform::add_flags` now accept `Cow<'static, str>`, simplifying lifetime management in many
+  cases.
+- `cfg-expr` updated to 0.6.0.
+
 ## [0.5.0] - 2020-12-02
 
 ### Changed
