@@ -11,7 +11,7 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```rust
 //! use guppy_summaries::{SummaryWithMetadata, SummaryId, SummarySource, PackageStatus};
 //! use pretty_assertions::assert_eq;
 //! use semver::Version;
