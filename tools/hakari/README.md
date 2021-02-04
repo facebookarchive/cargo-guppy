@@ -34,6 +34,15 @@ println!("Cargo.toml contents:\n{}", toml);
 The `cargo-guppy` repository also has a number of fixtures that demonstrate Hakari's output.
 [Here is an example](https://github.com/facebookincubator/cargo-guppy/blob/main/fixtures/guppy/hakari/metadata_guppy_869476c-1.toml).
 
+## Platform support
+
+* **Unix platforms**: Hakari works and is supported.
+* **Windows**: Hakari works and outputs file paths with forward slashes for
+  consistency with Unix. CRLF line endings are not supported in the workspace-hack's
+  `Cargo.toml` -- it is recommended that repositories disable automatic line ending conversion.
+  [Here's how to do it in Git](https://stackoverflow.com/a/10017566).
+  (Pull requests to improve this are welcome.)
+
 ## What are workspace-hack packages?
 
 Let's say you have a Rust crate `my-crate` with two dependencies:

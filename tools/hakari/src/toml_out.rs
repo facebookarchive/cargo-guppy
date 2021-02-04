@@ -6,6 +6,7 @@
 use crate::hakari::{HakariBuilder, OutputMap};
 #[cfg(feature = "summaries")]
 use crate::summaries::HakariBuilderSummary;
+use cfg_if::cfg_if;
 use guppy::{
     graph::{cargo::BuildPlatform, ExternalSource, GitReq, PackageMetadata, PackageSource},
     PackageId, TargetSpecError, Version,
@@ -149,6 +150,17 @@ pub enum TomlOutError {
         rel_path: PathBuf,
     },
 
+    /// A non-Unicode path was encountered while writing out TOML.
+    ///
+    /// The TOML format only supports Unicode paths.
+    NonUnicodePath {
+        /// The package ID that Hakari tried to write out a dependency line for.
+        package_id: PackageId,
+
+        /// The non-Unicode path that Hakari attempted to write.
+        path: PathBuf,
+    },
+
     /// An external source wasn't recognized by guppy.
     UnrecognizedExternal {
         /// The package ID that Hakari tried to write out a dependency line for.
@@ -178,6 +190,12 @@ impl fmt::Display for TomlOutError {
             #[cfg(feature = "summaries")]
             TomlOutError::Toml { context, .. } => write!(f, "while serializing TOML: {}", context),
             TomlOutError::FmtWrite(_) => write!(f, "while writing to fmt::Write"),
+            TomlOutError::NonUnicodePath { package_id, path } => write!(
+                f,
+                "for path dependency '{}', non-Unicode path encountered: {}",
+                package_id,
+                path.display(),
+            ),
             TomlOutError::PathWithoutHakari {
                 package_id,
                 rel_path,
@@ -203,9 +221,9 @@ impl error::Error for TomlOutError {
             #[cfg(feature = "summaries")]
             TomlOutError::Toml { err, .. } => Some(err),
             TomlOutError::FmtWrite(err) => Some(err),
-            TomlOutError::PathWithoutHakari { .. } | TomlOutError::UnrecognizedExternal { .. } => {
-                None
-            }
+            TomlOutError::NonUnicodePath { .. }
+            | TomlOutError::PathWithoutHakari { .. }
+            | TomlOutError::UnrecognizedExternal { .. } => None,
         }
     }
 }
@@ -279,6 +297,8 @@ pub(crate) fn write_toml(
                         // PackageSource::Workspace shouldn't be possible unless the Hakari map
                         // was fiddled with. Regardless, we can handle it fine.
                         let path_out = if options.absolute_paths {
+                            // TODO: canonicalize paths here, removing .. etc? tricky if the path is
+                            // missing (as in tests)
                             builder.graph().workspace().root().join(path)
                         } else {
                             let hakari_path =
@@ -289,7 +309,27 @@ pub(crate) fn write_toml(
                             pathdiff::diff_paths(path, hakari_path)
                                 .expect("both hakari_path and path are relative")
                         };
-                        format!("path = \"{}\"", path_out.display())
+
+                        let path_str = match path_out.to_str() {
+                            Some(s) => s,
+                            None => {
+                                return Err(TomlOutError::NonUnicodePath {
+                                    package_id: dep.id().clone(),
+                                    path: path_out,
+                                })
+                            }
+                        };
+
+                        cfg_if! {
+                            if #[cfg(windows)] {
+                                // TODO: is replacing \\ with / totally safe on Windows? Might run
+                                // into issues with UNC paths.
+                                let path_str = path_str.replace("\\", "/");
+                                format!("path = \"{}\", ", path_str)
+                            } else {
+                                format!("path = \"{}\", ", path_str)
+                            }
+                        }
                     }
                     PackageSource::External(s) => {
                         let external = source.parse_external().ok_or_else(|| {
