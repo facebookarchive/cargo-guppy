@@ -6,6 +6,7 @@ The fixtures are organized into several folders.
 
 ## `cargo metadata` output
 
+* `determinator-paths`: determinator path matching across platforms.
 * `small`: relatively simple examples that cover basic and some edge case functionality
 * `large`: complex examples pulled from real-world Rust repositories, that test a variety of edge cases
 * `invalid`: examples that are [*representable*](https://oleb.net/blog/2018/03/making-illegal-states-unrepresentable/)

@@ -43,6 +43,12 @@
 //! }
 //! ```
 //!
+//! # Platform support
+//!
+//! * **Unix platforms**: The determinator works and is supported.
+//! * **Windows**: experimental support. There may still be bugs around path normalization: please
+//!   [report them](https://github.com/facebookincubator/cargo-guppy/issues/new)!
+//!
 //! # How it works
 //!
 //! A Rust package can behave differently if one or more of the following change:

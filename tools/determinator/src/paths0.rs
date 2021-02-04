@@ -1,7 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use std::{ffi::OsStr, path::Path, str::Utf8Error};
+use cfg_if::cfg_if;
+use std::{path::Path, str::Utf8Error};
 
 /// A store for null-separated paths.
 ///
@@ -83,14 +84,15 @@ impl Paths0 {
     /// * the `Utf8Error` that it returned.
     pub fn new(buf: impl Into<Vec<u8>>) -> Result<Self, (Vec<u8>, Utf8Error)> {
         let buf = buf.into();
-        if cfg!(unix) {
-            return Ok(Self::new_unix(buf));
+        cfg_if! {
+            if #[cfg(unix)] {
+                Ok(Self::new_unix(buf))
+            } else {
+                // Validate UTF-8.
+                Self::validate_utf8(&buf)?;
+                Ok(Self::strip_trailing_null_byte(buf))
+            }
         }
-
-        // Validate UTF-8.
-        Self::validate_utf8(&buf)?;
-
-        Ok(Self::strip_trailing_null_byte(buf))
     }
 
     /// Creates a new instance of `Paths0`, converting `/` to `\` on platforms like Windows.
@@ -98,25 +100,31 @@ impl Paths0 {
     /// Some tools like Git (but not Mercurial) return paths with `/` on Windows, even though the
     /// canonical separator on the platform is `\`. This constructor changes all instances of `/`
     /// to `\`.
+    ///
+    /// This method is available on Unix and Windows platforms.
+    #[cfg(any(unix, windows))]
     pub fn new_forward_slashes(buf: impl Into<Vec<u8>>) -> Result<Self, (Vec<u8>, Utf8Error)> {
-        let mut buf = buf.into();
-        if cfg!(unix) {
-            return Ok(Self::new_unix(buf));
-        }
+        cfg_if! {
+            if #[cfg(unix)] {
+                Ok(Self::new_unix(buf.into()))
+            }
+            else {
+                let mut buf = buf.into();
+                // Validate UTF-8.
+                Self::validate_utf8(&buf)?;
 
-        // Validate UTF-8.
-        Self::validate_utf8(&buf)?;
-
-        // Change all `/` to `\` on Windows.
-        if std::path::MAIN_SEPARATOR == '\\' {
-            buf.iter_mut().for_each(|b| {
-                if *b == b'/' {
-                    *b = b'\\';
+                // Change all `/` to `\` on Windows.
+                if std::path::MAIN_SEPARATOR == '\\' {
+                    buf.iter_mut().for_each(|b| {
+                        if *b == b'/' {
+                            *b = b'\\';
+                        }
+                    });
                 }
-            });
-        }
 
-        Ok(Self::strip_trailing_null_byte(buf))
+                Ok(Self::strip_trailing_null_byte(buf))
+            }
+        }
     }
 
     /// Creates a new instance of `Paths0` on Unix platforms.
@@ -136,6 +144,7 @@ impl Paths0 {
     // Helper methods
     // ---
 
+    #[cfg(not(unix))]
     fn validate_utf8(buf: &[u8]) -> Result<(), (Vec<u8>, Utf8Error)> {
         buf.split(|b| *b == 0)
             .try_for_each(|path| match std::str::from_utf8(path) {
@@ -163,21 +172,24 @@ impl<'a> IntoIterator for &'a Paths0 {
             return Box::new(std::iter::empty());
         }
 
-        if cfg!(unix) {
-            // Paths are arbitrary byte sequences on Unix.
-            use std::os::unix::ffi::OsStrExt;
+        cfg_if! {
+            if #[cfg(unix)] {
+                // Paths are arbitrary byte sequences on Unix.
+                use std::ffi::OsStr;
+                use std::os::unix::ffi::OsStrExt;
 
-            Box::new(
-                self.buf
-                    .split(|b| *b == 0)
-                    .map(|path| Path::new(OsStr::from_bytes(path))),
-            )
-        } else {
-            Box::new(self.buf.split(|b| *b == 0).map(|path| {
-                let s = std::str::from_utf8(path)
-                    .expect("buf constructor should have already validated this path as UTF-8");
-                Path::new(s)
-            }))
+                Box::new(
+                    self.buf
+                        .split(|b| *b == 0)
+                        .map(|path| Path::new(OsStr::from_bytes(path))),
+                )
+            } else {
+                Box::new(self.buf.split(|b| *b == 0).map(|path| {
+                    let s = std::str::from_utf8(path)
+                        .expect("buf constructor should have already validated this path as UTF-8");
+                    Path::new(s)
+                }))
+            }
         }
     }
 }
@@ -208,6 +220,25 @@ mod tests {
         );
     }
 
+    // This is really a Windows test but it should work on all platforms.
+    #[test]
+    fn backslashes() {
+        paths_eq(*b"a\\b\\c", &["a\\b\\c"]);
+        paths_eq(*b"a\\b\0a\\c", &["a\\b", "a\\c"]);
+        paths_eq(*b"a\\b\0a\\c\0", &["a\\b", "a\\c"]);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn forward_slashes() {
+        paths_eq_fwd(*b"a/b/c", &["a\\b\\c"]);
+        paths_eq(*b"a/b\0a/c", &["a\\b", "a\\c"]);
+        paths_eq(*b"a/b\0a/c\0", &["a\\b", "a\\c"]);
+
+        // Also test mixed forward/backslashes.
+        paths_eq(*b"a/b\0a\\c", &["a\\b", "a\\c"]);
+    }
+
     fn paths_eq(bytes: impl Into<Vec<u8>>, expected: &[&str]) {
         let paths = Paths0::new(bytes.into()).expect("null-separated paths are valid");
         let actual: Vec<_> = paths.iter().collect();
@@ -219,7 +250,7 @@ mod tests {
     #[cfg(unix)]
     fn paths_eq_bytes(bytes: impl Into<Vec<u8>>, expected: &[&[u8]]) {
         // Paths are arbitrary byte sequences on Unix.
-        use std::os::unix::ffi::OsStrExt;
+        use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
 
         let paths = Paths0::new(bytes.into()).expect("null-separated paths are valid");
         let actual: Vec<_> = paths.iter().collect();
@@ -227,6 +258,16 @@ mod tests {
             .iter()
             .map(|path| Path::new(OsStr::from_bytes(path)))
             .collect();
+
+        assert_eq!(actual, expected, "paths match");
+    }
+
+    #[cfg(windows)]
+    fn paths_eq_fwd(bytes: impl Into<Vec<u8>>, expected: &[&str]) {
+        let paths =
+            Paths0::new_forward_slashes(bytes.into()).expect("null-separated paths are valid");
+        let actual: Vec<_> = paths.iter().collect();
+        let expected: Vec<_> = expected.iter().map(Path::new).collect();
 
         assert_eq!(actual, expected, "paths match");
     }
