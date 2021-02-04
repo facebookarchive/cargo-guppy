@@ -213,6 +213,9 @@ impl JsonFixture {
         // rel_path is relative to this dir.
         let mut abs_path = fixtures_dir.join("src");
         abs_path.push(rel_path);
+        let abs_path = abs_path
+            .canonicalize()
+            .expect("fixture path canonicalization succeeded");
 
         let workspace_root = fixtures_dir.parent().expect("up to workspace root");
         let workspace_path = pathdiff::diff_paths(&abs_path, workspace_root)

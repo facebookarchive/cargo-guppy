@@ -13,7 +13,10 @@ macro_rules! proptest_suite {
             use crate::tests::proptest_helpers::*;
             use proptest::prelude::*;
 
+            // Ignore cargo-compare tests on Windows for now. See
+            // https://github.com/facebookincubator/cargo-guppy/issues/265.
             #[test]
+            #[cfg_attr(windows, ignore)]
             fn proptest_compare() {
                 let fixture = Fixture::$name();
                 // cargo is pretty slow, so limit the number of test cases.

@@ -3,12 +3,13 @@
 
 //! Higher-level unit tests for the target determinator.
 
+use cfg_if::cfg_if;
 use determinator::{
     rules::{DeterminatorRules, PathMatch, RuleIndex},
-    Determinator,
+    Determinator, Paths0,
 };
 use fixtures::json::JsonFixture;
-use guppy::graph::feature::StandardFeatures;
+use guppy::{graph::feature::StandardFeatures, CargoMetadata};
 use std::path::Path;
 
 #[test]
@@ -423,6 +424,10 @@ fn guppy_match_paths() {
         ("guppy/src/foo", PathMatch::AncestorMatched),
         ("guppy/src/lib.rs", PathMatch::AncestorMatched),
         (
+            "internal-tools/proptest-ext/src/lib.rs",
+            PathMatch::AncestorMatched,
+        ),
+        (
             "Cargo.lock",
             PathMatch::RuleMatched(RuleIndex::DefaultPath(3)),
         ),
@@ -436,6 +441,66 @@ fn guppy_match_paths() {
             path
         );
     }
+}
+
+// Test matching paths against this repository.
+#[test]
+fn git_match_paths() {
+    cfg_if! {
+        if #[cfg(windows)] {
+            let json = include_str!("../../../fixtures/determinator-paths/guppy-win.json");
+        } else {
+            let json = include_str!("../../../fixtures/determinator-paths/guppy-linux.json");
+        }
+    };
+    let git_diff = include_bytes!("../../../fixtures/determinator-paths/git-diff.out");
+
+    let package_graph = CargoMetadata::parse_json(json)
+        .expect("metadata json parsed correct")
+        .build_graph()
+        .expect("PackageGraph built");
+    let mut determinator = Determinator::new(&package_graph, &package_graph);
+
+    // This will convert the forward slashes to backslashes on Windows, but keep them the same on
+    // Unix platforms.
+    let paths = Paths0::new_forward_slashes(git_diff.to_vec()).expect("paths0 is valid");
+    determinator.add_changed_paths(paths.iter());
+
+    let determinator_set = determinator.compute();
+    // The path changed set should contain several packages -- if paths weren't correctly matched
+    // on the platform then they may be missing.
+    let expected_path_changed = package_graph
+        .resolve_workspace_names(vec![
+            "cargo-guppy",
+            "determinator",
+            "guppy",
+            "target-spec",
+            "hakari",
+        ])
+        .expect("workspace names resolved");
+    assert_eq!(
+        determinator_set.path_changed_set, expected_path_changed,
+        "correct path changed set"
+    );
+
+    let expected_affected = package_graph
+        .resolve_workspace_names(vec![
+            "cargo-guppy",
+            "guppy",
+            "fixture-manager",
+            "cargo-compare",
+            "target-spec",
+            "determinator",
+            "hakari",
+            "fixtures",
+            "guppy-cmdlib",
+            "guppy-benchmarks",
+        ])
+        .expect("workspace names resolved");
+    assert_eq!(
+        determinator_set.affected_set, expected_affected,
+        "correct affected set"
+    );
 }
 
 fn read_options(fixture: &JsonFixture, toml_name: &str) -> DeterminatorRules {
