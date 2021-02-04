@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.2] - 2021-02-04
+
+### Fixed
+
+- `SummarySource` paths are now always output with forward slashes, including on Windows.
+
 ## [0.3.1] - 2020-12-09
 
 ### Added
