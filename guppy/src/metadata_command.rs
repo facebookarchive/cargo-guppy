@@ -115,10 +115,13 @@ impl<'a> TryFrom<&'a MetadataCommand> for PackageGraph {
     }
 }
 
-/// A deserialized Cargo metadata returned by a `MetadataCommand`.
+/// Deserialized Cargo metadata.
+///
+/// Returned by a `MetadataCommand` or constructed from `cargo metadata` JSON output.
 ///
 /// This is an alternative entry point for constructing a `PackageGraph`, to be used if the JSON
-/// output of `cargo metadata` is already available.
+/// output of `cargo metadata` is already available. To construct a `PackageGraph` from an on-disk
+/// Cargo workspace, use [`MetadataCommand`](MetadataCommand).
 ///
 /// This struct implements `serde::Serialize` and `Deserialize`.
 #[derive(Clone, Debug, Deserialize, Serialize)]
