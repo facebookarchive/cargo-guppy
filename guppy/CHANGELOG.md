@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.7.0] - 2020-02-03
+
+### Added
+
+* `PackageSource` now has support for parsing external sources through a new `parse_external` method.
+* Cargo simulations have some new features:
+  * New `CargoOptions::set_initials_platform` method can be used to simulate builds on exclusively the host
+    platform.
+  * `CargoSet::new` accepts an additional argument, `features_only`, which represents additional inputs that are only
+    used for feature unification. This may be used to simulate, e.g. `cargo build --package foo --package bar`, when
+    you only care about the results of `foo` but specifying `bar` influences the build.
+  * New enum `graph::cargo::BuildPlatform` represents either the target platform or the host. New methods
+    `CargoSet::platform_features` and `CargoSet::platform_direct_deps` accept the `BuildPlatform` enum.
+* `FeatureSet::contains_package` returns true if a feature set has at least one feature in the given package.
+* `semver::VersionReq` is now exposed in `guppy`.
+* `FeatureGraph::resolve_ids` resolves feature IDs into a `FeatureSet`.
+
+### Changed
+
+* Feature filters `all_filter`, `default_filter` and `none_filter` have been combined into a single enum
+  `StandardFeatures`.
+* Cargo builds are now done through `FeatureSet` instances, not `FeatureQuery`. This is because Cargo builds always
+  happen in the forward direction.
+  * `FeatureQuery::resolve_cargo` has been renamed to `FeatureSet::into_cargo_set`.
+* `CargoOptions::with_` methods have been renamed to begin with either `set_` or `add_`.
+* `Obs` is now a type rather than a trait.
+* `CargoOptions::set_proc_macros_on_target` was replaced with `InitialsPlatform::ProcMacrosOnTarget`.
+* Public dependency version bumps:
+  * `semver` updated to 0.11.
+  * `target-spec` updated to 0.6.
+
 ## [0.6.3] - 2020-01-11
 
 ### Fixed
@@ -283,6 +314,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.0
 [0.6.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.3
 [0.6.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.2
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.1
