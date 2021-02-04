@@ -6,7 +6,33 @@
 
 ## Examples
 
-TODO
+```rust
+use guppy::MetadataCommand;
+use hakari::{HakariBuilder, TomlOptions};
+
+// Use this workspace's PackageGraph for these tests.
+let package_graph = MetadataCommand::new()
+    .build_graph()
+    .expect("obtained cargo-guppy's PackageGraph");
+// The second argument to HakariBuilder::new specifies a Hakari (workspace-hack) package. At
+// the moment cargo-guppy does not have such a package, and it is a TODO to add one.
+let hakari_builder = HakariBuilder::new(&package_graph, None)
+    .expect("HakariBuilder was constructed");
+
+// HakariBuilder has a number of config options. For this example, use the defaults.
+let hakari = hakari_builder.compute();
+
+// "hakari" can be used to build a TOML representation that forms part of a Cargo.toml file.
+// Existing Cargo.toml files can be managed using Hakari::read_toml.
+let toml = hakari.to_toml_string(&TomlOptions::default()).expect("TOML output was constructed");
+
+// toml contains the Cargo.toml [dependencies] that would go in the Hakari package. It can be
+// written out through `HakariCargoToml` (returned by Hakari::read_toml) or manually.
+println!("Cargo.toml contents:\n{}", toml);
+```
+
+The `cargo-guppy` repository also has a number of fixtures that demonstrate Hakari's output.
+[Here is an example](https://github.com/facebookincubator/cargo-guppy/blob/main/fixtures/guppy/hakari/metadata_guppy_869476c-1.toml).
 
 ## What are workspace-hack packages?
 
@@ -161,7 +187,7 @@ The last step is to serialize the contents of the output map into the `workspace
 
 `HakariCargoToml` also supports serializing contents to memory and producing diffs.
 
-## TODOs
+## Future work
 
 `hakari` is a work-in-progress and is still missing many core features:
 * Simulating cross-compilations
