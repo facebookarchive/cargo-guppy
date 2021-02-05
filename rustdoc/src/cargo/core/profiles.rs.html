@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/3875bbb/src/cargo/core/profiles.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>profiles.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/cargo-e7ff1db891893a9e/34170fc/src/cargo/core/profiles.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>profiles.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../cargo/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
@@ -1252,24 +1252,17 @@
 <span id="1249">1249</span>
 <span id="1250">1250</span>
 <span id="1251">1251</span>
-<span id="1252">1252</span>
-<span id="1253">1253</span>
-<span id="1254">1254</span>
-<span id="1255">1255</span>
-<span id="1256">1256</span>
-<span id="1257">1257</span>
-<span id="1258">1258</span>
-<span id="1259">1259</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">compiler</span>::{<span class="ident">CompileMode</span>, <span class="ident">Unit</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::<span class="ident">resolver</span>::<span class="ident">features</span>::<span class="ident">FeaturesFor</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Feature</span>, <span class="ident">Features</span>, <span class="ident">PackageId</span>, <span class="ident">PackageIdSpec</span>, <span class="ident">Resolve</span>, <span class="ident">Shell</span>, <span class="ident">Target</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">core</span>::{<span class="ident">Feature</span>, <span class="ident">PackageId</span>, <span class="ident">PackageIdSpec</span>, <span class="ident">Resolve</span>, <span class="ident">Shell</span>, <span class="ident">Target</span>, <span class="ident">Workspace</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">errors</span>::<span class="ident">CargoResultExt</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">interning</span>::<span class="ident">InternedString</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">toml</span>::{<span class="ident">ProfilePackageSpec</span>, <span class="ident">StringOrBool</span>, <span class="ident">TomlProfile</span>, <span class="ident">TomlProfiles</span>, <span class="ident">U32OrBool</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::{<span class="ident">closest_msg</span>, <span class="ident">config</span>, <span class="ident">CargoResult</span>, <span class="ident">Config</span>};
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="ident">bail</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>::<span class="ident">Hash</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">cmp</span>, <span class="ident">env</span>, <span class="ident">fmt</span>, <span class="ident">hash</span>};
 
 <span class="doccomment">/// Collection of all profiles.</span>
@@ -1287,28 +1280,28 @@
     <span class="ident">named_profiles_enabled</span>: <span class="ident">bool</span>,
     <span class="doccomment">/// The profile the user requested to use.</span>
     <span class="ident">requested_profile</span>: <span class="ident">InternedString</span>,
+    <span class="doccomment">/// The host target for rustc being used by this `Profiles`.</span>
+    <span class="ident">rustc_host</span>: <span class="ident">InternedString</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Profiles</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">profiles</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TomlProfiles</span><span class="op">&gt;</span>,
-        <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-        <span class="ident">requested_profile</span>: <span class="ident">InternedString</span>,
-        <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">Features</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Profiles</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">requested_profile</span>: <span class="ident">InternedString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">Profiles</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>();
         <span class="kw">let</span> <span class="ident">incremental</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">env</span>::<span class="ident">var_os</span>(<span class="string">&quot;CARGO_INCREMENTAL&quot;</span>) {
             <span class="prelude-val">Some</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">v</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;1&quot;</span>),
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">config</span>.<span class="ident">build_config</span>()<span class="question-mark">?</span>.<span class="ident">incremental</span>,
         };
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">profiles</span> <span class="op">=</span> <span class="ident">merge_config_profiles</span>(<span class="ident">profiles</span>, <span class="ident">config</span>, <span class="ident">requested_profile</span>, <span class="ident">features</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">profiles</span> <span class="op">=</span> <span class="ident">merge_config_profiles</span>(<span class="ident">ws</span>, <span class="ident">requested_profile</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">rustc_host</span> <span class="op">=</span> <span class="ident">ws</span>.<span class="ident">config</span>().<span class="ident">load_global_rustc</span>(<span class="prelude-val">Some</span>(<span class="ident">ws</span>))<span class="question-mark">?</span>.<span class="ident">host</span>;
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">features</span>.<span class="ident">is_enabled</span>(<span class="ident">Feature</span>::<span class="ident">named_profiles</span>()) {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">ws</span>.<span class="ident">unstable_features</span>().<span class="ident">is_enabled</span>(<span class="ident">Feature</span>::<span class="ident">named_profiles</span>()) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">profile_makers</span> <span class="op">=</span> <span class="ident">Profiles</span> {
                 <span class="ident">incremental</span>,
                 <span class="ident">named_profiles_enabled</span>: <span class="bool-val">false</span>,
                 <span class="ident">dir_names</span>: <span class="self">Self</span>::<span class="ident">predefined_dir_names</span>(),
                 <span class="ident">by_name</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
                 <span class="ident">requested_profile</span>,
+                <span class="ident">rustc_host</span>,
             };
 
             <span class="ident">profile_makers</span>.<span class="ident">by_name</span>.<span class="ident">insert</span>(
@@ -1361,6 +1354,7 @@
             <span class="ident">dir_names</span>: <span class="self">Self</span>::<span class="ident">predefined_dir_names</span>(),
             <span class="ident">by_name</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
             <span class="ident">requested_profile</span>,
+            <span class="ident">rustc_host</span>,
         };
 
         <span class="self">Self</span>::<span class="ident">add_root_profiles</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">profile_makers</span>, <span class="kw-2">&amp;</span><span class="ident">profiles</span>);
@@ -1611,6 +1605,7 @@
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">v</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">incremental</span> {
             <span class="ident">profile</span>.<span class="ident">incremental</span> <span class="op">=</span> <span class="ident">v</span>;
         }
+
         <span class="comment">// Only enable incremental compilation for sources the user can</span>
         <span class="comment">// modify (aka path sources). For things that change infrequently,</span>
         <span class="comment">// non-incremental builds yield better performance in the compiler</span>
@@ -1830,6 +1825,9 @@
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">debug_assertions</span>) <span class="op">=</span> <span class="ident">toml</span>.<span class="ident">debug_assertions</span> {
         <span class="ident">profile</span>.<span class="ident">debug_assertions</span> <span class="op">=</span> <span class="ident">debug_assertions</span>;
     }
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">split_debuginfo</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">toml</span>.<span class="ident">split_debuginfo</span> {
+        <span class="ident">profile</span>.<span class="ident">split_debuginfo</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">InternedString</span>::<span class="ident">new</span>(<span class="ident">split_debuginfo</span>));
+    }
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rpath</span>) <span class="op">=</span> <span class="ident">toml</span>.<span class="ident">rpath</span> {
         <span class="ident">profile</span>.<span class="ident">rpath</span> <span class="op">=</span> <span class="ident">rpath</span>;
     }
@@ -1875,6 +1873,7 @@
     <span class="comment">// `None` means use rustc default.</span>
     <span class="kw">pub</span> <span class="ident">codegen_units</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">debuginfo</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">split_debuginfo</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">InternedString</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">debug_assertions</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">overflow_checks</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span> <span class="ident">rpath</span>: <span class="ident">bool</span>,
@@ -1893,6 +1892,7 @@
             <span class="ident">codegen_units</span>: <span class="prelude-val">None</span>,
             <span class="ident">debuginfo</span>: <span class="prelude-val">None</span>,
             <span class="ident">debug_assertions</span>: <span class="bool-val">false</span>,
+            <span class="ident">split_debuginfo</span>: <span class="prelude-val">None</span>,
             <span class="ident">overflow_checks</span>: <span class="bool-val">false</span>,
             <span class="ident">rpath</span>: <span class="bool-val">false</span>,
             <span class="ident">incremental</span>: <span class="bool-val">false</span>,
@@ -1917,6 +1917,7 @@
                 <span class="ident">root</span>
                 <span class="ident">codegen_units</span>
                 <span class="ident">debuginfo</span>
+                <span class="ident">split_debuginfo</span>
                 <span class="ident">debug_assertions</span>
                 <span class="ident">overflow_checks</span>
                 <span class="ident">rpath</span>
@@ -1997,25 +1998,13 @@
     <span class="doccomment">/// Compares all fields except `name`, which doesn&#39;t affect compilation.</span>
     <span class="doccomment">/// This is necessary for `Unit` deduplication for things like &quot;test&quot; and</span>
     <span class="doccomment">/// &quot;dev&quot; which are essentially the same.</span>
-    <span class="kw">fn</span> <span class="ident">comparable</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> (
-        <span class="ident">InternedString</span>,
-        <span class="ident">Lto</span>,
-        <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-        <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
-        <span class="ident">bool</span>,
-        <span class="ident">bool</span>,
-        <span class="ident">bool</span>,
-        <span class="ident">bool</span>,
-        <span class="ident">PanicStrategy</span>,
-        <span class="ident">Strip</span>,
-    ) {
+    <span class="kw">fn</span> <span class="ident">comparable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span> {
         (
             <span class="self">self</span>.<span class="ident">opt_level</span>,
             <span class="self">self</span>.<span class="ident">lto</span>,
             <span class="self">self</span>.<span class="ident">codegen_units</span>,
             <span class="self">self</span>.<span class="ident">debuginfo</span>,
+            <span class="self">self</span>.<span class="ident">split_debuginfo</span>,
             <span class="self">self</span>.<span class="ident">debug_assertions</span>,
             <span class="self">self</span>.<span class="ident">overflow_checks</span>,
             <span class="self">self</span>.<span class="ident">rpath</span>,
@@ -2336,12 +2325,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Returns a new copy of the profile map with all the mergers complete.</span>
 <span class="kw">fn</span> <span class="ident">merge_config_profiles</span>(
-    <span class="ident">profiles</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TomlProfiles</span><span class="op">&gt;</span>,
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
+    <span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">requested_profile</span>: <span class="ident">InternedString</span>,
-    <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">Features</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">InternedString</span>, <span class="ident">TomlProfile</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">profiles</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">profiles</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">profiles</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ws</span>.<span class="ident">profiles</span>() {
         <span class="prelude-val">Some</span>(<span class="ident">profiles</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">profiles</span>.<span class="ident">get_all</span>().<span class="ident">clone</span>(),
         <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BTreeMap</span>::<span class="ident">new</span>(),
     };
@@ -2350,7 +2337,7 @@
     <span class="ident">check_to_add</span>.<span class="ident">insert</span>(<span class="ident">requested_profile</span>);
     <span class="comment">// Merge config onto manifest profiles.</span>
     <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">profile</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">profiles</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">config_profile</span>) <span class="op">=</span> <span class="ident">get_config_profile</span>(<span class="ident">name</span>, <span class="ident">config</span>, <span class="ident">features</span>)<span class="question-mark">?</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">config_profile</span>) <span class="op">=</span> <span class="ident">get_config_profile</span>(<span class="ident">ws</span>, <span class="ident">name</span>)<span class="question-mark">?</span> {
             <span class="ident">profile</span>.<span class="ident">merge</span>(<span class="kw-2">&amp;</span><span class="ident">config_profile</span>);
         }
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">inherits</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">profile</span>.<span class="ident">inherits</span> {
@@ -2369,7 +2356,7 @@
         <span class="ident">std</span>::<span class="ident">mem</span>::<span class="ident">swap</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">current</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">check_to_add</span>);
         <span class="kw">for</span> <span class="ident">name</span> <span class="kw">in</span> <span class="ident">current</span>.<span class="ident">drain</span>() {
             <span class="kw">if</span> <span class="op">!</span><span class="ident">profiles</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">config_profile</span>) <span class="op">=</span> <span class="ident">get_config_profile</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>, <span class="ident">config</span>, <span class="ident">features</span>)<span class="question-mark">?</span> {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">config_profile</span>) <span class="op">=</span> <span class="ident">get_config_profile</span>(<span class="ident">ws</span>, <span class="kw-2">&amp;</span><span class="ident">name</span>)<span class="question-mark">?</span> {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">inherits</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">config_profile</span>.<span class="ident">inherits</span> {
                         <span class="ident">check_to_add</span>.<span class="ident">insert</span>(<span class="kw-2">*</span><span class="ident">inherits</span>);
                     }
@@ -2382,12 +2369,9 @@
 }
 
 <span class="doccomment">/// Helper for fetching a profile from config.</span>
-<span class="kw">fn</span> <span class="ident">get_config_profile</span>(
-    <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">Features</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TomlProfile</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">profile</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">config</span>::<span class="ident">Value</span><span class="op">&lt;</span><span class="ident">TomlProfile</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;profile.{}&quot;</span>, <span class="ident">name</span>))<span class="question-mark">?</span>;
+<span class="kw">fn</span> <span class="ident">get_config_profile</span>(<span class="ident">ws</span>: <span class="kw-2">&amp;</span><span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TomlProfile</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">profile</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">config</span>::<span class="ident">Value</span><span class="op">&lt;</span><span class="ident">TomlProfile</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>
+        <span class="ident">ws</span>.<span class="ident">config</span>().<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;profile.{}&quot;</span>, <span class="ident">name</span>))<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">profile</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">profile</span> {
         <span class="prelude-val">Some</span>(<span class="ident">profile</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">profile</span>,
         <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
@@ -2395,7 +2379,7 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">warnings</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
     <span class="ident">profile</span>
         .<span class="ident">val</span>
-        .<span class="ident">validate</span>(<span class="ident">name</span>, <span class="ident">features</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">warnings</span>)
+        .<span class="ident">validate</span>(<span class="ident">name</span>, <span class="ident">ws</span>.<span class="ident">unstable_features</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">warnings</span>)
         .<span class="ident">chain_err</span>(<span class="op">|</span><span class="op">|</span> {
             <span class="ident">anyhow</span>::<span class="macro">format_err</span><span class="macro">!</span>(
                 <span class="string">&quot;config profile `{}` is not valid (defined in `{}`)&quot;</span>,
@@ -2404,7 +2388,7 @@
             )
         })<span class="question-mark">?</span>;
     <span class="kw">for</span> <span class="ident">warning</span> <span class="kw">in</span> <span class="ident">warnings</span> {
-        <span class="ident">config</span>.<span class="ident">shell</span>().<span class="ident">warn</span>(<span class="ident">warning</span>)<span class="question-mark">?</span>;
+        <span class="ident">ws</span>.<span class="ident">config</span>().<span class="ident">shell</span>().<span class="ident">warn</span>(<span class="ident">warning</span>)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">profile</span>.<span class="ident">val</span>))
 }
