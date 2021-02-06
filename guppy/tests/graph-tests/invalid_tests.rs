@@ -1,4 +1,3 @@
-use assert_matches::assert_matches;
 use cargo_metadata::{Metadata, Target};
 use fixtures::json::JsonFixture;
 use guppy::{graph::PackageGraph, Error};
@@ -83,9 +82,12 @@ fn proc_macro_mixed_kinds() {
 
 fn assert_invalid(json: &str, search_str: &str) {
     let err = PackageGraph::from_json(json).expect_err("expected error for invalid metadata");
-    assert_matches!(
+    assert!(
+        matches!(
+            err,
+            Error::PackageGraphConstructError(ref s) if s.find(search_str).is_some(),
+        ),
+        "actual error is: {}",
         err,
-        Error::PackageGraphConstructError(ref s) if s.find(search_str).is_some(),
-        "actual error is: {}", err,
     );
 }
