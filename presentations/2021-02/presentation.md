@@ -179,7 +179,7 @@ query.resolve_with_fn(|_, link| {
   * Packages may or may not be enabled depending on dev, features or platforms
   * Feature resolution is *dependent on* which packages are enabled
   * Simulated through 2 feature queries + 2 package queries
-    * One each for the target, one each for the hos
+    * One each for the target, one each for the host
 
 ---
 
