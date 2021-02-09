@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["escape","Escape characters that may have special meaning in a shell."]],"mod":[["unix","Unix-specific escaping."],["windows","Windows-specific escaping."]]});

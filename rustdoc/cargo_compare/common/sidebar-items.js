@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["FeatureMap",""],["GuppyCargoCommon","Options that are common to Guppy and Cargo."]]});

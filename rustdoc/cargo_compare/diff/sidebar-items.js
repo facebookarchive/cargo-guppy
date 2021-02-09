@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["DiffOpts","Options for cargo/guppy comparisons."],["FeatureDiff",""],["TargetHostDiff",""]]});

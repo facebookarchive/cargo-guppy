@@ -1,5 +1,4 @@
 (function() {var implementors = {};
-implementors["cargo"] = [{"text":"impl Error for ConfigError","synthetic":false,"types":[]}];
 implementors["serde"] = [];
 implementors["serde_json"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["toml"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];

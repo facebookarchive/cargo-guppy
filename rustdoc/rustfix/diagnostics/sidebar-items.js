@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Applicability",""]],"struct":[["Diagnostic",""],["DiagnosticCode",""],["DiagnosticSpan",""],["DiagnosticSpanLine",""]]});

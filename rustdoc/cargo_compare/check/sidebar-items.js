@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["CheckOpts","Options for cargo/guppy comparisons."]]});
