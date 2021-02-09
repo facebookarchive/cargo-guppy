@@ -75,7 +75,7 @@ track and query Cargo dependencies
 * `FeatureGraph<'g>` is a second, auxiliary graph built from `PackageGraph`
 * Nodes are `(package, feature)` pairs, edges are either:
   * Feature dependencies, e.g. `foo = ["bar", "baz"]`
-  * Cross-links, e.g. `dep = { version = "1", features = ["foo"] }
+  * Cross-links, e.g. `dep = { version = "1", features = ["foo"] }`
 * Computed on-demand
 
 ---
