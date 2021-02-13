@@ -411,8 +411,7 @@ impl<'g> FeatureId<'g> {
         metadata: PackageMetadata<'g>,
         node: &FeatureNode,
     ) -> Option<&'g str> {
-        let feature_idx = node.feature_idx?;
-        metadata.feature_idx_to_name(feature_idx)
+        Some(metadata.feature_idx_to_name(node.feature_idx?))
     }
 
     /// Returns the package ID.

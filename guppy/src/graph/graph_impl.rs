@@ -928,15 +928,13 @@ impl<'g> PackageMetadata<'g> {
         self.inner.features.get_full(feature).map(|(n, _, _)| n)
     }
 
-    pub(super) fn feature_idx_to_name(&self, idx: usize) -> Option<&'g str> {
-        Some(
-            self.inner
-                .features
-                .get_index(idx)
-                .expect("feature idx should be valid")
-                .0
-                .as_ref(),
-        )
+    pub(super) fn feature_idx_to_name(&self, idx: usize) -> &'g str {
+        self.inner
+            .features
+            .get_index(idx)
+            .expect("feature idx should be valid")
+            .0
+            .as_ref()
     }
 
     #[allow(dead_code)]
