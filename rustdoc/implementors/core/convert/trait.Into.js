@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors["ascii"] = [{"text":"impl Into&lt;Vec&lt;u8&gt;&gt; for AsciiString","synthetic":false,"types":[]},{"text":"impl Into&lt;String&gt; for AsciiString","synthetic":false,"types":[]}];
+implementors["ascii"] = [{"text":"impl Into&lt;Vec&lt;u8, Global&gt;&gt; for AsciiString","synthetic":false,"types":[]},{"text":"impl Into&lt;String&gt; for AsciiString","synthetic":false,"types":[]}];
 implementors["combine"] = [{"text":"impl&lt;T, E&gt; Into&lt;Result&lt;Consumed&lt;T&gt;, Consumed&lt;Tracked&lt;E&gt;&gt;&gt;&gt; for FastResult&lt;T, E&gt;","synthetic":false,"types":[]},{"text":"impl&lt;O, E&gt; Into&lt;Result&lt;(O, Consumed&lt;()&gt;), Consumed&lt;Tracked&lt;E&gt;&gt;&gt;&gt; for FastResult&lt;O, E&gt;","synthetic":false,"types":[]}];
 implementors["diffus"] = [{"text":"impl&lt;'a, Diff, T:&nbsp;Diffable&lt;'a, Diff = Diff&gt; + 'a&gt; Into&lt;Edit&lt;'a, T&gt;&gt; for Edit&lt;'a, T&gt;","synthetic":false,"types":[]}];
 implementors["either"] = [{"text":"impl&lt;L, R&gt; Into&lt;Result&lt;R, L&gt;&gt; for Either&lt;L, R&gt;","synthetic":false,"types":[]}];
