@@ -341,7 +341,7 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
 ) -> prop::test_runner::TestCaseResult {
     let root_ids = graph.root_ids(ids, query_direction, iter_direction);
     let root_id_set: HashSet<_> = root_ids.iter().copied().collect();
-    assert_eq!(
+    prop_assert_eq!(
         root_ids.len(),
         root_id_set.len(),
         "{}: root IDs should all be unique",
@@ -349,7 +349,7 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
     );
 
     let root_metadatas = graph.root_metadatas(ids, query_direction, iter_direction);
-    assert_eq!(
+    prop_assert_eq!(
         root_ids.len(),
         root_metadatas.len(),
         "{}: root IDs and metadatas should have the same count",
@@ -359,13 +359,13 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
         .iter()
         .map(|metadata| metadata.id())
         .collect();
-    assert_eq!(
+    prop_assert_eq!(
         root_id_set, root_id_set_2,
         "{}: root IDs and metadatas should return the same results",
         msg
     );
 
-    assert!(
+    prop_assert!(
         !root_ids.is_empty(),
         "ids is non-empty so root ids can't be empty either"
     );

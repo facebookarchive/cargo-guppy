@@ -85,7 +85,7 @@ fn assert_invalid(json: &str, search_str: &str) {
     assert!(
         matches!(
             err,
-            Error::PackageGraphConstructError(ref s) if s.find(search_str).is_some(),
+            Error::PackageGraphConstructError(ref s) if s.contains(search_str),
         ),
         "actual error is: {}",
         err,
