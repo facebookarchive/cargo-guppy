@@ -360,7 +360,8 @@ pub(super) fn roots<'g, G: GraphAssert<'g>>(
         .map(|metadata| metadata.id())
         .collect();
     prop_assert_eq!(
-        root_id_set, root_id_set_2,
+        root_id_set,
+        root_id_set_2,
         "{}: root IDs and metadatas should return the same results",
         msg
     );
