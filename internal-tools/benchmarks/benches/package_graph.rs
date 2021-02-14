@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 use guppy::{
     graph::{DependencyDirection, PackageGraph, PackageMetadata},
     PackageId,
@@ -80,6 +80,13 @@ pub fn query_benchmarks(c: &mut Criterion) {
                 Some(2),
                 "2 versions of syn"
             );
+        })
+    });
+
+    c.bench_function("make_cycles", |b| {
+        b.iter(|| {
+            package_graph.invalidate_caches();
+            black_box(package_graph.cycles());
         })
     });
 }
