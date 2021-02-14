@@ -315,8 +315,9 @@ impl<'g> PackageSet<'g> {
     ///
     /// ## Cycles
     ///
-    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
-    /// topological order will be maintained.
+    /// The packages within a dependency cycle will be returned in non-dev order. When the direction
+    /// is forward, if package Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on
+    /// Foo, then Foo is returned before Bar.
     pub fn package_ids<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -335,8 +336,9 @@ impl<'g> PackageSet<'g> {
     ///
     /// ## Cycles
     ///
-    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
-    /// topological order will be maintained.
+    /// The packages within a dependency cycle will be returned in non-dev order. When the direction
+    /// is forward, if package Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on
+    /// Foo, then Foo is returned before Bar.
     pub fn packages<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -356,7 +358,7 @@ impl<'g> PackageSet<'g> {
     /// ## Cycles
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.
+    /// non-dev order (when the direction is forward).
     pub fn root_ids<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -378,7 +380,7 @@ impl<'g> PackageSet<'g> {
     /// ## Cycles
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.
+    /// non-dev order (when the direction is forward).
     pub fn root_packages<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -406,7 +408,9 @@ impl<'g> PackageSet<'g> {
     ///
     /// ## Cycles
     ///
-    /// The links in a dependency cycle may be returned in arbitrary order.
+    /// The links in a dependency cycle will be returned in non-dev order. When the direction is
+    /// forward, if package Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on Foo,
+    /// then the link Foo -> Bar is returned before the link Bar -> Foo.
     pub fn links<'a>(
         &'a self,
         direction: DependencyDirection,

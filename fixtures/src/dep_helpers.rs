@@ -520,6 +520,7 @@ pub trait GraphAssert<'g>: Copy + fmt::Debug {
     ) {
         if self.is_cyclic(a_id, b_id).unwrap() {
             // This is a dependency cycle -- ignore it in not-depends-on checks.
+            // TODO: make this smarter now that cycles are handled in non-dev order.
             return;
         }
 

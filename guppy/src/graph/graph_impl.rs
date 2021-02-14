@@ -8,7 +8,7 @@ use crate::{
         BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind, Cycles, DependencyDirection,
         OwnedBuildTargetId, PackageIx, PackageQuery, PackageSet,
     },
-    petgraph_support::{scc::Sccs, IxBitSet},
+    petgraph_support::{scc::Sccs, topo::TopoWithCycles, IxBitSet},
     CargoMetadata, DependencyKind, Error, JsonValue, MetadataCommand, PackageId, Platform,
 };
 use cargo_metadata::NodeDep;
@@ -19,6 +19,7 @@ use petgraph::{
     algo::{has_path_connecting, DfsSpace},
     graph::EdgeReference,
     prelude::*,
+    visit::EdgeFiltered,
 };
 use semver::{Version, VersionReq};
 use std::{
@@ -326,7 +327,18 @@ impl PackageGraph {
 
     /// Constructs a map of strongly connected components for this graph.
     pub(super) fn sccs(&self) -> &Sccs<PackageIx> {
-        self.sccs.get_or_init(|| Sccs::new(&self.dep_graph))
+        self.sccs.get_or_init(|| {
+            let edge_filtered =
+                EdgeFiltered::from_fn(&self.dep_graph, |edge| !edge.weight().dev_only());
+            // Sort the entire graph without dev-only edges -- a correct graph would be cycle-free
+            // but we don't currently do a consistency check for this so handle cycles.
+            // TODO: should we check at construction time? or bubble up a warning somehow?
+            let topo = TopoWithCycles::new(&edge_filtered);
+
+            Sccs::new(&self.dep_graph, |scc| {
+                topo.sort_nodes(scc);
+            })
+        })
     }
 
     /// Invalidates internal caches. Primarily for testing.
@@ -1551,7 +1563,7 @@ impl<'g> PackageLink<'g> {
     /// Return true if this edge is dev-only, i.e. code from this edge will not be included in
     /// normal builds.
     pub fn dev_only(&self) -> bool {
-        !self.normal().is_present() && !self.build().is_present()
+        self.inner.dev_only()
     }
 
     // ---
@@ -1592,6 +1604,13 @@ pub(crate) struct PackageLinkImpl {
     pub(super) normal: DependencyReqImpl,
     pub(super) build: DependencyReqImpl,
     pub(super) dev: DependencyReqImpl,
+}
+
+impl PackageLinkImpl {
+    #[inline]
+    fn dev_only(&self) -> bool {
+        self.normal.enabled().is_never() && self.build.enabled().is_never()
+    }
 }
 
 /// Information about a specific kind of dependency (normal, build or dev) from a package to another

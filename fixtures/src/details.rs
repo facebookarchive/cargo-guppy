@@ -71,15 +71,12 @@ impl FixtureDetails {
     }
 
     pub fn with_cycles(mut self, cycles: Vec<Vec<&'static str>>) -> Self {
-        let mut cycles: Vec<_> = cycles
+        let cycles: Vec<_> = cycles
             .into_iter()
-            .map(|cycle| {
-                let mut cycle: Vec<_> = cycle.into_iter().map(package_id).collect();
-                cycle.sort();
-                cycle
-            })
+            .map(|cycle| cycle.into_iter().map(package_id).collect())
             .collect();
-        cycles.sort();
+        // Don't sort because the order returned by all_cycles (both the outer and inner vecs) is
+        // significant.
         self.cycles = cycles;
         self
     }
@@ -292,17 +289,9 @@ impl FixtureDetails {
     // ---
 
     pub fn assert_cycles(&self, graph: &PackageGraph, msg: &str) {
-        let mut actual: Vec<_> = graph
-            .cycles()
-            .all_cycles()
-            .map(|cycle| {
-                let mut cycle: Vec<_> = cycle.into_iter().collect();
-                cycle.sort();
-                cycle
-            })
-            .collect();
-        actual.sort();
-
+        let actual: Vec<_> = graph.cycles().all_cycles().collect();
+        // Don't sort because the order returned by all_cycles (both the outer and inner vecs) is
+        // significant.
         assert_eq!(&self.cycles, &actual, "{}", msg);
     }
 }

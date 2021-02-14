@@ -282,8 +282,9 @@ impl<'g> FeatureSet<'g> {
     ///
     /// ## Cycles
     ///
-    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
-    /// topological order will be maintained.
+    /// The features within a dependency cycle will be returned in non-dev order. When the direction
+    /// is forward, if feature Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on
+    /// Foo, then Foo is returned before Bar.
     pub fn feature_ids<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -300,8 +301,9 @@ impl<'g> FeatureSet<'g> {
     ///
     /// ## Cycles
     ///
-    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
-    /// topological order will be maintained.
+    /// The features within a dependency cycle will be returned in non-dev order. When the direction
+    /// is forward, if feature Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on
+    /// Foo, then Foo is returned before Bar.
     pub fn features<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -321,8 +323,9 @@ impl<'g> FeatureSet<'g> {
     ///
     /// ## Cycles
     ///
-    /// The packages within a dependency cycle will be returned in arbitrary order, but overall
-    /// topological order will be maintained.
+    /// The packages within a dependency cycle will be returned in non-dev order. When the direction
+    /// is forward, if package Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on
+    /// Foo, then Foo is returned before Bar.
     pub fn packages_with_features<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -352,7 +355,7 @@ impl<'g> FeatureSet<'g> {
     /// ## Cycles
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.
+    /// non-dev order (when the direction is forward).
     pub fn root_ids<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -375,7 +378,7 @@ impl<'g> FeatureSet<'g> {
     /// ## Cycles
     ///
     /// If a root consists of a dependency cycle, all the packages in it will be returned in
-    /// arbitrary order.}
+    /// non-dev order (when the direction is forward).
     pub fn root_features<'a>(
         &'a self,
         direction: DependencyDirection,
@@ -395,7 +398,9 @@ impl<'g> FeatureSet<'g> {
     ///
     /// ## Cycles
     ///
-    /// The links in a dependency cycle may be returned in arbitrary order.
+    /// The links in a dependency cycle will be returned in non-dev order. When the direction is
+    /// forward, if feature Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on Foo,
+    /// then the link Foo -> Bar is returned before the link Bar -> Foo.
     pub fn cross_links<'a>(
         &'a self,
         direction: DependencyDirection,

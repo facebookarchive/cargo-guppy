@@ -46,7 +46,11 @@ impl<'g> Cycles<'g> {
 
     /// Returns all the cycles of 2 or more elements in this graph.
     ///
-    /// The order returned within each cycle is arbitrary.
+    /// Cycles are returned in topological order: if features in cycle B depend on features in cycle
+    /// A, A is returned before B.
+    ///
+    /// Within a cycle, nodes are returned in non-dev order: if feature Foo has a dependency on Bar,
+    /// and Bar has a dev-dependency on Foo, then Foo is returned before Bar.
     pub fn all_cycles(&self) -> impl Iterator<Item = Vec<FeatureId<'g>>> + 'g {
         let dep_graph = self.feature_graph.dep_graph();
         let package_graph = self.feature_graph.package_graph;

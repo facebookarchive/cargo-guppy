@@ -18,8 +18,8 @@ pub(crate) struct Sccs<Ix: IndexType> {
 }
 
 impl<Ix: IndexType> Sccs<Ix> {
-    /// Creates a new instance from the provided graph.
-    pub fn new<G>(graph: G) -> Self
+    /// Creates a new instance from the provided graph and the given sorter.
+    pub fn new<G>(graph: G, mut scc_sorter: impl FnMut(&mut Vec<NodeIndex<Ix>>)) -> Self
     where
         G: IntoNeighborsDirected<NodeId = NodeIndex<Ix>> + Visitable + IntoNodeIdentifiers,
         <G as Visitable>::Map: VisitMap<NodeIndex<Ix>>,
@@ -27,7 +27,18 @@ impl<Ix: IndexType> Sccs<Ix> {
         // Use kosaraju_scc since it is iterative (tarjan_scc is recursive) and package graphs
         // have unbounded depth.
         let sccs = kosaraju_scc(graph);
-        let sccs: Nested<Vec<_>> = sccs.into_iter().collect();
+        let sccs: Nested<Vec<_>> = sccs
+            .into_iter()
+            .map(|mut scc| {
+                if scc.len() > 1 {
+                    scc_sorter(&mut scc);
+                }
+                scc
+            })
+            // kosaraju_scc returns its sccs in reverse topological order. Reverse it again for
+            // forward topological order.
+            .rev()
+            .collect();
         let mut multi_map = HashMap::new();
         for (idx, scc) in sccs.iter().enumerate() {
             if scc.len() > 1 {
@@ -49,7 +60,7 @@ impl<Ix: IndexType> Sccs<Ix> {
     }
 
     /// Returns all the SCCs with more than one element.
-    pub fn multi_sccs(&self) -> impl Iterator<Item = &[NodeIndex<Ix>]> {
+    pub fn multi_sccs(&self) -> impl Iterator<Item = &[NodeIndex<Ix>]> + DoubleEndedIterator {
         self.sccs.iter().filter(|scc| scc.len() > 1)
     }
 
@@ -133,11 +144,11 @@ impl<'a, Ix: IndexType> Iterator for NodeIter<'a, Ix> {
     type Item = NodeIndex<Ix>;
 
     fn next(&mut self) -> Option<NodeIndex<Ix>> {
-        // Note that outgoing implies iterating over the sccs in reverse order, while incoming means
-        // sccs in forward order.
+        // Note that outgoing implies iterating over the sccs in forward order, while incoming means
+        // sccs in reverse order.
         match self.direction {
-            Direction::Outgoing => self.node_ixs.next_back().copied(),
-            Direction::Incoming => self.node_ixs.next().copied(),
+            Direction::Outgoing => self.node_ixs.next().copied(),
+            Direction::Incoming => self.node_ixs.next_back().copied(),
         }
     }
 }
