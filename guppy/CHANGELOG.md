@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.1] - 2020-02-14
+
+### Changed
+
+- Packages within a cycle are now returned in non-dev order. When the direction is forward,
+  if package Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on
+  Foo, then Foo is returned before Bar. (This is not a breaking change because it is an additional
+  constraint on guppy itself, not on its consumers.)
+
 ## [0.7.0] - 2020-02-03
 
 ### Added
@@ -314,6 +323,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.7.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.1
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.0
 [0.6.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.3
 [0.6.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.2
