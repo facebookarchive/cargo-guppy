@@ -8,7 +8,7 @@ use crate::{
         DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
         PlatformStatus, PlatformStatusImpl,
     },
-    petgraph_support::scc::Sccs,
+    petgraph_support::{scc::Sccs, topo::TopoWithCycles},
     DependencyKind, Error, PackageId,
 };
 use once_cell::sync::OnceCell;
@@ -216,7 +216,20 @@ impl<'g> FeatureGraph<'g> {
 
     /// Returns the strongly connected components for this feature graph.
     pub(super) fn sccs(&self) -> &'g Sccs<FeatureIx> {
-        self.inner.sccs.get_or_init(|| Sccs::new(&self.inner.graph))
+        self.inner.sccs.get_or_init(|| {
+            let edge_filtered =
+                EdgeFiltered::from_fn(self.dep_graph(), |edge| match edge.weight() {
+                    FeatureEdge::CrossPackage(cross_link) => !cross_link.dev_only(),
+                    FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => true,
+                });
+            // Sort the entire graph without dev-only edges -- a correct graph would be cycle-free
+            // but we don't currently do a consistency check for this so handle cycles.
+            // TODO: should we check at construction time? or bubble up a warning somehow?
+            let topo = TopoWithCycles::new(&edge_filtered);
+            Sccs::new(&self.inner.graph, |scc| {
+                topo.sort_nodes(scc);
+            })
+        })
     }
 
     fn metadata_impl(&self, feature_id: FeatureId<'g>) -> Option<&'g FeatureMetadataImpl> {
@@ -670,7 +683,7 @@ impl<'g> CrossLink<'g> {
     /// Returns true if this edge is dev-only, i.e. code from this edge will not be included in
     /// normal builds.
     pub fn dev_only(&self) -> bool {
-        self.normal().is_never() && self.build().is_never()
+        self.inner.dev_only()
     }
 
     /// Returns the `PackageLink` from which this `CrossLink` was derived.
@@ -790,6 +803,13 @@ pub struct CrossLinkImpl {
     pub(super) normal: PlatformStatusImpl,
     pub(super) build: PlatformStatusImpl,
     pub(super) dev: PlatformStatusImpl,
+}
+
+impl CrossLinkImpl {
+    #[inline]
+    fn dev_only(&self) -> bool {
+        self.normal.is_never() && self.build.is_never()
+    }
 }
 
 /// Metadata for a particular feature node.

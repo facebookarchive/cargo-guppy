@@ -607,7 +607,7 @@ impl FixtureDetails {
 
         Self::new(details)
             .with_workspace_members(vec![("", METADATA_CYCLE1_BASE)])
-            .with_cycles(vec![vec![METADATA_CYCLE1_BASE, METADATA_CYCLE1_HELPER]])
+            .with_cycles(vec![vec![METADATA_CYCLE1_HELPER, METADATA_CYCLE1_BASE]])
     }
 
     pub(crate) fn metadata_cycle2() -> Self {
@@ -715,7 +715,9 @@ impl FixtureDetails {
                 ("lower-b", METADATA_CYCLE2_LOWER_B),
             ])
             .with_cycles(vec![
+                // upper-b dev-depends on upper-a, and upper-a normal-depends on upper-b.
                 vec![METADATA_CYCLE2_UPPER_A, METADATA_CYCLE2_UPPER_B],
+                // lower-b dev-depends on lower-a, and lower-a normal-depends on lower-b.
                 vec![METADATA_CYCLE2_LOWER_A, METADATA_CYCLE2_LOWER_B],
             ])
     }
@@ -729,8 +731,8 @@ impl FixtureDetails {
                 ("testcycles-helper", METADATA_CYCLE_FEATURES_HELPER),
             ])
             .with_cycles(vec![vec![
-                METADATA_CYCLE_FEATURES_BASE,
                 METADATA_CYCLE_FEATURES_HELPER,
+                METADATA_CYCLE_FEATURES_BASE,
             ]])
     }
 
@@ -1254,9 +1256,9 @@ impl FixtureDetails {
         Self::new(details).with_cycles(vec![vec![
             METADATA_LIBRA_FUNCTIONAL_HYPHEN_TESTS,
             METADATA_LIBRA_E2E_TESTS,
-            METADATA_LIBRA_MOVE_LANG,
-            METADATA_LIBRA_MOVE_LANG_STDLIB,
             METADATA_LIBRA_VM_GENESIS,
+            METADATA_LIBRA_MOVE_LANG_STDLIB,
+            METADATA_LIBRA_MOVE_LANG,
         ]])
     }
 
@@ -1264,18 +1266,18 @@ impl FixtureDetails {
         let details = HashMap::new();
 
         Self::new(details).with_cycles(vec![
+            vec![METADATA_LIBRA_EXECUTOR_UTILS, METADATA_LIBRA_EXECUTOR],
             vec![
-                METADATA_LIBRA_COMPILER,
                 METADATA_LIBRA_FUNCTIONAL_HYPHEN_TESTS,
                 METADATA_LIBRA_E2E_TESTS,
-                METADATA_LIBRA_LIBRA_VM,
-                METADATA_LIBRA_MOVE_LANG,
-                METADATA_LIBRA_MOVE_VM_RUNTIME,
-                METADATA_LIBRA_STDLIB,
-                METADATA_LIBRA_TRANSACTION_BUILDER,
+                METADATA_LIBRA_COMPILER,
                 METADATA_LIBRA_VM_GENESIS,
+                METADATA_LIBRA_LIBRA_VM,
+                METADATA_LIBRA_MOVE_VM_RUNTIME,
+                METADATA_LIBRA_TRANSACTION_BUILDER,
+                METADATA_LIBRA_STDLIB,
+                METADATA_LIBRA_MOVE_LANG,
             ],
-            vec![METADATA_LIBRA_EXECUTOR, METADATA_LIBRA_EXECUTOR_UTILS],
         ])
     }
 

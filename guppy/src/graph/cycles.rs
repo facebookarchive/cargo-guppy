@@ -37,8 +37,14 @@ impl<'g> Cycles<'g> {
 
     /// Returns all the cycles of 2 or more elements in this graph.
     ///
-    /// The order returned within each cycle is arbitrary.
-    pub fn all_cycles(&self) -> impl Iterator<Item = Vec<&'g PackageId>> + 'g {
+    /// Cycles are returned in topological order: if packages in cycle B depend on packages in cycle
+    /// A, A is returned before B.
+    ///
+    /// Within a cycle, nodes are returned in non-dev order: if package Foo has a dependency on Bar,
+    /// and Bar has a cyclic dev-dependency on Foo, then Foo is returned before Bar.
+    pub fn all_cycles(
+        &self,
+    ) -> impl Iterator<Item = Vec<&'g PackageId>> + DoubleEndedIterator + 'g {
         let dep_graph = &self.package_graph.dep_graph;
         self.sccs
             .multi_sccs()

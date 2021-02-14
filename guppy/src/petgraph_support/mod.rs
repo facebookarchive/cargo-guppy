@@ -14,6 +14,7 @@ pub mod dfs;
 pub mod dot;
 pub mod edge_ref;
 pub mod scc;
+pub mod topo;
 pub mod walk;
 
 pub fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::EdgeId) {
