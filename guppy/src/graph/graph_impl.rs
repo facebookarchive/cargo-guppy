@@ -11,6 +11,7 @@ use crate::{
     petgraph_support::{scc::Sccs, topo::TopoWithCycles, IxBitSet},
     CargoMetadata, DependencyKind, Error, JsonValue, MetadataCommand, PackageId, Platform,
 };
+use camino::{Utf8Path, Utf8PathBuf};
 use cargo_metadata::NodeDep;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
@@ -26,7 +27,7 @@ use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt, iter,
     iter::FromIterator,
-    path::{Path, PathBuf},
+    path::Path,
 };
 use target_spec::TargetSpec;
 
@@ -475,7 +476,7 @@ pub struct Workspace<'g> {
 
 impl<'g> Workspace<'g> {
     /// Returns the workspace root.
-    pub fn root(&self) -> &'g Path {
+    pub fn root(&self) -> &'g Utf8Path {
         &self.inner.root
     }
 
@@ -490,7 +491,7 @@ impl<'g> Workspace<'g> {
     }
 
     /// Returns true if the workspace contains a package by the given workspace path.
-    pub fn contains_path(&self, path: impl AsRef<Path>) -> bool {
+    pub fn contains_path(&self, path: impl AsRef<Utf8Path>) -> bool {
         self.inner.members_by_path.contains_key(path.as_ref())
     }
 
@@ -503,7 +504,7 @@ impl<'g> Workspace<'g> {
     /// they're in.
     pub fn iter_by_path(
         &self,
-    ) -> impl Iterator<Item = (&'g Path, PackageMetadata<'g>)> + ExactSizeIterator {
+    ) -> impl Iterator<Item = (&'g Utf8Path, PackageMetadata<'g>)> + ExactSizeIterator {
         let graph = self.graph;
         self.inner.members_by_path.iter().map(move |(path, id)| {
             (
@@ -533,7 +534,7 @@ impl<'g> Workspace<'g> {
     /// Maps the given path to the corresponding workspace member.
     ///
     /// Returns an error if the path didn't match any workspace members.
-    pub fn member_by_path(&self, path: impl AsRef<Path>) -> Result<PackageMetadata<'g>, Error> {
+    pub fn member_by_path(&self, path: impl AsRef<Utf8Path>) -> Result<PackageMetadata<'g>, Error> {
         let path = path.as_ref();
         let id = self
             .inner
@@ -549,7 +550,7 @@ impl<'g> Workspace<'g> {
     /// Returns an error if any of the paths were unknown.
     pub fn members_by_paths<B>(
         &self,
-        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+        paths: impl IntoIterator<Item = impl AsRef<Utf8Path>>,
     ) -> Result<B, Error>
     where
         B: FromIterator<PackageMetadata<'g>>,
@@ -611,7 +612,7 @@ mod workspace_rayon {
         /// Requires the `rayon1` feature to be enabled.
         pub fn par_iter_by_path(
             &self,
-        ) -> impl ParallelIterator<Item = (&'g Path, PackageMetadata<'g>)> {
+        ) -> impl ParallelIterator<Item = (&'g Utf8Path, PackageMetadata<'g>)> {
             let graph = self.graph;
             self.inner
                 .members_by_path
@@ -644,9 +645,9 @@ mod workspace_rayon {
 
 #[derive(Clone, Debug)]
 pub(super) struct WorkspaceImpl {
-    pub(super) root: PathBuf,
+    pub(super) root: Utf8PathBuf,
     // This is a BTreeMap to allow presenting data in sorted order.
-    pub(super) members_by_path: BTreeMap<PathBuf, PackageId>,
+    pub(super) members_by_path: BTreeMap<Utf8PathBuf, PackageId>,
     pub(super) members_by_name: BTreeMap<Box<str>, PackageId>,
     // Cache for members by name (only used for proptests)
     #[cfg(feature = "proptest1")]
@@ -767,7 +768,7 @@ impl<'g> PackageMetadata<'g> {
     ///
     /// This is the same as the `license_file` field of `Cargo.toml`. It is typically only specified
     /// for nonstandard licenses.
-    pub fn license_file(&self) -> Option<&'g Path> {
+    pub fn license_file(&self) -> Option<&'g Utf8Path> {
         self.inner.license_file.as_ref().map(|path| path.as_ref())
     }
 
@@ -788,7 +789,7 @@ impl<'g> PackageMetadata<'g> {
     /// Returns the full path to the `Cargo.toml` for this package.
     ///
     /// This is specific to the system that `cargo metadata` was run on.
-    pub fn manifest_path(&self) -> &'g Path {
+    pub fn manifest_path(&self) -> &'g Utf8Path {
         &self.inner.manifest_path
     }
 
@@ -1011,8 +1012,8 @@ pub(crate) struct PackageMetadataImpl {
     pub(super) authors: Vec<String>,
     pub(super) description: Option<Box<str>>,
     pub(super) license: Option<Box<str>>,
-    pub(super) license_file: Option<Box<Path>>,
-    pub(super) manifest_path: Box<Path>,
+    pub(super) license_file: Option<Box<Utf8Path>>,
+    pub(super) manifest_path: Box<Utf8Path>,
     pub(super) categories: Vec<String>,
     pub(super) keywords: Vec<String>,
     pub(super) readme: Option<Box<Path>>,
@@ -1043,12 +1044,12 @@ pub enum PackageSource<'g> {
     /// This package is in the workspace.
     ///
     /// The path is relative to the workspace root.
-    Workspace(&'g Path),
+    Workspace(&'g Utf8Path),
 
     /// This package is a path dependency that isn't in the workspace.
     ///
     /// The path is relative to the workspace root.
-    Path(&'g Path),
+    Path(&'g Utf8Path),
 
     /// This package is an external dependency.
     ///
@@ -1106,7 +1107,7 @@ impl<'g> PackageSource<'g> {
     /// dependency.
     ///
     /// The path is relative to the workspace root.
-    pub fn workspace_path(&self) -> Option<&'g Path> {
+    pub fn workspace_path(&self) -> Option<&'g Utf8Path> {
         match self {
             PackageSource::Workspace(path) => Some(path),
             _ => None,
@@ -1117,7 +1118,7 @@ impl<'g> PackageSource<'g> {
     /// dependency.
     ///
     /// The path is relative to the workspace root.
-    pub fn local_path(&self) -> Option<&'g Path> {
+    pub fn local_path(&self) -> Option<&'g Utf8Path> {
         match self {
             PackageSource::Path(path) | PackageSource::Workspace(path) => Some(path),
             _ => None,
@@ -1150,8 +1151,8 @@ impl<'g> PackageSource<'g> {
 impl<'g> fmt::Display for PackageSource<'g> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            PackageSource::Workspace(path) => write!(f, "{}", path.display()),
-            PackageSource::Path(path) => write!(f, "{}", path.display()),
+            PackageSource::Workspace(path) => write!(f, "{}", path),
+            PackageSource::Path(path) => write!(f, "{}", path),
             PackageSource::External(source) => write!(f, "{}", source),
         }
     }
@@ -1438,8 +1439,8 @@ pub enum GitReq<'g> {
 /// Internal representation of the source of a package.
 #[derive(Clone, Debug)]
 pub(super) enum PackageSourceImpl {
-    Workspace(Box<Path>),
-    Path(Box<Path>),
+    Workspace(Box<Utf8Path>),
+    Path(Box<Utf8Path>),
     // Special, common case.
     CratesIo,
     External(Box<str>),

@@ -6,11 +6,10 @@
 use cfg_if::cfg_if;
 use determinator::{
     rules::{DeterminatorRules, PathMatch, RuleIndex},
-    Determinator, Paths0,
+    Determinator, Utf8Paths0,
 };
 use fixtures::json::JsonFixture;
 use guppy::{graph::feature::StandardFeatures, CargoMetadata};
-use std::path::Path;
 
 #[test]
 fn guppy_no_rules() {
@@ -22,7 +21,7 @@ fn guppy_no_rules() {
     // Do not set custom rules -- ensure that default rules are used.
 
     // README.md is ignored by the default rules.
-    determinator.add_changed_paths(vec![Path::new("README.md")]);
+    determinator.add_changed_paths(vec!["README.md"]);
     let determinator_set = determinator.compute();
     assert!(
         determinator_set.path_changed_set.is_empty(),
@@ -34,7 +33,7 @@ fn guppy_no_rules() {
     );
 
     // rust-toolchain causes a full build.
-    determinator.add_changed_paths(vec![Path::new("rust-toolchain")]);
+    determinator.add_changed_paths(vec!["rust-toolchain"]);
     let workspace_set = new.graph().resolve_workspace();
     let determinator_set = determinator.compute();
     assert_eq!(
@@ -67,7 +66,7 @@ fn guppy_path_rules() {
     );
 
     // Try adding some files -- this isn't matched by any rule.
-    determinator.add_changed_paths(vec![Path::new("fixtures/src/details.rs")]);
+    determinator.add_changed_paths(vec!["fixtures/src/details.rs"]);
     let expected_changed = new
         .graph()
         .resolve_workspace_names(vec!["fixtures"])
@@ -90,10 +89,7 @@ fn guppy_path_rules() {
     }
 
     // Add a README, which is ignored by the rules.
-    determinator.add_changed_paths(vec![
-        Path::new("guppy/README.md"),
-        Path::new("cargo-guppy/README.tpl"),
-    ]);
+    determinator.add_changed_paths(vec!["guppy/README.md", "cargo-guppy/README.tpl"]);
     {
         let determinator_set = determinator.compute();
         assert_eq!(determinator_set.path_changed_set, expected_changed);
@@ -101,7 +97,7 @@ fn guppy_path_rules() {
     }
 
     // Cargo.lock and .gitignore should be ignored by default and shouldn't cause any changes.
-    determinator.add_changed_paths(vec![Path::new(".gitignore"), Path::new("Cargo.lock")]);
+    determinator.add_changed_paths(vec![".gitignore", "Cargo.lock"]);
     {
         let determinator_set = determinator.compute();
         assert_eq!(determinator_set.path_changed_set, expected_changed);
@@ -109,7 +105,7 @@ fn guppy_path_rules() {
     }
 
     // Check that rules doesn't apply to subdirectories.
-    determinator.add_changed_paths(vec![Path::new("foo/CODE_OF_CONDUCT.md")]);
+    determinator.add_changed_paths(vec!["foo/CODE_OF_CONDUCT.md"]);
     {
         let determinator_set = determinator.compute();
         assert_eq!(determinator_set.path_changed_set, expected_changed);
@@ -118,7 +114,7 @@ fn guppy_path_rules() {
 
     // Ensure that fallthrough works.
 
-    determinator.add_changed_paths(vec![Path::new("CONTRIBUTING.md")]);
+    determinator.add_changed_paths(vec!["CONTRIBUTING.md"]);
     {
         // CONTRIBUTING.md should cause cargo-guppy to be added.
         let new_changed = new
@@ -134,7 +130,7 @@ fn guppy_path_rules() {
         assert_eq!(determinator_set.path_changed_set, new_changed);
         assert_eq!(determinator_set.affected_set, new_affected);
     }
-    determinator.add_changed_paths(vec![Path::new("CODE_OF_CONDUCT.md")]);
+    determinator.add_changed_paths(vec!["CODE_OF_CONDUCT.md"]);
     {
         // CODE_OF_CONDUCT.md should cause both guppy and cargo-guppy to be added.
         let new_changed = new
@@ -160,7 +156,7 @@ fn guppy_path_rules() {
     }
 
     // Ensure that skip-rules works as expected, skipping further rules.
-    determinator.add_changed_paths(vec![Path::new("internal-tools/benchmarks/foo")]);
+    determinator.add_changed_paths(vec!["internal-tools/benchmarks/foo"]);
     {
         // CODE_OF_CONDUCT.md should cause both guppy and cargo-guppy to be added.
         let new_changed = new
@@ -214,7 +210,7 @@ fn guppy_package_rules() {
         // This ruleset disables default rules, so Cargo.lock changing should cause everything to be
         // built.
         let mut determinator = determinator.clone();
-        determinator.add_changed_paths(vec![Path::new("Cargo.lock")]);
+        determinator.add_changed_paths(vec!["Cargo.lock"]);
         let determinator_set = determinator.compute();
         let workspace_set = new.graph().resolve_workspace();
         assert_eq!(
@@ -228,7 +224,7 @@ fn guppy_package_rules() {
     }
 
     // Add a file that doesn't match any of the rules.
-    determinator.add_changed_paths(vec![Path::new("cargo-guppy/foo.rs")]);
+    determinator.add_changed_paths(vec!["cargo-guppy/foo.rs"]);
     let determinator_set = determinator.compute();
     let expected_path_changed = new
         .graph()
@@ -249,7 +245,7 @@ fn guppy_package_rules() {
     );
 
     // Add a file which matches fixtures (and triggers guppy-cmdlib).
-    determinator.add_changed_paths(vec![Path::new("fixtures/src/main.rs")]);
+    determinator.add_changed_paths(vec!["fixtures/src/main.rs"]);
     let determinator_set = determinator.compute();
     let expected_path_changed = new
         .graph()
@@ -297,7 +293,7 @@ fn guppy_package_rules_2() {
 
     // Changing a "fake-trigger" file means "proptest-ext" changes, which causes "guppy-benchmarks"
     // to change, which according to a package rule means everything gets rebuilt.
-    determinator.add_changed_paths(vec![Path::new("foo/fake-trigger")]);
+    determinator.add_changed_paths(vec!["foo/fake-trigger"]);
     let determinator_set = determinator.compute();
     let expected_path_changed = new
         .graph()
@@ -453,7 +449,7 @@ fn git_match_paths() {
             let json = include_str!("../../../fixtures/determinator-paths/guppy-linux.json");
         }
     };
-    let git_diff = include_bytes!("../../../fixtures/determinator-paths/git-diff.out");
+    let git_diff = include_str!("../../../fixtures/determinator-paths/git-diff.out");
 
     let package_graph = CargoMetadata::parse_json(json)
         .expect("metadata json parsed correct")
@@ -463,7 +459,7 @@ fn git_match_paths() {
 
     // This will convert the forward slashes to backslashes on Windows, but keep them the same on
     // Unix platforms.
-    let paths = Paths0::new_forward_slashes(git_diff.to_vec()).expect("paths0 is valid");
+    let paths = Utf8Paths0::new_forward_slashes(git_diff);
     determinator.add_changed_paths(paths.iter());
 
     let determinator_set = determinator.compute();

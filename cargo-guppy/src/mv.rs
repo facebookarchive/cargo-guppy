@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use anyhow::{anyhow, bail, Context, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 use dialoguer::Confirm;
 use guppy::graph::{PackageGraph, PackageLink, PackageMetadata};
 use guppy_cmdlib::CargoMetadataOptions;
@@ -21,11 +22,11 @@ use toml_edit::{decorated, Document, Item, Table, Value};
 pub struct MvOptions {
     /// Source directories to move
     #[structopt(name = "DIR", required = true)]
-    src_dirs: Vec<PathBuf>,
+    src_dirs: Vec<Utf8PathBuf>,
 
     /// Destination directory to move to
     #[structopt(name = "DEST")]
-    dest_dir: PathBuf,
+    dest_dir: Utf8PathBuf,
 
     /// Print out operations instead of performing them
     #[structopt(long)]
@@ -57,7 +58,7 @@ impl MvOptions {
                     // This disallows, e.g. "cargo guppy mv foo foo/bar dest"
                     Entry::Occupied(_) => bail!(
                         "workspace path '{}' specified multiple times in source",
-                        workspace_path.display()
+                        workspace_path
                     ),
                     Entry::Vacant(v) => {
                         v.insert(package_move);
@@ -67,7 +68,7 @@ impl MvOptions {
         }
 
         // Build a map of edits to perform (manifest path to a list of edits).
-        let mut manifest_edits: BTreeMap<&Path, Vec<_>> = BTreeMap::new();
+        let mut manifest_edits: BTreeMap<&Utf8Path, Vec<_>> = BTreeMap::new();
 
         for package_move in src_moves.values() {
             for link in package_move.package.direct_links() {
@@ -86,7 +87,7 @@ impl MvOptions {
                 let edit_path = diff_paths(old_path, &package_move.new_path)
                     .expect("paths are all relative so diff_paths can never return None");
 
-                let edit_path = check_unicode_path(edit_path)?;
+                let edit_path = check_utf8_path(edit_path)?;
                 manifest_edits
                     .entry(from.manifest_path())
                     .or_default()
@@ -107,7 +108,7 @@ impl MvOptions {
                 }
                 .expect("paths are all relative so diff_paths can never return None");
 
-                let edit_path = check_unicode_path(edit_path)?;
+                let edit_path = check_utf8_path(edit_path)?;
                 manifest_edits
                     .entry(from.manifest_path())
                     .or_default()
@@ -128,11 +129,7 @@ impl MvOptions {
 
         println!("\nMoves:");
         for (src_dir, package_move) in &src_moves {
-            println!(
-                "  * move {} to {}",
-                src_dir.display(),
-                package_move.new_path,
-            );
+            println!("  * move {} to {}", src_dir, package_move.new_path,);
         }
 
         println!();
@@ -154,12 +151,8 @@ impl MvOptions {
 
             // Next, update the root manifest. Do this before moving directories because this relies
             // on the old directories existing.
-            update_root_toml(workspace_root, &src_moves).with_context(|| {
-                anyhow!(
-                    "error while updating root toml at {}",
-                    workspace_root.display()
-                )
-            })?;
+            update_root_toml(workspace_root, &src_moves)
+                .with_context(|| anyhow!("error while updating root toml at {}", workspace_root))?;
 
             // Finally, move directories into their new spots.
             // Rely on the fact that BTreeMap is sorted so that "foo" always shows up before
@@ -177,16 +170,12 @@ impl MvOptions {
                 assert!(
                     !abs_dest.exists(),
                     "expected destination {} not to exist",
-                    abs_dest.display()
+                    abs_dest
                 );
                 // fs::rename behaves differently on Unix and Windows if the destination exists.
                 // But we don't expect it to, as the assertion above checks.
                 fs::rename(&abs_src, &abs_dest).with_context(|| {
-                    anyhow!(
-                        "renaming {} to {} failed",
-                        src_dir.display(),
-                        package_move.new_path
-                    )
+                    anyhow!("renaming {} to {} failed", src_dir, package_move.new_path)
                 })?;
                 done.insert(src_dir);
             }
@@ -197,12 +186,12 @@ impl MvOptions {
 }
 
 enum DestDir {
-    Exists(PathBuf),
-    Create(PathBuf),
+    Exists(Utf8PathBuf),
+    Create(Utf8PathBuf),
 }
 
 impl DestDir {
-    fn new(pkg_graph: &PackageGraph, dest_dir: &Path) -> Result<Self> {
+    fn new(pkg_graph: &PackageGraph, dest_dir: &Utf8Path) -> Result<Self> {
         let workspace = pkg_graph.workspace();
         let workspace_root = workspace.root();
 
@@ -220,14 +209,14 @@ impl DestDir {
             Err(err) if err.kind() == io::ErrorKind::NotFound => {
                 // The destination directory doesn't exist and needs to be created.
                 // Canonicalize the parent, then glue the last component to it.
-                let last_component = dest_dir.file_name().with_context(|| {
-                    anyhow!("destination {} cannot end with ..", dest_dir.display())
-                })?;
+                let last_component = dest_dir
+                    .file_name()
+                    .with_context(|| anyhow!("destination {} cannot end with ..", dest_dir))?;
                 let parent = dest_dir
                     .parent()
-                    .with_context(|| anyhow!("destination {} cannot be /", dest_dir.display()))?;
+                    .with_context(|| anyhow!("destination {} cannot be /", dest_dir))?;
                 let parent = if parent.as_os_str() == "" {
-                    Path::new(".")
+                    Utf8Path::new(".")
                 } else {
                     parent
                 };
@@ -235,8 +224,9 @@ impl DestDir {
                 let parent = canonicalize_dir(pkg_graph, parent)?;
                 Ok(DestDir::Create(parent.join(last_component)))
             }
-            Err(err) => Err(err)
-                .with_context(|| anyhow!("reading destination {} failed", dest_dir.display())),
+            Err(err) => {
+                Err(err).with_context(|| anyhow!("reading destination {} failed", dest_dir))
+            }
         }
     }
 
@@ -247,7 +237,7 @@ impl DestDir {
         }
     }
 
-    fn join(&self, workspace_path: &Path, src_dir: &Path) -> Result<PathBuf> {
+    fn join(&self, workspace_path: &Utf8Path, src_dir: &Utf8Path) -> Result<Utf8PathBuf> {
         // Consider e.g. workspace path = foo/bar, src dir = foo, dest dir = quux.
         let new_path = match self {
             DestDir::Exists(dest_dir) => {
@@ -269,11 +259,7 @@ impl DestDir {
 
         // If the new path is inside (or the same as) the source directory, it's a problem.
         if new_path.starts_with(src_dir) {
-            bail!(
-                "invalid move: {} -> {}",
-                src_dir.display(),
-                new_path.display()
-            );
+            bail!("invalid move: {} -> {}", src_dir, new_path);
         }
 
         Ok(new_path)
@@ -281,14 +267,14 @@ impl DestDir {
 }
 
 /// Return the workspace path for a given directory (relative to cwd).
-fn canonicalize_dir(pkg_graph: &PackageGraph, path: impl AsRef<Path>) -> Result<PathBuf> {
+fn canonicalize_dir(pkg_graph: &PackageGraph, path: impl AsRef<Utf8Path>) -> Result<Utf8PathBuf> {
     let workspace = pkg_graph.workspace();
     let workspace_root = workspace.root();
 
     let path = path.as_ref();
     let canonical_path = path
         .canonicalize()
-        .with_context(|| anyhow!("reading path {} failed", path.display()))?;
+        .with_context(|| anyhow!("reading path {} failed", path))?;
     if !canonical_path.is_dir() {
         bail!("path {} is not a directory", canonical_path.display());
     }
@@ -296,31 +282,30 @@ fn canonicalize_dir(pkg_graph: &PackageGraph, path: impl AsRef<Path>) -> Result<
     Ok(rel_path(&canonical_path, workspace_root)?.to_path_buf())
 }
 
-fn rel_path<'a>(path: &'a Path, workspace_root: &Path) -> Result<&'a Path> {
-    path.strip_prefix(workspace_root).with_context(|| {
+fn rel_path<'a>(path: &'a Path, workspace_root: &Utf8Path) -> Result<&'a Utf8Path> {
+    let rel_path = path.strip_prefix(workspace_root).with_context(|| {
         anyhow!(
             "path {} not in workspace root {}",
             path.display(),
-            workspace_root.display()
+            workspace_root
         )
-    })
+    })?;
+    Utf8Path::from_path(rel_path)
+        .ok_or_else(|| anyhow!("rel path {} is invalid UTF-8", rel_path.display()))
 }
 
 /// Checks that the path is valid Unicode. If it is, returns a string, otherwise returns an error.
-fn check_unicode_path(path: PathBuf) -> Result<String> {
-    path.into_os_string().into_string().map_err(|non_unicode| {
-        anyhow!(
-            "path {} is not valid Unicode",
-            Path::new(&non_unicode).display()
-        )
-    })
+fn check_utf8_path(path: PathBuf) -> Result<Utf8PathBuf> {
+    // TODO: remove this, rely on Utf8PathBuf instead!
+    Utf8PathBuf::from_path_buf(path)
+        .map_err(|non_unicode| anyhow!("path {} is not valid Unicode", non_unicode.display()))
 }
 
 fn moves_for<'g: 'a, 'a>(
     pkg_graph: &'g PackageGraph,
-    src_dir: &'a Path,
+    src_dir: &'a Utf8Path,
     dest_dir: &'a DestDir,
-) -> Result<Vec<(&'g Path, PackageMove<'g>)>> {
+) -> Result<Vec<(&'g Utf8Path, PackageMove<'g>)>> {
     // TODO: speed this up using a trie in guppy? Probably not that important.
     let workspace = pkg_graph.workspace();
     let workspace_root = workspace.root();
@@ -338,17 +323,17 @@ fn moves_for<'g: 'a, 'a>(
                     if abs_new_path.exists() {
                         bail!(
                             "attempted to move {} to {}, which already exists",
-                            workspace_path.display(),
-                            new_path.display()
+                            workspace_path,
+                            new_path
                         );
                     }
 
-                    let mut new_path = check_unicode_path(new_path)?;
-
                     // new_path can sometimes have a trailing slash -- remove it if it does.
+                    let mut new_path = new_path.into_string();
                     if new_path.ends_with(MAIN_SEPARATOR) {
                         new_path.pop();
                     }
+                    let new_path = new_path.into();
 
                     Ok((workspace_path, PackageMove { package, new_path }))
                 });
@@ -363,13 +348,13 @@ fn moves_for<'g: 'a, 'a>(
 #[derive(Clone, Debug)]
 struct PackageMove<'g> {
     package: PackageMetadata<'g>,
-    new_path: String,
+    new_path: Utf8PathBuf,
 }
 
 #[derive(Clone, Debug)]
 struct ManifestEdit<'g> {
     link: PackageLink<'g>,
-    edit_path: String,
+    edit_path: Utf8PathBuf,
 }
 
 impl<'g> fmt::Display for ManifestEdit<'g> {
@@ -383,7 +368,7 @@ impl<'g> fmt::Display for ManifestEdit<'g> {
     }
 }
 
-fn apply_edits(manifest_path: &Path, edits: &[ManifestEdit<'_>]) -> Result<()> {
+fn apply_edits(manifest_path: &Utf8Path, edits: &[ManifestEdit<'_>]) -> Result<()> {
     let mut document = read_toml(manifest_path)?;
     let table = document.as_table_mut();
 
@@ -404,9 +389,8 @@ fn apply_edits(manifest_path: &Path, edits: &[ManifestEdit<'_>]) -> Result<()> {
     // * dependencies, build-dependencies, dev-dependencies
     // * [target.'foo'.dependencies], .build-dependencies and .dev-dependencies
     for edit in edits {
-        apply_edit(table, edit).with_context(|| {
-            anyhow!("error while applying edits to {}", manifest_path.display())
-        })?;
+        apply_edit(table, edit)
+            .with_context(|| anyhow!("error while applying edits to {}", manifest_path))?;
         for target in &all_targets {
             let target_table = match &mut table["target"][target] {
                 Item::Table(target_table) => target_table,
@@ -418,7 +402,7 @@ fn apply_edits(manifest_path: &Path, edits: &[ManifestEdit<'_>]) -> Result<()> {
             apply_edit(target_table, edit).with_context(|| {
                 anyhow!(
                     "error while applying edits to {}, section [target.'{}']",
-                    manifest_path.display(),
+                    manifest_path,
                     target
                 )
             })?;
@@ -426,7 +410,7 @@ fn apply_edits(manifest_path: &Path, edits: &[ManifestEdit<'_>]) -> Result<()> {
     }
 
     fs::write(manifest_path, document.to_string_in_original_order())
-        .with_context(|| anyhow!("error while writing manifest {}", manifest_path.display()))?;
+        .with_context(|| anyhow!("error while writing manifest {}", manifest_path))?;
 
     Ok(())
 }
@@ -491,8 +475,8 @@ fn apply_edit(table: &mut Table, edit: &ManifestEdit<'_>) -> Result<()> {
 }
 
 fn update_root_toml(
-    workspace_root: &Path,
-    src_moves: &BTreeMap<&Path, PackageMove<'_>>,
+    workspace_root: &Utf8Path,
+    src_moves: &BTreeMap<&Utf8Path, PackageMove<'_>>,
 ) -> Result<()> {
     let root_manifest_path = workspace_root.join("Cargo.toml");
     let mut document = read_toml(&root_manifest_path)?;
@@ -547,17 +531,17 @@ fn update_root_toml(
     }
 
     let mut out = fs::File::create(&root_manifest_path)
-        .with_context(|| anyhow!("Error while opening {}", root_manifest_path.display()))?;
+        .with_context(|| anyhow!("Error while opening {}", root_manifest_path))?;
     write!(out, "{}", document)?;
 
     Ok(())
 }
 
-fn read_toml(manifest_path: &Path) -> Result<Document> {
+fn read_toml(manifest_path: &Utf8Path) -> Result<Document> {
     let toml = fs::read_to_string(manifest_path)
-        .with_context(|| anyhow!("error while reading manifest {}", manifest_path.display()))?;
+        .with_context(|| anyhow!("error while reading manifest {}", manifest_path))?;
     toml.parse::<Document>()
-        .with_context(|| anyhow!("error while parsing manifest {}", manifest_path.display()))
+        .with_context(|| anyhow!("error while parsing manifest {}", manifest_path))
 }
 
 /// Replace the value while retaining the decor.

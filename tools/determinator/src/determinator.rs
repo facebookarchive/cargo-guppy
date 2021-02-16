@@ -8,6 +8,7 @@ use crate::{
         RulesImpl,
     },
 };
+use camino::Utf8Path;
 use globset::Candidate;
 use guppy::{
     graph::{
@@ -20,10 +21,7 @@ use guppy::{
 use itertools::Itertools;
 use petgraph::{graphmap::GraphMap, Directed};
 use rayon::prelude::*;
-use std::{
-    collections::{hash_map::Entry, HashMap, HashSet},
-    path::Path,
-};
+use std::collections::{hash_map::Entry, HashMap, HashSet};
 
 /// Determine target dependencies from changed files and packages in a workspace.
 ///
@@ -42,7 +40,7 @@ pub struct Determinator<'g, 'a> {
     cargo_options: Option<&'a CargoOptions<'a>>,
     old_features_only: Option<FeatureSet<'a>>,
     new_features_only: Option<FeatureSet<'g>>,
-    changed_paths: Vec<&'a Path>,
+    changed_paths: Vec<&'a Utf8Path>,
 }
 
 impl<'g, 'a> Determinator<'g, 'a> {
@@ -92,8 +90,12 @@ impl<'g, 'a> Determinator<'g, 'a> {
     ///
     /// On balance, only considering tracked files appears to be the right approach for most
     /// situations.
-    pub fn add_changed_paths(&mut self, paths: impl IntoIterator<Item = &'a Path>) -> &mut Self {
-        self.changed_paths.extend(paths);
+    pub fn add_changed_paths(
+        &mut self,
+        paths: impl IntoIterator<Item = &'a (impl AsRef<Utf8Path> + ?Sized + 'a)>,
+    ) -> &mut Self {
+        self.changed_paths
+            .extend(paths.into_iter().map(|path| path.as_ref()));
         self
     }
 
@@ -108,7 +110,7 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// `match_cb` is called for all package IDs that the path matches.
     pub fn match_path(
         &self,
-        path: impl AsRef<Path>,
+        path: impl AsRef<Utf8Path>,
         match_cb: impl FnMut(&'g PackageId),
     ) -> PathMatch {
         process_path(
@@ -302,7 +304,7 @@ impl<'g, 'a, 'b> BuildState<'g, 'a, 'b> {
     }
 
     // A return value of None stands for all packages in the workspace changed.
-    fn process_path(mut self, path: &Path) -> Option<Self> {
+    fn process_path(mut self, path: &Utf8Path) -> Option<Self> {
         let status = process_path(
             path,
             &self.determinator.new.workspace(),
@@ -367,7 +369,7 @@ impl<'g, 'a, 'b> BuildState<'g, 'a, 'b> {
 }
 
 fn process_path<'g>(
-    path: &Path,
+    path: &Utf8Path,
     workspace: &Workspace<'g>,
     path_rules: &[PathRuleImpl<'g>],
     mut match_cb: impl FnMut(&'g PackageId),

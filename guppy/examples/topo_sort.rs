@@ -24,7 +24,7 @@ fn main() -> Result<(), Error> {
             .source()
             .workspace_path()
             .expect("packages in workspace should have workspace path");
-        println!("{}: {}", package.name(), workspace_path.display());
+        println!("{}: {}", package.name(), workspace_path);
     }
 
     Ok(())
