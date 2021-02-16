@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.2] - 2020-02-15
+
+### Fixed
+
+- Restored compatibility with Rust 1.48. (1.48 is the MSRV, and is now tested in CI.)
+
 ## [0.7.1] - 2020-02-14
 
 ### Changed

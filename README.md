@@ -80,6 +80,13 @@ codebase from `cargo`, depending only on the stable [`cargo
 metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html) format. (Some other tools in this space like
 [`cargo-tree`](https://github.com/sfackler/cargo-tree) use cargo internals directly.)
 
+## Minimum supported Rust version
+
+The minimum supported Rust version (MSRV) is **1.48**.
+
+While a crate is pre-release status (0.x.x) it may have its MSRV bumped in a patch release. Once a crate has reached
+1.x, any MSRV bump will be accompanied with a new minor version.
+
 ## Contributing
 
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
