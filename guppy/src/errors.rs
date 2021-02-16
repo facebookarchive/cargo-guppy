@@ -4,7 +4,8 @@
 //! Contains types that describe errors and warnings that `guppy` methods can return.
 
 use crate::{graph::feature::FeatureId, PackageId};
-use std::{error, fmt, path::PathBuf};
+use camino::Utf8PathBuf;
+use std::{error, fmt};
 pub use target_spec::Error as TargetSpecError;
 use Error::*;
 
@@ -25,7 +26,7 @@ pub enum Error {
     /// A feature ID was unknown to this `FeatureGraph`.
     UnknownFeatureId(PackageId, Option<String>),
     /// A package specified by path was unknown to this workspace.
-    UnknownWorkspacePath(PathBuf),
+    UnknownWorkspacePath(Utf8PathBuf),
     /// A package specified by name was unknown to this workspace.
     UnknownWorkspaceName(String),
     /// An error was returned by `target-spec`.
@@ -74,7 +75,7 @@ impl fmt::Display for Error {
                 Some(feature) => write!(f, "Unknown feature ID: '{}' '{}'", package_id, feature),
                 None => write!(f, "Unknown feature ID: '{}' (base)", package_id),
             },
-            UnknownWorkspacePath(path) => write!(f, "Unknown workspace path: {}", path.display()),
+            UnknownWorkspacePath(path) => write!(f, "Unknown workspace path: {}", path),
             UnknownWorkspaceName(name) => write!(f, "Unknown workspace package name: {}", name),
             TargetSpecError(msg, _) => write!(f, "Target spec error while {}", msg),
             PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),

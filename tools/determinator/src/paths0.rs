@@ -1,8 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use cfg_if::cfg_if;
-use std::{path::Path, str::Utf8Error};
+use camino::Utf8Path;
+use std::str::Utf8Error;
 
 /// A store for null-separated paths.
 ///
@@ -63,80 +63,51 @@ use std::{path::Path, str::Utf8Error};
 ///
 /// # Implementations
 ///
-/// `&'a Paths0` implements `IntoIterator<Item = &'a Path>`.
+/// `&'a Utf8Paths0` implements `IntoIterator<Item = &'a Utf8Path>`.
 #[derive(Clone, Debug, Eq, Ord, PartialOrd, PartialEq)]
-pub struct Paths0 {
-    buf: Box<[u8]>,
+pub struct Utf8Paths0 {
+    buf: Box<str>,
 }
 
-impl Paths0 {
-    /// Creates a new instance of `Paths0` from a buffer.
+impl Utf8Paths0 {
+    /// Creates a new instance of `Utf8Paths0` from a string with embedded nulls.
     ///
-    /// The buffer may, but does not need to, have a trailing byte.
-    ///
-    /// # Errors
-    ///
-    /// On Unixes this supports arbitrary paths and is infallible.
-    ///
-    /// On other platforms like Windows, this only supports paths encoded as UTF-8. Any others will
-    /// return an error containing:
-    /// * the first path that failed to parse
-    /// * the `Utf8Error` that it returned.
-    pub fn new(buf: impl Into<Vec<u8>>) -> Result<Self, (Vec<u8>, Utf8Error)> {
-        let buf = buf.into();
-        cfg_if! {
-            if #[cfg(unix)] {
-                Ok(Self::new_unix(buf))
-            } else {
-                // Validate UTF-8.
-                Self::validate_utf8(&buf)?;
-                Ok(Self::strip_trailing_null_byte(buf))
-            }
-        }
+    /// The string may, but does not need to, have a trailing null byte.
+    pub fn new(buf: impl Into<String>) -> Self {
+        Self::strip_trailing_null_byte(buf.into())
     }
 
-    /// Creates a new instance of `Paths0`, converting `/` to `\` on platforms like Windows.
+    /// Creates a new instance of `Utf8Paths0` from a `Vec<u8>`, performing a UTF-8 validation
+    /// check on the buffer.
+    ///
+    /// The buffer may, but does not need to, have a trailing null byte.
+    ///
+    /// ## Errors
+    ///
+    /// If any paths inside the string weren't valid UTF-8, this returns the first path that failed
+    /// to parse and the error returned.
+    pub fn from_bytes(buf: impl Into<Vec<u8>>) -> Result<Self, (Vec<u8>, Utf8Error)> {
+        let buf = buf.into();
+        let buf = Self::validate_utf8(buf)?;
+        Ok(Self::strip_trailing_null_byte(buf))
+    }
+
+    /// Creates a new instance of `Utf8Paths0`, converting `/` to `\` on platforms like Windows.
     ///
     /// Some tools like Git (but not Mercurial) return paths with `/` on Windows, even though the
     /// canonical separator on the platform is `\`. This constructor changes all instances of `/`
     /// to `\`.
-    ///
-    /// This method is available on Unix and Windows platforms.
-    #[cfg(any(unix, windows))]
-    pub fn new_forward_slashes(buf: impl Into<Vec<u8>>) -> Result<Self, (Vec<u8>, Utf8Error)> {
-        cfg_if! {
-            if #[cfg(unix)] {
-                Ok(Self::new_unix(buf.into()))
-            }
-            else {
-                let mut buf = buf.into();
-                // Validate UTF-8.
-                Self::validate_utf8(&buf)?;
-
-                // Change all `/` to `\` on Windows.
-                if std::path::MAIN_SEPARATOR == '\\' {
-                    buf.iter_mut().for_each(|b| {
-                        if *b == b'/' {
-                            *b = b'\\';
-                        }
-                    });
-                }
-
-                Ok(Self::strip_trailing_null_byte(buf))
-            }
+    pub fn new_forward_slashes(buf: impl Into<String>) -> Self {
+        let mut buf = buf.into();
+        // Change all `/` to `\` on Windows.
+        if std::path::MAIN_SEPARATOR == '\\' {
+            buf = buf.replace('/', "\\");
         }
-    }
-
-    /// Creates a new instance of `Paths0` on Unix platforms.
-    ///
-    /// This is infallible, but is only available on Unix platforms.
-    #[cfg(unix)]
-    pub fn new_unix(buf: impl Into<Vec<u8>>) -> Self {
-        Self::strip_trailing_null_byte(buf.into())
+        Self::strip_trailing_null_byte(buf)
     }
 
     /// Iterates over the paths in this buffer.
-    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = &'a Path> + 'a> {
+    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = &'a Utf8Path> + 'a> {
         self.into_iter()
     }
 
@@ -144,17 +115,24 @@ impl Paths0 {
     // Helper methods
     // ---
 
-    #[cfg(not(unix))]
-    fn validate_utf8(buf: &[u8]) -> Result<(), (Vec<u8>, Utf8Error)> {
-        buf.split(|b| *b == 0)
-            .try_for_each(|path| match std::str::from_utf8(path) {
-                Ok(_) => Ok(()),
-                Err(utf8_error) => Err((path.to_vec(), utf8_error)),
-            })
+    fn validate_utf8(buf: Vec<u8>) -> Result<String, (Vec<u8>, Utf8Error)> {
+        match String::from_utf8(buf) {
+            Ok(s) => Ok(s),
+            Err(err) => {
+                let buf = err.into_bytes();
+                // Look for the path that failed validation.
+                buf.split(|b| *b == 0)
+                    .try_for_each(|path| match std::str::from_utf8(path) {
+                        Ok(_) => Ok(()),
+                        Err(utf8_error) => Err((path.to_vec(), utf8_error)),
+                    })?;
+                unreachable!("full buffer failed utf-8 validation => at least one path failed");
+            }
+        }
     }
 
-    fn strip_trailing_null_byte(mut buf: Vec<u8>) -> Self {
-        if buf.iter().last() == Some(&0) {
+    fn strip_trailing_null_byte(mut buf: String) -> Self {
+        if buf.as_bytes().last() == Some(&0) {
             buf.pop();
         }
 
@@ -162,9 +140,9 @@ impl Paths0 {
     }
 }
 
-impl<'a> IntoIterator for &'a Paths0 {
-    type Item = &'a Path;
-    type IntoIter = Box<dyn Iterator<Item = &'a Path> + 'a>;
+impl<'a> IntoIterator for &'a Utf8Paths0 {
+    type Item = &'a Utf8Path;
+    type IntoIter = Box<dyn Iterator<Item = &'a Utf8Path> + 'a>;
 
     fn into_iter(self) -> Self::IntoIter {
         // An empty string means there are no paths -- this has to be handled as a special case.
@@ -172,25 +150,7 @@ impl<'a> IntoIterator for &'a Paths0 {
             return Box::new(std::iter::empty());
         }
 
-        cfg_if! {
-            if #[cfg(unix)] {
-                // Paths are arbitrary byte sequences on Unix.
-                use std::ffi::OsStr;
-                use std::os::unix::ffi::OsStrExt;
-
-                Box::new(
-                    self.buf
-                        .split(|b| *b == 0)
-                        .map(|path| Path::new(OsStr::from_bytes(path))),
-                )
-            } else {
-                Box::new(self.buf.split(|b| *b == 0).map(|path| {
-                    let s = std::str::from_utf8(path)
-                        .expect("buf constructor should have already validated this path as UTF-8");
-                    Path::new(s)
-                }))
-            }
-        }
+        Box::new(self.buf.split('\0').map(|path| Utf8Path::new(path)))
     }
 }
 
@@ -211,15 +171,6 @@ mod tests {
         paths_eq(*b"a/b\xF0\x9F\x98\x81\0c/d", &["a/b😁", "c/d"]);
     }
 
-    #[cfg(unix)]
-    #[test]
-    fn basic_non_unicode() {
-        paths_eq_bytes(
-            *b"foo\xff/bar\0baz\n/quux",
-            &[b"foo\xff/bar", b"baz\n/quux"],
-        );
-    }
-
     // This is really a Windows test but it should work on all platforms.
     #[test]
     fn backslashes() {
@@ -232,42 +183,27 @@ mod tests {
     #[test]
     fn forward_slashes() {
         paths_eq_fwd(*b"a/b/c", &["a\\b\\c"]);
-        paths_eq(*b"a/b\0a/c", &["a\\b", "a\\c"]);
-        paths_eq(*b"a/b\0a/c\0", &["a\\b", "a\\c"]);
+        paths_eq_fwd(*b"a/b\0a/c", &["a\\b", "a\\c"]);
+        paths_eq_fwd(*b"a/b\0a/c\0", &["a\\b", "a\\c"]);
 
         // Also test mixed forward/backslashes.
-        paths_eq(*b"a/b\0a\\c", &["a\\b", "a\\c"]);
+        paths_eq_fwd(*b"a/b\0a\\c", &["a\\b", "a\\c"]);
     }
 
     fn paths_eq(bytes: impl Into<Vec<u8>>, expected: &[&str]) {
-        let paths = Paths0::new(bytes.into()).expect("null-separated paths are valid");
+        let paths = Utf8Paths0::from_bytes(bytes.into()).expect("null-separated paths are valid");
         let actual: Vec<_> = paths.iter().collect();
-        let expected: Vec<_> = expected.iter().map(Path::new).collect();
-
-        assert_eq!(actual, expected, "paths match");
-    }
-
-    #[cfg(unix)]
-    fn paths_eq_bytes(bytes: impl Into<Vec<u8>>, expected: &[&[u8]]) {
-        // Paths are arbitrary byte sequences on Unix.
-        use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
-
-        let paths = Paths0::new(bytes.into()).expect("null-separated paths are valid");
-        let actual: Vec<_> = paths.iter().collect();
-        let expected: Vec<_> = expected
-            .iter()
-            .map(|path| Path::new(OsStr::from_bytes(path)))
-            .collect();
+        let expected: Vec<_> = expected.iter().map(Utf8Path::new).collect();
 
         assert_eq!(actual, expected, "paths match");
     }
 
     #[cfg(windows)]
     fn paths_eq_fwd(bytes: impl Into<Vec<u8>>, expected: &[&str]) {
-        let paths =
-            Paths0::new_forward_slashes(bytes.into()).expect("null-separated paths are valid");
+        let s = String::from_utf8(bytes.into()).expect("valid UTF-8");
+        let paths = Utf8Paths0::new_forward_slashes(s);
         let actual: Vec<_> = paths.iter().collect();
-        let expected: Vec<_> = expected.iter().map(Path::new).collect();
+        let expected: Vec<_> = expected.iter().map(Utf8Path::new).collect();
 
         assert_eq!(actual, expected, "paths match");
     }

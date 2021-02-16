@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::diff::SummaryDiff;
+use camino::Utf8PathBuf;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
-    path::PathBuf,
 };
 use toml::{Serializer, Value};
 
@@ -130,7 +130,7 @@ pub enum SummarySource {
     Workspace {
         /// The path of this package, relative to the workspace root.
         #[serde(rename = "workspace-path", with = "path_forward_slashes")]
-        workspace_path: PathBuf,
+        workspace_path: Utf8PathBuf,
     },
 
     /// A non-workspace path.
@@ -139,7 +139,7 @@ pub enum SummarySource {
     Path {
         /// The path of this package, relative to the workspace root.
         #[serde(with = "path_forward_slashes")]
-        path: PathBuf,
+        path: Utf8PathBuf,
     },
 
     /// The `crates.io` registry.
@@ -156,14 +156,14 @@ pub enum SummarySource {
 
 impl SummarySource {
     /// Creates a new `SummarySource` representing a workspace source.
-    pub fn workspace(workspace_path: impl Into<PathBuf>) -> Self {
+    pub fn workspace(workspace_path: impl Into<Utf8PathBuf>) -> Self {
         SummarySource::Workspace {
             workspace_path: workspace_path.into(),
         }
     }
 
     /// Creates a new `SummarySource` representing a non-workspace path source.
-    pub fn path(path: impl Into<PathBuf>) -> Self {
+    pub fn path(path: impl Into<Utf8PathBuf>) -> Self {
         SummarySource::Path { path: path.into() }
     }
 
@@ -187,13 +187,11 @@ impl fmt::Display for SummarySource {
             // Don't differentiate here between workspace and non-workspace paths because
             // PackageStatus provides that info.
             SummarySource::Workspace { workspace_path } => {
-                let path_out = path_forward_slashes::replace_slashes(workspace_path)
-                    .map_err(|()| fmt::Error)?;
+                let path_out = path_forward_slashes::replace_slashes(workspace_path);
                 write!(f, "path '{}'", path_out)
             }
             SummarySource::Path { path } => {
-                let path_out =
-                    path_forward_slashes::replace_slashes(path).map_err(|()| fmt::Error)?;
+                let path_out = path_forward_slashes::replace_slashes(path);
                 write!(f, "path '{}'", path_out)
             }
             SummarySource::CratesIo => write!(f, "crates.io"),
@@ -302,20 +300,19 @@ mod package_map_impl {
 /// Windows.
 mod path_forward_slashes {
     use super::*;
+    use camino::Utf8Path;
     use cfg_if::cfg_if;
     use serde::{Deserializer, Serializer};
-    use std::path::Path;
 
-    pub fn serialize<S>(path: &PathBuf, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(path: &Utf8PathBuf, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let path_out = replace_slashes(path)
-            .map_err(|()| serde::ser::Error::custom("path contains invalid UTF-8 characters"))?;
+        let path_out = replace_slashes(path);
         path_out.serialize(serializer)
     }
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<PathBuf, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Utf8PathBuf, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -324,27 +321,21 @@ mod path_forward_slashes {
                 let s = String::deserialize(deserializer)?;
                 // Convert forward slashes to backslashes on Windows.
                 let s = s.replace("/", "\\");
-                Ok(PathBuf::from(s))
+                Ok(Utf8PathBuf::from(s))
             } else {
-                PathBuf::deserialize(deserializer)
+                Utf8PathBuf::deserialize(deserializer)
             }
         }
     }
 
     // TODO: consider putting this logic in an actual newtype wrapper :/
-    pub fn replace_slashes(path: &Path) -> Result<impl fmt::Display + Serialize + '_, ()> {
+    pub fn replace_slashes(path: &Utf8Path) -> impl fmt::Display + Serialize + '_ {
         // (Note: serde doesn't support non-Unicode paths anyway.)
-        let path_str = match path.to_str() {
-            Some(s) => s,
-            None => {
-                return Err(());
-            }
-        };
         cfg_if! {
             if #[cfg(windows)] {
-                Ok(path_str.replace("\\", "/"))
+                path.as_str().replace("\\", "/")
             } else {
-                Ok(path_str)
+                path.as_str()
             }
         }
     }

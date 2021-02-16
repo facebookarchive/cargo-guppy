@@ -33,7 +33,7 @@
 //! determinator.set_rules(&rules).unwrap();
 //!
 //! // The determinator expects a list of changed files to be passed in.
-//! determinator.add_changed_paths(vec![Path::new("guppy/src/lib.rs"), Path::new("tools/determinator/README.md")]);
+//! determinator.add_changed_paths(vec!["guppy/src/lib.rs", "tools/determinator/README.md"]);
 //!
 //! let determinator_set = determinator.compute();
 //! // determinator_set.affected_set contains the workspace packages directly or indirectly affected

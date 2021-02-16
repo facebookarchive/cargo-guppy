@@ -11,8 +11,8 @@ use crate::{
     sorted_set::SortedSet,
     Error, PackageId,
 };
+use camino::Utf8Path;
 use petgraph::prelude::*;
-use std::path::Path;
 
 /// A query over a package graph.
 ///
@@ -46,7 +46,7 @@ impl PackageGraph {
     /// Returns an error if any workspace paths were unknown.
     pub fn query_workspace_paths(
         &self,
-        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+        paths: impl IntoIterator<Item = impl AsRef<Utf8Path>>,
     ) -> Result<PackageQuery, Error> {
         let workspace = self.workspace();
         let package_ixs = paths

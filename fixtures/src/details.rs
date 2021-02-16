@@ -8,6 +8,7 @@ use crate::{
     },
     package_id,
 };
+use camino::Utf8PathBuf;
 use guppy::{
     errors::FeatureGraphWarning,
     graph::{
@@ -19,13 +20,13 @@ use guppy::{
 use pretty_assertions::assert_eq;
 use std::{
     collections::{BTreeMap, HashMap},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 /// This captures metadata fields that are relevant for tests. They are meant to be written out
 /// lazily as tests are filled out -- feel free to add more details as necessary!
 pub struct FixtureDetails {
-    workspace_members: Option<BTreeMap<PathBuf, PackageId>>,
+    workspace_members: Option<BTreeMap<Utf8PathBuf, PackageId>>,
     package_details: HashMap<PackageId, PackageDetails>,
     link_details: HashMap<(PackageId, PackageId), LinkDetails>,
     feature_graph_warnings: Vec<FeatureGraphWarning>,
@@ -45,7 +46,7 @@ impl FixtureDetails {
 
     pub fn with_workspace_members<'a>(
         mut self,
-        workspace_members: impl IntoIterator<Item = (impl Into<PathBuf>, &'a str)>,
+        workspace_members: impl IntoIterator<Item = (impl Into<Utf8PathBuf>, &'a str)>,
     ) -> Self {
         self.workspace_members = Some(
             workspace_members
@@ -342,12 +343,12 @@ impl PackageDetails {
     }
 
     pub fn with_workspace_path(mut self, path: &'static str) -> Self {
-        self.source = Some(PackageSource::Workspace(Path::new(path)));
+        self.source = Some(PackageSource::Workspace(path.into()));
         self
     }
 
     pub fn with_local_path(mut self, path: &'static str) -> Self {
-        self.source = Some(PackageSource::Path(Path::new(path)));
+        self.source = Some(PackageSource::Path(path.into()));
         self
     }
 

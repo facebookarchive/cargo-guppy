@@ -10,13 +10,14 @@ use crate::{
     sorted_set::SortedSet,
     Error, PackageId,
 };
+use camino::{Utf8Path, Utf8PathBuf};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, Resolve, Target};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
-    path::{Path, PathBuf},
+    path::Path,
 };
 use target_spec::TargetSpec;
 
@@ -35,10 +36,18 @@ impl PackageGraph {
             .map(PackageId::from_metadata)
             .collect();
 
+        let workspace_root =
+            Utf8PathBuf::from_path_buf(metadata.workspace_root).map_err(|path_buf| {
+                Error::PackageGraphConstructError(format!(
+                    "workspace root is invalid UTF-8: {}",
+                    path_buf.display()
+                ))
+            })?;
+
         let mut build_state = GraphBuildState::new(
             &metadata.packages,
             resolve,
-            &metadata.workspace_root,
+            &workspace_root,
             &workspace_members,
         );
 
@@ -50,7 +59,7 @@ impl PackageGraph {
 
         let dep_graph = build_state.finish();
 
-        let workspace = WorkspaceImpl::new(metadata.workspace_root, &packages, workspace_members)?;
+        let workspace = WorkspaceImpl::new(workspace_root, &packages, workspace_members)?;
 
         Ok(Self {
             dep_graph,
@@ -67,7 +76,7 @@ impl PackageGraph {
 impl WorkspaceImpl {
     /// Indexes and creates a new workspace.
     fn new(
-        workspace_root: impl Into<PathBuf>,
+        workspace_root: impl Into<Utf8PathBuf>,
         packages: &HashMap<PackageId, PackageMetadataImpl>,
         members: impl IntoIterator<Item = PackageId>,
     ) -> Result<Self, Error> {
@@ -126,7 +135,7 @@ struct GraphBuildState<'a> {
     // The values of package_data are (package_ix, name, version).
     package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
-    workspace_root: &'a Path,
+    workspace_root: &'a Utf8Path,
     workspace_members: &'a HashSet<PackageId>,
 }
 
@@ -134,7 +143,7 @@ impl<'a> GraphBuildState<'a> {
     fn new(
         packages: &[Package],
         resolve: Resolve,
-        workspace_root: &'a Path,
+        workspace_root: &'a Utf8Path,
         workspace_members: &'a HashSet<PackageId>,
     ) -> Self {
         // No idea how many edges there are going to be, so use packages.len() as a reasonable lower
@@ -201,6 +210,13 @@ impl<'a> GraphBuildState<'a> {
             };
             let rel_path = pathdiff::diff_paths(dirname, self.workspace_root)
                 .expect("workspace root is absolute");
+            let rel_path = Utf8PathBuf::from_path_buf(rel_path).map_err(|path_buf| {
+                Error::PackageGraphConstructError(format!(
+                    "package '{}': location '{}' is invalid UTF-8",
+                    package_id,
+                    path_buf.display()
+                ))
+            })?;
             PackageSourceImpl::Path(rel_path.into_boxed_path())
         };
 
@@ -273,6 +289,31 @@ impl<'a> GraphBuildState<'a> {
             .chain(optional_deps)
             .collect();
 
+        let license_file = match package.license_file {
+            Some(license_file) => Some(
+                Utf8PathBuf::from_path_buf(license_file)
+                    .map_err(|path_buf| {
+                        Error::PackageGraphConstructError(format!(
+                            "for package '{}', license file is invalid UTF-8: {}",
+                            package_id,
+                            path_buf.display()
+                        ))
+                    })?
+                    .into(),
+            ),
+            None => None,
+        };
+
+        let manifest_path = Utf8PathBuf::from_path_buf(package.manifest_path)
+            .map_err(|path_buf| {
+                Error::PackageGraphConstructError(format!(
+                    "for package '{}', manifest path is invalid UTF-8: {}",
+                    package_id,
+                    path_buf.display()
+                ))
+            })?
+            .into();
+
         Ok((
             package_id,
             PackageMetadataImpl {
@@ -281,8 +322,8 @@ impl<'a> GraphBuildState<'a> {
                 authors: package.authors,
                 description: package.description.map(|s| s.into()),
                 license: package.license.map(|s| s.into()),
-                license_file: package.license_file.map(|s| s.into()),
-                manifest_path: package.manifest_path.into(),
+                license_file,
+                manifest_path,
                 categories: package.categories,
                 keywords: package.keywords,
                 readme: package.readme.map(|s| s.into()),
@@ -315,19 +356,25 @@ impl<'a> GraphBuildState<'a> {
 
     /// Computes the workspace path for this package. Errors if this package is not in the
     /// workspace.
-    fn workspace_path(&self, id: &PackageId, manifest_path: &Path) -> Result<Box<Path>, Error> {
+    fn workspace_path(&self, id: &PackageId, manifest_path: &Path) -> Result<Box<Utf8Path>, Error> {
         // Strip off the workspace path from the manifest path.
         let workspace_path = manifest_path
             .strip_prefix(self.workspace_root)
             .map_err(|_| {
                 Error::PackageGraphConstructError(format!(
-                    "workspace member '{}' at path {:?} not in workspace (root: {:?})",
+                    "workspace member '{}' at path {:?} not in workspace (root: {})",
                     id, manifest_path, self.workspace_root
                 ))
             })?;
         let workspace_path = workspace_path.parent().ok_or_else(|| {
             Error::PackageGraphConstructError(format!(
                 "workspace member '{}' has invalid manifest path {:?}",
+                id, manifest_path
+            ))
+        })?;
+        let workspace_path = Utf8Path::from_path(workspace_path).ok_or_else(|| {
+            Error::PackageGraphConstructError(format!(
+                "workspace member '{}' has invalid UTF-8 manifest path {:?}",
                 id, manifest_path
             ))
         })?;

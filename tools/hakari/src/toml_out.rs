@@ -6,6 +6,7 @@
 use crate::hakari::{HakariBuilder, OutputMap};
 #[cfg(feature = "summaries")]
 use crate::summaries::HakariBuilderSummary;
+use camino::Utf8PathBuf;
 use cfg_if::cfg_if;
 use guppy::{
     graph::{cargo::BuildPlatform, ExternalSource, GitReq, PackageMetadata, PackageSource},
@@ -17,7 +18,6 @@ use std::{
     error, fmt,
     fmt::Write,
     hash::{Hash, Hasher},
-    path::PathBuf,
 };
 use twox_hash::XxHash64;
 
@@ -147,18 +147,7 @@ pub enum TomlOutError {
         package_id: PackageId,
 
         /// The relative path to the package from the root of the workspace.
-        rel_path: PathBuf,
-    },
-
-    /// A non-Unicode path was encountered while writing out TOML.
-    ///
-    /// The TOML format only supports Unicode paths.
-    NonUnicodePath {
-        /// The package ID that Hakari tried to write out a dependency line for.
-        package_id: PackageId,
-
-        /// The non-Unicode path that Hakari attempted to write.
-        path: PathBuf,
+        rel_path: Utf8PathBuf,
     },
 
     /// An external source wasn't recognized by guppy.
@@ -190,20 +179,13 @@ impl fmt::Display for TomlOutError {
             #[cfg(feature = "summaries")]
             TomlOutError::Toml { context, .. } => write!(f, "while serializing TOML: {}", context),
             TomlOutError::FmtWrite(_) => write!(f, "while writing to fmt::Write"),
-            TomlOutError::NonUnicodePath { package_id, path } => write!(
-                f,
-                "for path dependency '{}', non-Unicode path encountered: {}",
-                package_id,
-                path.display(),
-            ),
             TomlOutError::PathWithoutHakari {
                 package_id,
                 rel_path,
             } => write!(
                 f,
                 "for path dependency '{}', no Hakari package was specified (relative path {})",
-                package_id,
-                rel_path.display(),
+                package_id, rel_path,
             ),
             TomlOutError::UnrecognizedExternal { package_id, source } => write!(
                 f,
@@ -221,9 +203,9 @@ impl error::Error for TomlOutError {
             #[cfg(feature = "summaries")]
             TomlOutError::Toml { err, .. } => Some(err),
             TomlOutError::FmtWrite(err) => Some(err),
-            TomlOutError::NonUnicodePath { .. }
-            | TomlOutError::PathWithoutHakari { .. }
-            | TomlOutError::UnrecognizedExternal { .. } => None,
+            TomlOutError::PathWithoutHakari { .. } | TomlOutError::UnrecognizedExternal { .. } => {
+                None
+            }
         }
     }
 }
@@ -306,20 +288,13 @@ pub(crate) fn write_toml(
                                     package_id: dep.id().clone(),
                                     rel_path: path.to_path_buf(),
                                 })?;
-                            pathdiff::diff_paths(path, hakari_path)
-                                .expect("both hakari_path and path are relative")
+                            let rel_path = pathdiff::diff_paths(path, hakari_path)
+                                .expect("both hakari_path and path are relative");
+                            Utf8PathBuf::from_path_buf(rel_path)
+                                .expect("both path and hakari_path are UTF-8 so this is as well")
                         };
 
-                        let path_str = match path_out.to_str() {
-                            Some(s) => s,
-                            None => {
-                                return Err(TomlOutError::NonUnicodePath {
-                                    package_id: dep.id().clone(),
-                                    path: path_out,
-                                })
-                            }
-                        };
-
+                        let path_str = path_out.as_str();
                         cfg_if! {
                             if #[cfg(windows)] {
                                 // TODO: is replacing \\ with / totally safe on Windows? Might run

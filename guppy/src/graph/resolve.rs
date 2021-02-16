@@ -17,12 +17,13 @@ use crate::{
     sorted_set::SortedSet,
     Error, PackageId,
 };
+use camino::Utf8Path;
 use fixedbitset::FixedBitSet;
 use petgraph::{
     prelude::*,
     visit::{NodeFiltered, NodeRef},
 };
-use std::{fmt, path::Path};
+use std::fmt;
 
 impl PackageGraph {
     /// Creates a new `PackageSet` consisting of all members of this package graph.
@@ -84,7 +85,7 @@ impl PackageGraph {
     /// Returns an error if any workspace paths are unknown.
     pub fn resolve_workspace_paths(
         &self,
-        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+        paths: impl IntoIterator<Item = impl AsRef<Utf8Path>>,
     ) -> Result<PackageSet, Error> {
         let workspace = self.workspace();
         let included: IxBitSet = paths
