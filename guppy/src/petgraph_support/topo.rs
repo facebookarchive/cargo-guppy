@@ -5,8 +5,8 @@ use petgraph::{
     graph::IndexType,
     prelude::*,
     visit::{
-        GraphRef, IntoNeighborsDirected, IntoNodeIdentifiers, NodeCompactIndexable, Visitable,
-        Walker,
+        GraphRef, IntoNeighborsDirected, IntoNodeIdentifiers, NodeCompactIndexable, VisitMap,
+        Visitable, Walker,
     },
 };
 
@@ -25,6 +25,7 @@ impl<Ix: IndexType> TopoWithCycles<Ix> {
             + IntoNodeIdentifiers
             + IntoNeighborsDirected<NodeId = NodeIndex<Ix>>
             + NodeCompactIndexable,
+        G::Map: VisitMap<NodeIndex<Ix>>,
     {
         // petgraph's default topo algorithms don't handle cycles. Use DfsPostOrder which does.
         let mut dfs = DfsPostOrder::empty(graph);
