@@ -329,6 +329,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.7.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.2
 [0.7.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.1
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.0
 [0.6.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.6.3
