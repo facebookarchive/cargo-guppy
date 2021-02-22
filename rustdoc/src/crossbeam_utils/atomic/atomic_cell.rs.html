@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.1/src/atomic/atomic_cell.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>atomic_cell.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.2/src/atomic/atomic_cell.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>atomic_cell.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../crossbeam_utils/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -972,20 +972,37 @@
 <span id="969">969</span>
 <span id="970">970</span>
 <span id="971">971</span>
+<span id="972">972</span>
+<span id="973">973</span>
+<span id="974">974</span>
+<span id="975">975</span>
+<span id="976">976</span>
+<span id="977">977</span>
+<span id="978">978</span>
+<span id="979">979</span>
+<span id="980">980</span>
+<span id="981">981</span>
+<span id="982">982</span>
+<span id="983">983</span>
+<span id="984">984</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Necessary for implementing atomic methods for `AtomicUnit`</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">unit_arg</span>)]</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">let_unit_value</span>)]</span>
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">primitive</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicBool</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">cell</span>::<span class="ident">UnsafeCell</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>;
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">Ordering</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_loom</span>))]</span>
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ptr</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicBool</span>, <span class="ident">Ordering</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">panic</span>::{<span class="ident">RefUnwindSafe</span>, <span class="ident">UnwindSafe</span>};
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_loom</span>))]</span>
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">seq_lock</span>::<span class="ident">SeqLock</span>;
 
 <span class="doccomment">/// A thread-safe mutable memory location.</span>
@@ -1188,6 +1205,7 @@
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// # #![allow(deprecated)]</span>
     <span class="doccomment">/// use crossbeam_utils::atomic::AtomicCell;</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// let a = AtomicCell::new(1);</span>
@@ -1198,6 +1216,8 @@
     <span class="doccomment">/// assert_eq!(a.compare_and_swap(1, 2), 1);</span>
     <span class="doccomment">/// assert_eq!(a.load(), 2);</span>
     <span class="doccomment">/// ```</span>
+    <span class="comment">// TODO: remove in the next major version.</span>
+    <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;Use `compare_exchange` instead&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compare_and_swap</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">current</span>: <span class="ident">T</span>, <span class="ident">new</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">compare_exchange</span>(<span class="ident">current</span>, <span class="ident">new</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">v</span>,
@@ -1467,23 +1487,23 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u8</span>)]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u8</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU8</span>, <span class="string">&quot;let a = AtomicCell::new(7u8);&quot;</span>);
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u8</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">has_atomic_u8</span>, <span class="ident">not</span>(<span class="ident">crossbeam_loom</span>)))]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i8</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI8</span>, <span class="string">&quot;let a = AtomicCell::new(7i8);&quot;</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u16</span>)]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u16</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU16</span>, <span class="string">&quot;let a = AtomicCell::new(7u16);&quot;</span>);
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u16</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">has_atomic_u16</span>, <span class="ident">not</span>(<span class="ident">crossbeam_loom</span>)))]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i16</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI16</span>, <span class="string">&quot;let a = AtomicCell::new(7i16);&quot;</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u32</span>)]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u32</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU32</span>, <span class="string">&quot;let a = AtomicCell::new(7u32);&quot;</span>);
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u32</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">has_atomic_u32</span>, <span class="ident">not</span>(<span class="ident">crossbeam_loom</span>)))]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i32</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI32</span>, <span class="string">&quot;let a = AtomicCell::new(7i32);&quot;</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u64</span>)]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u64</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU64</span>, <span class="string">&quot;let a = AtomicCell::new(7u64);&quot;</span>);
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u64</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">has_atomic_u64</span>, <span class="ident">not</span>(<span class="ident">crossbeam_loom</span>)))]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i64</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI64</span>, <span class="string">&quot;let a = AtomicCell::new(7i64);&quot;</span>);
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u128</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">has_atomic_u128</span>, <span class="ident">not</span>(<span class="ident">crossbeam_loom</span>)))]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u128</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU128</span>, <span class="string">&quot;let a = AtomicCell::new(7u128);&quot;</span>);
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u128</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">has_atomic_u128</span>, <span class="ident">not</span>(<span class="ident">crossbeam_loom</span>)))]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i128</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI128</span>, <span class="string">&quot;let  a = AtomicCell::new(7i128);&quot;</span>);
 
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(
@@ -1491,6 +1511,7 @@
     <span class="ident">atomic</span>::<span class="ident">AtomicUsize</span>,
     <span class="string">&quot;let a = AtomicCell::new(7usize);&quot;</span>
 );
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_loom</span>))]</span>
 <span class="macro">impl_arithmetic</span><span class="macro">!</span>(
     <span class="ident">isize</span>,
     <span class="ident">atomic</span>::<span class="ident">AtomicIsize</span>,
@@ -1599,6 +1620,7 @@
 <span class="doccomment">/// scalability.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="attribute">#[<span class="ident">must_use</span>]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_loom</span>))]</span>
 <span class="kw">fn</span> <span class="ident">lock</span>(<span class="ident">addr</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">SeqLock</span> {
     <span class="comment">// The number of locks is a prime number because we want to make sure `addr % LEN` gets</span>
     <span class="comment">// dispersed across all locks.</span>
@@ -1744,6 +1766,7 @@
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">swap</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_val</span>: (), <span class="ident">_order</span>: <span class="ident">Ordering</span>) {}
 
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">unnecessary_wraps</span>)]</span> <span class="comment">// This is intentional.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">compare_exchange_weak</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1785,6 +1808,9 @@
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">has_atomic_u128</span>)]</span>
             <span class="macro">atomic</span><span class="macro">!</span>(@<span class="ident">check</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU128</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">a</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">atomic_op</span>);
 
+            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">crossbeam_loom</span>)]</span>
+            <span class="macro">unimplemented</span><span class="macro">!</span>(<span class="string">&quot;loom does not support non-atomic atomic ops&quot;</span>);
+            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_loom</span>))]</span>
             <span class="kw">break</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">fallback_op</span>;
         }
     };

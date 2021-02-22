@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.1/src/sync/parker.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parker.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.2/src/sync/parker.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parker.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../crossbeam_utils/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -398,24 +398,35 @@
 <span id="395">395</span>
 <span id="396">396</span>
 <span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">primitive</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">AtomicUsize</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">primitive</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Condvar</span>, <span class="ident">Mutex</span>};
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">AtomicUsize</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Condvar</span>, <span class="ident">Mutex</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">Duration</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
 
 <span class="doccomment">/// A thread parking primitive.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Conceptually, each `Parker` has an associated token which is initially not present:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * The [`park`] method blocks the current thread unless or until the token is available, at</span>
-<span class="doccomment">///   which point it automatically consumes the token. It may also return *spuriously*, without</span>
-<span class="doccomment">///   consuming the token.</span>
+<span class="doccomment">///   which point it automatically consumes the token.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// * The [`park_timeout`] method works the same as [`park`], but blocks for a specified maximum</span>
-<span class="doccomment">///   time.</span>
+<span class="doccomment">/// * The [`park_timeout`] and [`park_deadline`] methods work the same as [`park`], but block for</span>
+<span class="doccomment">///   a specified maximum time.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * The [`unpark`] method atomically makes the token available if it wasn&#39;t already. Because the</span>
 <span class="doccomment">///   token is initially absent, [`unpark`] followed by [`park`] will result in the second call</span>
@@ -444,13 +455,13 @@
 <span class="doccomment">///     u.unpark();</span>
 <span class="doccomment">/// });</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// // Wakes up when `u.unpark()` provides the token, but may also wake up</span>
-<span class="doccomment">/// // spuriously before that without consuming the token.</span>
+<span class="doccomment">/// // Wakes up when `u.unpark()` provides the token.</span>
 <span class="doccomment">/// p.park();</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// [`park`]: Parker::park</span>
 <span class="doccomment">/// [`park_timeout`]: Parker::park_timeout</span>
+<span class="doccomment">/// [`park_deadline`]: Parker::park_deadline</span>
 <span class="doccomment">/// [`unpark`]: Unparker::unpark</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Parker</span> {
     <span class="ident">unparker</span>: <span class="ident">Unparker</span>,
@@ -491,9 +502,6 @@
 
     <span class="doccomment">/// Blocks the current thread until the token is made available.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// A call to `park` may wake up spuriously without consuming the token, and callers should be</span>
-    <span class="doccomment">/// prepared for this possibility.</span>
-    <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
@@ -514,9 +522,6 @@
 
     <span class="doccomment">/// Blocks the current thread until the token is made available, but only for a limited time.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// A call to `park_timeout` may wake up spuriously without consuming the token, and callers</span>
-    <span class="doccomment">/// should be prepared for this possibility.</span>
-    <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
@@ -529,7 +534,25 @@
     <span class="doccomment">/// p.park_timeout(Duration::from_millis(500));</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">park_timeout</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">timeout</span>: <span class="ident">Duration</span>) {
-        <span class="self">self</span>.<span class="ident">unparker</span>.<span class="ident">inner</span>.<span class="ident">park</span>(<span class="prelude-val">Some</span>(<span class="ident">timeout</span>));
+        <span class="self">self</span>.<span class="ident">park_deadline</span>(<span class="ident">Instant</span>::<span class="ident">now</span>() <span class="op">+</span> <span class="ident">timeout</span>)
+    }
+
+    <span class="doccomment">/// Blocks the current thread until the token is made available, or until a certain deadline.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::time::{Duration, Instant};</span>
+    <span class="doccomment">/// use crossbeam_utils::sync::Parker;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let p = Parker::new();</span>
+    <span class="doccomment">/// let deadline = Instant::now() + Duration::from_millis(500);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // Waits for the token to become available, but will not wait longer than 500 ms.</span>
+    <span class="doccomment">/// p.park_deadline(deadline);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">park_deadline</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">deadline</span>: <span class="ident">Instant</span>) {
+        <span class="self">self</span>.<span class="ident">unparker</span>.<span class="ident">inner</span>.<span class="ident">park</span>(<span class="prelude-val">Some</span>(<span class="ident">deadline</span>))
     }
 
     <span class="doccomment">/// Returns a reference to an associated [`Unparker`].</span>
@@ -628,8 +651,7 @@
     <span class="doccomment">///     u.unpark();</span>
     <span class="doccomment">/// });</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// // Wakes up when `u.unpark()` provides the token, but may also wake up</span>
-    <span class="doccomment">/// // spuriously before that without consuming the token.</span>
+    <span class="doccomment">/// // Wakes up when `u.unpark()` provides the token.</span>
     <span class="doccomment">/// p.park();</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
@@ -703,7 +725,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Inner</span> {
-    <span class="kw">fn</span> <span class="ident">park</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">timeout</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>) {
+    <span class="kw">fn</span> <span class="ident">park</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">deadline</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span>) {
         <span class="comment">// If we were previously notified then we consume this notification and return quickly.</span>
         <span class="kw">if</span> <span class="self">self</span>
             .<span class="ident">state</span>
@@ -714,8 +736,8 @@
         }
 
         <span class="comment">// If the timeout is zero, then there is no need to actually block.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">dur</span>) <span class="op">=</span> <span class="ident">timeout</span> {
-            <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">dur</span> <span class="op">=</span><span class="op">=</span> <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">0</span>) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">deadline</span>) <span class="op">=</span> <span class="ident">deadline</span> {
+            <span class="kw">if</span> <span class="ident">deadline</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">Instant</span>::<span class="ident">now</span>() {
                 <span class="kw">return</span>;
             }
         }
@@ -739,40 +761,42 @@
             <span class="prelude-val">Err</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;inconsistent park_timeout state: {}&quot;</span>, <span class="ident">n</span>),
         }
 
-        <span class="kw">match</span> <span class="ident">timeout</span> {
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">loop</span> {
-                    <span class="comment">// Block the current thread on the conditional variable.</span>
-                    <span class="ident">m</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">cvar</span>.<span class="ident">wait</span>(<span class="ident">m</span>).<span class="ident">unwrap</span>();
-
-                    <span class="kw">if</span> <span class="self">self</span>
-                        .<span class="ident">state</span>
-                        .<span class="ident">compare_exchange</span>(<span class="ident">NOTIFIED</span>, <span class="ident">EMPTY</span>, <span class="ident">SeqCst</span>, <span class="ident">SeqCst</span>)
-                        .<span class="ident">is_ok</span>()
-                    {
-                        <span class="comment">// got a notification</span>
-                        <span class="kw">return</span>;
+        <span class="kw">loop</span> {
+            <span class="comment">// Block the current thread on the conditional variable.</span>
+            <span class="ident">m</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">deadline</span> {
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">cvar</span>.<span class="ident">wait</span>(<span class="ident">m</span>).<span class="ident">unwrap</span>(),
+                <span class="prelude-val">Some</span>(<span class="ident">deadline</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Instant</span>::<span class="ident">now</span>();
+                    <span class="kw">if</span> <span class="ident">now</span> <span class="op">&lt;</span> <span class="ident">deadline</span> {
+                        <span class="comment">// We could check for a timeout here, in the return value of wait_timeout,</span>
+                        <span class="comment">// but in the case that a timeout and an unpark arrive simultaneously, we</span>
+                        <span class="comment">// prefer to report the former.</span>
+                        <span class="self">self</span>.<span class="ident">cvar</span>.<span class="ident">wait_timeout</span>(<span class="ident">m</span>, <span class="ident">deadline</span> <span class="op">-</span> <span class="ident">now</span>).<span class="ident">unwrap</span>().<span class="number">0</span>
+                    } <span class="kw">else</span> {
+                        <span class="comment">// We&#39;ve timed out; swap out the state back to empty on our way out</span>
+                        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">EMPTY</span>, <span class="ident">SeqCst</span>) {
+                            <span class="ident">NOTIFIED</span> <span class="op">|</span> <span class="ident">PARKED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span>,
+                            <span class="ident">n</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;inconsistent park_timeout state: {}&quot;</span>, <span class="ident">n</span>),
+                        };
                     }
-
-                    <span class="comment">// spurious wakeup, go back to sleep</span>
                 }
-            }
-            <span class="prelude-val">Some</span>(<span class="ident">timeout</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="comment">// Wait with a timeout, and if we spuriously wake up or otherwise wake up from a</span>
-                <span class="comment">// notification we just want to unconditionally set `state` back to `EMPTY`, either</span>
-                <span class="comment">// consuming a notification or un-flagging ourselves as parked.</span>
-                <span class="kw">let</span> (<span class="ident">_m</span>, <span class="ident">_result</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cvar</span>.<span class="ident">wait_timeout</span>(<span class="ident">m</span>, <span class="ident">timeout</span>).<span class="ident">unwrap</span>();
+            };
 
-                <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">EMPTY</span>, <span class="ident">SeqCst</span>) {
-                    <span class="ident">NOTIFIED</span> <span class="op">=</span><span class="op">&gt;</span> {} <span class="comment">// got a notification</span>
-                    <span class="ident">PARKED</span> <span class="op">=</span><span class="op">&gt;</span> {}   <span class="comment">// no notification</span>
-                    <span class="ident">n</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;inconsistent park_timeout state: {}&quot;</span>, <span class="ident">n</span>),
-                }
+            <span class="kw">if</span> <span class="self">self</span>
+                .<span class="ident">state</span>
+                .<span class="ident">compare_exchange</span>(<span class="ident">NOTIFIED</span>, <span class="ident">EMPTY</span>, <span class="ident">SeqCst</span>, <span class="ident">SeqCst</span>)
+                .<span class="ident">is_ok</span>()
+            {
+                <span class="comment">// got a notification</span>
+                <span class="kw">return</span>;
             }
+
+            <span class="comment">// Spurious wakeup, go back to sleep. Alternatively, if we timed out, it will be caught</span>
+            <span class="comment">// in the branch above, when we discover the deadline is in the past</span>
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unpark</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unpark</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="comment">// To ensure the unparked thread will observe any writes we made before this call, we must</span>
         <span class="comment">// perform a release operation that `park` can synchronize with. To do that we must write</span>
         <span class="comment">// `NOTIFIED` even if `state` is already `NOTIFIED`. That is why this must be a swap rather</span>
