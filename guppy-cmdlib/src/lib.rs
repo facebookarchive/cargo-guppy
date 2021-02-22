@@ -5,7 +5,7 @@
 //!
 //! This library allows translating command-line arguments into guppy's data structures.
 
-#[cfg(feature = "proptest010")]
+#[cfg(feature = "proptest1")]
 pub mod proptest;
 
 use anyhow::Result;

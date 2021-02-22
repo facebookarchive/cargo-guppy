@@ -22,12 +22,12 @@ use target_spec::{Platform, TargetFeatures};
 /// The methods in this section allow a `PackageGraph` to be used in property-based testing
 /// scenarios.
 ///
-/// Currently, [proptest 0.10](https://docs.rs/proptest/0.10) is supported if the `proptest010`
+/// Currently, [proptest 1](https://docs.rs/proptest/1) is supported if the `proptest1`
 /// feature is enabled.
 impl PackageGraph {
     /// Returns a `Strategy` that generates random package IDs from this graph.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     ///
     /// ## Panics
     ///
@@ -42,7 +42,7 @@ impl PackageGraph {
 
     /// Returns a `Strategy` that generates random dependency links from this graph.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     ///
     /// ## Panics
     ///
@@ -60,7 +60,7 @@ impl PackageGraph {
 
     /// Returns a `Strategy` that generates a random `PackageResolver` instance from this graph.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     pub fn prop010_resolver_strategy(&self) -> impl Strategy<Value = Prop010Resolver> {
         // Generate a FixedBitSet to filter based off of.
         fixedbitset_strategy(self.dep_graph.edge_count()).prop_map(Prop010Resolver::new)
@@ -68,7 +68,7 @@ impl PackageGraph {
 
     /// Returns a `Strategy` that generates a random `CargoOptions` from this graph.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     pub fn prop010_cargo_options_strategy(&self) -> impl Strategy<Value = CargoOptions<'_>> {
         let target_platform = option::of(Platform::strategy(any::<TargetFeatures>()));
         let host_platform = option::of(Platform::strategy(any::<TargetFeatures>()));
@@ -109,12 +109,12 @@ impl PackageGraph {
 /// The methods in this section allow a `Workspace` to be used in property-based testing
 /// scenarios.
 ///
-/// Currently, [proptest 0.10](https://docs.rs/proptest/0.10) is supported if the `proptest010`
+/// Currently, [proptest 1](https://docs.rs/proptest/1) is supported if the `proptest1`
 /// feature is enabled.
 impl<'g> Workspace<'g> {
     /// Returns a `Strategy` that generates random package names from this workspace.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     ///
     /// ## Panics
     ///
@@ -126,7 +126,7 @@ impl<'g> Workspace<'g> {
 
     /// Returns a `Strategy` that generates random package IDs from this workspace.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     ///
     /// ## Panics
     ///
@@ -146,7 +146,7 @@ impl<'g> Workspace<'g> {
 
 /// A randomly generated package resolver.
 ///
-/// Created by `PackageGraph::prop010_resolver_strategy`. Requires the `proptest010` feature to be
+/// Created by `PackageGraph::prop010_resolver_strategy`. Requires the `proptest1` feature to be
 /// enabled.
 #[derive(Clone, Debug)]
 pub struct Prop010Resolver {

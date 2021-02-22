@@ -214,7 +214,7 @@
 
 mod cargo_toml;
 mod hakari;
-#[cfg(feature = "proptest010")]
+#[cfg(feature = "proptest1")]
 mod proptest_helpers;
 #[cfg(feature = "summaries")]
 pub mod summaries;

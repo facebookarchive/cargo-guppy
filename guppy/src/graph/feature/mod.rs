@@ -11,8 +11,8 @@ mod build;
 mod cycles;
 pub mod feature_list;
 mod graph_impl;
-#[cfg(feature = "proptest010")]
-mod proptest010;
+#[cfg(feature = "proptest1")]
+mod proptest_helpers;
 mod query;
 mod resolve;
 

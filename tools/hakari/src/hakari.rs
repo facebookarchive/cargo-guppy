@@ -354,7 +354,7 @@ mod summaries {
 ///
 /// Call `HakariBuilder::set_unify_target_host` to configure this option.
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "proptest010", derive(proptest_derive::Arbitrary))]
+#[cfg_attr(feature = "proptest1", derive(proptest_derive::Arbitrary))]
 #[cfg_attr(feature = "summaries", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "summaries", serde(rename_all = "kebab-case"))]
 #[non_exhaustive]

@@ -16,11 +16,11 @@ use proptest::{
 /// The methods in this section allow random instances of a `HakariBuilder` to be generated, for use
 /// in property-based testing scenarios.
 ///
-/// Requires the `proptest010` feature to be enabled.
+/// Requires the `proptest1` feature to be enabled.
 impl<'g> HakariBuilder<'g, 'static> {
     /// Returns a `Strategy` that generates random `HakariBuilder` instances based on this graph.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     ///
     /// ## Panics
     ///

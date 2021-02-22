@@ -11,13 +11,13 @@ use std::borrow::Cow;
 /// The methods in this section allow `Platform` instances to be used in property-based testing
 /// scenarios.
 ///
-/// Currently, [proptest 0.10](https://docs.rs/proptest/0.10) is supported if the `proptest010`
+/// Currently, [proptest 1](https://docs.rs/proptest/1) is supported if the `proptest1`
 /// feature is enabled.
 impl Platform<'static> {
     /// Given a way to generate `TargetFeatures` instances, this returns a `Strategy` that generates
     /// a platform at random.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     ///
     /// ## Examples
     ///
@@ -43,7 +43,7 @@ impl Platform<'static> {
 
     /// A version of `strategy` that allows target triples to be filtered.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     pub fn filtered_strategy(
         triple_filter: impl Fn(&'static str) -> bool,
         target_features: impl Strategy<Value = TargetFeatures>,

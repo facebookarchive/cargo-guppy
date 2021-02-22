@@ -16,8 +16,8 @@ pub mod cargo;
 mod cycles;
 pub mod feature;
 mod graph_impl;
-#[cfg(feature = "proptest010")]
-mod proptest010;
+#[cfg(feature = "proptest1")]
+mod proptest_helpers;
 mod query;
 mod query_core;
 mod resolve;
@@ -31,8 +31,8 @@ pub use cycles::*;
 pub use graph_impl::*;
 use once_cell::sync::Lazy;
 use petgraph::graph::IndexType;
-#[cfg(feature = "proptest010")]
-pub use proptest010::*;
+#[cfg(feature = "proptest1")]
+pub use proptest_helpers::*;
 pub use query::*;
 pub use resolve::*;
 use semver::{Version, VersionReq};
@@ -41,7 +41,7 @@ use semver::{Version, VersionReq};
 ///
 /// Used by the `_directed` methods.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "proptest010", derive(proptest_derive::Arbitrary))]
+#[cfg_attr(feature = "proptest1", derive(proptest_derive::Arbitrary))]
 pub enum DependencyDirection {
     /// Dependencies from this package to other packages.
     Forward,
