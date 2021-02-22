@@ -13,7 +13,7 @@ use proptest::prelude::*;
 /// The methods in this section allow a `FeatureGraph` to be used in property-based testing
 /// scenarios.
 ///
-/// Currently, [proptest 0.10](https://docs.rs/proptest/0.10) is supported if the `proptest010`
+/// Currently, [proptest 1](https://docs.rs/proptest/1) is supported if the `proptest1`
 /// feature is enabled.
 impl<'g> FeatureGraph<'g> {
     /// Returns a `Strategy` that generates random feature IDs from this graph.
@@ -21,7 +21,7 @@ impl<'g> FeatureGraph<'g> {
     /// The IDs so chosen are uniformly random from the entire feature graph. In other words, a
     /// package with more optional features is more likely to be chosen.
     ///
-    /// Requires the `proptest010` feature to be enabled.
+    /// Requires the `proptest1` feature to be enabled.
     ///
     /// ## Panics
     ///

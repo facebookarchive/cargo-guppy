@@ -41,7 +41,7 @@ mod errors;
 mod evaluator;
 mod parser;
 mod platform;
-#[cfg(feature = "proptest010")]
+#[cfg(feature = "proptest1")]
 mod proptest;
 #[cfg(feature = "summaries")]
 pub mod summaries;

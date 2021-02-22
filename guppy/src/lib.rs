@@ -48,7 +48,7 @@
 //!
 //! # Optional features
 //!
-//! * `proptest010`: Support for [property-based testing](https://jessitron.com/2013/04/25/property-based-testing-what-is-it/)
+//! * `proptest1`: Support for [property-based testing](https://jessitron.com/2013/04/25/property-based-testing-what-is-it/)
 //!   using the [`proptest`](https://altsysrq.github.io/proptest-book/intro.html) framework.
 //! * `rayon1`: Support for parallel iterators through [Rayon](docs.rs/rayon/1) (preliminary work
 //!   so far, more parallel iterators to be added in the future).

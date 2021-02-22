@@ -149,7 +149,7 @@ mod target_features_impl {
     }
 }
 
-#[cfg(all(test, feature = "proptest010"))]
+#[cfg(all(test, feature = "proptest1"))]
 mod tests {
     use super::*;
     use proptest::prelude::*;
