@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Public dependency version bumps:
+  - `cfg-expr` updated to 0.7.1.
+  - `proptest` updated to version 1 and the corresponding feature renamed to `proptest1`.
+
 ## [0.6.1] - 2020-02-14
 
 ### Changed

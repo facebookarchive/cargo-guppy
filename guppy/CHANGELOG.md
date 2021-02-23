@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `guppy` now uses [`camino`](https://crates.io/crates/camino) `Utf8Path` and `Utf8PathBuf` wrappers. These wrappers
+  provide type-level assertions that returned paths are valid UTF-8.
+- Public dependency version bumps:
+  - `proptest` updated to version 1 and the corresponding feature renamed to `proptest1`.
+
 ## [0.7.2] - 2020-02-15
 
 ### Fixed
