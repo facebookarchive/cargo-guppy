@@ -508,31 +508,6 @@
 <span id="505">505</span>
 <span id="506">506</span>
 <span id="507">507</span>
-<span id="508">508</span>
-<span id="509">509</span>
-<span id="510">510</span>
-<span id="511">511</span>
-<span id="512">512</span>
-<span id="513">513</span>
-<span id="514">514</span>
-<span id="515">515</span>
-<span id="516">516</span>
-<span id="517">517</span>
-<span id="518">518</span>
-<span id="519">519</span>
-<span id="520">520</span>
-<span id="521">521</span>
-<span id="522">522</span>
-<span id="523">523</span>
-<span id="524">524</span>
-<span id="525">525</span>
-<span id="526">526</span>
-<span id="527">527</span>
-<span id="528">528</span>
-<span id="529">529</span>
-<span id="530">530</span>
-<span id="531">531</span>
-<span id="532">532</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -542,6 +517,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">hakari</span>::{<span class="ident">HakariBuilder</span>, <span class="ident">OutputMap</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">summaries</span>::<span class="ident">HakariBuilderSummary</span>;
+<span class="kw">use</span> <span class="ident">camino</span>::<span class="ident">Utf8PathBuf</span>;
 <span class="kw">use</span> <span class="ident">cfg_if</span>::<span class="ident">cfg_if</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">graph</span>::{<span class="ident">cargo</span>::<span class="ident">BuildPlatform</span>, <span class="ident">ExternalSource</span>, <span class="ident">GitReq</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSource</span>},
@@ -553,7 +529,6 @@
     <span class="ident">error</span>, <span class="ident">fmt</span>,
     <span class="ident">fmt</span>::<span class="ident">Write</span>,
     <span class="ident">hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>},
-    <span class="ident">path</span>::<span class="ident">PathBuf</span>,
 };
 <span class="kw">use</span> <span class="ident">twox_hash</span>::<span class="ident">XxHash64</span>;
 
@@ -683,18 +658,7 @@
         <span class="ident">package_id</span>: <span class="ident">PackageId</span>,
 
         <span class="doccomment">/// The relative path to the package from the root of the workspace.</span>
-        <span class="ident">rel_path</span>: <span class="ident">PathBuf</span>,
-    },
-
-    <span class="doccomment">/// A non-Unicode path was encountered while writing out TOML.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The TOML format only supports Unicode paths.</span>
-    <span class="ident">NonUnicodePath</span> {
-        <span class="doccomment">/// The package ID that Hakari tried to write out a dependency line for.</span>
-        <span class="ident">package_id</span>: <span class="ident">PackageId</span>,
-
-        <span class="doccomment">/// The non-Unicode path that Hakari attempted to write.</span>
-        <span class="ident">path</span>: <span class="ident">PathBuf</span>,
+        <span class="ident">rel_path</span>: <span class="ident">Utf8PathBuf</span>,
     },
 
     <span class="doccomment">/// An external source wasn&#39;t recognized by guppy.</span>
@@ -726,20 +690,13 @@
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
             <span class="ident">TomlOutError</span>::<span class="ident">Toml</span> { <span class="ident">context</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;while serializing TOML: {}&quot;</span>, <span class="ident">context</span>),
             <span class="ident">TomlOutError</span>::<span class="ident">FmtWrite</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;while writing to fmt::Write&quot;</span>),
-            <span class="ident">TomlOutError</span>::<span class="ident">NonUnicodePath</span> { <span class="ident">package_id</span>, <span class="ident">path</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(
-                <span class="ident">f</span>,
-                <span class="string">&quot;for path dependency &#39;{}&#39;, non-Unicode path encountered: {}&quot;</span>,
-                <span class="ident">package_id</span>,
-                <span class="ident">path</span>.<span class="ident">display</span>(),
-            ),
             <span class="ident">TomlOutError</span>::<span class="ident">PathWithoutHakari</span> {
                 <span class="ident">package_id</span>,
                 <span class="ident">rel_path</span>,
             } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(
                 <span class="ident">f</span>,
                 <span class="string">&quot;for path dependency &#39;{}&#39;, no Hakari package was specified (relative path {})&quot;</span>,
-                <span class="ident">package_id</span>,
-                <span class="ident">rel_path</span>.<span class="ident">display</span>(),
+                <span class="ident">package_id</span>, <span class="ident">rel_path</span>,
             ),
             <span class="ident">TomlOutError</span>::<span class="ident">UnrecognizedExternal</span> { <span class="ident">package_id</span>, <span class="ident">source</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(
                 <span class="ident">f</span>,
@@ -757,9 +714,9 @@
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
             <span class="ident">TomlOutError</span>::<span class="ident">Toml</span> { <span class="ident">err</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>),
             <span class="ident">TomlOutError</span>::<span class="ident">FmtWrite</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>),
-            <span class="ident">TomlOutError</span>::<span class="ident">NonUnicodePath</span> { .. }
-            <span class="op">|</span> <span class="ident">TomlOutError</span>::<span class="ident">PathWithoutHakari</span> { .. }
-            <span class="op">|</span> <span class="ident">TomlOutError</span>::<span class="ident">UnrecognizedExternal</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">TomlOutError</span>::<span class="ident">PathWithoutHakari</span> { .. } <span class="op">|</span> <span class="ident">TomlOutError</span>::<span class="ident">UnrecognizedExternal</span> { .. } <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">None</span>
+            }
         }
     }
 }
@@ -842,20 +799,13 @@
                                     <span class="ident">package_id</span>: <span class="ident">dep</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
                                     <span class="ident">rel_path</span>: <span class="ident">path</span>.<span class="ident">to_path_buf</span>(),
                                 })<span class="question-mark">?</span>;
-                            <span class="ident">pathdiff</span>::<span class="ident">diff_paths</span>(<span class="ident">path</span>, <span class="ident">hakari_path</span>)
-                                .<span class="ident">expect</span>(<span class="string">&quot;both hakari_path and path are relative&quot;</span>)
+                            <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">pathdiff</span>::<span class="ident">diff_paths</span>(<span class="ident">path</span>, <span class="ident">hakari_path</span>)
+                                .<span class="ident">expect</span>(<span class="string">&quot;both hakari_path and path are relative&quot;</span>);
+                            <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(<span class="ident">rel_path</span>)
+                                .<span class="ident">expect</span>(<span class="string">&quot;both path and hakari_path are UTF-8 so this is as well&quot;</span>)
                         };
 
-                        <span class="kw">let</span> <span class="ident">path_str</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">path_out</span>.<span class="ident">to_str</span>() {
-                            <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>,
-                            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
-                                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">TomlOutError</span>::<span class="ident">NonUnicodePath</span> {
-                                    <span class="ident">package_id</span>: <span class="ident">dep</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
-                                    <span class="ident">path</span>: <span class="ident">path_out</span>,
-                                })
-                            }
-                        };
-
+                        <span class="kw">let</span> <span class="ident">path_str</span> <span class="op">=</span> <span class="ident">path_out</span>.<span class="ident">as_str</span>();
                         <span class="macro">cfg_if</span><span class="macro">!</span> {
                             <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span> {
                                 <span class="comment">// TODO: is replacing \\ with / totally safe on Windows? Might run</span>

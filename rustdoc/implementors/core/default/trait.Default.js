@@ -7,6 +7,7 @@ implementors["bit_set"] = [{"text":"impl&lt;B:&nbsp;BitBlock&gt; Default for Bit
 implementors["bit_vec"] = [{"text":"impl&lt;B:&nbsp;BitBlock&gt; Default for BitVec&lt;B&gt;","synthetic":false,"types":[]}];
 implementors["bstr"] = [{"text":"impl Default for BString","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Default for &amp;'a BStr","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Default for &amp;'a mut BStr","synthetic":false,"types":[]}];
 implementors["byteorder"] = [{"text":"impl Default for BigEndian","synthetic":false,"types":[]},{"text":"impl Default for LittleEndian","synthetic":false,"types":[]}];
+implementors["camino"] = [{"text":"impl Default for Utf8PathBuf","synthetic":false,"types":[]}];
 implementors["cargo_metadata"] = [{"text":"impl Default for DependencyKind","synthetic":false,"types":[]},{"text":"impl Default for MetadataCommand","synthetic":false,"types":[]}];
 implementors["chrono"] = [{"text":"impl Default for Parsed","synthetic":false,"types":[]}];
 implementors["clap"] = [{"text":"impl&lt;'a, 'b&gt; Default for Arg&lt;'a, 'b&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;'a: 'b,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Default for ArgMatches&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Default for Values&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Default for OsValues&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Default for ArgGroup&lt;'a&gt;","synthetic":false,"types":[]}];

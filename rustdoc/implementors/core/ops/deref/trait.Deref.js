@@ -3,6 +3,7 @@ implementors["ansi_term"] = [{"text":"impl&lt;'a, S:&nbsp;'a + ToOwned + ?Sized&
 implementors["anyhow"] = [{"text":"impl Deref for Error","synthetic":false,"types":[]}];
 implementors["ascii"] = [{"text":"impl Deref for AsciiString","synthetic":false,"types":[]}];
 implementors["bstr"] = [{"text":"impl Deref for BString","synthetic":false,"types":[]},{"text":"impl Deref for BStr","synthetic":false,"types":[]}];
+implementors["camino"] = [{"text":"impl Deref for Utf8PathBuf","synthetic":false,"types":[]}];
 implementors["crossbeam_epoch"] = [{"text":"impl&lt;T:&nbsp;?Sized + Pointable&gt; Deref for Owned&lt;T&gt;","synthetic":false,"types":[]}];
 implementors["crossbeam_utils"] = [{"text":"impl&lt;T&gt; Deref for CachePadded&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;?Sized&gt; Deref for ShardedLockReadGuard&lt;'_, T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;?Sized&gt; Deref for ShardedLockWriteGuard&lt;'_, T&gt;","synthetic":false,"types":[]}];
 implementors["either"] = [{"text":"impl&lt;L, R&gt; Deref for Either&lt;L, R&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;L: Deref,<br>&nbsp;&nbsp;&nbsp;&nbsp;R: Deref&lt;Target = L::Target&gt;,&nbsp;</span>","synthetic":false,"types":[]}];

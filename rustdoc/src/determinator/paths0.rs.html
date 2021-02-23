@@ -211,76 +211,12 @@
 <span id="208">208</span>
 <span id="209">209</span>
 <span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
-<span id="218">218</span>
-<span id="219">219</span>
-<span id="220">220</span>
-<span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
-<span id="229">229</span>
-<span id="230">230</span>
-<span id="231">231</span>
-<span id="232">232</span>
-<span id="233">233</span>
-<span id="234">234</span>
-<span id="235">235</span>
-<span id="236">236</span>
-<span id="237">237</span>
-<span id="238">238</span>
-<span id="239">239</span>
-<span id="240">240</span>
-<span id="241">241</span>
-<span id="242">242</span>
-<span id="243">243</span>
-<span id="244">244</span>
-<span id="245">245</span>
-<span id="246">246</span>
-<span id="247">247</span>
-<span id="248">248</span>
-<span id="249">249</span>
-<span id="250">250</span>
-<span id="251">251</span>
-<span id="252">252</span>
-<span id="253">253</span>
-<span id="254">254</span>
-<span id="255">255</span>
-<span id="256">256</span>
-<span id="257">257</span>
-<span id="258">258</span>
-<span id="259">259</span>
-<span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
-<span id="266">266</span>
-<span id="267">267</span>
-<span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="ident">cfg_if</span>::<span class="ident">cfg_if</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">path</span>::<span class="ident">Path</span>, <span class="ident">str</span>::<span class="ident">Utf8Error</span>};
+<span class="kw">use</span> <span class="ident">camino</span>::<span class="ident">Utf8Path</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>::<span class="ident">Utf8Error</span>;
 
 <span class="doccomment">/// A store for null-separated paths.</span>
 <span class="doccomment">///</span>
@@ -341,80 +277,51 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Implementations</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// `&amp;&#39;a Paths0` implements `IntoIterator&lt;Item = &amp;&#39;a Path&gt;`.</span>
+<span class="doccomment">/// `&amp;&#39;a Utf8Paths0` implements `IntoIterator&lt;Item = &amp;&#39;a Utf8Path&gt;`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Ord</span>, <span class="ident">PartialOrd</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Paths0</span> {
-    <span class="ident">buf</span>: <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Utf8Paths0</span> {
+    <span class="ident">buf</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">Paths0</span> {
-    <span class="doccomment">/// Creates a new instance of `Paths0` from a buffer.</span>
+<span class="kw">impl</span> <span class="ident">Utf8Paths0</span> {
+    <span class="doccomment">/// Creates a new instance of `Utf8Paths0` from a string with embedded nulls.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// The buffer may, but does not need to, have a trailing byte.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Errors</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// On Unixes this supports arbitrary paths and is infallible.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// On other platforms like Windows, this only supports paths encoded as UTF-8. Any others will</span>
-    <span class="doccomment">/// return an error containing:</span>
-    <span class="doccomment">/// * the first path that failed to parse</span>
-    <span class="doccomment">/// * the `Utf8Error` that it returned.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">buf</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Utf8Error</span>)<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">into</span>();
-        <span class="macro">cfg_if</span><span class="macro">!</span> {
-            <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span> {
-                <span class="prelude-val">Ok</span>(<span class="self">Self</span>::<span class="ident">new_unix</span>(<span class="ident">buf</span>))
-            } <span class="kw">else</span> {
-                <span class="comment">// Validate UTF-8.</span>
-                <span class="self">Self</span>::<span class="ident">validate_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>)<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="self">Self</span>::<span class="ident">strip_trailing_null_byte</span>(<span class="ident">buf</span>))
-            }
-        }
+    <span class="doccomment">/// The string may, but does not need to, have a trailing null byte.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">buf</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span>::<span class="ident">strip_trailing_null_byte</span>(<span class="ident">buf</span>.<span class="ident">into</span>())
     }
 
-    <span class="doccomment">/// Creates a new instance of `Paths0`, converting `/` to `\` on platforms like Windows.</span>
+    <span class="doccomment">/// Creates a new instance of `Utf8Paths0` from a `Vec&lt;u8&gt;`, performing a UTF-8 validation</span>
+    <span class="doccomment">/// check on the buffer.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The buffer may, but does not need to, have a trailing null byte.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ## Errors</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If any paths inside the string weren&#39;t valid UTF-8, this returns the first path that failed</span>
+    <span class="doccomment">/// to parse and the error returned.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">buf</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Utf8Error</span>)<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">into</span>();
+        <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">validate_utf8</span>(<span class="ident">buf</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::<span class="ident">strip_trailing_null_byte</span>(<span class="ident">buf</span>))
+    }
+
+    <span class="doccomment">/// Creates a new instance of `Utf8Paths0`, converting `/` to `\` on platforms like Windows.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Some tools like Git (but not Mercurial) return paths with `/` on Windows, even though the</span>
     <span class="doccomment">/// canonical separator on the platform is `\`. This constructor changes all instances of `/`</span>
     <span class="doccomment">/// to `\`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method is available on Unix and Windows platforms.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">unix</span>, <span class="ident">windows</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_forward_slashes</span>(<span class="ident">buf</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Utf8Error</span>)<span class="op">&gt;</span> {
-        <span class="macro">cfg_if</span><span class="macro">!</span> {
-            <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span> {
-                <span class="prelude-val">Ok</span>(<span class="self">Self</span>::<span class="ident">new_unix</span>(<span class="ident">buf</span>.<span class="ident">into</span>()))
-            }
-            <span class="kw">else</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">into</span>();
-                <span class="comment">// Validate UTF-8.</span>
-                <span class="self">Self</span>::<span class="ident">validate_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>)<span class="question-mark">?</span>;
-
-                <span class="comment">// Change all `/` to `\` on Windows.</span>
-                <span class="kw">if</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">MAIN_SEPARATOR</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;\\&#39;</span> {
-                    <span class="ident">buf</span>.<span class="ident">iter_mut</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> {
-                        <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">b</span> <span class="op">=</span><span class="op">=</span> <span class="string">b&#39;/&#39;</span> {
-                            <span class="kw-2">*</span><span class="ident">b</span> <span class="op">=</span> <span class="string">b&#39;\\&#39;</span>;
-                        }
-                    });
-                }
-
-                <span class="prelude-val">Ok</span>(<span class="self">Self</span>::<span class="ident">strip_trailing_null_byte</span>(<span class="ident">buf</span>))
-            }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_forward_slashes</span>(<span class="ident">buf</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">into</span>();
+        <span class="comment">// Change all `/` to `\` on Windows.</span>
+        <span class="kw">if</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">MAIN_SEPARATOR</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;\\&#39;</span> {
+            <span class="ident">buf</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">replace</span>(<span class="string">&#39;/&#39;</span>, <span class="string">&quot;\\&quot;</span>);
         }
-    }
-
-    <span class="doccomment">/// Creates a new instance of `Paths0` on Unix platforms.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is infallible, but is only available on Unix platforms.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_unix</span>(<span class="ident">buf</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">Self</span>::<span class="ident">strip_trailing_null_byte</span>(<span class="ident">buf</span>.<span class="ident">into</span>())
+        <span class="self">Self</span>::<span class="ident">strip_trailing_null_byte</span>(<span class="ident">buf</span>)
     }
 
     <span class="doccomment">/// Iterates over the paths in this buffer.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">into_iter</span>()
     }
 
@@ -422,17 +329,24 @@
     <span class="comment">// Helper methods</span>
     <span class="comment">// ---</span>
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">unix</span>))]</span>
-    <span class="kw">fn</span> <span class="ident">validate_utf8</span>(<span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Utf8Error</span>)<span class="op">&gt;</span> {
-        <span class="ident">buf</span>.<span class="ident">split</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">b</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>)
-            .<span class="ident">try_for_each</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">std</span>::<span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">path</span>) {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
-                <span class="prelude-val">Err</span>(<span class="ident">utf8_error</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>((<span class="ident">path</span>.<span class="ident">to_vec</span>(), <span class="ident">utf8_error</span>)),
-            })
+    <span class="kw">fn</span> <span class="ident">validate_utf8</span>(<span class="ident">buf</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Utf8Error</span>)<span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">buf</span>) {
+            <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">s</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">err</span>.<span class="ident">into_bytes</span>();
+                <span class="comment">// Look for the path that failed validation.</span>
+                <span class="ident">buf</span>.<span class="ident">split</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">b</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>)
+                    .<span class="ident">try_for_each</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">std</span>::<span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">path</span>) {
+                        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
+                        <span class="prelude-val">Err</span>(<span class="ident">utf8_error</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>((<span class="ident">path</span>.<span class="ident">to_vec</span>(), <span class="ident">utf8_error</span>)),
+                    })<span class="question-mark">?</span>;
+                <span class="macro">unreachable</span><span class="macro">!</span>(<span class="string">&quot;full buffer failed utf-8 validation =&gt; at least one path failed&quot;</span>);
+            }
+        }
     }
 
-    <span class="kw">fn</span> <span class="ident">strip_trailing_null_byte</span>(<span class="kw-2">mut</span> <span class="ident">buf</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">if</span> <span class="ident">buf</span>.<span class="ident">iter</span>().<span class="ident">last</span>() <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">0</span>) {
+    <span class="kw">fn</span> <span class="ident">strip_trailing_null_byte</span>(<span class="kw-2">mut</span> <span class="ident">buf</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">if</span> <span class="ident">buf</span>.<span class="ident">as_bytes</span>().<span class="ident">last</span>() <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">0</span>) {
             <span class="ident">buf</span>.<span class="ident">pop</span>();
         }
 
@@ -440,9 +354,9 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Paths0</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>;
-    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Utf8Paths0</span> {
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Utf8Path</span>;
+    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">IntoIter</span> {
         <span class="comment">// An empty string means there are no paths -- this has to be handled as a special case.</span>
@@ -450,25 +364,7 @@
             <span class="kw">return</span> <span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">std</span>::<span class="ident">iter</span>::<span class="ident">empty</span>());
         }
 
-        <span class="macro">cfg_if</span><span class="macro">!</span> {
-            <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span> {
-                <span class="comment">// Paths are arbitrary byte sequences on Unix.</span>
-                <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::<span class="ident">OsStr</span>;
-                <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">os</span>::<span class="ident">unix</span>::<span class="ident">ffi</span>::<span class="ident">OsStrExt</span>;
-
-                <span class="ident">Box</span>::<span class="ident">new</span>(
-                    <span class="self">self</span>.<span class="ident">buf</span>
-                        .<span class="ident">split</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">b</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>)
-                        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">OsStr</span>::<span class="ident">from_bytes</span>(<span class="ident">path</span>))),
-                )
-            } <span class="kw">else</span> {
-                <span class="ident">Box</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">buf</span>.<span class="ident">split</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">b</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">str</span>::<span class="ident">from_utf8</span>(<span class="ident">path</span>)
-                        .<span class="ident">expect</span>(<span class="string">&quot;buf constructor should have already validated this path as UTF-8&quot;</span>);
-                    <span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">s</span>)
-                }))
-            }
-        }
+        <span class="ident">Box</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">buf</span>.<span class="ident">split</span>(<span class="string">&#39;\0&#39;</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">Utf8Path</span>::<span class="ident">new</span>(<span class="ident">path</span>)))
     }
 }
 
@@ -489,15 +385,6 @@
         <span class="ident">paths_eq</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b\xF0\x9F\x98\x81\0c/d&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a/b😁&quot;</span>, <span class="string">&quot;c/d&quot;</span>]);
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">basic_non_unicode</span>() {
-        <span class="ident">paths_eq_bytes</span>(
-            <span class="kw-2">*</span><span class="string">b&quot;foo\xff/bar\0baz\n/quux&quot;</span>,
-            <span class="kw-2">&amp;</span>[<span class="string">b&quot;foo\xff/bar&quot;</span>, <span class="string">b&quot;baz\n/quux&quot;</span>],
-        );
-    }
-
     <span class="comment">// This is really a Windows test but it should work on all platforms.</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">backslashes</span>() {
@@ -510,42 +397,27 @@
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">forward_slashes</span>() {
         <span class="ident">paths_eq_fwd</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b/c&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a\\b\\c&quot;</span>]);
-        <span class="ident">paths_eq</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b\0a/c&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a\\b&quot;</span>, <span class="string">&quot;a\\c&quot;</span>]);
-        <span class="ident">paths_eq</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b\0a/c\0&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a\\b&quot;</span>, <span class="string">&quot;a\\c&quot;</span>]);
+        <span class="ident">paths_eq_fwd</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b\0a/c&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a\\b&quot;</span>, <span class="string">&quot;a\\c&quot;</span>]);
+        <span class="ident">paths_eq_fwd</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b\0a/c\0&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a\\b&quot;</span>, <span class="string">&quot;a\\c&quot;</span>]);
 
         <span class="comment">// Also test mixed forward/backslashes.</span>
-        <span class="ident">paths_eq</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b\0a\\c&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a\\b&quot;</span>, <span class="string">&quot;a\\c&quot;</span>]);
+        <span class="ident">paths_eq_fwd</span>(<span class="kw-2">*</span><span class="string">b&quot;a/b\0a\\c&quot;</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;a\\b&quot;</span>, <span class="string">&quot;a\\c&quot;</span>]);
     }
 
     <span class="kw">fn</span> <span class="ident">paths_eq</span>(<span class="ident">bytes</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>]) {
-        <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">Paths0</span>::<span class="ident">new</span>(<span class="ident">bytes</span>.<span class="ident">into</span>()).<span class="ident">expect</span>(<span class="string">&quot;null-separated paths are valid&quot;</span>);
+        <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">Utf8Paths0</span>::<span class="ident">from_bytes</span>(<span class="ident">bytes</span>.<span class="ident">into</span>()).<span class="ident">expect</span>(<span class="string">&quot;null-separated paths are valid&quot;</span>);
         <span class="kw">let</span> <span class="ident">actual</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">paths</span>.<span class="ident">iter</span>().<span class="ident">collect</span>();
-        <span class="kw">let</span> <span class="ident">expected</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">expected</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">Path</span>::<span class="ident">new</span>).<span class="ident">collect</span>();
-
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">actual</span>, <span class="ident">expected</span>, <span class="string">&quot;paths match&quot;</span>);
-    }
-
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">paths_eq_bytes</span>(<span class="ident">bytes</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="ident">u8</span>]]) {
-        <span class="comment">// Paths are arbitrary byte sequences on Unix.</span>
-        <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">ffi</span>::<span class="ident">OsStr</span>, <span class="ident">os</span>::<span class="ident">unix</span>::<span class="ident">ffi</span>::<span class="ident">OsStrExt</span>};
-
-        <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">Paths0</span>::<span class="ident">new</span>(<span class="ident">bytes</span>.<span class="ident">into</span>()).<span class="ident">expect</span>(<span class="string">&quot;null-separated paths are valid&quot;</span>);
-        <span class="kw">let</span> <span class="ident">actual</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">paths</span>.<span class="ident">iter</span>().<span class="ident">collect</span>();
-        <span class="kw">let</span> <span class="ident">expected</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">expected</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">OsStr</span>::<span class="ident">from_bytes</span>(<span class="ident">path</span>)))
-            .<span class="ident">collect</span>();
+        <span class="kw">let</span> <span class="ident">expected</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">expected</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">Utf8Path</span>::<span class="ident">new</span>).<span class="ident">collect</span>();
 
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">actual</span>, <span class="ident">expected</span>, <span class="string">&quot;paths match&quot;</span>);
     }
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
     <span class="kw">fn</span> <span class="ident">paths_eq_fwd</span>(<span class="ident">bytes</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>]) {
-        <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span>
-            <span class="ident">Paths0</span>::<span class="ident">new_forward_slashes</span>(<span class="ident">bytes</span>.<span class="ident">into</span>()).<span class="ident">expect</span>(<span class="string">&quot;null-separated paths are valid&quot;</span>);
+        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from_utf8</span>(<span class="ident">bytes</span>.<span class="ident">into</span>()).<span class="ident">expect</span>(<span class="string">&quot;valid UTF-8&quot;</span>);
+        <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">Utf8Paths0</span>::<span class="ident">new_forward_slashes</span>(<span class="ident">s</span>);
         <span class="kw">let</span> <span class="ident">actual</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">paths</span>.<span class="ident">iter</span>().<span class="ident">collect</span>();
-        <span class="kw">let</span> <span class="ident">expected</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">expected</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">Path</span>::<span class="ident">new</span>).<span class="ident">collect</span>();
+        <span class="kw">let</span> <span class="ident">expected</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">expected</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">Utf8Path</span>::<span class="ident">new</span>).<span class="ident">collect</span>();
 
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">actual</span>, <span class="ident">expected</span>, <span class="string">&quot;paths match&quot;</span>);
     }

@@ -1,5 +1,6 @@
 (function() {var implementors = {};
 implementors["ascii"] = [{"text":"impl FromStr for AsciiString","synthetic":false,"types":[]}];
+implementors["camino"] = [{"text":"impl FromStr for Utf8PathBuf","synthetic":false,"types":[]}];
 implementors["cargo_guppy"] = [{"text":"impl FromStr for Kind","synthetic":false,"types":[]},{"text":"impl FromStr for BuildKind","synthetic":false,"types":[]}];
 implementors["cargo_platform"] = [{"text":"impl FromStr for Cfg","synthetic":false,"types":[]},{"text":"impl FromStr for CfgExpr","synthetic":false,"types":[]},{"text":"impl FromStr for Platform","synthetic":false,"types":[]}];
 implementors["cfg_expr"] = [{"text":"impl FromStr for Endian","synthetic":false,"types":[]},{"text":"impl FromStr for Family","synthetic":false,"types":[]}];
