@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `hakari` now uses [`camino`](https://crates.io/crates/camino) `Utf8Path` and `Utf8PathBuf` wrappers. These wrappers
+  provide type-level assertions that returned paths are valid UTF-8.
+- Public dependency version bumps:
+  - `proptest` updated to version 1 and the corresponding feature renamed to `proptest1`.
+
 ## [0.1.1] - 2021-02-04
 
 ### Added

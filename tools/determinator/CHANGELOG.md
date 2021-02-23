@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `determinator` now uses [`camino`](https://crates.io/crates/camino) `Utf8Path` and `Utf8PathBuf` wrappers. These wrappers
+  provide type-level assertions that returned paths are valid UTF-8.
+
 ## [0.2.1] - 2021-02-04
 
 ### Added
