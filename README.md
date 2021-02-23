@@ -63,7 +63,7 @@ Comparison testing has found a number of bugs in upstream Cargo, for example:
 
 to more complex rules about the overall dependency graph, such as:
 * some third-party dependencies are banned from the workspace entirely, or only from default builds
-* every workspace package depends on a `workspace-hack` crate (similar to [rustc-workspace-hack](https://github.com/rust-lang/rust/tree/main/src/tools/rustc-workspace-hack))
+* every workspace package depends on a `workspace-hack` crate (similar to [rustc-workspace-hack](https://github.com/rust-lang/rust/tree/master/src/tools/rustc-workspace-hack))
 * for any given third-party dependency, the workspace only depends on one version of it directly (transitive dependencies to other versions are still allowed)
 * every workspace package is categorized as either *production* or *test-only*, and the linter checks that test-only crates are not included in production builds
 * support for *overlay features*, which allow test-only code to be:
