@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.7.0] - 2021-02-23
 
 ### Changed
 
@@ -8,14 +8,14 @@
   - `cfg-expr` updated to 0.7.1.
   - `proptest` updated to version 1 and the corresponding feature renamed to `proptest1`.
 
-## [0.6.1] - 2020-02-14
+## [0.6.1] - 2021-02-14
 
 ### Changed
 
 - `cfg-expr` version requirement relaxed: 0.6 through 0.7 are now supported. There are no API changes between
   the two versions.
 
-## [0.6.0] - 2020-02-03
+## [0.6.0] - 2021-02-03
 
 ### Added
 
@@ -100,6 +100,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.7.0
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.6.0
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.5.0
