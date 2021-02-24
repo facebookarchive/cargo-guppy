@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.8.0] - 2021-02-23
 
 ### Changed
 
@@ -9,13 +9,13 @@
 - Public dependency version bumps:
   - `proptest` updated to version 1 and the corresponding feature renamed to `proptest1`.
 
-## [0.7.2] - 2020-02-15
+## [0.7.2] - 2021-02-15
 
 ### Fixed
 
 - Restored compatibility with Rust 1.48. (1.48 is the MSRV, and is now tested in CI.)
 
-## [0.7.1] - 2020-02-14
+## [0.7.1] - 2021-02-14
 
 ### Changed
 
@@ -24,7 +24,7 @@
   Foo, then Foo is returned before Bar. (This is not a breaking change because it is an additional
   constraint on guppy itself, not on its consumers.)
 
-## [0.7.0] - 2020-02-03
+## [0.7.0] - 2021-02-03
 
 ### Added
 
@@ -55,7 +55,7 @@
   * `semver` updated to 0.11.
   * `target-spec` updated to 0.6.
 
-## [0.6.3] - 2020-01-11
+## [0.6.3] - 2021-01-11
 
 ### Fixed
 
@@ -338,6 +338,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.8.0
 [0.7.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.2
 [0.7.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.1
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.0

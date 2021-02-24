@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.4.0] - 2021-02-23
 
 ### Changed
 
@@ -37,6 +37,7 @@
 
 Initial release.
 
+[0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.4.0
 [0.3.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.3.2
 [0.3.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.3.1
 [0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.3.0

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.2.0] - 2021-02-23
 
 ### Changed
 
@@ -24,5 +24,6 @@
 
 Initial release.
 
+[0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.2.0
 [0.1.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.1.1
 [0.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.1.0
