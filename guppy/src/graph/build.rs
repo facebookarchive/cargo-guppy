@@ -764,7 +764,10 @@ impl DepRequiredOrOptional {
         self.build_if.add_spec(target_spec.as_ref());
         if dep.uses_default_features {
             self.default_features_if.add_spec(target_spec.as_ref());
+        } else {
+            self.no_default_features_if.add_spec(target_spec.as_ref());
         }
+
         for feature in &dep.features {
             self.feature_targets
                 .entry(feature.clone())

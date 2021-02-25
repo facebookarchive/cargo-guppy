@@ -1634,16 +1634,28 @@ impl<'g> DependencyReq<'g> {
 
     /// Returns the enabled status of this dependency.
     ///
+    /// `status` is the union of `default_features` and `no_default_features`.
+    ///
     /// See the documentation for `EnabledStatus` for more.
     pub fn status(&self) -> EnabledStatus<'g> {
         self.inner.enabled()
     }
 
-    /// Returns the status of default features on the platform `guppy` is running on.
+    /// Returns the enabled status of this dependency when `default-features = true`.
     ///
     /// See the documentation for `EnabledStatus` for more.
     pub fn default_features(&self) -> EnabledStatus<'g> {
         self.inner.default_features()
+    }
+
+    /// Returns the enabled status of this dependency when `default-features = false`.
+    ///
+    /// This is generally less useful than `status` or `default_features`, but is provided for
+    /// completeness.
+    ///
+    /// See the documentation for `EnabledStatus` for more.
+    pub fn no_default_features(&self) -> EnabledStatus<'g> {
+        self.inner.no_default_features()
     }
 
     /// Returns a list of all features possibly enabled by this dependency. This includes features
@@ -1940,6 +1952,10 @@ impl DependencyReqImpl {
         self.make_status(|req_impl| &req_impl.default_features_if)
     }
 
+    pub(super) fn no_default_features(&self) -> EnabledStatus {
+        self.make_status(|req_impl| &req_impl.no_default_features_if)
+    }
+
     pub(super) fn feature_status(&self, feature: &str) -> EnabledStatus {
         // This PlatformStatusImpl in static memory is so that the lifetimes work out.
         static DEFAULT_STATUS: PlatformStatusImpl = PlatformStatusImpl::Specs(Vec::new());
@@ -1966,6 +1982,7 @@ impl DependencyReqImpl {
 pub(super) struct DepRequiredOrOptional {
     pub(super) build_if: PlatformStatusImpl,
     pub(super) default_features_if: PlatformStatusImpl,
+    pub(super) no_default_features_if: PlatformStatusImpl,
     pub(super) feature_targets: BTreeMap<String, PlatformStatusImpl>,
 }
 
