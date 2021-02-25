@@ -2001,6 +2001,23 @@
 <span id="1998">1998</span>
 <span id="1999">1999</span>
 <span id="2000">2000</span>
+<span id="2001">2001</span>
+<span id="2002">2002</span>
+<span id="2003">2003</span>
+<span id="2004">2004</span>
+<span id="2005">2005</span>
+<span id="2006">2006</span>
+<span id="2007">2007</span>
+<span id="2008">2008</span>
+<span id="2009">2009</span>
+<span id="2010">2010</span>
+<span id="2011">2011</span>
+<span id="2012">2012</span>
+<span id="2013">2013</span>
+<span id="2014">2014</span>
+<span id="2015">2015</span>
+<span id="2016">2016</span>
+<span id="2017">2017</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -3638,16 +3655,28 @@
 
     <span class="doccomment">/// Returns the enabled status of this dependency.</span>
     <span class="doccomment">///</span>
+    <span class="doccomment">/// `status` is the union of `default_features` and `no_default_features`.</span>
+    <span class="doccomment">///</span>
     <span class="doccomment">/// See the documentation for `EnabledStatus` for more.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">enabled</span>()
     }
 
-    <span class="doccomment">/// Returns the status of default features on the platform `guppy` is running on.</span>
+    <span class="doccomment">/// Returns the enabled status of this dependency when `default-features = true`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// See the documentation for `EnabledStatus` for more.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">default_features</span>()
+    }
+
+    <span class="doccomment">/// Returns the enabled status of this dependency when `default-features = false`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is generally less useful than `status` or `default_features`, but is provided for</span>
+    <span class="doccomment">/// completeness.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// See the documentation for `EnabledStatus` for more.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">no_default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">no_default_features</span>()
     }
 
     <span class="doccomment">/// Returns a list of all features possibly enabled by this dependency. This includes features</span>
@@ -3944,6 +3973,10 @@
         <span class="self">self</span>.<span class="ident">make_status</span>(<span class="op">|</span><span class="ident">req_impl</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">req_impl</span>.<span class="ident">default_features_if</span>)
     }
 
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">no_default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
+        <span class="self">self</span>.<span class="ident">make_status</span>(<span class="op">|</span><span class="ident">req_impl</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">req_impl</span>.<span class="ident">no_default_features_if</span>)
+    }
+
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">feature_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
         <span class="comment">// This PlatformStatusImpl in static memory is so that the lifetimes work out.</span>
         <span class="kw">static</span> <span class="ident">DEFAULT_STATUS</span>: <span class="ident">PlatformStatusImpl</span> <span class="op">=</span> <span class="ident">PlatformStatusImpl</span>::<span class="ident">Specs</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
@@ -3970,6 +4003,7 @@
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">DepRequiredOrOptional</span> {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">build_if</span>: <span class="ident">PlatformStatusImpl</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">default_features_if</span>: <span class="ident">PlatformStatusImpl</span>,
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">no_default_features_if</span>: <span class="ident">PlatformStatusImpl</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">feature_targets</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">PlatformStatusImpl</span><span class="op">&gt;</span>,
 }
 
