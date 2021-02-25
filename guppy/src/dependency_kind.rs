@@ -26,6 +26,13 @@ pub enum DependencyKind {
 }
 
 impl DependencyKind {
+    /// A list of all the possible values of `DependencyKind`.
+    pub const VALUES: &'static [Self; 3] = &[
+        DependencyKind::Normal,
+        DependencyKind::Development,
+        DependencyKind::Build,
+    ];
+
     /// Returns a string representing the kind of dependency this is.
     pub fn to_str(self) -> &'static str {
         match self {

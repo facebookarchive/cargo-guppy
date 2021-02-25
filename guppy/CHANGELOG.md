@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `DependencyKind::VALUES` lists out all the values of `DependencyKind`.
+- `DependencyReq::no_default_features()` returns the enabled status for a dependency when `default-features = false`.
+
 ## [0.8.0] - 2021-02-23
 
 ### Changed
