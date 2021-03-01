@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.14.1/src/sys/ioctl/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.0/src/sys/ioctl/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../nix/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -777,8 +777,6 @@
 <span id="774">774</span>
 <span id="775">775</span>
 <span id="776">776</span>
-<span id="777">777</span>
-<span id="778">778</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Provide helpers for making ioctl system calls.</span>
 <span class="doccomment">//!</span>
@@ -811,7 +809,7 @@
 <span class="doccomment">//! Historically `ioctl` numbers were arbitrary hard-coded values. In Linux (before 2.6) and some</span>
 <span class="doccomment">//! unices this has changed to a more-ordered system where the ioctl numbers are partitioned into</span>
 <span class="doccomment">//! subcomponents (For linux this is documented in</span>
-<span class="doccomment">//! [`Documentation/ioctl/ioctl-number.txt`](http://elixir.free-electrons.com/linux/latest/source/Documentation/ioctl/ioctl-number.txt)):</span>
+<span class="doccomment">//! [`Documentation/ioctl/ioctl-number.rst`](https://elixir.bootlin.com/linux/latest/source/Documentation/userspace-api/ioctl/ioctl-number.rst)):</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//!   * Number: The actual ioctl ID</span>
 <span class="doccomment">//!   * Type: A grouping of ioctls for a common purpose or driver</span>
@@ -1003,11 +1001,13 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # fn main() {}</span>
 <span class="doccomment">//! ```</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
+<span class="kw">use</span> <span class="ident">cfg_if</span>::<span class="ident">cfg_if</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
 <span class="attribute">#[<span class="ident">macro_use</span>]</span>
 <span class="kw">mod</span> <span class="ident">linux</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::<span class="ident">linux</span>::<span class="kw-2">*</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>,
@@ -1099,7 +1099,6 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```no_run</span>
 <span class="doccomment">/// # #[macro_use] extern crate nix;</span>
-<span class="doccomment">/// # extern crate libc;</span>
 <span class="doccomment">/// # use libc::TIOCNXCL;</span>
 <span class="doccomment">/// # use std::fs::File;</span>
 <span class="doccomment">/// # use std::os::unix::io::AsRawFd;</span>
@@ -1178,7 +1177,6 @@
 <span class="doccomment">/// # Example</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// # extern crate libc;</span>
 <span class="doccomment">/// # #[macro_use] extern crate nix;</span>
 <span class="doccomment">/// # #[cfg(any(target_os = &quot;android&quot;, target_os = &quot;linux&quot;))]</span>
 <span class="doccomment">/// ioctl_read_bad!(tcgets, libc::TCGETS, libc::termios);</span>
@@ -1252,7 +1250,6 @@
 <span class="doccomment">/// # Example</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// # extern crate libc;</span>
 <span class="doccomment">/// # #[macro_use] extern crate nix;</span>
 <span class="doccomment">/// # #[cfg(any(target_os = &quot;android&quot;, target_os = &quot;linux&quot;))]</span>
 <span class="doccomment">/// ioctl_write_ptr_bad!(tcsets, libc::TCSETS, libc::termios);</span>
@@ -1372,7 +1369,6 @@
 <span class="doccomment">/// # Examples</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// # extern crate libc;</span>
 <span class="doccomment">/// # #[macro_use] extern crate nix;</span>
 <span class="doccomment">/// # #[cfg(any(target_os = &quot;android&quot;, target_os = &quot;linux&quot;))]</span>
 <span class="doccomment">/// ioctl_write_int_bad!(tcsbrk, libc::TCSBRK);</span>

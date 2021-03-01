@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.14.1/src/dir.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dir.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.0/src/dir.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dir.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../nix/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -211,14 +211,44 @@
 <span id="208">208</span>
 <span id="209">209</span>
 <span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> {<span class="ident">Error</span>, <span class="ident">NixPath</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">errno</span>::<span class="ident">Errno</span>;
-<span class="kw">use</span> <span class="ident">fcntl</span>::{<span class="self">self</span>, <span class="ident">OFlag</span>};
-<span class="kw">use</span> <span class="ident">libc</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">NixPath</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">errno</span>::<span class="ident">Errno</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">fcntl</span>::{<span class="self">self</span>, <span class="ident">OFlag</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">os</span>::<span class="ident">unix</span>::<span class="ident">io</span>::{<span class="ident">AsRawFd</span>, <span class="ident">IntoRawFd</span>, <span class="ident">RawFd</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">ffi</span>, <span class="ident">fmt</span>, <span class="ident">ptr</span>};
-<span class="kw">use</span> <span class="ident">sys</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sys</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">libc</span>::{<span class="ident">dirent64</span> <span class="kw">as</span> <span class="ident">dirent</span>, <span class="ident">readdir64_r</span> <span class="kw">as</span> <span class="ident">readdir_r</span>};
@@ -239,9 +269,9 @@
 <span class="doccomment">///    * returns entries for `.` (current directory) and `..` (parent directory).</span>
 <span class="doccomment">///    * returns entries&#39; names as a `CStr` (no allocation or conversion beyond whatever libc</span>
 <span class="doccomment">///      does).</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Dir</span>(
-    <span class="comment">// This could be ptr::NonNull once nix requires Rust 1.25.</span>
-    <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">libc</span>::<span class="ident">DIR</span>
+    <span class="ident">ptr</span>::<span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">libc</span>::<span class="ident">DIR</span><span class="op">&gt;</span>
 );
 
 <span class="kw">impl</span> <span class="ident">Dir</span> {
@@ -273,7 +303,8 @@
             <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">close</span>(<span class="ident">fd</span>) };
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>);
         };
-        <span class="prelude-val">Ok</span>(<span class="ident">Dir</span>(<span class="ident">d</span>))
+        <span class="comment">// Always guaranteed to be non-null by the previous check</span>
+        <span class="prelude-val">Ok</span>(<span class="ident">Dir</span>(<span class="ident">ptr</span>::<span class="ident">NonNull</span>::<span class="ident">new</span>(<span class="ident">d</span>).<span class="ident">unwrap</span>()))
     }
 
     <span class="doccomment">/// Returns an iterator of `Result&lt;Entry&gt;` which rewinds when finished.</span>
@@ -292,64 +323,103 @@
 
 <span class="kw">impl</span> <span class="ident">AsRawFd</span> <span class="kw">for</span> <span class="ident">Dir</span> {
     <span class="kw">fn</span> <span class="ident">as_raw_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RawFd</span> {
-        <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">dirfd</span>(<span class="self">self</span>.<span class="number">0</span>) }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Dir</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Dir&quot;</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;fd&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">as_raw_fd</span>())
-            .<span class="ident">finish</span>()
+        <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">dirfd</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>()) }
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Dir</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">closedir</span>(<span class="self">self</span>.<span class="number">0</span>) };
+        <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">closedir</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>()) });
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">std</span>::<span class="ident">thread</span>::<span class="ident">panicking</span>() <span class="op">&amp;&amp;</span> <span class="ident">e</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">Sys</span>(<span class="ident">Errno</span>::<span class="ident">EBADF</span>)) {
+            <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Closing an invalid file descriptor!&quot;</span>);
+        };
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">fn</span> <span class="ident">next</span>(<span class="ident">dir</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Dir</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Entry</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">unsafe</span> {
+        <span class="comment">// Note: POSIX specifies that portable applications should dynamically allocate a</span>
+        <span class="comment">// buffer with room for a `d_name` field of size `pathconf(..., _PC_NAME_MAX)` plus 1</span>
+        <span class="comment">// for the NUL byte. It doesn&#39;t look like the std library does this; it just uses</span>
+        <span class="comment">// fixed-sized buffers (and libc&#39;s dirent seems to be sized so this is appropriate).</span>
+        <span class="comment">// Probably fine here too then.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ent</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">mem</span>::<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">dirent</span><span class="op">&gt;</span>::<span class="ident">uninit</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">Errno</span>::<span class="ident">result</span>(
+            <span class="ident">readdir_r</span>(<span class="ident">dir</span>.<span class="number">0</span>.<span class="ident">as_ptr</span>(), <span class="ident">ent</span>.<span class="ident">as_mut_ptr</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">result</span>))
+        {
+            <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>));
+        }
+        <span class="kw">if</span> <span class="ident">result</span>.<span class="ident">is_null</span>() {
+            <span class="kw">return</span> <span class="prelude-val">None</span>;
+        }
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">result</span>, <span class="ident">ent</span>.<span class="ident">as_mut_ptr</span>());
+        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">Entry</span>(<span class="ident">ent</span>.<span class="ident">assume_init</span>())))
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;d</span> <span class="kw-2">mut</span> <span class="ident">Dir</span>);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Entry</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
-        <span class="kw">unsafe</span> {
-            <span class="comment">// Note: POSIX specifies that portable applications should dynamically allocate a</span>
-            <span class="comment">// buffer with room for a `d_name` field of size `pathconf(..., _PC_NAME_MAX)` plus 1</span>
-            <span class="comment">// for the NUL byte. It doesn&#39;t look like the std library does this; it just uses</span>
-            <span class="comment">// fixed-sized buffers (and libc&#39;s dirent seems to be sized so this is appropriate).</span>
-            <span class="comment">// Probably fine here too then.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ent</span>: <span class="ident">Entry</span> <span class="op">=</span> <span class="ident">Entry</span>(::<span class="ident">std</span>::<span class="ident">mem</span>::<span class="ident">uninitialized</span>());
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>();
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">readdir_r</span>((<span class="self">self</span>.<span class="number">0</span>).<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ent</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">result</span>)) {
-                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>));
-            }
-            <span class="kw">if</span> <span class="ident">result</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">null_mut</span>() {
-                <span class="kw">return</span> <span class="prelude-val">None</span>;
-            }
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">result</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ent</span>.<span class="number">0</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">dirent</span>);
-            <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="ident">ent</span>));
-        }
+        <span class="ident">next</span>(<span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;d</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">rewinddir</span>((<span class="self">self</span>.<span class="number">0</span>).<span class="number">0</span>) }
+        <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">rewinddir</span>((<span class="self">self</span>.<span class="number">0</span>).<span class="number">0</span>.<span class="ident">as_ptr</span>()) }
+    }
+}
+
+<span class="doccomment">/// The return type of [Dir::into_iter]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OwningIter</span>(<span class="ident">Dir</span>);
+
+<span class="kw">impl</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">OwningIter</span> {
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Entry</span><span class="op">&gt;</span>;
+
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
+        <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="number">0</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="ident">Dir</span> {
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Entry</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">OwningIter</span>;
+
+    <span class="doccomment">/// Creates a owning iterator, that is, one that takes ownership of the</span>
+    <span class="doccomment">/// `Dir`. The `Dir` cannot be used after calling this.  This can be useful</span>
+    <span class="doccomment">/// when you have a function that both creates a `Dir` instance and returns</span>
+    <span class="doccomment">/// an `Iterator`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Example:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use nix::{dir::Dir, fcntl::OFlag, sys::stat::Mode};</span>
+    <span class="doccomment">/// use std::{iter::Iterator, string::String};</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// fn ls_upper(dirname: &amp;str) -&gt; impl Iterator&lt;Item=String&gt; {</span>
+    <span class="doccomment">///     let d = Dir::open(dirname, OFlag::O_DIRECTORY, Mode::S_IXUSR).unwrap();</span>
+    <span class="doccomment">///     d.into_iter().map(|x| x.unwrap().file_name().as_ref().to_string_lossy().to_ascii_uppercase())</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">IntoIter</span> {
+        <span class="ident">OwningIter</span>(<span class="self">self</span>)
     }
 }
 
 <span class="doccomment">/// A directory entry, similar to `std::fs::DirEntry`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Note that unlike the std version, this may represent the `.` or `..` entries.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Entry</span>(<span class="ident">dirent</span>);
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Type</span> {
     <span class="ident">Fifo</span>,
     <span class="ident">CharacterDevice</span>,
@@ -386,7 +456,7 @@
                   <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>,
                   <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;solaris&quot;</span>)))]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ino</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span> {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">d_fileno</span> <span class="kw">as</span> <span class="ident">u64</span>
+        <span class="ident">u64</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">d_fileno</span>)
     }
 
     <span class="doccomment">/// Returns the bare file name of this directory entry without any other leading path component.</span>
@@ -410,16 +480,6 @@
             <span class="ident">libc</span>::<span class="ident">DT_SOCK</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">Type</span>::<span class="ident">Socket</span>),
             <span class="comment">/* libc::DT_UNKNOWN | */</span> <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
         }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Entry</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Entry&quot;</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;ino&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">ino</span>())
-            .<span class="ident">field</span>(<span class="string">&quot;file_name&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">file_name</span>())
-            .<span class="ident">field</span>(<span class="string">&quot;file_type&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">file_type</span>())
-            .<span class="ident">finish</span>()
     }
 }
 </pre></div>

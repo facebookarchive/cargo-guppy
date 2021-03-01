@@ -38,5 +38,4 @@ implementors["time"] = [{"text":"impl Error for OutOfRangeError","synthetic":fal
 implementors["toml"] = [{"text":"impl Error for DatetimeParseError","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]},{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["toml_edit"] = [{"text":"impl Error for TomlError","synthetic":false,"types":[]}];
 implementors["ucd_trie"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
-implementors["void"] = [{"text":"impl Error for Void","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

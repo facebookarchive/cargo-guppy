@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.14.1/src/sys/aio.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>aio.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.0/src/sys/aio.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>aio.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../nix/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
@@ -1247,46 +1247,6 @@
 <span id="1244">1244</span>
 <span id="1245">1245</span>
 <span id="1246">1246</span>
-<span id="1247">1247</span>
-<span id="1248">1248</span>
-<span id="1249">1249</span>
-<span id="1250">1250</span>
-<span id="1251">1251</span>
-<span id="1252">1252</span>
-<span id="1253">1253</span>
-<span id="1254">1254</span>
-<span id="1255">1255</span>
-<span id="1256">1256</span>
-<span id="1257">1257</span>
-<span id="1258">1258</span>
-<span id="1259">1259</span>
-<span id="1260">1260</span>
-<span id="1261">1261</span>
-<span id="1262">1262</span>
-<span id="1263">1263</span>
-<span id="1264">1264</span>
-<span id="1265">1265</span>
-<span id="1266">1266</span>
-<span id="1267">1267</span>
-<span id="1268">1268</span>
-<span id="1269">1269</span>
-<span id="1270">1270</span>
-<span id="1271">1271</span>
-<span id="1272">1272</span>
-<span id="1273">1273</span>
-<span id="1274">1274</span>
-<span id="1275">1275</span>
-<span id="1276">1276</span>
-<span id="1277">1277</span>
-<span id="1278">1278</span>
-<span id="1279">1279</span>
-<span id="1280">1280</span>
-<span id="1281">1281</span>
-<span id="1282">1282</span>
-<span id="1283">1283</span>
-<span id="1284">1284</span>
-<span id="1285">1285</span>
-<span id="1286">1286</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// vim: tw=80</span>
 <span class="doccomment">//! POSIX Asynchronous I/O</span>
@@ -1311,20 +1271,19 @@
 <span class="doccomment">//! [`aio_cancel_all`](fn.aio_cancel_all.html), though the operating system may</span>
 <span class="doccomment">//! not support this for all filesystems and devices.</span>
 
-<span class="kw">use</span> {<span class="ident">Error</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">errno</span>::<span class="ident">Errno</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">errno</span>::<span class="ident">Errno</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">os</span>::<span class="ident">unix</span>::<span class="ident">io</span>::<span class="ident">RawFd</span>;
 <span class="kw">use</span> <span class="ident">libc</span>::{<span class="ident">c_void</span>, <span class="ident">off_t</span>, <span class="ident">size_t</span>};
-<span class="kw">use</span> <span class="ident">libc</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">borrow</span>::{<span class="ident">Borrow</span>, <span class="ident">BorrowMut</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>::{<span class="ident">null</span>, <span class="ident">null_mut</span>};
-<span class="kw">use</span> <span class="ident">sys</span>::<span class="ident">signal</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sys</span>::<span class="ident">signal</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">thread</span>;
-<span class="kw">use</span> <span class="ident">sys</span>::<span class="ident">time</span>::<span class="ident">TimeSpec</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sys</span>::<span class="ident">time</span>::<span class="ident">TimeSpec</span>;
 
 <span class="macro">libc_enum</span><span class="macro">!</span> {
     <span class="doccomment">/// Mode for `AioCb::fsync`.  Controls whether only data or both data and</span>
@@ -1370,7 +1329,7 @@
 <span class="doccomment">/// Return values for [`AioCb::cancel`](struct.AioCb.html#method.cancel) and</span>
 <span class="doccomment">/// [`aio_cancel_all`](fn.aio_cancel_all.html)</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">i32</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AioCancelStat</span> {
     <span class="doccomment">/// All outstanding requests were canceled</span>
     <span class="ident">AioCanceled</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">AIO_CANCELED</span>,
@@ -1392,9 +1351,9 @@
     <span class="doccomment">/// Keeps a reference to a slice</span>
     <span class="ident">Phantom</span>(<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>]<span class="op">&gt;</span>),
     <span class="doccomment">/// Generic thing that keeps a buffer from dropping</span>
-    <span class="ident">BoxedSlice</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="ident">BoxedSlice</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>),
     <span class="doccomment">/// Generic thing that keeps a mutable buffer from dropping</span>
-    <span class="ident">BoxedMutSlice</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="ident">BoxedMutSlice</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>),
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Buffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
@@ -1406,14 +1365,14 @@
             <span class="ident">Buffer</span>::<span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">fmt</span>, <span class="string">&quot;None&quot;</span>),
             <span class="ident">Buffer</span>::<span class="ident">Phantom</span>(<span class="ident">p</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">p</span>.<span class="ident">fmt</span>(<span class="ident">fmt</span>),
             <span class="ident">Buffer</span>::<span class="ident">BoxedSlice</span>(<span class="kw-2">ref</span> <span class="ident">bs</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bs</span>.<span class="ident">borrow</span>();
+                <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bs</span>.<span class="ident">borrow</span>();
                 <span class="macro">write</span><span class="macro">!</span>(<span class="ident">fmt</span>, <span class="string">&quot;BoxedSlice({:?})&quot;</span>,
-                    <span class="ident">borrowed</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>)
+                    <span class="ident">borrowed</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">dyn</span> <span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>)
             },
             <span class="ident">Buffer</span>::<span class="ident">BoxedMutSlice</span>(<span class="kw-2">ref</span> <span class="ident">bms</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bms</span>.<span class="ident">borrow</span>();
+                <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bms</span>.<span class="ident">borrow</span>();
                 <span class="macro">write</span><span class="macro">!</span>(<span class="ident">fmt</span>, <span class="string">&quot;BoxedMutSlice({:?})&quot;</span>,
-                    <span class="ident">borrowed</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>)
+                    <span class="ident">borrowed</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">dyn</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>)
             }
         }
     }
@@ -1455,7 +1414,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// It is an error to call this method while the `AioCb` is still in</span>
     <span class="doccomment">/// progress.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">boxed_slice</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">boxed_slice</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">in_progress</span>, <span class="string">&quot;Can&#39;t remove the buffer from an AioCb that&#39;s still in-progress.  Did you forget to call aio_return?&quot;</span>);
         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Buffer</span>::<span class="ident">BoxedSlice</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">oldbuffer</span> <span class="op">=</span> <span class="ident">Buffer</span>::<span class="prelude-val">None</span>;
@@ -1477,7 +1436,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// It is an error to call this method while the `AioCb` is still in</span>
     <span class="doccomment">/// progress.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">boxed_mut_slice</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">boxed_mut_slice</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">in_progress</span>, <span class="string">&quot;Can&#39;t remove the buffer from an AioCb that&#39;s still in-progress.  Did you forget to call aio_return?&quot;</span>);
         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Buffer</span>::<span class="ident">BoxedMutSlice</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">oldbuffer</span> <span class="op">=</span> <span class="ident">Buffer</span>::<span class="prelude-val">None</span>;
@@ -1516,8 +1475,6 @@
     <span class="doccomment">/// [`fsync`](#method.fsync) operation.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -1577,8 +1534,6 @@
     <span class="doccomment">/// Create an `AioCb` from a mutable slice and read into it.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -1653,8 +1608,6 @@
     <span class="doccomment">/// Create an `AioCb` from a Vector and use it for writing</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -1684,9 +1637,6 @@
     <span class="doccomment">/// Create an `AioCb` from a `Bytes` object</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate bytes;</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use bytes::Bytes;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
     <span class="doccomment">/// # use nix::sys::signal::SigevNotify;</span>
@@ -1709,9 +1659,6 @@
     <span class="doccomment">/// using an un`Box`ed `Bytes` object.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate bytes;</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use bytes::Bytes;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
     <span class="doccomment">/// # use nix::sys::signal::SigevNotify;</span>
@@ -1738,12 +1685,12 @@
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// [`from_slice`]: #method.from_slice</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_boxed_slice</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">offs</span>: <span class="ident">off_t</span>, <span class="ident">buf</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_boxed_slice</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">offs</span>: <span class="ident">off_t</span>, <span class="ident">buf</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>,
                       <span class="ident">prio</span>: <span class="ident">libc</span>::<span class="ident">c_int</span>, <span class="ident">sigev_notify</span>: <span class="ident">SigevNotify</span>,
                       <span class="ident">opcode</span>: <span class="ident">LioOpcode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AioCb</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">AioCb</span>::<span class="ident">common_init</span>(<span class="ident">fd</span>, <span class="ident">prio</span>, <span class="ident">sigev_notify</span>);
         {
-            <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">borrow</span>();
+            <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Borrow</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">borrow</span>();
             <span class="kw">let</span> <span class="ident">slice</span> : <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="ident">borrowed</span>.<span class="ident">borrow</span>();
             <span class="ident">a</span>.<span class="ident">aio_nbytes</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">size_t</span>;
             <span class="ident">a</span>.<span class="ident">aio_buf</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>;
@@ -1770,8 +1717,6 @@
     <span class="doccomment">/// Create an `AioCb` from a Vector and use it for reading</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -1806,12 +1751,12 @@
     <span class="doccomment">/// [`from_boxed_slice`]: #method.from_boxed_slice</span>
     <span class="doccomment">/// [`from_mut_slice`]: #method.from_mut_slice</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_boxed_mut_slice</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">offs</span>: <span class="ident">off_t</span>,
-                                <span class="kw-2">mut</span> <span class="ident">buf</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>,
+                                <span class="kw-2">mut</span> <span class="ident">buf</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span>,
                                 <span class="ident">prio</span>: <span class="ident">libc</span>::<span class="ident">c_int</span>, <span class="ident">sigev_notify</span>: <span class="ident">SigevNotify</span>,
                                 <span class="ident">opcode</span>: <span class="ident">LioOpcode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AioCb</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">AioCb</span>::<span class="ident">common_init</span>(<span class="ident">fd</span>, <span class="ident">prio</span>, <span class="ident">sigev_notify</span>);
         {
-            <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">borrow_mut</span>();
+            <span class="kw">let</span> <span class="ident">borrowed</span> : <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw">dyn</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">borrow_mut</span>();
             <span class="kw">let</span> <span class="ident">slice</span> : <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>] <span class="op">=</span> <span class="ident">borrowed</span>.<span class="ident">borrow_mut</span>();
             <span class="ident">a</span>.<span class="ident">aio_nbytes</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">size_t</span>;
             <span class="ident">a</span>.<span class="ident">aio_buf</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>;
@@ -1932,8 +1877,6 @@
     <span class="doccomment">/// Construct an `AioCb` from a slice and use it for writing.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -2016,8 +1959,6 @@
     <span class="doccomment">/// result.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -2071,8 +2012,6 @@
     <span class="doccomment">/// is an alternative to `aio_suspend`, used by most of the other examples.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -2215,8 +2154,6 @@
 <span class="doccomment">/// descriptor.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// # extern crate tempfile;</span>
-<span class="doccomment">/// # extern crate nix;</span>
 <span class="doccomment">/// # use nix::errno::Errno;</span>
 <span class="doccomment">/// # use nix::Error;</span>
 <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -2268,13 +2205,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Use `aio_suspend` to block until an aio operation completes.</span>
 <span class="doccomment">///</span>
-<span class="comment">// Disable doctest due to a known bug in FreeBSD&#39;s 32-bit emulation.  The fix</span>
-<span class="comment">// will be included in release 11.2.</span>
-<span class="comment">// FIXME reenable the doc test when the CI machine gets upgraded to that release.</span>
-<span class="comment">// https://svnweb.freebsd.org/base?view=revision&amp;revision=325018</span>
-<span class="doccomment">/// ```no_run</span>
-<span class="doccomment">/// # extern crate tempfile;</span>
-<span class="doccomment">/// # extern crate nix;</span>
+<span class="doccomment">/// ```</span>
 <span class="doccomment">/// # use nix::sys::aio::*;</span>
 <span class="doccomment">/// # use nix::sys::signal::SigevNotify;</span>
 <span class="doccomment">/// # use std::os::unix::io::AsRawFd;</span>
@@ -2311,13 +2242,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">AioCb</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
         <span class="ident">fmt</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;AioCb&quot;</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;aio_fildes&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>.<span class="ident">aio_fildes</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;aio_offset&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>.<span class="ident">aio_offset</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;aio_buf&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>.<span class="ident">aio_buf</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;aio_nbytes&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>.<span class="ident">aio_nbytes</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;aio_lio_opcode&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>.<span class="ident">aio_lio_opcode</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;aio_reqprio&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>.<span class="ident">aio_reqprio</span>)
-            .<span class="ident">field</span>(<span class="string">&quot;aio_sigevent&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">SigEvent</span>::<span class="ident">from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>.<span class="ident">aio_sigevent</span>))
+            .<span class="ident">field</span>(<span class="string">&quot;aiocb&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aiocb</span>)
             .<span class="ident">field</span>(<span class="string">&quot;mutable&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mutable</span>)
             .<span class="ident">field</span>(<span class="string">&quot;in_progress&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">in_progress</span>)
             .<span class="ident">finish</span>()
@@ -2387,8 +2312,6 @@
     <span class="doccomment">/// [`AioCb::error`] to poll.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
     <span class="doccomment">/// # use nix::sys::signal::SigevNotify;</span>
     <span class="doccomment">/// # use std::os::unix::io::AsRawFd;</span>
@@ -2444,8 +2367,6 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Examples</span>
     <span class="doccomment">/// ```no_run</span>
-    <span class="doccomment">/// # extern crate tempfile;</span>
-    <span class="doccomment">/// # extern crate nix;</span>
     <span class="doccomment">/// # use nix::Error;</span>
     <span class="doccomment">/// # use nix::errno::Errno;</span>
     <span class="doccomment">/// # use nix::sys::aio::*;</span>
@@ -2509,7 +2430,6 @@
                 },
                 <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">Sys</span>(<span class="ident">Errno</span>::<span class="ident">EINPROGRESS</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="comment">// aiocb is was successfully queued; no need to do anything</span>
-                    ()
                 },
                 <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">Sys</span>(<span class="ident">Errno</span>::<span class="ident">EINVAL</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(
                     <span class="string">&quot;AioCb was never submitted, or already finalized&quot;</span>),
