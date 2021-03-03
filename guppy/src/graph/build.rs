@@ -134,6 +134,7 @@ struct GraphBuildState<'a> {
     dep_graph: Graph<PackageId, PackageLinkImpl, Directed, PackageIx>,
     // The values of package_data are (package_ix, name, version).
     package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
+    // The values of resolve_data are (dependencies, all features).
     resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
     workspace_root: &'a Utf8Path,
     workspace_members: &'a HashSet<PackageId>,
@@ -780,7 +781,7 @@ impl DepRequiredOrOptional {
 
 impl PlatformStatusImpl {
     pub(super) fn extend(&mut self, other: &PlatformStatusImpl) {
-        // &mut *self is a reborrow to allow mem::replace to work below.
+        // &mut *self is a reborrow to allow *self to work below.
         match (&mut *self, other) {
             (PlatformStatusImpl::Always, _) => {
                 // Always stays the same since it means all specs are included.
@@ -796,7 +797,7 @@ impl PlatformStatusImpl {
     }
 
     pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec<'static>>) {
-        // &mut *self is a reborrow to allow mem::replace to work below.
+        // &mut *self is a reborrow to allow *self to work below.
         match (&mut *self, spec) {
             (PlatformStatusImpl::Always, _) => {
                 // Always stays the same since it means all specs are included.
