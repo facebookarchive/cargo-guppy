@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.9.0] - 2021-03-11
 
 ### Added
 
@@ -353,6 +353,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.9.0
 [0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.8.0
 [0.7.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.2
 [0.7.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.1
