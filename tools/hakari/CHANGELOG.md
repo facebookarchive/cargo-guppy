@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## [0.3.0] - 2021-03-11
 
 ### Changed
 
+- `guppy` updated to 0.9.0.
 - `HakariCargoToml` now uses `camino`'s UTF-8 paths.
   - `HakariCargoToml::new` now accepts `impl Into<Utf8PathBuf>` rather than `impl Into<PathBuf>`.
   - `HakariCargoToml::toml_path` returns `&Utf8Path` instead of `&Path`.
@@ -32,6 +33,7 @@
 
 Initial release.
 
+[0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.3.0
 [0.2.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.2.0
 [0.1.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.1.1
 [0.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.1.0
