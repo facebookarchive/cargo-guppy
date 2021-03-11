@@ -5,7 +5,8 @@ use crate::{
     graph::{
         cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
         DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
-        PackageLinkImpl, PackageMetadataImpl, PackageSourceImpl, PlatformStatusImpl, WorkspaceImpl,
+        PackageLinkImpl, PackageMetadataImpl, PackagePublishImpl, PackageSourceImpl,
+        PlatformStatusImpl, WorkspaceImpl,
     },
     sorted_set::SortedSet,
     Error, PackageId,
@@ -292,7 +293,7 @@ impl<'a> GraphBuildState<'a> {
                 edition: package.edition.into(),
                 metadata_table: package.metadata,
                 links: package.links.map(|s| s.into()),
-                publish: package.publish,
+                publish: PackagePublishImpl::new(package.publish),
                 features,
 
                 package_ix,
@@ -767,6 +768,16 @@ impl PlatformStatusImpl {
             (PlatformStatusImpl::Specs(specs), Some(spec)) => {
                 specs.push(spec.clone());
             }
+        }
+    }
+}
+
+impl PackagePublishImpl {
+    /// Converts cargo_metadata registries to our own format.
+    fn new(registries: Option<Vec<String>>) -> Self {
+        match registries {
+            None => PackagePublishImpl::Unrestricted,
+            Some(registries) => PackagePublishImpl::Registries(registries.into_boxed_slice()),
         }
     }
 }

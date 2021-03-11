@@ -847,13 +847,11 @@ impl<'g> PackageMetadata<'g> {
         self.inner.links.as_ref().map(|x| x.as_ref())
     }
 
-    /// Returns the list of registries to which this package may be published.
+    /// Returns the registries to which this package may be published.
     ///
-    /// Returns `None` if publishing is unrestricted, and `Some(&[])` if publishing is forbidden.
-    ///
-    /// This is the same as the `publish` field of `Cargo.toml`.
-    pub fn publish(&self) -> Option<&'g [String]> {
-        self.inner.publish.as_deref()
+    /// This is derived from the `publish` field of `Cargo.toml`.
+    pub fn publish(&self) -> PackagePublish<'g> {
+        PackagePublish::new(&self.inner.publish)
     }
 
     /// Returns all the build targets for this package.
@@ -1020,7 +1018,7 @@ pub(crate) struct PackageMetadataImpl {
     pub(super) edition: Box<str>,
     pub(super) metadata_table: JsonValue,
     pub(super) links: Option<Box<str>>,
-    pub(super) publish: Option<Vec<String>>,
+    pub(super) publish: PackagePublishImpl,
     // Some(...) means named feature with listed dependencies.
     // None means an optional dependency.
     pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
@@ -1443,6 +1441,113 @@ pub(super) enum PackageSourceImpl {
     // Special, common case.
     CratesIo,
     External(Box<str>),
+}
+
+/// Locations that a package can be published to.
+///
+/// Returned by [`PackageMetadata::publish`].
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum PackagePublish<'g> {
+    /// Publication of this package is unrestricted.
+    Unrestricted,
+
+    /// This package can only be published to the listed [package registry].
+    ///
+    /// If the list is empty, this package cannot be published to any registries.
+    ///
+    /// [package registry]: https://doc.rust-lang.org/cargo/reference/registries.html
+    Registries(&'g [String]),
+}
+
+// TODO: implement PartialOrd/Ord for these as well using lattice rules
+
+assert_covariant!(PackagePublish);
+
+impl<'g> PackagePublish<'g> {
+    pub(super) fn new(inner: &'g PackagePublishImpl) -> Self {
+        match inner {
+            PackagePublishImpl::Unrestricted => PackagePublish::Unrestricted,
+            PackagePublishImpl::Registries(registries) => PackagePublish::Registries(registries),
+        }
+    }
+
+    /// The string `"crates-io"`, indicating that a package can be published to
+    /// [crates.io](https://crates.io/).
+    pub const CRATES_IO: &'static str = "crates-io";
+
+    /// Returns true if this package can be published to any package registry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use guppy::graph::PackagePublish;
+    ///
+    /// assert!(PackagePublish::Unrestricted.is_unrestricted());
+    /// assert!(!PackagePublish::Registries(&[PackagePublish::CRATES_IO.to_owned()]).is_unrestricted());
+    /// assert!(!PackagePublish::Registries(&[]).is_unrestricted());
+    /// ```
+    pub fn is_unrestricted(&self) -> bool {
+        matches!(self, PackagePublish::Unrestricted)
+    }
+
+    /// Returns true if a package can be published to the given package registry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use guppy::graph::PackagePublish;
+    ///
+    /// // Unrestricted means this package can be published to any registry.
+    /// assert!(PackagePublish::Unrestricted.can_publish_to(PackagePublish::CRATES_IO));
+    /// assert!(PackagePublish::Unrestricted.can_publish_to("my-registry"));
+    ///
+    /// // Publish to specific registries but not others.
+    /// let crates_io = &[PackagePublish::CRATES_IO.to_owned()];
+    /// let crates_io_publish = PackagePublish::Registries(crates_io);
+    /// assert!(crates_io_publish.can_publish_to(PackagePublish::CRATES_IO));
+    /// assert!(!crates_io_publish.can_publish_to("my-registry"));
+    ///
+    /// // Cannot publish to any registries.
+    /// assert!(!PackagePublish::Registries(&[]).can_publish_to(PackagePublish::CRATES_IO));
+    /// ```
+    pub fn can_publish_to(&self, registry: impl AsRef<str>) -> bool {
+        let registry = registry.as_ref();
+        match self {
+            PackagePublish::Unrestricted => true,
+            PackagePublish::Registries(registries) => registries.iter().any(|r| r == registry),
+        }
+    }
+
+    /// Returns true if a package can be published to crates.io.
+    pub fn can_publish_to_crates_io(&self) -> bool {
+        self.can_publish_to(Self::CRATES_IO)
+    }
+
+    /// Returns true if a package cannot be published to any registries.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use guppy::graph::PackagePublish;
+    ///
+    /// assert!(!PackagePublish::Unrestricted.is_never());
+    /// assert!(!PackagePublish::Registries(&[PackagePublish::CRATES_IO.to_owned()]).is_never());
+    /// assert!(PackagePublish::Registries(&[]).is_never());
+    /// ```
+    pub fn is_never(&self) -> bool {
+        match self {
+            PackagePublish::Unrestricted => false,
+            PackagePublish::Registries(registries) => registries.is_empty(),
+        }
+    }
+}
+
+/// Internal representation of PackagePublish.
+#[derive(Clone, Debug)]
+pub(super) enum PackagePublishImpl {
+    Unrestricted,
+    Registries(Box<[String]>),
 }
 
 /// Represents a dependency from one package to another.

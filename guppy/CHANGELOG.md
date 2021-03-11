@@ -9,8 +9,11 @@
 
 ### Changed
 
+- `PackageMetadata::publish` now returns a new, more descriptive `PackagePublish` enum ([#320]).
 - `PackageMetadata::readme` now returns `&Utf8Path` rather than `&Path`.
 - `BuildTarget::path` now returns `&Utf8Path` rather than `&Path`.
+
+[#320]: https://github.com/facebookincubator/cargo-guppy/issues/320
 
 ## [0.8.0] - 2021-02-23
 
