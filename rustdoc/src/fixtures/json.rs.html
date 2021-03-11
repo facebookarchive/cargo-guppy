@@ -1302,6 +1302,11 @@
 <span id="1299">1299</span>
 <span id="1300">1300</span>
 <span id="1301">1301</span>
+<span id="1302">1302</span>
+<span id="1303">1303</span>
+<span id="1304">1304</span>
+<span id="1305">1305</span>
+<span id="1306">1306</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1310,6 +1315,7 @@
     <span class="ident">details</span>::{<span class="ident">FixtureDetails</span>, <span class="ident">LinkDetails</span>, <span class="ident">PackageDetails</span>, <span class="ident">PlatformResults</span>},
     <span class="ident">package_id</span>,
 };
+<span class="kw">use</span> <span class="ident">camino</span>::{<span class="ident">Utf8Component</span>, <span class="ident">Utf8Path</span>, <span class="ident">Utf8PathBuf</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">errors</span>::{<span class="ident">FeatureBuildStage</span>, <span class="ident">FeatureGraphWarning</span>},
     <span class="ident">graph</span>::{<span class="ident">BuildTargetId</span>, <span class="ident">BuildTargetKind</span>, <span class="ident">EnabledTernary</span>, <span class="ident">PackageGraph</span>},
@@ -1319,7 +1325,6 @@
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>},
     <span class="ident">fs</span>,
-    <span class="ident">path</span>::{<span class="ident">Component</span>, <span class="ident">Path</span>, <span class="ident">PathBuf</span>},
 };
 
 <span class="comment">// Metadata along with interesting crate names.</span>
@@ -1505,26 +1510,32 @@
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">JsonFixture</span> {
     <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
-    <span class="ident">workspace_path</span>: <span class="ident">PathBuf</span>,
-    <span class="ident">abs_path</span>: <span class="ident">PathBuf</span>,
+    <span class="ident">workspace_path</span>: <span class="ident">Utf8PathBuf</span>,
+    <span class="ident">abs_path</span>: <span class="ident">Utf8PathBuf</span>,
     <span class="ident">json_graph</span>: <span class="ident">OnceCell</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="ident">PackageGraph</span>)<span class="op">&gt;</span>,
     <span class="ident">details</span>: <span class="ident">FixtureDetails</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">JsonFixture</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">rel_path</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">details</span>: <span class="ident">FixtureDetails</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">rel_path</span>);
-        <span class="kw">let</span> <span class="ident">fixtures_dir</span> <span class="op">=</span> <span class="ident">Path</span>::<span class="ident">new</span>(<span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>));
+        <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">Utf8Path</span>::<span class="ident">new</span>(<span class="ident">rel_path</span>);
+        <span class="kw">let</span> <span class="ident">fixtures_dir</span> <span class="op">=</span> <span class="ident">Utf8Path</span>::<span class="ident">new</span>(<span class="macro">env</span><span class="macro">!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>));
         <span class="comment">// rel_path is relative to this dir.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">abs_path</span> <span class="op">=</span> <span class="ident">fixtures_dir</span>.<span class="ident">join</span>(<span class="string">&quot;src&quot;</span>);
         <span class="ident">abs_path</span>.<span class="ident">push</span>(<span class="ident">rel_path</span>);
-        <span class="kw">let</span> <span class="ident">abs_path</span> <span class="op">=</span> <span class="ident">abs_path</span>
-            .<span class="ident">canonicalize</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;fixture path canonicalization succeeded&quot;</span>);
+        <span class="kw">let</span> <span class="ident">abs_path</span> <span class="op">=</span> <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(
+            <span class="ident">abs_path</span>
+                .<span class="ident">canonicalize</span>()
+                .<span class="ident">expect</span>(<span class="string">&quot;fixture path canonicalization succeeded&quot;</span>),
+        )
+        .<span class="ident">expect</span>(<span class="string">&quot;valid UTF-8 path&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">workspace_root</span> <span class="op">=</span> <span class="ident">fixtures_dir</span>.<span class="ident">parent</span>().<span class="ident">expect</span>(<span class="string">&quot;up to workspace root&quot;</span>);
-        <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">pathdiff</span>::<span class="ident">diff_paths</span>(<span class="kw-2">&amp;</span><span class="ident">abs_path</span>, <span class="ident">workspace_root</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;both abs_path and workspace root are absolute&quot;</span>);
+        <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(
+            <span class="ident">pathdiff</span>::<span class="ident">diff_paths</span>(<span class="kw-2">&amp;</span><span class="ident">abs_path</span>, <span class="ident">workspace_root</span>)
+                .<span class="ident">expect</span>(<span class="string">&quot;both abs_path and workspace root are absolute&quot;</span>),
+        )
+        .<span class="ident">expect</span>(<span class="string">&quot;diff of UTF-8 paths is UTF-8&quot;</span>);
 
         <span class="comment">// No symlinks in this repo, so normalize this path.</span>
         <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">normalize_assuming_no_symlinks</span>(<span class="kw-2">&amp;</span><span class="ident">workspace_path</span>);
@@ -1549,12 +1560,12 @@
     }
 
     <span class="doccomment">/// Returns the absolute path of this fixture.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abs_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Path</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abs_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Utf8Path</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">abs_path</span>
     }
 
     <span class="doccomment">/// Returns the path of this fixture, relative to the workspace root.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Path</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Utf8Path</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">workspace_path</span>
     }
 
@@ -1649,9 +1660,8 @@
 
     <span class="kw">fn</span> <span class="ident">init_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span>) {
         <span class="kw">let</span> (<span class="ident">json</span>, <span class="ident">package_graph</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">json_graph</span>.<span class="ident">get_or_init</span>(<span class="op">|</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">json</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">read_to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">abs_path</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-                <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;reading file &#39;{}&#39; failed: {}&quot;</span>, <span class="self">self</span>.<span class="ident">abs_path</span>.<span class="ident">display</span>(), <span class="ident">err</span>)
-            });
+            <span class="kw">let</span> <span class="ident">json</span> <span class="op">=</span> <span class="ident">fs</span>::<span class="ident">read_to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">abs_path</span>)
+                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;reading file &#39;{}&#39; failed: {}&quot;</span>, <span class="self">self</span>.<span class="ident">abs_path</span>, <span class="ident">err</span>));
             <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">parse_graph</span>(<span class="kw-2">&amp;</span><span class="ident">json</span>);
             (<span class="ident">json</span>, <span class="ident">graph</span>)
         });
@@ -1666,11 +1676,11 @@
 }
 
 <span class="comment">// Thanks to @porglezomp on Twitter for this simple normalization method.</span>
-<span class="kw">fn</span> <span class="ident">normalize_assuming_no_symlinks</span>(<span class="ident">p</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PathBuf</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">PathBuf</span>::<span class="ident">new</span>();
+<span class="kw">fn</span> <span class="ident">normalize_assuming_no_symlinks</span>(<span class="ident">p</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Utf8PathBuf</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">Utf8PathBuf</span>::<span class="ident">new</span>();
     <span class="kw">for</span> <span class="ident">c</span> <span class="kw">in</span> <span class="ident">p</span>.<span class="ident">as_ref</span>().<span class="ident">components</span>() {
         <span class="kw">match</span> <span class="ident">c</span> {
-            <span class="ident">Component</span>::<span class="ident">ParentDir</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Utf8Component</span>::<span class="ident">ParentDir</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">out</span>.<span class="ident">pop</span>();
             }
             <span class="ident">c</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">out</span>.<span class="ident">push</span>(<span class="ident">c</span>),

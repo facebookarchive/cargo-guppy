@@ -1,4 +1,5 @@
 (function() {var implementors = {};
+implementors["camino"] = [{"text":"impl TryFrom&lt;PathBuf&gt; for Utf8PathBuf","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; TryFrom&lt;&amp;'a Path&gt; for &amp;'a Utf8Path","synthetic":false,"types":[]}];
 implementors["guppy"] = [{"text":"impl TryFrom&lt;MetadataCommand&gt; for PackageGraph","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; TryFrom&lt;&amp;'a MetadataCommand&gt; for PackageGraph","synthetic":false,"types":[]},{"text":"impl TryFrom&lt;CargoMetadata&gt; for PackageGraph","synthetic":false,"types":[]}];
 implementors["nix"] = [{"text":"impl TryFrom&lt;i32&gt; for Signal","synthetic":false,"types":[]},{"text":"impl TryFrom&lt;u32&gt; for BaudRate","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

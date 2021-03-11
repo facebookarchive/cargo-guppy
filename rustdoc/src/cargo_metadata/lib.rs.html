@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/cargo_metadata-0.12.3/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/cargo_metadata-0.13.1/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
 <link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../cargo_metadata/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
@@ -610,6 +610,24 @@
 <span id="607">607</span>
 <span id="608">608</span>
 <span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="doccomment">//! Structured access to the output of `cargo metadata` and `cargo --message-format=json`.</span>
@@ -691,13 +709,17 @@
 <span class="doccomment">//! let output = command.wait().expect(&quot;Couldn&#39;t get cargo&#39;s exit status&quot;);</span>
 <span class="doccomment">//! ```</span>
 
+<span class="kw">use</span> <span class="ident">camino</span>::<span class="ident">Utf8PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">env</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">process</span>::<span class="ident">Command</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">str</span>::<span class="ident">from_utf8</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">derive_builder</span>::<span class="ident">Builder</span>;
 
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">camino</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">semver</span>::<span class="ident">Version</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">dependency</span>::{<span class="ident">Dependency</span>, <span class="ident">DependencyKind</span>};
@@ -742,6 +764,9 @@
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">derive</span>(<span class="ident">Builder</span>))]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">pattern</span> <span class="op">=</span> <span class="string">&quot;owned&quot;</span>, <span class="ident">setter</span>(<span class="ident">into</span>)))]</span>
 <span class="doccomment">/// Starting point for metadata returned by `cargo metadata`</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Metadata</span> {
     <span class="doccomment">/// A list of all crates referenced by this crate (and the crate itself)</span>
@@ -751,16 +776,14 @@
     <span class="doccomment">/// Dependencies graph</span>
     <span class="kw">pub</span> <span class="ident">resolve</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Resolve</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Workspace root</span>
-    <span class="kw">pub</span> <span class="ident">workspace_root</span>: <span class="ident">PathBuf</span>,
+    <span class="kw">pub</span> <span class="ident">workspace_root</span>: <span class="ident">Utf8PathBuf</span>,
     <span class="doccomment">/// Build directory</span>
-    <span class="kw">pub</span> <span class="ident">target_directory</span>: <span class="ident">PathBuf</span>,
+    <span class="kw">pub</span> <span class="ident">target_directory</span>: <span class="ident">Utf8PathBuf</span>,
     <span class="doccomment">/// The workspace-level metadata object. Null if non-existent.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;metadata&quot;</span>, <span class="ident">default</span>, <span class="ident">skip_serializing_if</span> <span class="op">=</span> <span class="string">&quot;is_null&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">workspace_metadata</span>: <span class="ident">serde_json</span>::<span class="ident">Value</span>,
+    <span class="doccomment">/// The metadata format version</span>
     <span class="ident">version</span>: <span class="ident">usize</span>,
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
-    <span class="ident">__do_not_match_exhaustively</span>: (),
 }
 
 <span class="kw">impl</span> <span class="ident">Metadata</span> {
@@ -783,6 +806,9 @@
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">derive</span>(<span class="ident">Builder</span>))]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">pattern</span> <span class="op">=</span> <span class="string">&quot;owned&quot;</span>, <span class="ident">setter</span>(<span class="ident">into</span>)))]</span>
 <span class="doccomment">/// A dependency graph</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Resolve</span> {
     <span class="doccomment">/// Nodes in a dependencies graph</span>
@@ -790,12 +816,12 @@
 
     <span class="doccomment">/// The crate for which the metadata was read.</span>
     <span class="kw">pub</span> <span class="ident">root</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
-    <span class="ident">__do_not_match_exhaustively</span>: (),
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">derive</span>(<span class="ident">Builder</span>))]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">pattern</span> <span class="op">=</span> <span class="string">&quot;owned&quot;</span>, <span class="ident">setter</span>(<span class="ident">into</span>)))]</span>
 <span class="doccomment">/// A node in a dependencies graph</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Node</span> {
     <span class="doccomment">/// An opaque identifier for a package</span>
@@ -813,12 +839,12 @@
     <span class="doccomment">/// Features enabled on the crate</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
     <span class="kw">pub</span> <span class="ident">features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
-    <span class="ident">__do_not_match_exhaustively</span>: (),
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">derive</span>(<span class="ident">Builder</span>))]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">pattern</span> <span class="op">=</span> <span class="string">&quot;owned&quot;</span>, <span class="ident">setter</span>(<span class="ident">into</span>)))]</span>
 <span class="doccomment">/// A dependency in a node</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NodeDep</span> {
     <span class="doccomment">/// The name of the dependency&#39;s library target.</span>
@@ -831,12 +857,12 @@
     <span class="doccomment">/// This field was added in Rust 1.41.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
     <span class="kw">pub</span> <span class="ident">dep_kinds</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">DepKindInfo</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
-    <span class="ident">__do_not_match_exhaustively</span>: (),
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">derive</span>(<span class="ident">Builder</span>))]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">pattern</span> <span class="op">=</span> <span class="string">&quot;owned&quot;</span>, <span class="ident">setter</span>(<span class="ident">into</span>)))]</span>
 <span class="doccomment">/// Information about a dependency kind.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DepKindInfo</span> {
     <span class="doccomment">/// The kind of dependency.</span>
@@ -854,12 +880,12 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// [`Display`]: std::fmt::Display</span>
     <span class="kw">pub</span> <span class="ident">target</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">dependency</span>::<span class="ident">Platform</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
-    <span class="ident">__do_not_match_exhaustively</span>: (),
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">derive</span>(<span class="ident">Builder</span>))]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">pattern</span> <span class="op">=</span> <span class="string">&quot;owned&quot;</span>, <span class="ident">setter</span>(<span class="ident">into</span>)))]</span>
 <span class="doccomment">/// One or more crates described by a single `Cargo.toml`</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Each [`target`][Package::targets] of a `Package` will be built as a crate.</span>
@@ -885,13 +911,13 @@
     <span class="kw">pub</span> <span class="ident">license</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="doccomment">/// If the package is using a nonstandard license, this key may be specified instead of</span>
     <span class="doccomment">/// `license`, and must point to a file relative to the manifest.</span>
-    <span class="kw">pub</span> <span class="ident">license_file</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">license_file</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Utf8PathBuf</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Targets provided by the crate (lib, bin, example, test, ...)</span>
     <span class="kw">pub</span> <span class="ident">targets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Target</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Features provided by the crate, mapped to the features required by that feature.</span>
     <span class="kw">pub</span> <span class="ident">features</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Path containing the `Cargo.toml`</span>
-    <span class="kw">pub</span> <span class="ident">manifest_path</span>: <span class="ident">PathBuf</span>,
+    <span class="kw">pub</span> <span class="ident">manifest_path</span>: <span class="ident">Utf8PathBuf</span>,
     <span class="doccomment">/// Categories as given in the `Cargo.toml`</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
     <span class="kw">pub</span> <span class="ident">categories</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -899,7 +925,7 @@
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
     <span class="kw">pub</span> <span class="ident">keywords</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Readme as given in the `Cargo.toml`</span>
-    <span class="kw">pub</span> <span class="ident">readme</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">readme</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Utf8PathBuf</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Repository as given in the `Cargo.toml`</span>
     <span class="comment">// can&#39;t use `url::Url` because that requires a more recent stable compiler</span>
     <span class="kw">pub</span> <span class="ident">repository</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -950,14 +976,11 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is always `None` if running with a version of Cargo older than 1.39.</span>
     <span class="kw">pub</span> <span class="ident">publish</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
-    <span class="ident">__do_not_match_exhaustively</span>: (),
 }
 
 <span class="kw">impl</span> <span class="ident">Package</span> {
     <span class="doccomment">/// Full path to the license file if one is present in the manifest</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">license_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">license_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Utf8PathBuf</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">license_file</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">file</span><span class="op">|</span> {
             <span class="self">self</span>.<span class="ident">manifest_path</span>
                 .<span class="ident">parent</span>()
@@ -967,7 +990,7 @@
     }
 
     <span class="doccomment">/// Full path to the readme file if one is present in the manifest</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readme</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readme</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Utf8PathBuf</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">readme</span>
             .<span class="ident">as_ref</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">file</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">manifest_path</span>.<span class="ident">join</span>(<span class="ident">file</span>))
@@ -996,6 +1019,9 @@
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">derive</span>(<span class="ident">Builder</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">pattern</span> <span class="op">=</span> <span class="string">&quot;owned&quot;</span>, <span class="ident">setter</span>(<span class="ident">into</span>)))]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="doccomment">/// A single target (lib, bin, example, ...) provided by a crate</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Target</span> {
     <span class="doccomment">/// Name as given in the `Cargo.toml` or generated from the file name</span>
@@ -1005,32 +1031,34 @@
     <span class="doccomment">/// Almost the same as `kind`, except when an example is a library instead of an executable.</span>
     <span class="doccomment">/// In that case `crate_types` contains things like `rlib` and `dylib` while `kind` is `example`</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">default</span>))]</span>
     <span class="kw">pub</span> <span class="ident">crate_types</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">default</span>))]</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;required-features&quot;</span>)]</span>
     <span class="doccomment">/// This target is built only if these features are enabled.</span>
     <span class="doccomment">/// It doesn&#39;t apply to `lib` targets.</span>
     <span class="kw">pub</span> <span class="ident">required_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Path to the main source file of the target</span>
-    <span class="kw">pub</span> <span class="ident">src_path</span>: <span class="ident">PathBuf</span>,
+    <span class="kw">pub</span> <span class="ident">src_path</span>: <span class="ident">Utf8PathBuf</span>,
     <span class="doccomment">/// Rust edition for this target</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;edition_default&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;edition_default()&quot;</span>))]</span>
     <span class="kw">pub</span> <span class="ident">edition</span>: <span class="ident">String</span>,
     <span class="doccomment">/// Whether or not this target has doc tests enabled, and the target is</span>
     <span class="doccomment">/// compatible with doc testing.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is always `true` if running with a version of Cargo older than 1.37.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;default_true&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;true&quot;</span>))]</span>
     <span class="kw">pub</span> <span class="ident">doctest</span>: <span class="ident">bool</span>,
     <span class="doccomment">/// Whether or not this target is tested by default by `cargo test`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is always `true` if running with a version of Cargo older than 1.47.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;default_true&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builder&quot;</span>, <span class="ident">builder</span>(<span class="ident">default</span> <span class="op">=</span> <span class="string">&quot;true&quot;</span>))]</span>
     <span class="kw">pub</span> <span class="ident">test</span>: <span class="ident">bool</span>,
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
-    <span class="ident">__do_not_match_exhaustively</span>: (),
 }
 
 <span class="kw">fn</span> <span class="ident">default_true</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
@@ -1055,9 +1083,15 @@
 <span class="doccomment">/// A builder for configurating `cargo metadata` invocation.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MetadataCommand</span> {
+    <span class="doccomment">/// Path to `cargo` executable.  If not set, this will use the</span>
+    <span class="doccomment">/// the `$CARGO` environment variable, and if that is not set, will</span>
+    <span class="doccomment">/// simply be `cargo`.</span>
     <span class="ident">cargo_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Path to `Cargo.toml`</span>
     <span class="ident">manifest_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Current directory of the `cargo metadata` process.</span>
     <span class="ident">current_dir</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Output information only about the root package and don&#39;t fetch dependencies.</span>
     <span class="ident">no_deps</span>: <span class="ident">bool</span>,
     <span class="doccomment">/// Collections of `CargoOpt::SomeFeatures(..)`</span>
     <span class="ident">features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -1065,6 +1099,8 @@
     <span class="ident">all_features</span>: <span class="ident">bool</span>,
     <span class="doccomment">/// Latched `CargoOpt::NoDefaultFeatures`</span>
     <span class="ident">no_default_features</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// Arbitrary command line flags to pass to `cargo`.  These will be added</span>
+    <span class="doccomment">/// to the end of the command line invocation.</span>
     <span class="ident">other_options</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 

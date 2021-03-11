@@ -3,6 +3,7 @@ implementors["aho_corasick"] = [{"text":"impl Error for Error","synthetic":false
 implementors["ascii"] = [{"text":"impl Error for ToAsciiCharError","synthetic":false,"types":[]},{"text":"impl Error for AsAsciiStrError","synthetic":false,"types":[]},{"text":"impl&lt;O:&nbsp;Any&gt; Error for FromAsciiError&lt;O&gt;","synthetic":false,"types":[]}];
 implementors["atomicwrites"] = [{"text":"impl&lt;E:&nbsp;ErrorTrait&gt; Error for Error&lt;E&gt;","synthetic":false,"types":[]}];
 implementors["bstr"] = [{"text":"impl Error for FromUtf8Error","synthetic":false,"types":[]},{"text":"impl Error for Utf8Error","synthetic":false,"types":[]}];
+implementors["camino"] = [{"text":"impl Error for FromPathBufError","synthetic":false,"types":[]},{"text":"impl Error for FromPathError","synthetic":false,"types":[]}];
 implementors["cargo_metadata"] = [{"text":"impl Error for Error","synthetic":false,"types":[]}];
 implementors["cargo_platform"] = [{"text":"impl Error for ParseError","synthetic":false,"types":[]}];
 implementors["cfg_expr"] = [{"text":"impl Error for ParseError","synthetic":false,"types":[]}];

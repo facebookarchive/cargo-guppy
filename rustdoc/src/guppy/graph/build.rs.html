@@ -784,37 +784,6 @@
 <span id="781">781</span>
 <span id="782">782</span>
 <span id="783">783</span>
-<span id="784">784</span>
-<span id="785">785</span>
-<span id="786">786</span>
-<span id="787">787</span>
-<span id="788">788</span>
-<span id="789">789</span>
-<span id="790">790</span>
-<span id="791">791</span>
-<span id="792">792</span>
-<span id="793">793</span>
-<span id="794">794</span>
-<span id="795">795</span>
-<span id="796">796</span>
-<span id="797">797</span>
-<span id="798">798</span>
-<span id="799">799</span>
-<span id="800">800</span>
-<span id="801">801</span>
-<span id="802">802</span>
-<span id="803">803</span>
-<span id="804">804</span>
-<span id="805">805</span>
-<span id="806">806</span>
-<span id="807">807</span>
-<span id="808">808</span>
-<span id="809">809</span>
-<span id="810">810</span>
-<span id="811">811</span>
-<span id="812">812</span>
-<span id="813">813</span>
-<span id="814">814</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -823,7 +792,8 @@
     <span class="ident">graph</span>::{
         <span class="ident">cargo_version_matches</span>, <span class="ident">BuildTargetImpl</span>, <span class="ident">BuildTargetKindImpl</span>, <span class="ident">DepRequiredOrOptional</span>,
         <span class="ident">DependencyReqImpl</span>, <span class="ident">OwnedBuildTargetId</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageGraphData</span>, <span class="ident">PackageIx</span>,
-        <span class="ident">PackageLinkImpl</span>, <span class="ident">PackageMetadataImpl</span>, <span class="ident">PackageSourceImpl</span>, <span class="ident">PlatformStatusImpl</span>, <span class="ident">WorkspaceImpl</span>,
+        <span class="ident">PackageLinkImpl</span>, <span class="ident">PackageMetadataImpl</span>, <span class="ident">PackagePublishImpl</span>, <span class="ident">PackageSourceImpl</span>,
+        <span class="ident">PlatformStatusImpl</span>, <span class="ident">WorkspaceImpl</span>,
     },
     <span class="ident">sorted_set</span>::<span class="ident">SortedSet</span>,
     <span class="ident">Error</span>, <span class="ident">PackageId</span>,
@@ -833,10 +803,7 @@
 <span class="kw">use</span> <span class="ident">once_cell</span>::<span class="ident">sync</span>::<span class="ident">OnceCell</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">semver</span>::<span class="ident">Version</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>},
-    <span class="ident">path</span>::<span class="ident">Path</span>,
-};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">target_spec</span>::<span class="ident">TargetSpec</span>;
 
 <span class="kw">impl</span> <span class="ident">PackageGraph</span> {
@@ -854,13 +821,7 @@
             .<span class="ident">map</span>(<span class="ident">PackageId</span>::<span class="ident">from_metadata</span>)
             .<span class="ident">collect</span>();
 
-        <span class="kw">let</span> <span class="ident">workspace_root</span> <span class="op">=</span>
-            <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(<span class="ident">metadata</span>.<span class="ident">workspace_root</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">path_buf</span><span class="op">|</span> {
-                <span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
-                    <span class="string">&quot;workspace root is invalid UTF-8: {}&quot;</span>,
-                    <span class="ident">path_buf</span>.<span class="ident">display</span>()
-                ))
-            })<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">workspace_root</span> <span class="op">=</span> <span class="ident">metadata</span>.<span class="ident">workspace_root</span>;
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">build_state</span> <span class="op">=</span> <span class="ident">GraphBuildState</span>::<span class="ident">new</span>(
             <span class="kw-2">&amp;</span><span class="ident">metadata</span>.<span class="ident">packages</span>,
@@ -1022,20 +983,14 @@
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
                         <span class="string">&quot;package &#39;{}&#39;: manifest path &#39;{}&#39; does not have parent&quot;</span>,
-                        <span class="ident">package_id</span>,
-                        <span class="ident">package</span>.<span class="ident">manifest_path</span>.<span class="ident">display</span>(),
+                        <span class="ident">package_id</span>, <span class="ident">package</span>.<span class="ident">manifest_path</span>,
                     )));
                 }
             };
             <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">pathdiff</span>::<span class="ident">diff_paths</span>(<span class="ident">dirname</span>, <span class="self">self</span>.<span class="ident">workspace_root</span>)
                 .<span class="ident">expect</span>(<span class="string">&quot;workspace root is absolute&quot;</span>);
-            <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(<span class="ident">rel_path</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">path_buf</span><span class="op">|</span> {
-                <span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
-                    <span class="string">&quot;package &#39;{}&#39;: location &#39;{}&#39; is invalid UTF-8&quot;</span>,
-                    <span class="ident">package_id</span>,
-                    <span class="ident">path_buf</span>.<span class="ident">display</span>()
-                ))
-            })<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(<span class="ident">rel_path</span>)
+                .<span class="ident">expect</span>(<span class="string">&quot;diff between two UTF-8 paths should produce a UTF-8 path&quot;</span>);
             <span class="ident">PackageSourceImpl</span>::<span class="ident">Path</span>(<span class="ident">rel_path</span>.<span class="ident">into_boxed_path</span>())
         };
 
@@ -1108,31 +1063,6 @@
             .<span class="ident">chain</span>(<span class="ident">optional_deps</span>)
             .<span class="ident">collect</span>();
 
-        <span class="kw">let</span> <span class="ident">license_file</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">package</span>.<span class="ident">license_file</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">license_file</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(
-                <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(<span class="ident">license_file</span>)
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">path_buf</span><span class="op">|</span> {
-                        <span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
-                            <span class="string">&quot;for package &#39;{}&#39;, license file is invalid UTF-8: {}&quot;</span>,
-                            <span class="ident">package_id</span>,
-                            <span class="ident">path_buf</span>.<span class="ident">display</span>()
-                        ))
-                    })<span class="question-mark">?</span>
-                    .<span class="ident">into</span>(),
-            ),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-        };
-
-        <span class="kw">let</span> <span class="ident">manifest_path</span> <span class="op">=</span> <span class="ident">Utf8PathBuf</span>::<span class="ident">from_path_buf</span>(<span class="ident">package</span>.<span class="ident">manifest_path</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">path_buf</span><span class="op">|</span> {
-                <span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
-                    <span class="string">&quot;for package &#39;{}&#39;, manifest path is invalid UTF-8: {}&quot;</span>,
-                    <span class="ident">package_id</span>,
-                    <span class="ident">path_buf</span>.<span class="ident">display</span>()
-                ))
-            })<span class="question-mark">?</span>
-            .<span class="ident">into</span>();
-
         <span class="prelude-val">Ok</span>((
             <span class="ident">package_id</span>,
             <span class="ident">PackageMetadataImpl</span> {
@@ -1141,8 +1071,8 @@
                 <span class="ident">authors</span>: <span class="ident">package</span>.<span class="ident">authors</span>,
                 <span class="ident">description</span>: <span class="ident">package</span>.<span class="ident">description</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
                 <span class="ident">license</span>: <span class="ident">package</span>.<span class="ident">license</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
-                <span class="ident">license_file</span>,
-                <span class="ident">manifest_path</span>,
+                <span class="ident">license_file</span>: <span class="ident">package</span>.<span class="ident">license_file</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">into</span>()),
+                <span class="ident">manifest_path</span>: <span class="ident">package</span>.<span class="ident">manifest_path</span>.<span class="ident">into</span>(),
                 <span class="ident">categories</span>: <span class="ident">package</span>.<span class="ident">categories</span>,
                 <span class="ident">keywords</span>: <span class="ident">package</span>.<span class="ident">keywords</span>,
                 <span class="ident">readme</span>: <span class="ident">package</span>.<span class="ident">readme</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
@@ -1150,7 +1080,7 @@
                 <span class="ident">edition</span>: <span class="ident">package</span>.<span class="ident">edition</span>.<span class="ident">into</span>(),
                 <span class="ident">metadata_table</span>: <span class="ident">package</span>.<span class="ident">metadata</span>,
                 <span class="ident">links</span>: <span class="ident">package</span>.<span class="ident">links</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
-                <span class="ident">publish</span>: <span class="ident">package</span>.<span class="ident">publish</span>,
+                <span class="ident">publish</span>: <span class="ident">PackagePublishImpl</span>::<span class="ident">new</span>(<span class="ident">package</span>.<span class="ident">publish</span>),
                 <span class="ident">features</span>,
 
                 <span class="ident">package_ix</span>,
@@ -1175,7 +1105,11 @@
 
     <span class="doccomment">/// Computes the workspace path for this package. Errors if this package is not in the</span>
     <span class="doccomment">/// workspace.</span>
-    <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>, <span class="ident">manifest_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">workspace_path</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
+        <span class="ident">manifest_path</span>: <span class="kw-2">&amp;</span><span class="ident">Utf8Path</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// Strip off the workspace path from the manifest path.</span>
         <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">manifest_path</span>
             .<span class="ident">strip_prefix</span>(<span class="self">self</span>.<span class="ident">workspace_root</span>)
@@ -1188,12 +1122,6 @@
         <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">workspace_path</span>.<span class="ident">parent</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
             <span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
                 <span class="string">&quot;workspace member &#39;{}&#39; has invalid manifest path {:?}&quot;</span>,
-                <span class="ident">id</span>, <span class="ident">manifest_path</span>
-            ))
-        })<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">Utf8Path</span>::<span class="ident">from_path</span>(<span class="ident">workspace_path</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-            <span class="ident">Error</span>::<span class="ident">PackageGraphConstructError</span>(<span class="macro">format</span><span class="macro">!</span>(
-                <span class="string">&quot;workspace member &#39;{}&#39; has invalid UTF-8 manifest path {:?}&quot;</span>,
                 <span class="ident">id</span>, <span class="ident">manifest_path</span>
             ))
         })<span class="question-mark">?</span>;
@@ -1627,6 +1555,16 @@
             (<span class="ident">PlatformStatusImpl</span>::<span class="ident">Specs</span>(<span class="ident">specs</span>), <span class="prelude-val">Some</span>(<span class="ident">spec</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">specs</span>.<span class="ident">push</span>(<span class="ident">spec</span>.<span class="ident">clone</span>());
             }
+        }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">PackagePublishImpl</span> {
+    <span class="doccomment">/// Converts cargo_metadata registries to our own format.</span>
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">registries</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">match</span> <span class="ident">registries</span> {
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackagePublishImpl</span>::<span class="ident">Unrestricted</span>,
+            <span class="prelude-val">Some</span>(<span class="ident">registries</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackagePublishImpl</span>::<span class="ident">Registries</span>(<span class="ident">registries</span>.<span class="ident">into_boxed_slice</span>()),
         }
     }
 }
