@@ -26,7 +26,7 @@ fn summaries_unchanged() -> Result<()> {
             let is_changed = item.is_changed();
             if is_changed {
                 num_changed += 1;
-                println!("** {}:\n{}", item.path().display(), item.diff(),);
+                println!("** {}:\n{}", item.path(), item.diff());
             }
         }
     }
@@ -56,12 +56,7 @@ fn hakari_unchanged() -> Result<()> {
             let is_changed = item.is_changed();
             if is_changed {
                 num_changed += 1;
-                println!(
-                    "** (fixture {}) {}:\n{}",
-                    name,
-                    item.path().display(),
-                    item.diff(),
-                );
+                println!("** (fixture {}) {}:\n{}", name, item.path(), item.diff());
             }
         }
     }

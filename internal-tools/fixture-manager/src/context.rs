@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use anyhow::{bail, Result};
+use camino::{Utf8Path, Utf8PathBuf};
 use fixtures::json::JsonFixture;
-use std::path::{Path, PathBuf};
 
 pub trait ContextImpl<'g> {
     type IterArgs;
     type IterItem;
     type Existing;
 
-    fn dir_name(fixture: &'g JsonFixture) -> PathBuf;
+    fn dir_name(fixture: &'g JsonFixture) -> Utf8PathBuf;
     fn file_name(fixture: &'g JsonFixture, item: &Self::IterItem) -> String;
 
     fn iter(
@@ -18,7 +18,7 @@ pub trait ContextImpl<'g> {
         args: &Self::IterArgs,
     ) -> Box<dyn Iterator<Item = Self::IterItem> + 'g>;
 
-    fn parse_existing(path: &Path, contents: String) -> Result<Self::Existing>;
+    fn parse_existing(path: &Utf8Path, contents: String) -> Result<Self::Existing>;
     fn is_changed(item: &Self::IterItem, existing: &Self::Existing) -> bool;
     fn diff(
         fixture: &'g JsonFixture,
@@ -38,7 +38,7 @@ pub trait ContextDiff<'a> {}
 pub struct GenerateContext<'g, T: ContextImpl<'g>> {
     fixture: &'g JsonFixture,
     skip_existing: bool,
-    file_template: PathBuf,
+    file_template: Utf8PathBuf,
     iter: Box<dyn Iterator<Item = T::IterItem> + 'g>,
 }
 
@@ -95,13 +95,13 @@ impl<'g, T: ContextImpl<'g>> Iterator for GenerateContext<'g, T> {
 
 pub struct ContextItem<'g, T: ContextImpl<'g>> {
     fixture: &'g JsonFixture,
-    path: PathBuf,
+    path: Utf8PathBuf,
     item: T::IterItem,
     existing: Option<T::Existing>,
 }
 
 impl<'g, T: ContextImpl<'g>> ContextItem<'g, T> {
-    pub fn path(&self) -> &Path {
+    pub fn path(&self) -> &Utf8Path {
         &self.path
     }
 
@@ -135,7 +135,7 @@ impl<'g, T: ContextImpl<'g>> ContextItem<'g, T> {
     }
 }
 
-fn read_contents(file: &Path) -> Result<Option<String>> {
+fn read_contents(file: &Utf8Path) -> Result<Option<String>> {
     let contents = match std::fs::read_to_string(file) {
         Ok(data) => data,
         Err(err) => {

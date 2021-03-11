@@ -3,12 +3,12 @@
 
 use crate::context::ContextImpl;
 use anyhow::Result;
+use camino::{Utf8Path, Utf8PathBuf};
 use fixtures::json::JsonFixture;
 use hakari::{diffy::PatchFormatter, Hakari, HakariBuilder, HakariCargoToml, TomlOptions};
 use once_cell::sync::Lazy;
 use proptest::prelude::*;
 use proptest_ext::ValueGenerator;
-use std::path::{Path, PathBuf};
 
 pub struct HakariTomlContext;
 
@@ -17,7 +17,7 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
     type IterItem = (usize, HakariTomlItem<'g>);
     type Existing = HakariCargoToml;
 
-    fn dir_name(fixture: &'g JsonFixture) -> PathBuf {
+    fn dir_name(fixture: &'g JsonFixture) -> Utf8PathBuf {
         fixture
             .abs_path()
             .parent()
@@ -61,7 +61,7 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
         Box::new(iter)
     }
 
-    fn parse_existing(path: &Path, contents: String) -> Result<Self::Existing> {
+    fn parse_existing(path: &Utf8Path, contents: String) -> Result<Self::Existing> {
         Ok(HakariCargoToml::new_in_memory(path, contents)?)
     }
 

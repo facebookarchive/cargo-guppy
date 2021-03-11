@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use atomicwrites::{AtomicFile, OverwriteBehavior};
+use camino::{Utf8Path, Utf8PathBuf};
 use diffy::Patch;
-use std::{
-    error, fmt, io,
-    path::{Path, PathBuf},
-};
+use std::{error, fmt, io};
 
 /// Support for maintaining `Cargo.toml` files that unify features in a workspace.
 ///
@@ -62,7 +60,7 @@ use std::{
 ///     ```
 #[derive(Clone, Debug)]
 pub struct HakariCargoToml {
-    toml_path: PathBuf,
+    toml_path: Utf8PathBuf,
     contents: String,
     // Start and end offsets for the section to replace.
     start_offset: usize,
@@ -85,7 +83,7 @@ impl HakariCargoToml {
     ///
     /// Returns an error if the file couldn't be read (other than if the file wasn't found, which
     /// is a case handled by this struct).
-    pub fn new(toml_path: impl Into<PathBuf>) -> Result<Self, CargoTomlError> {
+    pub fn new(toml_path: impl Into<Utf8PathBuf>) -> Result<Self, CargoTomlError> {
         let toml_path = toml_path.into();
 
         let contents = match std::fs::read_to_string(&toml_path) {
@@ -104,8 +102,8 @@ impl HakariCargoToml {
     ///
     /// If the path is relative, it is evaluated with respect to the current directory.
     pub fn new_relative(
-        workspace_root: impl Into<PathBuf>,
-        crate_dir: impl AsRef<Path>,
+        workspace_root: impl Into<Utf8PathBuf>,
+        crate_dir: impl AsRef<Utf8Path>,
     ) -> Result<Self, CargoTomlError> {
         let mut toml_path = workspace_root.into();
         toml_path.push(crate_dir);
@@ -119,7 +117,7 @@ impl HakariCargoToml {
     ///
     /// This may be useful for test scenarios.
     pub fn new_in_memory(
-        toml_path: impl Into<PathBuf>,
+        toml_path: impl Into<Utf8PathBuf>,
         contents: String,
     ) -> Result<Self, CargoTomlError> {
         let toml_path = toml_path.into();
@@ -149,7 +147,7 @@ impl HakariCargoToml {
     }
 
     /// Returns the toml path provided at construction time.
-    pub fn toml_path(&self) -> &Path {
+    pub fn toml_path(&self) -> &Utf8Path {
         &self.toml_path
     }
 
@@ -245,7 +243,7 @@ pub enum CargoTomlError {
     /// The contents of the `Cargo.toml` file could not be read or written.
     Io {
         /// The path that was attempted to be read.
-        toml_path: PathBuf,
+        toml_path: Utf8PathBuf,
 
         /// The error that occurred.
         error: io::Error,
@@ -255,7 +253,7 @@ pub enum CargoTomlError {
     /// `### END HAKARI SECTION` couldn't be found.
     GeneratedSectionNotFound {
         /// The path that was read.
-        toml_path: PathBuf,
+        toml_path: Utf8PathBuf,
     },
 }
 
@@ -263,7 +261,7 @@ impl fmt::Display for CargoTomlError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             CargoTomlError::Io { toml_path, .. } => {
-                write!(f, "error while reading path '{}'", toml_path.display())
+                write!(f, "error while reading path '{}'", toml_path)
             }
             CargoTomlError::GeneratedSectionNotFound { toml_path, .. } => {
                 write!(
@@ -272,7 +270,7 @@ impl fmt::Display for CargoTomlError {
                 ### BEGIN HAKARI SECTION\n\
                 ...\n\
                 ### END HAKARI SECTION",
-                    toml_path.display()
+                    toml_path
                 )
             }
         }
