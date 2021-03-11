@@ -15,10 +15,7 @@ use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, Res
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
-use std::{
-    collections::{BTreeMap, HashMap, HashSet},
-    path::Path,
-};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use target_spec::TargetSpec;
 
 impl PackageGraph {
@@ -36,13 +33,7 @@ impl PackageGraph {
             .map(PackageId::from_metadata)
             .collect();
 
-        let workspace_root =
-            Utf8PathBuf::from_path_buf(metadata.workspace_root).map_err(|path_buf| {
-                Error::PackageGraphConstructError(format!(
-                    "workspace root is invalid UTF-8: {}",
-                    path_buf.display()
-                ))
-            })?;
+        let workspace_root = metadata.workspace_root;
 
         let mut build_state = GraphBuildState::new(
             &metadata.packages,
@@ -204,20 +195,14 @@ impl<'a> GraphBuildState<'a> {
                 None => {
                     return Err(Error::PackageGraphConstructError(format!(
                         "package '{}': manifest path '{}' does not have parent",
-                        package_id,
-                        package.manifest_path.display(),
+                        package_id, package.manifest_path,
                     )));
                 }
             };
             let rel_path = pathdiff::diff_paths(dirname, self.workspace_root)
                 .expect("workspace root is absolute");
-            let rel_path = Utf8PathBuf::from_path_buf(rel_path).map_err(|path_buf| {
-                Error::PackageGraphConstructError(format!(
-                    "package '{}': location '{}' is invalid UTF-8",
-                    package_id,
-                    path_buf.display()
-                ))
-            })?;
+            let rel_path = Utf8PathBuf::from_path_buf(rel_path)
+                .expect("diff between two UTF-8 paths should produce a UTF-8 path");
             PackageSourceImpl::Path(rel_path.into_boxed_path())
         };
 
@@ -290,31 +275,6 @@ impl<'a> GraphBuildState<'a> {
             .chain(optional_deps)
             .collect();
 
-        let license_file = match package.license_file {
-            Some(license_file) => Some(
-                Utf8PathBuf::from_path_buf(license_file)
-                    .map_err(|path_buf| {
-                        Error::PackageGraphConstructError(format!(
-                            "for package '{}', license file is invalid UTF-8: {}",
-                            package_id,
-                            path_buf.display()
-                        ))
-                    })?
-                    .into(),
-            ),
-            None => None,
-        };
-
-        let manifest_path = Utf8PathBuf::from_path_buf(package.manifest_path)
-            .map_err(|path_buf| {
-                Error::PackageGraphConstructError(format!(
-                    "for package '{}', manifest path is invalid UTF-8: {}",
-                    package_id,
-                    path_buf.display()
-                ))
-            })?
-            .into();
-
         Ok((
             package_id,
             PackageMetadataImpl {
@@ -323,8 +283,8 @@ impl<'a> GraphBuildState<'a> {
                 authors: package.authors,
                 description: package.description.map(|s| s.into()),
                 license: package.license.map(|s| s.into()),
-                license_file,
-                manifest_path,
+                license_file: package.license_file.map(|f| f.into()),
+                manifest_path: package.manifest_path.into(),
                 categories: package.categories,
                 keywords: package.keywords,
                 readme: package.readme.map(|s| s.into()),
@@ -357,7 +317,11 @@ impl<'a> GraphBuildState<'a> {
 
     /// Computes the workspace path for this package. Errors if this package is not in the
     /// workspace.
-    fn workspace_path(&self, id: &PackageId, manifest_path: &Path) -> Result<Box<Utf8Path>, Error> {
+    fn workspace_path(
+        &self,
+        id: &PackageId,
+        manifest_path: &Utf8Path,
+    ) -> Result<Box<Utf8Path>, Error> {
         // Strip off the workspace path from the manifest path.
         let workspace_path = manifest_path
             .strip_prefix(self.workspace_root)
@@ -370,12 +334,6 @@ impl<'a> GraphBuildState<'a> {
         let workspace_path = workspace_path.parent().ok_or_else(|| {
             Error::PackageGraphConstructError(format!(
                 "workspace member '{}' has invalid manifest path {:?}",
-                id, manifest_path
-            ))
-        })?;
-        let workspace_path = Utf8Path::from_path(workspace_path).ok_or_else(|| {
-            Error::PackageGraphConstructError(format!(
-                "workspace member '{}' has invalid UTF-8 manifest path {:?}",
                 id, manifest_path
             ))
         })?;

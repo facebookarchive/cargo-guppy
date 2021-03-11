@@ -18,10 +18,7 @@ use guppy::{
     DependencyKind, PackageId, Platform, Version,
 };
 use pretty_assertions::assert_eq;
-use std::{
-    collections::{BTreeMap, HashMap},
-    path::PathBuf,
-};
+use std::collections::{BTreeMap, HashMap};
 
 /// This captures metadata fields that are relevant for tests. They are meant to be written out
 /// lazily as tests are filled out -- feel free to add more details as necessary!
@@ -306,7 +303,13 @@ pub struct PackageDetails {
     license: Option<&'static str>,
 
     source: Option<PackageSource<'static>>,
-    build_targets: Option<Vec<(BuildTargetId<'static>, BuildTargetKind<'static>, PathBuf)>>,
+    build_targets: Option<
+        Vec<(
+            BuildTargetId<'static>,
+            BuildTargetKind<'static>,
+            Utf8PathBuf,
+        )>,
+    >,
     // The vector items are (name, package id).
     // XXX add more details about dependency edges here?
     deps: Option<Vec<(&'static str, PackageId)>>,

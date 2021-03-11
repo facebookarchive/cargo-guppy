@@ -27,7 +27,6 @@ use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt, iter,
     iter::FromIterator,
-    path::Path,
 };
 use target_spec::TargetSpec;
 
@@ -813,7 +812,7 @@ impl<'g> PackageMetadata<'g> {
     ///
     /// This is the same as the `readme` field of `Cargo.toml`. The path returned is relative to the
     /// directory the `Cargo.toml` is in (i.e. relative to the parent of `self.manifest_path()`).
-    pub fn readme(&self) -> Option<&'g Path> {
+    pub fn readme(&self) -> Option<&'g Utf8Path> {
         self.inner.readme.as_ref().map(|path| path.as_ref())
     }
 
@@ -1016,7 +1015,7 @@ pub(crate) struct PackageMetadataImpl {
     pub(super) manifest_path: Box<Utf8Path>,
     pub(super) categories: Vec<String>,
     pub(super) keywords: Vec<String>,
-    pub(super) readme: Option<Box<Path>>,
+    pub(super) readme: Option<Box<Utf8Path>>,
     pub(super) repository: Option<Box<str>>,
     pub(super) edition: Box<str>,
     pub(super) metadata_table: JsonValue,

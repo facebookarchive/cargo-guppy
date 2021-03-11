@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::sorted_set::SortedSet;
-use std::{borrow::Borrow, cmp::Ordering, path::Path};
+use camino::Utf8Path;
+use std::{borrow::Borrow, cmp::Ordering};
 
 /// A build target in a package.
 ///
@@ -59,7 +60,7 @@ impl<'g> BuildTarget<'g> {
     }
 
     /// Returns the absolute path of the location where the source for this build target is located.
-    pub fn path(&self) -> &'g Path {
+    pub fn path(&self) -> &'g Utf8Path {
         &self.inner.path
     }
 
@@ -191,7 +192,7 @@ pub(super) struct BuildTargetImpl {
     // This is only set if the id is BuildTargetId::Library.
     pub(super) lib_name: Option<Box<str>>,
     pub(super) required_features: Vec<String>,
-    pub(super) path: Box<Path>,
+    pub(super) path: Box<Utf8Path>,
     pub(super) edition: Box<str>,
     pub(super) doc_tests: bool,
 }
@@ -229,8 +230,7 @@ pub(super) enum BuildTargetKindImpl {
     Binary,
 }
 
-// Allow Borrow usage for complex keys. Adapted from
-// http://idubrov.name/rust/2018/06/01/tricking-the-hashmap.html.
+// Borrow for complex keys. See https://github.com/sunshowers/borrow-complex-key-example.
 pub(super) trait BuildTargetKey {
     fn key(&self) -> BuildTargetId;
 }
