@@ -7,6 +7,11 @@
 - `DependencyKind::VALUES` lists out all the values of `DependencyKind`.
 - `DependencyReq::no_default_features()` returns the enabled status for a dependency when `default-features = false`.
 
+### Changed
+
+- `PackageMetadata::readme` now returns `&Utf8Path` rather than `&Path`.
+- `BuildTarget::path` now returns `&Utf8Path` rather than `&Path`.
+
 ## [0.8.0] - 2021-02-23
 
 ### Changed
