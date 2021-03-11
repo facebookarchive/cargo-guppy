@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `HakariCargoToml` now uses `camino`'s UTF-8 paths.
+  - `HakariCargoToml::new` now accepts `impl Into<Utf8PathBuf>` rather than `impl Into<PathBuf>`.
+  - `HakariCargoToml::toml_path` returns `&Utf8Path` instead of `&Path`.
+
 ## [0.2.0] - 2021-02-23
 
 ### Changed

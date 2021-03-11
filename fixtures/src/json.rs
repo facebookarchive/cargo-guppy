@@ -5,6 +5,7 @@ use crate::{
     details::{FixtureDetails, LinkDetails, PackageDetails, PlatformResults},
     package_id,
 };
+use camino::{Utf8Component, Utf8Path, Utf8PathBuf};
 use guppy::{
     errors::{FeatureBuildStage, FeatureGraphWarning},
     graph::{BuildTargetId, BuildTargetKind, EnabledTernary, PackageGraph},
@@ -14,7 +15,6 @@ use once_cell::sync::{Lazy, OnceCell};
 use std::{
     collections::{BTreeMap, HashMap},
     fs,
-    path::{Component, Path, PathBuf},
 };
 
 // Metadata along with interesting crate names.
@@ -200,26 +200,32 @@ define_fixtures! {
 
 pub struct JsonFixture {
     name: &'static str,
-    workspace_path: PathBuf,
-    abs_path: PathBuf,
+    workspace_path: Utf8PathBuf,
+    abs_path: Utf8PathBuf,
     json_graph: OnceCell<(String, PackageGraph)>,
     details: FixtureDetails,
 }
 
 impl JsonFixture {
     fn new(name: &'static str, rel_path: &'static str, details: FixtureDetails) -> Self {
-        let rel_path = Path::new(rel_path);
-        let fixtures_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let rel_path = Utf8Path::new(rel_path);
+        let fixtures_dir = Utf8Path::new(env!("CARGO_MANIFEST_DIR"));
         // rel_path is relative to this dir.
         let mut abs_path = fixtures_dir.join("src");
         abs_path.push(rel_path);
-        let abs_path = abs_path
-            .canonicalize()
-            .expect("fixture path canonicalization succeeded");
+        let abs_path = Utf8PathBuf::from_path_buf(
+            abs_path
+                .canonicalize()
+                .expect("fixture path canonicalization succeeded"),
+        )
+        .expect("valid UTF-8 path");
 
         let workspace_root = fixtures_dir.parent().expect("up to workspace root");
-        let workspace_path = pathdiff::diff_paths(&abs_path, workspace_root)
-            .expect("both abs_path and workspace root are absolute");
+        let workspace_path = Utf8PathBuf::from_path_buf(
+            pathdiff::diff_paths(&abs_path, workspace_root)
+                .expect("both abs_path and workspace root are absolute"),
+        )
+        .expect("diff of UTF-8 paths is UTF-8");
 
         // No symlinks in this repo, so normalize this path.
         let workspace_path = normalize_assuming_no_symlinks(&workspace_path);
@@ -244,12 +250,12 @@ impl JsonFixture {
     }
 
     /// Returns the absolute path of this fixture.
-    pub fn abs_path(&self) -> &Path {
+    pub fn abs_path(&self) -> &Utf8Path {
         &self.abs_path
     }
 
     /// Returns the path of this fixture, relative to the workspace root.
-    pub fn workspace_path(&self) -> &Path {
+    pub fn workspace_path(&self) -> &Utf8Path {
         &self.workspace_path
     }
 
@@ -344,9 +350,8 @@ impl JsonFixture {
 
     fn init_graph(&self) -> (&str, &PackageGraph) {
         let (json, package_graph) = self.json_graph.get_or_init(|| {
-            let json = fs::read_to_string(&self.abs_path).unwrap_or_else(|err| {
-                panic!("reading file '{}' failed: {}", self.abs_path.display(), err)
-            });
+            let json = fs::read_to_string(&self.abs_path)
+                .unwrap_or_else(|err| panic!("reading file '{}' failed: {}", self.abs_path, err));
             let graph = Self::parse_graph(&json);
             (json, graph)
         });
@@ -361,11 +366,11 @@ impl JsonFixture {
 }
 
 // Thanks to @porglezomp on Twitter for this simple normalization method.
-fn normalize_assuming_no_symlinks(p: impl AsRef<Path>) -> PathBuf {
-    let mut out = PathBuf::new();
+fn normalize_assuming_no_symlinks(p: impl AsRef<Utf8Path>) -> Utf8PathBuf {
+    let mut out = Utf8PathBuf::new();
     for c in p.as_ref().components() {
         match c {
-            Component::ParentDir => {
+            Utf8Component::ParentDir => {
                 out.pop();
             }
             c => out.push(c),

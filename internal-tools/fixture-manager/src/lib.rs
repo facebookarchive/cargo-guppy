@@ -45,7 +45,7 @@ enum Command {
 
 pub fn list() -> Result<()> {
     for (name, fixture) in JsonFixture::all_fixtures().iter() {
-        println!("{}: {}", name, fixture.workspace_path().display());
+        println!("{}: {}", name, fixture.workspace_path());
     }
 
     Ok(())
@@ -165,7 +165,7 @@ impl GenerateOpts {
 
                 if self.mode == GenerateMode::Check {
                     if is_changed {
-                        println!("** {}:\n{}", item.path().display(), item.diff());
+                        println!("** {}:\n{}", item.path(), item.diff());
                     }
 
                     continue;

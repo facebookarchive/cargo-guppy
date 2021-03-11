@@ -3,6 +3,7 @@
 
 use crate::context::ContextImpl;
 use anyhow::Result;
+use camino::{Utf8Path, Utf8PathBuf};
 use fixtures::json::JsonFixture;
 use guppy::graph::{
     cargo::CargoSet,
@@ -11,10 +12,7 @@ use guppy::graph::{
 use guppy_cmdlib::PackagesAndFeatures;
 use once_cell::sync::Lazy;
 use proptest_ext::ValueGenerator;
-use std::{
-    fmt::Write,
-    path::{Path, PathBuf},
-};
+use std::fmt::Write;
 
 pub struct SummaryContext;
 
@@ -23,7 +21,7 @@ impl<'g> ContextImpl<'g> for SummaryContext {
     type IterItem = (usize, Summary);
     type Existing = Summary;
 
-    fn dir_name(fixture: &'g JsonFixture) -> PathBuf {
+    fn dir_name(fixture: &'g JsonFixture) -> Utf8PathBuf {
         fixture
             .abs_path()
             .parent()
@@ -77,7 +75,7 @@ impl<'g> ContextImpl<'g> for SummaryContext {
         Box::new(iter)
     }
 
-    fn parse_existing(_: &Path, contents: String) -> Result<Self::Existing> {
+    fn parse_existing(_: &Utf8Path, contents: String) -> Result<Self::Existing> {
         Ok(Summary::parse(&contents)?)
     }
 
