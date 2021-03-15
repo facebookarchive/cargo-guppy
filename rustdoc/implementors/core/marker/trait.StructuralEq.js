@@ -50,4 +50,5 @@ implementors["time"] = [{"text":"impl StructuralEq for Duration","synthetic":fal
 implementors["toml"] = [{"text":"impl StructuralEq for Error","synthetic":false,"types":[]},{"text":"impl StructuralEq for Error","synthetic":false,"types":[]}];
 implementors["toml_edit"] = [{"text":"impl StructuralEq for Decor","synthetic":false,"types":[]},{"text":"impl StructuralEq for Key","synthetic":false,"types":[]},{"text":"impl StructuralEq for TomlError","synthetic":false,"types":[]}];
 implementors["unicode_segmentation"] = [{"text":"impl StructuralEq for GraphemeIncomplete","synthetic":false,"types":[]}];
+implementors["zeroize"] = [{"text":"impl&lt;Z:&nbsp;Zeroize&gt; StructuralEq for Zeroizing&lt;Z&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

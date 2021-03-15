@@ -84,4 +84,5 @@ implementors["ucd_trie"] = [{"text":"impl Debug for Error","synthetic":false,"ty
 implementors["unicode_segmentation"] = [{"text":"impl Debug for GraphemeIncomplete","synthetic":false,"types":[]}];
 implementors["vec_map"] = [{"text":"impl&lt;V:&nbsp;Debug&gt; Debug for VecMap&lt;V&gt;","synthetic":false,"types":[]}];
 implementors["void"] = [{"text":"impl Debug for Void","synthetic":false,"types":[]}];
+implementors["zeroize"] = [{"text":"impl&lt;Z:&nbsp;Debug + Zeroize&gt; Debug for Zeroizing&lt;Z&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

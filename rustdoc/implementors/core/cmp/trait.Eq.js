@@ -60,4 +60,5 @@ implementors["toml"] = [{"text":"impl Eq for Error","synthetic":false,"types":[]
 implementors["toml_edit"] = [{"text":"impl Eq for Decor","synthetic":false,"types":[]},{"text":"impl Eq for Key","synthetic":false,"types":[]},{"text":"impl Eq for TomlError","synthetic":false,"types":[]}];
 implementors["unicode_segmentation"] = [{"text":"impl Eq for GraphemeIncomplete","synthetic":false,"types":[]}];
 implementors["vec_map"] = [{"text":"impl&lt;V:&nbsp;Eq&gt; Eq for VecMap&lt;V&gt;","synthetic":false,"types":[]}];
+implementors["zeroize"] = [{"text":"impl&lt;Z:&nbsp;Eq + Zeroize&gt; Eq for Zeroizing&lt;Z&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

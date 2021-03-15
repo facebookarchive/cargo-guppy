@@ -111,5 +111,5 @@ sourcesIndex["unreachable"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["vec_map"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["void"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["wait_timeout"] = {"name":"","files":["lib.rs","unix.rs"]};
-sourcesIndex["zeroize"] = {"name":"","files":["lib.rs"]};
+sourcesIndex["zeroize"] = {"name":"","files":["lib.rs","x86.rs"]};
 createSourceSidebar();

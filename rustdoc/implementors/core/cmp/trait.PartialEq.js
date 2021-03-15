@@ -69,4 +69,5 @@ implementors["twox_hash"] = [{"text":"impl PartialEq&lt;XxHash64&gt; for XxHash6
 implementors["unicode_segmentation"] = [{"text":"impl PartialEq&lt;GraphemeIncomplete&gt; for GraphemeIncomplete","synthetic":false,"types":[]}];
 implementors["vec_map"] = [{"text":"impl&lt;V:&nbsp;PartialEq&gt; PartialEq&lt;VecMap&lt;V&gt;&gt; for VecMap&lt;V&gt;","synthetic":false,"types":[]}];
 implementors["void"] = [{"text":"impl&lt;T&gt; PartialEq&lt;T&gt; for Void","synthetic":false,"types":[]}];
+implementors["zeroize"] = [{"text":"impl&lt;Z:&nbsp;PartialEq + Zeroize&gt; PartialEq&lt;Zeroizing&lt;Z&gt;&gt; for Zeroizing&lt;Z&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

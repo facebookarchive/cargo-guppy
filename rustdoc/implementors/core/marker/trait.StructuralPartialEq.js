@@ -58,4 +58,5 @@ implementors["toml"] = [{"text":"impl StructuralPartialEq for Value","synthetic"
 implementors["toml_edit"] = [{"text":"impl StructuralPartialEq for Decor","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for Key","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for TomlError","synthetic":false,"types":[]}];
 implementors["twox_hash"] = [{"text":"impl StructuralPartialEq for XxHash64","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for XxHash32","synthetic":false,"types":[]}];
 implementors["unicode_segmentation"] = [{"text":"impl StructuralPartialEq for GraphemeIncomplete","synthetic":false,"types":[]}];
+implementors["zeroize"] = [{"text":"impl&lt;Z:&nbsp;Zeroize&gt; StructuralPartialEq for Zeroizing&lt;Z&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
