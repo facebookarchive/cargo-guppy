@@ -56,32 +56,22 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CommandError(err) => write!(f, "Error while executing 'cargo metadata': {}", err),
-            MetadataParseError(err) => write!(
-                f,
-                "Error while parsing 'cargo metadata' JSON output: {}",
-                err
-            ),
-            MetadataSerializeError(err) => write!(
-                f,
-                "Error while serializing 'cargo metadata' JSON output: {}",
-                err
-            ),
-            PackageGraphConstructError(msg) => {
-                write!(f, "Error while computing package graph: {}", msg)
-            }
+            CommandError(_) => write!(f, "`cargo metadata` execution failed"),
+            MetadataParseError(_) => write!(f, "`cargo metadata` returned invalid JSON output"),
+            MetadataSerializeError(_) => write!(f, "failed to serialize `cargo metadata` to JSON"),
+            PackageGraphConstructError(_) => write!(f, "failed to construct package graph"),
             UnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
             UnknownFeatureId(package_id, feature) => match feature {
-                Some(feature) => write!(f, "Unknown feature ID: '{}' '{}'", package_id, feature),
-                None => write!(f, "Unknown feature ID: '{}' (base)", package_id),
+                Some(feature) => write!(f, "unknown feature ID: '{}' '{}'", package_id, feature),
+                None => write!(f, "unknown feature ID: '{}' (base)", package_id),
             },
-            UnknownWorkspacePath(path) => write!(f, "Unknown workspace path: {}", path),
-            UnknownWorkspaceName(name) => write!(f, "Unknown workspace package name: {}", name),
-            TargetSpecError(msg, _) => write!(f, "Target spec error while {}", msg),
-            PackageGraphInternalError(msg) => write!(f, "Internal error in package graph: {}", msg),
-            FeatureGraphInternalError(msg) => write!(f, "Internal error in feature graph: {}", msg),
+            UnknownWorkspacePath(path) => write!(f, "unknown workspace path: {}", path),
+            UnknownWorkspaceName(name) => write!(f, "unknown workspace package name: {}", name),
+            TargetSpecError(msg, _) => write!(f, "target spec error while {}", msg),
+            PackageGraphInternalError(msg) => write!(f, "internal error in package graph: {}", msg),
+            FeatureGraphInternalError(msg) => write!(f, "internal error in feature graph: {}", msg),
             #[cfg(feature = "summaries")]
-            UnknownSummaryId(summary_id) => write!(f, "Unknown summary ID: {:?}", summary_id),
+            UnknownSummaryId(summary_id) => write!(f, "unknown summary ID: {:?}", summary_id),
         }
     }
 }
