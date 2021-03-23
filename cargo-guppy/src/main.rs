@@ -49,12 +49,26 @@ enum Command {
     Mv(MvOptions),
 }
 
+// On Unix-like operating systems, the executable name of the Cargo subcommand usually doesn't have
+// a file extension, while on Windows, executables usually have a ".exe" extension.
+fn executable_name(subcommand: &str) -> String {
+    #[cfg(target_os = "windows")]
+    {
+        format!("cargo-{}.exe", subcommand)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        format!("cargo-{}", subcommand)
+    }
+}
+
 // When invoked as a cargo subcommand, cargo passes too many arguments so we need to filter out
 // arg[1] if it matches the end of arg[0], e.i. "cargo-X X foo" should become "cargo-X foo".
 fn args() -> impl Iterator<Item = String> {
     let mut args: Vec<String> = ::std::env::args().collect();
 
-    if args.len() >= 2 && args[0].ends_with(&format!("cargo-{}", args[1])) {
+    if args.len() >= 2 && args[0].ends_with(&executable_name(&args[1])) {
         args.remove(1);
     }
 
