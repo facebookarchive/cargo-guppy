@@ -167,7 +167,7 @@ macro_rules! doc_comment {
 impl DeterminatorRules {
     /// Deserializes determinator rules from the given TOML string.
     pub fn parse(s: &str) -> Result<Self, toml::de::Error> {
-        Ok(toml::from_str(s)?)
+        toml::from_str(s)
     }
 
     doc_comment! {

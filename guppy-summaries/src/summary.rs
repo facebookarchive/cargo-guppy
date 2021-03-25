@@ -55,7 +55,7 @@ impl<M> SummaryWithMetadata<M> {
     where
         M: Deserialize<'de>,
     {
-        Ok(toml::from_str(s)?)
+        toml::from_str(s)
     }
 
     /// Perform a diff of this summary against another.
