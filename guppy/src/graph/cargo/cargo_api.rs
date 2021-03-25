@@ -182,7 +182,7 @@ impl<'a> Default for CargoOptions<'a> {
 #[serde(rename_all = "kebab-case")]
 #[non_exhaustive]
 pub enum CargoResolverVersion {
-    /// The default "classic" feature resolver in Rust.
+    /// The "classic" feature resolver in Rust.
     ///
     /// This feature resolver unifies features across inactive platforms, and also unifies features
     /// across normal, build and dev dependencies for initials. This may produce results that are
@@ -200,18 +200,15 @@ pub enum CargoResolverVersion {
     /// in the Cargo reference.
     V1Install,
 
-    /// The new feature resolver. This feature resolver does not unify features:
+    /// [Version 2 of the feature resolver](https://doc.rust-lang.org/cargo/reference/resolver.html#feature-resolver-version-2),
+    /// available since Rust 1.51. This feature resolver does not unify features:
     ///
     /// * across host (build) and target (regular) dependencies
     /// * with dev-dependencies for initials, if tests aren't currently being built
     /// * with [platform-specific dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies) that are currently inactive
     ///
-    /// This is currently available as `-Zfeatures=all`, and is expected to be released in a future
-    /// version of Cargo.
-    ///
-    /// For more, see
-    /// [Features](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#features) in the
-    /// Cargo reference.
+    /// Version 2 of the feature resolver can be enabled by specifying `resolver = "2"` in the
+    /// workspace's `Cargo.toml`.
     V2,
 }
 
