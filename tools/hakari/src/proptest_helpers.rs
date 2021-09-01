@@ -91,7 +91,6 @@ mod test {
                 let summary2 = builder2.to_summary().unwrap_or_else(|err| {
                     panic!("for fixture {}, second builder -> summary conversion failed: {}", name, err);
                 });
-                assert_eq!(builder, builder2, "builder roundtripped correctly");
                 assert_eq!(summary, summary2, "summary roundtripped correctly");
             });
         }

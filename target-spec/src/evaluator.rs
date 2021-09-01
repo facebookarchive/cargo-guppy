@@ -25,8 +25,8 @@ pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, Error>
 
 pub(crate) fn eval_target(target: &Target, platform: &Platform) -> Option<bool> {
     match target {
-        Target::TargetInfo(ref target_info) => {
-            Some(platform.triple() == target_info.triple.as_str())
+        Target::SingleTarget(single_target) => {
+            Some(platform.triple_str() == single_target.triple_str())
         }
         Target::Spec(ref expr) => eval_expr(expr, platform),
     }
@@ -35,7 +35,7 @@ pub(crate) fn eval_target(target: &Target, platform: &Platform) -> Option<bool> 
 fn eval_expr(spec: &Arc<Expression>, platform: &Platform) -> Option<bool> {
     spec.eval(|pred| {
         match pred {
-            Predicate::Target(target) => Some(target.matches(platform.target_info())),
+            Predicate::Target(target) => Some(platform.single_target().matches(target)),
             Predicate::TargetFeature(feature) => platform.target_features().matches(feature),
             Predicate::Test | Predicate::DebugAssertions | Predicate::ProcMacro => {
                 // Known families that always evaluate to false. See

@@ -42,7 +42,7 @@ impl PlatformSummary {
             return Err(Error::CustomPlatformSummary);
         };
         Ok(Self {
-            triple: platform.triple().to_string(),
+            triple: platform.triple_str().to_string(),
             target_features: TargetFeaturesSummary::new(platform.target_features()),
             flags: platform.flags().map(|flag| flag.to_string()).collect(),
         })
@@ -165,7 +165,7 @@ mod tests {
             assert_eq!(summary, deserialized, "summary and deserialized should match");
             let platform2 = deserialized.to_platform().expect("conversion to Platform succeeded");
 
-            assert_eq!(platform.triple(), platform2.triple(), "triples match");
+            assert_eq!(platform.triple_str(), platform2.triple_str(), "triples match");
             assert_eq!(platform.target_features(), platform2.target_features(), "target features match");
             assert_eq!(platform.flags().collect::<HashSet<_>>(), platform2.flags().collect::<HashSet<_>>(), "flags match");
         }

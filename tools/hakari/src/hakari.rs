@@ -281,22 +281,6 @@ impl<'g> HakariBuilder<'g> {
     }
 }
 
-impl<'g> PartialEq for HakariBuilder<'g> {
-    fn eq(&self, other: &Self) -> bool {
-        std::ptr::eq(self.graph.0, other.graph.0)
-            && self.hakari_package().map(|package| package.id())
-                == other.hakari_package.map(|package| package.id())
-            && self.platforms == other.platforms
-            && self.version == other.version
-            && self.verify_mode == other.verify_mode
-            && self.omitted_packages == other.omitted_packages
-            && self.unify_target_host == other.unify_target_host
-            && self.unify_all == other.unify_all
-    }
-}
-
-impl<'g> Eq for HakariBuilder<'g> {}
-
 #[cfg(feature = "summaries")]
 mod summaries {
     use super::*;

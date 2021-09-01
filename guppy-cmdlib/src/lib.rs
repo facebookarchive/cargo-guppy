@@ -181,7 +181,7 @@ pub fn triple_to_platform(
     default_fn: impl FnOnce() -> Option<Platform>,
 ) -> Result<Option<Platform>> {
     match triple {
-        Some("current") => Ok(Platform::current()),
+        Some("current") => Ok(Some(Platform::current()?)),
         Some("any") => Ok(None),
         Some(triple) => Ok(Some(Platform::new(triple, TargetFeatures::Unknown)?)),
         None => Ok(default_fn()),

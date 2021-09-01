@@ -1,8 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::debug_ignore::DebugIgnore;
 use crate::{
+    debug_ignore::DebugIgnore,
     graph::{
         feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet},
         query_core::QueryParams,
