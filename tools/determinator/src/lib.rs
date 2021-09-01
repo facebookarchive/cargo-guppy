@@ -69,7 +69,8 @@
 //!
 //! The list of file changes can be obtained from a source control system such as Git. This crate
 //! provides a helper which simplifies the process of enumerating file lists while handling some
-//! gnarly edge cases. For more information, see the documentation for [`Paths0`](crate::Paths0).
+//! gnarly edge cases. For more information, see the documentation for
+//! [`Utf8Paths0`](crate::Utf8Paths0).
 //!
 //! These simple rules may need to be customized for particular scenarios (e.g. to ignore certain
 //! files, or mark a package changed if a file outside of it changes). For those situations, the

@@ -64,8 +64,8 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// This should consist of paths that are changed since the base revision, and should use the
     /// canonical separator for the platform (e.g. `/` on Unix platforms and `\` on Windows).
     ///
-    /// [`Paths0`](crate::Paths0) in this crate provides a convenient way to handle null-separated
-    /// paths as produced by source control systems.
+    /// [`Utf8Paths0`](crate::Utf8Paths0) in this crate provides a convenient way to handle
+    /// null-separated paths as produced by source control systems.
     ///
     /// # Should you include untracked and ignored files?
     ///

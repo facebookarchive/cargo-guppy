@@ -155,6 +155,31 @@ jobs:
           command: test
           args: --all-targets --all-features
 
+  build-rustdoc:
+    name: Build documentation
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        # 1.51 is the MSRV
+        rust-version: [ 1.51, stable ]
+      fail-fast: false
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build rustdoc
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          # cargo-compare currently pulls in cargo which bloats build times massively
+          args: --all-features --workspace --exclude cargo-compare
+
   test-extended:
     name: cargo-compare extended tests
     runs-on: ${{ matrix.os }}
