@@ -181,7 +181,7 @@ impl FixtureDetails {
 
     pub fn assert_deps(&self, graph: &PackageGraph, id: &PackageId, msg: &str) {
         let details = &self.package_details[id];
-        assert_deps_internal(&graph, DependencyDirection::Forward, details, msg);
+        assert_deps_internal(graph, DependencyDirection::Forward, details, msg);
     }
 
     /// Returns true if the reverse deps for this package are available to test against.
@@ -192,7 +192,7 @@ impl FixtureDetails {
 
     pub fn assert_reverse_deps(&self, graph: &PackageGraph, id: &PackageId, msg: &str) {
         let details = &self.package_details[id];
-        assert_deps_internal(&graph, DependencyDirection::Reverse, details, msg);
+        assert_deps_internal(graph, DependencyDirection::Reverse, details, msg);
     }
 
     // ---
@@ -485,7 +485,7 @@ impl PackageDetails {
 pub struct LinkDetails {
     from: PackageId,
     to: PackageId,
-    platform_results: Vec<(DependencyKind, Platform<'static>, PlatformResults)>,
+    platform_results: Vec<(DependencyKind, Platform, PlatformResults)>,
     features: Vec<(DependencyKind, Vec<&'static str>)>,
 }
 
@@ -502,7 +502,7 @@ impl LinkDetails {
     pub fn with_platform_status(
         mut self,
         dep_kind: DependencyKind,
-        platform: Platform<'static>,
+        platform: Platform,
         status: PlatformResults,
     ) -> Self {
         self.platform_results.push((dep_kind, platform, status));
@@ -524,7 +524,7 @@ impl LinkDetails {
     }
 
     pub fn assert_metadata(&self, link: PackageLink<'_>, msg: &str) {
-        let required_enabled = |status: EnabledStatus<'_>, platform: &Platform<'_>| {
+        let required_enabled = |status: EnabledStatus<'_>, platform: &Platform| {
             (status.required_on(platform), status.enabled_on(platform))
         };
 

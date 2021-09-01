@@ -24,10 +24,10 @@ use std::{
 ///
 /// This struct provides a number of options that determine how `Hakari` instances are generated.
 #[derive(Clone, Debug)]
-pub struct HakariBuilder<'g, 'a> {
+pub struct HakariBuilder<'g> {
     graph: DebugIgnore<&'g PackageGraph>,
     hakari_package: Option<PackageMetadata<'g>>,
-    platforms: Vec<Platform<'a>>,
+    platforms: Vec<Platform>,
     version: CargoResolverVersion,
     verify_mode: bool,
     omitted_packages: HashSet<&'g PackageId>,
@@ -35,7 +35,7 @@ pub struct HakariBuilder<'g, 'a> {
     unify_all: bool,
 }
 
-impl<'g, 'a> HakariBuilder<'g, 'a> {
+impl<'g> HakariBuilder<'g> {
     /// Creates a new `HakariBuilder` instance from a `PackageGraph`.
     ///
     /// The Hakari package itself is usually present in the workspace. If so, specify its
@@ -110,17 +110,14 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
     /// instructions.
     ///
     /// Call `set_platforms` with an empty list to reset to default behavior.
-    pub fn set_platforms(
-        &mut self,
-        platforms: impl IntoIterator<Item = Platform<'a>>,
-    ) -> &mut Self {
+    pub fn set_platforms(&mut self, platforms: impl IntoIterator<Item = Platform>) -> &mut Self {
         self.platforms = platforms.into_iter().collect();
         self
     }
 
     /// Returns the platforms set through `set_platforms`, or an empty list if no platforms are
     /// set.
-    pub fn platforms(&self) -> &[Platform<'a>] {
+    pub fn platforms(&self) -> &[Platform] {
         &self.platforms
     }
 
@@ -245,7 +242,7 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
     }
 
     /// Computes the `Hakari` for this builder.
-    pub fn compute(self) -> Hakari<'g, 'a> {
+    pub fn compute(self) -> Hakari<'g> {
         Hakari::build(self)
     }
 
@@ -284,7 +281,7 @@ impl<'g, 'a> HakariBuilder<'g, 'a> {
     }
 }
 
-impl<'g, 'a> PartialEq for HakariBuilder<'g, 'a> {
+impl<'g> PartialEq for HakariBuilder<'g> {
     fn eq(&self, other: &Self) -> bool {
         std::ptr::eq(self.graph.0, other.graph.0)
             && self.hakari_package().map(|package| package.id())
@@ -298,14 +295,14 @@ impl<'g, 'a> PartialEq for HakariBuilder<'g, 'a> {
     }
 }
 
-impl<'g, 'a> Eq for HakariBuilder<'g, 'a> {}
+impl<'g> Eq for HakariBuilder<'g> {}
 
 #[cfg(feature = "summaries")]
 mod summaries {
     use super::*;
     use crate::summaries::HakariBuilderSummary;
 
-    impl<'g> HakariBuilder<'g, 'static> {
+    impl<'g> HakariBuilder<'g> {
         /// Constructs a `HakariBuilder` from a `PackageGraph` and a serialized summary.
         ///
         /// Requires the `summaries` feature to be enabled.
@@ -333,7 +330,7 @@ mod summaries {
             let omitted_packages = summary
                 .omitted_packages
                 .iter()
-                .map(|summary_id| Ok(graph.metadata_by_summary_id(&summary_id)?.id()))
+                .map(|summary_id| Ok(graph.metadata_by_summary_id(summary_id)?.id()))
                 .collect::<Result<HashSet<_>, _>>()?;
 
             Ok(Self {
@@ -404,8 +401,8 @@ pub struct OutputKey {
 /// Produced by [`HakariBuilder::compute`](HakariBuilder::compute).
 #[derive(Clone, Debug)]
 #[non_exhaustive]
-pub struct Hakari<'g, 'a> {
-    builder: HakariBuilder<'g, 'a>,
+pub struct Hakari<'g> {
+    builder: HakariBuilder<'g>,
 
     /// The map built by Hakari of dependencies that need to be unified.
     ///
@@ -419,9 +416,9 @@ pub struct Hakari<'g, 'a> {
     pub computed_map: ComputedMap<'g>,
 }
 
-impl<'g, 'a> Hakari<'g, 'a> {
+impl<'g> Hakari<'g> {
     /// Returns the `HakariBuilder` used to create this instance.
-    pub fn builder(&self) -> &HakariBuilder<'g, 'a> {
+    pub fn builder(&self) -> &HakariBuilder<'g> {
         &self.builder
     }
 
@@ -462,7 +459,7 @@ impl<'g, 'a> Hakari<'g, 'a> {
     // Helper methods
     // ---
 
-    fn build(builder: HakariBuilder<'g, 'a>) -> Self {
+    fn build(builder: HakariBuilder<'g>) -> Self {
         let graph = *builder.graph;
         let computed_map_build = ComputedMapBuild::new(&builder);
 
@@ -644,7 +641,7 @@ struct ComputedMapBuild<'g, 'b> {
 }
 
 impl<'g, 'b> ComputedMapBuild<'g, 'b> {
-    fn new(builder: &'b HakariBuilder<'g, '_>) -> Self {
+    fn new(builder: &'b HakariBuilder<'g>) -> Self {
         let platforms_features: Vec<_> = if builder.platforms.is_empty() {
             StandardFeatures::VALUES
                 .iter()

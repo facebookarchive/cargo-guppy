@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::common::GuppyCargoCommon;
+use guppy::graph::cargo::CargoResolverVersion;
 use guppy::graph::PackageGraph;
 use guppy_cmdlib::CargoMetadataOptions;
 use once_cell::sync::Lazy;
@@ -19,12 +20,13 @@ pub(super) static CARGO_GUPPY_WORKSPACE: &str = ".";
 pub struct Fixture {
     metadata_opts: CargoMetadataOptions,
     graph: PackageGraph,
+    resolver: CargoResolverVersion,
 }
 
 macro_rules! define_fixture {
-    ($name: ident, $path: ident) => {
+    (name => $name: ident, path => $path: ident, resolver => $resolver: expr,) => {
         pub(crate) fn $name() -> &'static Fixture {
-            static FIXTURE: Lazy<Fixture> = Lazy::new(|| Fixture::new($path));
+            static FIXTURE: Lazy<Fixture> = Lazy::new(|| Fixture::new($path, $resolver));
             &*FIXTURE
         }
     };
@@ -33,7 +35,7 @@ macro_rules! define_fixture {
 static CARGO_MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
 impl Fixture {
-    pub fn new(workspace_dir: &str) -> Self {
+    pub fn new(workspace_dir: &str, resolver: CargoResolverVersion) -> Self {
         // Assume that the workspace is relative to `CARGO_MANIFEST_DIR`.
         let workspace_dir = Path::new(CARGO_MANIFEST_DIR).join(workspace_dir);
         if !workspace_dir.is_dir() {
@@ -53,6 +55,7 @@ impl Fixture {
         Self {
             metadata_opts,
             graph,
+            resolver,
         }
     }
 
@@ -60,8 +63,16 @@ impl Fixture {
     // Fixtures
     // ---
 
-    define_fixture!(inside_outside, INSIDE_OUTSIDE_WORKSPACE);
-    define_fixture!(cargo_guppy, CARGO_GUPPY_WORKSPACE);
+    define_fixture! {
+        name => inside_outside,
+        path => INSIDE_OUTSIDE_WORKSPACE,
+        resolver => CargoResolverVersion::V1,
+    }
+    define_fixture! {
+        name => cargo_guppy,
+        path => CARGO_GUPPY_WORKSPACE,
+        resolver => CargoResolverVersion::V2,
+    }
 
     // ---
 
@@ -89,6 +100,6 @@ impl Fixture {
     }
 
     pub fn common_strategy(&self) -> impl Strategy<Value = GuppyCargoCommon> + '_ {
-        GuppyCargoCommon::strategy(&self.metadata_opts, self.graph())
+        GuppyCargoCommon::strategy(&self.metadata_opts, self.graph(), self.resolver)
     }
 }

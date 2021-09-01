@@ -3,6 +3,7 @@
 
 use crate::{custom_platforms::TargetInfo, eval_target, Error, Platform};
 use cfg_expr::{targets::get_builtin_target_by_triple, Expression, Predicate};
+use std::borrow::Cow;
 use std::{str::FromStr, sync::Arc};
 
 /// A parsed target specification or triple, as found in a `Cargo.toml` file.
@@ -32,11 +33,11 @@ use std::{str::FromStr, sync::Arc};
 /// assert_eq!(spec.eval(&i686_linux), Some(true), "i686 Linux matches some features");
 /// ```
 #[derive(Clone, Debug)]
-pub struct TargetSpec<'a> {
-    target: Target<'a>,
+pub struct TargetSpec {
+    target: Target,
 }
 
-impl<'a> TargetSpec<'a> {
+impl TargetSpec {
     /// Creates a new exact, custom target spec to match against.
     ///
     /// Note that this is for an *exact* target spec, similar to a triple specified, not an
@@ -44,9 +45,9 @@ impl<'a> TargetSpec<'a> {
     ///
     /// Custom platforms are often found in embedded and similar environments. For built-in
     /// platforms, the `FromStr` implementation is recommended instead.
-    pub fn custom(target_info: &'a TargetInfo<'a>) -> Self {
+    pub fn custom(target_info: impl Into<Cow<'static, TargetInfo>>) -> Self {
         Self {
-            target: Target::TargetInfo(target_info),
+            target: Target::TargetInfo(target_info.into()),
         }
     }
 
@@ -55,12 +56,12 @@ impl<'a> TargetSpec<'a> {
     /// Returns `Some(true)` if there's a match, `Some(false)` if there's none, or `None` if the
     /// result of the evaluation is unknown (typically found if target features are involved).
     #[inline]
-    pub fn eval(&self, platform: &Platform<'_>) -> Option<bool> {
+    pub fn eval(&self, platform: &Platform) -> Option<bool> {
         eval_target(&self.target, platform)
     }
 }
 
-impl FromStr for TargetSpec<'static> {
+impl FromStr for TargetSpec {
     type Err = Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
@@ -71,27 +72,25 @@ impl FromStr for TargetSpec<'static> {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum Target<'a> {
-    TargetInfo(&'a TargetInfo<'a>),
+pub(crate) enum Target {
+    TargetInfo(Cow<'static, TargetInfo>),
     Spec(Arc<Expression>),
 }
 
-impl Target<'static> {
+impl Target {
     /// Parses this expression into a `Target` instance.
     fn parse(input: &str) -> Result<Self, Error> {
         if input.starts_with("cfg(") {
             let expr = Expression::parse(input).map_err(Error::InvalidCfg)?;
             Self::verify_expr(expr)
         } else {
-            Ok(Target::TargetInfo(
+            Ok(Target::TargetInfo(Cow::Borrowed(
                 get_builtin_target_by_triple(input)
                     .ok_or_else(|| Error::UnknownTargetTriple(input.to_string()))?,
-            ))
+            )))
         }
     }
-}
 
-impl<'a> Target<'a> {
     /// Verify this `cfg()` expression.
     fn verify_expr(expr: Expression) -> Result<Self, Error> {
         // Error out on unknown key-value pairs. Everything else is recognized (though
@@ -118,7 +117,7 @@ mod tests {
         let res = Target::parse("x86_64-apple-darwin");
         assert!(matches!(
             res,
-            Ok(Target::TargetInfo(target_info)) if target_info.triple == "x86_64-apple-darwin"
+            Ok(Target::TargetInfo(target_info)) if target_info.triple.as_str() == "x86_64-apple-darwin"
         ));
     }
 

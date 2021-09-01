@@ -20,35 +20,50 @@ pub mod custom_platforms {
 
 /// A platform to evaluate target specs against.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct Platform<'a> {
-    target_info: &'a TargetInfo<'a>,
+pub struct Platform {
+    target_info: Cow<'static, TargetInfo>,
     target_features: TargetFeatures,
     flags: BTreeSet<Cow<'static, str>>,
     is_custom: bool,
 }
 
-impl Platform<'static> {
+impl Platform {
     /// Creates a new `Platform` from the given built-in triple and target features.
     ///
     /// Returns `None` if this platform wasn't known to `target-spec`.
     pub fn new(triple: impl AsRef<str>, target_features: TargetFeatures) -> Result<Self, Error> {
         let triple = triple.as_ref();
         Ok(Self {
-            target_info: get_builtin_target_by_triple(triple)
-                .ok_or_else(|| Error::UnknownPlatformTriple(triple.to_string()))?,
+            target_info: Cow::Borrowed(
+                get_builtin_target_by_triple(triple)
+                    .ok_or_else(|| Error::UnknownPlatformTriple(triple.to_string()))?,
+            ),
             target_features,
             flags: BTreeSet::new(),
             is_custom: false,
         })
     }
-}
 
-impl<'a> Platform<'a> {
+    /// Returns the current platform, as detected at build time.
+    ///
+    /// This will return `None` if the current platform was unknown to this version of
+    /// `target-spec`.
+    pub fn current() -> Option<Self> {
+        let target_info = Cow::Borrowed(get_builtin_target_by_triple(CURRENT_TARGET)?);
+        let target_features = TargetFeatures::features(CURRENT_TARGET_FEATURES.iter().copied());
+        Some(Self {
+            target_info,
+            target_features,
+            flags: BTreeSet::new(),
+            is_custom: false,
+        })
+    }
+
     /// Creates a new, custom platform from a `TargetInfo` and target features.
     ///
     /// Custom platforms are often found in embedded and similar environments. For built-in
     /// platforms, `new` is recommended instead.
-    pub fn custom(target_info: &'a TargetInfo<'a>, target_features: TargetFeatures) -> Self {
+    pub fn custom(target_info: Cow<'static, TargetInfo>, target_features: TargetFeatures) -> Self {
         Self {
             target_info,
             target_features,
@@ -69,8 +84,8 @@ impl<'a> Platform<'a> {
     }
 
     /// Returns the target triple for this platform.
-    pub fn triple(&self) -> &'a str {
-        self.target_info.triple
+    pub fn triple(&self) -> &str {
+        self.target_info.triple.as_str()
     }
 
     /// Returns the set of flags enabled for this platform.
@@ -84,8 +99,8 @@ impl<'a> Platform<'a> {
     }
 
     /// Returns the underlying `TargetInfo`.
-    pub fn target_info(&self) -> &'a TargetInfo<'a> {
-        self.target_info
+    pub fn target_info(&self) -> &TargetInfo {
+        &self.target_info
     }
 
     /// Returns the set of target features for this platform.
@@ -96,23 +111,6 @@ impl<'a> Platform<'a> {
     /// Returns true if this is a custom platform, created by `Platform::custom`.
     pub fn is_custom(&self) -> bool {
         self.is_custom
-    }
-}
-
-impl Platform<'static> {
-    /// Returns the current platform, as detected at build time.
-    ///
-    /// This will return `None` if the current platform was unknown to this version of
-    /// `target-spec`.
-    pub fn current() -> Option<Self> {
-        let target_info = get_builtin_target_by_triple(CURRENT_TARGET)?;
-        let target_features = TargetFeatures::features(CURRENT_TARGET_FEATURES.iter().copied());
-        Some(Self {
-            target_info,
-            target_features,
-            flags: BTreeSet::new(),
-            is_custom: false,
-        })
     }
 }
 

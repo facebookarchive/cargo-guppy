@@ -7,6 +7,7 @@ use crate::{
     GlobalContext,
 };
 use anyhow::{Error, Result};
+use guppy::graph::cargo::CargoResolverVersion;
 use guppy_cmdlib::CargoMetadataOptions;
 use proptest::{
     prelude::*,
@@ -29,12 +30,21 @@ pub struct CheckOpts {
     /// Print out unchanged packages and features as well
     #[structopt(long)]
     pub verbose: bool,
+    // TODO: add resolver to cargo metadata
+    /// Use v2 resolver (must match resolver in workspace Cargo.toml)
+    #[structopt(long)]
+    pub v2_resolver: bool,
 }
 
 impl CheckOpts {
     /// Executes this command.
     pub fn exec(self, ctx: &GlobalContext) -> Result<()> {
-        let strat = GuppyCargoCommon::strategy(&self.metadata, ctx.graph);
+        let resolver = if self.v2_resolver {
+            CargoResolverVersion::V2
+        } else {
+            CargoResolverVersion::V1
+        };
+        let strat = GuppyCargoCommon::strategy(&self.metadata, ctx.graph, resolver);
 
         let mut testrunner = TestRunner::new(Config {
             cases: self.cases,

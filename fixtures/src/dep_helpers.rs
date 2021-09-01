@@ -112,7 +112,7 @@ pub(crate) fn assert_deps_internal(
             (
                 link.dep_name(),
                 link.resolved_name().to_string(),
-                desc.variable_metadata(&link).id(),
+                desc.variable_metadata(link).id(),
             )
         })
         .collect();
@@ -135,7 +135,7 @@ pub(crate) fn assert_deps_internal(
         msg, desc.direction_desc, desc.known_desc
     );
     for actual_dep in &actual_deps {
-        known_details.assert_metadata(desc.known_metadata(&actual_dep), &known_msg);
+        known_details.assert_metadata(desc.known_metadata(actual_dep), &known_msg);
         // XXX maybe compare version requirements?
     }
 }

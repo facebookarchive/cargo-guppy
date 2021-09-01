@@ -37,7 +37,7 @@ impl PlatformSummary {
     ///
     /// Returns an error if this is a custom platform. Serializing custom platforms is currently
     /// unsupported.
-    pub fn new(platform: &Platform<'_>) -> Result<Self, Error> {
+    pub fn new(platform: &Platform) -> Result<Self, Error> {
         if platform.is_custom() {
             return Err(Error::CustomPlatformSummary);
         };
@@ -51,7 +51,7 @@ impl PlatformSummary {
     /// Converts `self` to a `Platform`.
     ///
     /// Returns an `Error` if the platform was unknown.
-    pub fn to_platform(&self) -> Result<Platform<'static>, Error> {
+    pub fn to_platform(&self) -> Result<Platform, Error> {
         let mut platform = Platform::new(&self.triple, self.target_features.to_target_features())?;
         platform.add_flags(self.flags.iter().cloned());
         Ok(platform)

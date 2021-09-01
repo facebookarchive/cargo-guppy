@@ -43,7 +43,7 @@ impl PackagesAndFeatures {
 
 /// Generates a random, known target triple that can be understood by both cargo and guppy, or
 /// `None`.
-pub fn triple_strategy() -> impl Strategy<Value = Option<&'static str>> {
+pub fn triple_strategy() -> impl Strategy<Value = Option<String>> {
     let platform_strategy = Platform::filtered_strategy(
         |triple| {
             // Filter out Apple platforms because rustc requires the Apple SDKs to be set up for
@@ -55,6 +55,6 @@ pub fn triple_strategy() -> impl Strategy<Value = Option<&'static str>> {
     prop_oneof![
         // 25% chance to generate None, 75% to generate a particular platform
         1 => Just(None),
-        3 => platform_strategy.prop_map(|platform| Some(platform.triple())),
+        3 => platform_strategy.prop_map(|platform| Some(platform.triple().to_owned())),
     ]
 }

@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::debug_ignore::DebugIgnore;
 use crate::{
     graph::{
         feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet},
@@ -175,7 +176,7 @@ pub fn feature_id_filter<'g: 'a, 'a>(
 /// `FeatureGraph`, or through `PackageQuery::to_feature_query`.
 #[derive(Clone, Debug)]
 pub struct FeatureQuery<'g> {
-    pub(super) graph: FeatureGraph<'g>,
+    pub(super) graph: DebugIgnore<FeatureGraph<'g>>,
     pub(in crate::graph) params: QueryParams<FeatureGraphSpec>,
 }
 
@@ -220,7 +221,7 @@ impl<'g> FeatureGraph<'g> {
     ) -> Result<FeatureQuery<'g>, Error> {
         let feature_ids = feature_ids.into_iter().map(|feature_id| feature_id.into());
         Ok(FeatureQuery {
-            graph: *self,
+            graph: DebugIgnore(*self),
             params: QueryParams::Forward(self.feature_ixs(feature_ids)?),
         })
     }
@@ -234,7 +235,7 @@ impl<'g> FeatureGraph<'g> {
     ) -> Result<FeatureQuery<'g>, Error> {
         let feature_ids = feature_ids.into_iter().map(|feature_id| feature_id.into());
         Ok(FeatureQuery {
-            graph: *self,
+            graph: DebugIgnore(*self),
             params: QueryParams::Reverse(self.feature_ixs(feature_ids)?),
         })
     }
@@ -249,7 +250,7 @@ impl<'g> FeatureGraph<'g> {
             DependencyDirection::Reverse => QueryParams::Reverse(feature_ixs),
         };
         FeatureQuery {
-            graph: *self,
+            graph: DebugIgnore(*self),
             params,
         }
     }

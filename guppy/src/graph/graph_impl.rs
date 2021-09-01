@@ -1852,7 +1852,7 @@ impl<'g> EnabledStatus<'g> {
     ///
     /// Returns `Unknown` if the result was unknown, which may happen if the platform's target
     /// features are unknown.
-    pub fn required_on(&self, platform: &Platform<'_>) -> EnabledTernary {
+    pub fn required_on(&self, platform: &Platform) -> EnabledTernary {
         self.required.enabled_on(platform)
     }
 
@@ -1865,7 +1865,7 @@ impl<'g> EnabledStatus<'g> {
     ///
     /// Returns `Unknown` if the result was unknown, which may happen if the platform's target
     /// features are unknown.
-    pub fn enabled_on(&self, platform: &Platform<'_>) -> EnabledTernary {
+    pub fn enabled_on(&self, platform: &Platform) -> EnabledTernary {
         let required = self.required.enabled_on(platform);
         let optional = self.optional.enabled_on(platform);
 
@@ -1946,7 +1946,7 @@ impl<'g> PlatformStatus<'g> {
     }
 
     /// Evaluates whether this dependency is enabled on the given platform.
-    pub fn enabled_on(&self, platform: &Platform<'_>) -> EnabledTernary {
+    pub fn enabled_on(&self, platform: &Platform) -> EnabledTernary {
         match self {
             PlatformStatus::Never => EnabledTernary::Disabled,
             PlatformStatus::Always => EnabledTernary::Enabled,
@@ -2013,14 +2013,14 @@ impl EnabledTernary {
 /// in the Cargo reference.
 #[derive(Copy, Clone, Debug)]
 pub struct PlatformEval<'g> {
-    specs: &'g [TargetSpec<'static>],
+    specs: &'g [TargetSpec],
 }
 
 assert_covariant!(PlatformEval);
 
 impl<'g> PlatformEval<'g> {
     /// Runs this evaluator against the given platform.
-    pub fn eval(&self, platform: &Platform<'_>) -> EnabledTernary {
+    pub fn eval(&self, platform: &Platform) -> EnabledTernary {
         let mut res = EnabledTernary::Disabled;
         for spec in self.specs.iter() {
             let matches = spec.eval(platform);
@@ -2100,7 +2100,7 @@ impl DepRequiredOrOptional {
 pub(crate) enum PlatformStatusImpl {
     Always,
     // Empty vector means never.
-    Specs(Vec<TargetSpec<'static>>),
+    Specs(Vec<TargetSpec>),
 }
 
 impl PlatformStatusImpl {

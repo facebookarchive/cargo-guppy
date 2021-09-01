@@ -60,7 +60,7 @@ impl QueryOptions {
             // cases are passing workspace members as the root set, which won't be
             // duplicated.
             let root_set = self.roots.iter().map(|s| s.as_str()).collect();
-            Ok(pkg_graph.query_directed(names_to_ids(&pkg_graph, root_set), self.direction)?)
+            Ok(pkg_graph.query_directed(names_to_ids(pkg_graph, root_set), self.direction)?)
         } else {
             ensure!(
                 self.direction == DependencyDirection::Forward,
@@ -126,12 +126,10 @@ impl FilterOptions {
         let omitted_package_ids: HashSet<_> =
             self.base_opts.omitted_package_ids(pkg_graph).collect();
 
-        let platform = if let Some(ref target) = self.target {
+        let platform = self.target.as_ref().map(|target| {
             // The features are unknown.
-            Some(Platform::new(target, TargetFeatures::Unknown).unwrap())
-        } else {
-            None
-        };
+            Platform::new(target, TargetFeatures::Unknown).unwrap()
+        });
 
         move |_, link| {
             // filter by the kind of dependency (--kind)

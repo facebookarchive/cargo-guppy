@@ -211,7 +211,7 @@ impl error::Error for TomlOutError {
 }
 
 pub(crate) fn write_toml(
-    builder: &HakariBuilder<'_, '_>,
+    builder: &HakariBuilder<'_>,
     output_map: &OutputMap<'_>,
     options: &TomlOptions,
     mut out: impl fmt::Write,
@@ -404,9 +404,7 @@ impl<'a> VersionDisplay<'a> {
 
 impl<'a> fmt::Display for VersionDisplay<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO: semver's VersionReq appears to parse build metadata as prerelease. That's probably
-        // wrong. Double-check upstream, and skip outputting build metadata for now.
-        if self.exact_versions || self.version.is_prerelease() {
+        if self.exact_versions || !self.version.pre.is_empty() {
             // Preserve the version exactly.
             write!(f, "{}", self.version)
         } else if self.version.major >= 1 {

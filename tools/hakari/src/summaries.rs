@@ -56,7 +56,7 @@ impl HakariBuilderSummary {
     ///
     /// Returns an error if there are any custom platforms. Serializing custom platforms is
     /// currently unsupported.
-    pub fn new(builder: &HakariBuilder<'_, '_>) -> Result<Self, TargetSpecError> {
+    pub fn new(builder: &HakariBuilder<'_>) -> Result<Self, TargetSpecError> {
         Ok(Self {
             hakari_package: builder
                 .hakari_package()
@@ -90,7 +90,7 @@ impl HakariBuilderSummary {
     pub fn to_hakari_builder<'g>(
         &self,
         graph: &'g PackageGraph,
-    ) -> Result<HakariBuilder<'g, 'static>, guppy::Error> {
+    ) -> Result<HakariBuilder<'g>, guppy::Error> {
         HakariBuilder::from_summary(graph, self)
     }
 
@@ -133,7 +133,7 @@ impl HakariBuilderSummary {
     }
 }
 
-impl<'g, 'a> HakariBuilder<'g, 'a> {
+impl<'g> HakariBuilder<'g> {
     /// Converts this `HakariBuilder` to a serializable summary.
     ///
     /// Requires the `summaries` feature to be enabled.

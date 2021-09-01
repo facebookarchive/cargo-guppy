@@ -73,7 +73,7 @@ impl<'g> FeatureSet<'g> {
     pub(super) fn new(query: FeatureQuery<'g>) -> Self {
         let graph = query.graph;
         Self {
-            graph: DebugIgnore(graph),
+            graph,
             core: ResolveCore::new(graph.dep_graph(), query.params),
         }
     }
@@ -85,7 +85,7 @@ impl<'g> FeatureSet<'g> {
         let graph = query.graph;
         let params = query.params.clone();
         Self {
-            graph: DebugIgnore(graph),
+            graph,
             core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge| {
                 match graph.edge_to_cross_link(
                     edge.source(),

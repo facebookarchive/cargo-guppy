@@ -170,7 +170,7 @@ impl Prop010Resolver {
 
     /// Returns true if the given link is accepted by this resolver.
     pub fn accept_link(&self, link: PackageLink<'_>) -> bool {
-        self.included_edges.is_visited(&link.edge_ix())
+        self.included_edges.is_visited(&link.edge_ix().index())
     }
 }
 
