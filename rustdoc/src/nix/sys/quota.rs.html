@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.0/src/sys/quota.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>quota.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.1/src/sys/quota.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>quota.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../nix/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../nix/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -276,7 +275,7 @@
 <span id="273">273</span>
 <span id="274">274</span>
 <span id="275">275</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="doccomment">//! Set and configure disk quotas for users, groups, or projects.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Examples</span>
@@ -291,23 +290,23 @@
 <span class="doccomment">//! dqblk.set_blocks_soft_limit(8000);</span>
 <span class="doccomment">//! quotactl_set(QuotaType::USRQUOTA, &quot;/dev/sda1&quot;, 50, &amp;dqblk, QuotaValidFlags::QIF_BLIMITS);</span>
 <span class="doccomment">//! ```</span>
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">default</span>::<span class="ident">Default</span>;
+<span class="kw">use</span> <span class="ident">std::default::Default</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">mem</span>, <span class="ident">ptr</span>};
 <span class="kw">use</span> <span class="ident">libc</span>::{<span class="self">self</span>, <span class="ident">c_int</span>, <span class="ident">c_char</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="prelude-ty">Result</span>, <span class="ident">NixPath</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">errno</span>::<span class="ident">Errno</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::errno::Errno</span>;
 
 <span class="kw">struct</span> <span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd</span>, <span class="ident">QuotaType</span>);
 
 <span class="kw">impl</span> <span class="ident">QuotaCmd</span> {
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_unsafe</span>)]</span>
     <span class="kw">fn</span> <span class="ident">as_int</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c_int</span> {
-        <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">QCMD</span>(<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">i32</span>, <span class="self">self</span>.<span class="number">1</span> <span class="kw">as</span> <span class="ident">i32</span>) }
+        <span class="kw">unsafe</span> { <span class="ident">libc::QCMD</span>(<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">i32</span>, <span class="self">self</span>.<span class="number">1</span> <span class="kw">as</span> <span class="ident">i32</span>) }
     }
 }
 
 <span class="comment">// linux quota version &gt;= 2</span>
-<span class="macro">libc_enum</span><span class="macro">!</span>{
+<span class="macro">libc_enum!</span>{
     <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">i32</span>)]</span>
     <span class="kw">enum</span> <span class="ident">QuotaSubCmd</span> {
         <span class="ident">Q_SYNC</span>,
@@ -318,7 +317,7 @@
     }
 }
 
-<span class="macro">libc_enum</span><span class="macro">!</span>{
+<span class="macro">libc_enum!</span>{
     <span class="doccomment">/// The scope of the quota.</span>
     <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">i32</span>)]</span>
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">QuotaType</span> {
@@ -329,7 +328,7 @@
     }
 }
 
-<span class="macro">libc_enum</span><span class="macro">!</span>{
+<span class="macro">libc_enum!</span>{
     <span class="doccomment">/// The type of quota format to use.</span>
     <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">i32</span>)]</span>
     <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">QuotaFmt</span> {
@@ -346,7 +345,7 @@
     }
 }
 
-<span class="macro">libc_bitflags</span><span class="macro">!</span>(
+<span class="macro">libc_bitflags!</span>(
     <span class="doccomment">/// Indicates the quota fields that are valid to read from.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QuotaValidFlags</span>: <span class="ident">u32</span> {
@@ -376,11 +375,11 @@
 <span class="doccomment">/// Wrapper type for `if_dqblk`</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Dqblk</span>(<span class="ident">libc</span>::<span class="ident">dqblk</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Dqblk</span>(<span class="ident">libc::dqblk</span>);
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Dqblk</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Dqblk</span> {
-        <span class="ident">Dqblk</span>(<span class="ident">libc</span>::<span class="ident">dqblk</span> {
+        <span class="ident">Dqblk</span>(<span class="ident">libc::dqblk</span> {
             <span class="ident">dqb_bhardlimit</span>: <span class="number">0</span>,
             <span class="ident">dqb_bsoftlimit</span>: <span class="number">0</span>,
             <span class="ident">dqb_curspace</span>: <span class="number">0</span>,
@@ -397,8 +396,8 @@
 <span class="kw">impl</span> <span class="ident">Dqblk</span> {
     <span class="doccomment">/// The absolute limit on disk quota blocks allocated.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_hard_limit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_BLIMITS</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_BLIMITS</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_bhardlimit</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -412,8 +411,8 @@
 
     <span class="doccomment">/// Preferred limit on disk quota blocks</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_soft_limit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_BLIMITS</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_BLIMITS</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_bsoftlimit</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -427,8 +426,8 @@
 
     <span class="doccomment">/// Current occupied space (bytes).</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">occupied_space</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_SPACE</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_SPACE</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_curspace</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -437,8 +436,8 @@
 
     <span class="doccomment">/// Maximum number of allocated inodes.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inodes_hard_limit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_ILIMITS</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_ILIMITS</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_ihardlimit</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -452,8 +451,8 @@
 
     <span class="doccomment">/// Preferred inode limit</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inodes_soft_limit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_ILIMITS</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_ILIMITS</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_isoftlimit</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -467,8 +466,8 @@
 
     <span class="doccomment">/// Current number of allocated inodes.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocated_inodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_INODES</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_INODES</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_curinodes</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -477,8 +476,8 @@
 
     <span class="doccomment">/// Time limit for excessive disk use.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_time_limit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_BTIME</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_BTIME</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_btime</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -492,8 +491,8 @@
 
     <span class="doccomment">/// Time limit for excessive files.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inode_time_limit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags</span>::<span class="ident">from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
-        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags</span>::<span class="ident">QIF_ITIME</span>) {
+        <span class="kw">let</span> <span class="ident">valid_fields</span> <span class="op">=</span> <span class="ident">QuotaValidFlags::from_bits_truncate</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span>);
+        <span class="kw">if</span> <span class="ident">valid_fields</span>.<span class="ident">contains</span>(<span class="ident">QuotaValidFlags::QIF_ITIME</span>) {
             <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">dqb_itime</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -508,13 +507,13 @@
 
 <span class="kw">fn</span> <span class="ident">quotactl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">cmd</span>: <span class="ident">QuotaCmd</span>, <span class="ident">special</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">P</span><span class="op">&gt;</span>, <span class="ident">id</span>: <span class="ident">c_int</span>, <span class="ident">addr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
-        <span class="ident">Errno</span>::<span class="ident">clear</span>();
+        <span class="ident">Errno::clear</span>();
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">special</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">dev</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">dev</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">libc</span>::<span class="ident">quotactl</span>(<span class="ident">cmd</span>.<span class="ident">as_int</span>(), <span class="ident">path</span>.<span class="ident">as_ptr</span>(), <span class="ident">id</span>, <span class="ident">addr</span>)),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">libc</span>::<span class="ident">quotactl</span>(<span class="ident">cmd</span>.<span class="ident">as_int</span>(), <span class="ident">ptr</span>::<span class="ident">null</span>(), <span class="ident">id</span>, <span class="ident">addr</span>)),
+            <span class="prelude-val">Some</span>(<span class="ident">dev</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">dev</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">libc::quotactl</span>(<span class="ident">cmd</span>.<span class="ident">as_int</span>(), <span class="ident">path</span>.<span class="ident">as_ptr</span>(), <span class="ident">id</span>, <span class="ident">addr</span>)),
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">libc::quotactl</span>(<span class="ident">cmd</span>.<span class="ident">as_int</span>(), <span class="ident">ptr::null</span>(), <span class="ident">id</span>, <span class="ident">addr</span>)),
         }<span class="question-mark">?</span>;
 
-        <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
+        <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
     }
 }
 
@@ -523,26 +522,26 @@
     <span class="ident">quota_file</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path_copy</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">to_bytes_with_nul</span>().<span class="ident">to_owned</span>();
         <span class="kw">let</span> <span class="ident">p</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span> <span class="op">=</span> <span class="ident">path_copy</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>;
-        <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd</span>::<span class="ident">Q_QUOTAON</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="ident">format</span> <span class="kw">as</span> <span class="ident">c_int</span>, <span class="ident">p</span>)
+        <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd::Q_QUOTAON</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="ident">format</span> <span class="kw">as</span> <span class="ident">c_int</span>, <span class="ident">p</span>)
     })<span class="question-mark">?</span>
 }
 
 <span class="doccomment">/// Disable disk quotas for a block device.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">quotactl_off</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">which</span>: <span class="ident">QuotaType</span>, <span class="ident">special</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd</span>::<span class="ident">Q_QUOTAOFF</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="number">0</span>, <span class="ident">ptr</span>::<span class="ident">null_mut</span>())
+    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd::Q_QUOTAOFF</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="number">0</span>, <span class="ident">ptr::null_mut</span>())
 }
 
 <span class="doccomment">/// Update the on-disk copy of quota usages for a filesystem.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// If `special` is `None`, then all file systems with active quotas are sync&#39;d.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">quotactl_sync</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">which</span>: <span class="ident">QuotaType</span>, <span class="ident">special</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">P</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd</span>::<span class="ident">Q_SYNC</span>, <span class="ident">which</span>), <span class="ident">special</span>, <span class="number">0</span>, <span class="ident">ptr</span>::<span class="ident">null_mut</span>())
+    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd::Q_SYNC</span>, <span class="ident">which</span>), <span class="ident">special</span>, <span class="number">0</span>, <span class="ident">ptr::null_mut</span>())
 }
 
 <span class="doccomment">/// Get disk quota limits and current usage for the given user/group id.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">quotactl_get</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">which</span>: <span class="ident">QuotaType</span>, <span class="ident">special</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">id</span>: <span class="ident">c_int</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Dqblk</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dqblk</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">MaybeUninit</span>::<span class="ident">uninit</span>();
-    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd</span>::<span class="ident">Q_GETQUOTA</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="ident">id</span>, <span class="ident">dqblk</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dqblk</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit::uninit</span>();
+    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd::Q_GETQUOTA</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="ident">id</span>, <span class="ident">dqblk</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(<span class="kw">unsafe</span>{ <span class="ident">Dqblk</span>(<span class="ident">dqblk</span>.<span class="ident">assume_init</span>())})
 }
 
@@ -550,8 +549,7 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">quotactl_set</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">which</span>: <span class="ident">QuotaType</span>, <span class="ident">special</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">id</span>: <span class="ident">c_int</span>, <span class="ident">dqblk</span>: <span class="kw-2">&amp;</span><span class="ident">Dqblk</span>, <span class="ident">fields</span>: <span class="ident">QuotaValidFlags</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dqblk_copy</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">dqblk</span>;
     <span class="ident">dqblk_copy</span>.<span class="number">0</span>.<span class="ident">dqb_valid</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">bits</span>();
-    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd</span>::<span class="ident">Q_SETQUOTA</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">dqblk_copy</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>)
+    <span class="ident">quotactl</span>(<span class="ident">QuotaCmd</span>(<span class="ident">QuotaSubCmd::Q_SETQUOTA</span>, <span class="ident">which</span>), <span class="prelude-val">Some</span>(<span class="ident">special</span>), <span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">dqblk_copy</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>)
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nix"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nix" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>

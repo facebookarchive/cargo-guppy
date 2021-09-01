@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-core-1.9.0/src/registry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>registry.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/rayon-core-1.9.1/src/registry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>registry.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../rayon_core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../rayon_core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -922,36 +921,31 @@
 <span id="919">919</span>
 <span id="920">920</span>
 <span id="921">921</span>
-<span id="922">922</span>
-<span id="923">923</span>
-<span id="924">924</span>
-<span id="925">925</span>
-</pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">job</span>::{<span class="ident">JobFifo</span>, <span class="ident">JobRef</span>, <span class="ident">StackJob</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">latch</span>::{<span class="ident">AsCoreLatch</span>, <span class="ident">CoreLatch</span>, <span class="ident">CountLatch</span>, <span class="ident">Latch</span>, <span class="ident">LockLatch</span>, <span class="ident">SpinLatch</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">log</span>::<span class="ident">Event</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">log</span>::<span class="ident">Logger</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sleep</span>::<span class="ident">Sleep</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">unwind</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">util</span>::<span class="ident">leak</span>;
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::job</span>::{<span class="ident">JobFifo</span>, <span class="ident">JobRef</span>, <span class="ident">StackJob</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::latch</span>::{<span class="ident">AsCoreLatch</span>, <span class="ident">CoreLatch</span>, <span class="ident">CountLatch</span>, <span class="ident">Latch</span>, <span class="ident">LockLatch</span>, <span class="ident">SpinLatch</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::log::Event</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::log::Logger</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sleep::Sleep</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::unwind</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">ErrorKind</span>, <span class="ident">ExitHandler</span>, <span class="ident">PanicHandler</span>, <span class="ident">StartHandler</span>, <span class="ident">ThreadPoolBuildError</span>, <span class="ident">ThreadPoolBuilder</span>,
 };
 <span class="kw">use</span> <span class="ident">crossbeam_deque</span>::{<span class="ident">Injector</span>, <span class="ident">Steal</span>, <span class="ident">Stealer</span>, <span class="ident">Worker</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">any</span>::<span class="ident">Any</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cell</span>::<span class="ident">Cell</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">hash_map</span>::<span class="ident">DefaultHasher</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">hash</span>::<span class="ident">Hasher</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>;
+<span class="kw">use</span> <span class="ident">std::any::Any</span>;
+<span class="kw">use</span> <span class="ident">std::cell::Cell</span>;
+<span class="kw">use</span> <span class="ident">std::collections::hash_map::DefaultHasher</span>;
+<span class="kw">use</span> <span class="ident">std::fmt</span>;
+<span class="kw">use</span> <span class="ident">std::hash::Hasher</span>;
+<span class="kw">use</span> <span class="ident">std::io</span>;
+<span class="kw">use</span> <span class="ident">std::mem</span>;
+<span class="kw">use</span> <span class="ident">std::ptr</span>;
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">ATOMIC_USIZE_INIT</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Once</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">thread</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">usize</span>;
+<span class="kw">use</span> <span class="ident">std::sync::atomic::ATOMIC_USIZE_INIT</span>;
+<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
+<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">Once</span>};
+<span class="kw">use</span> <span class="ident">std::thread</span>;
+<span class="kw">use</span> <span class="ident">std::usize</span>;
 
 <span class="doccomment">/// Thread builder used for customization via</span>
 <span class="doccomment">/// [`ThreadPoolBuilder::spawn_handler`](struct.ThreadPoolBuilder.html#method.spawn_handler).</span>
@@ -971,7 +965,7 @@
 
     <span class="doccomment">/// Gets the string that was specified by `ThreadPoolBuilder::name()`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">name</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="ident">String</span>::<span class="ident">as_str</span>)
+        <span class="self">self</span>.<span class="ident">name</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="ident">String::as_str</span>)
     }
 
     <span class="doccomment">/// Gets the value that was specified by `ThreadPoolBuilder::stack_size()`.</span>
@@ -986,8 +980,8 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">ThreadBuilder</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">ThreadBuilder</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;ThreadBuilder&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;pool&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">registry</span>.<span class="ident">id</span>())
             .<span class="ident">field</span>(<span class="string">&quot;index&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">index</span>)
@@ -1002,11 +996,11 @@
 <span class="doccomment">/// This trait is pub-in-private -- E0445 forces us to make it public,</span>
 <span class="doccomment">/// but we don&#39;t actually want to expose these details in the API.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ThreadSpawn</span> {
-    <span class="macro">private_decl</span><span class="macro">!</span> {}
+    <span class="macro">private_decl!</span> {}
 
     <span class="doccomment">/// Spawn a thread with the `ThreadBuilder` parameters, and then</span>
     <span class="doccomment">/// call `ThreadBuilder::run()`.</span>
-    <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">thread</span>: <span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">thread</span>: <span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
 }
 
 <span class="doccomment">/// Spawns a thread in the &quot;normal&quot; way with `std::thread::Builder`.</span>
@@ -1017,10 +1011,10 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DefaultSpawn</span>;
 
 <span class="kw">impl</span> <span class="ident">ThreadSpawn</span> <span class="kw">for</span> <span class="ident">DefaultSpawn</span> {
-    <span class="macro">private_impl</span><span class="macro">!</span> {}
+    <span class="macro">private_impl!</span> {}
 
-    <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">thread</span>: <span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">Builder</span>::<span class="ident">new</span>();
+    <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">thread</span>: <span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">thread::Builder::new</span>();
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">name</span>) <span class="op">=</span> <span class="ident">thread</span>.<span class="ident">name</span>() {
             <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">name</span>(<span class="ident">name</span>.<span class="ident">to_owned</span>());
         }
@@ -1041,7 +1035,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> <span class="ident">CustomSpawn</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
+    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
 {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">spawn</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">CustomSpawn</span>(<span class="ident">spawn</span>)
@@ -1050,12 +1044,12 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> <span class="ident">ThreadSpawn</span> <span class="kw">for</span> <span class="ident">CustomSpawn</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
+    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
 {
-    <span class="macro">private_impl</span><span class="macro">!</span> {}
+    <span class="macro">private_impl!</span> {}
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">thread</span>: <span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">thread</span>: <span class="ident">ThreadBuilder</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         (<span class="self">self</span>.<span class="number">0</span>)(<span class="ident">thread</span>)
     }
 }
@@ -1088,15 +1082,15 @@
 <span class="doccomment">/// ////////////////////////////////////////////////////////////////////////</span>
 <span class="doccomment">/// Initialization</span>
 
-<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">THE_REGISTRY</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-<span class="kw">static</span> <span class="ident">THE_REGISTRY_SET</span>: <span class="ident">Once</span> <span class="op">=</span> <span class="ident">Once</span>::<span class="ident">new</span>();
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">THE_REGISTRY</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+<span class="kw">static</span> <span class="ident">THE_REGISTRY_SET</span>: <span class="ident">Once</span> <span class="op">=</span> <span class="ident">Once::new</span>();
 
 <span class="doccomment">/// Starts the worker threads (if that has not already happened). If</span>
 <span class="doccomment">/// initialization has not already occurred, use the default</span>
 <span class="doccomment">/// configuration.</span>
-<span class="kw">fn</span> <span class="ident">global_registry</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span> {
-    <span class="ident">set_global_registry</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Registry</span>::<span class="ident">new</span>(<span class="ident">ThreadPoolBuilder</span>::<span class="ident">new</span>()))
-        .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="kw">unsafe</span> { <span class="ident">THE_REGISTRY</span>.<span class="ident">ok_or</span>(<span class="ident">err</span>) })
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">global_registry</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span> {
+    <span class="ident">set_global_registry</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Registry::new</span>(<span class="ident">ThreadPoolBuilder::new</span>()))
+        .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="kw">unsafe</span> { <span class="ident">THE_REGISTRY</span>.<span class="ident">as_ref</span>().<span class="ident">ok_or</span>(<span class="ident">err</span>) })
         .<span class="ident">expect</span>(<span class="string">&quot;The global thread pool has not been initialized.&quot;</span>)
 }
 
@@ -1108,7 +1102,7 @@
 <span class="kw">where</span>
     <span class="ident">S</span>: <span class="ident">ThreadSpawn</span>,
 {
-    <span class="ident">set_global_registry</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Registry</span>::<span class="ident">new</span>(<span class="ident">builder</span>))
+    <span class="ident">set_global_registry</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Registry::new</span>(<span class="ident">builder</span>))
 }
 
 <span class="doccomment">/// Starts the worker threads (if that has not already happened)</span>
@@ -1117,18 +1111,15 @@
 <span class="kw">where</span>
     <span class="ident">F</span>: <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span>, <span class="ident">ThreadPoolBuildError</span><span class="op">&gt;</span>,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="prelude-val">Err</span>(<span class="ident">ThreadPoolBuildError</span>::<span class="ident">new</span>(
-        <span class="ident">ErrorKind</span>::<span class="ident">GlobalPoolAlreadyInitialized</span>,
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="prelude-val">Err</span>(<span class="ident">ThreadPoolBuildError::new</span>(
+        <span class="ident">ErrorKind::GlobalPoolAlreadyInitialized</span>,
     ));
+
     <span class="ident">THE_REGISTRY_SET</span>.<span class="ident">call_once</span>(<span class="op">|</span><span class="op">|</span> {
-        <span class="ident">result</span> <span class="op">=</span> <span class="ident">registry</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">registry</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">leak</span>(<span class="ident">registry</span>);
-            <span class="kw">unsafe</span> {
-                <span class="ident">THE_REGISTRY</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">registry</span>);
-            }
-            <span class="ident">registry</span>
-        });
+        <span class="ident">result</span> <span class="op">=</span> <span class="ident">registry</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">registry</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">THE_REGISTRY</span>.<span class="ident">get_or_insert</span>(<span class="ident">registry</span>) })
     });
+
     <span class="ident">result</span>
 }
 
@@ -1153,9 +1144,9 @@
         <span class="kw">let</span> (<span class="ident">workers</span>, <span class="ident">stealers</span>): (<span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>) <span class="op">=</span> (<span class="number">0</span>..<span class="ident">n_threads</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">worker</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">breadth_first</span> {
-                    <span class="ident">Worker</span>::<span class="ident">new_fifo</span>()
+                    <span class="ident">Worker::new_fifo</span>()
                 } <span class="kw">else</span> {
-                    <span class="ident">Worker</span>::<span class="ident">new_lifo</span>()
+                    <span class="ident">Worker::new_lifo</span>()
                 };
 
                 <span class="kw">let</span> <span class="ident">stealer</span> <span class="op">=</span> <span class="ident">worker</span>.<span class="ident">stealer</span>();
@@ -1163,13 +1154,13 @@
             })
             .<span class="ident">unzip</span>();
 
-        <span class="kw">let</span> <span class="ident">logger</span> <span class="op">=</span> <span class="ident">Logger</span>::<span class="ident">new</span>(<span class="ident">n_threads</span>);
-        <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Registry</span> {
+        <span class="kw">let</span> <span class="ident">logger</span> <span class="op">=</span> <span class="ident">Logger::new</span>(<span class="ident">n_threads</span>);
+        <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">Registry</span> {
             <span class="ident">logger</span>: <span class="ident">logger</span>.<span class="ident">clone</span>(),
-            <span class="ident">thread_infos</span>: <span class="ident">stealers</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="ident">ThreadInfo</span>::<span class="ident">new</span>).<span class="ident">collect</span>(),
-            <span class="ident">sleep</span>: <span class="ident">Sleep</span>::<span class="ident">new</span>(<span class="ident">logger</span>, <span class="ident">n_threads</span>),
-            <span class="ident">injected_jobs</span>: <span class="ident">Injector</span>::<span class="ident">new</span>(),
-            <span class="ident">terminate_count</span>: <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="number">1</span>),
+            <span class="ident">thread_infos</span>: <span class="ident">stealers</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="ident">ThreadInfo::new</span>).<span class="ident">collect</span>(),
+            <span class="ident">sleep</span>: <span class="ident">Sleep::new</span>(<span class="ident">logger</span>, <span class="ident">n_threads</span>),
+            <span class="ident">injected_jobs</span>: <span class="ident">Injector::new</span>(),
+            <span class="ident">terminate_count</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">1</span>),
             <span class="ident">panic_handler</span>: <span class="ident">builder</span>.<span class="ident">take_panic_handler</span>(),
             <span class="ident">start_handler</span>: <span class="ident">builder</span>.<span class="ident">take_start_handler</span>(),
             <span class="ident">exit_handler</span>: <span class="ident">builder</span>.<span class="ident">take_exit_handler</span>(),
@@ -1187,19 +1178,19 @@
                 <span class="ident">index</span>,
             };
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">get_spawn_handler</span>().<span class="ident">spawn</span>(<span class="ident">thread</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ThreadPoolBuildError</span>::<span class="ident">new</span>(<span class="ident">ErrorKind</span>::<span class="ident">IOError</span>(<span class="ident">e</span>)));
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ThreadPoolBuildError::new</span>(<span class="ident">ErrorKind::IOError</span>(<span class="ident">e</span>)));
             }
         }
 
         <span class="comment">// Returning normally now, without termination.</span>
-        <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">t1000</span>);
+        <span class="ident">mem::forget</span>(<span class="ident">t1000</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">registry</span>.<span class="ident">clone</span>())
     }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">current</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>();
+            <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>();
             <span class="kw">if</span> <span class="ident">worker_thread</span>.<span class="ident">is_null</span>() {
                 <span class="ident">global_registry</span>().<span class="ident">clone</span>()
             } <span class="kw">else</span> {
@@ -1213,7 +1204,7 @@
     <span class="doccomment">/// avoids incrementing the `Arc`.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">current_num_threads</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
         <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>();
+            <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>();
             <span class="kw">if</span> <span class="ident">worker_thread</span>.<span class="ident">is_null</span>() {
                 <span class="ident">global_registry</span>().<span class="ident">num_threads</span>()
             } <span class="kw">else</span> {
@@ -1225,7 +1216,7 @@
     <span class="doccomment">/// Returns the current `WorkerThread` if it&#39;s part of this `Registry`.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">current_thread</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">WorkerThread</span><span class="op">&gt;</span> {
         <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">worker</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>().<span class="ident">as_ref</span>()<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">worker</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>().<span class="ident">as_ref</span>()<span class="question-mark">?</span>;
             <span class="kw">if</span> <span class="ident">worker</span>.<span class="ident">registry</span>().<span class="ident">id</span>() <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">id</span>() {
                 <span class="prelude-val">Some</span>(<span class="ident">worker</span>)
             } <span class="kw">else</span> {
@@ -1244,7 +1235,7 @@
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">log</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">event</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">crate</span>::<span class="ident">log</span>::<span class="ident">Event</span>) {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">log</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">event</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::log::Event</span>) {
         <span class="self">self</span>.<span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">event</span>)
     }
 
@@ -1257,13 +1248,13 @@
             <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">handler</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// If the customizable panic handler itself panics,</span>
                 <span class="comment">// then we abort.</span>
-                <span class="kw">let</span> <span class="ident">abort_guard</span> <span class="op">=</span> <span class="ident">unwind</span>::<span class="ident">AbortIfPanic</span>;
+                <span class="kw">let</span> <span class="ident">abort_guard</span> <span class="op">=</span> <span class="ident">unwind::AbortIfPanic</span>;
                 <span class="ident">handler</span>(<span class="ident">err</span>);
-                <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">abort_guard</span>);
+                <span class="ident">mem::forget</span>(<span class="ident">abort_guard</span>);
             }
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// Default panic handler aborts.</span>
-                <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">unwind</span>::<span class="ident">AbortIfPanic</span>; <span class="comment">// let this drop.</span>
+                <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">unwind::AbortIfPanic</span>; <span class="comment">// let this drop.</span>
             }
         }
     }
@@ -1297,7 +1288,7 @@
     <span class="doccomment">/// worker thread for the registry, this will push onto the</span>
     <span class="doccomment">/// deque. Else, it will inject from the outside (which is slower).</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">inject_or_push</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">job_ref</span>: <span class="ident">JobRef</span>) {
-        <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>();
+        <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>();
         <span class="kw">unsafe</span> {
             <span class="kw">if</span> <span class="op">!</span><span class="ident">worker_thread</span>.<span class="ident">is_null</span>() <span class="op">&amp;&amp;</span> (<span class="kw-2">*</span><span class="ident">worker_thread</span>).<span class="ident">registry</span>().<span class="ident">id</span>() <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">id</span>() {
                 (<span class="kw-2">*</span><span class="ident">worker_thread</span>).<span class="ident">push</span>(<span class="ident">job_ref</span>);
@@ -1320,8 +1311,8 @@
         <span class="comment">// drops) a `ThreadPool`; and, in that case, they cannot be</span>
         <span class="comment">// calling `inject()` later, since they dropped their</span>
         <span class="comment">// `ThreadPool`.</span>
-        <span class="macro">debug_assert_ne</span><span class="macro">!</span>(
-            <span class="self">self</span>.<span class="ident">terminate_count</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>),
+        <span class="macro">debug_assert_ne!</span>(
+            <span class="self">self</span>.<span class="ident">terminate_count</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>),
             <span class="number">0</span>,
             <span class="string">&quot;inject() sees state.terminate as true&quot;</span>
         );
@@ -1333,7 +1324,7 @@
         }
 
         <span class="self">self</span>.<span class="ident">sleep</span>
-            .<span class="ident">new_injected_jobs</span>(<span class="ident">usize</span>::<span class="ident">MAX</span>, <span class="ident">injected_jobs</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>, <span class="ident">queue_was_empty</span>);
+            .<span class="ident">new_injected_jobs</span>(<span class="ident">usize::MAX</span>, <span class="ident">injected_jobs</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>, <span class="ident">queue_was_empty</span>);
     }
 
     <span class="kw">fn</span> <span class="ident">has_injected_job</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
@@ -1343,14 +1334,14 @@
     <span class="kw">fn</span> <span class="ident">pop_injected_job</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">worker_index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">JobRef</span><span class="op">&gt;</span> {
         <span class="kw">loop</span> {
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">injected_jobs</span>.<span class="ident">steal</span>() {
-                <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">job</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">Steal::Success</span>(<span class="ident">job</span>) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="self">self</span>.<span class="ident">log</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">JobUninjected</span> {
                         <span class="ident">worker</span>: <span class="ident">worker_index</span>,
                     });
                     <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">job</span>);
                 }
-                <span class="ident">Steal</span>::<span class="ident">Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
-                <span class="ident">Steal</span>::<span class="ident">Retry</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                <span class="ident">Steal::Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
+                <span class="ident">Steal::Retry</span> <span class="op">=</span><span class="op">&gt;</span> {}
             }
         }
     }
@@ -1366,7 +1357,7 @@
         <span class="ident">R</span>: <span class="ident">Send</span>,
     {
         <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>();
+            <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>();
             <span class="kw">if</span> <span class="ident">worker_thread</span>.<span class="ident">is_null</span>() {
                 <span class="self">self</span>.<span class="ident">in_worker_cold</span>(<span class="ident">op</span>)
             } <span class="kw">else</span> <span class="kw">if</span> (<span class="kw-2">*</span><span class="ident">worker_thread</span>).<span class="ident">registry</span>().<span class="ident">id</span>() <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">id</span>() {
@@ -1386,15 +1377,15 @@
         <span class="ident">OP</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">WorkerThread</span>, <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span> <span class="op">+</span> <span class="ident">Send</span>,
         <span class="ident">R</span>: <span class="ident">Send</span>,
     {
-        <span class="macro">thread_local</span><span class="macro">!</span>(<span class="kw">static</span> <span class="ident">LOCK_LATCH</span>: <span class="ident">LockLatch</span> <span class="op">=</span> <span class="ident">LockLatch</span>::<span class="ident">new</span>());
+        <span class="macro">thread_local!</span>(<span class="kw">static</span> <span class="ident">LOCK_LATCH</span>: <span class="ident">LockLatch</span> <span class="op">=</span> <span class="ident">LockLatch::new</span>());
 
         <span class="ident">LOCK_LATCH</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> {
             <span class="comment">// This thread isn&#39;t a member of *any* thread pool, so just block.</span>
-            <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">WorkerThread</span>::<span class="ident">current</span>().<span class="ident">is_null</span>());
-            <span class="kw">let</span> <span class="ident">job</span> <span class="op">=</span> <span class="ident">StackJob</span>::<span class="ident">new</span>(
+            <span class="macro">debug_assert!</span>(<span class="ident">WorkerThread::current</span>().<span class="ident">is_null</span>());
+            <span class="kw">let</span> <span class="ident">job</span> <span class="op">=</span> <span class="ident">StackJob::new</span>(
                 <span class="op">|</span><span class="ident">injected</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>();
-                    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">injected</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">worker_thread</span>.<span class="ident">is_null</span>());
+                    <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>();
+                    <span class="macro">assert!</span>(<span class="ident">injected</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">worker_thread</span>.<span class="ident">is_null</span>());
                     <span class="ident">op</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">worker_thread</span>, <span class="bool-val">true</span>)
                 },
                 <span class="ident">l</span>,
@@ -1417,12 +1408,12 @@
     {
         <span class="comment">// This thread is a member of a different pool, so let it process</span>
         <span class="comment">// other work while waiting for this `op` to complete.</span>
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">current_thread</span>.<span class="ident">registry</span>().<span class="ident">id</span>() <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">id</span>());
-        <span class="kw">let</span> <span class="ident">latch</span> <span class="op">=</span> <span class="ident">SpinLatch</span>::<span class="ident">cross</span>(<span class="ident">current_thread</span>);
-        <span class="kw">let</span> <span class="ident">job</span> <span class="op">=</span> <span class="ident">StackJob</span>::<span class="ident">new</span>(
+        <span class="macro">debug_assert!</span>(<span class="ident">current_thread</span>.<span class="ident">registry</span>().<span class="ident">id</span>() <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">id</span>());
+        <span class="kw">let</span> <span class="ident">latch</span> <span class="op">=</span> <span class="ident">SpinLatch::cross</span>(<span class="ident">current_thread</span>);
+        <span class="kw">let</span> <span class="ident">job</span> <span class="op">=</span> <span class="ident">StackJob::new</span>(
             <span class="op">|</span><span class="ident">injected</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>();
-                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">injected</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">worker_thread</span>.<span class="ident">is_null</span>());
+                <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>();
+                <span class="macro">assert!</span>(<span class="ident">injected</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">worker_thread</span>.<span class="ident">is_null</span>());
                 <span class="ident">op</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">worker_thread</span>, <span class="bool-val">true</span>)
             },
             <span class="ident">latch</span>,
@@ -1453,10 +1444,10 @@
     <span class="doccomment">/// terminate count and is responsible for invoking `terminate()`</span>
     <span class="doccomment">/// when finished.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">increment_terminate_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">previous</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">terminate_count</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">AcqRel</span>);
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">previous</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="string">&quot;registry ref count incremented from zero&quot;</span>);
-        <span class="macro">assert</span><span class="macro">!</span>(
-            <span class="ident">previous</span> <span class="op">!</span><span class="op">=</span> <span class="ident">std</span>::<span class="ident">usize</span>::<span class="ident">MAX</span>,
+        <span class="kw">let</span> <span class="ident">previous</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">terminate_count</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::AcqRel</span>);
+        <span class="macro">debug_assert!</span>(<span class="ident">previous</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>, <span class="string">&quot;registry ref count incremented from zero&quot;</span>);
+        <span class="macro">assert!</span>(
+            <span class="ident">previous</span> <span class="op">!</span><span class="op">=</span> <span class="ident">std::usize::MAX</span>,
             <span class="string">&quot;overflow in registry ref count&quot;</span>
         );
     }
@@ -1465,7 +1456,7 @@
     <span class="doccomment">/// dropped. The worker threads will gradually terminate, once any</span>
     <span class="doccomment">/// extant work is completed.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">terminate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">terminate_count</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">AcqRel</span>) <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">terminate_count</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering::AcqRel</span>) <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
             <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">thread_info</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">thread_infos</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
                 <span class="ident">thread_info</span>.<span class="ident">terminate</span>.<span class="ident">set_and_tickle_one</span>(<span class="self">self</span>, <span class="ident">i</span>);
             }
@@ -1509,9 +1500,9 @@
 <span class="kw">impl</span> <span class="ident">ThreadInfo</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">stealer</span>: <span class="ident">Stealer</span><span class="op">&lt;</span><span class="ident">JobRef</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ThreadInfo</span> {
         <span class="ident">ThreadInfo</span> {
-            <span class="ident">primed</span>: <span class="ident">LockLatch</span>::<span class="ident">new</span>(),
-            <span class="ident">stopped</span>: <span class="ident">LockLatch</span>::<span class="ident">new</span>(),
-            <span class="ident">terminate</span>: <span class="ident">CountLatch</span>::<span class="ident">new</span>(),
+            <span class="ident">primed</span>: <span class="ident">LockLatch::new</span>(),
+            <span class="ident">stopped</span>: <span class="ident">LockLatch::new</span>(),
+            <span class="ident">terminate</span>: <span class="ident">CountLatch::new</span>(),
             <span class="ident">stealer</span>,
         }
     }
@@ -1540,16 +1531,16 @@
 <span class="comment">// thread local variable. So it will remain valid at least until the</span>
 <span class="comment">// worker is fully unwound. Using an unsafe pointer avoids the need</span>
 <span class="comment">// for a RefCell&lt;T&gt; etc.</span>
-<span class="macro">thread_local</span><span class="macro">!</span> {
-    <span class="kw">static</span> <span class="ident">WORKER_THREAD_STATE</span>: <span class="ident">Cell</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">WorkerThread</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="ident">ptr</span>::<span class="ident">null</span>());
+<span class="macro">thread_local!</span> {
+    <span class="kw">static</span> <span class="ident">WORKER_THREAD_STATE</span>: <span class="ident">Cell</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">WorkerThread</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Cell::new</span>(<span class="ident">ptr::null</span>());
 }
 
 <span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">WorkerThread</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="comment">// Undo `set_current`</span>
         <span class="ident">WORKER_THREAD_STATE</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> {
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">t</span>.<span class="ident">get</span>().<span class="ident">eq</span>(<span class="kw-2">&amp;</span>(<span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>)));
-            <span class="ident">t</span>.<span class="ident">set</span>(<span class="ident">ptr</span>::<span class="ident">null</span>());
+            <span class="macro">assert!</span>(<span class="ident">t</span>.<span class="ident">get</span>().<span class="ident">eq</span>(<span class="kw-2">&amp;</span>(<span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>)));
+            <span class="ident">t</span>.<span class="ident">set</span>(<span class="ident">ptr::null</span>());
         });
     }
 }
@@ -1560,14 +1551,14 @@
     <span class="doccomment">/// anywhere on the current thread.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">current</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">WorkerThread</span> {
-        <span class="ident">WORKER_THREAD_STATE</span>.<span class="ident">with</span>(<span class="ident">Cell</span>::<span class="ident">get</span>)
+        <span class="ident">WORKER_THREAD_STATE</span>.<span class="ident">with</span>(<span class="ident">Cell::get</span>)
     }
 
     <span class="doccomment">/// Sets `self` as the worker thread index for the current thread.</span>
     <span class="doccomment">/// This is done during worker thread startup.</span>
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set_current</span>(<span class="ident">thread</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">WorkerThread</span>) {
         <span class="ident">WORKER_THREAD_STATE</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> {
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">t</span>.<span class="ident">get</span>().<span class="ident">is_null</span>());
+            <span class="macro">assert!</span>(<span class="ident">t</span>.<span class="ident">get</span>().<span class="ident">is_null</span>());
             <span class="ident">t</span>.<span class="ident">set</span>(<span class="ident">thread</span>);
         });
     }
@@ -1579,7 +1570,7 @@
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">log</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">event</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">crate</span>::<span class="ident">log</span>::<span class="ident">Event</span>) {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">log</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">event</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::log::Event</span>) {
         <span class="self">self</span>.<span class="ident">registry</span>.<span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">event</span>)
     }
 
@@ -1641,7 +1632,7 @@
         <span class="comment">// because otherwise other code in rayon may assume that the</span>
         <span class="comment">// latch has been signaled, and that can lead to random memory</span>
         <span class="comment">// accesses, which would be *very bad*</span>
-        <span class="kw">let</span> <span class="ident">abort_guard</span> <span class="op">=</span> <span class="ident">unwind</span>::<span class="ident">AbortIfPanic</span>;
+        <span class="kw">let</span> <span class="ident">abort_guard</span> <span class="op">=</span> <span class="ident">unwind::AbortIfPanic</span>;
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">idle_state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">registry</span>.<span class="ident">sleep</span>.<span class="ident">start_looking</span>(<span class="self">self</span>.<span class="ident">index</span>, <span class="ident">latch</span>);
         <span class="kw">while</span> <span class="op">!</span><span class="ident">latch</span>.<span class="ident">probe</span>() {
@@ -1674,7 +1665,7 @@
             <span class="ident">worker</span>: <span class="self">self</span>.<span class="ident">index</span>,
             <span class="ident">latch_addr</span>: <span class="ident">latch</span>.<span class="ident">addr</span>(),
         });
-        <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">abort_guard</span>); <span class="comment">// successful execution, do not abort</span>
+        <span class="ident">mem::forget</span>(<span class="ident">abort_guard</span>); <span class="comment">// successful execution, do not abort</span>
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
@@ -1688,7 +1679,7 @@
     <span class="doccomment">/// local work to do.</span>
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">steal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">JobRef</span><span class="op">&gt;</span> {
         <span class="comment">// we only steal when we don&#39;t have any work to do locally</span>
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">local_deque_is_empty</span>());
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">local_deque_is_empty</span>());
 
         <span class="comment">// otherwise, try to steal</span>
         <span class="kw">let</span> <span class="ident">thread_infos</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">registry</span>.<span class="ident">thread_infos</span>.<span class="ident">as_slice</span>();
@@ -1706,15 +1697,15 @@
                 .<span class="ident">find_map</span>(<span class="op">|</span><span class="ident">victim_index</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">victim</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">thread_infos</span>[<span class="ident">victim_index</span>];
                     <span class="kw">match</span> <span class="ident">victim</span>.<span class="ident">stealer</span>.<span class="ident">steal</span>() {
-                        <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">job</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="ident">Steal::Success</span>(<span class="ident">job</span>) <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="self">self</span>.<span class="ident">log</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">JobStolen</span> {
                                 <span class="ident">worker</span>: <span class="self">self</span>.<span class="ident">index</span>,
                                 <span class="ident">victim</span>: <span class="ident">victim_index</span>,
                             });
                             <span class="prelude-val">Some</span>(<span class="ident">job</span>)
                         }
-                        <span class="ident">Steal</span>::<span class="ident">Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-                        <span class="ident">Steal</span>::<span class="ident">Retry</span> <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="ident">Steal::Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+                        <span class="ident">Steal::Retry</span> <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="ident">retry</span> <span class="op">=</span> <span class="bool-val">true</span>;
                             <span class="prelude-val">None</span>
                         }
@@ -1732,12 +1723,12 @@
 <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">main_loop</span>(<span class="ident">worker</span>: <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">JobRef</span><span class="op">&gt;</span>, <span class="ident">registry</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Registry</span><span class="op">&gt;</span>, <span class="ident">index</span>: <span class="ident">usize</span>) {
     <span class="kw">let</span> <span class="ident">worker_thread</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">WorkerThread</span> {
         <span class="ident">worker</span>,
-        <span class="ident">fifo</span>: <span class="ident">JobFifo</span>::<span class="ident">new</span>(),
+        <span class="ident">fifo</span>: <span class="ident">JobFifo::new</span>(),
         <span class="ident">index</span>,
-        <span class="ident">rng</span>: <span class="ident">XorShift64Star</span>::<span class="ident">new</span>(),
+        <span class="ident">rng</span>: <span class="ident">XorShift64Star::new</span>(),
         <span class="ident">registry</span>: <span class="ident">registry</span>.<span class="ident">clone</span>(),
     };
-    <span class="ident">WorkerThread</span>::<span class="ident">set_current</span>(<span class="ident">worker_thread</span>);
+    <span class="ident">WorkerThread::set_current</span>(<span class="ident">worker_thread</span>);
 
     <span class="comment">// let registry know we are ready to do work</span>
     <span class="ident">registry</span>.<span class="ident">thread_infos</span>[<span class="ident">index</span>].<span class="ident">primed</span>.<span class="ident">set</span>();
@@ -1745,12 +1736,12 @@
     <span class="comment">// Worker threads should not panic. If they do, just abort, as the</span>
     <span class="comment">// internal state of the threadpool is corrupted. Note that if</span>
     <span class="comment">// **user code** panics, we should catch that and redirect.</span>
-    <span class="kw">let</span> <span class="ident">abort_guard</span> <span class="op">=</span> <span class="ident">unwind</span>::<span class="ident">AbortIfPanic</span>;
+    <span class="kw">let</span> <span class="ident">abort_guard</span> <span class="op">=</span> <span class="ident">unwind::AbortIfPanic</span>;
 
     <span class="comment">// Inform a user callback that we started a thread.</span>
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">handler</span>) <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">start_handler</span> {
         <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">clone</span>();
-        <span class="kw">match</span> <span class="ident">unwind</span>::<span class="ident">halt_unwinding</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">handler</span>(<span class="ident">index</span>)) {
+        <span class="kw">match</span> <span class="ident">unwind::halt_unwinding</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">handler</span>(<span class="ident">index</span>)) {
             <span class="prelude-val">Ok</span>(()) <span class="op">=</span><span class="op">&gt;</span> {}
             <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">registry</span>.<span class="ident">handle_panic</span>(<span class="ident">err</span>);
@@ -1766,20 +1757,20 @@
     <span class="ident">worker_thread</span>.<span class="ident">wait_until</span>(<span class="ident">my_terminate_latch</span>);
 
     <span class="comment">// Should not be any work left in our queue.</span>
-    <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">worker_thread</span>.<span class="ident">take_local_job</span>().<span class="ident">is_none</span>());
+    <span class="macro">debug_assert!</span>(<span class="ident">worker_thread</span>.<span class="ident">take_local_job</span>().<span class="ident">is_none</span>());
 
     <span class="comment">// let registry know we are done</span>
     <span class="ident">registry</span>.<span class="ident">thread_infos</span>[<span class="ident">index</span>].<span class="ident">stopped</span>.<span class="ident">set</span>();
 
     <span class="comment">// Normal termination, do not abort.</span>
-    <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">abort_guard</span>);
+    <span class="ident">mem::forget</span>(<span class="ident">abort_guard</span>);
 
     <span class="ident">worker_thread</span>.<span class="ident">log</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">ThreadTerminate</span> { <span class="ident">worker</span>: <span class="ident">index</span> });
 
     <span class="comment">// Inform a user callback that we exited a thread.</span>
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">handler</span>) <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">exit_handler</span> {
         <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">clone</span>();
-        <span class="kw">match</span> <span class="ident">unwind</span>::<span class="ident">halt_unwinding</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">handler</span>(<span class="ident">index</span>)) {
+        <span class="kw">match</span> <span class="ident">unwind::halt_unwinding</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">handler</span>(<span class="ident">index</span>)) {
             <span class="prelude-val">Ok</span>(()) <span class="op">=</span><span class="op">&gt;</span> {}
             <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">registry</span>.<span class="ident">handle_panic</span>(<span class="ident">err</span>);
@@ -1800,7 +1791,7 @@
     <span class="ident">R</span>: <span class="ident">Send</span>,
 {
     <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="ident">owner_thread</span> <span class="op">=</span> <span class="ident">WorkerThread</span>::<span class="ident">current</span>();
+        <span class="kw">let</span> <span class="ident">owner_thread</span> <span class="op">=</span> <span class="ident">WorkerThread::current</span>();
         <span class="kw">if</span> <span class="op">!</span><span class="ident">owner_thread</span>.<span class="ident">is_null</span>() {
             <span class="comment">// Perfectly valid to give them a `&amp;T`: this is the</span>
             <span class="comment">// current thread, so we know the data structure won&#39;t be</span>
@@ -1825,21 +1816,21 @@
         <span class="comment">// Any non-zero seed will do -- this uses the hash of a global counter.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">seed</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">while</span> <span class="ident">seed</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hasher</span> <span class="op">=</span> <span class="ident">DefaultHasher</span>::<span class="ident">new</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hasher</span> <span class="op">=</span> <span class="ident">DefaultHasher::new</span>();
             <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
             <span class="kw">static</span> <span class="ident">COUNTER</span>: <span class="ident">AtomicUsize</span> <span class="op">=</span> <span class="ident">ATOMIC_USIZE_INIT</span>;
-            <span class="ident">hasher</span>.<span class="ident">write_usize</span>(<span class="ident">COUNTER</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>));
+            <span class="ident">hasher</span>.<span class="ident">write_usize</span>(<span class="ident">COUNTER</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>));
             <span class="ident">seed</span> <span class="op">=</span> <span class="ident">hasher</span>.<span class="ident">finish</span>();
         }
 
         <span class="ident">XorShift64Star</span> {
-            <span class="ident">state</span>: <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="ident">seed</span>),
+            <span class="ident">state</span>: <span class="ident">Cell::new</span>(<span class="ident">seed</span>),
         }
     }
 
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">x</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">get</span>();
-        <span class="macro">debug_assert_ne</span><span class="macro">!</span>(<span class="ident">x</span>, <span class="number">0</span>);
+        <span class="macro">debug_assert_ne!</span>(<span class="ident">x</span>, <span class="number">0</span>);
         <span class="ident">x</span> <span class="op">^</span><span class="op">=</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">12</span>;
         <span class="ident">x</span> <span class="op">^</span><span class="op">=</span> <span class="ident">x</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">25</span>;
         <span class="ident">x</span> <span class="op">^</span><span class="op">=</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">27</span>;
@@ -1853,5 +1844,4 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon_core"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="rayon_core" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

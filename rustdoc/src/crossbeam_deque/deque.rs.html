@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-deque-0.8.0/src/deque.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>deque.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-deque-0.8.1/src/deque.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>deque.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../crossbeam_deque/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../crossbeam_deque/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1996,23 +1995,68 @@
 <span id="1993">1993</span>
 <span id="1994">1994</span>
 <span id="1995">1995</span>
-</pre><div class="example-wrap"><pre class="rust ">
-<span class="comment">// TODO(@jeehoonkang): we mutates `batch_size` inside `for i in 0..batch_size {}`. It is difficult</span>
-<span class="comment">// to read because we&#39;re mutating the range bound.</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">mut_range_bound</span>)]</span>
+<span id="1996">1996</span>
+<span id="1997">1997</span>
+<span id="1998">1998</span>
+<span id="1999">1999</span>
+<span id="2000">2000</span>
+<span id="2001">2001</span>
+<span id="2002">2002</span>
+<span id="2003">2003</span>
+<span id="2004">2004</span>
+<span id="2005">2005</span>
+<span id="2006">2006</span>
+<span id="2007">2007</span>
+<span id="2008">2008</span>
+<span id="2009">2009</span>
+<span id="2010">2010</span>
+<span id="2011">2011</span>
+<span id="2012">2012</span>
+<span id="2013">2013</span>
+<span id="2014">2014</span>
+<span id="2015">2015</span>
+<span id="2016">2016</span>
+<span id="2017">2017</span>
+<span id="2018">2018</span>
+<span id="2019">2019</span>
+<span id="2020">2020</span>
+<span id="2021">2021</span>
+<span id="2022">2022</span>
+<span id="2023">2023</span>
+<span id="2024">2024</span>
+<span id="2025">2025</span>
+<span id="2026">2026</span>
+<span id="2027">2027</span>
+<span id="2028">2028</span>
+<span id="2029">2029</span>
+<span id="2030">2030</span>
+<span id="2031">2031</span>
+<span id="2032">2032</span>
+<span id="2033">2033</span>
+<span id="2034">2034</span>
+<span id="2035">2035</span>
+<span id="2036">2036</span>
+<span id="2037">2037</span>
+<span id="2038">2038</span>
+<span id="2039">2039</span>
+<span id="2040">2040</span>
+<span id="2041">2041</span>
+<span id="2042">2042</span>
+<span id="2043">2043</span>
+<span id="2044">2044</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="ident">std::cell</span>::{<span class="ident">Cell</span>, <span class="ident">UnsafeCell</span>};
+<span class="kw">use</span> <span class="ident">std::cmp</span>;
+<span class="kw">use</span> <span class="ident">std::fmt</span>;
+<span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
+<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
+<span class="kw">use</span> <span class="ident">std::mem</span>::{<span class="self">self</span>, <span class="ident">MaybeUninit</span>};
+<span class="kw">use</span> <span class="ident">std::ptr</span>;
+<span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicIsize</span>, <span class="ident">AtomicPtr</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cell</span>::{<span class="ident">Cell</span>, <span class="ident">UnsafeCell</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">iter</span>::<span class="ident">FromIterator</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>::{<span class="self">self</span>, <span class="ident">MaybeUninit</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicIsize</span>, <span class="ident">AtomicPtr</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
-
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">epoch</span>::{<span class="self">self</span>, <span class="ident">Atomic</span>, <span class="ident">Owned</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">utils</span>::{<span class="ident">Backoff</span>, <span class="ident">CachePadded</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::epoch</span>::{<span class="self">self</span>, <span class="ident">Atomic</span>, <span class="ident">Owned</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::utils</span>::{<span class="ident">Backoff</span>, <span class="ident">CachePadded</span>};
 
 <span class="comment">// Minimum buffer capacity.</span>
 <span class="kw">const</span> <span class="ident">MIN_CAP</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
@@ -2039,18 +2083,18 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Buffer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Allocates a new buffer with the specified capacity.</span>
     <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="ident">cap</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Buffer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="ident">cap</span>, <span class="ident">cap</span>.<span class="ident">next_power_of_two</span>());
+        <span class="macro">debug_assert_eq!</span>(<span class="ident">cap</span>, <span class="ident">cap</span>.<span class="ident">next_power_of_two</span>());
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="ident">cap</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">cap</span>);
         <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>();
-        <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">v</span>);
+        <span class="ident">mem::forget</span>(<span class="ident">v</span>);
 
         <span class="ident">Buffer</span> { <span class="ident">ptr</span>, <span class="ident">cap</span> }
     }
 
     <span class="doccomment">/// Deallocates the buffer.</span>
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">dealloc</span>(<span class="self">self</span>) {
-        <span class="ident">drop</span>(<span class="ident">Vec</span>::<span class="ident">from_raw_parts</span>(<span class="self">self</span>.<span class="ident">ptr</span>, <span class="number">0</span>, <span class="self">self</span>.<span class="ident">cap</span>));
+        <span class="ident">drop</span>(<span class="ident">Vec::from_raw_parts</span>(<span class="self">self</span>.<span class="ident">ptr</span>, <span class="number">0</span>, <span class="self">self</span>.<span class="ident">cap</span>));
     }
 
     <span class="doccomment">/// Returns a pointer to the task at the specified `index`.</span>
@@ -2066,7 +2110,7 @@
     <span class="doccomment">/// that would be more expensive and difficult to implement generically for all types `T`.</span>
     <span class="doccomment">/// Hence, as a hack, we use a volatile write instead.</span>
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">isize</span>, <span class="ident">task</span>: <span class="ident">T</span>) {
-        <span class="ident">ptr</span>::<span class="ident">write_volatile</span>(<span class="self">self</span>.<span class="ident">at</span>(<span class="ident">index</span>), <span class="ident">task</span>)
+        <span class="ident">ptr::write_volatile</span>(<span class="self">self</span>.<span class="ident">at</span>(<span class="ident">index</span>), <span class="ident">task</span>)
     }
 
     <span class="doccomment">/// Reads a task from the specified `index`.</span>
@@ -2076,7 +2120,7 @@
     <span class="doccomment">/// that would be more expensive and difficult to implement generically for all types `T`.</span>
     <span class="doccomment">/// Hence, as a hack, we use a volatile write instead.</span>
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">isize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
-        <span class="ident">ptr</span>::<span class="ident">read_volatile</span>(<span class="self">self</span>.<span class="ident">at</span>(<span class="ident">index</span>))
+        <span class="ident">ptr::read_volatile</span>(<span class="self">self</span>.<span class="ident">at</span>(<span class="ident">index</span>))
     }
 }
 
@@ -2118,11 +2162,11 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Inner</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="comment">// Load the back index, front index, and buffer.</span>
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
         <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>, <span class="ident">epoch</span>::<span class="ident">unprotected</span>());
+            <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>, <span class="ident">epoch::unprotected</span>());
 
             <span class="comment">// Go through the buffer from front to back and drop all tasks in the queue.</span>
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">f</span>;
@@ -2216,18 +2260,18 @@
     <span class="doccomment">/// let w = Worker::&lt;i32&gt;::new_fifo();</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_fifo</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">Buffer</span>::<span class="ident">alloc</span>(<span class="ident">MIN_CAP</span>);
+        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">Buffer::alloc</span>(<span class="ident">MIN_CAP</span>);
 
-        <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">Inner</span> {
-            <span class="ident">front</span>: <span class="ident">AtomicIsize</span>::<span class="ident">new</span>(<span class="number">0</span>),
-            <span class="ident">back</span>: <span class="ident">AtomicIsize</span>::<span class="ident">new</span>(<span class="number">0</span>),
-            <span class="ident">buffer</span>: <span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">Atomic</span>::<span class="ident">new</span>(<span class="ident">buffer</span>)),
+        <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">CachePadded::new</span>(<span class="ident">Inner</span> {
+            <span class="ident">front</span>: <span class="ident">AtomicIsize::new</span>(<span class="number">0</span>),
+            <span class="ident">back</span>: <span class="ident">AtomicIsize::new</span>(<span class="number">0</span>),
+            <span class="ident">buffer</span>: <span class="ident">CachePadded::new</span>(<span class="ident">Atomic::new</span>(<span class="ident">buffer</span>)),
         }));
 
         <span class="ident">Worker</span> {
             <span class="ident">inner</span>,
-            <span class="ident">buffer</span>: <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="ident">buffer</span>),
-            <span class="ident">flavor</span>: <span class="ident">Flavor</span>::<span class="ident">Fifo</span>,
+            <span class="ident">buffer</span>: <span class="ident">Cell::new</span>(<span class="ident">buffer</span>),
+            <span class="ident">flavor</span>: <span class="ident">Flavor::Fifo</span>,
             <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
         }
     }
@@ -2244,18 +2288,18 @@
     <span class="doccomment">/// let w = Worker::&lt;i32&gt;::new_lifo();</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_lifo</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">Buffer</span>::<span class="ident">alloc</span>(<span class="ident">MIN_CAP</span>);
+        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">Buffer::alloc</span>(<span class="ident">MIN_CAP</span>);
 
-        <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">Inner</span> {
-            <span class="ident">front</span>: <span class="ident">AtomicIsize</span>::<span class="ident">new</span>(<span class="number">0</span>),
-            <span class="ident">back</span>: <span class="ident">AtomicIsize</span>::<span class="ident">new</span>(<span class="number">0</span>),
-            <span class="ident">buffer</span>: <span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">Atomic</span>::<span class="ident">new</span>(<span class="ident">buffer</span>)),
+        <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">CachePadded::new</span>(<span class="ident">Inner</span> {
+            <span class="ident">front</span>: <span class="ident">AtomicIsize::new</span>(<span class="number">0</span>),
+            <span class="ident">back</span>: <span class="ident">AtomicIsize::new</span>(<span class="number">0</span>),
+            <span class="ident">buffer</span>: <span class="ident">CachePadded::new</span>(<span class="ident">Atomic::new</span>(<span class="ident">buffer</span>)),
         }));
 
         <span class="ident">Worker</span> {
             <span class="ident">inner</span>,
-            <span class="ident">buffer</span>: <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="ident">buffer</span>),
-            <span class="ident">flavor</span>: <span class="ident">Flavor</span>::<span class="ident">Lifo</span>,
+            <span class="ident">buffer</span>: <span class="ident">Cell::new</span>(<span class="ident">buffer</span>),
+            <span class="ident">flavor</span>: <span class="ident">Flavor::Lifo</span>,
             <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
         }
     }
@@ -2283,33 +2327,33 @@
     <span class="attribute">#[<span class="ident">cold</span>]</span>
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">resize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_cap</span>: <span class="ident">usize</span>) {
         <span class="comment">// Load the back index, front index, and buffer.</span>
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
         <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">get</span>();
 
         <span class="comment">// Allocate a new buffer and copy data from the old buffer to the new one.</span>
-        <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">Buffer</span>::<span class="ident">alloc</span>(<span class="ident">new_cap</span>);
+        <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">Buffer::alloc</span>(<span class="ident">new_cap</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">f</span>;
         <span class="kw">while</span> <span class="ident">i</span> <span class="op">!</span><span class="op">=</span> <span class="ident">b</span> {
-            <span class="ident">ptr</span>::<span class="ident">copy_nonoverlapping</span>(<span class="ident">buffer</span>.<span class="ident">at</span>(<span class="ident">i</span>), <span class="ident">new</span>.<span class="ident">at</span>(<span class="ident">i</span>), <span class="number">1</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">buffer</span>.<span class="ident">at</span>(<span class="ident">i</span>), <span class="ident">new</span>.<span class="ident">at</span>(<span class="ident">i</span>), <span class="number">1</span>);
             <span class="ident">i</span> <span class="op">=</span> <span class="ident">i</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>);
         }
 
-        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>::<span class="ident">pin</span>();
+        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch::pin</span>();
 
         <span class="comment">// Replace the old buffer with the new one.</span>
         <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">replace</span>(<span class="ident">new</span>);
         <span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span>
             <span class="self">self</span>.<span class="ident">inner</span>
                 .<span class="ident">buffer</span>
-                .<span class="ident">swap</span>(<span class="ident">Owned</span>::<span class="ident">new</span>(<span class="ident">new</span>).<span class="ident">into_shared</span>(<span class="ident">guard</span>), <span class="ident">Ordering</span>::<span class="ident">Release</span>, <span class="ident">guard</span>);
+                .<span class="ident">swap</span>(<span class="ident">Owned::new</span>(<span class="ident">new</span>).<span class="ident">into_shared</span>(<span class="ident">guard</span>), <span class="ident">Ordering::Release</span>, <span class="ident">guard</span>);
 
         <span class="comment">// Destroy the old buffer later.</span>
         <span class="ident">guard</span>.<span class="ident">defer_unchecked</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">old</span>.<span class="ident">into_owned</span>().<span class="ident">into_box</span>().<span class="ident">dealloc</span>());
 
         <span class="comment">// If the buffer is very large, then flush the thread-local garbage in order to deallocate</span>
         <span class="comment">// it as soon as possible.</span>
-        <span class="kw">if</span> <span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>() <span class="op">*</span> <span class="ident">new_cap</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">FLUSH_THRESHOLD_BYTES</span> {
+        <span class="kw">if</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>() <span class="op">*</span> <span class="ident">new_cap</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">FLUSH_THRESHOLD_BYTES</span> {
             <span class="ident">guard</span>.<span class="ident">flush</span>();
         }
     }
@@ -2319,8 +2363,8 @@
     <span class="kw">fn</span> <span class="ident">reserve</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">reserve_cap</span>: <span class="ident">usize</span>) {
         <span class="kw">if</span> <span class="ident">reserve_cap</span> <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="comment">// Compute the current length.</span>
-            <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-            <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+            <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+            <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>);
             <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>) <span class="kw">as</span> <span class="ident">usize</span>;
 
             <span class="comment">// The current capacity.</span>
@@ -2354,8 +2398,8 @@
     <span class="doccomment">/// assert!(!w.is_empty());</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>);
         <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">0</span>
     }
 
@@ -2373,8 +2417,8 @@
     <span class="doccomment">/// assert_eq!(w.len(), 2);</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>);
         <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>).<span class="ident">max</span>(<span class="number">0</span>) <span class="kw">as</span> <span class="ident">usize</span>
     }
 
@@ -2391,8 +2435,8 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">push</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">task</span>: <span class="ident">T</span>) {
         <span class="comment">// Load the back index, front index, and buffer.</span>
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">get</span>();
 
         <span class="comment">// Calculate the length of the queue.</span>
@@ -2412,13 +2456,13 @@
             <span class="ident">buffer</span>.<span class="ident">write</span>(<span class="ident">b</span>, <span class="ident">task</span>);
         }
 
-        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">Release</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::Release</span>);
 
         <span class="comment">// Increment the back index.</span>
         <span class="comment">//</span>
         <span class="comment">// This ordering could be `Relaxed`, but then thread sanitizer would falsely report data</span>
         <span class="comment">// races because it doesn&#39;t understand fences.</span>
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering::Release</span>);
     }
 
     <span class="doccomment">/// Pops a task from the queue.</span>
@@ -2438,8 +2482,8 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pop</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="comment">// Load the back and front index.</span>
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
         <span class="comment">// Calculate the length of the queue.</span>
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>);
@@ -2451,13 +2495,13 @@
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">flavor</span> {
             <span class="comment">// Pop from the front of the queue.</span>
-            <span class="ident">Flavor</span>::<span class="ident">Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Flavor::Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// Try incrementing the front index to pop the task.</span>
-                <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+                <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::SeqCst</span>);
                 <span class="kw">let</span> <span class="ident">new_f</span> <span class="op">=</span> <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>);
 
                 <span class="kw">if</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">new_f</span>) <span class="op">&lt;</span> <span class="number">0</span> {
-                    <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">store</span>(<span class="ident">f</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+                    <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">store</span>(<span class="ident">f</span>, <span class="ident">Ordering::Relaxed</span>);
                     <span class="kw">return</span> <span class="prelude-val">None</span>;
                 }
 
@@ -2476,22 +2520,22 @@
             }
 
             <span class="comment">// Pop from the back of the queue.</span>
-            <span class="ident">Flavor</span>::<span class="ident">Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Flavor::Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// Decrement the back index.</span>
                 <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="number">1</span>);
-                <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+                <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>, <span class="ident">Ordering::Relaxed</span>);
 
-                <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+                <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
 
                 <span class="comment">// Load the front index.</span>
-                <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+                <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
                 <span class="comment">// Compute the length after the back index was decremented.</span>
                 <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>);
 
                 <span class="kw">if</span> <span class="ident">len</span> <span class="op">&lt;</span> <span class="number">0</span> {
                     <span class="comment">// The queue is empty. Restore the back index to the original task.</span>
-                    <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+                    <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering::Relaxed</span>);
                     <span class="prelude-val">None</span>
                 } <span class="kw">else</span> {
                     <span class="comment">// Read the task to be popped.</span>
@@ -2507,17 +2551,17 @@
                             .<span class="ident">compare_exchange</span>(
                                 <span class="ident">f</span>,
                                 <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>),
-                                <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>,
-                                <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>,
+                                <span class="ident">Ordering::SeqCst</span>,
+                                <span class="ident">Ordering::Relaxed</span>,
                             )
                             .<span class="ident">is_err</span>()
                         {
                             <span class="comment">// Failed. We didn&#39;t pop anything.</span>
-                            <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">task</span>.<span class="ident">take</span>());
+                            <span class="ident">mem::forget</span>(<span class="ident">task</span>.<span class="ident">take</span>());
                         }
 
                         <span class="comment">// Restore the back index to the original task.</span>
-                        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+                        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">b</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering::Relaxed</span>);
                     } <span class="kw">else</span> {
                         <span class="comment">// Shrink the buffer if `len` is less than one fourth of the capacity.</span>
                         <span class="kw">if</span> <span class="ident">buffer</span>.<span class="ident">cap</span> <span class="op">&gt;</span> <span class="ident">MIN_CAP</span> <span class="op">&amp;&amp;</span> <span class="ident">len</span> <span class="op">&lt;</span> <span class="ident">buffer</span>.<span class="ident">cap</span> <span class="kw">as</span> <span class="ident">isize</span> <span class="op">/</span> <span class="number">4</span> {
@@ -2534,8 +2578,8 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Worker { .. }&quot;</span>)
     }
 }
@@ -2585,10 +2629,31 @@
     <span class="doccomment">/// assert!(!s.is_empty());</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
-        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
         <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">0</span>
+    }
+
+    <span class="doccomment">/// Returns the number of tasks in the deque.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_deque::Worker;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let w = Worker::new_lifo();</span>
+    <span class="doccomment">/// let s = w.stealer();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// assert_eq!(s.len(), 0);</span>
+    <span class="doccomment">/// w.push(1);</span>
+    <span class="doccomment">/// assert_eq!(s.len(), 1);</span>
+    <span class="doccomment">/// w.push(2);</span>
+    <span class="doccomment">/// assert_eq!(s.len(), 2);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+        <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>).<span class="ident">max</span>(<span class="number">0</span>) <span class="kw">as</span> <span class="ident">usize</span>
     }
 
     <span class="doccomment">/// Steals a task from the queue.</span>
@@ -2608,45 +2673,47 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">steal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Steal</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="comment">// Load the front index.</span>
-        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
         <span class="comment">// A SeqCst fence is needed here.</span>
         <span class="comment">//</span>
         <span class="comment">// If the current thread is already pinned (reentrantly), we must manually issue the</span>
         <span class="comment">// fence. Otherwise, the following pinning will issue the fence anyway, so we don&#39;t</span>
         <span class="comment">// have to.</span>
-        <span class="kw">if</span> <span class="ident">epoch</span>::<span class="ident">is_pinned</span>() {
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="kw">if</span> <span class="ident">epoch::is_pinned</span>() {
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
         }
 
-        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>::<span class="ident">pin</span>();
+        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch::pin</span>();
 
         <span class="comment">// Load the back index.</span>
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
         <span class="comment">// Is the queue empty?</span>
         <span class="kw">if</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>;
+            <span class="kw">return</span> <span class="ident">Steal::Empty</span>;
         }
 
         <span class="comment">// Load the buffer and read the task at the front.</span>
-        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>, <span class="ident">guard</span>);
+        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>);
         <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>) };
 
         <span class="comment">// Try incrementing the front index to steal the task.</span>
-        <span class="kw">if</span> <span class="self">self</span>
-            .<span class="ident">inner</span>
-            .<span class="ident">front</span>
-            .<span class="ident">compare_exchange</span>(<span class="ident">f</span>, <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>)
-            .<span class="ident">is_err</span>()
+        <span class="comment">// If the buffer has been swapped or the increment fails, we retry.</span>
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">buffer</span>
+            <span class="op">|</span><span class="op">|</span> <span class="self">self</span>
+                .<span class="ident">inner</span>
+                .<span class="ident">front</span>
+                .<span class="ident">compare_exchange</span>(<span class="ident">f</span>, <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Relaxed</span>)
+                .<span class="ident">is_err</span>()
         {
             <span class="comment">// We didn&#39;t steal this task, forget it.</span>
-            <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">task</span>);
-            <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+            <span class="ident">mem::forget</span>(<span class="ident">task</span>);
+            <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
         }
 
         <span class="comment">// Return the stolen task.</span>
-        <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">task</span>)
+        <span class="ident">Steal::Success</span>(<span class="ident">task</span>)
     }
 
     <span class="doccomment">/// Steals a batch of tasks and pushes them into another worker.</span>
@@ -2673,55 +2740,55 @@
     <span class="doccomment">/// assert_eq!(w2.pop(), Some(2));</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">steal_batch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">dest</span>: <span class="kw-2">&amp;</span><span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Steal</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">Arc</span>::<span class="ident">ptr_eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>, <span class="kw-2">&amp;</span><span class="ident">dest</span>.<span class="ident">inner</span>) {
+        <span class="kw">if</span> <span class="ident">Arc::ptr_eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>, <span class="kw-2">&amp;</span><span class="ident">dest</span>.<span class="ident">inner</span>) {
             <span class="kw">if</span> <span class="ident">dest</span>.<span class="ident">is_empty</span>() {
-                <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>;
+                <span class="kw">return</span> <span class="ident">Steal::Empty</span>;
             } <span class="kw">else</span> {
-                <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Success</span>(());
+                <span class="kw">return</span> <span class="ident">Steal::Success</span>(());
             }
         }
 
         <span class="comment">// Load the front index.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
         <span class="comment">// A SeqCst fence is needed here.</span>
         <span class="comment">//</span>
         <span class="comment">// If the current thread is already pinned (reentrantly), we must manually issue the</span>
         <span class="comment">// fence. Otherwise, the following pinning will issue the fence anyway, so we don&#39;t</span>
         <span class="comment">// have to.</span>
-        <span class="kw">if</span> <span class="ident">epoch</span>::<span class="ident">is_pinned</span>() {
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="kw">if</span> <span class="ident">epoch::is_pinned</span>() {
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
         }
 
-        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>::<span class="ident">pin</span>();
+        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch::pin</span>();
 
         <span class="comment">// Load the back index.</span>
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
         <span class="comment">// Is the queue empty?</span>
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>);
         <span class="kw">if</span> <span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>;
+            <span class="kw">return</span> <span class="ident">Steal::Empty</span>;
         }
 
         <span class="comment">// Reserve capacity for the stolen batch.</span>
-        <span class="kw">let</span> <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">cmp</span>::<span class="ident">min</span>((<span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">/</span> <span class="number">2</span>, <span class="ident">MAX_BATCH</span>);
+        <span class="kw">let</span> <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">cmp::min</span>((<span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">/</span> <span class="number">2</span>, <span class="ident">MAX_BATCH</span>);
         <span class="ident">dest</span>.<span class="ident">reserve</span>(<span class="ident">batch_size</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">batch_size</span> <span class="kw">as</span> <span class="ident">isize</span>;
 
         <span class="comment">// Get the destination buffer and back index.</span>
         <span class="kw">let</span> <span class="ident">dest_buffer</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">buffer</span>.<span class="ident">get</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
         <span class="comment">// Load the buffer.</span>
-        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>, <span class="ident">guard</span>);
+        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>);
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">flavor</span> {
             <span class="comment">// Steal a batch of tasks from the front at once.</span>
-            <span class="ident">Flavor</span>::<span class="ident">Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Flavor::Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// Copy the batch from the source to the destination buffer.</span>
                 <span class="kw">match</span> <span class="ident">dest</span>.<span class="ident">flavor</span> {
-                    <span class="ident">Flavor</span>::<span class="ident">Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">Flavor::Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                             <span class="kw">unsafe</span> {
                                 <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">i</span>));
@@ -2729,7 +2796,7 @@
                             }
                         }
                     }
-                    <span class="ident">Flavor</span>::<span class="ident">Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">Flavor::Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                             <span class="kw">unsafe</span> {
                                 <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">i</span>));
@@ -2740,34 +2807,41 @@
                 }
 
                 <span class="comment">// Try incrementing the front index to steal the batch.</span>
-                <span class="kw">if</span> <span class="self">self</span>
-                    .<span class="ident">inner</span>
-                    .<span class="ident">front</span>
-                    .<span class="ident">compare_exchange</span>(
-                        <span class="ident">f</span>,
-                        <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span>),
-                        <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>,
-                        <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>,
-                    )
-                    .<span class="ident">is_err</span>()
+                <span class="comment">// If the buffer has been swapped or the increment fails, we retry.</span>
+                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">buffer</span>
+                    <span class="op">|</span><span class="op">|</span> <span class="self">self</span>
+                        .<span class="ident">inner</span>
+                        .<span class="ident">front</span>
+                        .<span class="ident">compare_exchange</span>(
+                            <span class="ident">f</span>,
+                            <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span>),
+                            <span class="ident">Ordering::SeqCst</span>,
+                            <span class="ident">Ordering::Relaxed</span>,
+                        )
+                        .<span class="ident">is_err</span>()
                 {
-                    <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+                    <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
                 }
 
                 <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest_b</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span>);
             }
 
             <span class="comment">// Steal a batch of tasks from the front one by one.</span>
-            <span class="ident">Flavor</span>::<span class="ident">Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
+            <span class="ident">Flavor::Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="comment">// This loop may modify the batch_size, which triggers a clippy lint warning.</span>
+                <span class="comment">// Use a new variable to avoid the warning, and to make it clear we aren&#39;t</span>
+                <span class="comment">// modifying the loop exit condition during iteration.</span>
+                <span class="kw">let</span> <span class="ident">original_batch_size</span> <span class="op">=</span> <span class="ident">batch_size</span>;
+
+                <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">original_batch_size</span> {
                     <span class="comment">// If this is not the first steal, check whether the queue is empty.</span>
                     <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;</span> <span class="number">0</span> {
                         <span class="comment">// We&#39;ve already got the current front index. Now execute the fence to</span>
                         <span class="comment">// synchronize with other threads.</span>
-                        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+                        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
 
                         <span class="comment">// Load the back index.</span>
-                        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+                        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
                         <span class="comment">// Is the queue empty?</span>
                         <span class="kw">if</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">0</span> {
@@ -2780,14 +2854,21 @@
                     <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>) };
 
                     <span class="comment">// Try incrementing the front index to steal the task.</span>
-                    <span class="kw">if</span> <span class="self">self</span>
-                        .<span class="ident">inner</span>
-                        .<span class="ident">front</span>
-                        .<span class="ident">compare_exchange</span>(<span class="ident">f</span>, <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>)
-                        .<span class="ident">is_err</span>()
+                    <span class="comment">// If the buffer has been swapped or the increment fails, we retry.</span>
+                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">buffer</span>
+                        <span class="op">|</span><span class="op">|</span> <span class="self">self</span>
+                            .<span class="ident">inner</span>
+                            .<span class="ident">front</span>
+                            .<span class="ident">compare_exchange</span>(
+                                <span class="ident">f</span>,
+                                <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>),
+                                <span class="ident">Ordering::SeqCst</span>,
+                                <span class="ident">Ordering::Relaxed</span>,
+                            )
+                            .<span class="ident">is_err</span>()
                     {
                         <span class="comment">// We didn&#39;t steal this task, forget it and break from the loop.</span>
-                        <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">task</span>);
+                        <span class="ident">mem::forget</span>(<span class="ident">task</span>);
                         <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">i</span>;
                         <span class="kw">break</span>;
                     }
@@ -2804,11 +2885,11 @@
 
                 <span class="comment">// If we didn&#39;t steal anything, the operation needs to be retried.</span>
                 <span class="kw">if</span> <span class="ident">batch_size</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
-                    <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+                    <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
                 }
 
                 <span class="comment">// If stealing into a FIFO queue, stolen tasks need to be reversed.</span>
-                <span class="kw">if</span> <span class="ident">dest</span>.<span class="ident">flavor</span> <span class="op">=</span><span class="op">=</span> <span class="ident">Flavor</span>::<span class="ident">Fifo</span> {
+                <span class="kw">if</span> <span class="ident">dest</span>.<span class="ident">flavor</span> <span class="op">=</span><span class="op">=</span> <span class="ident">Flavor::Fifo</span> {
                     <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> <span class="op">/</span> <span class="number">2</span> {
                         <span class="kw">unsafe</span> {
                             <span class="kw">let</span> <span class="ident">i1</span> <span class="op">=</span> <span class="ident">dest_b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">batch_size</span> <span class="op">-</span> <span class="ident">i</span>);
@@ -2823,16 +2904,16 @@
             }
         }
 
-        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">Release</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::Release</span>);
 
         <span class="comment">// Update the back index in the destination queue.</span>
         <span class="comment">//</span>
         <span class="comment">// This ordering could be `Relaxed`, but then thread sanitizer would falsely report data</span>
         <span class="comment">// races because it doesn&#39;t understand fences.</span>
-        <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">dest_b</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+        <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">dest_b</span>, <span class="ident">Ordering::Release</span>);
 
         <span class="comment">// Return with success.</span>
-        <span class="ident">Steal</span>::<span class="ident">Success</span>(())
+        <span class="ident">Steal::Success</span>(())
     }
 
     <span class="doccomment">/// Steals a batch of tasks, pushes them into another worker, and pops a task from that worker.</span>
@@ -2858,57 +2939,57 @@
     <span class="doccomment">/// assert_eq!(w2.pop(), Some(2));</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">steal_batch_and_pop</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">dest</span>: <span class="kw-2">&amp;</span><span class="ident">Worker</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Steal</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">Arc</span>::<span class="ident">ptr_eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>, <span class="kw-2">&amp;</span><span class="ident">dest</span>.<span class="ident">inner</span>) {
+        <span class="kw">if</span> <span class="ident">Arc::ptr_eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>, <span class="kw-2">&amp;</span><span class="ident">dest</span>.<span class="ident">inner</span>) {
             <span class="kw">match</span> <span class="ident">dest</span>.<span class="ident">pop</span>() {
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>,
-                <span class="prelude-val">Some</span>(<span class="ident">task</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">task</span>),
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">Steal::Empty</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">task</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">Steal::Success</span>(<span class="ident">task</span>),
             }
         }
 
         <span class="comment">// Load the front index.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">front</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
         <span class="comment">// A SeqCst fence is needed here.</span>
         <span class="comment">//</span>
         <span class="comment">// If the current thread is already pinned (reentrantly), we must manually issue the</span>
         <span class="comment">// fence. Otherwise, the following pinning will issue the fence anyway, so we don&#39;t</span>
         <span class="comment">// have to.</span>
-        <span class="kw">if</span> <span class="ident">epoch</span>::<span class="ident">is_pinned</span>() {
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="kw">if</span> <span class="ident">epoch::is_pinned</span>() {
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
         }
 
-        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch</span>::<span class="ident">pin</span>();
+        <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">epoch::pin</span>();
 
         <span class="comment">// Load the back index.</span>
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
         <span class="comment">// Is the queue empty?</span>
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>);
         <span class="kw">if</span> <span class="ident">len</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>;
+            <span class="kw">return</span> <span class="ident">Steal::Empty</span>;
         }
 
         <span class="comment">// Reserve capacity for the stolen batch.</span>
-        <span class="kw">let</span> <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">cmp</span>::<span class="ident">min</span>((<span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">/</span> <span class="number">2</span>, <span class="ident">MAX_BATCH</span> <span class="op">-</span> <span class="number">1</span>);
+        <span class="kw">let</span> <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">cmp::min</span>((<span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">/</span> <span class="number">2</span>, <span class="ident">MAX_BATCH</span> <span class="op">-</span> <span class="number">1</span>);
         <span class="ident">dest</span>.<span class="ident">reserve</span>(<span class="ident">batch_size</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">batch_size</span> <span class="kw">as</span> <span class="ident">isize</span>;
 
         <span class="comment">// Get the destination buffer and back index.</span>
         <span class="kw">let</span> <span class="ident">dest_buffer</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">buffer</span>.<span class="ident">get</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
         <span class="comment">// Load the buffer</span>
-        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>, <span class="ident">guard</span>);
+        <span class="kw">let</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>);
 
         <span class="comment">// Read the task at the front.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">task</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>) };
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">flavor</span> {
             <span class="comment">// Steal a batch of tasks from the front at once.</span>
-            <span class="ident">Flavor</span>::<span class="ident">Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Flavor::Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// Copy the batch from the source to the destination buffer.</span>
                 <span class="kw">match</span> <span class="ident">dest</span>.<span class="ident">flavor</span> {
-                    <span class="ident">Flavor</span>::<span class="ident">Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">Flavor::Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                             <span class="kw">unsafe</span> {
                                 <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>));
@@ -2916,7 +2997,7 @@
                             }
                         }
                     }
-                    <span class="ident">Flavor</span>::<span class="ident">Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">Flavor::Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                             <span class="kw">unsafe</span> {
                                 <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>));
@@ -2926,51 +3007,58 @@
                     }
                 }
 
-                <span class="comment">// Try incrementing the front index to steal the batch.</span>
-                <span class="kw">if</span> <span class="self">self</span>
-                    .<span class="ident">inner</span>
-                    .<span class="ident">front</span>
-                    .<span class="ident">compare_exchange</span>(
-                        <span class="ident">f</span>,
-                        <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span> <span class="op">+</span> <span class="number">1</span>),
-                        <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>,
-                        <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>,
-                    )
-                    .<span class="ident">is_err</span>()
+                <span class="comment">// Try incrementing the front index to steal the task.</span>
+                <span class="comment">// If the buffer has been swapped or the increment fails, we retry.</span>
+                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">buffer</span>
+                    <span class="op">|</span><span class="op">|</span> <span class="self">self</span>
+                        .<span class="ident">inner</span>
+                        .<span class="ident">front</span>
+                        .<span class="ident">compare_exchange</span>(
+                            <span class="ident">f</span>,
+                            <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span> <span class="op">+</span> <span class="number">1</span>),
+                            <span class="ident">Ordering::SeqCst</span>,
+                            <span class="ident">Ordering::Relaxed</span>,
+                        )
+                        .<span class="ident">is_err</span>()
                 {
                     <span class="comment">// We didn&#39;t steal this task, forget it.</span>
-                    <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">task</span>);
-                    <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+                    <span class="ident">mem::forget</span>(<span class="ident">task</span>);
+                    <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
                 }
 
                 <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest_b</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span>);
             }
 
             <span class="comment">// Steal a batch of tasks from the front one by one.</span>
-            <span class="ident">Flavor</span>::<span class="ident">Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Flavor::Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// Try incrementing the front index to steal the task.</span>
                 <span class="kw">if</span> <span class="self">self</span>
                     .<span class="ident">inner</span>
                     .<span class="ident">front</span>
-                    .<span class="ident">compare_exchange</span>(<span class="ident">f</span>, <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>)
+                    .<span class="ident">compare_exchange</span>(<span class="ident">f</span>, <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Relaxed</span>)
                     .<span class="ident">is_err</span>()
                 {
                     <span class="comment">// We didn&#39;t steal this task, forget it.</span>
-                    <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">task</span>);
-                    <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+                    <span class="ident">mem::forget</span>(<span class="ident">task</span>);
+                    <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
                 }
 
                 <span class="comment">// Move the front index one step forward.</span>
                 <span class="ident">f</span> <span class="op">=</span> <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>);
 
                 <span class="comment">// Repeat the same procedure for the batch steals.</span>
-                <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
+                <span class="comment">//</span>
+                <span class="comment">// This loop may modify the batch_size, which triggers a clippy lint warning.</span>
+                <span class="comment">// Use a new variable to avoid the warning, and to make it clear we aren&#39;t</span>
+                <span class="comment">// modifying the loop exit condition during iteration.</span>
+                <span class="kw">let</span> <span class="ident">original_batch_size</span> <span class="op">=</span> <span class="ident">batch_size</span>;
+                <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">original_batch_size</span> {
                     <span class="comment">// We&#39;ve already got the current front index. Now execute the fence to</span>
                     <span class="comment">// synchronize with other threads.</span>
-                    <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+                    <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
 
                     <span class="comment">// Load the back index.</span>
-                    <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+                    <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
                     <span class="comment">// Is the queue empty?</span>
                     <span class="kw">if</span> <span class="ident">b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">f</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">0</span> {
@@ -2982,21 +3070,28 @@
                     <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">buffer</span>.<span class="ident">deref</span>().<span class="ident">read</span>(<span class="ident">f</span>) };
 
                     <span class="comment">// Try incrementing the front index to steal the task.</span>
-                    <span class="kw">if</span> <span class="self">self</span>
-                        .<span class="ident">inner</span>
-                        .<span class="ident">front</span>
-                        .<span class="ident">compare_exchange</span>(<span class="ident">f</span>, <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>), <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>)
-                        .<span class="ident">is_err</span>()
+                    <span class="comment">// If the buffer has been swapped or the increment fails, we retry.</span>
+                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">buffer</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>, <span class="ident">guard</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">buffer</span>
+                        <span class="op">|</span><span class="op">|</span> <span class="self">self</span>
+                            .<span class="ident">inner</span>
+                            .<span class="ident">front</span>
+                            .<span class="ident">compare_exchange</span>(
+                                <span class="ident">f</span>,
+                                <span class="ident">f</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>),
+                                <span class="ident">Ordering::SeqCst</span>,
+                                <span class="ident">Ordering::Relaxed</span>,
+                            )
+                            .<span class="ident">is_err</span>()
                     {
                         <span class="comment">// We didn&#39;t steal this task, forget it and break from the loop.</span>
-                        <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">tmp</span>);
+                        <span class="ident">mem::forget</span>(<span class="ident">tmp</span>);
                         <span class="ident">batch_size</span> <span class="op">=</span> <span class="ident">i</span>;
                         <span class="kw">break</span>;
                     }
 
                     <span class="comment">// Write the previously stolen task into the destination buffer.</span>
                     <span class="kw">unsafe</span> {
-                        <span class="ident">dest_buffer</span>.<span class="ident">write</span>(<span class="ident">dest_b</span>, <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">task</span>, <span class="ident">tmp</span>));
+                        <span class="ident">dest_buffer</span>.<span class="ident">write</span>(<span class="ident">dest_b</span>, <span class="ident">mem::replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">task</span>, <span class="ident">tmp</span>));
                     }
 
                     <span class="comment">// Move the source front index and the destination back index one step forward.</span>
@@ -3005,7 +3100,7 @@
                 }
 
                 <span class="comment">// If stealing into a FIFO queue, stolen tasks need to be reversed.</span>
-                <span class="kw">if</span> <span class="ident">dest</span>.<span class="ident">flavor</span> <span class="op">=</span><span class="op">=</span> <span class="ident">Flavor</span>::<span class="ident">Fifo</span> {
+                <span class="kw">if</span> <span class="ident">dest</span>.<span class="ident">flavor</span> <span class="op">=</span><span class="op">=</span> <span class="ident">Flavor::Fifo</span> {
                     <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> <span class="op">/</span> <span class="number">2</span> {
                         <span class="kw">unsafe</span> {
                             <span class="kw">let</span> <span class="ident">i1</span> <span class="op">=</span> <span class="ident">dest_b</span>.<span class="ident">wrapping_sub</span>(<span class="ident">batch_size</span> <span class="op">-</span> <span class="ident">i</span>);
@@ -3020,16 +3115,16 @@
             }
         }
 
-        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">Release</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::Release</span>);
 
         <span class="comment">// Update the back index in the destination queue.</span>
         <span class="comment">//</span>
         <span class="comment">// This ordering could be `Relaxed`, but then thread sanitizer would falsely report data</span>
         <span class="comment">// races because it doesn&#39;t understand fences.</span>
-        <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">dest_b</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+        <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">store</span>(<span class="ident">dest_b</span>, <span class="ident">Ordering::Release</span>);
 
         <span class="comment">// Return with success.</span>
-        <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">task</span>)
+        <span class="ident">Steal::Success</span>(<span class="ident">task</span>)
     }
 }
 
@@ -3042,8 +3137,8 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Stealer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Stealer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Stealer { .. }&quot;</span>)
     }
 }
@@ -3077,8 +3172,8 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Slot</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Waits until a task is written into the slot.</span>
     <span class="kw">fn</span> <span class="ident">wait_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff</span>::<span class="ident">new</span>();
-        <span class="kw">while</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>) <span class="op">&amp;</span> <span class="ident">WRITE</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff::new</span>();
+        <span class="kw">while</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>) <span class="op">&amp;</span> <span class="ident">WRITE</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
             <span class="ident">backoff</span>.<span class="ident">snooze</span>();
         }
     }
@@ -3104,14 +3199,14 @@
         <span class="comment">//  [3] `Slot::task` (UnsafeCell) may be safely zero initialized because it</span>
         <span class="comment">//       holds a MaybeUninit.</span>
         <span class="comment">//  [4] `Slot::state` (AtomicUsize) may be safely zero initialized.</span>
-        <span class="kw">unsafe</span> { <span class="ident">MaybeUninit</span>::<span class="ident">zeroed</span>().<span class="ident">assume_init</span>() }
+        <span class="kw">unsafe</span> { <span class="ident">MaybeUninit::zeroed</span>().<span class="ident">assume_init</span>() }
     }
 
     <span class="doccomment">/// Waits until the next pointer is set.</span>
     <span class="kw">fn</span> <span class="ident">wait_next</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Block</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff::new</span>();
         <span class="kw">loop</span> {
-            <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+            <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
             <span class="kw">if</span> <span class="op">!</span><span class="ident">next</span>.<span class="ident">is_null</span>() {
                 <span class="kw">return</span> <span class="ident">next</span>;
             }
@@ -3127,8 +3222,8 @@
             <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">this</span>).<span class="ident">slots</span>.<span class="ident">get_unchecked</span>(<span class="ident">i</span>);
 
             <span class="comment">// Mark the `DESTROY` bit if a thread is still using the slot.</span>
-            <span class="kw">if</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>) <span class="op">&amp;</span> <span class="ident">READ</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
-                <span class="op">&amp;&amp;</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">DESTROY</span>, <span class="ident">Ordering</span>::<span class="ident">AcqRel</span>) <span class="op">&amp;</span> <span class="ident">READ</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
+            <span class="kw">if</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>) <span class="op">&amp;</span> <span class="ident">READ</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
+                <span class="op">&amp;&amp;</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">DESTROY</span>, <span class="ident">Ordering::AcqRel</span>) <span class="op">&amp;</span> <span class="ident">READ</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
             {
                 <span class="comment">// If a thread is still using the slot, it will continue destruction of the block.</span>
                 <span class="kw">return</span>;
@@ -3136,7 +3231,7 @@
         }
 
         <span class="comment">// No thread is using the block, now it is safe to destroy it.</span>
-        <span class="ident">drop</span>(<span class="ident">Box</span>::<span class="ident">from_raw</span>(<span class="ident">this</span>));
+        <span class="ident">drop</span>(<span class="ident">Box::from_raw</span>(<span class="ident">this</span>));
     }
 }
 
@@ -3183,15 +3278,15 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Injector</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">Box</span>::<span class="ident">into_raw</span>(<span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">Block</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>::<span class="ident">new</span>()));
+        <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">Block</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::new</span>()));
         <span class="self">Self</span> {
-            <span class="ident">head</span>: <span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">Position</span> {
-                <span class="ident">block</span>: <span class="ident">AtomicPtr</span>::<span class="ident">new</span>(<span class="ident">block</span>),
-                <span class="ident">index</span>: <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="number">0</span>),
+            <span class="ident">head</span>: <span class="ident">CachePadded::new</span>(<span class="ident">Position</span> {
+                <span class="ident">block</span>: <span class="ident">AtomicPtr::new</span>(<span class="ident">block</span>),
+                <span class="ident">index</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">0</span>),
             }),
-            <span class="ident">tail</span>: <span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">Position</span> {
-                <span class="ident">block</span>: <span class="ident">AtomicPtr</span>::<span class="ident">new</span>(<span class="ident">block</span>),
-                <span class="ident">index</span>: <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="number">0</span>),
+            <span class="ident">tail</span>: <span class="ident">CachePadded::new</span>(<span class="ident">Position</span> {
+                <span class="ident">block</span>: <span class="ident">AtomicPtr::new</span>(<span class="ident">block</span>),
+                <span class="ident">index</span>: <span class="ident">AtomicUsize::new</span>(<span class="number">0</span>),
             }),
             <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
         }
@@ -3209,7 +3304,7 @@
     <span class="doccomment">/// let q = Injector::&lt;i32&gt;::new();</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Injector</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="self">Self</span>::<span class="ident">default</span>()
+        <span class="self">Self</span><span class="ident">::default</span>()
     }
 
     <span class="doccomment">/// Pushes a task into the queue.</span>
@@ -3224,9 +3319,9 @@
     <span class="doccomment">/// w.push(2);</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">push</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">task</span>: <span class="ident">T</span>) {
-        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff</span>::<span class="ident">new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff::new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">next_block</span> <span class="op">=</span> <span class="prelude-val">None</span>;
 
         <span class="kw">loop</span> {
@@ -3236,15 +3331,15 @@
             <span class="comment">// If we reached the end of the block, wait until the next one is installed.</span>
             <span class="kw">if</span> <span class="ident">offset</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> {
                 <span class="ident">backoff</span>.<span class="ident">snooze</span>();
-                <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
-                <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+                <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+                <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
                 <span class="kw">continue</span>;
             }
 
             <span class="comment">// If we&#39;re going to have to install the next block, allocate it in advance in order to</span>
             <span class="comment">// make the wait for other threads as short as possible.</span>
             <span class="kw">if</span> <span class="ident">offset</span> <span class="op">+</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> <span class="op">&amp;&amp;</span> <span class="ident">next_block</span>.<span class="ident">is_none</span>() {
-                <span class="ident">next_block</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Box</span>::<span class="ident">new</span>(<span class="ident">Block</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>::<span class="ident">new</span>()));
+                <span class="ident">next_block</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Box::new</span>(<span class="ident">Block</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::new</span>()));
             }
 
             <span class="kw">let</span> <span class="ident">new_tail</span> <span class="op">=</span> <span class="ident">tail</span> <span class="op">+</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>);
@@ -3253,30 +3348,30 @@
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">compare_exchange_weak</span>(
                 <span class="ident">tail</span>,
                 <span class="ident">new_tail</span>,
-                <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>,
-                <span class="ident">Ordering</span>::<span class="ident">Acquire</span>,
+                <span class="ident">Ordering::SeqCst</span>,
+                <span class="ident">Ordering::Acquire</span>,
             ) {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> {
                     <span class="comment">// If we&#39;ve reached the end of the block, install the next one.</span>
                     <span class="kw">if</span> <span class="ident">offset</span> <span class="op">+</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> {
-                        <span class="kw">let</span> <span class="ident">next_block</span> <span class="op">=</span> <span class="ident">Box</span>::<span class="ident">into_raw</span>(<span class="ident">next_block</span>.<span class="ident">unwrap</span>());
+                        <span class="kw">let</span> <span class="ident">next_block</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">next_block</span>.<span class="ident">unwrap</span>());
                         <span class="kw">let</span> <span class="ident">next_index</span> <span class="op">=</span> <span class="ident">new_tail</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>);
 
-                        <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next_block</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
-                        <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
-                        (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">next</span>.<span class="ident">store</span>(<span class="ident">next_block</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                        <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next_block</span>, <span class="ident">Ordering::Release</span>);
+                        <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering::Release</span>);
+                        (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">next</span>.<span class="ident">store</span>(<span class="ident">next_block</span>, <span class="ident">Ordering::Release</span>);
                     }
 
                     <span class="comment">// Write the task into the slot.</span>
                     <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">slots</span>.<span class="ident">get_unchecked</span>(<span class="ident">offset</span>);
-                    <span class="ident">slot</span>.<span class="ident">task</span>.<span class="ident">get</span>().<span class="ident">write</span>(<span class="ident">MaybeUninit</span>::<span class="ident">new</span>(<span class="ident">task</span>));
-                    <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">WRITE</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                    <span class="ident">slot</span>.<span class="ident">task</span>.<span class="ident">get</span>().<span class="ident">write</span>(<span class="ident">MaybeUninit::new</span>(<span class="ident">task</span>));
+                    <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">WRITE</span>, <span class="ident">Ordering::Release</span>);
 
                     <span class="kw">return</span>;
                 },
                 <span class="prelude-val">Err</span>(<span class="ident">t</span>) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="ident">tail</span> <span class="op">=</span> <span class="ident">t</span>;
-                    <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+                    <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
                     <span class="ident">backoff</span>.<span class="ident">spin</span>();
                 }
             }
@@ -3303,10 +3398,10 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span>;
 
-        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff::new</span>();
         <span class="kw">loop</span> {
-            <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
-            <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+            <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+            <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
             <span class="comment">// Calculate the offset of the index into the block.</span>
             <span class="ident">offset</span> <span class="op">=</span> (<span class="ident">head</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span>) <span class="op">%</span> <span class="ident">LAP</span>;
@@ -3322,12 +3417,12 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_head</span> <span class="op">=</span> <span class="ident">head</span> <span class="op">+</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>);
 
         <span class="kw">if</span> <span class="ident">new_head</span> <span class="op">&amp;</span> <span class="ident">HAS_NEXT</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
-            <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
+            <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
             <span class="comment">// If the tail equals the head, that means the queue is empty.</span>
             <span class="kw">if</span> <span class="ident">head</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">tail</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span> {
-                <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>;
+                <span class="kw">return</span> <span class="ident">Steal::Empty</span>;
             }
 
             <span class="comment">// If head and tail are not in the same block, set `HAS_NEXT` in head.</span>
@@ -3340,10 +3435,10 @@
         <span class="kw">if</span> <span class="self">self</span>
             .<span class="ident">head</span>
             .<span class="ident">index</span>
-            .<span class="ident">compare_exchange_weak</span>(<span class="ident">head</span>, <span class="ident">new_head</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>)
+            .<span class="ident">compare_exchange_weak</span>(<span class="ident">head</span>, <span class="ident">new_head</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Acquire</span>)
             .<span class="ident">is_err</span>()
         {
-            <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+            <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
         }
 
         <span class="kw">unsafe</span> {
@@ -3351,12 +3446,12 @@
             <span class="kw">if</span> <span class="ident">offset</span> <span class="op">+</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> {
                 <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">wait_next</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">next_index</span> <span class="op">=</span> (<span class="ident">new_head</span> <span class="op">&amp;</span> <span class="op">!</span><span class="ident">HAS_NEXT</span>).<span class="ident">wrapping_add</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>);
-                <span class="kw">if</span> <span class="op">!</span>(<span class="kw-2">*</span><span class="ident">next</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>).<span class="ident">is_null</span>() {
+                <span class="kw">if</span> <span class="op">!</span>(<span class="kw-2">*</span><span class="ident">next</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>).<span class="ident">is_null</span>() {
                     <span class="ident">next_index</span> <span class="op">|</span><span class="op">=</span> <span class="ident">HAS_NEXT</span>;
                 }
 
-                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
-                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next</span>, <span class="ident">Ordering::Release</span>);
+                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering::Release</span>);
             }
 
             <span class="comment">// Read the task.</span>
@@ -3366,11 +3461,13 @@
 
             <span class="comment">// Destroy the block if we&#39;ve reached the end, or if another thread wanted to destroy</span>
             <span class="comment">// but couldn&#39;t because we were busy reading from the slot.</span>
-            <span class="kw">if</span> (<span class="ident">offset</span> <span class="op">+</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span>) <span class="op">|</span><span class="op">|</span> (<span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">READ</span>, <span class="ident">Ordering</span>::<span class="ident">AcqRel</span>) <span class="op">&amp;</span> <span class="ident">DESTROY</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>) {
-                <span class="ident">Block</span>::<span class="ident">destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
+            <span class="kw">if</span> (<span class="ident">offset</span> <span class="op">+</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span>)
+                <span class="op">|</span><span class="op">|</span> (<span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">READ</span>, <span class="ident">Ordering::AcqRel</span>) <span class="op">&amp;</span> <span class="ident">DESTROY</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>)
+            {
+                <span class="ident">Block::destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
             }
 
-            <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">task</span>)
+            <span class="ident">Steal::Success</span>(<span class="ident">task</span>)
         }
     }
 
@@ -3400,10 +3497,10 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span>;
 
-        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff::new</span>();
         <span class="kw">loop</span> {
-            <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
-            <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+            <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+            <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
             <span class="comment">// Calculate the offset of the index into the block.</span>
             <span class="ident">offset</span> <span class="op">=</span> (<span class="ident">head</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span>) <span class="op">%</span> <span class="ident">LAP</span>;
@@ -3420,12 +3517,12 @@
         <span class="kw">let</span> <span class="ident">advance</span>;
 
         <span class="kw">if</span> <span class="ident">new_head</span> <span class="op">&amp;</span> <span class="ident">HAS_NEXT</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
-            <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
+            <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
             <span class="comment">// If the tail equals the head, that means the queue is empty.</span>
             <span class="kw">if</span> <span class="ident">head</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">tail</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span> {
-                <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>;
+                <span class="kw">return</span> <span class="ident">Steal::Empty</span>;
             }
 
             <span class="comment">// If head and tail are not in the same block, set `HAS_NEXT` in head. Also, calculate</span>
@@ -3451,10 +3548,10 @@
         <span class="kw">if</span> <span class="self">self</span>
             .<span class="ident">head</span>
             .<span class="ident">index</span>
-            .<span class="ident">compare_exchange_weak</span>(<span class="ident">head</span>, <span class="ident">new_head</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>)
+            .<span class="ident">compare_exchange_weak</span>(<span class="ident">head</span>, <span class="ident">new_head</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Acquire</span>)
             .<span class="ident">is_err</span>()
         {
-            <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+            <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
         }
 
         <span class="comment">// Reserve capacity for the stolen batch.</span>
@@ -3463,24 +3560,24 @@
 
         <span class="comment">// Get the destination buffer and back index.</span>
         <span class="kw">let</span> <span class="ident">dest_buffer</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">buffer</span>.<span class="ident">get</span>();
-        <span class="kw">let</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
         <span class="kw">unsafe</span> {
             <span class="comment">// If we&#39;ve reached the end of the block, move to the next one.</span>
             <span class="kw">if</span> <span class="ident">new_offset</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> {
                 <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">wait_next</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">next_index</span> <span class="op">=</span> (<span class="ident">new_head</span> <span class="op">&amp;</span> <span class="op">!</span><span class="ident">HAS_NEXT</span>).<span class="ident">wrapping_add</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>);
-                <span class="kw">if</span> <span class="op">!</span>(<span class="kw-2">*</span><span class="ident">next</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>).<span class="ident">is_null</span>() {
+                <span class="kw">if</span> <span class="op">!</span>(<span class="kw-2">*</span><span class="ident">next</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>).<span class="ident">is_null</span>() {
                     <span class="ident">next_index</span> <span class="op">|</span><span class="op">=</span> <span class="ident">HAS_NEXT</span>;
                 }
 
-                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
-                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next</span>, <span class="ident">Ordering::Release</span>);
+                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering::Release</span>);
             }
 
             <span class="comment">// Copy values from the injector into the destination queue.</span>
             <span class="kw">match</span> <span class="ident">dest</span>.<span class="ident">flavor</span> {
-                <span class="ident">Flavor</span>::<span class="ident">Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">Flavor::Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                         <span class="comment">// Read the task.</span>
                         <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">slots</span>.<span class="ident">get_unchecked</span>(<span class="ident">offset</span> <span class="op">+</span> <span class="ident">i</span>);
@@ -3492,7 +3589,7 @@
                     }
                 }
 
-                <span class="ident">Flavor</span>::<span class="ident">Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">Flavor::Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                         <span class="comment">// Read the task.</span>
                         <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">slots</span>.<span class="ident">get_unchecked</span>(<span class="ident">offset</span> <span class="op">+</span> <span class="ident">i</span>);
@@ -3505,7 +3602,7 @@
                 }
             }
 
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">Release</span>);
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::Release</span>);
 
             <span class="comment">// Update the back index in the destination queue.</span>
             <span class="comment">//</span>
@@ -3513,24 +3610,24 @@
             <span class="comment">// data races because it doesn&#39;t understand fences.</span>
             <span class="ident">dest</span>.<span class="ident">inner</span>
                 .<span class="ident">back</span>
-                .<span class="ident">store</span>(<span class="ident">dest_b</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                .<span class="ident">store</span>(<span class="ident">dest_b</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">Ordering::Release</span>);
 
             <span class="comment">// Destroy the block if we&#39;ve reached the end, or if another thread wanted to destroy</span>
             <span class="comment">// but couldn&#39;t because we were busy reading from the slot.</span>
             <span class="kw">if</span> <span class="ident">new_offset</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> {
-                <span class="ident">Block</span>::<span class="ident">destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
+                <span class="ident">Block::destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
             } <span class="kw">else</span> {
                 <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">offset</span>..<span class="ident">new_offset</span> {
                     <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">slots</span>.<span class="ident">get_unchecked</span>(<span class="ident">i</span>);
 
-                    <span class="kw">if</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">READ</span>, <span class="ident">Ordering</span>::<span class="ident">AcqRel</span>) <span class="op">&amp;</span> <span class="ident">DESTROY</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-                        <span class="ident">Block</span>::<span class="ident">destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
+                    <span class="kw">if</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">READ</span>, <span class="ident">Ordering::AcqRel</span>) <span class="op">&amp;</span> <span class="ident">DESTROY</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+                        <span class="ident">Block::destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
                         <span class="kw">break</span>;
                     }
                 }
             }
 
-            <span class="ident">Steal</span>::<span class="ident">Success</span>(())
+            <span class="ident">Steal::Success</span>(())
         }
     }
 
@@ -3559,10 +3656,10 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span>;
 
-        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff::new</span>();
         <span class="kw">loop</span> {
-            <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
-            <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+            <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
+            <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>);
 
             <span class="comment">// Calculate the offset of the index into the block.</span>
             <span class="ident">offset</span> <span class="op">=</span> (<span class="ident">head</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span>) <span class="op">%</span> <span class="ident">LAP</span>;
@@ -3579,12 +3676,12 @@
         <span class="kw">let</span> <span class="ident">advance</span>;
 
         <span class="kw">if</span> <span class="ident">new_head</span> <span class="op">&amp;</span> <span class="ident">HAS_NEXT</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
-            <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
+            <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
             <span class="comment">// If the tail equals the head, that means the queue is empty.</span>
             <span class="kw">if</span> <span class="ident">head</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">tail</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span> {
-                <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Empty</span>;
+                <span class="kw">return</span> <span class="ident">Steal::Empty</span>;
             }
 
             <span class="comment">// If head and tail are not in the same block, set `HAS_NEXT` in head.</span>
@@ -3609,10 +3706,10 @@
         <span class="kw">if</span> <span class="self">self</span>
             .<span class="ident">head</span>
             .<span class="ident">index</span>
-            .<span class="ident">compare_exchange_weak</span>(<span class="ident">head</span>, <span class="ident">new_head</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>)
+            .<span class="ident">compare_exchange_weak</span>(<span class="ident">head</span>, <span class="ident">new_head</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::Acquire</span>)
             .<span class="ident">is_err</span>()
         {
-            <span class="kw">return</span> <span class="ident">Steal</span>::<span class="ident">Retry</span>;
+            <span class="kw">return</span> <span class="ident">Steal::Retry</span>;
         }
 
         <span class="comment">// Reserve capacity for the stolen batch.</span>
@@ -3621,19 +3718,19 @@
 
         <span class="comment">// Get the destination buffer and back index.</span>
         <span class="kw">let</span> <span class="ident">dest_buffer</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">buffer</span>.<span class="ident">get</span>();
-        <span class="kw">let</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">dest_b</span> <span class="op">=</span> <span class="ident">dest</span>.<span class="ident">inner</span>.<span class="ident">back</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
         <span class="kw">unsafe</span> {
             <span class="comment">// If we&#39;ve reached the end of the block, move to the next one.</span>
             <span class="kw">if</span> <span class="ident">new_offset</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> {
                 <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">wait_next</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">next_index</span> <span class="op">=</span> (<span class="ident">new_head</span> <span class="op">&amp;</span> <span class="op">!</span><span class="ident">HAS_NEXT</span>).<span class="ident">wrapping_add</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>);
-                <span class="kw">if</span> <span class="op">!</span>(<span class="kw-2">*</span><span class="ident">next</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>).<span class="ident">is_null</span>() {
+                <span class="kw">if</span> <span class="op">!</span>(<span class="kw-2">*</span><span class="ident">next</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>).<span class="ident">is_null</span>() {
                     <span class="ident">next_index</span> <span class="op">|</span><span class="op">=</span> <span class="ident">HAS_NEXT</span>;
                 }
 
-                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
-                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">store</span>(<span class="ident">next</span>, <span class="ident">Ordering::Release</span>);
+                <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">store</span>(<span class="ident">next_index</span>, <span class="ident">Ordering::Release</span>);
             }
 
             <span class="comment">// Read the task.</span>
@@ -3642,7 +3739,7 @@
             <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="ident">slot</span>.<span class="ident">task</span>.<span class="ident">get</span>().<span class="ident">read</span>().<span class="ident">assume_init</span>();
 
             <span class="kw">match</span> <span class="ident">dest</span>.<span class="ident">flavor</span> {
-                <span class="ident">Flavor</span>::<span class="ident">Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">Flavor::Fifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="comment">// Copy values from the injector into the destination queue.</span>
                     <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                         <span class="comment">// Read the task.</span>
@@ -3655,7 +3752,7 @@
                     }
                 }
 
-                <span class="ident">Flavor</span>::<span class="ident">Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">Flavor::Lifo</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="comment">// Copy values from the injector into the destination queue.</span>
                     <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">batch_size</span> {
                         <span class="comment">// Read the task.</span>
@@ -3669,7 +3766,7 @@
                 }
             }
 
-            <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">Release</span>);
+            <span class="ident">atomic::fence</span>(<span class="ident">Ordering::Release</span>);
 
             <span class="comment">// Update the back index in the destination queue.</span>
             <span class="comment">//</span>
@@ -3677,24 +3774,24 @@
             <span class="comment">// data races because it doesn&#39;t understand fences.</span>
             <span class="ident">dest</span>.<span class="ident">inner</span>
                 .<span class="ident">back</span>
-                .<span class="ident">store</span>(<span class="ident">dest_b</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                .<span class="ident">store</span>(<span class="ident">dest_b</span>.<span class="ident">wrapping_add</span>(<span class="ident">batch_size</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">Ordering::Release</span>);
 
             <span class="comment">// Destroy the block if we&#39;ve reached the end, or if another thread wanted to destroy</span>
             <span class="comment">// but couldn&#39;t because we were busy reading from the slot.</span>
             <span class="kw">if</span> <span class="ident">new_offset</span> <span class="op">=</span><span class="op">=</span> <span class="ident">BLOCK_CAP</span> {
-                <span class="ident">Block</span>::<span class="ident">destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
+                <span class="ident">Block::destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
             } <span class="kw">else</span> {
                 <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">offset</span>..<span class="ident">new_offset</span> {
                     <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">slots</span>.<span class="ident">get_unchecked</span>(<span class="ident">i</span>);
 
-                    <span class="kw">if</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">READ</span>, <span class="ident">Ordering</span>::<span class="ident">AcqRel</span>) <span class="op">&amp;</span> <span class="ident">DESTROY</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
-                        <span class="ident">Block</span>::<span class="ident">destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
+                    <span class="kw">if</span> <span class="ident">slot</span>.<span class="ident">state</span>.<span class="ident">fetch_or</span>(<span class="ident">READ</span>, <span class="ident">Ordering::AcqRel</span>) <span class="op">&amp;</span> <span class="ident">DESTROY</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+                        <span class="ident">Block::destroy</span>(<span class="ident">block</span>, <span class="ident">offset</span>);
                         <span class="kw">break</span>;
                     }
                 }
             }
 
-            <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">task</span>)
+            <span class="ident">Steal::Success</span>(<span class="ident">task</span>)
         }
     }
 
@@ -3712,8 +3809,8 @@
     <span class="doccomment">/// assert!(!q.is_empty());</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
-        <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="kw">let</span> <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>);
+        <span class="kw">let</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>);
         <span class="ident">head</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span> <span class="op">=</span><span class="op">=</span> <span class="ident">tail</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SHIFT</span>
     }
 
@@ -3735,11 +3832,11 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
         <span class="kw">loop</span> {
             <span class="comment">// Load the tail index, then load the head index.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>);
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>);
 
             <span class="comment">// If the tail index didn&#39;t change, we&#39;ve got consistent indices to work with.</span>
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">tail</span> {
+            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">tail</span> {
                 <span class="comment">// Erase the lower bits.</span>
                 <span class="ident">tail</span> <span class="op">&amp;=</span> <span class="op">!</span>((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>) <span class="op">-</span> <span class="number">1</span>);
                 <span class="ident">head</span> <span class="op">&amp;=</span> <span class="op">!</span>((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>) <span class="op">-</span> <span class="number">1</span>);
@@ -3770,9 +3867,9 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Injector</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">head</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tail</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">index</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">head</span>.<span class="ident">block</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
         <span class="comment">// Erase the lower bits.</span>
         <span class="ident">head</span> <span class="op">&amp;=</span> <span class="op">!</span>((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">SHIFT</span>) <span class="op">-</span> <span class="number">1</span>);
@@ -3790,8 +3887,8 @@
                     <span class="ident">p</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">drop_in_place</span>();
                 } <span class="kw">else</span> {
                     <span class="comment">// Deallocate the block and move to the next one.</span>
-                    <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-                    <span class="ident">drop</span>(<span class="ident">Box</span>::<span class="ident">from_raw</span>(<span class="ident">block</span>));
+                    <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">block</span>).<span class="ident">next</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+                    <span class="ident">drop</span>(<span class="ident">Box::from_raw</span>(<span class="ident">block</span>));
                     <span class="ident">block</span> <span class="op">=</span> <span class="ident">next</span>;
                 }
 
@@ -3799,13 +3896,13 @@
             }
 
             <span class="comment">// Deallocate the last remaining block.</span>
-            <span class="ident">drop</span>(<span class="ident">Box</span>::<span class="ident">from_raw</span>(<span class="ident">block</span>));
+            <span class="ident">drop</span>(<span class="ident">Box::from_raw</span>(<span class="ident">block</span>));
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Injector</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Injector</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Worker { .. }&quot;</span>)
     }
 }
@@ -3856,7 +3953,7 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Steal</span>::<span class="ident">Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="ident">Steal::Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
     }
@@ -3875,7 +3972,7 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_success</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="ident">Steal::Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
     }
@@ -3894,7 +3991,7 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_retry</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Steal</span>::<span class="ident">Retry</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="ident">Steal::Retry</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
     }
@@ -3913,7 +4010,7 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">success</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">res</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">res</span>),
+            <span class="ident">Steal::Success</span>(<span class="ident">res</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">res</span>),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
         }
     }
@@ -3944,25 +4041,25 @@
         <span class="ident">F</span>: <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Steal</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
     {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Steal</span>::<span class="ident">Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>(),
-            <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>,
-            <span class="ident">Steal</span>::<span class="ident">Retry</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">res</span>) <span class="op">=</span> <span class="ident">f</span>() {
-                    <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="ident">res</span>)
+            <span class="ident">Steal::Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>(),
+            <span class="ident">Steal::Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>,
+            <span class="ident">Steal::Retry</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Steal::Success</span>(<span class="ident">res</span>) <span class="op">=</span> <span class="ident">f</span>() {
+                    <span class="ident">Steal::Success</span>(<span class="ident">res</span>)
                 } <span class="kw">else</span> {
-                    <span class="ident">Steal</span>::<span class="ident">Retry</span>
+                    <span class="ident">Steal::Retry</span>
                 }
             }
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Steal</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Steal</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Steal</span>::<span class="ident">Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Empty&quot;</span>),
-            <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Success(..)&quot;</span>),
-            <span class="ident">Steal</span>::<span class="ident">Retry</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Retry&quot;</span>),
+            <span class="ident">Steal::Empty</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Empty&quot;</span>),
+            <span class="ident">Steal::Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Success(..)&quot;</span>),
+            <span class="ident">Steal::Retry</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Retry&quot;</span>),
         }
     }
 }
@@ -3979,19 +4076,18 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">retry</span> <span class="op">=</span> <span class="bool-val">false</span>;
         <span class="kw">for</span> <span class="ident">s</span> <span class="kw">in</span> <span class="ident">iter</span> {
             <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">s</span> {
-                <span class="ident">Steal</span>::<span class="ident">Empty</span> <span class="op">=</span><span class="op">&gt;</span> {}
-                <span class="ident">Steal</span>::<span class="ident">Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">s</span>,
-                <span class="ident">Steal</span>::<span class="ident">Retry</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">retry</span> <span class="op">=</span> <span class="bool-val">true</span>,
+                <span class="ident">Steal::Empty</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                <span class="ident">Steal::Success</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">s</span>,
+                <span class="ident">Steal::Retry</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">retry</span> <span class="op">=</span> <span class="bool-val">true</span>,
             }
         }
 
         <span class="kw">if</span> <span class="ident">retry</span> {
-            <span class="ident">Steal</span>::<span class="ident">Retry</span>
+            <span class="ident">Steal::Retry</span>
         } <span class="kw">else</span> {
-            <span class="ident">Steal</span>::<span class="ident">Empty</span>
+            <span class="ident">Steal::Empty</span>
         }
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="crossbeam_deque"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="crossbeam_deque" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.3/src/sync/sharded_lock.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sharded_lock.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.5/src/sync/sharded_lock.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sharded_lock.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../crossbeam_utils/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../crossbeam_utils/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -631,20 +630,20 @@
 <span id="628">628</span>
 <span id="629">629</span>
 <span id="630">630</span>
-</pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cell</span>::<span class="ident">UnsafeCell</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashMap</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">panic</span>::{<span class="ident">RefUnwindSafe</span>, <span class="ident">UnwindSafe</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">LockResult</span>, <span class="ident">PoisonError</span>, <span class="ident">TryLockError</span>, <span class="ident">TryLockResult</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Mutex</span>, <span class="ident">RwLock</span>, <span class="ident">RwLockReadGuard</span>, <span class="ident">RwLockWriteGuard</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">thread</span>::{<span class="self">self</span>, <span class="ident">ThreadId</span>};
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="ident">std::cell::UnsafeCell</span>;
+<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+<span class="kw">use</span> <span class="ident">std::fmt</span>;
+<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
+<span class="kw">use</span> <span class="ident">std::mem</span>;
+<span class="kw">use</span> <span class="ident">std::ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
+<span class="kw">use</span> <span class="ident">std::panic</span>::{<span class="ident">RefUnwindSafe</span>, <span class="ident">UnwindSafe</span>};
+<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">LockResult</span>, <span class="ident">PoisonError</span>, <span class="ident">TryLockError</span>, <span class="ident">TryLockResult</span>};
+<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Mutex</span>, <span class="ident">RwLock</span>, <span class="ident">RwLockReadGuard</span>, <span class="ident">RwLockWriteGuard</span>};
+<span class="kw">use</span> <span class="ident">std::thread</span>::{<span class="self">self</span>, <span class="ident">ThreadId</span>};
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">CachePadded</span>;
-<span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="ident">lazy_static</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::CachePadded</span>;
+<span class="kw">use</span> <span class="ident">lazy_static::lazy_static</span>;
 
 <span class="doccomment">/// The number of shards per sharded lock. Must be a power of two.</span>
 <span class="kw">const</span> <span class="ident">NUM_SHARDS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span>;
@@ -735,13 +734,13 @@
         <span class="ident">ShardedLock</span> {
             <span class="ident">shards</span>: (<span class="number">0</span>..<span class="ident">NUM_SHARDS</span>)
                 .<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-                    <span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">Shard</span> {
-                        <span class="ident">lock</span>: <span class="ident">RwLock</span>::<span class="ident">new</span>(()),
-                        <span class="ident">write_guard</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="prelude-val">None</span>),
+                    <span class="ident">CachePadded::new</span>(<span class="ident">Shard</span> {
+                        <span class="ident">lock</span>: <span class="ident">RwLock::new</span>(()),
+                        <span class="ident">write_guard</span>: <span class="ident">UnsafeCell::new</span>(<span class="prelude-val">None</span>),
                     })
                 })
                 .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span>[<span class="kw">_</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(),
-            <span class="ident">value</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="ident">value</span>),
+            <span class="ident">value</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">value</span>),
         }
     }
 
@@ -769,7 +768,7 @@
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">value</span>.<span class="ident">into_inner</span>();
 
         <span class="kw">if</span> <span class="ident">is_poisoned</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">PoisonError</span>::<span class="ident">new</span>(<span class="ident">inner</span>))
+            <span class="prelude-val">Err</span>(<span class="ident">PoisonError::new</span>(<span class="ident">inner</span>))
         } <span class="kw">else</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">inner</span>)
         }
@@ -825,7 +824,7 @@
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">value</span>.<span class="ident">get</span>() };
 
         <span class="kw">if</span> <span class="ident">is_poisoned</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">PoisonError</span>::<span class="ident">new</span>(<span class="ident">inner</span>))
+            <span class="prelude-val">Err</span>(<span class="ident">PoisonError::new</span>(<span class="ident">inner</span>))
         } <span class="kw">else</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">inner</span>)
         }
@@ -867,15 +866,15 @@
                 <span class="ident">_guard</span>: <span class="ident">guard</span>,
                 <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
             }),
-            <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">Poisoned</span>(<span class="ident">err</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">TryLockError::Poisoned</span>(<span class="ident">err</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">ShardedLockReadGuard</span> {
                     <span class="ident">lock</span>: <span class="self">self</span>,
                     <span class="ident">_guard</span>: <span class="ident">err</span>.<span class="ident">into_inner</span>(),
                     <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
                 };
-                <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">Poisoned</span>(<span class="ident">PoisonError</span>::<span class="ident">new</span>(<span class="ident">guard</span>)))
+                <span class="prelude-val">Err</span>(<span class="ident">TryLockError::Poisoned</span>(<span class="ident">PoisonError::new</span>(<span class="ident">guard</span>)))
             }
-            <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">WouldBlock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">WouldBlock</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">TryLockError::WouldBlock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">TryLockError::WouldBlock</span>),
         }
     }
 
@@ -927,7 +926,7 @@
                 <span class="ident">_guard</span>: <span class="ident">guard</span>,
                 <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
             }),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">PoisonError</span>::<span class="ident">new</span>(<span class="ident">ShardedLockReadGuard</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">PoisonError::new</span>(<span class="ident">ShardedLockReadGuard</span> {
                 <span class="ident">lock</span>: <span class="self">self</span>,
                 <span class="ident">_guard</span>: <span class="ident">err</span>.<span class="ident">into_inner</span>(),
                 <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
@@ -967,11 +966,11 @@
         <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">shard</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">shards</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
             <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">shard</span>.<span class="ident">lock</span>.<span class="ident">try_write</span>() {
                 <span class="prelude-val">Ok</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">guard</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">Poisoned</span>(<span class="ident">err</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">TryLockError::Poisoned</span>(<span class="ident">err</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="ident">poisoned</span> <span class="op">=</span> <span class="bool-val">true</span>;
                     <span class="ident">err</span>.<span class="ident">into_inner</span>()
                 }
-                <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">WouldBlock</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">TryLockError::WouldBlock</span>) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="ident">blocked</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">i</span>);
                     <span class="kw">break</span>;
                 }
@@ -979,7 +978,7 @@
 
             <span class="comment">// Store the guard into the shard.</span>
             <span class="kw">unsafe</span> {
-                <span class="kw">let</span> <span class="ident">guard</span>: <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">transmute</span>(<span class="ident">guard</span>);
+                <span class="kw">let</span> <span class="ident">guard</span>: <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">mem::transmute</span>(<span class="ident">guard</span>);
                 <span class="kw">let</span> <span class="ident">dest</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">shard</span>.<span class="ident">write_guard</span>.<span class="ident">get</span>();
                 <span class="kw-2">*</span><span class="ident">dest</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">guard</span>);
             }
@@ -990,17 +989,17 @@
             <span class="kw">for</span> <span class="ident">shard</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">shards</span>[<span class="number">0</span>..<span class="ident">i</span>].<span class="ident">iter</span>().<span class="ident">rev</span>() {
                 <span class="kw">unsafe</span> {
                     <span class="kw">let</span> <span class="ident">dest</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">shard</span>.<span class="ident">write_guard</span>.<span class="ident">get</span>();
-                    <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">dest</span>, <span class="prelude-val">None</span>);
+                    <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">mem::replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">dest</span>, <span class="prelude-val">None</span>);
                     <span class="ident">drop</span>(<span class="ident">guard</span>);
                 }
             }
-            <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">WouldBlock</span>)
+            <span class="prelude-val">Err</span>(<span class="ident">TryLockError::WouldBlock</span>)
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">poisoned</span> {
             <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">ShardedLockWriteGuard</span> {
                 <span class="ident">lock</span>: <span class="self">self</span>,
                 <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
             };
-            <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">Poisoned</span>(<span class="ident">PoisonError</span>::<span class="ident">new</span>(<span class="ident">guard</span>)))
+            <span class="prelude-val">Err</span>(<span class="ident">TryLockError::Poisoned</span>(<span class="ident">PoisonError::new</span>(<span class="ident">guard</span>)))
         } <span class="kw">else</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">ShardedLockWriteGuard</span> {
                 <span class="ident">lock</span>: <span class="self">self</span>,
@@ -1055,14 +1054,14 @@
             <span class="comment">// Store the guard into the shard.</span>
             <span class="kw">unsafe</span> {
                 <span class="kw">let</span> <span class="ident">guard</span>: <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, ()<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">guard</span>;
-                <span class="kw">let</span> <span class="ident">guard</span>: <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">transmute</span>(<span class="ident">guard</span>);
+                <span class="kw">let</span> <span class="ident">guard</span>: <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">mem::transmute</span>(<span class="ident">guard</span>);
                 <span class="kw">let</span> <span class="ident">dest</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">shard</span>.<span class="ident">write_guard</span>.<span class="ident">get</span>();
                 <span class="kw-2">*</span><span class="ident">dest</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">guard</span>);
             }
         }
 
         <span class="kw">if</span> <span class="ident">poisoned</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">PoisonError</span>::<span class="ident">new</span>(<span class="ident">ShardedLockWriteGuard</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">PoisonError::new</span>(<span class="ident">ShardedLockWriteGuard</span> {
                 <span class="ident">lock</span>: <span class="self">self</span>,
                 <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
             }))
@@ -1075,21 +1074,21 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt</span>::<span class="ident">Debug</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">ShardedLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt::Debug</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">ShardedLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">try_read</span>() {
             <span class="prelude-val">Ok</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>
                 .<span class="ident">debug_struct</span>(<span class="string">&quot;ShardedLock&quot;</span>)
                 .<span class="ident">field</span>(<span class="string">&quot;data&quot;</span>, <span class="op">&amp;&amp;</span><span class="kw-2">*</span><span class="ident">guard</span>)
                 .<span class="ident">finish</span>(),
-            <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">Poisoned</span>(<span class="ident">err</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>
+            <span class="prelude-val">Err</span>(<span class="ident">TryLockError::Poisoned</span>(<span class="ident">err</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>
                 .<span class="ident">debug_struct</span>(<span class="string">&quot;ShardedLock&quot;</span>)
                 .<span class="ident">field</span>(<span class="string">&quot;data&quot;</span>, <span class="op">&amp;&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">err</span>.<span class="ident">get_ref</span>())
                 .<span class="ident">finish</span>(),
-            <span class="prelude-val">Err</span>(<span class="ident">TryLockError</span>::<span class="ident">WouldBlock</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">TryLockError::WouldBlock</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">struct</span> <span class="ident">LockedPlaceholder</span>;
-                <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">LockedPlaceholder</span> {
-                    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+                <span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">LockedPlaceholder</span> {
+                    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
                         <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="string">&quot;&lt;locked&gt;&quot;</span>)
                     }
                 }
@@ -1103,13 +1102,13 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Default</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ShardedLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ShardedLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">ShardedLock</span>::<span class="ident">new</span>(<span class="ident">Default</span>::<span class="ident">default</span>())
+        <span class="ident">ShardedLock::new</span>(<span class="ident">Default::default</span>())
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ShardedLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">t</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">ShardedLock</span>::<span class="ident">new</span>(<span class="ident">t</span>)
+        <span class="ident">ShardedLock::new</span>(<span class="ident">t</span>)
     }
 }
 
@@ -1130,16 +1129,16 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">fmt</span>::<span class="ident">Debug</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">ShardedLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">fmt::Debug</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">ShardedLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;ShardedLockReadGuard&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;lock&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>)
             .<span class="ident">finish</span>()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt</span>::<span class="ident">Display</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">ShardedLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt::Display</span><span class="op">&gt;</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">ShardedLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">fmt</span>(<span class="ident">f</span>)
     }
 }
@@ -1158,23 +1157,23 @@
         <span class="kw">for</span> <span class="ident">shard</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">shards</span>.<span class="ident">iter</span>().<span class="ident">rev</span>() {
             <span class="kw">unsafe</span> {
                 <span class="kw">let</span> <span class="ident">dest</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">shard</span>.<span class="ident">write_guard</span>.<span class="ident">get</span>();
-                <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">dest</span>, <span class="prelude-val">None</span>);
+                <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">mem::replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">dest</span>, <span class="prelude-val">None</span>);
                 <span class="ident">drop</span>(<span class="ident">guard</span>);
             }
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">fmt</span>::<span class="ident">Debug</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">ShardedLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">fmt::Debug</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">ShardedLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;ShardedLockWriteGuard&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;lock&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>)
             .<span class="ident">finish</span>()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt</span>::<span class="ident">Display</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">ShardedLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt::Display</span><span class="op">&gt;</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">ShardedLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">fmt</span>(<span class="ident">f</span>)
     }
 }
@@ -1217,10 +1216,10 @@
     <span class="ident">next_index</span>: <span class="ident">usize</span>,
 }
 
-<span class="macro">lazy_static</span><span class="macro">!</span> {
-    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">THREAD_INDICES</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">ThreadIndices</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">ThreadIndices</span> {
-        <span class="ident">mapping</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
-        <span class="ident">free_list</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
+<span class="macro">lazy_static!</span> {
+    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">THREAD_INDICES</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">ThreadIndices</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Mutex::new</span>(<span class="ident">ThreadIndices</span> {
+        <span class="ident">mapping</span>: <span class="ident">HashMap::new</span>(),
+        <span class="ident">free_list</span>: <span class="ident">Vec::new</span>(),
         <span class="ident">next_index</span>: <span class="number">0</span>,
     });
 }
@@ -1241,9 +1240,9 @@
     }
 }
 
-<span class="macro">thread_local</span><span class="macro">!</span> {
+<span class="macro">thread_local!</span> {
     <span class="kw">static</span> <span class="ident">REGISTRATION</span>: <span class="ident">Registration</span> <span class="op">=</span> {
-        <span class="kw">let</span> <span class="ident">thread_id</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">current</span>().<span class="ident">id</span>();
+        <span class="kw">let</span> <span class="ident">thread_id</span> <span class="op">=</span> <span class="ident">thread::current</span>().<span class="ident">id</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indices</span> <span class="op">=</span> <span class="ident">THREAD_INDICES</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
 
         <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">indices</span>.<span class="ident">free_list</span>.<span class="ident">pop</span>() {
@@ -1263,5 +1262,4 @@
     };
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="crossbeam_utils"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="crossbeam_utils" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>

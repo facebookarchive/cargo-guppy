@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/petgraph-0.5.1/src/algo/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/petgraph-0.6.0/src/algo/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../petgraph/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../petgraph/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -880,37 +879,76 @@
 <span id="877">877</span>
 <span id="878">878</span>
 <span id="879">879</span>
-</pre><div class="example-wrap"><pre class="rust ">
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
+<span id="902">902</span>
+</pre><pre class="rust">
 <span class="doccomment">//! Graph algorithms.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! It is a goal to gradually migrate the algorithms to be based on graph traits</span>
 <span class="doccomment">//! so that they are generally applicable. For now, some of these still require</span>
 <span class="doccomment">//! the `Graph` type.</span>
 
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">astar</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">bellman_ford</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">dijkstra</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">dominators</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">feedback_arc_set</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">floyd_warshall</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">isomorphism</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">k_shortest_path</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">matching</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">simple_paths</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">tred</span>;
 
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">cmp</span>::<span class="ident">min</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::{<span class="ident">BinaryHeap</span>, <span class="ident">HashMap</span>};
+<span class="kw">use</span> <span class="ident">std::collections</span>::{<span class="ident">BinaryHeap</span>, <span class="ident">HashMap</span>};
+<span class="kw">use</span> <span class="ident">std::num::NonZeroUsize</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::prelude</span>::<span class="kw-2">*</span>;
 
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">graph</span>::<span class="ident">IndexType</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">unionfind</span>::<span class="ident">UnionFind</span>;
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">visit</span>::{
-    <span class="ident">GraphBase</span>, <span class="ident">GraphRef</span>, <span class="ident">IntoEdgeReferences</span>, <span class="ident">IntoEdges</span>, <span class="ident">IntoNeighbors</span>, <span class="ident">IntoNeighborsDirected</span>,
-    <span class="ident">IntoNodeIdentifiers</span>, <span class="ident">NodeCompactIndexable</span>, <span class="ident">NodeCount</span>, <span class="ident">NodeIndexable</span>, <span class="ident">Reversed</span>, <span class="ident">VisitMap</span>,
-    <span class="ident">Visitable</span>,
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::graph::IndexType</span>;
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::unionfind::UnionFind</span>;
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::visit</span>::{
+    <span class="ident">GraphBase</span>, <span class="ident">GraphRef</span>, <span class="ident">IntoEdgeReferences</span>, <span class="ident">IntoNeighbors</span>, <span class="ident">IntoNeighborsDirected</span>,
+    <span class="ident">IntoNodeIdentifiers</span>, <span class="ident">NodeCompactIndexable</span>, <span class="ident">NodeIndexable</span>, <span class="ident">Reversed</span>, <span class="ident">VisitMap</span>, <span class="ident">Visitable</span>,
 };
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">EdgeType</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">data</span>::<span class="ident">Element</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">scored</span>::<span class="ident">MinScored</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::<span class="ident">Walker</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::{<span class="ident">Data</span>, <span class="ident">IntoNodeReferences</span>, <span class="ident">NodeRef</span>};
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::EdgeType</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::data::Element</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::scored::MinScored</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::visit::Walker</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::visit</span>::{<span class="ident">Data</span>, <span class="ident">IntoNodeReferences</span>, <span class="ident">NodeRef</span>};
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">astar</span>::<span class="ident">astar</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">dijkstra</span>::<span class="ident">dijkstra</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">isomorphism</span>::{<span class="ident">is_isomorphic</span>, <span class="ident">is_isomorphic_matching</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">simple_paths</span>::<span class="ident">all_simple_paths</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">astar::astar</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">bellman_ford</span>::{<span class="ident">bellman_ford</span>, <span class="ident">find_negative_cycle</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">dijkstra::dijkstra</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">feedback_arc_set::greedy_feedback_arc_set</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">floyd_warshall::floyd_warshall</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">isomorphism</span>::{
+    <span class="ident">is_isomorphic</span>, <span class="ident">is_isomorphic_matching</span>, <span class="ident">is_isomorphic_subgraph</span>, <span class="ident">is_isomorphic_subgraph_matching</span>,
+};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">k_shortest_path::k_shortest_path</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">matching</span>::{<span class="ident">greedy_matching</span>, <span class="ident">maximum_matching</span>, <span class="ident">Matching</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">simple_paths::all_simple_paths</span>;
 
 <span class="doccomment">/// \[Generic\] Return the number of connected components of the graph.</span>
 <span class="doccomment">///</span>
@@ -954,7 +992,7 @@
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">NodeCompactIndexable</span> <span class="op">+</span> <span class="ident">IntoEdgeReferences</span>,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vertex_sets</span> <span class="op">=</span> <span class="ident">UnionFind</span>::<span class="ident">new</span>(<span class="ident">g</span>.<span class="ident">node_bound</span>());
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vertex_sets</span> <span class="op">=</span> <span class="ident">UnionFind::new</span>(<span class="ident">g</span>.<span class="ident">node_bound</span>());
     <span class="kw">for</span> <span class="ident">edge</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">edge_references</span>() {
         <span class="kw">let</span> (<span class="ident">a</span>, <span class="ident">b</span>) <span class="op">=</span> (<span class="ident">edge</span>.<span class="ident">source</span>(), <span class="ident">edge</span>.<span class="ident">target</span>());
 
@@ -962,7 +1000,7 @@
         <span class="ident">vertex_sets</span>.<span class="ident">union</span>(<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">a</span>), <span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">b</span>));
     }
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">labels</span> <span class="op">=</span> <span class="ident">vertex_sets</span>.<span class="ident">into_labeling</span>();
-    <span class="ident">labels</span>.<span class="ident">sort</span>();
+    <span class="ident">labels</span>.<span class="ident">sort_unstable</span>();
     <span class="ident">labels</span>.<span class="ident">dedup</span>();
     <span class="ident">labels</span>.<span class="ident">len</span>()
 }
@@ -974,7 +1012,7 @@
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">NodeIndexable</span> <span class="op">+</span> <span class="ident">IntoEdgeReferences</span>,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">edge_sets</span> <span class="op">=</span> <span class="ident">UnionFind</span>::<span class="ident">new</span>(<span class="ident">g</span>.<span class="ident">node_bound</span>());
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">edge_sets</span> <span class="op">=</span> <span class="ident">UnionFind::new</span>(<span class="ident">g</span>.<span class="ident">node_bound</span>());
     <span class="kw">for</span> <span class="ident">edge</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">edge_references</span>() {
         <span class="kw">let</span> (<span class="ident">a</span>, <span class="ident">b</span>) <span class="op">=</span> (<span class="ident">edge</span>.<span class="ident">source</span>(), <span class="ident">edge</span>.<span class="ident">target</span>());
 
@@ -1000,8 +1038,8 @@
 <span class="doccomment">/// graph traversal. The implementation is iterative.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">toposort</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(
     <span class="ident">g</span>: <span class="ident">G</span>,
-    <span class="ident">space</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DfsSpace</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span>, <span class="ident">G</span>::<span class="ident">Map</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span>, <span class="ident">Cycle</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
+    <span class="ident">space</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DfsSpace</span><span class="op">&lt;</span><span class="ident">G::NodeId</span>, <span class="ident">G::Map</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span>, <span class="ident">Cycle</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoNeighborsDirected</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">Visitable</span>,
 {
@@ -1010,7 +1048,7 @@
         <span class="ident">dfs</span>.<span class="ident">reset</span>(<span class="ident">g</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">finished</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">visit_map</span>();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">finish_stack</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">finish_stack</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">node_identifiers</span>() {
             <span class="kw">if</span> <span class="ident">dfs</span>.<span class="ident">discovered</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">i</span>) {
                 <span class="kw">continue</span>;
@@ -1063,16 +1101,16 @@
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">Visitable</span>,
 {
-    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">visit</span>::{<span class="ident">depth_first_search</span>, <span class="ident">DfsEvent</span>};
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::visit</span>::{<span class="ident">depth_first_search</span>, <span class="ident">DfsEvent</span>};
 
     <span class="ident">depth_first_search</span>(<span class="ident">g</span>, <span class="ident">g</span>.<span class="ident">node_identifiers</span>(), <span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">event</span> {
-        <span class="ident">DfsEvent</span>::<span class="ident">BackEdge</span>(<span class="kw">_</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(()),
+        <span class="ident">DfsEvent::BackEdge</span>(<span class="kw">_</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(()),
         <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
     })
     .<span class="ident">is_err</span>()
 }
 
-<span class="kw">type</span> <span class="ident">DfsSpaceType</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DfsSpace</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">GraphBase</span><span class="op">&gt;</span>::<span class="ident">NodeId</span>, <span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">Visitable</span><span class="op">&gt;</span>::<span class="ident">Map</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">DfsSpaceType</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DfsSpace</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">GraphBase</span><span class="op">&gt;</span><span class="ident">::NodeId</span>, <span class="op">&lt;</span><span class="ident">G</span> <span class="kw">as</span> <span class="ident">Visitable</span><span class="op">&gt;</span><span class="ident">::Map</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// Workspace for a graph traversal.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
@@ -1089,7 +1127,7 @@
     <span class="kw">where</span>
         <span class="ident">G</span>: <span class="ident">GraphRef</span> <span class="op">+</span> <span class="ident">Visitable</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span>, <span class="ident">Map</span> <span class="op">=</span> <span class="ident">VM</span><span class="op">&gt;</span>,
     {
-        <span class="ident">DfsSpace</span> { <span class="ident">dfs</span>: <span class="ident">Dfs</span>::<span class="ident">empty</span>(<span class="ident">g</span>) }
+        <span class="ident">DfsSpace</span> { <span class="ident">dfs</span>: <span class="ident">Dfs::empty</span>(<span class="ident">g</span>) }
     }
 }
 
@@ -1100,8 +1138,8 @@
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">DfsSpace</span> {
             <span class="ident">dfs</span>: <span class="ident">Dfs</span> {
-                <span class="ident">stack</span>: <span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>::<span class="ident">default</span>(),
-                <span class="ident">discovered</span>: <span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>::<span class="ident">default</span>(),
+                <span class="ident">stack</span>: <span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="ident">::default</span>(),
+                <span class="ident">discovered</span>: <span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="ident">::default</span>(),
             },
         }
     }
@@ -1111,13 +1149,13 @@
 <span class="kw">fn</span> <span class="ident">with_dfs</span><span class="op">&lt;</span><span class="ident">G</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>, <span class="ident">space</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DfsSpaceType</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">GraphRef</span> <span class="op">+</span> <span class="ident">Visitable</span>,
-    <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Dfs</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span>, <span class="ident">G</span>::<span class="ident">Map</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span>,
+    <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Dfs</span><span class="op">&lt;</span><span class="ident">G::NodeId</span>, <span class="ident">G::Map</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">R</span>,
 {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">local_visitor</span>;
     <span class="kw">let</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">v</span>) <span class="op">=</span> <span class="ident">space</span> {
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">v</span>.<span class="ident">dfs</span>
     } <span class="kw">else</span> {
-        <span class="ident">local_visitor</span> <span class="op">=</span> <span class="ident">Dfs</span>::<span class="ident">empty</span>(<span class="ident">g</span>);
+        <span class="ident">local_visitor</span> <span class="op">=</span> <span class="ident">Dfs::empty</span>(<span class="ident">g</span>);
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">local_visitor</span>
     };
     <span class="ident">f</span>(<span class="ident">dfs</span>)
@@ -1131,9 +1169,9 @@
 <span class="doccomment">/// graph traversal.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_path_connecting</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(
     <span class="ident">g</span>: <span class="ident">G</span>,
-    <span class="ident">from</span>: <span class="ident">G</span>::<span class="ident">NodeId</span>,
-    <span class="ident">to</span>: <span class="ident">G</span>::<span class="ident">NodeId</span>,
-    <span class="ident">space</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DfsSpace</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span>, <span class="ident">G</span>::<span class="ident">Map</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">from</span>: <span class="ident">G::NodeId</span>,
+    <span class="ident">to</span>: <span class="ident">G::NodeId</span>,
+    <span class="ident">space</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">DfsSpace</span><span class="op">&lt;</span><span class="ident">G::NodeId</span>, <span class="ident">G::Map</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">Visitable</span>,
@@ -1147,7 +1185,7 @@
 
 <span class="doccomment">/// Renamed to `kosaraju_scc`.</span>
 <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;renamed to kosaraju_scc&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">scc</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">scc</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoNeighborsDirected</span> <span class="op">+</span> <span class="ident">Visitable</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span>,
 {
@@ -1165,15 +1203,15 @@
 <span class="doccomment">/// For an undirected graph, the sccs are simply the connected components.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This implementation is iterative and does two passes over the nodes.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kosaraju_scc</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kosaraju_scc</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoNeighborsDirected</span> <span class="op">+</span> <span class="ident">Visitable</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span>,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">DfsPostOrder</span>::<span class="ident">empty</span>(<span class="ident">g</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">DfsPostOrder::empty</span>(<span class="ident">g</span>);
 
     <span class="comment">// First phase, reverse dfs pass, compute finishing times.</span>
     <span class="comment">// http://stackoverflow.com/a/26780899/161659</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">finish_order</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">with_capacity</span>(<span class="number">0</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">finish_order</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="number">0</span>);
     <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">node_identifiers</span>() {
         <span class="kw">if</span> <span class="ident">dfs</span>.<span class="ident">discovered</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">i</span>) {
             <span class="kw">continue</span>;
@@ -1185,9 +1223,9 @@
         }
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">Dfs</span>::<span class="ident">from_parts</span>(<span class="ident">dfs</span>.<span class="ident">stack</span>, <span class="ident">dfs</span>.<span class="ident">discovered</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">Dfs::from_parts</span>(<span class="ident">dfs</span>.<span class="ident">stack</span>, <span class="ident">dfs</span>.<span class="ident">discovered</span>);
     <span class="ident">dfs</span>.<span class="ident">reset</span>(<span class="ident">g</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sccs</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sccs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
 
     <span class="comment">// Second phase</span>
     <span class="comment">// Process in decreasing finishing time order</span>
@@ -1197,7 +1235,7 @@
         }
         <span class="comment">// Move to the leader node `i`.</span>
         <span class="ident">dfs</span>.<span class="ident">move_to</span>(<span class="ident">i</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scc</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scc</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">nx</span>) <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">next</span>(<span class="ident">g</span>) {
             <span class="ident">scc</span>.<span class="ident">push</span>(<span class="ident">nx</span>);
         }
@@ -1206,9 +1244,160 @@
     <span class="ident">sccs</span>
 }
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">struct</span> <span class="ident">NodeData</span> {
+    <span class="ident">rootindex</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NonZeroUsize</span><span class="op">&gt;</span>,
+}
+
+<span class="doccomment">/// A reusable state for computing the *strongly connected components* using [Tarjan&#39;s algorithm][1].</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [1]: https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TarjanScc</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> {
+    <span class="ident">index</span>: <span class="ident">usize</span>,
+    <span class="ident">componentcount</span>: <span class="ident">usize</span>,
+    <span class="ident">nodes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeData</span><span class="op">&gt;</span>,
+    <span class="ident">stack</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TarjanScc</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span><span class="ident">::new</span>()
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> <span class="ident">TarjanScc</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Creates a new `TarjanScc`</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident">TarjanScc</span> {
+            <span class="ident">index</span>: <span class="number">1</span>,                        <span class="comment">// Invariant: index &lt; componentcount at all times.</span>
+            <span class="ident">componentcount</span>: <span class="ident">std::usize::MAX</span>, <span class="comment">// Will hold if componentcount is initialized to number of nodes - 1 or higher.</span>
+            <span class="ident">nodes</span>: <span class="ident">Vec::new</span>(),
+            <span class="ident">stack</span>: <span class="ident">Vec::new</span>(),
+        }
+    }
+
+    <span class="doccomment">/// \[Generic\] Compute the *strongly connected components* using Algorithm 3 in</span>
+    <span class="doccomment">/// [A Space-Efficient Algorithm for Finding Strongly Connected Components][1] by David J. Pierce,</span>
+    <span class="doccomment">/// which is a memory-efficient variation of [Tarjan&#39;s algorithm][2].</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [1]: https://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf</span>
+    <span class="doccomment">/// [2]: https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Calls `f` for each strongly strongly connected component (scc).</span>
+    <span class="doccomment">/// The order of node ids within each scc is arbitrary, but the order of</span>
+    <span class="doccomment">/// the sccs is their postorder (reverse topological sort).</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// For an undirected graph, the sccs are simply the connected components.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This implementation is recursive and does one pass over the nodes.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">run</span><span class="op">&lt;</span><span class="ident">G</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">g</span>: <span class="ident">G</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">F</span>)
+    <span class="kw">where</span>
+        <span class="ident">G</span>: <span class="ident">IntoNodeIdentifiers</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">IntoNeighbors</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">NodeIndexable</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span>[<span class="ident">N</span>]),
+        <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span>,
+    {
+        <span class="self">self</span>.<span class="ident">nodes</span>.<span class="ident">clear</span>();
+        <span class="self">self</span>.<span class="ident">nodes</span>
+            .<span class="ident">resize</span>(<span class="ident">g</span>.<span class="ident">node_bound</span>(), <span class="ident">NodeData</span> { <span class="ident">rootindex</span>: <span class="prelude-val">None</span> });
+
+        <span class="kw">for</span> <span class="ident">n</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">node_identifiers</span>() {
+            <span class="kw">let</span> <span class="ident">visited</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">n</span>)].<span class="ident">rootindex</span>.<span class="ident">is_some</span>();
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">visited</span> {
+                <span class="self">self</span>.<span class="ident">visit</span>(<span class="ident">n</span>, <span class="ident">g</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">f</span>);
+            }
+        }
+
+        <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">is_empty</span>());
+    }
+
+    <span class="kw">fn</span> <span class="ident">visit</span><span class="op">&lt;</span><span class="ident">G</span>, <span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">v</span>: <span class="ident">G::NodeId</span>, <span class="ident">g</span>: <span class="ident">G</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">F</span>)
+    <span class="kw">where</span>
+        <span class="ident">G</span>: <span class="ident">IntoNeighbors</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">NodeIndexable</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span>[<span class="ident">N</span>]),
+        <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span>,
+    {
+        <span class="macro">macro_rules!</span> <span class="ident">node</span> {
+            (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">node</span>:<span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">node</span>)]
+            };
+        }
+
+        <span class="kw">let</span> <span class="ident">node_v</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="macro">node!</span>[<span class="ident">v</span>];
+        <span class="macro">debug_assert!</span>(<span class="ident">node_v</span>.<span class="ident">rootindex</span>.<span class="ident">is_none</span>());
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v_is_local_root</span> <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="kw">let</span> <span class="ident">v_index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">index</span>;
+        <span class="ident">node_v</span>.<span class="ident">rootindex</span> <span class="op">=</span> <span class="ident">NonZeroUsize::new</span>(<span class="ident">v_index</span>);
+        <span class="self">self</span>.<span class="ident">index</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="kw">for</span> <span class="ident">w</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">neighbors</span>(<span class="ident">v</span>) {
+            <span class="kw">if</span> <span class="macro">node!</span>[<span class="ident">w</span>].<span class="ident">rootindex</span>.<span class="ident">is_none</span>() {
+                <span class="self">self</span>.<span class="ident">visit</span>(<span class="ident">w</span>, <span class="ident">g</span>, <span class="ident">f</span>);
+            }
+            <span class="kw">if</span> <span class="macro">node!</span>[<span class="ident">w</span>].<span class="ident">rootindex</span> <span class="op">&lt;</span> <span class="macro">node!</span>[<span class="ident">v</span>].<span class="ident">rootindex</span> {
+                <span class="macro">node!</span>[<span class="ident">v</span>].<span class="ident">rootindex</span> <span class="op">=</span> <span class="macro">node!</span>[<span class="ident">w</span>].<span class="ident">rootindex</span>;
+                <span class="ident">v_is_local_root</span> <span class="op">=</span> <span class="bool-val">false</span>
+            }
+        }
+
+        <span class="kw">if</span> <span class="ident">v_is_local_root</span> {
+            <span class="comment">// Pop the stack and generate an SCC.</span>
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indexadjustment</span> <span class="op">=</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">NonZeroUsize::new</span>(<span class="self">self</span>.<span class="ident">componentcount</span>);
+            <span class="kw">let</span> <span class="ident">nodes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">nodes</span>;
+            <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="self">self</span>
+                .<span class="ident">stack</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">rposition</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">w</span><span class="op">|</span> {
+                    <span class="kw">if</span> <span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">v</span>)].<span class="ident">rootindex</span> <span class="op">&gt;</span> <span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">w</span>)].<span class="ident">rootindex</span> {
+                        <span class="bool-val">true</span>
+                    } <span class="kw">else</span> {
+                        <span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">w</span>)].<span class="ident">rootindex</span> <span class="op">=</span> <span class="ident">c</span>;
+                        <span class="ident">indexadjustment</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                        <span class="bool-val">false</span>
+                    }
+                })
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">+</span> <span class="number">1</span>)
+                .<span class="ident">unwrap_or_default</span>();
+            <span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">v</span>)].<span class="ident">rootindex</span> <span class="op">=</span> <span class="ident">c</span>;
+            <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">v</span>); <span class="comment">// Pushing the component root to the back right before getting rid of it is somewhat ugly, but it lets it be included in f.</span>
+            <span class="ident">f</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stack</span>[<span class="ident">start</span>..]);
+            <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">truncate</span>(<span class="ident">start</span>);
+            <span class="self">self</span>.<span class="ident">index</span> <span class="op">-</span><span class="op">=</span> <span class="ident">indexadjustment</span>; <span class="comment">// Backtrack index back to where it was before we ever encountered the component.</span>
+            <span class="self">self</span>.<span class="ident">componentcount</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+        } <span class="kw">else</span> {
+            <span class="self">self</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">v</span>); <span class="comment">// Stack is filled up when backtracking, unlike in Tarjans original algorithm.</span>
+        }
+    }
+
+    <span class="doccomment">/// Returns the index of the component in which v has been assigned. Allows for using self as a lookup table for an scc decomposition produced by self.run().</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">node_component_index</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">g</span>: <span class="ident">G</span>, <span class="ident">v</span>: <span class="ident">N</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span>
+    <span class="kw">where</span>
+        <span class="ident">G</span>: <span class="ident">IntoNeighbors</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">NodeIndexable</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span>,
+        <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span>,
+    {
+        <span class="kw">let</span> <span class="ident">rindex</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">v</span>)]
+            .<span class="ident">rootindex</span>
+            .<span class="ident">map</span>(<span class="ident">NonZeroUsize::get</span>)
+            .<span class="ident">unwrap_or</span>(<span class="number">0</span>); <span class="comment">// Compiles to no-op.</span>
+        <span class="macro">debug_assert!</span>(
+            <span class="ident">rindex</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>,
+            <span class="string">&quot;Tried to get the component index of an unvisited node.&quot;</span>
+        );
+        <span class="macro">debug_assert!</span>(
+            <span class="ident">rindex</span> <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">componentcount</span>,
+            <span class="string">&quot;Given node has been visited but not yet assigned to a component.&quot;</span>
+        );
+        <span class="ident">std::usize::MAX</span> <span class="op">-</span> <span class="ident">rindex</span>
+    }
+}
+
 <span class="doccomment">/// \[Generic\] Compute the *strongly connected components* using [Tarjan&#39;s algorithm][1].</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// [1]: https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm</span>
+<span class="doccomment">/// [2]: https://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Return a vector where each element is a strongly connected component (scc).</span>
 <span class="doccomment">/// The order of node ids within each scc is arbitrary, but the order of</span>
@@ -1216,106 +1405,17 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// For an undirected graph, the sccs are simply the connected components.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This implementation is recursive and does one pass over the nodes.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tarjan_scc</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
+<span class="doccomment">/// This implementation is recursive and does one pass over the nodes. It is based on</span>
+<span class="doccomment">/// [A Space-Efficient Algorithm for Finding Strongly Connected Components][2] by David J. Pierce,</span>
+<span class="doccomment">/// to provide a memory-efficient implementation of [Tarjan&#39;s algorithm][1].</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tarjan_scc</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">NodeIndexable</span>,
 {
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">NodeData</span> {
-        <span class="ident">index</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-        <span class="ident">lowlink</span>: <span class="ident">usize</span>,
-        <span class="ident">on_stack</span>: <span class="ident">bool</span>,
-    }
-
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">Data</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">G</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">G</span>: <span class="ident">NodeIndexable</span>,
-        <span class="ident">G</span>::<span class="ident">NodeId</span>: <span class="lifetime">&#39;a</span>,
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sccs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
     {
-        <span class="ident">index</span>: <span class="ident">usize</span>,
-        <span class="ident">nodes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeData</span><span class="op">&gt;</span>,
-        <span class="ident">stack</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span>,
-        <span class="ident">sccs</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    }
-
-    <span class="kw">fn</span> <span class="ident">scc_visit</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">v</span>: <span class="ident">G</span>::<span class="ident">NodeId</span>, <span class="ident">g</span>: <span class="ident">G</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Data</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>)
-    <span class="kw">where</span>
-        <span class="ident">G</span>: <span class="ident">IntoNeighbors</span> <span class="op">+</span> <span class="ident">NodeIndexable</span>,
-    {
-        <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">node</span> {
-            (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">node</span>:<span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">data</span>.<span class="ident">nodes</span>[<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">node</span>)]
-            };
-        }
-
-        <span class="kw">if</span> <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">index</span>.<span class="ident">is_some</span>() {
-            <span class="comment">// already visited</span>
-            <span class="kw">return</span>;
-        }
-
-        <span class="kw">let</span> <span class="ident">v_index</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">index</span>;
-        <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">index</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">v_index</span>);
-        <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">lowlink</span> <span class="op">=</span> <span class="ident">v_index</span>;
-        <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">on_stack</span> <span class="op">=</span> <span class="bool-val">true</span>;
-        <span class="ident">data</span>.<span class="ident">stack</span>.<span class="ident">push</span>(<span class="ident">v</span>);
-        <span class="ident">data</span>.<span class="ident">index</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-
-        <span class="kw">for</span> <span class="ident">w</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">neighbors</span>(<span class="ident">v</span>) {
-            <span class="kw">match</span> <span class="macro">node</span><span class="macro">!</span>[<span class="ident">w</span>].<span class="ident">index</span> {
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="ident">scc_visit</span>(<span class="ident">w</span>, <span class="ident">g</span>, <span class="ident">data</span>);
-                    <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">lowlink</span> <span class="op">=</span> <span class="ident">min</span>(<span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">lowlink</span>, <span class="macro">node</span><span class="macro">!</span>[<span class="ident">w</span>].<span class="ident">lowlink</span>);
-                }
-                <span class="prelude-val">Some</span>(<span class="ident">w_index</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">if</span> <span class="macro">node</span><span class="macro">!</span>[<span class="ident">w</span>].<span class="ident">on_stack</span> {
-                        <span class="comment">// Successor w is in stack S and hence in the current SCC</span>
-                        <span class="kw">let</span> <span class="ident">v_lowlink</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">lowlink</span>;
-                        <span class="kw-2">*</span><span class="ident">v_lowlink</span> <span class="op">=</span> <span class="ident">min</span>(<span class="kw-2">*</span><span class="ident">v_lowlink</span>, <span class="ident">w_index</span>);
-                    }
-                }
-            }
-        }
-
-        <span class="comment">// If v is a root node, pop the stack and generate an SCC</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">v_index</span>) <span class="op">=</span> <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">index</span> {
-            <span class="kw">if</span> <span class="macro">node</span><span class="macro">!</span>[<span class="ident">v</span>].<span class="ident">lowlink</span> <span class="op">=</span><span class="op">=</span> <span class="ident">v_index</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cur_scc</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
-                <span class="kw">loop</span> {
-                    <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">stack</span>.<span class="ident">pop</span>().<span class="ident">unwrap</span>();
-                    <span class="macro">node</span><span class="macro">!</span>[<span class="ident">w</span>].<span class="ident">on_stack</span> <span class="op">=</span> <span class="bool-val">false</span>;
-                    <span class="ident">cur_scc</span>.<span class="ident">push</span>(<span class="ident">w</span>);
-                    <span class="kw">if</span> <span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">w</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">v</span>) {
-                        <span class="kw">break</span>;
-                    }
-                }
-                <span class="ident">data</span>.<span class="ident">sccs</span>.<span class="ident">push</span>(<span class="ident">cur_scc</span>);
-            }
-        }
-    }
-
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sccs</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
-    {
-        <span class="kw">let</span> <span class="ident">map</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[
-            <span class="ident">NodeData</span> {
-                <span class="ident">index</span>: <span class="prelude-val">None</span>,
-                <span class="ident">lowlink</span>: <span class="op">!</span><span class="number">0</span>,
-                <span class="ident">on_stack</span>: <span class="bool-val">false</span>
-            };
-            <span class="ident">g</span>.<span class="ident">node_bound</span>()
-        ];
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">Data</span> {
-            <span class="ident">index</span>: <span class="number">0</span>,
-            <span class="ident">nodes</span>: <span class="ident">map</span>,
-            <span class="ident">stack</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
-            <span class="ident">sccs</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">sccs</span>,
-        };
-
-        <span class="kw">for</span> <span class="ident">n</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">node_identifiers</span>() {
-            <span class="ident">scc_visit</span>(<span class="ident">n</span>, <span class="ident">g</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">data</span>);
-        }
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tarjan_scc</span> <span class="op">=</span> <span class="ident">TarjanScc::new</span>();
+        <span class="ident">tarjan_scc</span>.<span class="ident">run</span>(<span class="ident">g</span>, <span class="op">|</span><span class="ident">scc</span><span class="op">|</span> <span class="ident">sccs</span>.<span class="ident">push</span>(<span class="ident">scc</span>.<span class="ident">to_vec</span>()));
     }
     <span class="ident">sccs</span>
 }
@@ -1409,12 +1509,12 @@
     <span class="ident">Ix</span>: <span class="ident">IndexType</span>,
 {
     <span class="kw">let</span> <span class="ident">sccs</span> <span class="op">=</span> <span class="ident">kosaraju_scc</span>(<span class="kw-2">&amp;</span><span class="ident">g</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">condensed</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Graph</span>::<span class="ident">with_capacity</span>(<span class="ident">sccs</span>.<span class="ident">len</span>(), <span class="ident">g</span>.<span class="ident">edge_count</span>());
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">condensed</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>, <span class="ident">E</span>, <span class="ident">Ty</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Graph::with_capacity</span>(<span class="ident">sccs</span>.<span class="ident">len</span>(), <span class="ident">g</span>.<span class="ident">edge_count</span>());
 
     <span class="comment">// Build a map from old indices to new ones.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">node_map</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">NodeIndex</span>::<span class="ident">end</span>(); <span class="ident">g</span>.<span class="ident">node_count</span>()];
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">node_map</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">NodeIndex::end</span>(); <span class="ident">g</span>.<span class="ident">node_count</span>()];
     <span class="kw">for</span> <span class="ident">comp</span> <span class="kw">in</span> <span class="ident">sccs</span> {
-        <span class="kw">let</span> <span class="ident">new_nix</span> <span class="op">=</span> <span class="ident">condensed</span>.<span class="ident">add_node</span>(<span class="ident">Vec</span>::<span class="ident">new</span>());
+        <span class="kw">let</span> <span class="ident">new_nix</span> <span class="op">=</span> <span class="ident">condensed</span>.<span class="ident">add_node</span>(<span class="ident">Vec::new</span>());
         <span class="kw">for</span> <span class="ident">nix</span> <span class="kw">in</span> <span class="ident">comp</span> {
             <span class="ident">node_map</span>[<span class="ident">nix</span>.<span class="ident">index</span>()] <span class="op">=</span> <span class="ident">new_nix</span>;
         }
@@ -1453,16 +1553,16 @@
 <span class="doccomment">/// Use `from_elements` to create a graph from the resulting iterator.</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">min_spanning_tree</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MinSpanningTree</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">G</span>::<span class="ident">NodeWeight</span>: <span class="ident">Clone</span>,
-    <span class="ident">G</span>::<span class="ident">EdgeWeight</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">PartialOrd</span>,
+    <span class="ident">G::NodeWeight</span>: <span class="ident">Clone</span>,
+    <span class="ident">G::EdgeWeight</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">PartialOrd</span>,
     <span class="ident">G</span>: <span class="ident">IntoNodeReferences</span> <span class="op">+</span> <span class="ident">IntoEdgeReferences</span> <span class="op">+</span> <span class="ident">NodeIndexable</span>,
 {
     <span class="comment">// Initially each vertex is its own disjoint subgraph, track the connectedness</span>
     <span class="comment">// of the pre-MST with a union &amp; find datastructure.</span>
-    <span class="kw">let</span> <span class="ident">subgraphs</span> <span class="op">=</span> <span class="ident">UnionFind</span>::<span class="ident">new</span>(<span class="ident">g</span>.<span class="ident">node_bound</span>());
+    <span class="kw">let</span> <span class="ident">subgraphs</span> <span class="op">=</span> <span class="ident">UnionFind::new</span>(<span class="ident">g</span>.<span class="ident">node_bound</span>());
 
     <span class="kw">let</span> <span class="ident">edges</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">edge_references</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sort_edges</span> <span class="op">=</span> <span class="ident">BinaryHeap</span>::<span class="ident">with_capacity</span>(<span class="ident">edges</span>.<span class="ident">size_hint</span>().<span class="number">0</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sort_edges</span> <span class="op">=</span> <span class="ident">BinaryHeap::with_capacity</span>(<span class="ident">edges</span>.<span class="ident">size_hint</span>().<span class="number">0</span>);
     <span class="kw">for</span> <span class="ident">edge</span> <span class="kw">in</span> <span class="ident">edges</span> {
         <span class="ident">sort_edges</span>.<span class="ident">push</span>(<span class="ident">MinScored</span>(
             <span class="ident">edge</span>.<span class="ident">weight</span>().<span class="ident">clone</span>(),
@@ -1475,20 +1575,22 @@
         <span class="ident">node_ids</span>: <span class="prelude-val">Some</span>(<span class="ident">g</span>.<span class="ident">node_references</span>()),
         <span class="ident">subgraphs</span>,
         <span class="ident">sort_edges</span>,
-        <span class="ident">node_map</span>: <span class="ident">HashMap</span>::<span class="ident">new</span>(),
+        <span class="ident">node_map</span>: <span class="ident">HashMap::new</span>(),
         <span class="ident">node_count</span>: <span class="number">0</span>,
     }
 }
 
 <span class="doccomment">/// An iterator producing a minimum spanning forest of a graph.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MinSpanningTree</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">Data</span> <span class="op">+</span> <span class="ident">IntoNodeReferences</span>,
 {
     <span class="ident">graph</span>: <span class="ident">G</span>,
-    <span class="ident">node_ids</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeReferences</span><span class="op">&gt;</span>,
+    <span class="ident">node_ids</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">G::NodeReferences</span><span class="op">&gt;</span>,
     <span class="ident">subgraphs</span>: <span class="ident">UnionFind</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-    <span class="ident">sort_edges</span>: <span class="ident">BinaryHeap</span><span class="op">&lt;</span><span class="ident">MinScored</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">EdgeWeight</span>, (<span class="ident">G</span>::<span class="ident">NodeId</span>, <span class="ident">G</span>::<span class="ident">NodeId</span>)<span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::type_complexity</span>)]</span>
+    <span class="ident">sort_edges</span>: <span class="ident">BinaryHeap</span><span class="op">&lt;</span><span class="ident">MinScored</span><span class="op">&lt;</span><span class="ident">G::EdgeWeight</span>, (<span class="ident">G::NodeId</span>, <span class="ident">G::NodeId</span>)<span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">node_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">usize</span><span class="op">&gt;</span>,
     <span class="ident">node_count</span>: <span class="ident">usize</span>,
 }
@@ -1496,18 +1598,18 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">MinSpanningTree</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoNodeReferences</span> <span class="op">+</span> <span class="ident">NodeIndexable</span>,
-    <span class="ident">G</span>::<span class="ident">NodeWeight</span>: <span class="ident">Clone</span>,
-    <span class="ident">G</span>::<span class="ident">EdgeWeight</span>: <span class="ident">PartialOrd</span>,
+    <span class="ident">G::NodeWeight</span>: <span class="ident">Clone</span>,
+    <span class="ident">G::EdgeWeight</span>: <span class="ident">PartialOrd</span>,
 {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Element</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeWeight</span>, <span class="ident">G</span>::<span class="ident">EdgeWeight</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Element</span><span class="op">&lt;</span><span class="ident">G::NodeWeight</span>, <span class="ident">G::EdgeWeight</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Item</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">g</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">iter</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">node_ids</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">next</span>() {
                 <span class="self">self</span>.<span class="ident">node_map</span>.<span class="ident">insert</span>(<span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">node</span>.<span class="ident">id</span>()), <span class="self">self</span>.<span class="ident">node_count</span>);
                 <span class="self">self</span>.<span class="ident">node_count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">Element</span>::<span class="ident">Node</span> {
+                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">Element::Node</span> {
                     <span class="ident">weight</span>: <span class="ident">node</span>.<span class="ident">weight</span>().<span class="ident">clone</span>(),
                 });
             }
@@ -1530,9 +1632,9 @@
                 <span class="kw">let</span> (<span class="kw-2">&amp;</span><span class="ident">a_order</span>, <span class="kw-2">&amp;</span><span class="ident">b_order</span>) <span class="op">=</span>
                     <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">node_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">a_index</span>), <span class="self">self</span>.<span class="ident">node_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">b_index</span>)) {
                         (<span class="prelude-val">Some</span>(<span class="ident">a_id</span>), <span class="prelude-val">Some</span>(<span class="ident">b_id</span>)) <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">a_id</span>, <span class="ident">b_id</span>),
-                        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Edge references unknown node&quot;</span>),
+                        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;Edge references unknown node&quot;</span>),
                     };
-                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">Element</span>::<span class="ident">Edge</span> {
+                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">Element::Edge</span> {
                     <span class="ident">source</span>: <span class="ident">a_order</span>,
                     <span class="ident">target</span>: <span class="ident">b_order</span>,
                     <span class="ident">weight</span>: <span class="ident">score</span>,
@@ -1556,123 +1658,10 @@
         <span class="self">self</span>.<span class="number">0</span>
     }
 }
+
 <span class="doccomment">/// An algorithm error: a cycle of negative weights was found in the graph.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NegativeCycle</span>(());
-
-<span class="doccomment">/// \[Generic\] Compute shortest paths from node `source` to all other.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Using the [Bellman–Ford algorithm][bf]; negative edge costs are</span>
-<span class="doccomment">/// permitted, but the graph must not have a cycle of negative weights</span>
-<span class="doccomment">/// (in that case it will return an error).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// On success, return one vec with path costs, and another one which points</span>
-<span class="doccomment">/// out the predecessor of a node along a shortest path. The vectors</span>
-<span class="doccomment">/// are indexed by the graph&#39;s node indices.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [bf]: https://en.wikipedia.org/wiki/Bellman%E2%80%93Ford_algorithm</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Example</span>
-<span class="doccomment">/// ```rust</span>
-<span class="doccomment">/// use petgraph::Graph;</span>
-<span class="doccomment">/// use petgraph::algo::bellman_ford;</span>
-<span class="doccomment">/// use petgraph::prelude::*;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let mut g = Graph::new();</span>
-<span class="doccomment">/// let a = g.add_node(()); // node with no weight</span>
-<span class="doccomment">/// let b = g.add_node(());</span>
-<span class="doccomment">/// let c = g.add_node(());</span>
-<span class="doccomment">/// let d = g.add_node(());</span>
-<span class="doccomment">/// let e = g.add_node(());</span>
-<span class="doccomment">/// let f = g.add_node(());</span>
-<span class="doccomment">/// g.extend_with_edges(&amp;[</span>
-<span class="doccomment">///     (0, 1, 2.0),</span>
-<span class="doccomment">///     (0, 3, 4.0),</span>
-<span class="doccomment">///     (1, 2, 1.0),</span>
-<span class="doccomment">///     (1, 5, 7.0),</span>
-<span class="doccomment">///     (2, 4, 5.0),</span>
-<span class="doccomment">///     (4, 5, 1.0),</span>
-<span class="doccomment">///     (3, 4, 1.0),</span>
-<span class="doccomment">/// ]);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// // Graph represented with the weight of each edge</span>
-<span class="doccomment">/// //</span>
-<span class="doccomment">/// //     2       1</span>
-<span class="doccomment">/// // a ----- b ----- c</span>
-<span class="doccomment">/// // | 4     | 7     |</span>
-<span class="doccomment">/// // d       f       | 5</span>
-<span class="doccomment">/// // | 1     | 1     |</span>
-<span class="doccomment">/// // \------ e ------/</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let path = bellman_ford(&amp;g, a);</span>
-<span class="doccomment">/// assert_eq!(path, Ok((vec![0.0 ,     2.0,    3.0,    4.0,     5.0,     6.0],</span>
-<span class="doccomment">///                      vec![None, Some(a),Some(b),Some(a), Some(d), Some(e)]</span>
-<span class="doccomment">///                    ))</span>
-<span class="doccomment">///           );</span>
-<span class="doccomment">/// // Node f (indice 5) can be reach from a with a path costing 6.</span>
-<span class="doccomment">/// // Predecessor of f is Some(e) which predecessor is Some(d) which predecessor is Some(a).</span>
-<span class="doccomment">/// // Thus the path from a to f is a &lt;-&gt; d &lt;-&gt; e &lt;-&gt; f</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// let graph_with_neg_cycle = Graph::&lt;(), f32, Undirected&gt;::from_edges(&amp;[</span>
-<span class="doccomment">///         (0, 1, -2.0),</span>
-<span class="doccomment">///         (0, 3, -4.0),</span>
-<span class="doccomment">///         (1, 2, -1.0),</span>
-<span class="doccomment">///         (1, 5, -25.0),</span>
-<span class="doccomment">///         (2, 4, -5.0),</span>
-<span class="doccomment">///         (4, 5, -25.0),</span>
-<span class="doccomment">///         (3, 4, -1.0),</span>
-<span class="doccomment">/// ]);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// assert!(bellman_ford(&amp;graph_with_neg_cycle, NodeIndex::new(0)).is_err());</span>
-<span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bellman_ford</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(
-    <span class="ident">g</span>: <span class="ident">G</span>,
-    <span class="ident">source</span>: <span class="ident">G</span>::<span class="ident">NodeId</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">EdgeWeight</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">G</span>::<span class="ident">NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>), <span class="ident">NegativeCycle</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">G</span>: <span class="ident">NodeCount</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoEdges</span> <span class="op">+</span> <span class="ident">NodeIndexable</span>,
-    <span class="ident">G</span>::<span class="ident">EdgeWeight</span>: <span class="ident">FloatMeasure</span>,
-{
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">predecessor</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="prelude-val">None</span>; <span class="ident">g</span>.<span class="ident">node_bound</span>()];
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">distance</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>::<span class="ident">infinite</span>(); <span class="ident">g</span>.<span class="ident">node_bound</span>()];
-
-    <span class="kw">let</span> <span class="ident">ix</span> <span class="op">=</span> <span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">g</span>.<span class="ident">to_index</span>(<span class="ident">i</span>);
-
-    <span class="ident">distance</span>[<span class="ident">ix</span>(<span class="ident">source</span>)] <span class="op">=</span> <span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>::<span class="ident">zero</span>();
-    <span class="comment">// scan up to |V| - 1 times.</span>
-    <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">1</span>..<span class="ident">g</span>.<span class="ident">node_count</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">did_update</span> <span class="op">=</span> <span class="bool-val">false</span>;
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">node_identifiers</span>() {
-            <span class="kw">for</span> <span class="ident">edge</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">edges</span>(<span class="ident">i</span>) {
-                <span class="kw">let</span> <span class="ident">i</span> <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">source</span>();
-                <span class="kw">let</span> <span class="ident">j</span> <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">target</span>();
-                <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">edge</span>.<span class="ident">weight</span>();
-                <span class="kw">if</span> <span class="ident">distance</span>[<span class="ident">ix</span>(<span class="ident">i</span>)] <span class="op">+</span> <span class="ident">w</span> <span class="op">&lt;</span> <span class="ident">distance</span>[<span class="ident">ix</span>(<span class="ident">j</span>)] {
-                    <span class="ident">distance</span>[<span class="ident">ix</span>(<span class="ident">j</span>)] <span class="op">=</span> <span class="ident">distance</span>[<span class="ident">ix</span>(<span class="ident">i</span>)] <span class="op">+</span> <span class="ident">w</span>;
-                    <span class="ident">predecessor</span>[<span class="ident">ix</span>(<span class="ident">j</span>)] <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">i</span>);
-                    <span class="ident">did_update</span> <span class="op">=</span> <span class="bool-val">true</span>;
-                }
-            }
-        }
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">did_update</span> {
-            <span class="kw">break</span>;
-        }
-    }
-
-    <span class="comment">// check for negative weight cycle</span>
-    <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">node_identifiers</span>() {
-        <span class="kw">for</span> <span class="ident">edge</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">edges</span>(<span class="ident">i</span>) {
-            <span class="kw">let</span> <span class="ident">j</span> <span class="op">=</span> <span class="ident">edge</span>.<span class="ident">target</span>();
-            <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">edge</span>.<span class="ident">weight</span>();
-            <span class="kw">if</span> <span class="ident">distance</span>[<span class="ident">ix</span>(<span class="ident">i</span>)] <span class="op">+</span> <span class="ident">w</span> <span class="op">&lt;</span> <span class="ident">distance</span>[<span class="ident">ix</span>(<span class="ident">j</span>)] {
-                <span class="comment">//println!(&quot;neg cycle, detected from {} to {}, weight={}&quot;, i, j, w);</span>
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">NegativeCycle</span>(()));
-            }
-        }
-    }
-
-    <span class="prelude-val">Ok</span>((<span class="ident">distance</span>, <span class="ident">predecessor</span>))
-}
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NegativeCycle</span>(<span class="kw">pub</span> ());
 
 <span class="doccomment">/// Return `true` if the graph is bipartite. A graph is bipartite if it&#39;s nodes can be divided into</span>
 <span class="doccomment">/// two disjoint and indepedent sets U and V such that every edge connects U to one in V. This</span>
@@ -1682,21 +1671,21 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_bipartite_undirected</span><span class="op">&lt;</span><span class="ident">G</span>, <span class="ident">N</span>, <span class="ident">VM</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>, <span class="ident">start</span>: <span class="ident">N</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">GraphRef</span> <span class="op">+</span> <span class="ident">Visitable</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span>, <span class="ident">Map</span> <span class="op">=</span> <span class="ident">VM</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">IntoNeighbors</span><span class="op">&lt;</span><span class="ident">NodeId</span> <span class="op">=</span> <span class="ident">N</span><span class="op">&gt;</span>,
-    <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>,
+    <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">std::fmt::Debug</span>,
     <span class="ident">VM</span>: <span class="ident">VisitMap</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>,
 {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">red</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">visit_map</span>();
     <span class="ident">red</span>.<span class="ident">visit</span>(<span class="ident">start</span>);
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">blue</span> <span class="op">=</span> <span class="ident">g</span>.<span class="ident">visit_map</span>();
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stack</span> <span class="op">=</span> ::<span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">VecDeque</span>::<span class="ident">new</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stack</span> <span class="op">=</span> <span class="ident">::std::collections::VecDeque::new</span>();
     <span class="ident">stack</span>.<span class="ident">push_front</span>(<span class="ident">start</span>);
 
     <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">stack</span>.<span class="ident">pop_front</span>() {
         <span class="kw">let</span> <span class="ident">is_red</span> <span class="op">=</span> <span class="ident">red</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">node</span>);
         <span class="kw">let</span> <span class="ident">is_blue</span> <span class="op">=</span> <span class="ident">blue</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">node</span>);
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">is_red</span> <span class="op">^</span> <span class="ident">is_blue</span>);
+        <span class="macro">assert!</span>(<span class="ident">is_red</span> <span class="op">^</span> <span class="ident">is_blue</span>);
 
         <span class="kw">for</span> <span class="ident">neighbour</span> <span class="kw">in</span> <span class="ident">g</span>.<span class="ident">neighbors</span>(<span class="ident">node</span>) {
             <span class="kw">let</span> <span class="ident">is_neigbour_red</span> <span class="op">=</span> <span class="ident">red</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">neighbour</span>);
@@ -1717,7 +1706,7 @@
                         <span class="ident">red</span>.<span class="ident">visit</span>(<span class="ident">neighbour</span>);
                     }
                     (<span class="kw">_</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                        <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Invariant doesn&#39;t hold&quot;</span>);
+                        <span class="macro">panic!</span>(<span class="string">&quot;Invariant doesn&#39;t hold&quot;</span>);
                     }
                 }
 
@@ -1729,8 +1718,8 @@
     <span class="bool-val">true</span>
 }
 
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::<span class="ident">Add</span>;
+<span class="kw">use</span> <span class="ident">std::fmt::Debug</span>;
+<span class="kw">use</span> <span class="ident">std::ops::Add</span>;
 
 <span class="doccomment">/// Associated data that can be used for measures (such as length).</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Measure</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">PartialOrd</span> <span class="op">+</span> <span class="ident">Add</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">Clone</span> {}
@@ -1760,6 +1749,61 @@
         <span class="number">1.</span> <span class="op">/</span> <span class="number">0.</span>
     }
 }
+
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BoundedMeasure</span>: <span class="ident">Measure</span> <span class="op">+</span> <span class="ident">std::ops::Sub</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">min</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">max</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">overflowing_add</span>(<span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="self">Self</span>, <span class="ident">bool</span>);
+}
+
+<span class="macro">macro_rules!</span> <span class="ident">impl_bounded_measure_integer</span>(
+    ( $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span> ),<span class="op">*</span> ) <span class="op">=</span><span class="op">&gt;</span> {
+        $(
+            <span class="kw">impl</span> <span class="ident">BoundedMeasure</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
+                <span class="kw">fn</span> <span class="ident">min</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+                    <span class="ident">std</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::MIN</span>
+                }
+
+                <span class="kw">fn</span> <span class="ident">max</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+                    <span class="ident">std</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::MAX</span>
+                }
+
+                <span class="kw">fn</span> <span class="ident">overflowing_add</span>(<span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="self">Self</span>, <span class="ident">bool</span>) {
+                    <span class="self">self</span>.<span class="ident">overflowing_add</span>(<span class="ident">rhs</span>)
+                }
+            }
+        )<span class="op">*</span>
+    };
+);
+
+<span class="macro">impl_bounded_measure_integer!</span>(<span class="ident">u8</span>, <span class="ident">u16</span>, <span class="ident">u32</span>, <span class="ident">u64</span>, <span class="ident">u128</span>, <span class="ident">usize</span>, <span class="ident">i8</span>, <span class="ident">i16</span>, <span class="ident">i32</span>, <span class="ident">i64</span>, <span class="ident">i128</span>, <span class="ident">isize</span>);
+
+<span class="macro">macro_rules!</span> <span class="ident">impl_bounded_measure_float</span>(
+    ( $( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span> ),<span class="op">*</span> ) <span class="op">=</span><span class="op">&gt;</span> {
+        $(
+            <span class="kw">impl</span> <span class="ident">BoundedMeasure</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
+                <span class="kw">fn</span> <span class="ident">min</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+                    <span class="ident">std</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::MIN</span>
+                }
+
+                <span class="kw">fn</span> <span class="ident">max</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+                    <span class="ident">std</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::MAX</span>
+                }
+
+                <span class="kw">fn</span> <span class="ident">overflowing_add</span>(<span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="self">Self</span>, <span class="ident">bool</span>) {
+                    <span class="comment">// for an overflow: a + b &gt; max: both values need to be positive and a &gt; max - b must be satisfied</span>
+                    <span class="kw">let</span> <span class="ident">overflow</span> <span class="op">=</span> <span class="self">self</span> <span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::default</span>() <span class="op">&amp;&amp;</span> <span class="ident">rhs</span> <span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::default</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span> <span class="op">&gt;</span> <span class="ident">std</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::MAX</span> <span class="op">-</span> <span class="ident">rhs</span>;
+
+                    <span class="comment">// for an underflow: a + b &lt; min: overflow can not happen and both values must be negative and a &lt; min - b must be satisfied</span>
+                    <span class="kw">let</span> <span class="ident">underflow</span> <span class="op">=</span> <span class="op">!</span><span class="ident">overflow</span> <span class="op">&amp;&amp;</span> <span class="self">self</span> <span class="op">&lt;</span> <span class="self">Self</span><span class="ident">::default</span>() <span class="op">&amp;&amp;</span> <span class="ident">rhs</span> <span class="op">&lt;</span> <span class="self">Self</span><span class="ident">::default</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span> <span class="op">&lt;</span> <span class="ident">std</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t::MIN</span> <span class="op">-</span> <span class="ident">rhs</span>;
+
+                    (<span class="self">self</span> <span class="op">+</span> <span class="ident">rhs</span>, <span class="ident">overflow</span> <span class="op">|</span><span class="op">|</span> <span class="ident">underflow</span>)
+                }
+            }
+        )<span class="op">*</span>
+    };
+);
+
+<span class="macro">impl_bounded_measure_float!</span>(<span class="ident">f32</span>, <span class="ident">f64</span>);
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="petgraph"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="petgraph" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>

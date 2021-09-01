@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-epoch-0.9.3/src/internal.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>internal.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-epoch-0.9.5/src/internal.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>internal.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../crossbeam_epoch/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../crossbeam_epoch/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -673,7 +672,7 @@
 <span id="670">670</span>
 <span id="671">671</span>
 <span id="672">672</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="doccomment">//! The global data and participant for garbage collection.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Registration</span>
@@ -711,24 +710,24 @@
 <span class="doccomment">//! Ideally each instance of concurrent data structure may have its own queue that gets fully</span>
 <span class="doccomment">//! destroyed as soon as the data structure gets dropped.</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">primitive</span>::<span class="ident">cell</span>::<span class="ident">UnsafeCell</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">primitive</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">cell</span>::<span class="ident">Cell</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>::{<span class="self">self</span>, <span class="ident">ManuallyDrop</span>};
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">num</span>::<span class="ident">Wrapping</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">Ordering</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::primitive::cell::UnsafeCell</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::primitive::sync::atomic</span>;
+<span class="kw">use</span> <span class="ident">core::cell::Cell</span>;
+<span class="kw">use</span> <span class="ident">core::mem</span>::{<span class="self">self</span>, <span class="ident">ManuallyDrop</span>};
+<span class="kw">use</span> <span class="ident">core::num::Wrapping</span>;
+<span class="kw">use</span> <span class="ident">core::sync::atomic::Ordering</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">ptr</span>};
 
-<span class="kw">use</span> <span class="ident">crossbeam_utils</span>::<span class="ident">CachePadded</span>;
-<span class="kw">use</span> <span class="ident">memoffset</span>::<span class="ident">offset_of</span>;
+<span class="kw">use</span> <span class="ident">crossbeam_utils::CachePadded</span>;
+<span class="kw">use</span> <span class="ident">memoffset::offset_of</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">atomic</span>::{<span class="ident">Owned</span>, <span class="ident">Shared</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">collector</span>::{<span class="ident">Collector</span>, <span class="ident">LocalHandle</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">deferred</span>::<span class="ident">Deferred</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">epoch</span>::{<span class="ident">AtomicEpoch</span>, <span class="ident">Epoch</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">guard</span>::{<span class="ident">unprotected</span>, <span class="ident">Guard</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sync</span>::<span class="ident">list</span>::{<span class="ident">Entry</span>, <span class="ident">IsElement</span>, <span class="ident">IterError</span>, <span class="ident">List</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sync</span>::<span class="ident">queue</span>::<span class="ident">Queue</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::atomic</span>::{<span class="ident">Owned</span>, <span class="ident">Shared</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::collector</span>::{<span class="ident">Collector</span>, <span class="ident">LocalHandle</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::deferred::Deferred</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::epoch</span>::{<span class="ident">AtomicEpoch</span>, <span class="ident">Epoch</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::guard</span>::{<span class="ident">unprotected</span>, <span class="ident">Guard</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::list</span>::{<span class="ident">Entry</span>, <span class="ident">IsElement</span>, <span class="ident">IterError</span>, <span class="ident">List</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::queue::Queue</span>;
 
 <span class="doccomment">/// Maximum number of objects a bag can contain.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_sanitize</span>))]</span>
@@ -749,7 +748,7 @@
 <span class="kw">impl</span> <span class="ident">Bag</span> {
     <span class="doccomment">/// Returns a new, empty bag.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">Self</span>::<span class="ident">default</span>()
+        <span class="self">Self</span><span class="ident">::default</span>()
     }
 
     <span class="doccomment">/// Returns `true` if the bag is empty.</span>
@@ -782,85 +781,85 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Bag</span> {
-    <span class="attribute">#[<span class="ident">rustfmt</span>::<span class="ident">skip</span>]</span>
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="comment">// TODO: [no_op; MAX_OBJECTS] syntax blocked by https://github.com/rust-lang/rust/issues/49147</span>
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_sanitize</span>))]</span>
         <span class="kw">return</span> <span class="ident">Bag</span> {
             <span class="ident">len</span>: <span class="number">0</span>,
             <span class="ident">deferreds</span>: [
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
             ],
         };
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">crossbeam_sanitize</span>)]</span>
         <span class="kw">return</span> <span class="ident">Bag</span> {
             <span class="ident">len</span>: <span class="number">0</span>,
             <span class="ident">deferreds</span>: [
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
-                <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
+                <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>),
             ],
         };
     }
@@ -870,16 +869,16 @@
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="comment">// Call all deferred functions.</span>
         <span class="kw">for</span> <span class="ident">deferred</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">deferreds</span>[..<span class="self">self</span>.<span class="ident">len</span>] {
-            <span class="kw">let</span> <span class="ident">no_op</span> <span class="op">=</span> <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">no_op_func</span>);
-            <span class="kw">let</span> <span class="ident">owned_deferred</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="ident">deferred</span>, <span class="ident">no_op</span>);
+            <span class="kw">let</span> <span class="ident">no_op</span> <span class="op">=</span> <span class="ident">Deferred::new</span>(<span class="ident">no_op_func</span>);
+            <span class="kw">let</span> <span class="ident">owned_deferred</span> <span class="op">=</span> <span class="ident">mem::replace</span>(<span class="ident">deferred</span>, <span class="ident">no_op</span>);
             <span class="ident">owned_deferred</span>.<span class="ident">call</span>();
         }
     }
 }
 
 <span class="comment">// can&#39;t #[derive(Debug)] because Debug is not implemented for arrays 64 items long</span>
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Bag</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Bag</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Bag&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;deferreds&quot;</span>, <span class="op">&amp;&amp;</span><span class="self">self</span>.<span class="ident">deferreds</span>[..<span class="self">self</span>.<span class="ident">len</span>])
             .<span class="ident">finish</span>()
@@ -927,19 +926,19 @@
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">locals</span>: <span class="ident">List</span>::<span class="ident">new</span>(),
-            <span class="ident">queue</span>: <span class="ident">Queue</span>::<span class="ident">new</span>(),
-            <span class="ident">epoch</span>: <span class="ident">CachePadded</span>::<span class="ident">new</span>(<span class="ident">AtomicEpoch</span>::<span class="ident">new</span>(<span class="ident">Epoch</span>::<span class="ident">starting</span>())),
+            <span class="ident">locals</span>: <span class="ident">List::new</span>(),
+            <span class="ident">queue</span>: <span class="ident">Queue::new</span>(),
+            <span class="ident">epoch</span>: <span class="ident">CachePadded::new</span>(<span class="ident">AtomicEpoch::new</span>(<span class="ident">Epoch::starting</span>())),
         }
     }
 
     <span class="doccomment">/// Pushes the bag into the global queue and replaces the bag with a new empty bag.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">push_bag</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bag</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Bag</span>, <span class="ident">guard</span>: <span class="kw-2">&amp;</span><span class="ident">Guard</span>) {
-        <span class="kw">let</span> <span class="ident">bag</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="ident">bag</span>, <span class="ident">Bag</span>::<span class="ident">new</span>());
+        <span class="kw">let</span> <span class="ident">bag</span> <span class="op">=</span> <span class="ident">mem::replace</span>(<span class="ident">bag</span>, <span class="ident">Bag::new</span>());
 
-        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
 
-        <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
         <span class="self">self</span>.<span class="ident">queue</span>.<span class="ident">push</span>(<span class="ident">bag</span>.<span class="ident">seal</span>(<span class="ident">epoch</span>), <span class="ident">guard</span>);
     }
 
@@ -954,10 +953,10 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">collect</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">guard</span>: <span class="kw-2">&amp;</span><span class="ident">Guard</span>) {
         <span class="kw">let</span> <span class="ident">global_epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">try_advance</span>(<span class="ident">guard</span>);
 
-        <span class="kw">let</span> <span class="ident">steps</span> <span class="op">=</span> <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">crossbeam_sanitize</span>) {
-            <span class="ident">usize</span>::<span class="ident">max_value</span>()
+        <span class="kw">let</span> <span class="ident">steps</span> <span class="op">=</span> <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">crossbeam_sanitize</span>) {
+            <span class="ident">usize::max_value</span>()
         } <span class="kw">else</span> {
-            <span class="self">Self</span>::<span class="ident">COLLECT_STEPS</span>
+            <span class="self">Self</span><span class="ident">::COLLECT_STEPS</span>
         };
 
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">steps</span> {
@@ -981,22 +980,22 @@
     <span class="doccomment">/// `try_advance()` is annotated `#[cold]` because it is rarely called.</span>
     <span class="attribute">#[<span class="ident">cold</span>]</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">try_advance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">guard</span>: <span class="kw-2">&amp;</span><span class="ident">Guard</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Epoch</span> {
-        <span class="kw">let</span> <span class="ident">global_epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="kw">let</span> <span class="ident">global_epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
 
         <span class="comment">// TODO(stjepang): `Local`s are stored in a linked list because linked lists are fairly</span>
         <span class="comment">// easy to implement in a lock-free manner. However, traversal can be slow due to cache</span>
         <span class="comment">// misses and data dependencies. We should experiment with other data structures as well.</span>
         <span class="kw">for</span> <span class="ident">local</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">locals</span>.<span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="ident">guard</span>) {
             <span class="kw">match</span> <span class="ident">local</span> {
-                <span class="prelude-val">Err</span>(<span class="ident">IterError</span>::<span class="ident">Stalled</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">IterError::Stalled</span>) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="comment">// A concurrent thread stalled this iteration. That thread might also try to</span>
                     <span class="comment">// advance the epoch, in which case we leave the job to it. Otherwise, the</span>
                     <span class="comment">// epoch will not be advanced.</span>
                     <span class="kw">return</span> <span class="ident">global_epoch</span>;
                 }
                 <span class="prelude-val">Ok</span>(<span class="ident">local</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">let</span> <span class="ident">local_epoch</span> <span class="op">=</span> <span class="ident">local</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+                    <span class="kw">let</span> <span class="ident">local_epoch</span> <span class="op">=</span> <span class="ident">local</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
 
                     <span class="comment">// If the participant was pinned in a different epoch, we cannot advance the</span>
                     <span class="comment">// global epoch just yet.</span>
@@ -1006,7 +1005,7 @@
                 }
             }
         }
-        <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+        <span class="ident">atomic::fence</span>(<span class="ident">Ordering::Acquire</span>);
 
         <span class="comment">// All pinned participants were pinned in the current global epoch.</span>
         <span class="comment">// Now let&#39;s advance the global epoch...</span>
@@ -1016,7 +1015,7 @@
         <span class="comment">// called from a thread that was pinned in `global_epoch`, and the global epoch cannot be</span>
         <span class="comment">// advanced two steps ahead of it.</span>
         <span class="kw">let</span> <span class="ident">new_epoch</span> <span class="op">=</span> <span class="ident">global_epoch</span>.<span class="ident">successor</span>();
-        <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">new_epoch</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+        <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">new_epoch</span>, <span class="ident">Ordering::Release</span>);
         <span class="ident">new_epoch</span>
     }
 }
@@ -1054,8 +1053,8 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">crossbeam_sanitize</span>))]</span> <span class="comment">// `crossbeam_sanitize` reduces the size of `Local`</span>
 <span class="attribute">#[<span class="ident">test</span>]</span>
 <span class="kw">fn</span> <span class="ident">local_size</span>() {
-    <span class="macro">assert</span><span class="macro">!</span>(
-        <span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Local</span><span class="op">&gt;</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">2048</span>,
+    <span class="macro">assert!</span>(
+        <span class="ident">core::mem::size_of</span>::<span class="op">&lt;</span><span class="ident">Local</span><span class="op">&gt;</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">2048</span>,
         <span class="string">&quot;An allocation of `Local` should be &lt;= 2048 bytes.&quot;</span>
     );
 }
@@ -1070,14 +1069,14 @@
         <span class="kw">unsafe</span> {
             <span class="comment">// Since we dereference no pointers in this block, it is safe to use `unprotected`.</span>
 
-            <span class="kw">let</span> <span class="ident">local</span> <span class="op">=</span> <span class="ident">Owned</span>::<span class="ident">new</span>(<span class="ident">Local</span> {
-                <span class="ident">entry</span>: <span class="ident">Entry</span>::<span class="ident">default</span>(),
-                <span class="ident">epoch</span>: <span class="ident">AtomicEpoch</span>::<span class="ident">new</span>(<span class="ident">Epoch</span>::<span class="ident">starting</span>()),
-                <span class="ident">collector</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="ident">ManuallyDrop</span>::<span class="ident">new</span>(<span class="ident">collector</span>.<span class="ident">clone</span>())),
-                <span class="ident">bag</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="ident">Bag</span>::<span class="ident">new</span>()),
-                <span class="ident">guard_count</span>: <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="number">0</span>),
-                <span class="ident">handle_count</span>: <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="number">1</span>),
-                <span class="ident">pin_count</span>: <span class="ident">Cell</span>::<span class="ident">new</span>(<span class="ident">Wrapping</span>(<span class="number">0</span>)),
+            <span class="kw">let</span> <span class="ident">local</span> <span class="op">=</span> <span class="ident">Owned::new</span>(<span class="ident">Local</span> {
+                <span class="ident">entry</span>: <span class="ident">Entry::default</span>(),
+                <span class="ident">epoch</span>: <span class="ident">AtomicEpoch::new</span>(<span class="ident">Epoch::starting</span>()),
+                <span class="ident">collector</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">ManuallyDrop::new</span>(<span class="ident">collector</span>.<span class="ident">clone</span>())),
+                <span class="ident">bag</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">Bag::new</span>()),
+                <span class="ident">guard_count</span>: <span class="ident">Cell::new</span>(<span class="number">0</span>),
+                <span class="ident">handle_count</span>: <span class="ident">Cell::new</span>(<span class="number">1</span>),
+                <span class="ident">pin_count</span>: <span class="ident">Cell::new</span>(<span class="ident">Wrapping</span>(<span class="number">0</span>)),
             })
             .<span class="ident">into_shared</span>(<span class="ident">unprotected</span>());
             <span class="ident">collector</span>.<span class="ident">global</span>.<span class="ident">locals</span>.<span class="ident">insert</span>(<span class="ident">local</span>, <span class="ident">unprotected</span>());
@@ -1138,13 +1137,13 @@
         <span class="self">self</span>.<span class="ident">guard_count</span>.<span class="ident">set</span>(<span class="ident">guard_count</span>.<span class="ident">checked_add</span>(<span class="number">1</span>).<span class="ident">unwrap</span>());
 
         <span class="kw">if</span> <span class="ident">guard_count</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
-            <span class="kw">let</span> <span class="ident">global_epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">global</span>().<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+            <span class="kw">let</span> <span class="ident">global_epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">global</span>().<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
             <span class="kw">let</span> <span class="ident">new_epoch</span> <span class="op">=</span> <span class="ident">global_epoch</span>.<span class="ident">pinned</span>();
 
             <span class="comment">// Now we must store `new_epoch` into `self.epoch` and execute a `SeqCst` fence.</span>
             <span class="comment">// The fence makes sure that any future loads from `Atomic`s will not happen before</span>
             <span class="comment">// this store.</span>
-            <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)) {
+            <span class="kw">if</span> <span class="macro">cfg!</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)) {
                 <span class="comment">// HACK(stjepang): On x86 architectures there are two different ways of executing</span>
                 <span class="comment">// a `SeqCst` fence.</span>
                 <span class="comment">//</span>
@@ -1158,21 +1157,21 @@
                 <span class="comment">// differently from SC accesses), but experimental evidence suggests that this</span>
                 <span class="comment">// works fine.  Using inline assembly would be a viable (and correct) alternative,</span>
                 <span class="comment">// but alas, that is not possible on stable Rust.</span>
-                <span class="kw">let</span> <span class="ident">current</span> <span class="op">=</span> <span class="ident">Epoch</span>::<span class="ident">starting</span>();
+                <span class="kw">let</span> <span class="ident">current</span> <span class="op">=</span> <span class="ident">Epoch::starting</span>();
                 <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">compare_exchange</span>(
                     <span class="ident">current</span>,
                     <span class="ident">new_epoch</span>,
-                    <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>,
-                    <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>,
+                    <span class="ident">Ordering::SeqCst</span>,
+                    <span class="ident">Ordering::SeqCst</span>,
                 );
-                <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">res</span>.<span class="ident">is_ok</span>(), <span class="string">&quot;participant was expected to be unpinned&quot;</span>);
+                <span class="macro">debug_assert!</span>(<span class="ident">res</span>.<span class="ident">is_ok</span>(), <span class="string">&quot;participant was expected to be unpinned&quot;</span>);
                 <span class="comment">// We add a compiler fence to make it less likely for LLVM to do something wrong</span>
                 <span class="comment">// here.  Formally, this is not enough to get rid of data races; practically,</span>
                 <span class="comment">// it should go a long way.</span>
-                <span class="ident">atomic</span>::<span class="ident">compiler_fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+                <span class="ident">atomic::compiler_fence</span>(<span class="ident">Ordering::SeqCst</span>);
             } <span class="kw">else</span> {
-                <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">new_epoch</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-                <span class="ident">atomic</span>::<span class="ident">fence</span>(<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+                <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">new_epoch</span>, <span class="ident">Ordering::Relaxed</span>);
+                <span class="ident">atomic::fence</span>(<span class="ident">Ordering::SeqCst</span>);
             }
 
             <span class="comment">// Increment the pin counter.</span>
@@ -1181,7 +1180,7 @@
 
             <span class="comment">// After every `PINNINGS_BETWEEN_COLLECT` try advancing the epoch and collecting</span>
             <span class="comment">// some garbage.</span>
-            <span class="kw">if</span> <span class="ident">count</span>.<span class="number">0</span> <span class="op">%</span> <span class="self">Self</span>::<span class="ident">PINNINGS_BETWEEN_COLLECT</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="kw">if</span> <span class="ident">count</span>.<span class="number">0</span> <span class="op">%</span> <span class="self">Self</span><span class="ident">::PINNINGS_BETWEEN_COLLECT</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
                 <span class="self">self</span>.<span class="ident">global</span>().<span class="ident">collect</span>(<span class="kw-2">&amp;</span><span class="ident">guard</span>);
             }
         }
@@ -1196,7 +1195,7 @@
         <span class="self">self</span>.<span class="ident">guard_count</span>.<span class="ident">set</span>(<span class="ident">guard_count</span> <span class="op">-</span> <span class="number">1</span>);
 
         <span class="kw">if</span> <span class="ident">guard_count</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
-            <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">Epoch</span>::<span class="ident">starting</span>(), <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+            <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">Epoch::starting</span>(), <span class="ident">Ordering::Release</span>);
 
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">handle_count</span>.<span class="ident">get</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
                 <span class="self">self</span>.<span class="ident">finalize</span>();
@@ -1211,14 +1210,14 @@
 
         <span class="comment">// Update the local epoch only if there&#39;s only one guard.</span>
         <span class="kw">if</span> <span class="ident">guard_count</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
-            <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-            <span class="kw">let</span> <span class="ident">global_epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">global</span>().<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>).<span class="ident">pinned</span>();
+            <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+            <span class="kw">let</span> <span class="ident">global_epoch</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">global</span>().<span class="ident">epoch</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>).<span class="ident">pinned</span>();
 
             <span class="comment">// Update the local epoch only if the global epoch is greater than the local epoch.</span>
             <span class="kw">if</span> <span class="ident">epoch</span> <span class="op">!</span><span class="op">=</span> <span class="ident">global_epoch</span> {
                 <span class="comment">// We store the new epoch with `Release` because we need to ensure any memory</span>
                 <span class="comment">// accesses from the previous epoch do not leak into the new one.</span>
-                <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">global_epoch</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+                <span class="self">self</span>.<span class="ident">epoch</span>.<span class="ident">store</span>(<span class="ident">global_epoch</span>, <span class="ident">Ordering::Release</span>);
 
                 <span class="comment">// However, we don&#39;t need a following `SeqCst` fence, because it is safe for memory</span>
                 <span class="comment">// accesses from the new epoch to be executed before updating the local epoch. At</span>
@@ -1231,7 +1230,7 @@
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">acquire_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let</span> <span class="ident">handle_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">handle_count</span>.<span class="ident">get</span>();
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">handle_count</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">1</span>);
+        <span class="macro">debug_assert!</span>(<span class="ident">handle_count</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">1</span>);
         <span class="self">self</span>.<span class="ident">handle_count</span>.<span class="ident">set</span>(<span class="ident">handle_count</span> <span class="op">+</span> <span class="number">1</span>);
     }
 
@@ -1240,7 +1239,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">release_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let</span> <span class="ident">guard_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">guard_count</span>.<span class="ident">get</span>();
         <span class="kw">let</span> <span class="ident">handle_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">handle_count</span>.<span class="ident">get</span>();
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">handle_count</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">1</span>);
+        <span class="macro">debug_assert!</span>(<span class="ident">handle_count</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">1</span>);
         <span class="self">self</span>.<span class="ident">handle_count</span>.<span class="ident">set</span>(<span class="ident">handle_count</span> <span class="op">-</span> <span class="number">1</span>);
 
         <span class="kw">if</span> <span class="ident">guard_count</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">handle_count</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
@@ -1251,8 +1250,8 @@
     <span class="doccomment">/// Removes the `Local` from the global linked list.</span>
     <span class="attribute">#[<span class="ident">cold</span>]</span>
     <span class="kw">fn</span> <span class="ident">finalize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">guard_count</span>.<span class="ident">get</span>(), <span class="number">0</span>);
-        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">handle_count</span>.<span class="ident">get</span>(), <span class="number">0</span>);
+        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.<span class="ident">guard_count</span>.<span class="ident">get</span>(), <span class="number">0</span>);
+        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.<span class="ident">handle_count</span>.<span class="ident">get</span>(), <span class="number">0</span>);
 
         <span class="comment">// Temporarily increment handle count. This is required so that the following call to `pin`</span>
         <span class="comment">// doesn&#39;t call `finalize` again.</span>
@@ -1271,7 +1270,7 @@
             <span class="comment">// Take the reference to the `Global` out of this `Local`. Since we&#39;re not protected</span>
             <span class="comment">// by a guard at this time, it&#39;s crucial that the reference is read before marking the</span>
             <span class="comment">// `Local` as deleted.</span>
-            <span class="kw">let</span> <span class="ident">collector</span>: <span class="ident">Collector</span> <span class="op">=</span> <span class="ident">ptr</span>::<span class="ident">read</span>(<span class="self">self</span>.<span class="ident">collector</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="kw-2">*</span><span class="ident">c</span>)));
+            <span class="kw">let</span> <span class="ident">collector</span>: <span class="ident">Collector</span> <span class="op">=</span> <span class="ident">ptr::read</span>(<span class="self">self</span>.<span class="ident">collector</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="kw-2">*</span><span class="ident">c</span>)));
 
             <span class="comment">// Mark this node in the linked list as deleted.</span>
             <span class="self">self</span>.<span class="ident">entry</span>.<span class="ident">delete</span>(<span class="ident">unprotected</span>());
@@ -1286,66 +1285,65 @@
 
 <span class="kw">impl</span> <span class="ident">IsElement</span><span class="op">&lt;</span><span class="ident">Local</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Local</span> {
     <span class="kw">fn</span> <span class="ident">entry_of</span>(<span class="ident">local</span>: <span class="kw-2">&amp;</span><span class="ident">Local</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Entry</span> {
-        <span class="kw">let</span> <span class="ident">entry_ptr</span> <span class="op">=</span> (<span class="ident">local</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Local</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="macro">offset_of</span><span class="macro">!</span>(<span class="ident">Local</span>, <span class="ident">entry</span>)) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Entry</span>;
+        <span class="kw">let</span> <span class="ident">entry_ptr</span> <span class="op">=</span> (<span class="ident">local</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Local</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="macro">offset_of!</span>(<span class="ident">Local</span>, <span class="ident">entry</span>)) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Entry</span>;
         <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">entry_ptr</span> }
     }
 
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">element_of</span>(<span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">Entry</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Local</span> {
         <span class="comment">// offset_of! macro uses unsafe, but it&#39;s unnecessary in this context.</span>
         <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_unsafe</span>)]</span>
-        <span class="kw">let</span> <span class="ident">local_ptr</span> <span class="op">=</span> (<span class="ident">entry</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Entry</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="macro">offset_of</span><span class="macro">!</span>(<span class="ident">Local</span>, <span class="ident">entry</span>)) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Local</span>;
+        <span class="kw">let</span> <span class="ident">local_ptr</span> <span class="op">=</span> (<span class="ident">entry</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Entry</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="macro">offset_of!</span>(<span class="ident">Local</span>, <span class="ident">entry</span>)) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Local</span>;
         <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">local_ptr</span>
     }
 
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">finalize</span>(<span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">Entry</span>, <span class="ident">guard</span>: <span class="kw-2">&amp;</span><span class="ident">Guard</span>) {
-        <span class="ident">guard</span>.<span class="ident">defer_destroy</span>(<span class="ident">Shared</span>::<span class="ident">from</span>(<span class="self">Self</span>::<span class="ident">element_of</span>(<span class="ident">entry</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>));
+        <span class="ident">guard</span>.<span class="ident">defer_destroy</span>(<span class="ident">Shared::from</span>(<span class="self">Self</span><span class="ident">::element_of</span>(<span class="ident">entry</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>));
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">not</span>(<span class="ident">crossbeam_loom</span>)))]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
+    <span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
 
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">check_defer</span>() {
-        <span class="kw">static</span> <span class="ident">FLAG</span>: <span class="ident">AtomicUsize</span> <span class="op">=</span> <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="number">0</span>);
+        <span class="kw">static</span> <span class="ident">FLAG</span>: <span class="ident">AtomicUsize</span> <span class="op">=</span> <span class="ident">AtomicUsize::new</span>(<span class="number">0</span>);
         <span class="kw">fn</span> <span class="ident">set</span>() {
-            <span class="ident">FLAG</span>.<span class="ident">store</span>(<span class="number">42</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+            <span class="ident">FLAG</span>.<span class="ident">store</span>(<span class="number">42</span>, <span class="ident">Ordering::Relaxed</span>);
         }
 
-        <span class="kw">let</span> <span class="ident">d</span> <span class="op">=</span> <span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">set</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>), <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">d</span> <span class="op">=</span> <span class="ident">Deferred::new</span>(<span class="ident">set</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>), <span class="number">0</span>);
         <span class="ident">d</span>.<span class="ident">call</span>();
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>), <span class="number">42</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>), <span class="number">42</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">check_bag</span>() {
-        <span class="kw">static</span> <span class="ident">FLAG</span>: <span class="ident">AtomicUsize</span> <span class="op">=</span> <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="number">0</span>);
+        <span class="kw">static</span> <span class="ident">FLAG</span>: <span class="ident">AtomicUsize</span> <span class="op">=</span> <span class="ident">AtomicUsize::new</span>(<span class="number">0</span>);
         <span class="kw">fn</span> <span class="ident">incr</span>() {
-            <span class="ident">FLAG</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+            <span class="ident">FLAG</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>);
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bag</span> <span class="op">=</span> <span class="ident">Bag</span>::<span class="ident">new</span>();
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">bag</span>.<span class="ident">is_empty</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bag</span> <span class="op">=</span> <span class="ident">Bag::new</span>();
+        <span class="macro">assert!</span>(<span class="ident">bag</span>.<span class="ident">is_empty</span>());
 
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">MAX_OBJECTS</span> {
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="kw">unsafe</span> { <span class="ident">bag</span>.<span class="ident">try_push</span>(<span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">incr</span>)).<span class="ident">is_ok</span>() });
-            <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">bag</span>.<span class="ident">is_empty</span>());
-            <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>), <span class="number">0</span>);
+            <span class="macro">assert!</span>(<span class="kw">unsafe</span> { <span class="ident">bag</span>.<span class="ident">try_push</span>(<span class="ident">Deferred::new</span>(<span class="ident">incr</span>)).<span class="ident">is_ok</span>() });
+            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">bag</span>.<span class="ident">is_empty</span>());
+            <span class="macro">assert_eq!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>), <span class="number">0</span>);
         }
 
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">bag</span>.<span class="ident">try_push</span>(<span class="ident">Deferred</span>::<span class="ident">new</span>(<span class="ident">incr</span>)) };
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">result</span>.<span class="ident">is_err</span>());
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">bag</span>.<span class="ident">is_empty</span>());
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>), <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">bag</span>.<span class="ident">try_push</span>(<span class="ident">Deferred::new</span>(<span class="ident">incr</span>)) };
+        <span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">is_err</span>());
+        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">bag</span>.<span class="ident">is_empty</span>());
+        <span class="macro">assert_eq!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>), <span class="number">0</span>);
 
         <span class="ident">drop</span>(<span class="ident">bag</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>), <span class="ident">MAX_OBJECTS</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">FLAG</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>), <span class="ident">MAX_OBJECTS</span>);
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="crossbeam_epoch"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="crossbeam_epoch" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

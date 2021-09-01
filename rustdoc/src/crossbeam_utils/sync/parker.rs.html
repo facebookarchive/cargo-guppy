@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.3/src/sync/parker.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parker.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.8.5/src/sync/parker.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>parker.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../crossbeam_utils/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../crossbeam_utils/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -410,13 +409,13 @@
 <span id="407">407</span>
 <span id="408">408</span>
 <span id="409">409</span>
-</pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">primitive</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">AtomicUsize</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">primitive</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Condvar</span>, <span class="ident">Mutex</span>};
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::<span class="ident">Ordering</span>::<span class="ident">SeqCst</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::primitive::sync::atomic::AtomicUsize</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::primitive::sync</span>::{<span class="ident">Arc</span>, <span class="ident">Condvar</span>, <span class="ident">Mutex</span>};
+<span class="kw">use</span> <span class="ident">core::sync::atomic::Ordering::SeqCst</span>;
+<span class="kw">use</span> <span class="ident">std::fmt</span>;
+<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
+<span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
 
 <span class="doccomment">/// A thread parking primitive.</span>
 <span class="doccomment">///</span>
@@ -474,10 +473,10 @@
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">unparker</span>: <span class="ident">Unparker</span> {
-                <span class="ident">inner</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Inner</span> {
-                    <span class="ident">state</span>: <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="ident">EMPTY</span>),
-                    <span class="ident">lock</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(()),
-                    <span class="ident">cvar</span>: <span class="ident">Condvar</span>::<span class="ident">new</span>(),
+                <span class="ident">inner</span>: <span class="ident">Arc::new</span>(<span class="ident">Inner</span> {
+                    <span class="ident">state</span>: <span class="ident">AtomicUsize::new</span>(<span class="ident">EMPTY</span>),
+                    <span class="ident">lock</span>: <span class="ident">Mutex::new</span>(()),
+                    <span class="ident">cvar</span>: <span class="ident">Condvar::new</span>(),
                 }),
             },
             <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
@@ -497,7 +496,7 @@
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Parker</span> {
-        <span class="self">Self</span>::<span class="ident">default</span>()
+        <span class="self">Self</span><span class="ident">::default</span>()
     }
 
     <span class="doccomment">/// Blocks the current thread until the token is made available.</span>
@@ -534,7 +533,7 @@
     <span class="doccomment">/// p.park_timeout(Duration::from_millis(500));</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">park_timeout</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">timeout</span>: <span class="ident">Duration</span>) {
-        <span class="self">self</span>.<span class="ident">park_deadline</span>(<span class="ident">Instant</span>::<span class="ident">now</span>() <span class="op">+</span> <span class="ident">timeout</span>)
+        <span class="self">self</span>.<span class="ident">park_deadline</span>(<span class="ident">Instant::now</span>() <span class="op">+</span> <span class="ident">timeout</span>)
     }
 
     <span class="doccomment">/// Blocks the current thread until the token is made available, or until a certain deadline.</span>
@@ -590,7 +589,7 @@
     <span class="doccomment">/// let raw = Parker::into_raw(p);</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_raw</span>(<span class="ident">this</span>: <span class="ident">Parker</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> () {
-        <span class="ident">Unparker</span>::<span class="ident">into_raw</span>(<span class="ident">this</span>.<span class="ident">unparker</span>)
+        <span class="ident">Unparker::into_raw</span>(<span class="ident">this</span>.<span class="ident">unparker</span>)
     }
 
     <span class="doccomment">/// Converts a raw pointer into a `Parker`.</span>
@@ -610,14 +609,14 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw">const</span> ()) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Parker</span> {
         <span class="ident">Parker</span> {
-            <span class="ident">unparker</span>: <span class="ident">Unparker</span>::<span class="ident">from_raw</span>(<span class="ident">ptr</span>),
+            <span class="ident">unparker</span>: <span class="ident">Unparker::from_raw</span>(<span class="ident">ptr</span>),
             <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Parker</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Parker</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Parker { .. }&quot;</span>)
     }
 }
@@ -673,7 +672,7 @@
     <span class="doccomment">/// let raw = Unparker::into_raw(u);</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_raw</span>(<span class="ident">this</span>: <span class="ident">Unparker</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> () {
-        <span class="ident">Arc</span>::<span class="ident">into_raw</span>(<span class="ident">this</span>.<span class="ident">inner</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> ()
+        <span class="ident">Arc::into_raw</span>(<span class="ident">this</span>.<span class="ident">inner</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> ()
     }
 
     <span class="doccomment">/// Converts a raw pointer into an `Unparker`.</span>
@@ -695,13 +694,13 @@
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw">const</span> ()) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Unparker</span> {
         <span class="ident">Unparker</span> {
-            <span class="ident">inner</span>: <span class="ident">Arc</span>::<span class="ident">from_raw</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Inner</span>),
+            <span class="ident">inner</span>: <span class="ident">Arc::from_raw</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Inner</span>),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Unparker</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Unparker</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">pad</span>(<span class="string">&quot;Unparker { .. }&quot;</span>)
     }
 }
@@ -737,7 +736,7 @@
 
         <span class="comment">// If the timeout is zero, then there is no need to actually block.</span>
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">deadline</span>) <span class="op">=</span> <span class="ident">deadline</span> {
-            <span class="kw">if</span> <span class="ident">deadline</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">Instant</span>::<span class="ident">now</span>() {
+            <span class="kw">if</span> <span class="ident">deadline</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">Instant::now</span>() {
                 <span class="kw">return</span>;
             }
         }
@@ -755,10 +754,10 @@
                 <span class="comment">// with that `unpark` to observe any writes it made before the call to `unpark`. To</span>
                 <span class="comment">// do that we must read from the write it made to `state`.</span>
                 <span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">EMPTY</span>, <span class="ident">SeqCst</span>);
-                <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">old</span>, <span class="ident">NOTIFIED</span>, <span class="string">&quot;park state changed unexpectedly&quot;</span>);
+                <span class="macro">assert_eq!</span>(<span class="ident">old</span>, <span class="ident">NOTIFIED</span>, <span class="string">&quot;park state changed unexpectedly&quot;</span>);
                 <span class="kw">return</span>;
             }
-            <span class="prelude-val">Err</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;inconsistent park_timeout state: {}&quot;</span>, <span class="ident">n</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">n</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;inconsistent park_timeout state: {}&quot;</span>, <span class="ident">n</span>),
         }
 
         <span class="kw">loop</span> {
@@ -766,7 +765,7 @@
             <span class="ident">m</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">deadline</span> {
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">cvar</span>.<span class="ident">wait</span>(<span class="ident">m</span>).<span class="ident">unwrap</span>(),
                 <span class="prelude-val">Some</span>(<span class="ident">deadline</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Instant</span>::<span class="ident">now</span>();
+                    <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
                     <span class="kw">if</span> <span class="ident">now</span> <span class="op">&lt;</span> <span class="ident">deadline</span> {
                         <span class="comment">// We could check for a timeout here, in the return value of wait_timeout,</span>
                         <span class="comment">// but in the case that a timeout and an unpark arrive simultaneously, we</span>
@@ -776,7 +775,7 @@
                         <span class="comment">// We&#39;ve timed out; swap out the state back to empty on our way out</span>
                         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">EMPTY</span>, <span class="ident">SeqCst</span>) {
                             <span class="ident">NOTIFIED</span> <span class="op">|</span> <span class="ident">PARKED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span>,
-                            <span class="ident">n</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;inconsistent park_timeout state: {}&quot;</span>, <span class="ident">n</span>),
+                            <span class="ident">n</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;inconsistent park_timeout state: {}&quot;</span>, <span class="ident">n</span>),
                         };
                     }
                 }
@@ -805,7 +804,7 @@
             <span class="ident">EMPTY</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span>,    <span class="comment">// no one was waiting</span>
             <span class="ident">NOTIFIED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span>, <span class="comment">// already unparked</span>
             <span class="ident">PARKED</span> <span class="op">=</span><span class="op">&gt;</span> {}        <span class="comment">// gotta go wake someone up</span>
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;inconsistent state in unpark&quot;</span>),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;inconsistent state in unpark&quot;</span>),
         }
 
         <span class="comment">// There is a period between when the parked thread sets `state` to `PARKED` (or last</span>
@@ -821,5 +820,4 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="crossbeam_utils"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="crossbeam_utils" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>

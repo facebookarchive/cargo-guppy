@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Error",""]],"struct":[["Parser","A recursive-descent parser for parsing version requirements."]]});

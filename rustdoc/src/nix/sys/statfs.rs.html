@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.0/src/sys/statfs.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>statfs.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.1/src/sys/statfs.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>statfs.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../nix/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../nix/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -569,34 +568,34 @@
 <span id="566">566</span>
 <span id="567">567</span>
 <span id="568">568</span>
-</pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>::{<span class="self">self</span>, <span class="ident">Debug</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">os</span>::<span class="ident">unix</span>::<span class="ident">io</span>::<span class="ident">AsRawFd</span>;
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="ident">std::fmt</span>::{<span class="self">self</span>, <span class="ident">Debug</span>};
+<span class="kw">use</span> <span class="ident">std::mem</span>;
+<span class="kw">use</span> <span class="ident">std::os::unix::io::AsRawFd</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>)))]</span>
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::<span class="ident">CStr</span>;
+<span class="kw">use</span> <span class="ident">std::ffi::CStr</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">NixPath</span>, <span class="prelude-ty">Result</span>, <span class="ident">errno</span>::<span class="ident">Errno</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">NixPath</span>, <span class="prelude-ty">Result</span>, <span class="ident">errno::Errno</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">fsid_t</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">__fsid_t</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">fsid_t</span> <span class="op">=</span> <span class="ident">libc::__fsid_t</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">fsid_t</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">fsid_t</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">fsid_t</span> <span class="op">=</span> <span class="ident">libc::fsid_t</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Statfs</span>(<span class="ident">libc</span>::<span class="ident">statfs</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Statfs</span>(<span class="ident">libc::statfs</span>);
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;freebsd&quot;</span>)]</span>
 <span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">u32</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>)]</span>
-<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span>;
+<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc::c_ulong</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;s390x&quot;</span>))]</span>
-<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">c_uint</span>;
+<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc::c_uint</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>))]</span>
-<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span>;
+<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc::c_ulong</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;s390x&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>))))]</span>
-<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">__fsword_t</span>;
+<span class="kw">type</span> <span class="ident">fs_type_t</span> <span class="op">=</span> <span class="ident">libc::__fsword_t</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(
     <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;freebsd&quot;</span>,
@@ -609,63 +608,63 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FsType</span>(<span class="kw">pub</span> <span class="ident">fs_type_t</span>);
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ADFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">ADFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ADFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::ADFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">AFFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">AFFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">AFFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::AFFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CODA_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">CODA_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CODA_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::CODA_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CRAMFS_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">CRAMFS_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CRAMFS_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::CRAMFS_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">EFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::EFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXT2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">EXT2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXT2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::EXT2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXT3_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">EXT3_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXT3_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::EXT3_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXT4_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">EXT4_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">EXT4_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::EXT4_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HPFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">HPFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HPFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::HPFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HUGETLBFS_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">HUGETLBFS_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HUGETLBFS_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::HUGETLBFS_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ISOFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">ISOFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ISOFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::ISOFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">JFFS2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">JFFS2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">JFFS2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::JFFS2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">MINIX_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::MINIX_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX_SUPER_MAGIC2</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">MINIX_SUPER_MAGIC2</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX_SUPER_MAGIC2</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::MINIX_SUPER_MAGIC2</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">MINIX2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::MINIX2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX2_SUPER_MAGIC2</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">MINIX2_SUPER_MAGIC2</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MINIX2_SUPER_MAGIC2</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::MINIX2_SUPER_MAGIC2</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MSDOS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">MSDOS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MSDOS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::MSDOS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NCP_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">NCP_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NCP_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::NCP_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">NFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::NFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OPENPROM_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">OPENPROM_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OPENPROM_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::OPENPROM_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OVERLAYFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">OVERLAYFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OVERLAYFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::OVERLAYFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">PROC_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">PROC_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">PROC_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::PROC_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">QNX4_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">QNX4_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">QNX4_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::QNX4_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">REISERFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">REISERFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">REISERFS_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::REISERFS_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMB_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">SMB_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SMB_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::SMB_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TMPFS_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">TMPFS_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TMPFS_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::TMPFS_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">USBDEVICE_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">USBDEVICE_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">USBDEVICE_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::USBDEVICE_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CGROUP_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">CGROUP_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CGROUP_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::CGROUP_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CGROUP2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc</span>::<span class="ident">CGROUP2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CGROUP2_SUPER_MAGIC</span>: <span class="ident">FsType</span> <span class="op">=</span> <span class="ident">FsType</span>(<span class="ident">libc::CGROUP2_SUPER_MAGIC</span> <span class="kw">as</span> <span class="ident">fs_type_t</span>);
 
 
 <span class="kw">impl</span> <span class="ident">Statfs</span> {
@@ -683,7 +682,7 @@
     <span class="doccomment">/// Magic code defining system type</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>)))]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">filesystem_type_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">str</span> {
-        <span class="kw">let</span> <span class="ident">c_str</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">CStr</span>::<span class="ident">from_ptr</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_fstypename</span>.<span class="ident">as_ptr</span>()) };
+        <span class="kw">let</span> <span class="ident">c_str</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">CStr::from_ptr</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_fstypename</span>.<span class="ident">as_ptr</span>()) };
         <span class="ident">c_str</span>.<span class="ident">to_str</span>().<span class="ident">unwrap</span>()
     }
 
@@ -710,19 +709,19 @@
         <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>,
         <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)
     ))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimal_transfer_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimal_transfer_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bsize</span>
     }
 
     <span class="doccomment">/// Optimal transfer block size</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;s390x&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>))))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimal_transfer_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">__fsword_t</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimal_transfer_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::__fsword_t</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bsize</span>
     }
 
     <span class="doccomment">/// Optimal transfer block size</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimal_transfer_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_long</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimal_transfer_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_long</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_iosize</span>
     }
 
@@ -748,14 +747,14 @@
     <span class="doccomment">/// Size of a block</span>
     <span class="comment">// f_bsize on linux: https://github.com/torvalds/linux/blob/master/fs/nfs/super.c#L471</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bsize</span>
     }
 
     <span class="doccomment">/// Size of a block</span>
     <span class="comment">// f_bsize on linux: https://github.com/torvalds/linux/blob/master/fs/nfs/super.c#L471</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;s390x&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>))))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">__fsword_t</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::__fsword_t</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bsize</span>
     }
 
@@ -767,13 +766,13 @@
 
     <span class="doccomment">/// Size of a block</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bsize</span>
     }
 
     <span class="doccomment">/// Size of a block</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_long</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">block_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_long</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bsize</span>
     }
 
@@ -791,19 +790,19 @@
 
     <span class="doccomment">/// Maximum length of filenames</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maximum_name_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maximum_name_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_namelen</span>
     }
 
     <span class="doccomment">/// Maximum length of filenames</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;s390x&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>))))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maximum_name_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">__fsword_t</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maximum_name_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::__fsword_t</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_namelen</span>
     }
 
     <span class="doccomment">/// Maximum length of filenames</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maximum_name_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">maximum_name_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_namelen</span>
     }
 
@@ -821,7 +820,7 @@
 
     <span class="doccomment">/// Total data blocks in filesystem</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_long</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_long</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_blocks</span>
     }
 
@@ -841,7 +840,7 @@
         <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>,
         <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>, <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)))
     )))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_blocks</span>
     }
 
@@ -859,7 +858,7 @@
 
     <span class="doccomment">/// Free blocks in filesystem</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_long</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_long</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bfree</span>
     }
 
@@ -879,7 +878,7 @@
         <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>,
         <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>, <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)))
     )))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bfree</span>
     }
 
@@ -891,7 +890,7 @@
 
     <span class="doccomment">/// Free blocks available to unprivileged user</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_available</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_long</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_available</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_long</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bavail</span>
     }
 
@@ -917,7 +916,7 @@
         <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>,
         <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>, <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)))
     )))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_available</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blocks_available</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_bavail</span>
     }
 
@@ -935,13 +934,13 @@
 
     <span class="doccomment">/// Total file nodes in filesystem</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_long</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_long</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_files</span>
     }
 
     <span class="doccomment">/// Total file nodes in filesystem</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>, <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>))))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">fsfilcnt_t</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::fsfilcnt_t</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_files</span>
     }
 
@@ -955,7 +954,7 @@
         <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>,
         <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>, <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)))
     )))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_files</span>
     }
 
@@ -972,7 +971,7 @@
 
     <span class="doccomment">/// Free file nodes in filesystem</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_long</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_long</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_ffree</span>
     }
 
@@ -984,7 +983,7 @@
 
     <span class="doccomment">/// Free file nodes in filesystem</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>, <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>))))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">fsfilcnt_t</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::fsfilcnt_t</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_ffree</span>
     }
 
@@ -998,7 +997,7 @@
         <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;dragonfly&quot;</span>,
         <span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>, <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)))
     )))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc</span>::<span class="ident">c_ulong</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">files_free</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_ulong</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">f_ffree</span>
     }
 
@@ -1009,7 +1008,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">Statfs</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;Statfs&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;optimal_transfer_size&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">optimal_transfer_size</span>())
             .<span class="ident">field</span>(<span class="string">&quot;block_size&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">block_size</span>())
@@ -1025,27 +1024,27 @@
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">statfs</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Statfs</span><span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stat</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc</span>::<span class="ident">statfs</span><span class="op">&gt;</span>::<span class="ident">uninit</span>();
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">libc</span>::<span class="ident">statfs</span>(<span class="ident">path</span>.<span class="ident">as_ptr</span>(), <span class="ident">stat</span>.<span class="ident">as_mut_ptr</span>()))<span class="question-mark">?</span>;
-        <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Statfs</span>(<span class="ident">stat</span>.<span class="ident">assume_init</span>()))
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stat</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc::statfs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">libc::statfs</span>(<span class="ident">path</span>.<span class="ident">as_ptr</span>(), <span class="ident">stat</span>.<span class="ident">as_mut_ptr</span>()))<span class="question-mark">?</span>;
+        <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Statfs</span>(<span class="ident">stat</span>.<span class="ident">assume_init</span>()))
     }
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fstatfs</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsRawFd</span><span class="op">&gt;</span>(<span class="ident">fd</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Statfs</span><span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stat</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc</span>::<span class="ident">statfs</span><span class="op">&gt;</span>::<span class="ident">uninit</span>();
-        <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">libc</span>::<span class="ident">fstatfs</span>(<span class="ident">fd</span>.<span class="ident">as_raw_fd</span>(), <span class="ident">stat</span>.<span class="ident">as_mut_ptr</span>()))
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stat</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc::statfs</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
+        <span class="ident">Errno::result</span>(<span class="ident">libc::fstatfs</span>(<span class="ident">fd</span>.<span class="ident">as_raw_fd</span>(), <span class="ident">stat</span>.<span class="ident">as_mut_ptr</span>()))
             .<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Statfs</span>(<span class="ident">stat</span>.<span class="ident">assume_init</span>()))
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fs</span>::<span class="ident">File</span>;
+    <span class="kw">use</span> <span class="ident">std::fs::File</span>;
 
-    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sys</span>::<span class="ident">statfs</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sys</span>::<span class="ident">statvfs</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::statfs</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::statvfs</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident">std::path::Path</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">statfs_call</span>() {
@@ -1064,17 +1063,17 @@
     }
 
     <span class="kw">fn</span> <span class="ident">check_fstatfs</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path::new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
             <span class="kw">return</span>;
         }
         <span class="kw">let</span> <span class="ident">vfs</span> <span class="op">=</span> <span class="ident">statvfs</span>(<span class="ident">path</span>.<span class="ident">as_bytes</span>()).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">File</span>::<span class="ident">open</span>(<span class="ident">path</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">File::open</span>(<span class="ident">path</span>).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">fs</span> <span class="op">=</span> <span class="ident">fstatfs</span>(<span class="kw-2">&amp;</span><span class="ident">file</span>).<span class="ident">unwrap</span>();
         <span class="ident">assert_fs_equals</span>(<span class="ident">fs</span>, <span class="ident">vfs</span>);
     }
 
     <span class="kw">fn</span> <span class="ident">check_statfs</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path::new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
             <span class="kw">return</span>;
         }
         <span class="kw">let</span> <span class="ident">vfs</span> <span class="op">=</span> <span class="ident">statvfs</span>(<span class="ident">path</span>.<span class="ident">as_bytes</span>()).<span class="ident">unwrap</span>();
@@ -1083,9 +1082,9 @@
     }
 
     <span class="kw">fn</span> <span class="ident">assert_fs_equals</span>(<span class="ident">fs</span>: <span class="ident">Statfs</span>, <span class="ident">vfs</span>: <span class="ident">Statvfs</span>) {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">block_size</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">fragment_size</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">block_size</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">fragment_size</span>() <span class="kw">as</span> <span class="ident">u64</span>);
     }
 
     <span class="comment">// This test is ignored because files_free/blocks_free can change after statvfs call and before</span>
@@ -1111,17 +1110,17 @@
     }
 
     <span class="kw">fn</span> <span class="ident">check_fstatfs_strict</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path::new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
             <span class="kw">return</span>;
         }
         <span class="kw">let</span> <span class="ident">vfs</span> <span class="op">=</span> <span class="ident">statvfs</span>(<span class="ident">path</span>.<span class="ident">as_bytes</span>());
-        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">File</span>::<span class="ident">open</span>(<span class="ident">path</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">File::open</span>(<span class="ident">path</span>).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">fs</span> <span class="op">=</span> <span class="ident">fstatfs</span>(<span class="kw-2">&amp;</span><span class="ident">file</span>);
         <span class="ident">assert_fs_equals_strict</span>(<span class="ident">fs</span>.<span class="ident">unwrap</span>(), <span class="ident">vfs</span>.<span class="ident">unwrap</span>())
     }
 
     <span class="kw">fn</span> <span class="ident">check_statfs_strict</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path</span>::<span class="ident">new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">Path::new</span>(<span class="ident">path</span>).<span class="ident">exists</span>() {
             <span class="kw">return</span>;
         }
         <span class="kw">let</span> <span class="ident">vfs</span> <span class="op">=</span> <span class="ident">statvfs</span>(<span class="ident">path</span>.<span class="ident">as_bytes</span>());
@@ -1130,14 +1129,13 @@
     }
 
     <span class="kw">fn</span> <span class="ident">assert_fs_equals_strict</span>(<span class="ident">fs</span>: <span class="ident">Statfs</span>, <span class="ident">vfs</span>: <span class="ident">Statvfs</span>) {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">files_free</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">files_free</span>() <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">blocks_free</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks_free</span>() <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">blocks_available</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks_available</span>() <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">fs</span>.<span class="ident">block_size</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">fragment_size</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">files_free</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">files_free</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">blocks_free</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks_free</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">blocks_available</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks_available</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">files</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">blocks</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">fs</span>.<span class="ident">block_size</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">vfs</span>.<span class="ident">fragment_size</span>() <span class="kw">as</span> <span class="ident">u64</span>);
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nix"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nix" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>

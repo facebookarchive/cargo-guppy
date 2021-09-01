@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["ErrorVariant","Different kinds of parsing errors."],["InputLocation","Where an `Error` has occurred."],["LineColLocation","Line/column where an `Error` has occurred."]],"struct":[["Error","Parse-related error type."]]});

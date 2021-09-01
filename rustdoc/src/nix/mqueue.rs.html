@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.0/src/mqueue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mqueue.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.20.1/src/mqueue.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mqueue.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../nix/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../nix/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -178,21 +177,21 @@
 <span id="175">175</span>
 <span id="176">176</span>
 <span id="177">177</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="doccomment">//! Posix Message Queue functions</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [Further reading and details on the C API](http://man7.org/linux/man-pages/man7/mq_overview.7.html)</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="prelude-ty">Result</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">errno</span>::<span class="ident">Errno</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Result</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::errno::Errno</span>;
 
 <span class="kw">use</span> <span class="ident">libc</span>::{<span class="self">self</span>, <span class="ident">c_char</span>, <span class="ident">mqd_t</span>, <span class="ident">size_t</span>};
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ffi</span>::<span class="ident">CString</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">sys</span>::<span class="ident">stat</span>::<span class="ident">Mode</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
+<span class="kw">use</span> <span class="ident">std::ffi::CString</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::stat::Mode</span>;
+<span class="kw">use</span> <span class="ident">std::mem</span>;
 
-<span class="macro">libc_bitflags</span><span class="macro">!</span>{
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MQ_OFlag</span>: <span class="ident">libc</span>::<span class="ident">c_int</span> {
+<span class="macro">libc_bitflags!</span>{
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MQ_OFlag</span>: <span class="ident">libc::c_int</span> {
         <span class="ident">O_RDONLY</span>;
         <span class="ident">O_WRONLY</span>;
         <span class="ident">O_RDWR</span>;
@@ -203,8 +202,8 @@
     }
 }
 
-<span class="macro">libc_bitflags</span><span class="macro">!</span>{
-    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FdFlag</span>: <span class="ident">libc</span>::<span class="ident">c_int</span> {
+<span class="macro">libc_bitflags!</span>{
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FdFlag</span>: <span class="ident">libc::c_int</span> {
         <span class="ident">FD_CLOEXEC</span>;
     }
 }
@@ -212,7 +211,7 @@
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MqAttr</span> {
-    <span class="ident">mq_attr</span>: <span class="ident">libc</span>::<span class="ident">mq_attr</span>,
+    <span class="ident">mq_attr</span>: <span class="ident">libc::mq_attr</span>,
 }
 
 <span class="comment">// x32 compatibility</span>
@@ -220,7 +219,7 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">mq_attr_member_t</span> <span class="op">=</span> <span class="ident">i64</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">mq_attr_member_t</span> <span class="op">=</span> <span class="ident">libc</span>::<span class="ident">c_long</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">mq_attr_member_t</span> <span class="op">=</span> <span class="ident">libc::c_long</span>;
 
 <span class="kw">impl</span> <span class="ident">MqAttr</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">mq_flags</span>: <span class="ident">mq_attr_member_t</span>,
@@ -229,7 +228,7 @@
                <span class="ident">mq_curmsgs</span>: <span class="ident">mq_attr_member_t</span>)
                <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MqAttr</span>
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attr</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc</span>::<span class="ident">mq_attr</span><span class="op">&gt;</span>::<span class="ident">uninit</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attr</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc::mq_attr</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">attr</span>.<span class="ident">as_mut_ptr</span>();
             (<span class="kw-2">*</span><span class="ident">p</span>).<span class="ident">mq_flags</span> <span class="op">=</span> <span class="ident">mq_flags</span>;
@@ -250,7 +249,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// See also [`mq_open(2)`](http://pubs.opengroup.org/onlinepubs/9699919799/functions/mq_open.html)</span>
 <span class="comment">// The mode.bits cast is only lossless on some OSes</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">cast_lossless</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::cast_lossless</span>)]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_open</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">CString</span>,
                <span class="ident">oflag</span>: <span class="ident">MQ_OFlag</span>,
                <span class="ident">mode</span>: <span class="ident">Mode</span>,
@@ -258,30 +257,30 @@
                <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">mqd_t</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">attr</span> {
         <span class="prelude-val">Some</span>(<span class="ident">mq_attr</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> {
-            <span class="ident">libc</span>::<span class="ident">mq_open</span>(<span class="ident">name</span>.<span class="ident">as_ptr</span>(),
+            <span class="ident">libc::mq_open</span>(<span class="ident">name</span>.<span class="ident">as_ptr</span>(),
                           <span class="ident">oflag</span>.<span class="ident">bits</span>(),
-                          <span class="ident">mode</span>.<span class="ident">bits</span>() <span class="kw">as</span> <span class="ident">libc</span>::<span class="ident">c_int</span>,
-                          <span class="kw-2">&amp;</span><span class="ident">mq_attr</span>.<span class="ident">mq_attr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">libc</span>::<span class="ident">mq_attr</span>)
+                          <span class="ident">mode</span>.<span class="ident">bits</span>() <span class="kw">as</span> <span class="ident">libc::c_int</span>,
+                          <span class="kw-2">&amp;</span><span class="ident">mq_attr</span>.<span class="ident">mq_attr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">libc::mq_attr</span>)
         },
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">mq_open</span>(<span class="ident">name</span>.<span class="ident">as_ptr</span>(), <span class="ident">oflag</span>.<span class="ident">bits</span>()) },
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> { <span class="ident">libc::mq_open</span>(<span class="ident">name</span>.<span class="ident">as_ptr</span>(), <span class="ident">oflag</span>.<span class="ident">bits</span>()) },
     };
-    <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>)
+    <span class="ident">Errno::result</span>(<span class="ident">res</span>)
 }
 
 <span class="doccomment">/// Remove a message queue</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See also [`mq_unlink(2)`](http://pubs.opengroup.org/onlinepubs/9699919799/functions/mq_unlink.html)</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_unlink</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">CString</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">mq_unlink</span>(<span class="ident">name</span>.<span class="ident">as_ptr</span>()) };
-    <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
+    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::mq_unlink</span>(<span class="ident">name</span>.<span class="ident">as_ptr</span>()) };
+    <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
 }
 
 <span class="doccomment">/// Close a message queue</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See also [`mq_close(2)`](http://pubs.opengroup.org/onlinepubs/9699919799/functions/mq_close.html)</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_close</span>(<span class="ident">mqdes</span>: <span class="ident">mqd_t</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">mq_close</span>(<span class="ident">mqdes</span>) };
-    <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
+    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::mq_close</span>(<span class="ident">mqdes</span>) };
+    <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
 }
 
 <span class="doccomment">/// Receive a message from a message queue</span>
@@ -290,12 +289,12 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_receive</span>(<span class="ident">mqdes</span>: <span class="ident">mqd_t</span>, <span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="ident">msg_prio</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">message</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">size_t</span>;
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-        <span class="ident">libc</span>::<span class="ident">mq_receive</span>(<span class="ident">mqdes</span>,
+        <span class="ident">libc::mq_receive</span>(<span class="ident">mqdes</span>,
                          <span class="ident">message</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>,
                          <span class="ident">len</span>,
                          <span class="ident">msg_prio</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u32</span>)
     };
-    <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span> <span class="kw">as</span> <span class="ident">usize</span>)
+    <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span> <span class="kw">as</span> <span class="ident">usize</span>)
 }
 
 <span class="doccomment">/// Send a message to a message queue</span>
@@ -303,21 +302,21 @@
 <span class="doccomment">/// See also [`mq_send(2)`](http://pubs.opengroup.org/onlinepubs/9699919799/functions/mq_send.html)</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_send</span>(<span class="ident">mqdes</span>: <span class="ident">mqd_t</span>, <span class="ident">message</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">msq_prio</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-        <span class="ident">libc</span>::<span class="ident">mq_send</span>(<span class="ident">mqdes</span>,
+        <span class="ident">libc::mq_send</span>(<span class="ident">mqdes</span>,
                       <span class="ident">message</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_char</span>,
                       <span class="ident">message</span>.<span class="ident">len</span>(),
                       <span class="ident">msq_prio</span>)
     };
-    <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
+    <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
 }
 
 <span class="doccomment">/// Get message queue attributes</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See also [`mq_getattr(2)`](http://pubs.opengroup.org/onlinepubs/9699919799/functions/mq_getattr.html)</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_getattr</span>(<span class="ident">mqd</span>: <span class="ident">mqd_t</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MqAttr</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attr</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc</span>::<span class="ident">mq_attr</span><span class="op">&gt;</span>::<span class="ident">uninit</span>();
-    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc</span>::<span class="ident">mq_getattr</span>(<span class="ident">mqd</span>, <span class="ident">attr</span>.<span class="ident">as_mut_ptr</span>()) };
-    <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="kw">unsafe</span>{<span class="ident">MqAttr</span> { <span class="ident">mq_attr</span>: <span class="ident">attr</span>.<span class="ident">assume_init</span>() }})
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attr</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc::mq_attr</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
+    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::mq_getattr</span>(<span class="ident">mqd</span>, <span class="ident">attr</span>.<span class="ident">as_mut_ptr</span>()) };
+    <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="kw">unsafe</span>{<span class="ident">MqAttr</span> { <span class="ident">mq_attr</span>: <span class="ident">attr</span>.<span class="ident">assume_init</span>() }})
 }
 
 <span class="doccomment">/// Set the attributes of the message queue. Only `O_NONBLOCK` can be set, everything else will be ignored</span>
@@ -326,11 +325,11 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// [Further reading](http://pubs.opengroup.org/onlinepubs/9699919799/functions/mq_setattr.html)</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_setattr</span>(<span class="ident">mqd</span>: <span class="ident">mqd_t</span>, <span class="ident">newattr</span>: <span class="kw-2">&amp;</span><span class="ident">MqAttr</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MqAttr</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attr</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc</span>::<span class="ident">mq_attr</span><span class="op">&gt;</span>::<span class="ident">uninit</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attr</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">libc::mq_attr</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-        <span class="ident">libc</span>::<span class="ident">mq_setattr</span>(<span class="ident">mqd</span>, <span class="kw-2">&amp;</span><span class="ident">newattr</span>.<span class="ident">mq_attr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">libc</span>::<span class="ident">mq_attr</span>, <span class="ident">attr</span>.<span class="ident">as_mut_ptr</span>())
+        <span class="ident">libc::mq_setattr</span>(<span class="ident">mqd</span>, <span class="kw-2">&amp;</span><span class="ident">newattr</span>.<span class="ident">mq_attr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">libc::mq_attr</span>, <span class="ident">attr</span>.<span class="ident">as_mut_ptr</span>())
     };
-    <span class="ident">Errno</span>::<span class="ident">result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="kw">unsafe</span>{ <span class="ident">MqAttr</span> { <span class="ident">mq_attr</span>: <span class="ident">attr</span>.<span class="ident">assume_init</span>() }})
+    <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="kw">unsafe</span>{ <span class="ident">MqAttr</span> { <span class="ident">mq_attr</span>: <span class="ident">attr</span>.<span class="ident">assume_init</span>() }})
 }
 
 <span class="doccomment">/// Convenience function.</span>
@@ -338,7 +337,7 @@
 <span class="doccomment">/// Returns the old attributes</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_set_nonblock</span>(<span class="ident">mqd</span>: <span class="ident">mqd_t</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MqAttr</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">oldattr</span> <span class="op">=</span> <span class="ident">mq_getattr</span>(<span class="ident">mqd</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">newattr</span> <span class="op">=</span> <span class="ident">MqAttr</span>::<span class="ident">new</span>(<span class="ident">mq_attr_member_t</span>::<span class="ident">from</span>(<span class="ident">MQ_OFlag</span>::<span class="ident">O_NONBLOCK</span>.<span class="ident">bits</span>()),
+    <span class="kw">let</span> <span class="ident">newattr</span> <span class="op">=</span> <span class="ident">MqAttr::new</span>(<span class="ident">mq_attr_member_t::from</span>(<span class="ident">MQ_OFlag::O_NONBLOCK</span>.<span class="ident">bits</span>()),
                               <span class="ident">oldattr</span>.<span class="ident">mq_attr</span>.<span class="ident">mq_maxmsg</span>,
                               <span class="ident">oldattr</span>.<span class="ident">mq_attr</span>.<span class="ident">mq_msgsize</span>,
                               <span class="ident">oldattr</span>.<span class="ident">mq_attr</span>.<span class="ident">mq_curmsgs</span>);
@@ -350,12 +349,11 @@
 <span class="doccomment">/// Returns the old attributes</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mq_remove_nonblock</span>(<span class="ident">mqd</span>: <span class="ident">mqd_t</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MqAttr</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">oldattr</span> <span class="op">=</span> <span class="ident">mq_getattr</span>(<span class="ident">mqd</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">newattr</span> <span class="op">=</span> <span class="ident">MqAttr</span>::<span class="ident">new</span>(<span class="number">0</span>,
+    <span class="kw">let</span> <span class="ident">newattr</span> <span class="op">=</span> <span class="ident">MqAttr::new</span>(<span class="number">0</span>,
                               <span class="ident">oldattr</span>.<span class="ident">mq_attr</span>.<span class="ident">mq_maxmsg</span>,
                               <span class="ident">oldattr</span>.<span class="ident">mq_attr</span>.<span class="ident">mq_msgsize</span>,
                               <span class="ident">oldattr</span>.<span class="ident">mq_attr</span>.<span class="ident">mq_curmsgs</span>);
     <span class="ident">mq_setattr</span>(<span class="ident">mqd</span>, <span class="kw-2">&amp;</span><span class="ident">newattr</span>)
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="nix"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="nix" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

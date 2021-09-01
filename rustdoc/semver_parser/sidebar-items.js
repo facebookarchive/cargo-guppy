@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Compat",""],["Identifier",""],["Op",""]],"mod":[["lexer","Lexer for semver ranges."],["parser",""],["version","Version data and functions."]],"struct":[["Comparator",""],["Range",""],["RangeSet",""]]});
