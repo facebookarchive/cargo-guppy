@@ -1,8 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::debug_ignore::DebugIgnore;
 use crate::{
+    debug_ignore::DebugIgnore,
     errors::FeatureGraphWarning,
     graph::{
         feature::{build::FeatureGraphBuildState, Cycles, FeatureFilter, FeatureList},

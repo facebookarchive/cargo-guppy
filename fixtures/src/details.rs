@@ -535,7 +535,7 @@ impl LinkDetails {
                 results.status,
                 "{}: for platform '{}', kind {}, status is correct",
                 msg,
-                platform.triple(),
+                platform.triple_str(),
                 dep_kind,
             );
             assert_eq!(
@@ -543,7 +543,7 @@ impl LinkDetails {
                 results.default_features,
                 "{}: for platform '{}', kind {}, default features is correct",
                 msg,
-                platform.triple(),
+                platform.triple_str(),
                 dep_kind,
             );
             for (feature, status) in &results.feature_statuses {
@@ -552,7 +552,7 @@ impl LinkDetails {
                     *status,
                     "{}: for platform '{}', kind {}, feature '{}' has correct status",
                     msg,
-                    platform.triple(),
+                    platform.triple_str(),
                     dep_kind,
                     feature
                 );

@@ -1,9 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{custom_platforms::TargetInfo, eval_target, Error, Platform};
-use cfg_expr::{targets::get_builtin_target_by_triple, Expression, Predicate};
-use std::borrow::Cow;
+use crate::{eval_target, Error, Platform, SingleTarget};
+use cfg_expr::{Expression, Predicate};
 use std::{str::FromStr, sync::Arc};
 
 /// A parsed target specification or triple, as found in a `Cargo.toml` file.
@@ -45,9 +44,9 @@ impl TargetSpec {
     ///
     /// Custom platforms are often found in embedded and similar environments. For built-in
     /// platforms, the `FromStr` implementation is recommended instead.
-    pub fn custom(target_info: impl Into<Cow<'static, TargetInfo>>) -> Self {
+    pub fn custom(single_target: SingleTarget) -> Self {
         Self {
-            target: Target::TargetInfo(target_info.into()),
+            target: Target::SingleTarget(single_target),
         }
     }
 
@@ -73,7 +72,7 @@ impl FromStr for TargetSpec {
 
 #[derive(Clone, Debug)]
 pub(crate) enum Target {
-    TargetInfo(Cow<'static, TargetInfo>),
+    SingleTarget(SingleTarget),
     Spec(Arc<Expression>),
 }
 
@@ -84,10 +83,10 @@ impl Target {
             let expr = Expression::parse(input).map_err(Error::InvalidCfg)?;
             Self::verify_expr(expr)
         } else {
-            Ok(Target::TargetInfo(Cow::Borrowed(
-                get_builtin_target_by_triple(input)
-                    .ok_or_else(|| Error::UnknownTargetTriple(input.to_string()))?,
-            )))
+            match input.parse::<SingleTarget>() {
+                Ok(single_target) => Ok(Target::SingleTarget(single_target)),
+                Err(parse_err) => Err(Error::UnknownTargetTriple(parse_err)),
+            }
         }
     }
 
@@ -117,15 +116,16 @@ mod tests {
         let res = Target::parse("x86_64-apple-darwin");
         assert!(matches!(
             res,
-            Ok(Target::TargetInfo(target_info)) if target_info.triple.as_str() == "x86_64-apple-darwin"
+            Ok(Target::SingleTarget(single_target))
+                if single_target.triple_str() == "x86_64-apple-darwin"
         ));
     }
 
     #[test]
     fn test_single() {
         let expr = match Target::parse("cfg(windows)").unwrap() {
-            Target::TargetInfo(target_info) => {
-                panic!("expected spec, got target info: {:?}", target_info)
+            Target::SingleTarget(single_target) => {
+                panic!("expected spec, got single target: {:?}", single_target)
             }
             Target::Spec(expr) => expr,
         };
@@ -146,8 +146,8 @@ mod tests {
     #[test]
     fn test_testequal() {
         let expr = match Target::parse("cfg(target_os = \"windows\")").unwrap() {
-            Target::TargetInfo(target_info) => {
-                panic!("expected spec, got target info: {:?}", target_info)
+            Target::SingleTarget(single_target) => {
+                panic!("expected spec, got single target: {:?}", single_target)
             }
             Target::Spec(expr) => expr,
         };
@@ -159,19 +159,45 @@ mod tests {
     }
 
     #[test]
-    fn test_unknown_triple() {
-        let err = Target::parse("x86_64-pc-darwin").expect_err("unknown triple");
+    fn test_lexicon_triple() {
+        use target_lexicon::*;
+
+        let target =
+            Target::parse("x86_64-pc-darwin").expect("this triple is known to target-lexicon");
+
+        let lexicon_triple = match target {
+            Target::SingleTarget(SingleTarget::Lexicon { lexicon_triple, .. }) => lexicon_triple,
+            other => panic!("not a lexicon target: {:?}", other),
+        };
+
+        let expected_triple = Triple {
+            architecture: Architecture::X86_64,
+            vendor: Vendor::Pc,
+            operating_system: OperatingSystem::Darwin,
+            environment: Environment::Unknown,
+            binary_format: BinaryFormat::Macho,
+        };
         assert_eq!(
-            err,
-            Error::UnknownTargetTriple("x86_64-pc-darwin".to_string())
+            lexicon_triple, expected_triple,
+            "lexicon triple matched correctly"
         );
+    }
+
+    #[test]
+    fn test_unknown_triple() {
+        // This used to be "x86_64-pc-darwin", but target-lexicon can parse that.
+        let err = Target::parse("cannotbeknown").expect_err("unknown triple");
+        assert!(matches!(
+            err,
+            Error::UnknownTargetTriple(parse_err) if parse_err.triple_str() == "cannotbeknown"
+        ));
     }
 
     #[test]
     fn test_unknown_flag() {
         let expr = match Target::parse("cfg(foo)").unwrap() {
-            Target::TargetInfo(target_info) => {
-                panic!("expected spec, got target info: {:?}", target_info)
+            Target::SingleTarget(single_target) => {
+                panic!("expected spec, got target info: {:?}", single_target)
             }
             Target::Spec(expr) => expr,
         };

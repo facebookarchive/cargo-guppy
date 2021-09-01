@@ -55,6 +55,6 @@ pub fn triple_strategy() -> impl Strategy<Value = Option<String>> {
     prop_oneof![
         // 25% chance to generate None, 75% to generate a particular platform
         1 => Just(None),
-        3 => platform_strategy.prop_map(|platform| Some(platform.triple().to_owned())),
+        3 => platform_strategy.prop_map(|platform| Some(platform.triple_str().to_owned())),
     ]
 }

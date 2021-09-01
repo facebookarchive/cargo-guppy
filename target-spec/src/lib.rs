@@ -43,6 +43,7 @@ mod parser;
 mod platform;
 #[cfg(feature = "proptest1")]
 mod proptest;
+mod single_target;
 #[cfg(feature = "summaries")]
 pub mod summaries;
 
@@ -50,3 +51,4 @@ pub use errors::*;
 pub use evaluator::*;
 pub use parser::*;
 pub use platform::*;
+pub use single_target::*;

@@ -149,9 +149,9 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// * the host and target platforms are set to the current platform
     pub fn default_cargo_options() -> CargoOptions<'static> {
         let mut options = CargoOptions::new();
-        options
-            .set_include_dev(true)
-            .set_platform(Platform::current());
+        options.set_include_dev(true).set_platform(Some(
+            Platform::current().expect("current platform is unknown"),
+        ));
         options
     }
 

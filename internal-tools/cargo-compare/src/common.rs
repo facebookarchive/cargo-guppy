@@ -3,13 +3,11 @@
 
 use crate::{type_conversions::ToGuppy, GlobalContext};
 use anyhow::Result;
-use cargo::core::resolver::CliFeatures;
-use cargo::core::FeatureValue;
 use cargo::{
     core::{
         compiler::{CompileKind, CompileTarget, RustcTargetData},
-        resolver::{features::FeaturesFor, ForceAllTargets, HasDevUnits},
-        PackageIdSpec, Workspace,
+        resolver::{features::FeaturesFor, CliFeatures, ForceAllTargets, HasDevUnits},
+        FeatureValue, PackageIdSpec, Workspace,
     },
     ops::resolve_ws_with_opts,
     util::interning::InternedString,
@@ -255,7 +253,7 @@ impl GuppyCargoCommon {
     }
 
     fn guppy_current_platform(&self) -> Result<Platform> {
-        Platform::current().ok_or_else(|| anyhow::anyhow!("unknown current platform"))
+        Ok(Platform::current()?)
     }
 }
 
