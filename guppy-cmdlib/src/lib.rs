@@ -176,10 +176,10 @@ impl CargoMetadataOptions {
 /// Parse a given triple, the string "current", or "any", into a platform.
 ///
 /// TODO: This should eventually support JSON specs as well, probably.
-pub fn triple_to_platform<'a>(
+pub fn triple_to_platform(
     triple: Option<&str>,
-    default_fn: impl FnOnce() -> Option<Platform<'a>>,
-) -> Result<Option<Platform<'a>>> {
+    default_fn: impl FnOnce() -> Option<Platform>,
+) -> Result<Option<Platform>> {
     match triple {
         Some("current") => Ok(Platform::current()),
         Some("any") => Ok(None),

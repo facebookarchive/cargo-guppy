@@ -17,7 +17,7 @@ use proptest::{
 /// in property-based testing scenarios.
 ///
 /// Requires the `proptest1` feature to be enabled.
-impl<'g> HakariBuilder<'g, 'static> {
+impl<'g> HakariBuilder<'g> {
     /// Returns a `Strategy` that generates random `HakariBuilder` instances based on this graph.
     ///
     /// Requires the `proptest1` feature to be enabled.
@@ -30,7 +30,7 @@ impl<'g> HakariBuilder<'g, 'static> {
     pub fn prop010_strategy(
         graph: &'g PackageGraph,
         hakari_id_strategy: impl Strategy<Value = Option<&'g PackageId>> + 'g,
-    ) -> impl Strategy<Value = HakariBuilder<'g, 'static>> + 'g {
+    ) -> impl Strategy<Value = HakariBuilder<'g>> + 'g {
         (
             hakari_id_strategy,
             vec(Platform::strategy(any::<TargetFeatures>()), 0..4),

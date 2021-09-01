@@ -3,14 +3,12 @@
 
 use crate::{type_conversions::ToGuppy, GlobalContext};
 use anyhow::Result;
+use cargo::core::resolver::CliFeatures;
+use cargo::core::FeatureValue;
 use cargo::{
     core::{
         compiler::{CompileKind, CompileTarget, RustcTargetData},
-        enable_nightly_features,
-        resolver::{
-            features::{FeaturesFor, RequestedFeatures},
-            ForceAllTargets, HasDevUnits, ResolveOpts,
-        },
+        resolver::{features::FeaturesFor, ForceAllTargets, HasDevUnits},
         PackageIdSpec, Workspace,
     },
     ops::resolve_ws_with_opts,
@@ -63,7 +61,11 @@ impl GuppyCargoCommon {
     pub fn resolve_cargo(&self, ctx: &GlobalContext<'_>) -> Result<FeatureMap> {
         let config = self.cargo_make_config(ctx)?;
         let root_manifest = self.cargo_discover_root(&config)?;
-        let workspace = self.cargo_make_workspace(&config, &root_manifest)?;
+        let mut workspace = self.cargo_make_workspace(&config, &root_manifest)?;
+        // See the comment in resolve_guppy about avoid-dev-deps for why this is necessary.
+        if !self.include_dev {
+            workspace.set_require_optional_deps(false);
+        }
 
         let compile_kind = match &self.target_platform {
             Some(platform) => CompileKind::Target(CompileTarget::new(platform)?),
@@ -71,7 +73,7 @@ impl GuppyCargoCommon {
         };
         let target_data = RustcTargetData::new(&workspace, &[compile_kind])?;
 
-        let resolve_opts = ResolveOpts::new(self.include_dev, self.cargo_make_requested_features());
+        let cli_features = self.cargo_make_cli_features();
         let packages = &self.pf.packages;
         let specs: Vec<_> = if packages.is_empty() {
             // Pass in the entire workspace.
@@ -82,7 +84,7 @@ impl GuppyCargoCommon {
         } else {
             packages
                 .iter()
-                .map(|spec| PackageIdSpec::parse(&spec))
+                .map(|spec| PackageIdSpec::parse(spec))
                 .collect::<Result<_>>()?
         };
 
@@ -90,7 +92,7 @@ impl GuppyCargoCommon {
             &workspace,
             &target_data,
             &[compile_kind],
-            &resolve_opts,
+            &cli_features,
             &specs,
             if self.include_dev {
                 HasDevUnits::Yes
@@ -175,7 +177,7 @@ impl GuppyCargoCommon {
     }
 
     /// Returns a `Platform` corresponding to the target platform.
-    pub fn make_target_platform(&self) -> Result<Platform<'static>> {
+    pub fn make_target_platform(&self) -> Result<Platform> {
         match &self.target_platform {
             Some(triple) => Ok(Platform::new(triple, TargetFeatures::Unknown)?),
             None => self.guppy_current_platform(),
@@ -185,18 +187,18 @@ impl GuppyCargoCommon {
     pub fn strategy<'a>(
         metadata_opts: &'a CargoMetadataOptions,
         graph: &'a PackageGraph,
+        resolver: CargoResolverVersion,
     ) -> impl Strategy<Value = Self> + 'a {
         (
             PackagesAndFeatures::strategy(graph),
             any::<bool>(),
-            any::<bool>(),
             triple_strategy(),
         )
-            .prop_map(move |(pf, include_dev, v2, target_platform)| Self {
+            .prop_map(move |(pf, include_dev, target_platform)| Self {
                 pf,
                 include_dev,
-                v2,
-                target_platform: target_platform.map(|s| s.to_string()),
+                v2: resolver == CargoResolverVersion::V2,
+                target_platform,
                 metadata_opts: metadata_opts.clone(),
             })
     }
@@ -215,24 +217,7 @@ impl GuppyCargoCommon {
         let locked = true;
         let offline = true;
 
-        let unstable_flags: Vec<String> = if self.v2 {
-            enable_nightly_features();
-            vec!["features=all".into()]
-        } else {
-            vec![]
-        };
-
-        config.configure(
-            2,
-            false,
-            None,
-            frozen,
-            locked,
-            offline,
-            &None,
-            &unstable_flags,
-            &[],
-        )?;
+        config.configure(2, false, None, frozen, locked, offline, &None, &[], &[])?;
 
         Ok(config)
     }
@@ -255,21 +240,21 @@ impl GuppyCargoCommon {
         Workspace::new(root_manifest, config)
     }
 
-    fn cargo_make_requested_features(&self) -> RequestedFeatures {
+    fn cargo_make_cli_features(&self) -> CliFeatures {
         let features: BTreeSet<_> = self
             .pf
             .features
             .iter()
-            .map(|feature| InternedString::new(feature))
+            .map(|feature| FeatureValue::Feature(InternedString::new(feature)))
             .collect();
-        RequestedFeatures {
+        CliFeatures {
             features: Rc::new(features),
             all_features: self.pf.all_features,
             uses_default_features: !self.pf.no_default_features,
         }
     }
 
-    fn guppy_current_platform(&self) -> Result<Platform<'static>> {
+    fn guppy_current_platform(&self) -> Result<Platform> {
         Platform::current().ok_or_else(|| anyhow::anyhow!("unknown current platform"))
     }
 }

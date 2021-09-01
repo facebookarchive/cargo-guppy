@@ -1,6 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::debug_ignore::DebugIgnore;
 use crate::{
     errors::FeatureGraphWarning,
     graph::{
@@ -274,7 +275,7 @@ impl<'g> FeatureGraph<'g> {
         match edge.unwrap_or_else(|| &self.dep_graph()[edge_ix]) {
             FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => None,
             FeatureEdge::CrossPackage(inner) => {
-                Some(CrossLink::new(*self, source_ix, target_ix, edge_ix, &inner))
+                Some(CrossLink::new(*self, source_ix, target_ix, edge_ix, inner))
             }
         }
     }
@@ -336,10 +337,7 @@ impl<'g> FeatureGraph<'g> {
         self.feature_ixs_for_package_ixs(package_ixs)
             .filter(|feature_ix| {
                 let feature_node = &self.dep_graph()[*feature_ix];
-                filter.accept(
-                    &self,
-                    FeatureId::from_node(self.package_graph, feature_node),
-                )
+                filter.accept(self, FeatureId::from_node(self.package_graph, feature_node))
             })
             .collect()
     }
@@ -600,7 +598,7 @@ impl FeatureGraphImpl {
 /// This is currently an opaque type -- it will be filled out in the future.
 #[derive(Copy, Clone, Debug)]
 pub struct CrossLink<'g> {
-    graph: FeatureGraph<'g>,
+    graph: DebugIgnore<FeatureGraph<'g>>,
     from: &'g FeatureMetadataImpl,
     to: &'g FeatureMetadataImpl,
     edge_ix: EdgeIndex<FeatureIx>,
@@ -620,7 +618,7 @@ impl<'g> CrossLink<'g> {
     ) -> Self {
         let dep_graph = graph.dep_graph();
         Self {
-            graph,
+            graph: DebugIgnore(graph),
             from: graph
                 .metadata_impl_for_node(&dep_graph[source_ix])
                 .expect("valid source ix"),
@@ -635,7 +633,7 @@ impl<'g> CrossLink<'g> {
     /// Returns the feature which depends on the `to` feature.
     pub fn from(&self) -> FeatureMetadata<'g> {
         FeatureMetadata {
-            graph: self.graph,
+            graph: self.graph.0,
             node: self.graph.dep_graph()[self.from.feature_ix],
             inner: self.from,
         }
@@ -644,7 +642,7 @@ impl<'g> CrossLink<'g> {
     /// Returns the feature which is depended on by the `from` feature.
     pub fn to(&self) -> FeatureMetadata<'g> {
         FeatureMetadata {
-            graph: self.graph,
+            graph: self.graph.0,
             node: self.graph.dep_graph()[self.to.feature_ix],
             inner: self.to,
         }

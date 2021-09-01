@@ -37,8 +37,8 @@ impl<G: GraphSpec> QueryParams<G> {
 
     pub(super) fn initials(&self) -> &[NodeIndex<G::Ix>] {
         match self {
-            QueryParams::Forward(v) => &v,
-            QueryParams::Reverse(v) => &v,
+            QueryParams::Forward(v) => v,
+            QueryParams::Reverse(v) => v,
         }
     }
 }

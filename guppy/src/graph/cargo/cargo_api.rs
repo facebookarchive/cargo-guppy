@@ -24,8 +24,8 @@ pub struct CargoOptions<'a> {
     pub(crate) include_dev: bool,
     pub(crate) initials_platform: InitialsPlatform,
     // Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.
-    pub(crate) host_platform: Option<Obs<'a, Platform<'a>>>,
-    pub(crate) target_platform: Option<Obs<'a, Platform<'a>>>,
+    pub(crate) host_platform: Option<Obs<'a, Platform>>,
+    pub(crate) target_platform: Option<Obs<'a, Platform>>,
     pub(crate) omitted_packages: HashSet<&'a PackageId>,
 }
 
@@ -82,8 +82,8 @@ impl<'a> CargoOptions<'a> {
     /// Sets both the target and host platforms to the provided one, or to evaluate against any
     /// platform if `None`.
     ///
-    /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
-    /// `Arc<Platform<'static>>`.
+    /// This method accepts an owned `Platform`, a borrowed `&'a Platform` or a shared
+    /// `Arc<Platform>`.
     ///
     /// ### Examples
     ///
@@ -92,21 +92,18 @@ impl<'a> CargoOptions<'a> {
     /// use guppy::Platform;
     /// use std::sync::Arc;
     ///
-    /// let platform = Platform::current();
+    /// let platform = Platform::current().expect("current platform is known");
     ///
     /// // Borrowed platform.
-    /// let _ = CargoOptions::new().set_platform(platform.as_ref());
+    /// let _ = CargoOptions::new().set_platform(Some(&platform));
     ///
     /// // Owned platform.
-    /// let _ = CargoOptions::new().set_platform(platform.clone());
+    /// let _ = CargoOptions::new().set_platform(Some(platform.clone()));
     ///
     /// // Shared platform.
-    /// let _ = CargoOptions::new().set_platform(platform.map(Arc::new));
+    /// let _ = CargoOptions::new().set_platform(Some(Arc::new(platform)));
     /// ```
-    pub fn set_platform(
-        &mut self,
-        platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
-    ) -> &mut Self {
+    pub fn set_platform(&mut self, platform: Option<impl Into<Obs<'a, Platform>>>) -> &mut Self {
         let platform = Self::convert_platform(platform);
         self.target_platform = platform.clone();
         self.host_platform = platform;
@@ -115,11 +112,11 @@ impl<'a> CargoOptions<'a> {
 
     /// Sets the target platform to the provided one, or to evaluate against any platform if `None`.
     ///
-    /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
-    /// `Arc<Platform<'static>>`.
+    /// This method accepts an owned `Platform`, a borrowed `&'a Platform` or a shared
+    /// `Arc<Platform>`.
     pub fn set_target_platform(
         &mut self,
-        target_platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
+        target_platform: Option<impl Into<Obs<'a, Platform>>>,
     ) -> &mut Self {
         self.target_platform = Self::convert_platform(target_platform);
         self
@@ -127,11 +124,11 @@ impl<'a> CargoOptions<'a> {
 
     /// Sets the host platform to the provided one, or to evaluate against any platform if `None`.
     ///
-    /// This method accepts an owned `Platform<'a>`, a borrowed `&'a Platform<'a>` or a shared
-    /// `Arc<Platform<'static>>`.
+    /// This method accepts an owned `Platform`, a borrowed `&'a Platform` or a shared
+    /// `Arc<Platform>`.
     pub fn set_host_platform(
         &mut self,
-        host_platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
+        host_platform: Option<impl Into<Obs<'a, Platform>>>,
     ) -> &mut Self {
         self.host_platform = Self::convert_platform(host_platform);
         self
@@ -155,17 +152,17 @@ impl<'a> CargoOptions<'a> {
     // Helper methods
     // ---
 
-    pub(crate) fn target_platform(&self) -> Option<&Platform<'a>> {
+    pub(crate) fn target_platform(&self) -> Option<&Platform> {
         self.target_platform.as_deref()
     }
 
-    pub(crate) fn host_platform(&self) -> Option<&Platform<'a>> {
+    pub(crate) fn host_platform(&self) -> Option<&Platform> {
         self.host_platform.as_deref()
     }
 
     fn convert_platform(
-        platform: Option<impl Into<Obs<'a, Platform<'a>>>>,
-    ) -> Option<Obs<'a, Platform<'a>>> {
+        platform: Option<impl Into<Obs<'a, Platform>>>,
+    ) -> Option<Obs<'a, Platform>> {
         platform.map(|platform| platform.into())
     }
 }
@@ -309,7 +306,7 @@ impl<'g> CargoSet<'g> {
 
     /// Returns the feature graph for this `CargoSet` instance.
     pub fn feature_graph(&self) -> &FeatureGraph<'g> {
-        &self.initials.graph()
+        self.initials.graph()
     }
 
     /// Returns the package graph for this `CargoSet` instance.

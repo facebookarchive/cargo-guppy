@@ -23,14 +23,16 @@ pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, Error>
     Ok(target_spec.eval(&platform))
 }
 
-pub(crate) fn eval_target(target: &Target<'_>, platform: &Platform<'_>) -> Option<bool> {
+pub(crate) fn eval_target(target: &Target, platform: &Platform) -> Option<bool> {
     match target {
-        Target::TargetInfo(ref target_info) => Some(platform.triple() == target_info.triple),
+        Target::TargetInfo(ref target_info) => {
+            Some(platform.triple() == target_info.triple.as_str())
+        }
         Target::Spec(ref expr) => eval_expr(expr, platform),
     }
 }
 
-fn eval_expr(spec: &Arc<Expression>, platform: &Platform<'_>) -> Option<bool> {
+fn eval_expr(spec: &Arc<Expression>, platform: &Platform) -> Option<bool> {
     spec.eval(|pred| {
         match pred {
             Predicate::Target(target) => Some(target.matches(platform.target_info())),

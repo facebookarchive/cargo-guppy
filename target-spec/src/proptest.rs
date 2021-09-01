@@ -13,7 +13,7 @@ use std::borrow::Cow;
 ///
 /// Currently, [proptest 1](https://docs.rs/proptest/1) is supported if the `proptest1`
 /// feature is enabled.
-impl Platform<'static> {
+impl Platform {
     /// Given a way to generate `TargetFeatures` instances, this returns a `Strategy` that generates
     /// a platform at random.
     ///
@@ -31,11 +31,11 @@ impl Platform<'static> {
     /// ```
     pub fn strategy(
         target_features: impl Strategy<Value = TargetFeatures>,
-    ) -> impl Strategy<Value = Platform<'static>> {
+    ) -> impl Strategy<Value = Platform> {
         let flags = btree_set(flag_strategy(), 0..3);
         (0..ALL_BUILTINS.len(), target_features, flags).prop_map(|(idx, target_features, flags)| {
             let mut platform =
-                Platform::new(ALL_BUILTINS[idx].triple, target_features).expect("known triple");
+                Platform::new(&ALL_BUILTINS[idx].triple.0, target_features).expect("known triple");
             platform.add_flags(flags);
             platform
         })
@@ -47,16 +47,16 @@ impl Platform<'static> {
     pub fn filtered_strategy(
         triple_filter: impl Fn(&'static str) -> bool,
         target_features: impl Strategy<Value = TargetFeatures>,
-    ) -> impl Strategy<Value = Platform<'static>> {
+    ) -> impl Strategy<Value = Platform> {
         let filtered: Vec<_> = ALL_BUILTINS
             .iter()
-            .filter(|target_info| triple_filter(target_info.triple))
+            .filter(|target_info| triple_filter(target_info.triple.as_str()))
             .collect();
         let flags = btree_set(flag_strategy(), 0..3);
         (0..filtered.len(), target_features, flags).prop_map(
             move |(idx, target_features, flags)| {
-                let mut platform =
-                    Platform::new(filtered[idx].triple, target_features).expect("known triple");
+                let mut platform = Platform::new(filtered[idx].triple.as_str(), target_features)
+                    .expect("known triple");
                 platform.add_flags(flags);
                 platform
             },

@@ -151,7 +151,7 @@ impl<'a> CargoSetBuildState<'a> {
         let is_enabled = |feature_set: &FeatureSet<'_>,
                           link: &PackageLink<'_>,
                           kind: DependencyKind,
-                          platform: Option<&Platform<'_>>| {
+                          platform: Option<&Platform>| {
             let (from, to) = link.endpoints();
             let req_status = link.req_for_kind(kind).status();
             // Check the complete set to figure out whether we look at required_on or
@@ -365,7 +365,7 @@ impl<'a> CargoSetBuildState<'a> {
 
         let is_enabled = |link: &CrossLink<'_>,
                           kind: DependencyKind,
-                          platform: Option<&Platform<'_>>| {
+                          platform: Option<&Platform>| {
             let platform_status = link.status_for_kind(kind);
 
             match platform {

@@ -251,7 +251,7 @@ impl<'g, G: GraphSpec> Iterator for Topo<'g, G> {
     type Item = NodeIndex<G::Ix>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(ix) = self.node_iter.next() {
+        for ix in &mut self.node_iter {
             if !self.included.is_visited(&ix) {
                 continue;
             }

@@ -113,7 +113,7 @@ impl<'g> fmt::Display for FeatureDiff<'g> {
                 for (pkg_id, diff) in diff {
                     use diffus::edit::map::Edit;
 
-                    let package = self.graph.metadata(&pkg_id).expect("valid package ID");
+                    let package = self.graph.metadata(pkg_id).expect("valid package ID");
                     match diff {
                         Edit::Copy(features) => {
                             if self.verbose {
@@ -171,7 +171,7 @@ impl<'g> fmt::Display for FeatureDiff<'g> {
             edit::Edit::Copy(map) => {
                 if self.verbose {
                     for (pkg_id, features) in map {
-                        let package = self.graph.metadata(&pkg_id).expect("valid package ID");
+                        let package = self.graph.metadata(pkg_id).expect("valid package ID");
 
                         writeln!(
                             f,

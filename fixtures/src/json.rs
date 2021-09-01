@@ -379,6 +379,8 @@ fn normalize_assuming_no_symlinks(p: impl AsRef<Utf8Path>) -> Utf8PathBuf {
     out
 }
 
+// Some clones in here make the code more uniform overall.
+#[allow(clippy::redundant_clone)]
 impl FixtureDetails {
     // Specific fixtures follow.
 

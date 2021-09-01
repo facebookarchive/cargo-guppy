@@ -80,7 +80,7 @@ impl<'g> ContextImpl<'g> for SummaryContext {
     }
 
     fn is_changed((_, summary): &Self::IterItem, existing: &Self::Existing) -> bool {
-        let diff = SummaryDiff::new(existing, &summary);
+        let diff = SummaryDiff::new(existing, summary);
         diff.is_changed() || existing.metadata != summary.metadata
     }
 
@@ -97,7 +97,7 @@ impl<'g> ContextImpl<'g> for SummaryContext {
             None => &*EMPTY_SUMMARY,
         };
 
-        let diff = SummaryDiff::new(existing, &summary);
+        let diff = SummaryDiff::new(existing, summary);
         format!("{}", diff.report())
     }
 

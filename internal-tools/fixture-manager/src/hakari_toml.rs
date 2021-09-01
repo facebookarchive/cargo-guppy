@@ -116,6 +116,6 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
 
 pub struct HakariTomlItem<'g> {
     #[allow(dead_code)]
-    hakari: Hakari<'g, 'static>,
+    hakari: Hakari<'g>,
     toml: String,
 }

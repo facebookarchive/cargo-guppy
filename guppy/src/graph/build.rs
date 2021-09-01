@@ -310,7 +310,7 @@ impl<'a> GraphBuildState<'a> {
         &self,
         id: &PackageId,
     ) -> Result<(NodeIndex<PackageIx>, &str, &Version), Error> {
-        let (package_ix, name, version) = self.package_data.get(&id).ok_or_else(|| {
+        let (package_ix, name, version) = self.package_data.get(id).ok_or_else(|| {
             Error::PackageGraphConstructError(format!("no package data found for package '{}'", id))
         })?;
         Ok((*package_ix, name, version))
@@ -755,7 +755,7 @@ impl PlatformStatusImpl {
         }
     }
 
-    pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec<'static>>) {
+    pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec>) {
         // &mut *self is a reborrow to allow *self to work below.
         match (&mut *self, spec) {
             (PlatformStatusImpl::Always, _) => {

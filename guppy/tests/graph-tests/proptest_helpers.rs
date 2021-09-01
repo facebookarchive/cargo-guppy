@@ -471,7 +471,7 @@ fn resolve_ops_impl<G: GraphAssert<'static>>(
             initials,
             direction,
         } => {
-            let resolve_set = graph.resolve(&initials, *direction);
+            let resolve_set = graph.resolve(initials, *direction);
             let ids = resolve_set.ids(*direction).into_iter().collect();
             (resolve_set, ids)
         }
