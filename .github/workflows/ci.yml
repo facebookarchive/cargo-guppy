@@ -141,9 +141,10 @@ jobs:
       - name: Build
         uses: actions-rs/cargo@v1
         with:
-          # Build all targets to ensure examples are built as well.
           command: build
-          args: --all-targets --all-features
+          # Build all targets to ensure examples are built as well.
+          # Exclude cargo-compare so that it only runs on the cfg-expr version below.
+          args: --all-targets --all-features --workspace --exclude cargo-compare
       - name: Run doctests
         uses: actions-rs/cargo@v1
         with:
@@ -153,7 +154,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all-targets --all-features
+          # Exclude cargo-compare so that it only runs on the cfg-expr version below.
+          args: --all-targets --all-features --workspace --exclude cargo-compare
 
   build-rustdoc:
     name: Build documentation
@@ -198,7 +200,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          # 1.54 is the cfg-expr version
+          # TODO: why is there no way to specify this as a global variable in GHA?
+          toolchain: 1.54
       - name: Build and test
         uses: actions-rs/cargo@v1
         with:
