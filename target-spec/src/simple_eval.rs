@@ -3,10 +3,8 @@
 
 use crate::{
     platform::{Platform, TargetFeatures},
-    Error, Target, TargetSpec,
+    Error, TargetSpec,
 };
-use cfg_expr::{Expression, Predicate};
-use std::sync::Arc;
 
 /// Evaluates the given spec against the provided target and returns `Some(true)` on a successful
 /// match, and `Some(false)` on a failing match.
@@ -14,48 +12,13 @@ use std::sync::Arc;
 /// This defaults to treating target features as unknown, and returns `None` if the overall result
 /// is unknown.
 ///
-/// For more advanced uses, see `TargetSpec::eval`.
+/// For more advanced uses, see [`TargetSpec::eval`].
 ///
 /// For more information, see the crate-level documentation.
 pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, Error> {
     let target_spec = spec_or_triple.parse::<TargetSpec>()?;
     let platform = Platform::new(platform.to_owned(), TargetFeatures::Unknown)?;
     Ok(target_spec.eval(&platform))
-}
-
-pub(crate) fn eval_target(target: &Target, platform: &Platform) -> Option<bool> {
-    match target {
-        Target::SingleTarget(single_target) => {
-            Some(platform.triple_str() == single_target.triple_str())
-        }
-        Target::Spec(ref expr) => eval_expr(expr, platform),
-    }
-}
-
-fn eval_expr(spec: &Arc<Expression>, platform: &Platform) -> Option<bool> {
-    spec.eval(|pred| {
-        match pred {
-            Predicate::Target(target) => Some(platform.single_target().matches(target)),
-            Predicate::TargetFeature(feature) => platform.target_features().matches(feature),
-            Predicate::Test | Predicate::DebugAssertions | Predicate::ProcMacro => {
-                // Known families that always evaluate to false. See
-                // https://docs.rs/cargo-platform/0.1.1/src/cargo_platform/lib.rs.html#76.
-                Some(false)
-            }
-            Predicate::Feature(_) => {
-                // NOTE: This is not supported by Cargo which always evaluates this to false. See
-                // https://github.com/rust-lang/cargo/issues/7442 for more details.
-                Some(false)
-            }
-            Predicate::Flag(flag) => {
-                // This returns false by default but true in some cases.
-                Some(platform.has_flag(flag))
-            }
-            Predicate::KeyValue { .. } => {
-                unreachable!("these predicates are disallowed at TargetSpec construction time")
-            }
-        }
-    })
 }
 
 #[cfg(test)]

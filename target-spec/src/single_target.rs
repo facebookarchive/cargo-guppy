@@ -1,8 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::{errors::SingleTargetParseError, Platform};
 use cfg_expr::{target_lexicon::Triple, TargetPredicate};
-use std::{borrow::Cow, cmp::Ordering, error, fmt, hash, str::FromStr};
+use std::{borrow::Cow, cmp::Ordering, hash, str::FromStr};
 
 /// A single, specific target, uniquely identified by a triple.
 ///
@@ -40,16 +41,21 @@ impl SingleTarget {
                 triple_str,
                 lexicon_triple,
             }),
-            Err(lexicon_err) => Err(SingleTargetParseError {
-                triple_str,
-                lexicon_err,
-            }),
+            Err(lexicon_err) => Err(SingleTargetParseError::new(triple_str, lexicon_err)),
         }
     }
 
     /// Returns the triple string corresponding to this target.
     pub fn triple_str(&self) -> &str {
         &self.triple_str
+    }
+
+    /// Evaluates this specification against the given platform.
+    ///
+    /// This simply compares `self` against the `SingleTarget` the platform is based on, ignoring
+    /// target features and flags.
+    pub fn eval(&self, platform: &Platform) -> bool {
+        self == platform.single_target()
     }
 
     // Use cfg-expr's target matcher.
@@ -67,10 +73,10 @@ impl FromStr for SingleTarget {
                 triple_str: triple_str.to_owned().into(),
                 lexicon_triple,
             }),
-            Err(lexicon_err) => Err(SingleTargetParseError {
-                triple_str: triple_str.to_owned().into(),
+            Err(lexicon_err) => Err(SingleTargetParseError::new(
+                triple_str.to_owned().into(),
                 lexicon_err,
-            }),
+            )),
         }
     }
 }
@@ -108,34 +114,6 @@ impl Ord for SingleTarget {
 impl hash::Hash for SingleTarget {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         hash::Hash::hash(&self.triple_str, state);
-    }
-}
-
-/// An error returned while parsing a single target.
-///
-/// This is caused by a triple not being understood by either `cfg-expr` or `target-lexicon`.
-#[derive(Debug, PartialEq)]
-pub struct SingleTargetParseError {
-    triple_str: Cow<'static, str>,
-    lexicon_err: cfg_expr::target_lexicon::ParseError,
-}
-
-impl SingleTargetParseError {
-    /// Returns the triple string that could not be parsed.
-    pub fn triple_str(&self) -> &str {
-        &self.triple_str
-    }
-}
-
-impl fmt::Display for SingleTargetParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "unknown triple string: {}", self.triple_str)
-    }
-}
-
-impl error::Error for SingleTargetParseError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        Some(&self.lexicon_err)
     }
 }
 
