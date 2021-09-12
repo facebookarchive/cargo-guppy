@@ -33,22 +33,24 @@
 //! assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"), Ok(Some(true)));
 //! assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"), Ok(Some(false)));
 //! ```
+//!
+//! For more advanced usage, see [`Platform`] and [`TargetSpec`].
 
 #![warn(missing_docs)]
 #![forbid(unsafe_code)]
 
-mod errors;
-mod evaluator;
-mod parser;
+pub mod errors;
 mod platform;
 #[cfg(feature = "proptest1")]
 mod proptest;
+mod simple_eval;
 mod single_target;
+mod spec;
 #[cfg(feature = "summaries")]
 pub mod summaries;
 
-pub use errors::*;
-pub use evaluator::*;
-pub use parser::*;
+pub use errors::Error;
 pub use platform::*;
+pub use simple_eval::*;
 pub use single_target::*;
+pub use spec::*;
