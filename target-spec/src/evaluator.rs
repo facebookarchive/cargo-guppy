@@ -19,7 +19,7 @@ use std::sync::Arc;
 /// For more information, see the crate-level documentation.
 pub fn eval(spec_or_triple: &str, platform: &str) -> Result<Option<bool>, Error> {
     let target_spec = spec_or_triple.parse::<TargetSpec>()?;
-    let platform = Platform::new(platform, TargetFeatures::Unknown)?;
+    let platform = Platform::new(platform.to_owned(), TargetFeatures::Unknown)?;
     Ok(target_spec.eval(&platform))
 }
 
@@ -191,7 +191,7 @@ mod tests {
 
         fn eval_unknown(spec: &str, platform: &str) -> Option<bool> {
             let platform = Platform::new(
-                platform,
+                platform.to_owned(),
                 TargetFeatures::features(["sse", "sse2"].iter().copied()),
             )
             .expect("platform should be found");
@@ -223,8 +223,8 @@ mod tests {
         );
 
         fn eval_all(spec: &str, platform: &str) -> Option<bool> {
-            let platform =
-                Platform::new(platform, TargetFeatures::All).expect("platform should be found");
+            let platform = Platform::new(platform.to_owned(), TargetFeatures::All)
+                .expect("platform should be found");
             let spec: TargetSpec = spec.parse().unwrap();
             spec.eval(&platform)
         }
