@@ -159,31 +159,6 @@ mod tests {
     }
 
     #[test]
-    fn test_lexicon_triple() {
-        use target_lexicon::*;
-
-        let target =
-            Target::parse("x86_64-pc-darwin").expect("this triple is known to target-lexicon");
-
-        let lexicon_triple = match target {
-            Target::SingleTarget(SingleTarget::Lexicon { lexicon_triple, .. }) => lexicon_triple,
-            other => panic!("not a lexicon target: {:?}", other),
-        };
-
-        let expected_triple = Triple {
-            architecture: Architecture::X86_64,
-            vendor: Vendor::Pc,
-            operating_system: OperatingSystem::Darwin,
-            environment: Environment::Unknown,
-            binary_format: BinaryFormat::Macho,
-        };
-        assert_eq!(
-            lexicon_triple, expected_triple,
-            "lexicon triple matched correctly"
-        );
-    }
-
-    #[test]
     fn test_unknown_triple() {
         // This used to be "x86_64-pc-darwin", but target-lexicon can parse that.
         let err = Target::parse("cannotbeknown").expect_err("unknown triple");
