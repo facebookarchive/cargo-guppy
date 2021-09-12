@@ -8,7 +8,7 @@ use std::{borrow::Cow, collections::BTreeSet, ops::Deref};
 include!(concat!(env!("OUT_DIR"), "/current_platform.rs"));
 
 /// A platform to evaluate target specs against.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Platform {
     single_target: SingleTarget,
     target_features: TargetFeatures,
@@ -20,11 +20,12 @@ impl Platform {
     /// Creates a new `Platform` from the given built-in triple and target features.
     ///
     /// Returns `None` if this platform wasn't known to `target-spec`.
-    pub fn new(triple: impl AsRef<str>, target_features: TargetFeatures) -> Result<Self, Error> {
-        let single_target = triple
-            .as_ref()
-            .parse::<SingleTarget>()
-            .map_err(Error::UnknownPlatformTriple)?;
+    pub fn new(
+        triple: impl Into<Cow<'static, str>>,
+        target_features: TargetFeatures,
+    ) -> Result<Self, Error> {
+        let single_target =
+            SingleTarget::new(triple.into()).map_err(Error::UnknownPlatformTriple)?;
         Ok(Self {
             single_target,
             target_features,
@@ -50,7 +51,7 @@ impl Platform {
         })
     }
 
-    /// Creates a new, custom platform from a `TargetInfo` and target features.
+    /// Creates a new, custom platform from a `SingleTarget` and target features.
     ///
     /// Custom platforms are often found in embedded and similar environments. For built-in
     /// platforms, `new` is recommended instead.

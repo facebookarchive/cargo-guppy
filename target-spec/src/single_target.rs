@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use cfg_expr::{target_lexicon::Triple, TargetPredicate};
-use std::{borrow::Cow, error, fmt, str::FromStr};
+use std::{borrow::Cow, cmp::Ordering, error, fmt, hash, str::FromStr};
 
 /// A single, specific target, uniquely identified by a triple.
 ///
@@ -14,6 +14,12 @@ use std::{borrow::Cow, error, fmt, str::FromStr};
 /// # Examples
 ///
 /// ```
+/// use target_spec::SingleTarget;
+///
+/// // Parse a simple target.
+/// let target = SingleTarget::new("x86_64-unknown-linux-gnu").unwrap();
+/// // This is not a valid triple.
+/// let err = SingleTarget::new("cannot-be-known").unwrap_err();
 /// ```
 #[derive(Clone, Debug)]
 pub struct SingleTarget {
@@ -66,6 +72,42 @@ impl FromStr for SingleTarget {
                 lexicon_err,
             }),
         }
+    }
+}
+
+// ---
+// Trait impls
+//
+// These impls only use the `triple_str`, which is valid because the `lexicon_triple` is a pure
+// function of the `triple_str`.
+// ---
+
+impl PartialEq for SingleTarget {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.triple_str.eq(&other.triple_str)
+    }
+}
+
+impl Eq for SingleTarget {}
+
+impl PartialOrd for SingleTarget {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.triple_str.partial_cmp(&other.triple_str)
+    }
+}
+
+impl Ord for SingleTarget {
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.triple_str.cmp(&other.triple_str)
+    }
+}
+
+impl hash::Hash for SingleTarget {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        hash::Hash::hash(&self.triple_str, state);
     }
 }
 
