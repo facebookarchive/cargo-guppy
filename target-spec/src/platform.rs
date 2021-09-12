@@ -13,25 +13,19 @@ pub struct Platform {
     single_target: SingleTarget,
     target_features: TargetFeatures,
     flags: BTreeSet<Cow<'static, str>>,
-    is_custom: bool,
 }
 
 impl Platform {
-    /// Creates a new `Platform` from the given built-in triple and target features.
+    /// Creates a new `Platform` from the given triple and target features.
     ///
-    /// Returns `None` if this platform wasn't known to `target-spec`.
+    /// Returns an error if this platform wasn't known to `target-spec`.
     pub fn new(
-        triple: impl Into<Cow<'static, str>>,
+        triple_str: impl Into<Cow<'static, str>>,
         target_features: TargetFeatures,
     ) -> Result<Self, Error> {
         let single_target =
-            SingleTarget::new(triple.into()).map_err(Error::UnknownPlatformTriple)?;
-        Ok(Self {
-            single_target,
-            target_features,
-            flags: BTreeSet::new(),
-            is_custom: false,
-        })
+            SingleTarget::new(triple_str.into()).map_err(Error::UnknownPlatformTriple)?;
+        Ok(Self::from_single_target(single_target, target_features))
     }
 
     /// Returns the current platform, as detected at build time.
@@ -47,20 +41,18 @@ impl Platform {
             single_target,
             target_features,
             flags: BTreeSet::new(),
-            is_custom: false,
         })
     }
 
-    /// Creates a new, custom platform from a `SingleTarget` and target features.
-    ///
-    /// Custom platforms are often found in embedded and similar environments. For built-in
-    /// platforms, `new` is recommended instead.
-    pub fn custom(single_target: SingleTarget, target_features: TargetFeatures) -> Self {
+    /// Creates a new platform from a `SingleTarget` and target features.
+    pub fn from_single_target(
+        single_target: SingleTarget,
+        target_features: TargetFeatures,
+    ) -> Self {
         Self {
             single_target,
             target_features,
             flags: BTreeSet::new(),
-            is_custom: true,
         }
     }
 
@@ -98,11 +90,6 @@ impl Platform {
     /// Returns the set of target features for this platform.
     pub fn target_features(&self) -> &TargetFeatures {
         &self.target_features
-    }
-
-    /// Returns true if this is a custom platform, created by `Platform::custom`.
-    pub fn is_custom(&self) -> bool {
-        self.is_custom
     }
 }
 

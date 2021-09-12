@@ -126,9 +126,9 @@ impl FilterOptions {
         let omitted_package_ids: HashSet<_> =
             self.base_opts.omitted_package_ids(pkg_graph).collect();
 
-        let platform = self.target.as_ref().map(|target| {
+        let platform = self.target.clone().map(|triple_str| {
             // The features are unknown.
-            Platform::new(target, TargetFeatures::Unknown).unwrap()
+            Platform::new(triple_str, TargetFeatures::Unknown).unwrap()
         });
 
         move |_, link| {

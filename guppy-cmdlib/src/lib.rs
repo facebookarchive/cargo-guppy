@@ -183,7 +183,10 @@ pub fn triple_to_platform(
     match triple {
         Some("current") => Ok(Some(Platform::current()?)),
         Some("any") => Ok(None),
-        Some(triple) => Ok(Some(Platform::new(triple, TargetFeatures::Unknown)?)),
+        Some(triple) => Ok(Some(Platform::new(
+            triple.to_owned(),
+            TargetFeatures::Unknown,
+        )?)),
         None => Ok(default_fn()),
     }
 }

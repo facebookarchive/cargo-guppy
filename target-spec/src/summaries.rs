@@ -34,13 +34,8 @@ pub struct PlatformSummary {
 
 impl PlatformSummary {
     /// Creates a new `PlatformSummary` instance from a platform.
-    ///
-    /// Returns an error if this is a custom platform. Serializing custom platforms is currently
-    /// unsupported.
     pub fn new(platform: &Platform) -> Result<Self, Error> {
-        if platform.is_custom() {
-            return Err(Error::CustomPlatformSummary);
-        };
+        // The error branch is unused but left available for potential future uses.
         Ok(Self {
             triple: platform.triple_str().to_string(),
             target_features: TargetFeaturesSummary::new(platform.target_features()),
@@ -52,7 +47,10 @@ impl PlatformSummary {
     ///
     /// Returns an `Error` if the platform was unknown.
     pub fn to_platform(&self) -> Result<Platform, Error> {
-        let mut platform = Platform::new(&self.triple, self.target_features.to_target_features())?;
+        let mut platform = Platform::new(
+            self.triple.to_owned(),
+            self.target_features.to_target_features(),
+        )?;
         platform.add_flags(self.flags.iter().cloned());
         Ok(platform)
     }

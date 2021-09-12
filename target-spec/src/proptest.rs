@@ -34,8 +34,11 @@ impl Platform {
     ) -> impl Strategy<Value = Platform> {
         let flags = btree_set(flag_strategy(), 0..3);
         (0..ALL_BUILTINS.len(), target_features, flags).prop_map(|(idx, target_features, flags)| {
-            let mut platform =
-                Platform::new(&ALL_BUILTINS[idx].triple.0, target_features).expect("known triple");
+            let mut platform = Platform::new(
+                ALL_BUILTINS[idx].triple.as_str().to_owned(),
+                target_features,
+            )
+            .expect("known triple");
             platform.add_flags(flags);
             platform
         })
