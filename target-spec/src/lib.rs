@@ -44,13 +44,13 @@ mod platform;
 #[cfg(feature = "proptest1")]
 mod proptest;
 mod simple_eval;
-mod single_target;
 mod spec;
 #[cfg(feature = "summaries")]
 pub mod summaries;
+mod triple;
 
 pub use errors::Error;
 pub use platform::*;
 pub use simple_eval::*;
-pub use single_target::*;
 pub use spec::*;
+pub use triple::*;

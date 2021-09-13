@@ -12,9 +12,9 @@ pub enum Error {
     /// A `cfg()` expression was invalid and could not be parsed.
     InvalidExpression(ExpressionParseError),
     /// The provided target triple (in the position that a `cfg()` expression would be) was unknown.
-    UnknownTargetTriple(SingleTargetParseError),
+    UnknownTargetTriple(TripleParseError),
     /// The provided platform triple was unknown.
-    UnknownPlatformTriple(SingleTargetParseError),
+    UnknownPlatformTriple(TripleParseError),
     /// The provided `cfg()` expression parsed correctly, but it had an unknown predicate.
     UnknownPredicate(String),
 }
@@ -73,12 +73,12 @@ impl error::Error for ExpressionParseError {
 ///
 /// This is caused by a triple not being understood by either `cfg-expr` or `target-lexicon`.
 #[derive(Debug, PartialEq)]
-pub struct SingleTargetParseError {
+pub struct TripleParseError {
     triple_str: Cow<'static, str>,
     lexicon_err: cfg_expr::target_lexicon::ParseError,
 }
 
-impl SingleTargetParseError {
+impl TripleParseError {
     pub(crate) fn new(
         triple_str: Cow<'static, str>,
         lexicon_err: cfg_expr::target_lexicon::ParseError,
@@ -95,13 +95,13 @@ impl SingleTargetParseError {
     }
 }
 
-impl fmt::Display for SingleTargetParseError {
+impl fmt::Display for TripleParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "unknown triple string: {}", self.triple_str)
     }
 }
 
-impl error::Error for SingleTargetParseError {
+impl error::Error for TripleParseError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         Some(&self.lexicon_err)
     }
