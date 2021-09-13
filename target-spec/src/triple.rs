@@ -24,11 +24,7 @@ use std::{borrow::Cow, cmp::Ordering, hash, str::FromStr};
 /// ```
 #[derive(Clone, Debug)]
 pub struct Triple {
-    /// The triple string, for example `x86_64-unknown-linux-gnu`. This can be provided at
-    /// construction time (preferred), or derived from the `Triple` if not.
     triple_str: Cow<'static, str>,
-
-    /// The triple used for comparisons.
     lexicon_triple: target_lexicon::Triple,
 }
 
@@ -36,13 +32,27 @@ impl Triple {
     /// Creates a new `Triple` from a triple string.
     pub fn new(triple_str: impl Into<Cow<'static, str>>) -> Result<Self, TripleParseError> {
         let triple_str = triple_str.into();
-        match triple_str.parse::<target_lexicon::Triple>() {
-            Ok(lexicon_triple) => Ok(Self {
-                triple_str,
-                lexicon_triple,
-            }),
-            Err(lexicon_err) => Err(TripleParseError::new(triple_str, lexicon_err)),
-        }
+        // Hack around this non-conformant triple added in Rust 1.48.
+        // https://github.com/EmbarkStudios/cfg-expr/blob/64b460831e020dc108e111663a0a38c922241f9e/tests/eval.rs#L19-L37
+        let lexicon_triple = if triple_str == "avr-unknown-gnu-atmega328" {
+            target_lexicon::Triple {
+                architecture: target_lexicon::Architecture::Avr,
+                vendor: target_lexicon::Vendor::Unknown,
+                operating_system: target_lexicon::OperatingSystem::Unknown,
+                environment: target_lexicon::Environment::Unknown,
+                binary_format: target_lexicon::BinaryFormat::Unknown,
+            }
+        } else {
+            match triple_str.parse::<target_lexicon::Triple>() {
+                Ok(lexicon_triple) => lexicon_triple,
+                Err(lexicon_err) => return Err(TripleParseError::new(triple_str, lexicon_err)),
+            }
+        };
+
+        Ok(Self {
+            triple_str,
+            lexicon_triple,
+        })
     }
 
     /// Returns the string corresponding to this triple.
