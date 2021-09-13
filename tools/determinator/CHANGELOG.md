@@ -1,10 +1,17 @@
 # Changelog
 
+## [0.5.0] - 2021-09-13
+
+### Changed
+
+- Public dependency version bump: `guppy` updated to 0.10.0.
+- MSRV updated to Rust 1.51.
+
 ## [0.4.0] - 2021-03-11
 
 ### Changed
 
-- `guppy` updated to 0.9.0.
+- Public dependency version bump: `guppy` updated to 0.9.0.
 
 ## [0.3.0] - 2021-02-23
 
@@ -43,6 +50,7 @@ Initial release.
 * Path-based and package-based custom rules, including a default set of rules for files like `rust-toolchain` and `Cargo.lock`.
 * A `Paths0` wrapper to make it easier to retrieve changes from source control.
 
+[0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.5.0
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.4.0
 [0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.3.0
 [0.2.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.2.1
