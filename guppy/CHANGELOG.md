@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.0] - 2021-09-13
+
+### Changed
+
+- Public dependency version bumps:
+  - `target-spec` updated to 0.8.0.
+    - As a result, `Platform` no longer has a lifetime parameter.
+  - `semver` updated to 1.0.
+- MSRV updated to Rust 1.51.
+
 ## [0.9.0] - 2021-03-11
 
 ### Added
@@ -353,6 +363,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.10.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.0
 [0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.9.0
 [0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.8.0
 [0.7.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.7.2

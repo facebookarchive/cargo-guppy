@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.8.0] - 2021-09-13
+
+### Added
+
+- `Triple` represents a target triple, uniquely identified by a triple string.
+- `TargetExpression` represents a target expression beginning with `cfg(`.
+
+### Changed
+
+- `target-spec` now uses [`target-lexicon`](https://github.com/bytecodealliance/target-lexicon) to parse triples,
+  while continuing to use `cfg-expr` for expressions and evaluation.
+  - Updated supported builtin targets to Rust 1.55.
+  - `target-spec` is now more forward compatible, since new targets in future versions of Rust
+    can be supported with non-breaking updates to `target-lexicon`.
+- `TargetSpec` is now an enum with `Triple` and `TargetExpression` variants.
+- `Platform` no longer has a lifetime parameter.
+- Updated supported builtin targets to Rust 1.55.
+- `cfg-expr` is now a private dependency again (`target-lexicon` is also a private dependency).
+- MSRV updated to Rust 1.51.
+
 ## [0.7.0] - 2021-02-23
 
 ### Changed
@@ -100,6 +120,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.8.0
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.7.0
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.6.0
