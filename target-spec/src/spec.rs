@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{errors::ExpressionParseError, Error, Platform, SingleTarget};
+use crate::{errors::ExpressionParseError, Error, Platform, Triple};
 use cfg_expr::{Expression, Predicate};
 use std::{borrow::Cow, str::FromStr, sync::Arc};
 
@@ -31,10 +31,10 @@ use std::{borrow::Cow, str::FromStr, sync::Arc};
 /// ```
 #[derive(Clone, Debug)]
 pub enum TargetSpec {
-    /// A simple, exact target.
+    /// An exact target parsed from a triple.
     ///
     /// Parsed from strings like `"i686-pc-windows-gnu"`.
-    Single(SingleTarget),
+    Triple(Triple),
 
     /// A complex expression.
     ///
@@ -50,8 +50,8 @@ impl TargetSpec {
         if input.starts_with("cfg(") {
             Ok(TargetSpec::Expression(TargetExpression::new(&input)?))
         } else {
-            match SingleTarget::new(input) {
-                Ok(single_target) => Ok(TargetSpec::Single(single_target)),
+            match Triple::new(input) {
+                Ok(triple) => Ok(TargetSpec::Triple(triple)),
                 Err(parse_err) => Err(Error::UnknownTargetTriple(parse_err)),
             }
         }
@@ -64,7 +64,7 @@ impl TargetSpec {
     #[inline]
     pub fn eval(&self, platform: &Platform) -> Option<bool> {
         match self {
-            TargetSpec::Single(single_target) => Some(single_target.eval(platform)),
+            TargetSpec::Triple(triple) => Some(triple.eval(platform)),
             TargetSpec::Expression(expr) => expr.eval(platform),
         }
     }
@@ -110,7 +110,7 @@ impl TargetExpression {
     pub fn eval(&self, platform: &Platform) -> Option<bool> {
         self.inner.eval(|pred| {
             match pred {
-                Predicate::Target(target) => Some(platform.single_target().matches(target)),
+                Predicate::Target(target) => Some(platform.triple().matches(target)),
                 Predicate::TargetFeature(feature) => platform.target_features().matches(feature),
                 Predicate::Test | Predicate::DebugAssertions | Predicate::ProcMacro => {
                     // Known families that always evaluate to false. See
@@ -169,19 +169,15 @@ mod tests {
         let res = TargetSpec::new("x86_64-apple-darwin");
         assert!(matches!(
             res,
-            Ok(TargetSpec::Single(single_target))
-                if single_target.triple_str() == "x86_64-apple-darwin"
+            Ok(TargetSpec::Triple(triple)) if triple.as_str() == "x86_64-apple-darwin"
         ));
     }
 
     #[test]
     fn test_single() {
         let expr = match TargetSpec::new("cfg(windows)").unwrap() {
-            TargetSpec::Single(single_target) => {
-                panic!(
-                    "expected expression, got single target: {:?}",
-                    single_target
-                )
+            TargetSpec::Triple(triple) => {
+                panic!("expected expression, got triple: {:?}", triple)
             }
             TargetSpec::Expression(expr) => expr,
         };
@@ -202,8 +198,8 @@ mod tests {
     #[test]
     fn test_testequal() {
         let expr = match TargetSpec::new("cfg(target_os = \"windows\")").unwrap() {
-            TargetSpec::Single(single_target) => {
-                panic!("expected spec, got single target: {:?}", single_target)
+            TargetSpec::Triple(triple) => {
+                panic!("expected spec, got triple: {:?}", triple)
             }
             TargetSpec::Expression(expr) => expr,
         };
@@ -227,8 +223,8 @@ mod tests {
     #[test]
     fn test_unknown_flag() {
         let expr = match TargetSpec::new("cfg(foo)").unwrap() {
-            TargetSpec::Single(single_target) => {
-                panic!("expected spec, got target info: {:?}", single_target)
+            TargetSpec::Triple(triple) => {
+                panic!("expected spec, got triple: {:?}", triple)
             }
             TargetSpec::Expression(expr) => expr,
         };
