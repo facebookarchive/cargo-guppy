@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0] - 2021-09-13
+
+### Changed
+
+- Public dependency version bumps:
+  - `semver` updated to 1.0.
+  - `diffus` updated to 0.10.0.
+
 ## [0.4.0] - 2021-02-23
 
 ### Changed
@@ -37,6 +45,7 @@
 
 Initial release.
 
+[0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.0
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.4.0
 [0.3.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.3.2
 [0.3.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.3.1

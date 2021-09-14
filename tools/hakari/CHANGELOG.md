@@ -1,11 +1,15 @@
 # Changelog
 
-## [0.4.0] - 2021-09-13
+## [0.4.1] - 2021-09-13
 
 ### Changed
 
-- Public dependency version bump: `guppy` updated to 0.10.0.
+- Public dependency version bump: `guppy` updated to 0.10.1.
 - MSRV updated to Rust 1.51.
+
+## [0.4.0] - 2021-09-13
+
+(This release was never published because it was based on `guppy 0.10.0`, which was yanked.)
 
 ## [0.3.0] - 2021-03-11
 
