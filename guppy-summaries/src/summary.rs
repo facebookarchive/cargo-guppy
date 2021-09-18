@@ -122,6 +122,16 @@ impl SummaryId {
     }
 }
 
+impl fmt::Display for SummaryId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{{ name = \"{}\", version = \"{}\", source = \"{}\"}}",
+            self.name, self.version, self.source
+        )
+    }
+}
+
 /// The location of a package.
 #[derive(Clone, Debug, Deserialize, Eq, Hash, Ord, Serialize, PartialEq, PartialOrd)]
 #[serde(rename_all = "kebab-case", untagged)]
@@ -187,11 +197,11 @@ impl fmt::Display for SummarySource {
             // Don't differentiate here between workspace and non-workspace paths because
             // PackageStatus provides that info.
             SummarySource::Workspace { workspace_path } => {
-                let path_out = path_forward_slashes::replace_slashes(workspace_path);
+                let path_out = path_forward_slashes::ser_replace_slashes(workspace_path);
                 write!(f, "path '{}'", path_out)
             }
             SummarySource::Path { path } => {
-                let path_out = path_forward_slashes::replace_slashes(path);
+                let path_out = path_forward_slashes::ser_replace_slashes(path);
                 write!(f, "path '{}'", path_out)
             }
             SummarySource::CratesIo => write!(f, "crates.io"),
@@ -298,44 +308,52 @@ mod package_map_impl {
 
 /// Serialization and deserialization for paths that converts to and from forward slashes on
 /// Windows.
-mod path_forward_slashes {
+pub mod path_forward_slashes {
     use super::*;
     use camino::Utf8Path;
     use cfg_if::cfg_if;
     use serde::{Deserializer, Serializer};
 
+    /// Serializes a path using forward slashes.
     pub fn serialize<S>(path: &Utf8PathBuf, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let path_out = replace_slashes(path);
+        let path_out = ser_replace_slashes(path);
         path_out.serialize(serializer)
     }
 
+    /// Deserializes a path, converting forward slashes to backslashes.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Utf8PathBuf, D::Error>
     where
         D: Deserializer<'de>,
     {
-        cfg_if! {
-            if #[cfg(windows)] {
-                let s = String::deserialize(deserializer)?;
-                // Convert forward slashes to backslashes on Windows.
-                let s = s.replace("/", "\\");
-                Ok(Utf8PathBuf::from(s))
-            } else {
-                Utf8PathBuf::deserialize(deserializer)
-            }
-        }
+        Ok(de_replace_slashes(Utf8PathBuf::deserialize(deserializer)?))
     }
 
     // TODO: consider putting this logic in an actual newtype wrapper :/
-    pub fn replace_slashes(path: &Utf8Path) -> impl fmt::Display + Serialize + '_ {
+    /// Replaces backslashes with forward slashes on Windows.
+    pub fn ser_replace_slashes(path: &Utf8Path) -> impl fmt::Display + Serialize + '_ {
         // (Note: serde doesn't support non-Unicode paths anyway.)
         cfg_if! {
             if #[cfg(windows)] {
                 path.as_str().replace("\\", "/")
             } else {
                 path.as_str()
+            }
+        }
+    }
+
+    /// Replaces forward slashes with backslashes on Windows.
+    pub fn de_replace_slashes(path: Utf8PathBuf) -> Utf8PathBuf {
+        cfg_if! {
+            if #[cfg(windows)] {
+                let s = path.into_string();
+                // Convert forward slashes to backslashes on Windows.
+                let s = s.replace("/", "\\");
+                s.into()
+            } else {
+                path
             }
         }
     }

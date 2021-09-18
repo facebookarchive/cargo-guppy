@@ -40,6 +40,21 @@ pub enum Error {
     /// This is present if the `summaries` feature is enabled.
     #[cfg(feature = "summaries")]
     UnknownSummaryId(guppy_summaries::SummaryId),
+    /// While resolving a [`PackageSetSummary`](crate::graph::summaries::PackageSetSummary),
+    /// some elements were unknown to the `PackageGraph`.
+    ///
+    /// This is present if the `summaries` feature is enabled.
+    #[cfg(feature = "summaries")]
+    UnknownPackageSetSummary {
+        /// A description attached to the error.
+        message: String,
+        /// Summary IDs that weren't known to the `PackageGraph`.
+        unknown_summary_ids: Vec<crate::graph::summaries::SummaryId>,
+        /// Workspace packages that weren't known to the `PackageGraph`.
+        unknown_workspace_members: Vec<String>,
+        /// Third-party packages that weren't known to the `PackageGraph`.
+        unknown_third_party: Vec<crate::graph::summaries::ThirdPartySummary>,
+    },
 }
 
 impl Error {
@@ -71,7 +86,35 @@ impl fmt::Display for Error {
             PackageGraphInternalError(msg) => write!(f, "internal error in package graph: {}", msg),
             FeatureGraphInternalError(msg) => write!(f, "internal error in feature graph: {}", msg),
             #[cfg(feature = "summaries")]
-            UnknownSummaryId(summary_id) => write!(f, "unknown summary ID: {:?}", summary_id),
+            UnknownSummaryId(summary_id) => write!(f, "unknown summary ID: {}", summary_id),
+            #[cfg(feature = "summaries")]
+            UnknownPackageSetSummary {
+                message,
+                unknown_summary_ids,
+                unknown_workspace_members,
+                unknown_third_party,
+            } => {
+                writeln!(f, "unknown elements: {}", message)?;
+                if !unknown_summary_ids.is_empty() {
+                    writeln!(f, "* unknown summary IDs:")?;
+                    for summary_id in unknown_summary_ids {
+                        writeln!(f, "  - {}", summary_id)?;
+                    }
+                }
+                if !unknown_workspace_members.is_empty() {
+                    writeln!(f, "* unknown workspace names:")?;
+                    for workspace_member in unknown_workspace_members {
+                        writeln!(f, "  - {}", workspace_member)?;
+                    }
+                }
+                if !unknown_third_party.is_empty() {
+                    writeln!(f, "* unknown third-party:")?;
+                    for third_party in unknown_third_party {
+                        writeln!(f, "  - {}", third_party)?;
+                    }
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -92,6 +135,8 @@ impl error::Error for Error {
             FeatureGraphInternalError(_) => None,
             #[cfg(feature = "summaries")]
             UnknownSummaryId(_) => None,
+            #[cfg(feature = "summaries")]
+            UnknownPackageSetSummary { .. } => None,
         }
     }
 }

@@ -1309,6 +1309,11 @@ impl<'g> ExternalSource<'g> {
     /// Used for matching with the `Git` variant.
     pub const REV_EQ: &'static str = "?rev=";
 
+    /// The URL for the `crates.io` registry.
+    ///
+    /// This lacks the leading `"registry+`" that's part of the [`PackageSource`].
+    pub const CRATES_IO_URL: &'static str = "https://github.com/rust-lang/crates.io-index";
+
     /// Attempts to parse the given string as an external source.
     ///
     /// Returns `None` if the string could not be recognized as an external source.

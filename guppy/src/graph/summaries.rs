@@ -5,6 +5,8 @@
 //!
 //! Requires the `summaries` feature to be enabled.
 
+mod package_set;
+
 use crate::{
     graph::{
         cargo::{CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform},
@@ -14,6 +16,7 @@ use crate::{
     Error,
 };
 pub use guppy_summaries::*;
+pub use package_set::*;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 pub use target_spec::summaries::PlatformSummary;
@@ -147,8 +150,8 @@ pub struct CargoOptionsSummary {
     pub target_platform: Option<PlatformSummary>,
 
     /// The set of packages omitted from computations.
-    #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
-    pub omitted_packages: BTreeSet<SummaryId>,
+    #[serde(skip_serializing_if = "PackageSetSummary::is_empty", default)]
+    pub omitted_packages: PackageSetSummary,
 
     /// The packages that formed the features-only set.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -162,14 +165,8 @@ impl CargoOptionsSummary {
         features_only: &FeatureSet<'_>,
         opts: &CargoOptions<'_>,
     ) -> Result<Self, Error> {
-        let omitted_summary_ids = opts
-            .omitted_packages
-            .iter()
-            .map(|package_id| {
-                let metadata = graph.metadata(package_id).expect("valid package ID");
-                metadata.to_summary_id()
-            })
-            .collect();
+        let omitted_packages =
+            PackageSetSummary::from_package_ids(graph, opts.omitted_packages.iter().copied())?;
 
         let mut features_only = features_only
             .packages_with_features(DependencyDirection::Forward)
@@ -204,7 +201,7 @@ impl CargoOptionsSummary {
                 .map_err(|err| {
                     Error::TargetSpecError("while serializing target platform".to_string(), err)
                 })?,
-            omitted_packages: omitted_summary_ids,
+            omitted_packages,
             features_only,
         })
     }
@@ -216,9 +213,7 @@ impl CargoOptionsSummary {
     ) -> Result<CargoOptions<'g>, Error> {
         let omitted_packages = self
             .omitted_packages
-            .iter()
-            .map(|summary_id| Ok(package_graph.metadata_by_summary_id(summary_id)?.id()))
-            .collect::<Result<Vec<_>, _>>()?;
+            .to_package_set(package_graph, "resolving omitted-packages")?;
 
         // TODO: return the features-only set
 
@@ -245,7 +240,7 @@ impl CargoOptionsSummary {
                         Error::TargetSpecError("parsing target platform".to_string(), err)
                     })?,
             )
-            .add_omitted_packages(omitted_packages);
+            .add_omitted_packages(omitted_packages.package_ids(DependencyDirection::Forward));
         Ok(options)
     }
 }
