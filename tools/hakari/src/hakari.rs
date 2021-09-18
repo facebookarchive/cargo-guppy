@@ -30,7 +30,7 @@ pub struct HakariBuilder<'g> {
     hakari_package: Option<PackageMetadata<'g>>,
     pub(crate) platforms: Vec<Platform>,
     resolver: CargoResolverVersion,
-    verify_mode: bool,
+    pub(crate) verify_mode: bool,
     omitted_packages: HashSet<&'g PackageId>,
     unify_target_host: UnifyTargetHost,
     unify_all: bool,
@@ -40,8 +40,7 @@ impl<'g> HakariBuilder<'g> {
     /// Creates a new `HakariBuilder` instance from a `PackageGraph`.
     ///
     /// The Hakari package itself is usually present in the workspace. If so, specify its
-    /// package ID, otherwise pass in `None`. If specified, this package is marked as special: see
-    /// the documentation for [`set_verify_mode`](Self::set_verify_mode) for more.
+    /// package ID, otherwise pass in `None`.
     ///
     /// Returns an error if a Hakari package ID is specified but it isn't known to the graph, or
     /// isn't in the workspace.
@@ -195,30 +194,6 @@ impl<'g> HakariBuilder<'g> {
         Ok(hakari_omitted.is_omitted(package_id))
     }
 
-    /// If set to true, runs Hakari in verify mode.
-    ///
-    /// By default, Hakari runs in generate mode: the goal of this mode is to update an existing
-    /// Hakari package's TOML. In this mode, the Hakari package is always omitted from
-    /// consideration and added to the omitted packages.
-    ///
-    /// In verify mode, the goal is to ensure that Cargo builds actually produce a unique set of
-    /// features. In this mode, instead of being omitted, the Hakari package is always *included*
-    /// in feature resolution (default features), through the `features_only` argument to
-    /// [`CargoSet::new`](CargoSet::new). If, in the result, [`output_map`](Hakari::output_map)
-    /// is empty, then features were unified.
-    ///
-    /// Setting this to true has no effect if the Hakari package is not specified at construction
-    /// time.
-    pub fn set_verify_mode(&mut self, verify_mode: bool) -> &mut Self {
-        self.verify_mode = verify_mode;
-        self
-    }
-
-    /// Returns the current value of `verify_mode`.
-    pub fn verify_mode(&self) -> bool {
-        self.verify_mode
-    }
-
     /// Whether to unify feature sets across target and host platforms.
     ///
     /// By default, `hakari` does not perform any unification across the target and host platforms.
@@ -339,7 +314,7 @@ mod summaries {
                 graph: DebugIgnore(graph),
                 hakari_package,
                 resolver: summary.resolver,
-                verify_mode: summary.verify_mode,
+                verify_mode: false,
                 unify_target_host: summary.unify_target_host,
                 unify_all: summary.unify_all,
                 platforms,
@@ -404,7 +379,7 @@ pub struct OutputKey {
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct Hakari<'g> {
-    builder: HakariBuilder<'g>,
+    pub(crate) builder: HakariBuilder<'g>,
 
     /// The map built by Hakari of dependencies that need to be unified.
     ///
@@ -777,6 +752,15 @@ impl<'g> ComputedValue<'g> {
         [
             (BuildPlatform::Target, &self.target_inner),
             (BuildPlatform::Host, &self.host_inner),
+        ]
+    }
+
+    /// Converts `self` into [`ComputedInnerMap`] instances, along with the build platforms they
+    /// represent.
+    pub fn into_inner_maps(self) -> [(BuildPlatform, ComputedInnerMap<'g>); 2] {
+        [
+            (BuildPlatform::Target, self.target_inner),
+            (BuildPlatform::Host, self.host_inner),
         ]
     }
 

@@ -12,7 +12,7 @@ use crate::{
 };
 use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt};
 use target_spec::Platform;
 
 /// Options for queries which simulate what Cargo does.
@@ -473,6 +473,15 @@ impl BuildPlatform {
         match self {
             BuildPlatform::Host => BuildPlatform::Target,
             BuildPlatform::Target => BuildPlatform::Host,
+        }
+    }
+}
+
+impl fmt::Display for BuildPlatform {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BuildPlatform::Target => write!(f, "target"),
+            BuildPlatform::Host => write!(f, "host"),
         }
     }
 }
