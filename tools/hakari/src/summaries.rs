@@ -9,13 +9,13 @@ use crate::{HakariBuilder, TomlOutError, UnifyTargetHost};
 use guppy::{
     graph::{
         cargo::CargoResolverVersion,
-        summaries::{PlatformSummary, SummaryId},
+        summaries::{PackageSetSummary, PlatformSummary},
         PackageGraph,
     },
     TargetSpecError,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, fmt};
+use std::fmt;
 use toml::Serializer;
 
 /// A `HakariBuilder` in serializable form.
@@ -46,7 +46,7 @@ pub struct HakariBuilderSummary {
     pub platforms: Vec<PlatformSummary>,
 
     /// The list of omitted packages.
-    pub omitted_packages: BTreeSet<SummaryId>,
+    pub omitted_packages: PackageSetSummary,
 }
 
 impl HakariBuilderSummary {
@@ -68,16 +68,11 @@ impl HakariBuilderSummary {
                 .collect::<Result<Vec<_>, _>>()?,
             version: builder.resolver_version(),
             verify_mode: builder.verify_mode(),
-            omitted_packages: builder
-                .omitted_packages_only()
-                .map(|package_id| {
-                    builder
-                        .graph()
-                        .metadata(package_id)
-                        .expect("valid package ID")
-                        .to_summary_id()
-                })
-                .collect(),
+            omitted_packages: PackageSetSummary::from_package_ids(
+                builder.graph(),
+                builder.omitted_packages_only(),
+            )
+            .expect("all package IDs are valid"),
             unify_target_host: builder.unify_target_host(),
             unify_all: builder.unify_all(),
         })

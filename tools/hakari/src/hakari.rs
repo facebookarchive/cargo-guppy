@@ -313,9 +313,9 @@ mod summaries {
                 .collect::<Result<Vec<_>, _>>()?;
             let omitted_packages = summary
                 .omitted_packages
-                .iter()
-                .map(|summary_id| Ok(graph.metadata_by_summary_id(summary_id)?.id()))
-                .collect::<Result<HashSet<_>, _>>()?;
+                .to_package_set(graph, "resolving hakari omitted-packages")?
+                .package_ids(DependencyDirection::Forward)
+                .collect();
 
             Ok(Self {
                 graph: DebugIgnore(graph),
