@@ -12,10 +12,11 @@ use guppy::{
         feature::{FeatureId, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, PackageMetadata,
     },
-    PackageId, Platform,
+    PackageId, Platform, TargetFeatures,
 };
 use rayon::prelude::*;
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
 };
@@ -27,7 +28,7 @@ use std::{
 pub struct HakariBuilder<'g> {
     graph: DebugIgnore<&'g PackageGraph>,
     hakari_package: Option<PackageMetadata<'g>>,
-    platforms: Vec<Platform>,
+    pub(crate) platforms: Vec<Platform>,
     resolver: CargoResolverVersion,
     verify_mode: bool,
     omitted_packages: HashSet<&'g PackageId>,
@@ -109,16 +110,29 @@ impl<'g> HakariBuilder<'g> {
     /// only need to be unified on some platforms, `hakari` will output platform-specific
     /// instructions.
     ///
+    /// This currently supports target triples only, without further customization around
+    /// target features or flags. In the future, this may support `cfg()` expressions using
+    /// an [SMT solver](https://en.wikipedia.org/wiki/Satisfiability_modulo_theories).
+    ///
     /// Call `set_platforms` with an empty list to reset to default behavior.
-    pub fn set_platforms(&mut self, platforms: impl IntoIterator<Item = Platform>) -> &mut Self {
-        self.platforms = platforms.into_iter().collect();
-        self
+    ///
+    /// Returns an error if a platform wasn't known to [`target_spec`], the library `hakari` uses
+    /// to resolve platforms.
+    pub fn set_platforms(
+        &mut self,
+        platforms: impl IntoIterator<Item = impl Into<Cow<'static, str>>>,
+    ) -> Result<&mut Self, target_spec::Error> {
+        self.platforms = platforms
+            .into_iter()
+            .map(|s| Platform::new(s.into(), TargetFeatures::Unknown))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(self)
     }
 
     /// Returns the platforms set through `set_platforms`, or an empty list if no platforms are
     /// set.
-    pub fn platforms(&self) -> &[Platform] {
-        &self.platforms
+    pub fn platforms(&self) -> impl Iterator<Item = &str> + ExactSizeIterator + '_ {
+        self.platforms.iter().map(|platform| platform.triple_str())
     }
 
     /// Sets the Cargo resolver version.
@@ -285,6 +299,7 @@ impl<'g> HakariBuilder<'g> {
 mod summaries {
     use super::*;
     use crate::summaries::HakariBuilderSummary;
+    use guppy::TargetFeatures;
 
     impl<'g> HakariBuilder<'g> {
         /// Constructs a `HakariBuilder` from a `PackageGraph` and a serialized summary.
@@ -305,9 +320,12 @@ mod summaries {
             let platforms = summary
                 .platforms
                 .iter()
-                .map(|platform| {
-                    platform.to_platform().map_err(|err| {
-                        guppy::Error::TargetSpecError("deserializing Hakari platforms".into(), err)
+                .map(|triple_str| {
+                    Platform::new(triple_str.clone(), TargetFeatures::Unknown).map_err(|err| {
+                        guppy::Error::TargetSpecError(
+                            "while resolving hakari config or summary".to_owned(),
+                            err,
+                        )
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;

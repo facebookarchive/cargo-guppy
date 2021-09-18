@@ -245,7 +245,7 @@ pub(crate) fn write_toml(
 
     for (key, vals) in output_map {
         let cfg_str = match key.platform_idx {
-            Some(idx) => builder.platforms()[idx].triple_str(),
+            Some(idx) => builder.platforms[idx].triple_str(),
             None => "'cfg(all())'",
         };
         let dep_str = match key.build_platform {

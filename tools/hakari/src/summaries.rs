@@ -7,18 +7,17 @@
 
 use crate::{HakariBuilder, TomlOutError, UnifyTargetHost};
 use guppy::{
-    graph::{
-        cargo::CargoResolverVersion,
-        summaries::{PackageSetSummary, PlatformSummary},
-        PackageGraph,
-    },
+    graph::{cargo::CargoResolverVersion, summaries::PackageSetSummary, PackageGraph},
     TargetSpecError,
 };
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use toml::Serializer;
 
-/// A `HakariBuilder` in serializable form.
+/// A `HakariBuilder` in serializable form. This forms the configuration file format for `hakari`.
+///
+/// For an example, see the
+/// [cargo-hakari README](https://github.com/facebookincubator/cargo-guppy/tree/main/tools/hakari#configuration).
 ///
 /// Requires the `summaries` feature to be enabled.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -46,7 +45,7 @@ pub struct HakariBuilderSummary {
     pub unify_all: bool,
 
     /// The platforms used by the `HakariBuilder`.
-    pub platforms: Vec<PlatformSummary>,
+    pub platforms: Vec<String>,
 
     /// The list of omitted packages.
     pub omitted_packages: PackageSetSummary,
@@ -66,9 +65,8 @@ impl HakariBuilderSummary {
                 .map(|package| package.name().to_string()),
             platforms: builder
                 .platforms()
-                .iter()
-                .map(|platform| PlatformSummary::new(platform))
-                .collect::<Result<Vec<_>, _>>()?,
+                .map(|triple_str| triple_str.to_owned())
+                .collect::<Vec<_>>(),
             resolver: builder.resolver(),
             verify_mode: builder.verify_mode(),
             omitted_packages: PackageSetSummary::from_package_ids(
