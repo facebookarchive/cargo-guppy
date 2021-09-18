@@ -98,7 +98,7 @@ impl TomlOptions {
     ///
     /// ```toml
     /// # resolver = "2"
-    /// # verify-mode = true
+    /// # platforms = [...]
     /// ...
     /// ```
     ///

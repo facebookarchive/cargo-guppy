@@ -138,7 +138,6 @@ include:
 * [platforms to simulate Cargo builds on](HakariBuilder::set_platforms)
 * [the version of the Cargo resolver to use](HakariBuilder::set_resolver_version)
 * [packages to be omitted from the computation](HakariBuilder::add_omitted_packages)
-* [a "verify mode" to ensure that dependency feature sets are correctly unified](HakariBuilder::set_verify_mode)
 
 With the optional `summaries` feature, `HakariBuilder` options can be
 [read from](HakariBuilder::from_summary) or [written to](HakariBuilder::to_summary)

@@ -35,7 +35,6 @@ impl<'g> HakariBuilder<'g> {
             hakari_id_strategy,
             vec(Platform::strategy(any::<TargetFeatures>()), 0..4),
             any::<CargoResolverVersion>(),
-            any::<bool>(),
             hash_set(graph.prop010_id_strategy(), 0..8),
             any::<UnifyTargetHost>(),
             any::<bool>(),
@@ -45,7 +44,6 @@ impl<'g> HakariBuilder<'g> {
                     hakari_id,
                     platforms,
                     version,
-                    verify_mode,
                     omitted_packages,
                     unify_target_host,
                     unify_all,
@@ -60,7 +58,6 @@ impl<'g> HakariBuilder<'g> {
                         .set_platforms(platforms)
                         .expect("all platforms are known")
                         .set_resolver(version)
-                        .set_verify_mode(verify_mode)
                         .add_omitted_packages(omitted_packages)
                         .expect("omitted packages obtained from PackageGraph should work")
                         .set_unify_target_host(unify_target_host)
@@ -110,15 +107,13 @@ mod test {
             let strategy =
                 HakariBuilder::prop010_strategy(graph, option::of(workspace.prop010_id_strategy()));
             proptest!(|(builder in strategy, queries in vec(graph.prop010_id_strategy(), 0..64))| {
-                // Ensure that if verify mode is set to false, the hakari package is omitted.
-                if !builder.verify_mode() {
-                    if let Some(package) = builder.hakari_package() {
-                        assert!(
-                            builder.omits_package(package.id()).expect("valid package ID"),
-                            "for fixture {}, verify mode is false => hakari package is omitted",
-                            name,
-                        );
-                    }
+                // Ensure that the hakari package is omitted.
+                if let Some(package) = builder.hakari_package() {
+                    assert!(
+                        builder.omits_package(package.id()).expect("valid package ID"),
+                        "for fixture {}, verify mode is false => hakari package is omitted",
+                        name,
+                    );
                 }
                 // Ensure that omits_package and omitted_packages match.
                 let omitted_packages: HashSet<_> = builder.omitted_packages().collect();

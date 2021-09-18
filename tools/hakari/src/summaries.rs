@@ -32,10 +32,6 @@ pub struct HakariBuilderSummary {
     #[serde(alias = "version")]
     pub resolver: CargoResolverVersion,
 
-    /// Whether the builder was run in verify mode.
-    #[serde(default)]
-    pub verify_mode: bool,
-
     /// Unification across target and host.
     #[serde(default)]
     pub unify_target_host: UnifyTargetHost,
@@ -68,7 +64,6 @@ impl HakariBuilderSummary {
                 .map(|triple_str| triple_str.to_owned())
                 .collect::<Vec<_>>(),
             resolver: builder.resolver(),
-            verify_mode: builder.verify_mode(),
             omitted_packages: PackageSetSummary::from_package_ids(
                 builder.graph(),
                 builder.omitted_packages_only(),
