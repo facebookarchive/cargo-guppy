@@ -52,8 +52,13 @@ impl<'g> HakariBuilder<'g> {
                 )| {
                     let mut builder = HakariBuilder::new(graph, hakari_id)
                         .expect("HakariBuilder::new returned an error");
+                    let platforms: Vec<_> = platforms
+                        .iter()
+                        .map(|platform| platform.triple_str().to_owned())
+                        .collect();
                     builder
                         .set_platforms(platforms)
+                        .expect("all platforms are known")
                         .set_resolver(version)
                         .set_verify_mode(verify_mode)
                         .add_omitted_packages(omitted_packages)
