@@ -341,8 +341,6 @@ mod summaries {
 #[non_exhaustive]
 pub enum UnifyTargetHost {
     /// Perform no unification across the target and host feature sets.
-    ///
-    /// This is the default behavior.
     None,
 
     /// Perform unification across target and host feature sets, but only if a dependency is built
@@ -357,13 +355,15 @@ pub enum UnifyTargetHost {
     ///
     /// This is most useful if every package in the workspace depends on the Hakari package, and
     /// some of those packages are built on the host (e.g. proc macros or build dependencies).
+    ///
+    /// This is the default behavior.
     ReplicateTargetAsHost,
 }
 
-/// The default for `UnifyTargetHost`: perform no unification.
+/// The default for `UnifyTargetHost`: replicate target as host.
 impl Default for UnifyTargetHost {
     fn default() -> Self {
-        UnifyTargetHost::None
+        UnifyTargetHost::ReplicateTargetAsHost
     }
 }
 
