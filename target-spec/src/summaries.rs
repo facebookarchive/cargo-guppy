@@ -17,14 +17,14 @@ use std::{borrow::Cow, collections::BTreeSet};
 /// This structure can be serialized and deserialized using `serde`.
 ///
 /// Requires the `summaries` feature to be enabled.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct PlatformSummary {
     /// The platform triple.
     pub triple: String,
 
     /// The target features used.
-    #[serde(with = "target_features_impl")]
+    #[serde(with = "target_features_impl", default)]
     pub target_features: TargetFeaturesSummary,
 
     /// The flags enabled.
@@ -34,6 +34,7 @@ pub struct PlatformSummary {
 
 impl PlatformSummary {
     /// Creates a new `PlatformSummary` instance from a platform.
+
     pub fn new(platform: &Platform) -> Result<Self, Error> {
         // The error branch is unused but left available for potential future uses.
         Ok(Self {
@@ -66,6 +67,8 @@ impl PlatformSummary {
 #[non_exhaustive]
 pub enum TargetFeaturesSummary {
     /// The target features are unknown.
+    ///
+    /// This is the default.
     Unknown,
     /// Only match the specified features.
     Features(BTreeSet<String>),
@@ -98,6 +101,59 @@ impl TargetFeaturesSummary {
                 TargetFeatures::Features(features)
             }
         }
+    }
+}
+
+impl Default for TargetFeaturesSummary {
+    #[inline]
+    fn default() -> Self {
+        TargetFeaturesSummary::Unknown
+    }
+}
+
+mod platform_impl {
+    use super::*;
+    use serde::Deserializer;
+
+    impl<'de> Deserialize<'de> for PlatformSummary {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let d = PlatformSummaryDeserialize::deserialize(deserializer)?;
+            match d {
+                PlatformSummaryDeserialize::String(triple) => Ok(PlatformSummary {
+                    triple,
+                    target_features: TargetFeaturesSummary::default(),
+                    flags: BTreeSet::default(),
+                }),
+                PlatformSummaryDeserialize::Full {
+                    triple,
+                    target_features,
+                    flags,
+                } => Ok(PlatformSummary {
+                    triple,
+                    target_features,
+                    flags,
+                }),
+            }
+        }
+    }
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum PlatformSummaryDeserialize {
+        String(String),
+        #[serde(rename_all = "kebab-case")]
+        Full {
+            triple: String,
+            /// The target features used.
+            #[serde(with = "target_features_impl", default)]
+            target_features: TargetFeaturesSummary,
+            /// The flags enabled.
+            #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
+            flags: BTreeSet<String>,
+        },
     }
 }
 
@@ -147,8 +203,89 @@ mod target_features_impl {
     }
 }
 
-#[cfg(all(test, feature = "proptest1"))]
+#[cfg(test)]
 mod tests {
+    #![allow(clippy::vec_init_then_push)]
+
+    use super::*;
+
+    #[test]
+    fn platform_deserialize_valid() {
+        // Need a wrapper because of TOML restrictions
+        #[derive(Debug, Deserialize, Serialize, Eq, PartialEq)]
+        struct Wrapper {
+            platform: PlatformSummary,
+        }
+
+        let mut valid = vec![];
+        valid.push((
+            r#"platform = "x86_64-unknown-linux-gnu""#,
+            PlatformSummary {
+                triple: "x86_64-unknown-linux-gnu".into(),
+                target_features: TargetFeaturesSummary::Unknown,
+                flags: BTreeSet::new(),
+            },
+        ));
+        valid.push((
+            r#"platform = { triple = "x86_64-unknown-linux-gnu" }"#,
+            PlatformSummary {
+                triple: "x86_64-unknown-linux-gnu".into(),
+                target_features: TargetFeaturesSummary::Unknown,
+                flags: BTreeSet::new(),
+            },
+        ));
+        valid.push((
+            r#"platform = { triple = "x86_64-unknown-linux-gnu", target-features = "unknown" }"#,
+            PlatformSummary {
+                triple: "x86_64-unknown-linux-gnu".into(),
+                target_features: TargetFeaturesSummary::Unknown,
+                flags: BTreeSet::new(),
+            },
+        ));
+        valid.push((
+            r#"platform = { triple = "x86_64-unknown-linux-gnu", target-features = "all" }"#,
+            PlatformSummary {
+                triple: "x86_64-unknown-linux-gnu".into(),
+                target_features: TargetFeaturesSummary::All,
+                flags: BTreeSet::new(),
+            },
+        ));
+        valid.push((
+            r#"platform = { triple = "x86_64-unknown-linux-gnu", target-features = [] }"#,
+            PlatformSummary {
+                triple: "x86_64-unknown-linux-gnu".into(),
+                target_features: TargetFeaturesSummary::Features(BTreeSet::new()),
+                flags: BTreeSet::new(),
+            },
+        ));
+
+        let mut flags = BTreeSet::new();
+        flags.insert("cargo_web".to_owned());
+        valid.push((
+            r#"platform = { triple = "x86_64-unknown-linux-gnu", flags = ["cargo_web"] }"#,
+            PlatformSummary {
+                triple: "x86_64-unknown-linux-gnu".into(),
+                target_features: TargetFeaturesSummary::Unknown,
+                flags,
+            },
+        ));
+
+        for (input, expected) in valid {
+            let actual: Wrapper = toml::from_str(input)
+                .unwrap_or_else(|err| panic!("input {} is valid: {}", input, err));
+            assert_eq!(actual.platform, expected, "for input: {}", input);
+
+            // Serialize and deserialize again.
+            let serialized = toml::to_string(&actual).expect("serialized correctly");
+            let actual_2: Wrapper = toml::from_str(&serialized)
+                .unwrap_or_else(|err| panic!("serialized input: {} is valid: {}", input, err));
+            assert_eq!(actual, actual_2, "for input: {}", input);
+        }
+    }
+}
+
+#[cfg(all(test, feature = "proptest1"))]
+mod proptests {
     use super::*;
     use proptest::prelude::*;
     use std::collections::HashSet;
