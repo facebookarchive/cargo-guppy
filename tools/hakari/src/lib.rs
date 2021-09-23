@@ -175,7 +175,7 @@
 //!    *partially generated*:
 //!
 //!    ```toml
-//!    [package]
+//!    [package]at
 //!    name = "workspace-hack"
 //!    version = "0.1.0"
 //!    # more options...
@@ -207,11 +207,12 @@
 //! * Automating the creation of `workspace-hack` packages
 //! * Support for alternate registries (depends on
 //!   [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052))
-//! * A command-line interface
 //!
 //! These features will be added as time permits.
 
 mod cargo_toml;
+#[cfg(feature = "cli-support")]
+pub mod cli_ops;
 mod hakari;
 #[cfg(feature = "proptest1")]
 mod proptest_helpers;
