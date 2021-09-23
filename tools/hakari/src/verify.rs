@@ -16,8 +16,10 @@
 //! [`output_map`](crate::Hakari::output_map) is empty, then features were unified.
 
 use crate::{hakari::ComputedInnerMap, HakariBuilder};
-use guppy::graph::feature::StandardFeatures;
-use guppy::{graph::cargo::BuildPlatform, PackageId};
+use guppy::{
+    graph::{cargo::BuildPlatform, feature::StandardFeatures},
+    PackageId,
+};
 use std::fmt;
 
 impl<'g> HakariBuilder<'g> {
