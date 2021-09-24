@@ -164,7 +164,7 @@ impl GuppyCargoCommon {
 
         let mut cargo_opts = CargoOptions::new();
         cargo_opts
-            .set_version(version)
+            .set_resolver(version)
             .set_include_dev(self.include_dev)
             .set_target_platform(Some(&target_platform))
             .set_host_platform(Some(&host_platform));

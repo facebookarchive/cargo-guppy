@@ -92,7 +92,7 @@ impl PackageGraph {
                 )| {
                     let mut options = CargoOptions::new();
                     options
-                        .set_version(version)
+                        .set_resolver(version)
                         .set_include_dev(include_dev)
                         .set_initials_platform(initials_platform)
                         .set_host_platform(host_platform)

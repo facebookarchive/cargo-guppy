@@ -20,7 +20,7 @@ use target_spec::Platform;
 /// This provides control over the resolution algorithm used by `guppy`'s simulation of Cargo.
 #[derive(Clone, Debug)]
 pub struct CargoOptions<'a> {
-    pub(crate) version: CargoResolverVersion,
+    pub(crate) resolver: CargoResolverVersion,
     pub(crate) include_dev: bool,
     pub(crate) initials_platform: InitialsPlatform,
     // Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.
@@ -41,7 +41,7 @@ impl<'a> CargoOptions<'a> {
     /// * do not omit any packages.
     pub fn new() -> Self {
         Self {
-            version: CargoResolverVersion::V1,
+            resolver: CargoResolverVersion::V1,
             include_dev: false,
             initials_platform: InitialsPlatform::Standard,
             host_platform: None,
@@ -53,8 +53,8 @@ impl<'a> CargoOptions<'a> {
     /// Sets the Cargo feature resolver version.
     ///
     /// For more about feature resolution, see the documentation for `CargoResolverVersion`.
-    pub fn set_version(&mut self, version: CargoResolverVersion) -> &mut Self {
-        self.version = version;
+    pub fn set_resolver(&mut self, resolver: CargoResolverVersion) -> &mut Self {
+        self.resolver = resolver;
         self
     }
 
@@ -184,6 +184,7 @@ pub enum CargoResolverVersion {
     /// This feature resolver unifies features across inactive platforms, and also unifies features
     /// across normal, build and dev dependencies for initials. This may produce results that are
     /// surprising at times.
+    #[serde(rename = "1", alias = "v1")]
     V1,
 
     /// The "classic" feature resolver in Rust, as used by commands like `cargo install`.
@@ -195,6 +196,7 @@ pub enum CargoResolverVersion {
     /// For more, see
     /// [avoid-dev-deps](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#avoid-dev-deps)
     /// in the Cargo reference.
+    #[serde(rename = "install", alias = "v1-install")]
     V1Install,
 
     /// [Version 2 of the feature resolver](https://doc.rust-lang.org/cargo/reference/resolver.html#feature-resolver-version-2),
@@ -206,6 +208,7 @@ pub enum CargoResolverVersion {
     ///
     /// Version 2 of the feature resolver can be enabled by specifying `resolver = "2"` in the
     /// workspace's `Cargo.toml`.
+    #[serde(rename = "2", alias = "v2")]
     V2,
 }
 

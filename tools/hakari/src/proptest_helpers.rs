@@ -54,7 +54,7 @@ impl<'g> HakariBuilder<'g> {
                         .expect("HakariBuilder::new returned an error");
                     builder
                         .set_platforms(platforms)
-                        .set_resolver_version(version)
+                        .set_resolver(version)
                         .set_verify_mode(verify_mode)
                         .add_omitted_packages(omitted_packages)
                         .expect("omitted packages obtained from PackageGraph should work")
