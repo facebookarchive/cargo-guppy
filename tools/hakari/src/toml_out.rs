@@ -97,7 +97,7 @@ impl TomlOptions {
     /// The options are output as a header in the Hakari section:
     ///
     /// ```toml
-    /// # version = "v1"
+    /// # resolver = "2"
     /// # verify-mode = true
     /// ...
     /// ```

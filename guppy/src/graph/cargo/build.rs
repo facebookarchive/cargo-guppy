@@ -40,7 +40,7 @@ impl<'a> CargoSetBuildState<'a> {
         initials: FeatureSet<'g>,
         features_only: FeatureSet<'g>,
     ) -> CargoSet<'g> {
-        match self.opts.version {
+        match self.opts.resolver {
             CargoResolverVersion::V1 => self.new_v1(initials, features_only, false),
             CargoResolverVersion::V1Install => {
                 let avoid_dev_deps = !self.opts.include_dev;
@@ -51,7 +51,7 @@ impl<'a> CargoSetBuildState<'a> {
     }
 
     pub(super) fn build_intermediate(self, query: FeatureQuery) -> CargoIntermediateSet {
-        match self.opts.version {
+        match self.opts.resolver {
             CargoResolverVersion::V1 => self.new_v1_intermediate(query, false),
             CargoResolverVersion::V1Install => {
                 let avoid_dev_deps = !self.opts.include_dev;

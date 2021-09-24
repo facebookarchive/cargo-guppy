@@ -27,8 +27,11 @@ pub struct HakariBuilderSummary {
     /// The name of the Hakari package in the workspace.
     pub hakari_package: Option<String>,
 
-    /// The resolver version used.
-    pub version: CargoResolverVersion,
+    /// The Cargo resolver version used.
+    ///
+    /// For more information, see the documentation for [`CargoResolverVersion`].
+    #[serde(alias = "version")]
+    pub resolver: CargoResolverVersion,
 
     /// Whether the builder was run in verify mode.
     #[serde(default)]
@@ -66,7 +69,7 @@ impl HakariBuilderSummary {
                 .iter()
                 .map(|platform| PlatformSummary::new(platform))
                 .collect::<Result<Vec<_>, _>>()?,
-            version: builder.resolver_version(),
+            resolver: builder.resolver(),
             verify_mode: builder.verify_mode(),
             omitted_packages: PackageSetSummary::from_package_ids(
                 builder.graph(),

@@ -28,7 +28,7 @@ pub struct HakariBuilder<'g> {
     graph: DebugIgnore<&'g PackageGraph>,
     hakari_package: Option<PackageMetadata<'g>>,
     platforms: Vec<Platform>,
-    version: CargoResolverVersion,
+    resolver: CargoResolverVersion,
     verify_mode: bool,
     omitted_packages: HashSet<&'g PackageId>,
     unify_target_host: UnifyTargetHost,
@@ -64,7 +64,7 @@ impl<'g> HakariBuilder<'g> {
             graph: DebugIgnore(graph),
             hakari_package,
             platforms: vec![],
-            version: CargoResolverVersion::V1,
+            resolver: CargoResolverVersion::V2,
             verify_mode: false,
             omitted_packages: HashSet::new(),
             unify_target_host: UnifyTargetHost::default(),
@@ -123,17 +123,17 @@ impl<'g> HakariBuilder<'g> {
 
     /// Sets the Cargo resolver version.
     ///
-    /// By default, `HakariBuilder` uses [version 1](CargoResolverVersion::V1) of the Cargo
+    /// By default, `HakariBuilder` uses [version 2](CargoResolverVersion::V2) of the Cargo
     /// resolver. For more about Cargo resolvers, see the documentation for
     /// [`CargoResolverVersion`](CargoResolverVersion).
-    pub fn set_resolver_version(&mut self, version: CargoResolverVersion) -> &mut Self {
-        self.version = version;
+    pub fn set_resolver(&mut self, resolver: CargoResolverVersion) -> &mut Self {
+        self.resolver = resolver;
         self
     }
 
     /// Returns the current Cargo resolver version.
-    pub fn resolver_version(&self) -> CargoResolverVersion {
-        self.version
+    pub fn resolver(&self) -> CargoResolverVersion {
+        self.resolver
     }
 
     /// Adds packages to not consider while performing unification.
@@ -320,7 +320,7 @@ mod summaries {
             Ok(Self {
                 graph: DebugIgnore(graph),
                 hakari_package,
-                version: summary.version,
+                resolver: summary.resolver,
                 verify_mode: summary.verify_mode,
                 unify_target_host: summary.unify_target_host,
                 unify_all: summary.unify_all,
@@ -477,7 +477,7 @@ impl<'g> Hakari<'g> {
                                 .platform_idx
                                 .map(|platform_idx| &builder.platforms[platform_idx]),
                         )
-                        .set_version(builder.version)
+                        .set_resolver(builder.resolver)
                         .add_omitted_packages(computed_map_build.hakari_omitted.iter());
                     let cargo_set = features
                         .into_cargo_set(&cargo_opts)
@@ -658,7 +658,7 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
                 let mut cargo_options = CargoOptions::new();
                 cargo_options
                     .set_include_dev(true)
-                    .set_version(builder.version)
+                    .set_resolver(builder.resolver)
                     .set_platform(platform)
                     .add_omitted_packages(hakari_omitted.iter());
 

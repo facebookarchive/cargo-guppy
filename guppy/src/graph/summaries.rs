@@ -131,8 +131,11 @@ impl<'g> PackageMetadata<'g> {
 #[serde(rename_all = "kebab-case")]
 #[non_exhaustive]
 pub struct CargoOptionsSummary {
-    /// The version of resolver used.
-    pub version: CargoResolverVersion,
+    /// The Cargo resolver version used.
+    ///
+    /// For more information, see the documentation for [`CargoResolverVersion`].
+    #[serde(alias = "version")]
+    pub resolver: CargoResolverVersion,
 
     /// Whether dev-dependencies are included.
     pub include_dev: bool,
@@ -182,7 +185,7 @@ impl CargoOptionsSummary {
         features_only.sort_unstable();
 
         Ok(Self {
-            version: opts.version,
+            resolver: opts.resolver,
             include_dev: opts.include_dev,
             initials_platform: InitialsPlatformSummary::V2 {
                 initials_platform: opts.initials_platform,
@@ -219,7 +222,7 @@ impl CargoOptionsSummary {
 
         let mut options = CargoOptions::new();
         options
-            .set_version(self.version)
+            .set_resolver(self.resolver)
             .set_include_dev(self.include_dev)
             .set_initials_platform(self.initials_platform.into())
             .set_host_platform(
