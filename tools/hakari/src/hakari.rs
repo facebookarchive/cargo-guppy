@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{
-    toml_out::{write_toml, TomlOptions},
+    toml_out::{write_toml, HakariOutputOptions},
     CargoTomlError, HakariCargoToml, TomlOutError,
 };
 use guppy::{
@@ -416,7 +416,7 @@ impl<'g> Hakari<'g> {
     /// `&mut String` and `fmt::Formatter` both implement `fmt::Write`.
     pub fn write_toml(
         &self,
-        options: &TomlOptions,
+        options: &HakariOutputOptions,
         out: impl fmt::Write,
     ) -> Result<(), TomlOutError> {
         write_toml(&self.builder, &self.output_map, options, out)
@@ -426,7 +426,7 @@ impl<'g> Hakari<'g> {
     ///
     /// The returned string is guaranteed to be valid TOML, and can be provided to
     /// a [`HakariCargoToml`](crate::HakariCargoToml) obtained from [`read_toml`](Self::read_toml).
-    pub fn to_toml_string(&self, options: &TomlOptions) -> Result<String, TomlOutError> {
+    pub fn to_toml_string(&self, options: &HakariOutputOptions) -> Result<String, TomlOutError> {
         let mut out = String::new();
         self.write_toml(options, &mut out)?;
         Ok(out)

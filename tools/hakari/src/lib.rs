@@ -9,7 +9,7 @@
 //!
 //! ```rust
 //! use guppy::MetadataCommand;
-//! use hakari::{HakariBuilder, TomlOptions};
+//! use hakari::{HakariBuilder, HakariOutputOptions};
 //!
 //! // Use this workspace's PackageGraph for these tests.
 //! let package_graph = MetadataCommand::new()
@@ -25,7 +25,7 @@
 //!
 //! // "hakari" can be used to build a TOML representation that forms part of a Cargo.toml file.
 //! // Existing Cargo.toml files can be managed using Hakari::read_toml.
-//! let toml = hakari.to_toml_string(&TomlOptions::default()).expect("TOML output was constructed");
+//! let toml = hakari.to_toml_string(&HakariOutputOptions::default()).expect("TOML output was constructed");
 //!
 //! // toml contains the Cargo.toml [dependencies] that would go in the Hakari package. It can be
 //! // written out through `HakariCargoToml` (returned by Hakari::read_toml) or manually.
