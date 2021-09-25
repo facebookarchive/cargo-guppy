@@ -1,18 +1,43 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! Generate summaries from `HakariBuilder` instances.
+//! Manage configuration and generate summaries for `hakari`.
 //!
 //! Requires the `summaries` feature to be enabled.
 
-use crate::{HakariBuilder, TomlOutError, UnifyTargetHost};
+use crate::{HakariBuilder, HakariOutputOptions, TomlOutError, UnifyTargetHost};
 use guppy::{
     graph::{cargo::CargoResolverVersion, summaries::PackageSetSummary, PackageGraph},
     TargetSpecError,
 };
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{fmt, str::FromStr};
 use toml::Serializer;
+
+/// Configuration for `hakari`.
+///
+/// Requires the `summaries` feature to be enabled.
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
+pub struct HakariConfig {
+    /// Builder options.
+    #[serde(flatten)]
+    pub builder: HakariBuilderSummary,
+
+    /// Output options.
+    #[serde(default)]
+    pub output: OutputOptionsSummary,
+}
+
+impl FromStr for HakariConfig {
+    type Err = toml::de::Error;
+
+    /// Deserializes a [`HakariConfig`] from the given TOML string.
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        toml::from_str(input)
+    }
+}
 
 /// A `HakariBuilder` in serializable form. This forms the configuration file format for `hakari`.
 ///
@@ -22,6 +47,7 @@ use toml::Serializer;
 /// Requires the `summaries` feature to be enabled.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
 pub struct HakariBuilderSummary {
     /// The name of the Hakari package in the workspace.
     pub hakari_package: Option<String>,
@@ -41,9 +67,11 @@ pub struct HakariBuilderSummary {
     pub unify_all: bool,
 
     /// The platforms used by the `HakariBuilder`.
+    #[serde(default)]
     pub platforms: Vec<String>,
 
     /// The list of omitted packages.
+    #[serde(default)]
     pub omitted_packages: PackageSetSummary,
 }
 
@@ -133,5 +161,45 @@ impl<'g> HakariBuilder<'g> {
     /// currently unsupported.
     pub fn to_summary(&self) -> Result<HakariBuilderSummary, TargetSpecError> {
         HakariBuilderSummary::new(self)
+    }
+}
+
+/// Options for `hakari` TOML output, in serializable form.
+///
+/// TODO: add a configuration.md file.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
+pub struct OutputOptionsSummary {
+    /// Output exact versions in package version fields.
+    #[serde(default)]
+    exact_versions: bool,
+
+    /// Output absolute paths for path dependencies.
+    #[serde(default)]
+    absolute_paths: bool,
+
+    /// Output a [`HakariBuilderSummary`] as comments.
+    #[serde(default)]
+    builder_summary: bool,
+}
+
+impl OutputOptionsSummary {
+    /// Creates a new `OutputOptionsSummary`.
+    pub fn new(options: &HakariOutputOptions) -> Self {
+        Self {
+            exact_versions: options.exact_versions,
+            absolute_paths: options.absolute_paths,
+            builder_summary: options.builder_summary,
+        }
+    }
+
+    /// Converts this summary to the options.
+    pub fn to_options(&self) -> HakariOutputOptions {
+        HakariOutputOptions {
+            exact_versions: self.exact_versions,
+            absolute_paths: self.absolute_paths,
+            builder_summary: self.builder_summary,
+        }
     }
 }

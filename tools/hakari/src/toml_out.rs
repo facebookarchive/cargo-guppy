@@ -23,14 +23,14 @@ use twox_hash::XxHash64;
 
 /// Options for Hakari TOML output.
 #[derive(Clone, Debug)]
-pub struct TomlOptions {
-    exact_versions: bool,
-    absolute_paths: bool,
+pub struct HakariOutputOptions {
+    pub(crate) exact_versions: bool,
+    pub(crate) absolute_paths: bool,
     #[cfg(feature = "summaries")]
-    builder_summary: bool,
+    pub(crate) builder_summary: bool,
 }
 
-impl TomlOptions {
+impl HakariOutputOptions {
     /// Creates a new instance with default settings.
     ///
     /// The default settings are:
@@ -110,7 +110,7 @@ impl TomlOptions {
     }
 }
 
-impl Default for TomlOptions {
+impl Default for HakariOutputOptions {
     fn default() -> Self {
         Self::new()
     }
@@ -213,7 +213,7 @@ impl error::Error for TomlOutError {
 pub(crate) fn write_toml(
     builder: &HakariBuilder<'_>,
     output_map: &OutputMap<'_>,
-    options: &TomlOptions,
+    options: &HakariOutputOptions,
     mut out: impl fmt::Write,
 ) -> Result<(), TomlOutError> {
     cfg_if::cfg_if! {

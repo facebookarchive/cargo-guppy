@@ -5,7 +5,7 @@ use crate::context::ContextImpl;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
 use fixtures::json::JsonFixture;
-use hakari::{diffy::PatchFormatter, Hakari, HakariBuilder, HakariCargoToml, TomlOptions};
+use hakari::{diffy::PatchFormatter, Hakari, HakariBuilder, HakariCargoToml, HakariOutputOptions};
 use once_cell::sync::Lazy;
 use proptest::prelude::*;
 use proptest_ext::ValueGenerator;
@@ -50,10 +50,12 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
                 .partial_clone()
                 .generate(&hakari_builder_strategy);
             let hakari = builder.compute();
-            let mut options = TomlOptions::new();
-            options.set_builder_summary(true).set_absolute_paths(true);
+            let mut output_options = HakariOutputOptions::default();
+            output_options
+                .set_builder_summary(true)
+                .set_absolute_paths(true);
             let toml = hakari
-                .to_toml_string(&options)
+                .to_toml_string(&output_options)
                 .expect("to_toml_string worked");
 
             (idx, HakariTomlItem { hakari, toml })
