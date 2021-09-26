@@ -139,6 +139,7 @@
 //! * [platforms to simulate Cargo builds on](HakariBuilder::set_platforms)
 //! * [the version of the Cargo resolver to use](HakariBuilder::set_resolver)
 //! * [packages to be excluded during computation](HakariBuilder::add_traversal_excludes)
+//! * [packages to be excluded from the final output](HakariBuilder::add_final_excludes)
 //!
 //! With the optional `cli-support` feature, `HakariBuilder` options can be
 //! [read from](HakariBuilder::from_summary) or [written to](HakariBuilder::to_summary)
@@ -201,7 +202,6 @@
 //! `hakari` is a work-in-progress and is still missing many core features:
 //! * Simulating cross-compilations
 //! * Omitting some packages on some environments
-//! * Excluding some packages from the final result
 //! * Only including a subset of packages in the final result (e.g. unifying core packages like
 //!   `syn` but not any others)
 //! * Automating the creation of `workspace-hack` packages

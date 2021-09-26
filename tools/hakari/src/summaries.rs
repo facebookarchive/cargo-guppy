@@ -73,6 +73,10 @@ pub struct HakariBuilderSummary {
     /// The list of packages excluded during graph traversals.
     #[serde(default)]
     pub traversal_excludes: PackageSetSummary,
+
+    /// The list of packages excluded from the final output.
+    #[serde(default)]
+    pub final_excludes: PackageSetSummary,
 }
 
 impl HakariBuilderSummary {
@@ -95,6 +99,11 @@ impl HakariBuilderSummary {
             traversal_excludes: PackageSetSummary::from_package_ids(
                 builder.graph(),
                 builder.traversal_excludes_only(),
+            )
+            .expect("all package IDs are valid"),
+            final_excludes: PackageSetSummary::from_package_ids(
+                builder.graph(),
+                builder.final_excludes(),
             )
             .expect("all package IDs are valid"),
             unify_target_host: builder.unify_target_host(),

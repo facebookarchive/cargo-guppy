@@ -32,6 +32,7 @@ pub struct HakariBuilder<'g> {
     resolver: CargoResolverVersion,
     pub(crate) verify_mode: bool,
     traversal_excludes: HashSet<&'g PackageId>,
+    final_excludes: HashSet<&'g PackageId>,
     unify_target_host: UnifyTargetHost,
     unify_all: bool,
 }
@@ -67,6 +68,7 @@ impl<'g> HakariBuilder<'g> {
             resolver: CargoResolverVersion::V2,
             verify_mode: false,
             traversal_excludes: HashSet::new(),
+            final_excludes: HashSet::new(),
             unify_target_host: UnifyTargetHost::default(),
             unify_all: false,
         })
@@ -158,6 +160,8 @@ impl<'g> HakariBuilder<'g> {
     /// * If a workspace package is specified, Cargo build simulations for it will not be run.
     /// * If a third-party package is specified, it will not be present in the output, nor will
     ///   any transitive dependencies or features enabled by it that aren't enabled any other way.
+    ///   In other words, any packages excluded during traversal are also [excluded from the final
+    ///   output](Self::add_final_excludes).
     ///
     /// Returns an error if any package IDs specified aren't known to the graph.
     pub fn add_traversal_excludes<'b>(
@@ -192,6 +196,48 @@ impl<'g> HakariBuilder<'g> {
 
         let excludes = self.make_traversal_excludes();
         Ok(excludes.is_excluded(package_id))
+    }
+
+    /// Adds packages to be removed from the final output.
+    ///
+    /// Unlike [`traversal_excludes`](Self::traversal_excludes), these packages are considered
+    /// during traversals, but removed at the end.
+    ///
+    /// Returns an error if any package IDs specified aren't known to the graph.
+    pub fn add_final_excludes<'b>(
+        &mut self,
+        excludes: impl IntoIterator<Item = &'b PackageId>,
+    ) -> Result<&mut Self, guppy::Error> {
+        let final_excludes: Vec<&'g PackageId> = excludes
+            .into_iter()
+            .map(|package_id| Ok(self.graph.metadata(package_id)?.id()))
+            .collect::<Result<_, _>>()?;
+        self.final_excludes.extend(final_excludes);
+        Ok(self)
+    }
+
+    /// Returns the packages to be removed from the final output.
+    pub fn final_excludes<'b>(&'b self) -> impl Iterator<Item = &'g PackageId> + 'b {
+        self.final_excludes.iter().copied()
+    }
+
+    /// Returns true if a package ID is currently excluded from the final output.
+    ///
+    /// Returns an error if this package ID isn't known to the underlying graph.
+    pub fn is_final_excluded(&self, package_id: &PackageId) -> Result<bool, guppy::Error> {
+        self.graph.metadata(package_id)?;
+        Ok(self.final_excludes.contains(package_id))
+    }
+
+    /// Returns true if a package ID is excluded from either the traversal or the final output.
+    ///
+    /// Also returns true for the Hakari package if specified. This is because the Hakari package is
+    /// treated as excluded by the algorithm.
+    ///
+    /// Returns an error if this package ID isn't known to the underlying graph.
+    #[inline]
+    pub fn is_excluded(&self, package_id: &PackageId) -> Result<bool, guppy::Error> {
+        Ok(self.is_traversal_excluded(package_id)? || self.is_final_excluded(package_id)?)
     }
 
     /// Whether to unify feature sets across target and host platforms.
@@ -311,6 +357,11 @@ mod summaries {
                 .to_package_set(graph, "resolving hakari traversal-excludes")?
                 .package_ids(DependencyDirection::Forward)
                 .collect();
+            let final_excludes = summary
+                .final_excludes
+                .to_package_set(graph, "resolving hakari final-excludes")?
+                .package_ids(DependencyDirection::Forward)
+                .collect();
 
             Ok(Self {
                 graph: DebugIgnore(graph),
@@ -321,6 +372,7 @@ mod summaries {
                 unify_all: summary.unify_all,
                 platforms,
                 traversal_excludes,
+                final_excludes,
             })
         }
     }
@@ -541,10 +593,11 @@ impl<'g> Hakari<'g> {
         }
 
         let computed_map = computed_map_build.computed_map;
+        let output_map = map_build.finish(&builder.final_excludes);
 
         Self {
             builder,
-            output_map: map_build.output_map,
+            output_map,
             computed_map,
         }
     }
@@ -1055,5 +1108,15 @@ impl<'g> OutputMapBuild<'g> {
                     .expect("specified feature IDs are valid"),
             )
         })
+    }
+
+    fn finish(mut self, final_excludes: &HashSet<&'g PackageId>) -> OutputMap<'g> {
+        for inner_map in self.output_map.values_mut() {
+            for package_id in final_excludes {
+                inner_map.remove(package_id);
+            }
+        }
+
+        self.output_map
     }
 }
