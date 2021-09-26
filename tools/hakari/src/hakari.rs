@@ -239,7 +239,7 @@ impl<'g> HakariBuilder<'g> {
     // Helper methods
     // ---
 
-    #[cfg(feature = "summaries")]
+    #[cfg(feature = "cli-support")]
     pub(crate) fn omitted_packages_only<'b>(&'b self) -> impl Iterator<Item = &'g PackageId> + 'b {
         self.omitted_packages.iter().copied()
     }
@@ -270,7 +270,7 @@ impl<'g> HakariBuilder<'g> {
     }
 }
 
-#[cfg(feature = "summaries")]
+#[cfg(feature = "cli-support")]
 mod summaries {
     use super::*;
     use crate::summaries::HakariBuilderSummary;
@@ -279,7 +279,7 @@ mod summaries {
     impl<'g> HakariBuilder<'g> {
         /// Constructs a `HakariBuilder` from a `PackageGraph` and a serialized summary.
         ///
-        /// Requires the `summaries` feature to be enabled.
+        /// Requires the `cli-support` feature to be enabled.
         ///
         /// Returns an error if the summary references a package that's not present, or if there was
         /// some other issue while creating a `HakariBuilder` from the summary.
@@ -329,8 +329,8 @@ mod summaries {
 /// Call `HakariBuilder::set_unify_target_host` to configure this option.
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "proptest1", derive(proptest_derive::Arbitrary))]
-#[cfg_attr(feature = "summaries", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "summaries", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "cli-support", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "cli-support", serde(rename_all = "kebab-case"))]
 #[non_exhaustive]
 pub enum UnifyTargetHost {
     /// Perform no unification across the target and host feature sets.

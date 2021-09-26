@@ -3,7 +3,7 @@
 
 //! Manage configuration and generate summaries for `hakari`.
 //!
-//! Requires the `summaries` feature to be enabled.
+//! Requires the `cli-support` feature to be enabled.
 
 use crate::{HakariBuilder, HakariOutputOptions, TomlOutError, UnifyTargetHost};
 use guppy::{
@@ -16,7 +16,7 @@ use toml::Serializer;
 
 /// Configuration for `hakari`.
 ///
-/// Requires the `summaries` feature to be enabled.
+/// Requires the `cli-support` feature to be enabled.
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 #[non_exhaustive]
@@ -44,7 +44,7 @@ impl FromStr for HakariConfig {
 /// For an example, see the
 /// [cargo-hakari README](https://github.com/facebookincubator/cargo-guppy/tree/main/tools/hakari#configuration).
 ///
-/// Requires the `summaries` feature to be enabled.
+/// Requires the `cli-support` feature to be enabled.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[non_exhaustive]
@@ -78,7 +78,7 @@ pub struct HakariBuilderSummary {
 impl HakariBuilderSummary {
     /// Creates a new `HakariBuilderSummary` from a builder.
     ///
-    /// Requires the `summaries` feature to be enabled.
+    /// Requires the `cli-support` feature to be enabled.
     ///
     /// Returns an error if there are any custom platforms. Serializing custom platforms is
     /// currently unsupported.
@@ -155,7 +155,7 @@ impl HakariBuilderSummary {
 impl<'g> HakariBuilder<'g> {
     /// Converts this `HakariBuilder` to a serializable summary.
     ///
-    /// Requires the `summaries` feature to be enabled.
+    /// Requires the `cli-support` feature to be enabled.
     ///
     /// Returns an error if there are any custom platforms. Serializing custom platforms is
     /// currently unsupported.
