@@ -44,7 +44,7 @@ impl<'g> HakariBuilder<'g> {
                     hakari_id,
                     platforms,
                     version,
-                    omitted_packages,
+                    traversal_excludes,
                     unify_target_host,
                     unify_all,
                 )| {
@@ -58,7 +58,7 @@ impl<'g> HakariBuilder<'g> {
                         .set_platforms(platforms)
                         .expect("all platforms are known")
                         .set_resolver(version)
-                        .add_omitted_packages(omitted_packages)
+                        .add_traversal_excludes(traversal_excludes)
                         .expect("omitted packages obtained from PackageGraph should work")
                         .set_unify_target_host(unify_target_host)
                         .set_unify_all(unify_all);
@@ -98,9 +98,9 @@ mod test {
         }
     }
 
-    /// Ensure that HakariBuilder's omitted packages and is_omitted match up.
+    /// Ensure that HakariBuilder's traversal_excludes and is_traversal_excluded match up.
     #[test]
-    fn omitted_packages() {
+    fn traversal_excludes() {
         for (&name, fixture) in JsonFixture::all_fixtures() {
             let graph = fixture.graph();
             let workspace = graph.workspace();
@@ -110,18 +110,18 @@ mod test {
                 // Ensure that the hakari package is omitted.
                 if let Some(package) = builder.hakari_package() {
                     assert!(
-                        builder.omits_package(package.id()).expect("valid package ID"),
-                        "for fixture {}, verify mode is false => hakari package is omitted",
+                        builder.is_traversal_excluded(package.id()).expect("valid package ID"),
+                        "for fixture {}, hakari package is excluded from traversals",
                         name,
                     );
                 }
                 // Ensure that omits_package and omitted_packages match.
-                let omitted_packages: HashSet<_> = builder.omitted_packages().collect();
+                let traversal_excludes: HashSet<_> = builder.traversal_excludes().collect();
                 for query_id in queries {
                     assert_eq!(
-                        omitted_packages.contains(query_id),
-                        builder.omits_package(query_id).expect("valid package ID"),
-                        "for fixture {}, omitted_packages and omits_package match",
+                        traversal_excludes.contains(query_id),
+                        builder.is_traversal_excluded(query_id).expect("valid package ID"),
+                        "for fixture {}, traversal_excludes and is_traversal_excluded match",
                         name,
                     );
                 }

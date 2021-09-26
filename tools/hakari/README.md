@@ -8,7 +8,7 @@
 
 ```rust
 use guppy::MetadataCommand;
-use hakari::{HakariBuilder, TomlOptions};
+use hakari::{HakariBuilder, HakariOutputOptions};
 
 // Use this workspace's PackageGraph for these tests.
 let package_graph = MetadataCommand::new()
@@ -24,7 +24,7 @@ let hakari = hakari_builder.compute();
 
 // "hakari" can be used to build a TOML representation that forms part of a Cargo.toml file.
 // Existing Cargo.toml files can be managed using Hakari::read_toml.
-let toml = hakari.to_toml_string(&TomlOptions::default()).expect("TOML output was constructed");
+let toml = hakari.to_toml_string(&HakariOutputOptions::default()).expect("TOML output was constructed");
 
 // toml contains the Cargo.toml [dependencies] that would go in the Hakari package. It can be
 // written out through `HakariCargoToml` (returned by Hakari::read_toml) or manually.
@@ -137,7 +137,7 @@ include:
 * [the location of the `workspace-hack` package](HakariBuilder::new)
 * [platforms to simulate Cargo builds on](HakariBuilder::set_platforms)
 * [the version of the Cargo resolver to use](HakariBuilder::set_resolver_version)
-* [packages to be omitted from the computation](HakariBuilder::add_omitted_packages)
+* [packages to be excluded during computation](HakariBuilder::add_traversal_excludes)
 
 With the optional `cli-support` feature, `HakariBuilder` options can be
 [read from](HakariBuilder::from_summary) or [written to](HakariBuilder::to_summary)

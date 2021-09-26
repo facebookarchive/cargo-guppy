@@ -70,9 +70,9 @@ pub struct HakariBuilderSummary {
     #[serde(default)]
     pub platforms: Vec<String>,
 
-    /// The list of omitted packages.
+    /// The list of packages excluded during graph traversals.
     #[serde(default)]
-    pub omitted_packages: PackageSetSummary,
+    pub traversal_excludes: PackageSetSummary,
 }
 
 impl HakariBuilderSummary {
@@ -92,9 +92,9 @@ impl HakariBuilderSummary {
                 .map(|triple_str| triple_str.to_owned())
                 .collect::<Vec<_>>(),
             resolver: builder.resolver(),
-            omitted_packages: PackageSetSummary::from_package_ids(
+            traversal_excludes: PackageSetSummary::from_package_ids(
                 builder.graph(),
-                builder.omitted_packages_only(),
+                builder.traversal_excludes_only(),
             )
             .expect("all package IDs are valid"),
             unify_target_host: builder.unify_target_host(),
