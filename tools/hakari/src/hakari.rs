@@ -31,7 +31,7 @@ pub struct HakariBuilder<'g> {
     pub(crate) platforms: Vec<Platform>,
     resolver: CargoResolverVersion,
     pub(crate) verify_mode: bool,
-    omitted_packages: HashSet<&'g PackageId>,
+    traversal_excludes: HashSet<&'g PackageId>,
     unify_target_host: UnifyTargetHost,
     unify_all: bool,
 }
@@ -66,7 +66,7 @@ impl<'g> HakariBuilder<'g> {
             platforms: vec![],
             resolver: CargoResolverVersion::V2,
             verify_mode: false,
-            omitted_packages: HashSet::new(),
+            traversal_excludes: HashSet::new(),
             unify_target_host: UnifyTargetHost::default(),
             unify_all: false,
         })
@@ -149,7 +149,7 @@ impl<'g> HakariBuilder<'g> {
         self.resolver
     }
 
-    /// Adds packages to not consider while performing unification.
+    /// Pretends that the provided packages don't exist during graph traversals.
     ///
     /// Users may wish to not consider certain packages while figuring out the unified feature set.
     /// Setting this option prevents those packages from being considered.
@@ -157,41 +157,41 @@ impl<'g> HakariBuilder<'g> {
     /// Practically, this means that:
     /// * If a workspace package is specified, Cargo build simulations for it will not be run.
     /// * If a third-party package is specified, it will not be present in the output, nor will
-    ///   any features enabled by it that aren't enabled any other way.
+    ///   any transitive dependencies or features enabled by it that aren't enabled any other way.
     ///
     /// Returns an error if any package IDs specified aren't known to the graph.
-    pub fn add_omitted_packages<'b>(
+    pub fn add_traversal_excludes<'b>(
         &mut self,
-        omitted_packages: impl IntoIterator<Item = &'b PackageId>,
+        excludes: impl IntoIterator<Item = &'b PackageId>,
     ) -> Result<&mut Self, guppy::Error> {
-        let omitted_packages: Vec<&'g PackageId> = omitted_packages
+        let traversal_exclude: Vec<&'g PackageId> = excludes
             .into_iter()
             .map(|package_id| Ok(self.graph.metadata(package_id)?.id()))
             .collect::<Result<_, _>>()?;
-        self.omitted_packages.extend(omitted_packages);
+        self.traversal_excludes.extend(traversal_exclude);
         Ok(self)
     }
 
-    /// Returns the currently omitted packages.
+    /// Returns the packages currently excluded during graph traversals.
     ///
-    /// If `verify_mode` is currently false (the default), also returns the Hakari package if
-    /// specified. This is because the Hakari package is treated as omitted by the algorithm.
-    pub fn omitted_packages<'b>(&'b self) -> impl Iterator<Item = &'g PackageId> + 'b {
-        let hakari_omitted = self.make_hakari_omitted();
-        hakari_omitted.iter()
+    /// Also returns the Hakari package if specified. This is because the Hakari package is treated
+    /// as excluded while performing unification.
+    pub fn traversal_excludes<'b>(&'b self) -> impl Iterator<Item = &'g PackageId> + 'b {
+        let excludes = self.make_traversal_excludes();
+        excludes.iter()
     }
 
-    /// Returns true if a package ID is currently omitted from the set.
+    /// Returns true if a package ID is currently excluded during traversal.
     ///
-    /// If `verify_mode` is currently false (the default), also returns true for the Hakari package
-    /// if specified. This is because the Hakari package is treated as omitted by the algorithm.
+    /// Also returns true for the Hakari package if specified. This is because the Hakari package is
+    /// treated as excluded by the algorithm.
     ///
     /// Returns an error if this package ID isn't known to the underlying graph.
-    pub fn omits_package(&self, package_id: &PackageId) -> Result<bool, guppy::Error> {
+    pub fn is_traversal_excluded(&self, package_id: &PackageId) -> Result<bool, guppy::Error> {
         self.graph.metadata(package_id)?;
 
-        let hakari_omitted = self.make_hakari_omitted();
-        Ok(hakari_omitted.is_omitted(package_id))
+        let excludes = self.make_traversal_excludes();
+        Ok(excludes.is_excluded(package_id))
     }
 
     /// Whether to unify feature sets across target and host platforms.
@@ -240,19 +240,21 @@ impl<'g> HakariBuilder<'g> {
     // ---
 
     #[cfg(feature = "cli-support")]
-    pub(crate) fn omitted_packages_only<'b>(&'b self) -> impl Iterator<Item = &'g PackageId> + 'b {
-        self.omitted_packages.iter().copied()
+    pub(crate) fn traversal_excludes_only<'b>(
+        &'b self,
+    ) -> impl Iterator<Item = &'g PackageId> + 'b {
+        self.traversal_excludes.iter().copied()
     }
 
-    fn make_hakari_omitted<'b>(&'b self) -> HakariOmitted<'g, 'b> {
+    fn make_traversal_excludes<'b>(&'b self) -> TraversalExcludes<'g, 'b> {
         let hakari_package = if self.verify_mode {
             None
         } else {
             self.hakari_package.map(|package| package.id())
         };
 
-        HakariOmitted {
-            omitted: &self.omitted_packages,
+        TraversalExcludes {
+            excludes: &self.traversal_excludes,
             hakari_package,
         }
     }
@@ -304,9 +306,9 @@ mod summaries {
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            let omitted_packages = summary
-                .omitted_packages
-                .to_package_set(graph, "resolving hakari omitted-packages")?
+            let traversal_excludes = summary
+                .traversal_excludes
+                .to_package_set(graph, "resolving hakari traversal-excludes")?
                 .package_ids(DependencyDirection::Forward)
                 .collect();
 
@@ -318,7 +320,7 @@ mod summaries {
                 unify_target_host: summary.unify_target_host,
                 unify_all: summary.unify_all,
                 platforms,
-                omitted_packages,
+                traversal_excludes,
             })
         }
     }
@@ -471,7 +473,7 @@ impl<'g> Hakari<'g> {
                                 .map(|platform_idx| &builder.platforms[platform_idx]),
                         )
                         .set_resolver(builder.resolver)
-                        .add_omitted_packages(computed_map_build.hakari_omitted.iter());
+                        .add_omitted_packages(computed_map_build.excludes.iter());
                     let cargo_set = features
                         .into_cargo_set(&cargo_opts)
                         .expect("into_cargo_set processed successfully");
@@ -595,25 +597,25 @@ pub type ComputedInnerMap<'g> =
     BTreeMap<BTreeSet<&'g str>, Vec<(PackageMetadata<'g>, StandardFeatures)>>;
 
 #[derive(Debug)]
-struct HakariOmitted<'g, 'b> {
-    omitted: &'b HashSet<&'g PackageId>,
+struct TraversalExcludes<'g, 'b> {
+    excludes: &'b HashSet<&'g PackageId>,
     hakari_package: Option<&'g PackageId>,
 }
 
-impl<'g, 'b> HakariOmitted<'g, 'b> {
+impl<'g, 'b> TraversalExcludes<'g, 'b> {
     fn iter(&self) -> impl Iterator<Item = &'g PackageId> + 'b {
-        self.omitted.iter().copied().chain(self.hakari_package)
+        self.excludes.iter().copied().chain(self.hakari_package)
     }
 
-    fn is_omitted(&self, package_id: &PackageId) -> bool {
-        self.hakari_package == Some(package_id) || self.omitted.contains(package_id)
+    fn is_excluded(&self, package_id: &PackageId) -> bool {
+        self.hakari_package == Some(package_id) || self.excludes.contains(package_id)
     }
 }
 
 /// Intermediate build state used by Hakari.
 #[derive(Debug)]
 struct ComputedMapBuild<'g, 'b> {
-    hakari_omitted: HakariOmitted<'g, 'b>,
+    excludes: TraversalExcludes<'g, 'b>,
     computed_map: ComputedMap<'g>,
 }
 
@@ -638,9 +640,9 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
         };
 
         let workspace = builder.graph.workspace();
-        let hakari_omitted = builder.make_hakari_omitted();
+        let excludes = builder.make_traversal_excludes();
         let features_only = builder.make_features_only();
-        let hakari_omitted_ref = &hakari_omitted;
+        let excludes_ref = &excludes;
         let features_only_ref = &features_only;
 
         let computed_map: ComputedMap<'g> = platforms_features
@@ -653,11 +655,11 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
                     .set_include_dev(true)
                     .set_resolver(builder.resolver)
                     .set_platform(platform)
-                    .add_omitted_packages(hakari_omitted.iter());
+                    .add_omitted_packages(excludes.iter());
 
                 workspace.par_iter().map(move |workspace_package| {
-                    if hakari_omitted_ref.is_omitted(workspace_package.id()) {
-                        // Skip this package since it was omitted.
+                    if excludes_ref.is_excluded(workspace_package.id()) {
+                        // Skip this package since it was excluded during traversal.
                         return BTreeMap::new();
                     }
 
@@ -724,7 +726,7 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
             });
 
         Self {
-            hakari_omitted,
+            excludes,
             computed_map,
         }
     }

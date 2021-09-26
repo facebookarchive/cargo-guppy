@@ -138,7 +138,7 @@
 //! * [the location of the `workspace-hack` package](HakariBuilder::new)
 //! * [platforms to simulate Cargo builds on](HakariBuilder::set_platforms)
 //! * [the version of the Cargo resolver to use](HakariBuilder::set_resolver)
-//! * [packages to be omitted from the computation](HakariBuilder::add_omitted_packages)
+//! * [packages to be excluded during computation](HakariBuilder::add_traversal_excludes)
 //!
 //! With the optional `cli-support` feature, `HakariBuilder` options can be
 //! [read from](HakariBuilder::from_summary) or [written to](HakariBuilder::to_summary)
