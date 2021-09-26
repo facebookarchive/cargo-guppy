@@ -68,7 +68,7 @@ impl<'g> HakariBuilder<'g> {
     }
 }
 
-#[cfg(all(test, feature = "summaries"))]
+#[cfg(all(test, feature = "cli-support"))]
 mod test {
     use super::*;
     use fixtures::json::JsonFixture;

@@ -139,7 +139,7 @@ include:
 * [the version of the Cargo resolver to use](HakariBuilder::set_resolver_version)
 * [packages to be omitted from the computation](HakariBuilder::add_omitted_packages)
 
-With the optional `summaries` feature, `HakariBuilder` options can be
+With the optional `cli-support` feature, `HakariBuilder` options can be
 [read from](HakariBuilder::from_summary) or [written to](HakariBuilder::to_summary)
 a file as TOML or some other format.
 

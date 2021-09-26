@@ -4,7 +4,7 @@
 //! Facilities for writing out TOML data from a Hakari map.
 
 use crate::hakari::{HakariBuilder, OutputMap};
-#[cfg(feature = "summaries")]
+#[cfg(feature = "cli-support")]
 use crate::summaries::HakariBuilderSummary;
 use camino::Utf8PathBuf;
 use cfg_if::cfg_if;
@@ -26,7 +26,7 @@ use twox_hash::XxHash64;
 pub struct HakariOutputOptions {
     pub(crate) exact_versions: bool,
     pub(crate) absolute_paths: bool,
-    #[cfg(feature = "summaries")]
+    #[cfg(feature = "cli-support")]
     pub(crate) builder_summary: bool,
 }
 
@@ -40,7 +40,7 @@ impl HakariOutputOptions {
         Self {
             exact_versions: false,
             absolute_paths: false,
-            #[cfg(feature = "summaries")]
+            #[cfg(feature = "cli-support")]
             builder_summary: false,
         }
     }
@@ -102,8 +102,8 @@ impl HakariOutputOptions {
     /// ...
     /// ```
     ///
-    /// Requires the `summaries` feature to be enabled.
-    #[cfg(feature = "summaries")]
+    /// Requires the `cli-support` feature to be enabled.
+    #[cfg(feature = "cli-support")]
     pub fn set_builder_summary(&mut self, builder_summary: bool) -> &mut Self {
         self.builder_summary = builder_summary;
         self
@@ -125,8 +125,8 @@ pub enum TomlOutError {
 
     /// An error occurred while serializing TOML.
     ///
-    /// This option is only present if the `summaries` feature is enabled.
-    #[cfg(feature = "summaries")]
+    /// This option is only present if the `cli-support` feature is enabled.
+    #[cfg(feature = "cli-support")]
     Toml {
         /// A context string for the error.
         context: Cow<'static, str>,
@@ -176,7 +176,7 @@ impl fmt::Display for TomlOutError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             TomlOutError::Platform(_) => write!(f, "while serializing platform information"),
-            #[cfg(feature = "summaries")]
+            #[cfg(feature = "cli-support")]
             TomlOutError::Toml { context, .. } => write!(f, "while serializing TOML: {}", context),
             TomlOutError::FmtWrite(_) => write!(f, "while writing to fmt::Write"),
             TomlOutError::PathWithoutHakari {
@@ -200,7 +200,7 @@ impl error::Error for TomlOutError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             TomlOutError::Platform(err) => Some(err),
-            #[cfg(feature = "summaries")]
+            #[cfg(feature = "cli-support")]
             TomlOutError::Toml { err, .. } => Some(err),
             TomlOutError::FmtWrite(err) => Some(err),
             TomlOutError::PathWithoutHakari { .. } | TomlOutError::UnrecognizedExternal { .. } => {
@@ -217,7 +217,7 @@ pub(crate) fn write_toml(
     mut out: impl fmt::Write,
 ) -> Result<(), TomlOutError> {
     cfg_if::cfg_if! {
-        if #[cfg(feature = "summaries")] {
+        if #[cfg(feature = "cli-support")] {
             if options.builder_summary {
                 let summary = HakariBuilderSummary::new(builder)?;
                 summary.write_comment(&mut out)?;
