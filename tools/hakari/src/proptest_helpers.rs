@@ -36,6 +36,7 @@ impl<'g> HakariBuilder<'g> {
             vec(Platform::strategy(any::<TargetFeatures>()), 0..4),
             any::<CargoResolverVersion>(),
             hash_set(graph.prop010_id_strategy(), 0..8),
+            hash_set(graph.prop010_id_strategy(), 0..8),
             any::<UnifyTargetHost>(),
             any::<bool>(),
         )
@@ -45,6 +46,7 @@ impl<'g> HakariBuilder<'g> {
                     platforms,
                     version,
                     traversal_excludes,
+                    final_excludes,
                     unify_target_host,
                     unify_all,
                 )| {
@@ -59,7 +61,9 @@ impl<'g> HakariBuilder<'g> {
                         .expect("all platforms are known")
                         .set_resolver(version)
                         .add_traversal_excludes(traversal_excludes)
-                        .expect("omitted packages obtained from PackageGraph should work")
+                        .expect("traversal excludes obtained from PackageGraph should work")
+                        .add_final_excludes(final_excludes)
+                        .expect("final excludes obtained from PackageGraph should work")
                         .set_unify_target_host(unify_target_host)
                         .set_unify_all(unify_all);
                     builder
