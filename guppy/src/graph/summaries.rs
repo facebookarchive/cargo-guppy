@@ -13,6 +13,7 @@ use crate::{
         feature::FeatureSet,
         DependencyDirection, PackageGraph, PackageMetadata, PackageSet, PackageSource,
     },
+    platform::PlatformSpecSummary,
     Error,
 };
 pub use guppy_summaries::*;
@@ -145,12 +146,12 @@ pub struct CargoOptionsSummary {
     pub initials_platform: InitialsPlatformSummary,
 
     /// The host platform.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub host_platform: Option<PlatformSummary>,
+    #[serde(default)]
+    pub host_platform: PlatformSpecSummary,
 
     /// The target platform.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub target_platform: Option<PlatformSummary>,
+    #[serde(default)]
+    pub target_platform: PlatformSpecSummary,
 
     /// The set of packages omitted from computations.
     #[serde(skip_serializing_if = "PackageSetSummary::is_empty", default)]
@@ -190,20 +191,8 @@ impl CargoOptionsSummary {
             initials_platform: InitialsPlatformSummary::V2 {
                 initials_platform: opts.initials_platform,
             },
-            host_platform: opts
-                .host_platform()
-                .map(PlatformSummary::new)
-                .transpose()
-                .map_err(|err| {
-                    Error::TargetSpecError("while serializing host platform".to_string(), err)
-                })?,
-            target_platform: opts
-                .target_platform()
-                .map(PlatformSummary::new)
-                .transpose()
-                .map_err(|err| {
-                    Error::TargetSpecError("while serializing target platform".to_string(), err)
-                })?,
+            host_platform: PlatformSpecSummary::new(&opts.host_platform),
+            target_platform: PlatformSpecSummary::new(&opts.target_platform),
             omitted_packages,
             features_only,
         })
@@ -226,23 +215,13 @@ impl CargoOptionsSummary {
             .set_include_dev(self.include_dev)
             .set_initials_platform(self.initials_platform.into())
             .set_host_platform(
-                self.host_platform
-                    .as_ref()
-                    .map(|platform| platform.to_platform())
-                    .transpose()
-                    .map_err(|err| {
-                        Error::TargetSpecError("parsing host platform".to_string(), err)
-                    })?,
+                self.host_platform.to_platform_spec().map_err(|err| {
+                    Error::TargetSpecError("parsing host platform".to_string(), err)
+                })?,
             )
-            .set_target_platform(
-                self.target_platform
-                    .as_ref()
-                    .map(|platform| platform.to_platform())
-                    .transpose()
-                    .map_err(|err| {
-                        Error::TargetSpecError("parsing target platform".to_string(), err)
-                    })?,
-            )
+            .set_target_platform(self.target_platform.to_platform_spec().map_err(|err| {
+                Error::TargetSpecError("parsing target platform".to_string(), err)
+            })?)
             .add_omitted_packages(omitted_packages.package_ids(DependencyDirection::Forward));
         Ok(options)
     }

@@ -3,14 +3,15 @@
 
 //! Implementations for options shared by commands.
 
-use anyhow::{anyhow, ensure};
+use anyhow::{anyhow, ensure, Context};
 use clap::arg_enum;
 use guppy::{
     graph::{
         DependencyDirection, DependencyReq, EnabledTernary, PackageGraph, PackageLink, PackageQuery,
     },
-    PackageId, Platform, TargetFeatures,
+    PackageId,
 };
+use guppy_cmdlib::string_to_platform_spec;
 use std::collections::HashSet;
 use structopt::StructOpt;
 
@@ -113,7 +114,7 @@ pub struct FilterOptions {
     pub include_build: bool,
 
     #[structopt(long)]
-    /// Target to filter, default is to match all targets
+    /// Target to filter, "current", "any" or "always" [default: any]
     pub target: Option<String>,
 }
 
@@ -122,34 +123,27 @@ impl FilterOptions {
     pub fn make_resolver<'g>(
         &'g self,
         pkg_graph: &'g PackageGraph,
-    ) -> impl Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool + 'g {
+    ) -> anyhow::Result<impl Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool + 'g> {
         let omitted_package_ids: HashSet<_> =
             self.base_opts.omitted_package_ids(pkg_graph).collect();
 
-        let platform = self.target.clone().map(|triple_str| {
-            // The features are unknown.
-            Platform::new(triple_str, TargetFeatures::Unknown).unwrap()
-        });
+        let platform_spec = string_to_platform_spec(self.target.as_deref())
+            .with_context(|| "target platform isn't known")?;
 
-        move |_, link| {
+        let ret = move |_: &PackageQuery<'g>, link| {
             // filter by the kind of dependency (--kind)
             let include_kind = self.base_opts.kind.should_traverse(&link);
 
-            let include_type = if let Some(platform) = &platform {
-                // filter out irrelevant dependencies for a specific target (--target)
-                self.eval(link, |req| {
-                    req.status().enabled_on(platform) != EnabledTernary::Disabled
-                })
-            } else {
-                // keep dependencies that are potentially enabled on any platform
-                self.eval(link, |req| req.is_present())
-            };
+            let include_type = self.eval(link, |req| {
+                req.status().enabled_on(&platform_spec.clone()) != EnabledTernary::Disabled
+            });
 
             // filter out provided edge targets (--omit-edges-into)
             let include_edge = !omitted_package_ids.contains(link.to().id());
 
             include_kind && include_type && include_edge
-        }
+        };
+        Ok(ret)
     }
 
     /// Select normal, dev, or build dependencies as requested (--include-build, --include-dev), and

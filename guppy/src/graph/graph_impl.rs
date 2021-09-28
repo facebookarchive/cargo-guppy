@@ -9,6 +9,7 @@ use crate::{
         OwnedBuildTargetId, PackageIx, PackageQuery, PackageSet,
     },
     petgraph_support::{scc::Sccs, topo::TopoWithCycles, IxBitSet},
+    platform::PlatformSpec,
     CargoMetadata, DependencyKind, Error, JsonValue, MetadataCommand, PackageId, Platform,
 };
 use camino::{Utf8Path, Utf8PathBuf};
@@ -1843,45 +1844,29 @@ impl<'g> EnabledStatus<'g> {
         }
     }
 
-    /// Returns true if this dependency is required on all platforms.
-    pub fn is_always_required(&self) -> bool {
-        self.required.is_always()
-    }
-
     /// Returns true if this dependency is never enabled on any platform.
     pub fn is_never(&self) -> bool {
         self.required.is_never() && self.optional.is_never()
     }
 
-    /// Evaluates whether this dependency is required on the given platform.
+    /// Evaluates whether this dependency is required on the given platform spec.
     ///
-    /// Returns `Unknown` if the result was unknown, which may happen if the platform's target
-    /// features are unknown.
-    pub fn required_on(&self, platform: &Platform) -> EnabledTernary {
-        self.required.enabled_on(platform)
+    /// Returns `Unknown` if the result was unknown, which may happen if evaluating against an
+    /// individual platform and its target features are unknown.
+    pub fn required_on(&self, platform_spec: &PlatformSpec) -> EnabledTernary {
+        self.required.enabled_on(platform_spec)
     }
 
-    /// Returns true if there are any platforms on which this dependency is required.
-    pub fn required_on_any(&self) -> bool {
-        !self.required.is_never()
-    }
-
-    /// Evaluates whether this dependency is enabled (required or optional) on the given platform.
+    /// Evaluates whether this dependency is enabled (required or optional) on the given platform
+    /// spec.
     ///
-    /// Returns `Unknown` if the result was unknown, which may happen if the platform's target
-    /// features are unknown.
-    pub fn enabled_on(&self, platform: &Platform) -> EnabledTernary {
-        let required = self.required.enabled_on(platform);
-        let optional = self.optional.enabled_on(platform);
+    /// Returns `Unknown` if the result was unknown, which may happen if evaluating against an
+    /// individual platform and its target features are unknown.
+    pub fn enabled_on(&self, platform_spec: &PlatformSpec) -> EnabledTernary {
+        let required = self.required.enabled_on(platform_spec);
+        let optional = self.optional.enabled_on(platform_spec);
 
         required.or(optional)
-    }
-
-    /// Returns true if there are any platforms on which this dependency is enabled (required or
-    /// optional).
-    pub fn enabled_on_any(&self) -> bool {
-        // This is the opposite of is_never.
-        !self.required.is_never() || !self.optional.is_never()
     }
 
     /// Returns the `PlatformStatus` corresponding to whether this dependency is required.
@@ -1950,12 +1935,23 @@ impl<'g> PlatformStatus<'g> {
         !self.is_never()
     }
 
-    /// Evaluates whether this dependency is enabled on the given platform.
-    pub fn enabled_on(&self, platform: &Platform) -> EnabledTernary {
-        match self {
-            PlatformStatus::Never => EnabledTernary::Disabled,
-            PlatformStatus::Always => EnabledTernary::Enabled,
-            PlatformStatus::PlatformDependent { eval } => eval.eval(platform),
+    /// Evaluates whether this dependency is enabled on the given platform spec.
+    ///
+    /// Returns `Unknown` if the result was unknown, which may happen if evaluating against an
+    /// individual platform and its target features are unknown.
+    pub fn enabled_on(&self, platform_spec: &PlatformSpec) -> EnabledTernary {
+        match (self, platform_spec) {
+            (PlatformStatus::Always, _) => EnabledTernary::Enabled,
+            (PlatformStatus::Never, _) => EnabledTernary::Disabled,
+            (PlatformStatus::PlatformDependent { .. }, PlatformSpec::Any) => {
+                EnabledTernary::Enabled
+            }
+            (PlatformStatus::PlatformDependent { eval }, PlatformSpec::Platform(platform)) => {
+                eval.eval(platform)
+            }
+            (PlatformStatus::PlatformDependent { .. }, PlatformSpec::Always) => {
+                EnabledTernary::Disabled
+            }
         }
     }
 }

@@ -15,6 +15,7 @@ use guppy::{
         feature::{feature_filter, FeatureSet, StandardFeatures},
         PackageGraph,
     },
+    platform::PlatformSpec,
     MetadataCommand, Platform, TargetFeatures,
 };
 use std::{env, path::PathBuf};
@@ -176,17 +177,12 @@ impl CargoMetadataOptions {
 /// Parse a given triple, the string "current", or "any", into a platform.
 ///
 /// TODO: This should eventually support JSON specs as well, probably.
-pub fn triple_to_platform(
-    triple: Option<&str>,
-    default_fn: impl FnOnce() -> Option<Platform>,
-) -> Result<Option<Platform>> {
-    match triple {
-        Some("current") => Ok(Some(Platform::current()?)),
-        Some("any") => Ok(None),
-        Some(triple) => Ok(Some(Platform::new(
-            triple.to_owned(),
-            TargetFeatures::Unknown,
-        )?)),
-        None => Ok(default_fn()),
+pub fn string_to_platform_spec(s: Option<&str>) -> Result<PlatformSpec> {
+    match s {
+        Some("current") => Ok(PlatformSpec::current()?),
+        Some("always") => Ok(PlatformSpec::Always),
+        Some("any") => Ok(PlatformSpec::Any),
+        Some(triple) => Ok(Platform::new(triple.to_owned(), TargetFeatures::Unknown)?.into()),
+        None => Ok(PlatformSpec::Any),
     }
 }

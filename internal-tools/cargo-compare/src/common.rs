@@ -166,8 +166,8 @@ impl GuppyCargoCommon {
         cargo_opts
             .set_resolver(version)
             .set_include_dev(self.include_dev)
-            .set_target_platform(Some(&target_platform))
-            .set_host_platform(Some(&host_platform));
+            .set_target_platform(target_platform)
+            .set_host_platform(host_platform);
         let intermediate_set = CargoSet::new_intermediate(&initials, &cargo_opts)?;
         let (target_features, host_features) = intermediate_set.target_host_sets();
 

@@ -12,6 +12,7 @@ use guppy::{
         feature::{FeatureId, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, PackageMetadata,
     },
+    platform::PlatformSpec,
     PackageId, Platform, TargetFeatures,
 };
 use rayon::prelude::*;
@@ -19,6 +20,7 @@ use std::{
     borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
+    sync::Arc,
 };
 
 /// Configures and constructs [`Hakari`](Hakari) instances.
@@ -28,7 +30,7 @@ use std::{
 pub struct HakariBuilder<'g> {
     graph: DebugIgnore<&'g PackageGraph>,
     hakari_package: Option<PackageMetadata<'g>>,
-    pub(crate) platforms: Vec<Platform>,
+    pub(crate) platforms: Vec<Arc<Platform>>,
     resolver: CargoResolverVersion,
     pub(crate) verify_mode: bool,
     traversal_excludes: HashSet<&'g PackageId>,
@@ -106,10 +108,9 @@ impl<'g> HakariBuilder<'g> {
 
     /// Sets a list of platforms for `hakari` to use.
     ///
-    /// By default, `hakari` unifies features across all platforms. This may not always be desired,
-    /// so it is possible to set a list of platforms. If the features for a particular dependency
-    /// only need to be unified on some platforms, `hakari` will output platform-specific
-    /// instructions.
+    /// By default, `hakari` unifies features that are always enabled across all platforms. If
+    /// builds are commonly performed on a few platforms, `hakari` can output platform-specific
+    /// instructions for those builds.
     ///
     /// This currently supports target triples only, without further customization around
     /// target features or flags. In the future, this may support `cfg()` expressions using
@@ -125,7 +126,7 @@ impl<'g> HakariBuilder<'g> {
     ) -> Result<&mut Self, target_spec::Error> {
         self.platforms = platforms
             .into_iter()
-            .map(|s| Platform::new(s.into(), TargetFeatures::Unknown))
+            .map(|s| Ok(Arc::new(Platform::new(s.into(), TargetFeatures::Unknown)?)))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(self)
     }
@@ -344,12 +345,14 @@ mod summaries {
                 .platforms
                 .iter()
                 .map(|triple_str| {
-                    Platform::new(triple_str.clone(), TargetFeatures::Unknown).map_err(|err| {
-                        guppy::Error::TargetSpecError(
-                            "while resolving hakari config or summary".to_owned(),
-                            err,
-                        )
-                    })
+                    let platform = Platform::new(triple_str.clone(), TargetFeatures::Unknown)
+                        .map_err(|err| {
+                            guppy::Error::TargetSpecError(
+                                "while resolving hakari config or summary".to_owned(),
+                                err,
+                            )
+                        })?;
+                    Ok(platform.into())
                 })
                 .collect::<Result<Vec<_>, _>>()?;
             let traversal_excludes = summary
@@ -493,6 +496,11 @@ impl<'g> Hakari<'g> {
     fn build(builder: HakariBuilder<'g>) -> Self {
         let graph = *builder.graph;
         let computed_map_build = ComputedMapBuild::new(&builder);
+        let platform_specs: Vec<_> = builder
+            .platforms
+            .iter()
+            .map(|platform| PlatformSpec::Platform(platform.clone()))
+            .collect();
 
         // Collect all the dependencies that need to be unified, by platform and build type.
         let mut map_build: OutputMapBuild<'g> = OutputMapBuild::new(graph);
@@ -515,15 +523,15 @@ impl<'g> Hakari<'g> {
                     };
 
                     let mut cargo_opts = CargoOptions::new();
+                    let platform_spec = match output_key.platform_idx {
+                        Some(idx) => platform_specs[idx].clone(),
+                        None => PlatformSpec::Always,
+                    };
                     // Third-party dependencies are built without including dev.
                     cargo_opts
                         .set_include_dev(false)
                         .set_initials_platform(initials_platform)
-                        .set_platform(
-                            output_key
-                                .platform_idx
-                                .map(|platform_idx| &builder.platforms[platform_idx]),
-                        )
+                        .set_platform(platform_spec)
                         .set_resolver(builder.resolver)
                         .add_omitted_packages(computed_map_build.excludes.iter());
                     let cargo_set = features
@@ -674,23 +682,26 @@ struct ComputedMapBuild<'g, 'b> {
 
 impl<'g, 'b> ComputedMapBuild<'g, 'b> {
     fn new(builder: &'b HakariBuilder<'g>) -> Self {
-        let platforms_features: Vec<_> = if builder.platforms.is_empty() {
-            StandardFeatures::VALUES
+        // Features for the "always" platform spec.
+        let always_features = StandardFeatures::VALUES
+            .iter()
+            .map(|&features| (None, PlatformSpec::Always, features));
+
+        // Features for specified platforms.
+        let specified_features = StandardFeatures::VALUES.iter().flat_map(|&features| {
+            builder
+                .platforms
                 .iter()
-                .map(|&features| (None, None, features))
-                .collect()
-        } else {
-            StandardFeatures::VALUES
-                .iter()
-                .flat_map(|&features| {
-                    builder
-                        .platforms
-                        .iter()
-                        .enumerate()
-                        .map(move |(idx, platform)| (Some(idx), Some(platform), features))
+                .enumerate()
+                .map(move |(idx, platform)| {
+                    (
+                        Some(idx),
+                        PlatformSpec::Platform(platform.clone()),
+                        features,
+                    )
                 })
-                .collect()
-        };
+        });
+        let platforms_features: Vec<_> = always_features.chain(specified_features).collect();
 
         let workspace = builder.graph.workspace();
         let excludes = builder.make_traversal_excludes();
@@ -702,12 +713,12 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
             .into_par_iter()
             // The cargo_set computation in the inner iterator is the most expensive part of the
             // process, so use flat_map instead of flat_map_iter.
-            .flat_map(|(platform_idx, platform, feature_filter)| {
+            .flat_map(|(platform_idx, platform_spec, feature_filter)| {
                 let mut cargo_options = CargoOptions::new();
                 cargo_options
                     .set_include_dev(true)
                     .set_resolver(builder.resolver)
-                    .set_platform(platform)
+                    .set_platform(platform_spec)
                     .add_omitted_packages(excludes.iter());
 
                 workspace.par_iter().map(move |workspace_package| {

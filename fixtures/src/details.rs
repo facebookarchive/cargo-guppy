@@ -15,6 +15,7 @@ use guppy::{
         BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
         PackageGraph, PackageLink, PackageMetadata, PackageSource, Workspace,
     },
+    platform::PlatformSpec,
     DependencyKind, PackageId, Platform, Version,
 };
 use pretty_assertions::assert_eq;
@@ -524,14 +525,18 @@ impl LinkDetails {
     }
 
     pub fn assert_metadata(&self, link: PackageLink<'_>, msg: &str) {
-        let required_enabled = |status: EnabledStatus<'_>, platform: &Platform| {
-            (status.required_on(platform), status.enabled_on(platform))
+        let required_enabled = |status: EnabledStatus<'_>, platform_spec: &PlatformSpec| {
+            (
+                status.required_on(platform_spec),
+                status.enabled_on(platform_spec),
+            )
         };
 
         for (dep_kind, platform, results) in &self.platform_results {
+            let platform_spec = platform.clone().into();
             let req = link.req_for_kind(*dep_kind);
             assert_eq!(
-                required_enabled(req.status(), platform),
+                required_enabled(req.status(), &platform_spec),
                 results.status,
                 "{}: for platform '{}', kind {}, status is correct",
                 msg,
@@ -539,7 +544,7 @@ impl LinkDetails {
                 dep_kind,
             );
             assert_eq!(
-                required_enabled(req.default_features(), platform),
+                required_enabled(req.default_features(), &platform_spec),
                 results.default_features,
                 "{}: for platform '{}', kind {}, default features is correct",
                 msg,
@@ -548,7 +553,7 @@ impl LinkDetails {
             );
             for (feature, status) in &results.feature_statuses {
                 assert_eq!(
-                    required_enabled(req.feature_status(feature), platform),
+                    required_enabled(req.feature_status(feature), &platform_spec),
                     *status,
                     "{}: for platform '{}', kind {}, feature '{}' has correct status",
                     msg,

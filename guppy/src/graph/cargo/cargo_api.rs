@@ -7,13 +7,13 @@ use crate::{
         feature::{FeatureGraph, FeatureSet},
         DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
+    platform::PlatformSpec,
     sorted_set::SortedSet,
-    Error, Obs, PackageId,
+    Error, PackageId,
 };
 use petgraph::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, fmt};
-use target_spec::Platform;
 
 /// Options for queries which simulate what Cargo does.
 ///
@@ -24,8 +24,8 @@ pub struct CargoOptions<'a> {
     pub(crate) include_dev: bool,
     pub(crate) initials_platform: InitialsPlatform,
     // Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.
-    pub(crate) host_platform: Option<Obs<'a, Platform>>,
-    pub(crate) target_platform: Option<Obs<'a, Platform>>,
+    pub(crate) host_platform: PlatformSpec,
+    pub(crate) target_platform: PlatformSpec,
     pub(crate) omitted_packages: HashSet<&'a PackageId>,
 }
 
@@ -44,8 +44,8 @@ impl<'a> CargoOptions<'a> {
             resolver: CargoResolverVersion::V1,
             include_dev: false,
             initials_platform: InitialsPlatform::Standard,
-            host_platform: None,
-            target_platform: None,
+            host_platform: PlatformSpec::Any,
+            target_platform: PlatformSpec::Any,
             omitted_packages: HashSet::new(),
         }
     }
@@ -79,58 +79,23 @@ impl<'a> CargoOptions<'a> {
         self
     }
 
-    /// Sets both the target and host platforms to the provided one, or to evaluate against any
-    /// platform if `None`.
-    ///
-    /// This method accepts an owned `Platform`, a borrowed `&'a Platform` or a shared
-    /// `Arc<Platform>`.
-    ///
-    /// ### Examples
-    ///
-    /// ```
-    /// use guppy::graph::cargo::CargoOptions;
-    /// use guppy::Platform;
-    /// use std::sync::Arc;
-    ///
-    /// let platform = Platform::current().expect("current platform is known");
-    ///
-    /// // Borrowed platform.
-    /// let _ = CargoOptions::new().set_platform(Some(&platform));
-    ///
-    /// // Owned platform.
-    /// let _ = CargoOptions::new().set_platform(Some(platform.clone()));
-    ///
-    /// // Shared platform.
-    /// let _ = CargoOptions::new().set_platform(Some(Arc::new(platform)));
-    /// ```
-    pub fn set_platform(&mut self, platform: Option<impl Into<Obs<'a, Platform>>>) -> &mut Self {
-        let platform = Self::convert_platform(platform);
-        self.target_platform = platform.clone();
-        self.host_platform = platform;
+    /// Sets both the target and host platforms to the provided spec.
+    pub fn set_platform(&mut self, platform_spec: impl Into<PlatformSpec>) -> &mut Self {
+        let platform_spec = platform_spec.into();
+        self.target_platform = platform_spec.clone();
+        self.host_platform = platform_spec;
         self
     }
 
-    /// Sets the target platform to the provided one, or to evaluate against any platform if `None`.
-    ///
-    /// This method accepts an owned `Platform`, a borrowed `&'a Platform` or a shared
-    /// `Arc<Platform>`.
-    pub fn set_target_platform(
-        &mut self,
-        target_platform: Option<impl Into<Obs<'a, Platform>>>,
-    ) -> &mut Self {
-        self.target_platform = Self::convert_platform(target_platform);
+    /// Sets the target platform to the provided spec.
+    pub fn set_target_platform(&mut self, target_platform: impl Into<PlatformSpec>) -> &mut Self {
+        self.target_platform = target_platform.into();
         self
     }
 
-    /// Sets the host platform to the provided one, or to evaluate against any platform if `None`.
-    ///
-    /// This method accepts an owned `Platform`, a borrowed `&'a Platform` or a shared
-    /// `Arc<Platform>`.
-    pub fn set_host_platform(
-        &mut self,
-        host_platform: Option<impl Into<Obs<'a, Platform>>>,
-    ) -> &mut Self {
-        self.host_platform = Self::convert_platform(host_platform);
+    /// Sets the host platform to the provided spec.
+    pub fn set_host_platform(&mut self, host_platform: impl Into<PlatformSpec>) -> &mut Self {
+        self.host_platform = host_platform.into();
         self
     }
 
@@ -146,24 +111,6 @@ impl<'a> CargoOptions<'a> {
     ) -> &mut Self {
         self.omitted_packages.extend(package_ids);
         self
-    }
-
-    // ---
-    // Helper methods
-    // ---
-
-    pub(crate) fn target_platform(&self) -> Option<&Platform> {
-        self.target_platform.as_deref()
-    }
-
-    pub(crate) fn host_platform(&self) -> Option<&Platform> {
-        self.host_platform.as_deref()
-    }
-
-    fn convert_platform(
-        platform: Option<impl Into<Obs<'a, Platform>>>,
-    ) -> Option<Obs<'a, Platform>> {
-        platform.map(|platform| platform.into())
     }
 }
 

@@ -244,16 +244,16 @@ pub(crate) fn write_toml(
     });
 
     for (key, vals) in output_map {
-        let cfg_str = match key.platform_idx {
-            Some(idx) => builder.platforms[idx].triple_str(),
-            None => "'cfg(all())'",
+        let target_str = match key.platform_idx {
+            Some(idx) => format!("target.{}.", builder.platforms[idx].triple_str()),
+            None => "".to_owned(),
         };
         let dep_str = match key.build_platform {
             BuildPlatform::Target => "dependencies",
             BuildPlatform::Host => "build-dependencies",
         };
 
-        writeln!(out, "[target.{}.{}]", cfg_str, dep_str)?;
+        writeln!(out, "[{}{}]", target_str, dep_str)?;
 
         for (dep, all_features) in vals.values() {
             // We'd ideally use serde + toml but it doesn't support inline tables. Ugh.

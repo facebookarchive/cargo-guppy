@@ -94,9 +94,9 @@ mod dependency_kind;
 pub mod errors;
 pub mod graph;
 mod metadata_command;
-mod obs;
 mod package_id;
 pub(crate) mod petgraph_support;
+pub mod platform;
 pub(crate) mod sorted_set;
 #[cfg(test)]
 mod unit_tests;
@@ -104,7 +104,6 @@ mod unit_tests;
 pub use dependency_kind::*;
 pub use errors::Error;
 pub use metadata_command::*;
-pub use obs::*;
 pub use package_id::PackageId;
 
 // Public re-exports for upstream crates used in APIs. The no_inline ensures that they show up as
