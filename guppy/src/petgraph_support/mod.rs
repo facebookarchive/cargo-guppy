@@ -21,7 +21,20 @@ pub fn edge_triple<ER: EdgeRef>(edge_ref: ER) -> (ER::NodeId, ER::NodeId, ER::Ed
     (edge_ref.source(), edge_ref.target(), edge_ref.id())
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct IxBitSet(pub FixedBitSet);
+
+impl IxBitSet {
+    #[inline]
+    pub(crate) fn with_capacity(bits: usize) -> Self {
+        Self(FixedBitSet::with_capacity(bits))
+    }
+
+    #[inline]
+    pub(crate) fn insert_node_ix<Ix: IndexType>(&mut self, bit: NodeIndex<Ix>) {
+        self.0.insert(bit.index());
+    }
+}
 
 impl From<IxBitSet> for FixedBitSet {
     fn from(ix_set: IxBitSet) -> Self {
@@ -38,5 +51,12 @@ impl<Ix: IndexType> FromIterator<NodeIndex<Ix>> for IxBitSet {
 impl<Ix: IndexType> FromIterator<EdgeIndex<Ix>> for IxBitSet {
     fn from_iter<T: IntoIterator<Item = EdgeIndex<Ix>>>(iter: T) -> Self {
         IxBitSet(iter.into_iter().map(|edge_ix| edge_ix.index()).collect())
+    }
+}
+
+impl<Ix: IndexType> Extend<NodeIndex<Ix>> for IxBitSet {
+    fn extend<T: IntoIterator<Item = NodeIndex<Ix>>>(&mut self, iter: T) {
+        self.0
+            .extend(iter.into_iter().map(|node_ix| node_ix.index()));
     }
 }

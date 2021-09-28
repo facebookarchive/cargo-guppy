@@ -230,6 +230,101 @@ impl<'g> FeatureSet<'g> {
         res
     }
 
+    /// Returns a `PackageSet` on which a filter has been applied.
+    ///
+    /// Filters out all values for which the callback returns false.
+    ///
+    /// ## Cycles
+    ///
+    /// For packages within a dependency cycle, the callback will be called in non-dev order. When
+    /// the direction is forward, if package Foo has a dependency on Bar, and Bar has a cyclic
+    /// dev-dependency on Foo, then Foo is returned before Bar.
+    pub fn filter(
+        &self,
+        direction: DependencyDirection,
+        mut callback: impl FnMut(FeatureMetadata<'g>) -> bool,
+    ) -> Self {
+        let graph = self.graph;
+        let included: IxBitSet = self
+            .features(direction)
+            .filter_map(move |feature| {
+                let feature_ix = feature.feature_ix();
+                if callback(feature) {
+                    Some(feature_ix)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Self::from_included(*graph, included)
+    }
+
+    /// Partitions this `PackageSet` into two.
+    ///
+    /// The first `PackageSet` contains packages for which the callback returned true, and the
+    /// second one contains packages for which the callback returned false.
+    ///
+    /// ## Cycles
+    ///
+    /// For packages within a dependency cycle, the callback will be called in non-dev order. When
+    /// the direction is forward, if package Foo has a dependency on Bar, and Bar has a cyclic
+    /// dev-dependency on Foo, then Foo is returned before Bar.
+    pub fn partition(
+        &self,
+        direction: DependencyDirection,
+        mut callback: impl FnMut(FeatureMetadata<'g>) -> bool,
+    ) -> (Self, Self) {
+        let graph = self.graph;
+        let mut left = IxBitSet::with_capacity(self.core.included.len());
+        let mut right = left.clone();
+
+        self.features(direction).for_each(|feature| {
+            let feature_ix = feature.feature_ix();
+            match callback(feature) {
+                true => left.insert_node_ix(feature_ix),
+                false => right.insert_node_ix(feature_ix),
+            }
+        });
+        (
+            Self::from_included(*graph, left),
+            Self::from_included(*graph, right),
+        )
+    }
+
+    /// Performs filtering and partitioning at the same time.
+    ///
+    /// The first `PackageSet` contains packages for which the callback returned `Some(true)`, and
+    /// the second one contains packages for which the callback returned `Some(false)`. Packages
+    /// for which the callback returned `None` are dropped.
+    ///
+    /// ## Cycles
+    ///
+    /// For packages within a dependency cycle, the callback will be called in non-dev order. When
+    /// the direction is forward, if package Foo has a dependency on Bar, and Bar has a cyclic
+    /// dev-dependency on Foo, then Foo is returned before Bar.
+    pub fn filter_partition(
+        &self,
+        direction: DependencyDirection,
+        mut callback: impl FnMut(FeatureMetadata<'g>) -> Option<bool>,
+    ) -> (Self, Self) {
+        let graph = self.graph;
+        let mut left = IxBitSet::with_capacity(self.core.included.len());
+        let mut right = left.clone();
+
+        self.features(direction).for_each(|feature| {
+            let feature_ix = feature.feature_ix();
+            match callback(feature) {
+                Some(true) => left.insert_node_ix(feature_ix),
+                Some(false) => right.insert_node_ix(feature_ix),
+                None => {}
+            }
+        });
+        (
+            Self::from_included(*graph, left),
+            Self::from_included(*graph, right),
+        )
+    }
+
     // ---
     // Queries around packages
     // ---
