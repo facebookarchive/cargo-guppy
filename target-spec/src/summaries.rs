@@ -24,7 +24,6 @@ pub struct PlatformSummary {
     pub triple: String,
 
     /// The target features used.
-    #[serde(with = "target_features_impl", default)]
     pub target_features: TargetFeaturesSummary,
 
     /// The flags enabled.
@@ -62,8 +61,7 @@ impl PlatformSummary {
 /// This type can be serialized and deserialized using `serde`.
 ///
 /// Requires the `summaries` feature to be enabled.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case", untagged)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum TargetFeaturesSummary {
     /// The target features are unknown.
@@ -148,7 +146,7 @@ mod platform_impl {
         Full {
             triple: String,
             /// The target features used.
-            #[serde(with = "target_features_impl", default)]
+            #[serde(default)]
             target_features: TargetFeaturesSummary,
             /// The flags enabled.
             #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
@@ -159,38 +157,41 @@ mod platform_impl {
 
 mod target_features_impl {
     use super::*;
-    use serde::{de::Error, Deserializer, Serializer};
+    use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-    pub fn serialize<S>(
-        target_features: &TargetFeaturesSummary,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match target_features {
-            TargetFeaturesSummary::Unknown => "unknown".serialize(serializer),
-            TargetFeaturesSummary::All => "all".serialize(serializer),
-            TargetFeaturesSummary::Features(features) => features.serialize(serializer),
+    impl Serialize for TargetFeaturesSummary {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            match self {
+                TargetFeaturesSummary::Unknown => "unknown".serialize(serializer),
+                TargetFeaturesSummary::All => "all".serialize(serializer),
+                TargetFeaturesSummary::Features(features) => features.serialize(serializer),
+            }
         }
     }
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<TargetFeaturesSummary, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let d = TargetFeaturesDeserialize::deserialize(deserializer)?;
-        match d {
-            TargetFeaturesDeserialize::String(target_features) => match target_features.as_str() {
-                "unknown" => Ok(TargetFeaturesSummary::Unknown),
-                "all" => Ok(TargetFeaturesSummary::All),
-                other => Err(D::Error::custom(format!(
-                    "unknown string for target features: {}",
-                    other,
-                ))),
-            },
-            TargetFeaturesDeserialize::List(target_features) => {
-                Ok(TargetFeaturesSummary::Features(target_features))
+    impl<'de> Deserialize<'de> for TargetFeaturesSummary {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let d = TargetFeaturesDeserialize::deserialize(deserializer)?;
+            match d {
+                TargetFeaturesDeserialize::String(target_features) => {
+                    match target_features.as_str() {
+                        "unknown" => Ok(TargetFeaturesSummary::Unknown),
+                        "all" => Ok(TargetFeaturesSummary::All),
+                        other => Err(D::Error::custom(format!(
+                            "unknown string for target features: {}",
+                            other,
+                        ))),
+                    }
+                }
+                TargetFeaturesDeserialize::List(target_features) => {
+                    Ok(TargetFeaturesSummary::Features(target_features))
+                }
             }
         }
     }
