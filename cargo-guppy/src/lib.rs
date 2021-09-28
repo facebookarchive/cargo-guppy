@@ -55,7 +55,7 @@ use guppy::{
     PackageId,
 };
 use guppy_cmdlib::{
-    triple_to_platform, CargoMetadataOptions, CargoResolverOpts, PackagesAndFeatures,
+    string_to_platform_spec, CargoMetadataOptions, CargoResolverOpts, PackagesAndFeatures,
 };
 use std::{
     borrow::Cow,
@@ -137,7 +137,7 @@ pub fn cmd_dups(opts: &DupsOptions) -> Result<(), anyhow::Error> {
     let command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
-    let resolver = opts.filter_opts.make_resolver(&pkg_graph);
+    let resolver = opts.filter_opts.make_resolver(&pkg_graph)?;
     let selection = pkg_graph.query_workspace();
 
     let mut dupe_map: HashMap<_, Vec<_>> = HashMap::new();
@@ -204,8 +204,8 @@ pub struct ResolveCargoOptions {
 }
 
 pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error> {
-    let target_platform = triple_to_platform(opts.target_platform.as_deref(), || None)?;
-    let host_platform = triple_to_platform(opts.host_platform.as_deref(), || None)?;
+    let target_platform = string_to_platform_spec(opts.target_platform.as_deref())?;
+    let host_platform = string_to_platform_spec(opts.host_platform.as_deref())?;
     let command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
@@ -214,8 +214,8 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error
         .set_include_dev(opts.resolver_opts.include_dev)
         .set_resolver(opts.resolver_opts.resolver_version)
         .set_initials_platform(opts.resolver_opts.initials_platform)
-        .set_target_platform(target_platform.as_ref())
-        .set_host_platform(host_platform.as_ref())
+        .set_target_platform(target_platform)
+        .set_host_platform(host_platform)
         .add_omitted_packages(opts.base_filter_opts.omitted_package_ids(&pkg_graph));
 
     let (initials, features_only) = opts.pf.make_feature_sets(&pkg_graph)?;
@@ -323,7 +323,7 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
     let pkg_graph = command.build_graph()?;
 
     let query = options.query_opts.apply(&pkg_graph)?;
-    let resolver = options.filter_opts.make_resolver(&pkg_graph);
+    let resolver = options.filter_opts.make_resolver(&pkg_graph)?;
     let package_set = query.resolve_with_fn(resolver);
 
     for package_id in package_set.package_ids(options.output_direction) {
@@ -370,7 +370,7 @@ pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Erro
     let command = options.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
-    let resolver = options.filter_opts.make_resolver(&pkg_graph);
+    let resolver = options.filter_opts.make_resolver(&pkg_graph)?;
 
     let mut dep_cache = pkg_graph.new_depends_cache();
 

@@ -12,6 +12,16 @@ use crate::{Error, Platform, TargetFeatures};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::BTreeSet};
 
+impl Platform {
+    /// Converts this `Platform` to a serializable form.
+    ///
+    /// Requires the `summaries` feature to be enabled.
+    #[inline]
+    pub fn to_summary(&self) -> PlatformSummary {
+        PlatformSummary::new(self)
+    }
+}
+
 /// An owned, serializable version of `Platform`.
 ///
 /// This structure can be serialized and deserialized using `serde`.
@@ -33,14 +43,12 @@ pub struct PlatformSummary {
 
 impl PlatformSummary {
     /// Creates a new `PlatformSummary` instance from a platform.
-
-    pub fn new(platform: &Platform) -> Result<Self, Error> {
-        // The error branch is unused but left available for potential future uses.
-        Ok(Self {
+    pub fn new(platform: &Platform) -> Self {
+        Self {
             triple: platform.triple_str().to_string(),
             target_features: TargetFeaturesSummary::new(platform.target_features()),
             flags: platform.flags().map(|flag| flag.to_string()).collect(),
-        })
+        }
     }
 
     /// Converts `self` to a `Platform`.
@@ -294,7 +302,7 @@ mod proptests {
     proptest! {
         #[test]
         fn summary_roundtrip(platform in Platform::strategy(any::<TargetFeatures>())) {
-            let summary = PlatformSummary::new(&platform).expect("Platform::strategy does not generate custom platforms");
+            let summary = PlatformSummary::new(&platform);
             let serialized = toml::ser::to_string(&summary).expect("serialization succeeded");
 
             let deserialized: PlatformSummary = toml::from_str(&serialized).expect("deserialization succeeded");

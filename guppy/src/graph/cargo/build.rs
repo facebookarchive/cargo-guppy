@@ -9,12 +9,12 @@ use crate::{
         feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures},
         DependencyDirection, EnabledTernary, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
+    platform::PlatformSpec,
     sorted_set::SortedSet,
     DependencyKind, Error,
 };
 use fixedbitset::FixedBitSet;
 use petgraph::{prelude::*, visit::VisitMap};
-use target_spec::Platform;
 
 pub(super) struct CargoSetBuildState<'a> {
     opts: &'a CargoOptions<'a>,
@@ -151,7 +151,7 @@ impl<'a> CargoSetBuildState<'a> {
         let is_enabled = |feature_set: &FeatureSet<'_>,
                           link: &PackageLink<'_>,
                           kind: DependencyKind,
-                          platform: Option<&Platform>| {
+                          platform_spec: &PlatformSpec| {
             let (from, to) = link.endpoints();
             let req_status = link.req_for_kind(kind).status();
             // Check the complete set to figure out whether we look at required_on or
@@ -171,15 +171,10 @@ impl<'a> CargoSetBuildState<'a> {
                     false
                 });
 
-            match (consider_optional, platform) {
-                (true, Some(platform)) => {
-                    req_status.enabled_on(platform) != EnabledTernary::Disabled
-                }
-                (true, None) => req_status.enabled_on_any(),
-                (false, Some(platform)) => {
-                    req_status.required_on(platform) != EnabledTernary::Disabled
-                }
-                (false, None) => req_status.required_on_any(),
+            if consider_optional {
+                req_status.enabled_on(platform_spec) != EnabledTernary::Disabled
+            } else {
+                req_status.required_on(platform_spec) != EnabledTernary::Disabled
             }
         };
 
@@ -190,8 +185,8 @@ impl<'a> CargoSetBuildState<'a> {
 
         // 2. Figure out what packages will be included on the target platform, i.e. normal + dev
         // (if requested).
-        let target_platform = self.opts.target_platform();
-        let host_platform = self.opts.host_platform();
+        let target_platform = &self.opts.target_platform;
+        let host_platform = &self.opts.host_platform;
 
         let target_packages = target_query.resolve_with_fn(|query, link| {
             let (from, to) = link.endpoints();
@@ -363,16 +358,11 @@ impl<'a> CargoSetBuildState<'a> {
             })
             .collect();
 
-        let is_enabled = |link: &CrossLink<'_>,
-                          kind: DependencyKind,
-                          platform: Option<&Platform>| {
-            let platform_status = link.status_for_kind(kind);
-
-            match platform {
-                Some(platform) => platform_status.enabled_on(platform) != EnabledTernary::Disabled,
-                None => !platform_status.is_never(),
-            }
-        };
+        let is_enabled =
+            |link: &CrossLink<'_>, kind: DependencyKind, platform_spec: &PlatformSpec| {
+                let platform_status = link.status_for_kind(kind);
+                platform_status.enabled_on(platform_spec) != EnabledTernary::Disabled
+            };
 
         let target_query = if self.opts.initials_platform == InitialsPlatform::Host {
             // Empty query on the target.
@@ -385,8 +375,8 @@ impl<'a> CargoSetBuildState<'a> {
         let target_query_2 = target_query.clone();
 
         // 1. Perform a feature query for the target.
-        let target_platform = self.opts.target_platform();
-        let host_platform = self.opts.host_platform();
+        let target_platform = &self.opts.target_platform;
+        let host_platform = &self.opts.host_platform;
         let target = target_query.resolve_with_fn(|query, link| {
             let (from, to) = link.endpoints();
 

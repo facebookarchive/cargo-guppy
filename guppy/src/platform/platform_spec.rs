@@ -1,0 +1,64 @@
+// Copyright (c) The cargo-guppy Contributors
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+#[allow(unused_imports)]
+use crate::graph::EnabledTernary;
+use crate::{Platform, TargetSpecError};
+use std::sync::Arc;
+
+/// A specifier for a single platform, or for a range of platforms.
+///
+/// Some uses of `guppy` care about a single platform, and others care about queries against the
+/// intersection of all hypothetical platforms, or against a union of any of them. `PlatformSpec`
+/// handles the
+///
+/// `PlatformSpec` does not currently support expressions, but it might in the future, using an
+/// [SMT solver](https://en.wikipedia.org/wiki/Satisfiability_modulo_theories).
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub enum PlatformSpec {
+    /// The intersection of all platforms.
+    ///
+    /// Dependency queries performed against this variant will return [`EnabledTernary::Enabled`] if
+    /// and only if a dependency is not platform-dependent. They can never return
+    /// [`EnabledTernary::Unknown`].
+    ///
+    /// This variant does not currently understand expressions that always evaluate to true
+    /// (tautologies), like `cfg(any(unix, not(unix)))` or `cfg(all())`. In the future, an SMT
+    /// solver would be able to handle such expressions.
+    Always,
+
+    /// An individual platform.
+    ///
+    /// Dependency queries performed against this variant will return [`EnabledTernary::Enabled`] if
+    /// and only if a dependency is enabled on this platform. They may also return
+    /// [`EnabledTernary::Unknown`] if a platform is not enabled.
+    Platform(Arc<Platform>),
+
+    /// The union of all platforms.
+    ///
+    /// Dependency queries performed against this variant will return [`EnabledTernary::Enabled`] if
+    /// a dependency is enabled on any platform.
+    ///
+    /// This variant does not currently understand expressions that always evaluate to false
+    /// (contradictions), like `cfg(all(unix, not(unix)))` or `cfg(any())`. In the future, an SMT
+    /// solver would be able to handle such expressions.
+    Any,
+}
+
+impl PlatformSpec {
+    /// Returns a `PlatformSpec` corresponding to the current platform, as detected at build time.
+    ///
+    /// Returns an error if the current platform was unknown to the version of `target-spec` in
+    /// use.
+    pub fn current() -> Result<Self, TargetSpecError> {
+        Ok(PlatformSpec::Platform(Arc::new(Platform::current()?)))
+    }
+}
+
+impl From<Platform> for PlatformSpec {
+    #[inline]
+    fn from(platform: Platform) -> Self {
+        PlatformSpec::Platform(Arc::new(platform))
+    }
+}

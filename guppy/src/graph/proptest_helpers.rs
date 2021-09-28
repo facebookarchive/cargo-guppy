@@ -6,16 +6,15 @@ use crate::{
         cargo::{CargoOptions, CargoResolverVersion, InitialsPlatform},
         PackageGraph, PackageLink, PackageQuery, PackageResolver, Workspace,
     },
+    platform::PlatformSpec,
     PackageId,
 };
 use fixedbitset::FixedBitSet;
 use petgraph::{prelude::*, visit::VisitMap};
 use proptest::{
     collection::{hash_set, vec},
-    option,
     prelude::*,
 };
-use target_spec::{Platform, TargetFeatures};
 
 /// ## Helpers for property testing
 ///
@@ -70,15 +69,13 @@ impl PackageGraph {
     ///
     /// Requires the `proptest1` feature to be enabled.
     pub fn prop010_cargo_options_strategy(&self) -> impl Strategy<Value = CargoOptions<'_>> {
-        let target_platform = option::of(Platform::strategy(any::<TargetFeatures>()));
-        let host_platform = option::of(Platform::strategy(any::<TargetFeatures>()));
         let omitted_packages = hash_set(self.prop010_id_strategy(), 0..4);
         (
             any::<CargoResolverVersion>(),
             any::<bool>(),
             any::<InitialsPlatform>(),
-            target_platform,
-            host_platform,
+            any::<PlatformSpec>(),
+            any::<PlatformSpec>(),
             omitted_packages,
         )
             .prop_map(

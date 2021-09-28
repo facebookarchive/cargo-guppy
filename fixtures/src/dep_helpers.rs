@@ -8,7 +8,8 @@ use guppy::{
         DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageLinkPtrs,
         PackageMetadata, PackageQuery, PackageSet,
     },
-    DependencyKind, Error, PackageId, Platform,
+    platform::PlatformSpec,
+    DependencyKind, Error, PackageId,
 };
 use pretty_assertions::assert_eq;
 use std::{
@@ -348,7 +349,7 @@ pub(crate) fn assert_all_links(graph: &PackageGraph, direction: DependencyDirect
 }
 
 fn assert_enabled_status_is_known(req: DependencyReq<'_>, msg: &str) {
-    let current_platform = Platform::current().expect("current platform is known");
+    let current_platform = PlatformSpec::current().expect("current platform is known");
     assert!(
         req.status().enabled_on(&current_platform).is_known(),
         "{}: enabled status known for current platform",

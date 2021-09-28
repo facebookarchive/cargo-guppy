@@ -16,7 +16,8 @@ use guppy::{
         feature::{FeatureFilter, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, PackageMetadata, PackageSet, Workspace,
     },
-    PackageId, Platform,
+    platform::PlatformSpec,
+    PackageId,
 };
 use itertools::Itertools;
 use petgraph::{graphmap::GraphMap, Directed};
@@ -149,9 +150,9 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// * the host and target platforms are set to the current platform
     pub fn default_cargo_options() -> CargoOptions<'static> {
         let mut options = CargoOptions::new();
-        options.set_include_dev(true).set_platform(Some(
-            Platform::current().expect("current platform is unknown"),
-        ));
+        options
+            .set_include_dev(true)
+            .set_platform(PlatformSpec::current().expect("current platform is unknown"));
         options
     }
 
