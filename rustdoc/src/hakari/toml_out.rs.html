@@ -503,6 +503,10 @@
 <span id="503">503</span>
 <span id="504">504</span>
 <span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -510,7 +514,7 @@
 <span class="doccomment">//! Facilities for writing out TOML data from a Hakari map.</span>
 
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::hakari</span>::{<span class="ident">HakariBuilder</span>, <span class="ident">OutputMap</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::summaries::HakariBuilderSummary</span>;
 <span class="kw">use</span> <span class="ident">camino::Utf8PathBuf</span>;
 <span class="kw">use</span> <span class="ident">cfg_if::cfg_if</span>;
@@ -529,14 +533,14 @@
 
 <span class="doccomment">/// Options for Hakari TOML output.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TomlOptions</span> {
-    <span class="ident">exact_versions</span>: <span class="ident">bool</span>,
-    <span class="ident">absolute_paths</span>: <span class="ident">bool</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
-    <span class="ident">builder_summary</span>: <span class="ident">bool</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HakariOutputOptions</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">exact_versions</span>: <span class="ident">bool</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">absolute_paths</span>: <span class="ident">bool</span>,
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">builder_summary</span>: <span class="ident">bool</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">TomlOptions</span> {
+<span class="kw">impl</span> <span class="ident">HakariOutputOptions</span> {
     <span class="doccomment">/// Creates a new instance with default settings.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The default settings are:</span>
@@ -546,7 +550,7 @@
         <span class="self">Self</span> {
             <span class="ident">exact_versions</span>: <span class="bool-val">false</span>,
             <span class="ident">absolute_paths</span>: <span class="bool-val">false</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
             <span class="ident">builder_summary</span>: <span class="bool-val">false</span>,
         }
     }
@@ -603,20 +607,20 @@
     <span class="doccomment">/// The options are output as a header in the Hakari section:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```toml</span>
-    <span class="doccomment">/// # version = &quot;v1&quot;</span>
-    <span class="doccomment">/// # verify-mode = true</span>
+    <span class="doccomment">/// # resolver = &quot;2&quot;</span>
+    <span class="doccomment">/// # platforms = [...]</span>
     <span class="doccomment">/// ...</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Requires the `summaries` feature to be enabled.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+    <span class="doccomment">/// Requires the `cli-support` feature to be enabled.</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_builder_summary</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">builder_summary</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">builder_summary</span> <span class="op">=</span> <span class="ident">builder_summary</span>;
         <span class="self">self</span>
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TomlOptions</span> {
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">HakariOutputOptions</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span><span class="ident">::new</span>()
     }
@@ -631,8 +635,8 @@
 
     <span class="doccomment">/// An error occurred while serializing TOML.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// This option is only present if the `summaries` feature is enabled.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+    <span class="doccomment">/// This option is only present if the `cli-support` feature is enabled.</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
     <span class="ident">Toml</span> {
         <span class="doccomment">/// A context string for the error.</span>
         <span class="ident">context</span>: <span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">str</span><span class="op">&gt;</span>,
@@ -682,7 +686,7 @@
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="ident">TomlOutError::Platform</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;while serializing platform information&quot;</span>),
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
             <span class="ident">TomlOutError::Toml</span> { <span class="ident">context</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;while serializing TOML: {}&quot;</span>, <span class="ident">context</span>),
             <span class="ident">TomlOutError::FmtWrite</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;while writing to fmt::Write&quot;</span>),
             <span class="ident">TomlOutError::PathWithoutHakari</span> {
@@ -706,7 +710,7 @@
     <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="ident">TomlOutError::Platform</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>),
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
             <span class="ident">TomlOutError::Toml</span> { <span class="ident">err</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>),
             <span class="ident">TomlOutError::FmtWrite</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">err</span>),
             <span class="ident">TomlOutError::PathWithoutHakari</span> { .. } <span class="op">|</span> <span class="ident">TomlOutError::UnrecognizedExternal</span> { .. } <span class="op">=</span><span class="op">&gt;</span> {
@@ -719,11 +723,11 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">write_toml</span>(
     <span class="ident">builder</span>: <span class="kw-2">&amp;</span><span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">output_map</span>: <span class="kw-2">&amp;</span><span class="ident">OutputMap</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">TomlOptions</span>,
+    <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">HakariOutputOptions</span>,
     <span class="kw-2">mut</span> <span class="ident">out</span>: <span class="kw">impl</span> <span class="ident">fmt::Write</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TomlOutError</span><span class="op">&gt;</span> {
     <span class="macro">cfg_if::cfg_if!</span> {
-        <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span> {
+        <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span> {
             <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">builder_summary</span> {
                 <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="ident">HakariBuilderSummary::new</span>(<span class="ident">builder</span>)<span class="question-mark">?</span>;
                 <span class="ident">summary</span>.<span class="ident">write_comment</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>)<span class="question-mark">?</span>;
@@ -750,33 +754,32 @@
     });
 
     <span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">vals</span>) <span class="kw">in</span> <span class="ident">output_map</span> {
-        <span class="kw">let</span> <span class="ident">cfg_str</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">key</span>.<span class="ident">platform_idx</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">idx</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">builder</span>.<span class="ident">platforms</span>()[<span class="ident">idx</span>].<span class="ident">triple_str</span>(),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;&#39;cfg(all())&#39;&quot;</span>,
+        <span class="kw">let</span> <span class="ident">target_str</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">key</span>.<span class="ident">platform_idx</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">idx</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">format!</span>(<span class="string">&quot;target.{}.&quot;</span>, <span class="ident">builder</span>.<span class="ident">platforms</span>[<span class="ident">idx</span>].<span class="ident">triple_str</span>()),
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_owned</span>(),
         };
         <span class="kw">let</span> <span class="ident">dep_str</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">key</span>.<span class="ident">build_platform</span> {
             <span class="ident">BuildPlatform::Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;dependencies&quot;</span>,
             <span class="ident">BuildPlatform::Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;build-dependencies&quot;</span>,
         };
 
-        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;[target.{}.{}]&quot;</span>, <span class="ident">cfg_str</span>, <span class="ident">dep_str</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;[{}{}]&quot;</span>, <span class="ident">target_str</span>, <span class="ident">dep_str</span>)<span class="question-mark">?</span>;
 
         <span class="kw">for</span> (<span class="ident">dep</span>, <span class="ident">all_features</span>) <span class="kw">in</span> <span class="ident">vals</span>.<span class="ident">values</span>() {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">all_kv</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="number">4</span>);
+
             <span class="comment">// We&#39;d ideally use serde + toml but it doesn&#39;t support inline tables. Ugh.</span>
-            <span class="kw">let</span> (<span class="ident">name</span>, <span class="ident">package_kv</span>): (<span class="ident">Cow</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="ident">Cow</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">packages_by_name</span>[<span class="ident">dep</span>.<span class="ident">name</span>()].<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span>
-            {
-                (
-                    <span class="ident">make_hashed_name</span>(<span class="ident">dep</span>).<span class="ident">into</span>(),
-                    <span class="macro">format!</span>(<span class="string">&quot;package = \&quot;{}\&quot;, &quot;</span>, <span class="ident">dep</span>.<span class="ident">name</span>()).<span class="ident">into</span>(),
-                )
+            <span class="kw">let</span> <span class="ident">name</span>: <span class="ident">Cow</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">packages_by_name</span>[<span class="ident">dep</span>.<span class="ident">name</span>()].<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
+                <span class="ident">all_kv</span>.<span class="ident">push</span>(<span class="macro">format!</span>(<span class="string">&quot;package = \&quot;{}\&quot;&quot;</span>, <span class="ident">dep</span>.<span class="ident">name</span>()).<span class="ident">into</span>());
+                <span class="ident">make_hashed_name</span>(<span class="ident">dep</span>).<span class="ident">into</span>()
             } <span class="kw">else</span> {
-                (<span class="ident">dep</span>.<span class="ident">name</span>().<span class="ident">into</span>(), <span class="string">&quot;&quot;</span>.<span class="ident">into</span>())
+                <span class="ident">dep</span>.<span class="ident">name</span>().<span class="ident">into</span>()
             };
 
             <span class="kw">let</span> <span class="ident">source</span> <span class="op">=</span> <span class="ident">dep</span>.<span class="ident">source</span>();
             <span class="kw">let</span> <span class="ident">source_kv</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">source</span>.<span class="ident">is_crates_io</span>() {
                 <span class="macro">format!</span>(
-                    <span class="string">&quot;version = \&quot;{}\&quot;, &quot;</span>,
+                    <span class="string">&quot;version = \&quot;{}\&quot;&quot;</span>,
                     <span class="ident">VersionDisplay::new</span>(<span class="ident">dep</span>.<span class="ident">version</span>(), <span class="ident">options</span>.<span class="ident">exact_versions</span>)
                 )
             } <span class="kw">else</span> {
@@ -806,9 +809,9 @@
                                 <span class="comment">// TODO: is replacing \\ with / totally safe on Windows? Might run</span>
                                 <span class="comment">// into issues with UNC paths.</span>
                                 <span class="kw">let</span> <span class="ident">path_str</span> <span class="op">=</span> <span class="ident">path_str</span>.<span class="ident">replace</span>(<span class="string">&quot;\\&quot;</span>, <span class="string">&quot;/&quot;</span>);
-                                <span class="macro">format!</span>(<span class="string">&quot;path = \&quot;{}\&quot;, &quot;</span>, <span class="ident">path_str</span>)
+                                <span class="macro">format!</span>(<span class="string">&quot;path = \&quot;{}\&quot;&quot;</span>, <span class="ident">path_str</span>)
                             } <span class="kw">else</span> {
-                                <span class="macro">format!</span>(<span class="string">&quot;path = \&quot;{}\&quot;, &quot;</span>, <span class="ident">path_str</span>)
+                                <span class="macro">format!</span>(<span class="string">&quot;path = \&quot;{}\&quot;&quot;</span>, <span class="ident">path_str</span>)
                             }
                         }
                     }
@@ -824,13 +827,13 @@
                                 <span class="ident">repository</span>, <span class="ident">req</span>, ..
                             } <span class="op">=</span><span class="op">&gt;</span> {
                                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">String::new</span>();
-                                <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;git = \&quot;{}\&quot;, &quot;</span>, <span class="ident">repository</span>)<span class="question-mark">?</span>;
+                                <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;git = \&quot;{}\&quot;&quot;</span>, <span class="ident">repository</span>)<span class="question-mark">?</span>;
                                 <span class="kw">match</span> <span class="ident">req</span> {
                                     <span class="ident">GitReq::Branch</span>(<span class="ident">branch</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                                        <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;branch = \&quot;{}\&quot;, &quot;</span>, <span class="ident">branch</span>)<span class="question-mark">?</span>
+                                        <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;, branch = \&quot;{}\&quot;&quot;</span>, <span class="ident">branch</span>)<span class="question-mark">?</span>
                                     }
-                                    <span class="ident">GitReq::Tag</span>(<span class="ident">tag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;tag = \&quot;{}\&quot;, &quot;</span>, <span class="ident">tag</span>)<span class="question-mark">?</span>,
-                                    <span class="ident">GitReq::Rev</span>(<span class="ident">rev</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;rev = \&quot;{}\&quot;, &quot;</span>, <span class="ident">rev</span>)<span class="question-mark">?</span>,
+                                    <span class="ident">GitReq::Tag</span>(<span class="ident">tag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;, tag = \&quot;{}\&quot;&quot;</span>, <span class="ident">tag</span>)<span class="question-mark">?</span>,
+                                    <span class="ident">GitReq::Rev</span>(<span class="ident">rev</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">out</span>, <span class="string">&quot;, rev = \&quot;{}\&quot;&quot;</span>, <span class="ident">rev</span>)<span class="question-mark">?</span>,
                                     <span class="ident">GitReq::Default</span> <span class="op">=</span><span class="op">&gt;</span> {}
                                     <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">TomlOutError::UnrecognizedExternal</span> {
@@ -854,22 +857,27 @@
                 }
             };
 
-            <span class="kw">let</span> <span class="ident">default_features_kv</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">all_features</span>.<span class="ident">contains</span>(<span class="string">&quot;default&quot;</span>) {
-                <span class="string">&quot;&quot;</span>
-            } <span class="kw">else</span> {
-                <span class="string">&quot;default-features = false, &quot;</span>
-            };
-            <span class="kw">let</span> <span class="ident">all_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">all_features</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;\&quot;{}\&quot;&quot;</span>, <span class="ident">feature</span>))
-                .<span class="ident">collect</span>();
-            <span class="kw">let</span> <span class="ident">all_features_str</span> <span class="op">=</span> <span class="ident">all_features</span>.<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>);
+            <span class="ident">all_kv</span>.<span class="ident">push</span>(<span class="ident">source_kv</span>.<span class="ident">into</span>());
 
-            <span class="macro">writeln!</span>(
-                <span class="ident">out</span>,
-                <span class="string">&quot;{} = {{ {}{}{}features = [{}] }}&quot;</span>,
-                <span class="ident">name</span>, <span class="ident">package_kv</span>, <span class="ident">source_kv</span>, <span class="ident">default_features_kv</span>, <span class="ident">all_features_str</span>,
-            )<span class="question-mark">?</span>;
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">all_features</span>.<span class="ident">contains</span>(<span class="string">&quot;default&quot;</span>) {
+                <span class="ident">all_kv</span>.<span class="ident">push</span>(<span class="string">&quot;default-features = false&quot;</span>.<span class="ident">into</span>());
+            }
+
+            <span class="kw">let</span> <span class="ident">features_to_write</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">all_features</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">filter_map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">feature</span><span class="op">|</span> {
+                    <span class="kw">if</span> <span class="ident">feature</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;default&quot;</span> {
+                        <span class="prelude-val">None</span>
+                    } <span class="kw">else</span> {
+                        <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;\&quot;{}\&quot;&quot;</span>, <span class="ident">feature</span>))
+                    }
+                })
+                .<span class="ident">collect</span>();
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">features_to_write</span>.<span class="ident">is_empty</span>() {
+                <span class="ident">all_kv</span>.<span class="ident">push</span>(<span class="macro">format!</span>(<span class="string">&quot;features = [{}]&quot;</span>, <span class="ident">features_to_write</span>.<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>)).<span class="ident">into</span>());
+            };
+
+            <span class="macro">writeln!</span>(<span class="ident">out</span>, <span class="string">&quot;{} = {{ {} }}&quot;</span>, <span class="ident">name</span>, <span class="ident">all_kv</span>.<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>))<span class="question-mark">?</span>;
         }
 
         <span class="macro">writeln!</span>(<span class="ident">out</span>)<span class="question-mark">?</span>;

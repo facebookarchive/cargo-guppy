@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["PlatformSpec","A specifier for a single platform, or for a range of platforms."],["PlatformSpecSummary","A serializable version of [`PlatformSpec`]."]]});

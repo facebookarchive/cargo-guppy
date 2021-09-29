@@ -1,0 +1,1 @@
+initSidebarItems({"macro":[["vec1","A macro similar to `vec!` to create a `Vec1`."]],"struct":[["Size0Error","Error returned by operations which would cause `Vec1` to have a length of 0."],["Splice",""],["Vec1","`std::vec::Vec` wrapper which guarantees to have at least 1 element."]]});

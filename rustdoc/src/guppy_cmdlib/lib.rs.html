@@ -186,10 +186,6 @@
 <span id="186">186</span>
 <span id="187">187</span>
 <span id="188">188</span>
-<span id="189">189</span>
-<span id="190">190</span>
-<span id="191">191</span>
-<span id="192">192</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -208,6 +204,7 @@
         <span class="ident">feature</span>::{<span class="ident">feature_filter</span>, <span class="ident">FeatureSet</span>, <span class="ident">StandardFeatures</span>},
         <span class="ident">PackageGraph</span>,
     },
+    <span class="ident">platform::PlatformSpec</span>,
     <span class="ident">MetadataCommand</span>, <span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>,
 };
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">env</span>, <span class="ident">path::PathBuf</span>};
@@ -369,18 +366,13 @@
 <span class="doccomment">/// Parse a given triple, the string &quot;current&quot;, or &quot;any&quot;, into a platform.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// TODO: This should eventually support JSON specs as well, probably.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">triple_to_platform</span>(
-    <span class="ident">triple</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>,
-    <span class="ident">default_fn</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Platform</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="ident">triple</span> {
-        <span class="prelude-val">Some</span>(<span class="string">&quot;current&quot;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Platform::current</span>()<span class="question-mark">?</span>)),
-        <span class="prelude-val">Some</span>(<span class="string">&quot;any&quot;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-        <span class="prelude-val">Some</span>(<span class="ident">triple</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Platform::new</span>(
-            <span class="ident">triple</span>.<span class="ident">to_owned</span>(),
-            <span class="ident">TargetFeatures::Unknown</span>,
-        )<span class="question-mark">?</span>)),
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">default_fn</span>()),
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">string_to_platform_spec</span>(<span class="ident">s</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PlatformSpec</span><span class="op">&gt;</span> {
+    <span class="kw">match</span> <span class="ident">s</span> {
+        <span class="prelude-val">Some</span>(<span class="string">&quot;current&quot;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">PlatformSpec::current</span>()<span class="question-mark">?</span>),
+        <span class="prelude-val">Some</span>(<span class="string">&quot;always&quot;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">PlatformSpec::Always</span>),
+        <span class="prelude-val">Some</span>(<span class="string">&quot;any&quot;</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">PlatformSpec::Any</span>),
+        <span class="prelude-val">Some</span>(<span class="ident">triple</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Platform::new</span>(<span class="ident">triple</span>.<span class="ident">to_owned</span>(), <span class="ident">TargetFeatures::Unknown</span>)<span class="question-mark">?</span>.<span class="ident">into</span>()),
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">PlatformSpec::Any</span>),
     }
 }
 </pre></div>

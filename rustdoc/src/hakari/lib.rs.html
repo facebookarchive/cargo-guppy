@@ -248,7 +248,7 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```rust</span>
 <span class="doccomment">//! use guppy::MetadataCommand;</span>
-<span class="doccomment">//! use hakari::{HakariBuilder, TomlOptions};</span>
+<span class="doccomment">//! use hakari::{HakariBuilder, HakariOutputOptions};</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Use this workspace&#39;s PackageGraph for these tests.</span>
 <span class="doccomment">//! let package_graph = MetadataCommand::new()</span>
@@ -264,7 +264,7 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // &quot;hakari&quot; can be used to build a TOML representation that forms part of a Cargo.toml file.</span>
 <span class="doccomment">//! // Existing Cargo.toml files can be managed using Hakari::read_toml.</span>
-<span class="doccomment">//! let toml = hakari.to_toml_string(&amp;TomlOptions::default()).expect(&quot;TOML output was constructed&quot;);</span>
+<span class="doccomment">//! let toml = hakari.to_toml_string(&amp;HakariOutputOptions::default()).expect(&quot;TOML output was constructed&quot;);</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // toml contains the Cargo.toml [dependencies] that would go in the Hakari package. It can be</span>
 <span class="doccomment">//! // written out through `HakariCargoToml` (returned by Hakari::read_toml) or manually.</span>
@@ -376,11 +376,11 @@
 <span class="doccomment">//! include:</span>
 <span class="doccomment">//! * [the location of the `workspace-hack` package](HakariBuilder::new)</span>
 <span class="doccomment">//! * [platforms to simulate Cargo builds on](HakariBuilder::set_platforms)</span>
-<span class="doccomment">//! * [the version of the Cargo resolver to use](HakariBuilder::set_resolver_version)</span>
-<span class="doccomment">//! * [packages to be omitted from the computation](HakariBuilder::add_omitted_packages)</span>
-<span class="doccomment">//! * [a &quot;verify mode&quot; to ensure that dependency feature sets are correctly unified](HakariBuilder::set_verify_mode)</span>
+<span class="doccomment">//! * [the version of the Cargo resolver to use](HakariBuilder::set_resolver)</span>
+<span class="doccomment">//! * [packages to be excluded during computation](HakariBuilder::add_traversal_excludes)</span>
+<span class="doccomment">//! * [packages to be excluded from the final output](HakariBuilder::add_final_excludes)</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! With the optional `summaries` feature, `HakariBuilder` options can be</span>
+<span class="doccomment">//! With the optional `cli-support` feature, `HakariBuilder` options can be</span>
 <span class="doccomment">//! [read from](HakariBuilder::from_summary) or [written to](HakariBuilder::to_summary)</span>
 <span class="doccomment">//! a file as TOML or some other format.</span>
 <span class="doccomment">//!</span>
@@ -441,23 +441,23 @@
 <span class="doccomment">//! `hakari` is a work-in-progress and is still missing many core features:</span>
 <span class="doccomment">//! * Simulating cross-compilations</span>
 <span class="doccomment">//! * Omitting some packages on some environments</span>
-<span class="doccomment">//! * Excluding some packages from the final result</span>
 <span class="doccomment">//! * Only including a subset of packages in the final result (e.g. unifying core packages like</span>
 <span class="doccomment">//!   `syn` but not any others)</span>
-<span class="doccomment">//! * Automating the creation of `workspace-hack` packages</span>
 <span class="doccomment">//! * Support for alternate registries (depends on</span>
 <span class="doccomment">//!   [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052))</span>
-<span class="doccomment">//! * A command-line interface</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! These features will be added as time permits.</span>
 
 <span class="kw">mod</span> <span class="ident">cargo_toml</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">cli_ops</span>;
 <span class="kw">mod</span> <span class="ident">hakari</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;proptest1&quot;</span>)]</span>
 <span class="kw">mod</span> <span class="ident">proptest_helpers</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">summaries</span>;
 <span class="kw">mod</span> <span class="ident">toml_out</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">verify</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">cargo_toml</span>::<span class="kw-2">*</span>,

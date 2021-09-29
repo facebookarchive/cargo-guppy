@@ -456,47 +456,6 @@
 <span id="456">456</span>
 <span id="457">457</span>
 <span id="458">458</span>
-<span id="459">459</span>
-<span id="460">460</span>
-<span id="461">461</span>
-<span id="462">462</span>
-<span id="463">463</span>
-<span id="464">464</span>
-<span id="465">465</span>
-<span id="466">466</span>
-<span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
-<span id="474">474</span>
-<span id="475">475</span>
-<span id="476">476</span>
-<span id="477">477</span>
-<span id="478">478</span>
-<span id="479">479</span>
-<span id="480">480</span>
-<span id="481">481</span>
-<span id="482">482</span>
-<span id="483">483</span>
-<span id="484">484</span>
-<span id="485">485</span>
-<span id="486">486</span>
-<span id="487">487</span>
-<span id="488">488</span>
-<span id="489">489</span>
-<span id="490">490</span>
-<span id="491">491</span>
-<span id="492">492</span>
-<span id="493">493</span>
-<span id="494">494</span>
-<span id="495">495</span>
-<span id="496">496</span>
-<span id="497">497</span>
-<span id="498">498</span>
-<span id="499">499</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -507,25 +466,25 @@
         <span class="ident">feature</span>::{<span class="ident">FeatureGraph</span>, <span class="ident">FeatureSet</span>},
         <span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageSet</span>,
     },
+    <span class="ident">platform::PlatformSpec</span>,
     <span class="ident">sorted_set::SortedSet</span>,
-    <span class="ident">Error</span>, <span class="ident">Obs</span>, <span class="ident">PackageId</span>,
+    <span class="ident">Error</span>, <span class="ident">PackageId</span>,
 };
 <span class="kw">use</span> <span class="ident">petgraph::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">std::collections::HashSet</span>;
-<span class="kw">use</span> <span class="ident">target_spec::Platform</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashSet</span>, <span class="ident">fmt</span>};
 
 <span class="doccomment">/// Options for queries which simulate what Cargo does.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This provides control over the resolution algorithm used by `guppy`&#39;s simulation of Cargo.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">version</span>: <span class="ident">CargoResolverVersion</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">resolver</span>: <span class="ident">CargoResolverVersion</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">include_dev</span>: <span class="ident">bool</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">initials_platform</span>: <span class="ident">InitialsPlatform</span>,
     <span class="comment">// Use Supercow here to ensure that owned Platform instances are boxed, to reduce stack size.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">host_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">target_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">host_platform</span>: <span class="ident">PlatformSpec</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">target_platform</span>: <span class="ident">PlatformSpec</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">omitted_packages</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
 }
 
@@ -541,11 +500,11 @@
     <span class="doccomment">/// * do not omit any packages.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">version</span>: <span class="ident">CargoResolverVersion::V1</span>,
+            <span class="ident">resolver</span>: <span class="ident">CargoResolverVersion::V1</span>,
             <span class="ident">include_dev</span>: <span class="bool-val">false</span>,
             <span class="ident">initials_platform</span>: <span class="ident">InitialsPlatform::Standard</span>,
-            <span class="ident">host_platform</span>: <span class="prelude-val">None</span>,
-            <span class="ident">target_platform</span>: <span class="prelude-val">None</span>,
+            <span class="ident">host_platform</span>: <span class="ident">PlatformSpec::Any</span>,
+            <span class="ident">target_platform</span>: <span class="ident">PlatformSpec::Any</span>,
             <span class="ident">omitted_packages</span>: <span class="ident">HashSet::new</span>(),
         }
     }
@@ -553,8 +512,8 @@
     <span class="doccomment">/// Sets the Cargo feature resolver version.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more about feature resolution, see the documentation for `CargoResolverVersion`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_version</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">version</span>: <span class="ident">CargoResolverVersion</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">version</span> <span class="op">=</span> <span class="ident">version</span>;
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_resolver</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">resolver</span>: <span class="ident">CargoResolverVersion</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">resolver</span> <span class="op">=</span> <span class="ident">resolver</span>;
         <span class="self">self</span>
     }
 
@@ -579,58 +538,23 @@
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Sets both the target and host platforms to the provided one, or to evaluate against any</span>
-    <span class="doccomment">/// platform if `None`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method accepts an owned `Platform`, a borrowed `&amp;&#39;a Platform` or a shared</span>
-    <span class="doccomment">/// `Arc&lt;Platform&gt;`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ### Examples</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use guppy::graph::cargo::CargoOptions;</span>
-    <span class="doccomment">/// use guppy::Platform;</span>
-    <span class="doccomment">/// use std::sync::Arc;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let platform = Platform::current().expect(&quot;current platform is known&quot;);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // Borrowed platform.</span>
-    <span class="doccomment">/// let _ = CargoOptions::new().set_platform(Some(&amp;platform));</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // Owned platform.</span>
-    <span class="doccomment">/// let _ = CargoOptions::new().set_platform(Some(platform.clone()));</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// // Shared platform.</span>
-    <span class="doccomment">/// let _ = CargoOptions::new().set_platform(Some(Arc::new(platform)));</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_platform</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">platform</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::convert_platform</span>(<span class="ident">platform</span>);
-        <span class="self">self</span>.<span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">platform</span>.<span class="ident">clone</span>();
-        <span class="self">self</span>.<span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">platform</span>;
+    <span class="doccomment">/// Sets both the target and host platforms to the provided spec.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_platform</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">platform_spec</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">PlatformSpec</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">platform_spec</span> <span class="op">=</span> <span class="ident">platform_spec</span>.<span class="ident">into</span>();
+        <span class="self">self</span>.<span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">platform_spec</span>.<span class="ident">clone</span>();
+        <span class="self">self</span>.<span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">platform_spec</span>;
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Sets the target platform to the provided one, or to evaluate against any platform if `None`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method accepts an owned `Platform`, a borrowed `&amp;&#39;a Platform` or a shared</span>
-    <span class="doccomment">/// `Arc&lt;Platform&gt;`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_target_platform</span>(
-        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">target_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">target_platform</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::convert_platform</span>(<span class="ident">target_platform</span>);
+    <span class="doccomment">/// Sets the target platform to the provided spec.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_target_platform</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">target_platform</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">PlatformSpec</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">target_platform</span>.<span class="ident">into</span>();
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Sets the host platform to the provided one, or to evaluate against any platform if `None`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method accepts an owned `Platform`, a borrowed `&amp;&#39;a Platform` or a shared</span>
-    <span class="doccomment">/// `Arc&lt;Platform&gt;`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_host_platform</span>(
-        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">host_platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">host_platform</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::convert_platform</span>(<span class="ident">host_platform</span>);
+    <span class="doccomment">/// Sets the host platform to the provided spec.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_host_platform</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">host_platform</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">PlatformSpec</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">host_platform</span>.<span class="ident">into</span>();
         <span class="self">self</span>
     }
 
@@ -646,24 +570,6 @@
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">omitted_packages</span>.<span class="ident">extend</span>(<span class="ident">package_ids</span>);
         <span class="self">self</span>
-    }
-
-    <span class="comment">// ---</span>
-    <span class="comment">// Helper methods</span>
-    <span class="comment">// ---</span>
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">target_platform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Platform</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">target_platform</span>.<span class="ident">as_deref</span>()
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">host_platform</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Platform</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">host_platform</span>.<span class="ident">as_deref</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">convert_platform</span>(
-        <span class="ident">platform</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Obs</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">platform</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">platform</span><span class="op">|</span> <span class="ident">platform</span>.<span class="ident">into</span>())
     }
 }
 
@@ -684,6 +590,7 @@
     <span class="doccomment">/// This feature resolver unifies features across inactive platforms, and also unifies features</span>
     <span class="doccomment">/// across normal, build and dev dependencies for initials. This may produce results that are</span>
     <span class="doccomment">/// surprising at times.</span>
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;1&quot;</span>, <span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;v1&quot;</span>)]</span>
     <span class="ident">V1</span>,
 
     <span class="doccomment">/// The &quot;classic&quot; feature resolver in Rust, as used by commands like `cargo install`.</span>
@@ -695,6 +602,7 @@
     <span class="doccomment">/// For more, see</span>
     <span class="doccomment">/// [avoid-dev-deps](https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#avoid-dev-deps)</span>
     <span class="doccomment">/// in the Cargo reference.</span>
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;install&quot;</span>, <span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;v1-install&quot;</span>)]</span>
     <span class="ident">V1Install</span>,
 
     <span class="doccomment">/// [Version 2 of the feature resolver](https://doc.rust-lang.org/cargo/reference/resolver.html#feature-resolver-version-2),</span>
@@ -706,6 +614,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Version 2 of the feature resolver can be enabled by specifying `resolver = &quot;2&quot;` in the</span>
     <span class="doccomment">/// workspace&#39;s `Cargo.toml`.</span>
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;2&quot;</span>, <span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;v2&quot;</span>)]</span>
     <span class="ident">V2</span>,
 }
 
@@ -970,6 +879,15 @@
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="ident">BuildPlatform::Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BuildPlatform::Target</span>,
             <span class="ident">BuildPlatform::Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BuildPlatform::Host</span>,
+        }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">BuildPlatform</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">BuildPlatform::Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;target&quot;</span>),
+            <span class="ident">BuildPlatform::Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;host&quot;</span>),
         }
     }
 }

@@ -597,6 +597,11 @@
 <span id="597">597</span>
 <span id="598">598</span>
 <span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -615,6 +620,7 @@
         <span class="ident">BuildTargetId</span>, <span class="ident">BuildTargetKind</span>, <span class="ident">DependencyDirection</span>, <span class="ident">EnabledStatus</span>, <span class="ident">EnabledTernary</span>,
         <span class="ident">PackageGraph</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSource</span>, <span class="ident">Workspace</span>,
     },
+    <span class="ident">platform::PlatformSpec</span>,
     <span class="ident">DependencyKind</span>, <span class="ident">PackageId</span>, <span class="ident">Platform</span>, <span class="ident">Version</span>,
 };
 <span class="kw">use</span> <span class="ident">pretty_assertions::assert_eq</span>;
@@ -1124,14 +1130,18 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assert_metadata</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
-        <span class="kw">let</span> <span class="ident">required_enabled</span> <span class="op">=</span> <span class="op">|</span><span class="ident">status</span>: <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">platform</span>: <span class="kw-2">&amp;</span><span class="ident">Platform</span><span class="op">|</span> {
-            (<span class="ident">status</span>.<span class="ident">required_on</span>(<span class="ident">platform</span>), <span class="ident">status</span>.<span class="ident">enabled_on</span>(<span class="ident">platform</span>))
+        <span class="kw">let</span> <span class="ident">required_enabled</span> <span class="op">=</span> <span class="op">|</span><span class="ident">status</span>: <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">platform_spec</span>: <span class="kw-2">&amp;</span><span class="ident">PlatformSpec</span><span class="op">|</span> {
+            (
+                <span class="ident">status</span>.<span class="ident">required_on</span>(<span class="ident">platform_spec</span>),
+                <span class="ident">status</span>.<span class="ident">enabled_on</span>(<span class="ident">platform_spec</span>),
+            )
         };
 
         <span class="kw">for</span> (<span class="ident">dep_kind</span>, <span class="ident">platform</span>, <span class="ident">results</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">platform_results</span> {
+            <span class="kw">let</span> <span class="ident">platform_spec</span> <span class="op">=</span> <span class="ident">platform</span>.<span class="ident">clone</span>().<span class="ident">into</span>();
             <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">link</span>.<span class="ident">req_for_kind</span>(<span class="kw-2">*</span><span class="ident">dep_kind</span>);
             <span class="macro">assert_eq!</span>(
-                <span class="ident">required_enabled</span>(<span class="ident">req</span>.<span class="ident">status</span>(), <span class="ident">platform</span>),
+                <span class="ident">required_enabled</span>(<span class="ident">req</span>.<span class="ident">status</span>(), <span class="kw-2">&amp;</span><span class="ident">platform_spec</span>),
                 <span class="ident">results</span>.<span class="ident">status</span>,
                 <span class="string">&quot;{}: for platform &#39;{}&#39;, kind {}, status is correct&quot;</span>,
                 <span class="ident">msg</span>,
@@ -1139,7 +1149,7 @@
                 <span class="ident">dep_kind</span>,
             );
             <span class="macro">assert_eq!</span>(
-                <span class="ident">required_enabled</span>(<span class="ident">req</span>.<span class="ident">default_features</span>(), <span class="ident">platform</span>),
+                <span class="ident">required_enabled</span>(<span class="ident">req</span>.<span class="ident">default_features</span>(), <span class="kw-2">&amp;</span><span class="ident">platform_spec</span>),
                 <span class="ident">results</span>.<span class="ident">default_features</span>,
                 <span class="string">&quot;{}: for platform &#39;{}&#39;, kind {}, default features is correct&quot;</span>,
                 <span class="ident">msg</span>,
@@ -1148,7 +1158,7 @@
             );
             <span class="kw">for</span> (<span class="ident">feature</span>, <span class="ident">status</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">results</span>.<span class="ident">feature_statuses</span> {
                 <span class="macro">assert_eq!</span>(
-                    <span class="ident">required_enabled</span>(<span class="ident">req</span>.<span class="ident">feature_status</span>(<span class="ident">feature</span>), <span class="ident">platform</span>),
+                    <span class="ident">required_enabled</span>(<span class="ident">req</span>.<span class="ident">feature_status</span>(<span class="ident">feature</span>), <span class="kw-2">&amp;</span><span class="ident">platform_spec</span>),
                     <span class="kw-2">*</span><span class="ident">status</span>,
                     <span class="string">&quot;{}: for platform &#39;{}&#39;, kind {}, feature &#39;{}&#39; has correct status&quot;</span>,
                     <span class="ident">msg</span>,

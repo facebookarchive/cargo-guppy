@@ -40,6 +40,26 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -64,7 +84,20 @@
     (<span class="ident">edge_ref</span>.<span class="ident">source</span>(), <span class="ident">edge_ref</span>.<span class="ident">target</span>(), <span class="ident">edge_ref</span>.<span class="ident">id</span>())
 }
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IxBitSet</span>(<span class="kw">pub</span> <span class="ident">FixedBitSet</span>);
+
+<span class="kw">impl</span> <span class="ident">IxBitSet</span> {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">with_capacity</span>(<span class="ident">bits</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span>(<span class="ident">FixedBitSet::with_capacity</span>(<span class="ident">bits</span>))
+    }
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">insert_node_ix</span><span class="op">&lt;</span><span class="ident">Ix</span>: <span class="ident">IndexType</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span>) {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">insert</span>(<span class="ident">bit</span>.<span class="ident">index</span>());
+    }
+}
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">IxBitSet</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">FixedBitSet</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">ix_set</span>: <span class="ident">IxBitSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
@@ -81,6 +114,13 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Ix</span>: <span class="ident">IndexType</span><span class="op">&gt;</span> <span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IxBitSet</span> {
     <span class="kw">fn</span> <span class="ident">from_iter</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">IxBitSet</span>(<span class="ident">iter</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">edge_ix</span><span class="op">|</span> <span class="ident">edge_ix</span>.<span class="ident">index</span>()).<span class="ident">collect</span>())
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Ix</span>: <span class="ident">IndexType</span><span class="op">&gt;</span> <span class="ident">Extend</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IxBitSet</span> {
+    <span class="kw">fn</span> <span class="ident">extend</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">iter</span>: <span class="ident">T</span>) {
+        <span class="self">self</span>.<span class="number">0</span>
+            .<span class="ident">extend</span>(<span class="ident">iter</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">node_ix</span><span class="op">|</span> <span class="ident">node_ix</span>.<span class="ident">index</span>()));
     }
 }
 </pre></div>
