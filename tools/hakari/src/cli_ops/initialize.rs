@@ -16,7 +16,8 @@ pub struct HakariInit<'g, 'a> {
     package_graph: &'g PackageGraph,
     package_name: &'a str,
     crate_path: &'a Utf8Path,
-    config_path: Option<&'a Utf8Path>,
+    config: Option<(&'a Utf8Path, &'a str)>,
+    cargo_toml_comment: &'a str,
 }
 
 impl<'g, 'a> HakariInit<'g, 'a> {
@@ -28,20 +29,9 @@ impl<'g, 'a> HakariInit<'g, 'a> {
         package_graph: &'g PackageGraph,
         package_name: &'a str,
         crate_path: &'a Utf8Path,
-        config_path: Option<&'a Utf8Path>,
     ) -> Result<Self, InitError> {
         let workspace = package_graph.workspace();
         let workspace_root = workspace.root();
-
-        // The config path can't be present already.
-        if let Some(config_path) = config_path {
-            let abs_config_path = workspace_root.join(config_path);
-            if abs_config_path.exists() {
-                return Err(InitError::ConfigPathExists {
-                    abs_path: abs_config_path,
-                });
-            }
-        }
 
         // The package name can't already be present in the package graph.
         if let Ok(existing) = workspace.member_by_name(package_name) {
@@ -87,8 +77,35 @@ impl<'g, 'a> HakariInit<'g, 'a> {
             package_graph,
             package_name,
             crate_path,
-            config_path,
+            config: None,
+            cargo_toml_comment: "",
         })
+    }
+
+    /// Specifies a path, relative to the workspace root, where a stub configuration file should be
+    /// written out. Also accepts a comment (in TOML format) to put at the top of the file.
+    ///
+    /// If this method is not called, no configuration path will be written out.
+    pub fn set_config(
+        &mut self,
+        path: &'a Utf8Path,
+        comment: &'a str,
+    ) -> Result<&mut Self, InitError> {
+        // The config path can't be present already.
+        let abs_path = self.package_graph.workspace().root().join(path);
+        if abs_path.exists() {
+            return Err(InitError::ConfigPathExists { abs_path });
+        }
+
+        self.config = Some((path, comment));
+        Ok(self)
+    }
+
+    /// Specifies a comment, in TOML format, to add to the top of the workspace-hack package's
+    /// `Cargo.toml`.
+    pub fn set_cargo_toml_comment(&mut self, comment: &'a str) -> &mut Self {
+        self.cargo_toml_comment = comment;
+        self
     }
 
     /// Returns the workspace operations corresponding to this initialization.
@@ -120,6 +137,8 @@ impl<'g, 'a> HakariInit<'g, 'a> {
                                 .contents_utf8()
                                 .expect("embedded .toml-in is valid UTF-8");
                             let contents = contents.replace("%PACKAGE_NAME%", self.package_name);
+                            let contents =
+                                contents.replace("%CARGO_TOML_COMMENT%\n", self.cargo_toml_comment);
                             Some((
                                 Cow::Owned(path.with_extension("toml")),
                                 Cow::Owned(contents.into_bytes()),
@@ -134,10 +153,11 @@ impl<'g, 'a> HakariInit<'g, 'a> {
             .collect();
 
         let root_files = self
-            .config_path
+            .config
             .into_iter()
-            .map(|path| {
+            .map(|(path, comment)| {
                 let contents = CONFIG_TEMPLATE.replace("%PACKAGE_NAME%", self.package_name);
+                let contents = contents.replace("%CONFIG_COMMENT%\n", comment);
                 (Cow::Borrowed(path), Cow::Owned(contents.into_bytes()))
             })
             .collect();
