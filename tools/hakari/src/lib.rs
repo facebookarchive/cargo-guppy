@@ -175,7 +175,7 @@
 //!    *partially generated*:
 //!
 //!    ```toml
-//!    [package]at
+//!    [package]
 //!    name = "workspace-hack"
 //!    version = "0.1.0"
 //!    # more options...
@@ -204,7 +204,6 @@
 //! * Omitting some packages on some environments
 //! * Only including a subset of packages in the final result (e.g. unifying core packages like
 //!   `syn` but not any others)
-//! * Automating the creation of `workspace-hack` packages
 //! * Support for alternate registries (depends on
 //!   [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052))
 //!

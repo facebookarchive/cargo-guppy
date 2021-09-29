@@ -136,7 +136,7 @@ A [`HakariBuilder`](HakariBuilder) provides options to configure how a Hakari co
 include:
 * [the location of the `workspace-hack` package](HakariBuilder::new)
 * [platforms to simulate Cargo builds on](HakariBuilder::set_platforms)
-* [the version of the Cargo resolver to use](HakariBuilder::set_resolver_version)
+* [the version of the Cargo resolver to use](HakariBuilder::set_resolver)
 * [packages to be excluded during computation](HakariBuilder::add_traversal_excludes)
 * [packages to be excluded from the final output](HakariBuilder::add_final_excludes)
 
@@ -203,10 +203,8 @@ The last step is to serialize the contents of the output map into the `workspace
 * Omitting some packages on some environments
 * Only including a subset of packages in the final result (e.g. unifying core packages like
   `syn` but not any others)
-* Automating the creation of `workspace-hack` packages
 * Support for alternate registries (depends on
   [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052))
-* A command-line interface
 
 These features will be added as time permits.
 
