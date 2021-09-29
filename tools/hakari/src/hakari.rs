@@ -1139,6 +1139,7 @@ impl<'g> OutputMapBuild<'g> {
             };
 
             for (key, inner_map) in &mut self.output_map {
+                // Treat the host and target maps as separate.
                 if key.build_platform != build_platform {
                     continue;
                 }

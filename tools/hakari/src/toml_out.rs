@@ -256,21 +256,20 @@ pub(crate) fn write_toml(
         writeln!(out, "[{}{}]", target_str, dep_str)?;
 
         for (dep, all_features) in vals.values() {
+            let mut all_kv: Vec<Cow<str>> = Vec::with_capacity(4);
+
             // We'd ideally use serde + toml but it doesn't support inline tables. Ugh.
-            let (name, package_kv): (Cow<str>, Cow<str>) = if packages_by_name[dep.name()].len() > 1
-            {
-                (
-                    make_hashed_name(dep).into(),
-                    format!("package = \"{}\", ", dep.name()).into(),
-                )
+            let name: Cow<str> = if packages_by_name[dep.name()].len() > 1 {
+                all_kv.push(format!("package = \"{}\"", dep.name()).into());
+                make_hashed_name(dep).into()
             } else {
-                (dep.name().into(), "".into())
+                dep.name().into()
             };
 
             let source = dep.source();
             let source_kv = if source.is_crates_io() {
                 format!(
-                    "version = \"{}\", ",
+                    "version = \"{}\"",
                     VersionDisplay::new(dep.version(), options.exact_versions)
                 )
             } else {
@@ -300,9 +299,9 @@ pub(crate) fn write_toml(
                                 // TODO: is replacing \\ with / totally safe on Windows? Might run
                                 // into issues with UNC paths.
                                 let path_str = path_str.replace("\\", "/");
-                                format!("path = \"{}\", ", path_str)
+                                format!("path = \"{}\"", path_str)
                             } else {
-                                format!("path = \"{}\", ", path_str)
+                                format!("path = \"{}\"", path_str)
                             }
                         }
                     }
@@ -318,13 +317,13 @@ pub(crate) fn write_toml(
                                 repository, req, ..
                             } => {
                                 let mut out = String::new();
-                                write!(out, "git = \"{}\", ", repository)?;
+                                write!(out, "git = \"{}\"", repository)?;
                                 match req {
                                     GitReq::Branch(branch) => {
-                                        write!(out, "branch = \"{}\", ", branch)?
+                                        write!(out, "branch = \"{}\"", branch)?
                                     }
-                                    GitReq::Tag(tag) => write!(out, "tag = \"{}\", ", tag)?,
-                                    GitReq::Rev(rev) => write!(out, "rev = \"{}\", ", rev)?,
+                                    GitReq::Tag(tag) => write!(out, "tag = \"{}\"", tag)?,
+                                    GitReq::Rev(rev) => write!(out, "rev = \"{}\"", rev)?,
                                     GitReq::Default => {}
                                     _ => {
                                         return Err(TomlOutError::UnrecognizedExternal {
@@ -348,22 +347,27 @@ pub(crate) fn write_toml(
                 }
             };
 
-            let default_features_kv = if all_features.contains("default") {
-                ""
-            } else {
-                "default-features = false, "
-            };
-            let all_features: Vec<_> = all_features
-                .iter()
-                .map(|feature| format!("\"{}\"", feature))
-                .collect();
-            let all_features_str = all_features.join(", ");
+            all_kv.push(source_kv.into());
 
-            writeln!(
-                out,
-                "{} = {{ {}{}{}features = [{}] }}",
-                name, package_kv, source_kv, default_features_kv, all_features_str,
-            )?;
+            if !all_features.contains("default") {
+                all_kv.push("default-features = false".into());
+            }
+
+            let features_to_write: Vec<_> = all_features
+                .iter()
+                .filter_map(|&feature| {
+                    if feature == "default" {
+                        None
+                    } else {
+                        Some(format!("\"{}\"", feature))
+                    }
+                })
+                .collect();
+            if !features_to_write.is_empty() {
+                all_kv.push(format!("features = [{}]", features_to_write.join(", ")).into());
+            };
+
+            writeln!(out, "{} = {{ {} }}", name, all_kv.join(", "))?;
         }
 
         writeln!(out)?;
