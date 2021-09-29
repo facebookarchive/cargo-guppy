@@ -34,7 +34,7 @@ platforms = [
 # builder-summary = false
 ```
 
-For more options, see the (TODO XXX config file).
+For more options, see the (TODO XXX configuration.md).
 
 ## Contributing
 
