@@ -320,10 +320,10 @@ pub(crate) fn write_toml(
                                 write!(out, "git = \"{}\"", repository)?;
                                 match req {
                                     GitReq::Branch(branch) => {
-                                        write!(out, "branch = \"{}\"", branch)?
+                                        write!(out, ", branch = \"{}\"", branch)?
                                     }
-                                    GitReq::Tag(tag) => write!(out, "tag = \"{}\"", tag)?,
-                                    GitReq::Rev(rev) => write!(out, "rev = \"{}\"", rev)?,
+                                    GitReq::Tag(tag) => write!(out, ", tag = \"{}\"", tag)?,
+                                    GitReq::Rev(rev) => write!(out, ", rev = \"{}\"", rev)?,
                                     GitReq::Default => {}
                                     _ => {
                                         return Err(TomlOutError::UnrecognizedExternal {
