@@ -1122,6 +1122,52 @@ impl<'g> OutputMapBuild<'g> {
     }
 
     fn finish(mut self, final_excludes: &HashSet<&'g PackageId>) -> OutputMap<'g> {
+        // Remove all features that are already unified in the "always" set.
+        for &build_platform in BuildPlatform::VALUES {
+            let always_key = OutputKey {
+                platform_idx: None,
+                build_platform,
+            };
+            // Temporarily remove the set to avoid &mut issues.
+
+            let always_map = match self.output_map.remove(&always_key) {
+                Some(always_map) => always_map,
+                None => {
+                    // No packages unified for the always set.
+                    continue;
+                }
+            };
+
+            for (key, inner_map) in &mut self.output_map {
+                if key.build_platform != build_platform {
+                    continue;
+                }
+                for (package_id, (_always_package, always_features)) in &always_map {
+                    let (package, remaining_features) = {
+                        let (package, features) = match inner_map.get(package_id) {
+                            Some(v) => v,
+                            None => {
+                                // The package ID isn't present in the platform-specific map --
+                                // nothing to be done.
+                                continue;
+                            }
+                        };
+                        (*package, features - always_features)
+                    };
+                    if remaining_features.is_empty() {
+                        // No features left.
+                        inner_map.remove(package_id);
+                    } else {
+                        inner_map.insert(package_id, (package, remaining_features));
+                    }
+                }
+            }
+
+            // Put always_map back into the output map.
+            self.output_map.insert(always_key, always_map);
+        }
+
+        // Remove final-excludes.
         for inner_map in self.output_map.values_mut() {
             for package_id in final_excludes {
                 inner_map.remove(package_id);

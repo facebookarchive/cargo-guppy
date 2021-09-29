@@ -249,7 +249,7 @@ impl<'g> FeatureGraph<'g> {
     pub(super) fn metadata_for_node(&self, node: FeatureNode) -> Option<FeatureMetadata<'g>> {
         let inner = self.metadata_impl_for_node(&node)?;
         Some(FeatureMetadata {
-            graph: *self,
+            graph: DebugIgnore(*self),
             node,
             inner,
         })
@@ -495,7 +495,7 @@ impl<'g> fmt::Display for FeatureId<'g> {
 /// Metadata for a feature within a package.
 #[derive(Clone, Copy, Debug)]
 pub struct FeatureMetadata<'g> {
-    graph: FeatureGraph<'g>,
+    graph: DebugIgnore<FeatureGraph<'g>>,
     node: FeatureNode,
     inner: &'g FeatureMetadataImpl,
 }
@@ -633,7 +633,7 @@ impl<'g> CrossLink<'g> {
     /// Returns the feature which depends on the `to` feature.
     pub fn from(&self) -> FeatureMetadata<'g> {
         FeatureMetadata {
-            graph: self.graph.0,
+            graph: DebugIgnore(self.graph.0),
             node: self.graph.dep_graph()[self.from.feature_ix],
             inner: self.from,
         }
@@ -642,7 +642,7 @@ impl<'g> CrossLink<'g> {
     /// Returns the feature which is depended on by the `from` feature.
     pub fn to(&self) -> FeatureMetadata<'g> {
         FeatureMetadata {
-            graph: self.graph.0,
+            graph: DebugIgnore(self.graph.0),
             node: self.graph.dep_graph()[self.to.feature_ix],
             inner: self.to,
         }
