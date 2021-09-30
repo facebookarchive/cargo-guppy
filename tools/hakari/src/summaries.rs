@@ -7,8 +7,8 @@
 
 use crate::{HakariBuilder, HakariOutputOptions, TomlOutError, UnifyTargetHost};
 use guppy::{
+    errors::TargetSpecError,
     graph::{cargo::CargoResolverVersion, summaries::PackageSetSummary, PackageGraph},
-    TargetSpecError,
 };
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};

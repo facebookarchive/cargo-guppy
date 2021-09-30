@@ -19,7 +19,8 @@ use guppy::{
         feature::FeatureSet,
         DependencyDirection, PackageGraph,
     },
-    PackageId, Platform, TargetFeatures,
+    platform::{Platform, TargetFeatures},
+    PackageId,
 };
 use guppy_cmdlib::{proptest::triple_strategy, CargoMetadataOptions, PackagesAndFeatures};
 use proptest::prelude::*;

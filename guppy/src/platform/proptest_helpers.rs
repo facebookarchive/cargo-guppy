@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{platform::PlatformSpec, Platform, TargetFeatures};
+use crate::platform::{Platform, PlatformSpec, TargetFeatures};
 use proptest::prelude::*;
 
 /// # Helpers for property testing

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 #[allow(unused_imports)]
-use crate::graph::EnabledTernary;
-use crate::{Platform, TargetSpecError};
+use crate::platform::EnabledTernary;
+use crate::{errors::TargetSpecError, platform::Platform};
 use std::sync::Arc;
 
 /// A specifier for a single platform, or for a range of platforms.
@@ -56,9 +56,9 @@ impl PlatformSpec {
     }
 }
 
-impl From<Platform> for PlatformSpec {
+impl<T: Into<Arc<Platform>>> From<T> for PlatformSpec {
     #[inline]
-    fn from(platform: Platform) -> Self {
-        PlatformSpec::Platform(Arc::new(platform))
+    fn from(platform: T) -> Self {
+        PlatformSpec::Platform(platform.into())
     }
 }

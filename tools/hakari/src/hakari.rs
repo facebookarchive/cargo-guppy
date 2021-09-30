@@ -12,8 +12,8 @@ use guppy::{
         feature::{FeatureId, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, PackageMetadata,
     },
-    platform::PlatformSpec,
-    PackageId, Platform, TargetFeatures,
+    platform::{Platform, PlatformSpec, TargetFeatures},
+    PackageId,
 };
 use rayon::prelude::*;
 use std::{
@@ -323,7 +323,7 @@ impl<'g> HakariBuilder<'g> {
 mod summaries {
     use super::*;
     use crate::summaries::HakariBuilderSummary;
-    use guppy::TargetFeatures;
+    use guppy::platform::TargetFeatures;
 
     impl<'g> HakariBuilder<'g> {
         /// Constructs a `HakariBuilder` from a `PackageGraph` and a serialized summary.

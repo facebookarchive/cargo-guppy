@@ -9,8 +9,9 @@ use crate::summaries::HakariBuilderSummary;
 use camino::Utf8PathBuf;
 use cfg_if::cfg_if;
 use guppy::{
+    errors::TargetSpecError,
     graph::{cargo::BuildPlatform, ExternalSource, GitReq, PackageMetadata, PackageSource},
-    PackageId, TargetSpecError, Version,
+    PackageId, Version,
 };
 use std::{
     borrow::Cow,

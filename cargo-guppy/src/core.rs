@@ -6,9 +6,8 @@
 use anyhow::{anyhow, ensure, Context};
 use clap::arg_enum;
 use guppy::{
-    graph::{
-        DependencyDirection, DependencyReq, EnabledTernary, PackageGraph, PackageLink, PackageQuery,
-    },
+    graph::{DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageQuery},
+    platform::EnabledTernary,
     PackageId,
 };
 use guppy_cmdlib::string_to_platform_spec;

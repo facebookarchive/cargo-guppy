@@ -4,7 +4,10 @@
 //! Proptest support.
 
 use crate::PackagesAndFeatures;
-use guppy::{graph::PackageGraph, Platform, TargetFeatures};
+use guppy::{
+    graph::PackageGraph,
+    platform::{Platform, TargetFeatures},
+};
 use proptest::{collection::hash_set, prelude::*};
 
 impl PackagesAndFeatures {

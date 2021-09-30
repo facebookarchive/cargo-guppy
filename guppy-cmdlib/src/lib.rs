@@ -15,8 +15,8 @@ use guppy::{
         feature::{feature_filter, FeatureSet, StandardFeatures},
         PackageGraph,
     },
-    platform::PlatformSpec,
-    MetadataCommand, Platform, TargetFeatures,
+    platform::{Platform, PlatformSpec, TargetFeatures},
+    MetadataCommand,
 };
 use std::{env, path::PathBuf};
 use structopt::{clap::arg_enum, StructOpt};

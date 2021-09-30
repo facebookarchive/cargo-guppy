@@ -12,11 +12,11 @@ use camino::Utf8PathBuf;
 use guppy::{
     errors::FeatureGraphWarning,
     graph::{
-        BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, EnabledTernary,
-        PackageGraph, PackageLink, PackageMetadata, PackageSource, Workspace,
+        BuildTargetId, BuildTargetKind, DependencyDirection, EnabledStatus, PackageGraph,
+        PackageLink, PackageMetadata, PackageSource, Workspace,
     },
-    platform::PlatformSpec,
-    DependencyKind, PackageId, Platform, Version,
+    platform::{EnabledTernary, Platform, PlatformSpec},
+    DependencyKind, PackageId, Version,
 };
 use pretty_assertions::assert_eq;
 use std::collections::{BTreeMap, HashMap};

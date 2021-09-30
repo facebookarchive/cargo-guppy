@@ -4,7 +4,8 @@
 use crate::{HakariBuilder, UnifyTargetHost};
 use guppy::{
     graph::{cargo::CargoResolverVersion, PackageGraph},
-    PackageId, Platform, TargetFeatures,
+    platform::{Platform, TargetFeatures},
+    PackageId,
 };
 use proptest::{
     collection::{hash_set, vec},

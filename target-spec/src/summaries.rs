@@ -22,7 +22,7 @@ impl Platform {
     }
 }
 
-/// An owned, serializable version of `Platform`.
+/// An owned, serializable version of [`Platform`].
 ///
 /// This structure can be serialized and deserialized using `serde`.
 ///
@@ -64,7 +64,7 @@ impl PlatformSummary {
     }
 }
 
-/// An owned, serializable version of `TargetFeatures`.
+/// An owned, serializable version of [`TargetFeatures`].
 ///
 /// This type can be serialized and deserialized using `serde`.
 ///
