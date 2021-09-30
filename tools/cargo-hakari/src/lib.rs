@@ -5,7 +5,7 @@
 //!
 //! # Configuration
 //!
-//! `cargo-hakari` is configured through `Hakari.toml` at the root of the workspace.
+//! `cargo-hakari` is configured through `.guppy/hakari.toml` at the root of the workspace.
 //!
 //! Example configuration:
 //!

@@ -84,6 +84,10 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
 
                 for (rel_path, contents) in root_files {
                     let abs_path = workspace_root.join(rel_path.as_ref());
+                    let parent = abs_path.parent().expect("abs path should have a parent");
+                    std::fs::create_dir_all(&parent).map_err(|err| {
+                        ApplyError::io("error creating directories", &parent, err)
+                    })?;
                     write_contents(contents, &abs_path)?;
                 }
 

@@ -6,7 +6,7 @@ Manage workspace-hack crates.
 
 ## Configuration
 
-`cargo-hakari` is configured through `Hakari.toml` at the root of the workspace.
+`cargo-hakari` is configured through the `.guppy/hakari.toml` file at the root of the workspace.
 
 Example configuration:
 

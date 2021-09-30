@@ -20,7 +20,7 @@ use std::convert::TryFrom;
 use structopt::{clap::AppSettings, StructOpt};
 
 /// The location of the configuration used by `cargo hakari`, relative to the workspace root.
-pub static CONFIG_PATH: &str = "Hakari.toml";
+pub static CONFIG_PATH: &str = ".guppy/hakari.toml";
 
 /// The comment to add to the top of the config file.
 pub static CONFIG_COMMENT: &str = r#"# This file contains settings for `cargo hakari`.
@@ -66,7 +66,7 @@ struct GlobalOpts {
 
 #[derive(Debug, StructOpt)]
 enum Command {
-    /// Initialize a workspace-hack crate and a Hakari.toml file
+    /// Initialize a workspace-hack crate and a hakari.toml file
     #[structopt(name = "init")]
     Initialize {
         /// Path to generate the workspace-hack crate at, relative to the current directory.
@@ -76,7 +76,7 @@ enum Command {
         #[structopt(long, short)]
         package_name: Option<String>,
 
-        /// Skip writing a stub config to Hakari.toml
+        /// Skip writing a stub config to hakari.toml
         #[structopt(long)]
         skip_config: bool,
 
@@ -260,7 +260,7 @@ impl CommandWithBuilder {
     ) -> Result<i32> {
         let hakari_package = builder
             .hakari_package()
-            .expect("hakari-package must be specified in Hakari.toml");
+            .expect("hakari-package must be specified in hakari.toml");
         let hakari_package_name = hakari_package.name();
 
         match self {
@@ -268,7 +268,7 @@ impl CommandWithBuilder {
                 let hakari = builder.compute();
                 let toml_out = hakari
                     .to_toml_string(&hakari_output)
-                    .with_context(|| "error generating new Hakari toml")?;
+                    .with_context(|| "error generating new hakari.toml")?;
 
                 let existing_toml = hakari
                     .read_toml()
@@ -300,7 +300,7 @@ impl CommandWithBuilder {
             } => {
                 let ops = builder
                     .manage_dep_ops(&packages.to_package_set(builder.graph())?)
-                    .expect("hakari-package must be specified in Hakari.toml");
+                    .expect("hakari-package must be specified in hakari.toml");
                 if ops.is_empty() {
                     info!("no operations to perform");
                     return Ok(0);
@@ -315,7 +315,7 @@ impl CommandWithBuilder {
             } => {
                 let ops = builder
                     .remove_dep_ops(&packages.to_package_set(builder.graph())?, false)
-                    .expect("hakari-package must be specified in Hakari.toml");
+                    .expect("hakari-package must be specified in hakari.toml");
                 if ops.is_empty() {
                     info!("no operations to perform");
                     return Ok(0);
@@ -332,7 +332,7 @@ impl CommandWithBuilder {
                 let package_set = package.to_package_set();
                 let remove_ops = builder
                     .remove_dep_ops(&package_set, false)
-                    .expect("hakari-package must be specified in Hakari.toml");
+                    .expect("hakari-package must be specified in hakari.toml");
                 let add_later = if remove_ops.is_empty() {
                     info!(
                         "dependency from {} to {} not present",
@@ -373,7 +373,7 @@ impl CommandWithBuilder {
                 // force an add.
                 let add_ops = builder
                     .add_dep_ops(&package_set, true)
-                    .expect("hakari-package must be specified in Hakari.toml");
+                    .expect("hakari-package must be specified in hakari.toml");
 
                 match (expression.run(), add_later) {
                     (Ok(_), true) => {
@@ -465,10 +465,10 @@ fn config_path(package_graph: &PackageGraph) -> Utf8PathBuf {
 
 fn read_config(path: &Utf8Path) -> Result<HakariConfig> {
     let config = std::fs::read_to_string(path)
-        .with_context(|| format!("could not read Hakari config at {}", path))?;
+        .with_context(|| format!("could not read hakari config at {}", path))?;
     config
         .parse()
-        .with_context(|| format!("could not deserialize Hakari config at {}", path))
+        .with_context(|| format!("could not deserialize hakari config at {}", path))
 }
 
 fn write_to_cargo_toml(
