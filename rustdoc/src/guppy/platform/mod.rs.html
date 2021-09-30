@@ -14,23 +14,131 @@
 <span id="14">14</span>
 <span id="15">15</span>
 <span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="doccomment">//! Support for platform-specific resolution.</span>
+<span class="doccomment">//! Support for dependencies that are only enabled on some platforms.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! `guppy` provides for target-specific dependencies.</span>
+<span class="doccomment">//! Most of the time, dependencies are enabled across all platforms. For example, in this</span>
+<span class="doccomment">//! `Cargo.toml`:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```toml</span>
+<span class="doccomment">//! # once_cell 1.5 is enabled on all platforms.</span>
+<span class="doccomment">//! [dependencies]</span>
+<span class="doccomment">//! once_cell = &quot;1.5&quot;</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! However, in some cases, dependencies may only be enabled on certain platforms.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```toml</span>
+<span class="doccomment">//! # This dependency is only enabled on Linux x86_64.</span>
+<span class="doccomment">//! [target.x86_64-unknown-linux-gnu.dependencies]</span>
+<span class="doccomment">//! inotify = &quot;0.9.4&quot;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # This build dependency is enabled on Windows.</span>
+<span class="doccomment">//! [target.&#39;cfg(windows)&#39;.build-dependencies]</span>
+<span class="doccomment">//! winapi = &quot;0.3.9&quot;</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This module provides types that can represent platforms and evaluate expressions.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Representing platforms</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * [`Platform`] represents a single platform.</span>
+<span class="doccomment">//! * [`Triple`] is a [Rust target triple](https://doc.rust-lang.org/stable/rustc/platform-support.html).</span>
+<span class="doccomment">//! * [`PlatformSpec`] represents a single platform or a range of platforms, including any platform</span>
+<span class="doccomment">//!   (the union of all possible platforms) and all platforms (the intersection of all possible</span>
+<span class="doccomment">//!   platforms).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Evaluating platforms</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! These structs are defined in the context of a [`PackageGraph`](crate::graph::PackageGraph), and</span>
+<span class="doccomment">//! are typically returned through [`PackageLink`](crate::graph::PackageLink) instances.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * [`PlatformStatus`]: The status of a dependency or a feature which might be platform-dependent.</span>
+<span class="doccomment">//! * [`PlatformEval`]: A collection of platform specifications like `cfg(unix)`, to evaluate</span>
+<span class="doccomment">//!   against a platform.</span>
+<span class="doccomment">//! * [`EnabledTernary`]: A three-valued logic representing the status of a dependency or feature</span>
+<span class="doccomment">//!   on a given platform. Includes an additional status to represent situations like unknown</span>
+<span class="doccomment">//!   [target features](https://rust-lang.github.io/rfcs/2045-target-feature.html).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! If the `summaries` feature is enabled, this module also supports reading and writing serializable</span>
+<span class="doccomment">//! summaries of platforms. These can be used both as configuration, and to serialize the results of a</span>
+<span class="doccomment">//! particular `guppy` evaluation.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! For more, about platform-specific dependencies, see [Platform specific</span>
+<span class="doccomment">//! dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies)</span>
+<span class="doccomment">//! in the Cargo reference.</span>
 
+<span class="kw">mod</span> <span class="ident">platform_eval</span>;
 <span class="kw">mod</span> <span class="ident">platform_spec</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;proptest1&quot;</span>)]</span>
 <span class="kw">mod</span> <span class="ident">proptest_helpers</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
 <span class="kw">mod</span> <span class="ident">summaries</span>;
 
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">platform_eval</span>::<span class="kw-2">*</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">platform_spec</span>::<span class="kw-2">*</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;summaries&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">summaries</span>::<span class="kw-2">*</span>;
+<span class="comment">// These are inlined -- generally, treat target_spec as a private dependency so expose these types</span>
+<span class="comment">// as part of guppy&#39;s API.</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">target_spec</span>::{<span class="ident">Platform</span>, <span class="ident">TargetFeatures</span>, <span class="ident">Triple</span>};
 </pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="guppy" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
     <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
