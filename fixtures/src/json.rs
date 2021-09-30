@@ -8,8 +8,9 @@ use crate::{
 use camino::{Utf8Component, Utf8Path, Utf8PathBuf};
 use guppy::{
     errors::{FeatureBuildStage, FeatureGraphWarning},
-    graph::{BuildTargetId, BuildTargetKind, EnabledTernary, PackageGraph},
-    CargoMetadata, DependencyKind, Platform, TargetFeatures,
+    graph::{BuildTargetId, BuildTargetKind, PackageGraph},
+    platform::{EnabledTernary, Platform, TargetFeatures},
+    CargoMetadata, DependencyKind,
 };
 use once_cell::sync::{Lazy, OnceCell};
 use std::{

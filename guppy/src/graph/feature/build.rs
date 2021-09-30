@@ -9,8 +9,9 @@ use crate::{
             FeatureType,
         },
         DepRequiredOrOptional, DependencyReq, FeatureIx, PackageGraph, PackageIx, PackageLink,
-        PackageMetadata, PlatformStatusImpl,
+        PackageMetadata,
     },
+    platform::PlatformStatusImpl,
 };
 use cargo_metadata::DependencyKind;
 use once_cell::sync::OnceCell;

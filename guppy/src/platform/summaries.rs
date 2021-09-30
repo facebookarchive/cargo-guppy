@@ -1,8 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{graph::summaries::PlatformSummary, platform::PlatformSpec, TargetSpecError};
+use crate::{errors::TargetSpecError, platform::PlatformSpec};
 use std::sync::Arc;
+pub use target_spec::summaries::{PlatformSummary, TargetFeaturesSummary};
 
 /// A serializable version of [`PlatformSpec`].
 ///
@@ -44,8 +45,7 @@ pub enum PlatformSpecSummary {
     /// Deserialize a target triple.
     ///
     /// ```
-    /// # use guppy::platform::PlatformSpecSummary;
-    /// # use guppy::graph::summaries::PlatformSummary;
+    /// # use guppy::platform::{PlatformSummary, PlatformSpecSummary};
     /// # use target_spec::summaries::TargetFeaturesSummary;
     /// # use std::collections::BTreeSet;
     /// let spec: PlatformSpecSummary = serde_json::from_str(r#""x86_64-unknown-linux-gnu""#).unwrap();
@@ -59,8 +59,7 @@ pub enum PlatformSpecSummary {
     /// Deserialize a target map.
     ///
     /// ```
-    /// # use guppy::platform::PlatformSpecSummary;
-    /// # use guppy::graph::summaries::PlatformSummary;
+    /// # use guppy::platform::{PlatformSummary, PlatformSpecSummary};
     /// # use target_spec::summaries::TargetFeaturesSummary;
     /// # use std::collections::BTreeSet;
     /// let spec: PlatformSpecSummary = toml::from_str(r#"

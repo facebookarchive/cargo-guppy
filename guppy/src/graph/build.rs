@@ -5,8 +5,7 @@ use crate::{
     graph::{
         cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
         DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
-        PackageLinkImpl, PackageMetadataImpl, PackagePublishImpl, PackageSourceImpl,
-        PlatformStatusImpl, WorkspaceImpl,
+        PackageLinkImpl, PackageMetadataImpl, PackagePublishImpl, PackageSourceImpl, WorkspaceImpl,
     },
     sorted_set::SortedSet,
     Error, PackageId,
@@ -735,40 +734,6 @@ impl DepRequiredOrOptional {
                 .add_spec(target_spec.as_ref());
         }
         Ok(())
-    }
-}
-
-impl PlatformStatusImpl {
-    pub(super) fn extend(&mut self, other: &PlatformStatusImpl) {
-        // &mut *self is a reborrow to allow *self to work below.
-        match (&mut *self, other) {
-            (PlatformStatusImpl::Always, _) => {
-                // Always stays the same since it means all specs are included.
-            }
-            (PlatformStatusImpl::Specs(_), PlatformStatusImpl::Always) => {
-                // Mark self as Always.
-                *self = PlatformStatusImpl::Always;
-            }
-            (PlatformStatusImpl::Specs(specs), PlatformStatusImpl::Specs(other)) => {
-                specs.extend_from_slice(other.as_slice());
-            }
-        }
-    }
-
-    pub(super) fn add_spec(&mut self, spec: Option<&TargetSpec>) {
-        // &mut *self is a reborrow to allow *self to work below.
-        match (&mut *self, spec) {
-            (PlatformStatusImpl::Always, _) => {
-                // Always stays the same since it means all specs are included.
-            }
-            (PlatformStatusImpl::Specs(_), None) => {
-                // Mark self as Always.
-                *self = PlatformStatusImpl::Always;
-            }
-            (PlatformStatusImpl::Specs(specs), Some(spec)) => {
-                specs.push(spec.clone());
-            }
-        }
     }
 }
 

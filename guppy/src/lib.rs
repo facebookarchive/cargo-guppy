@@ -112,6 +112,3 @@ pub use package_id::PackageId;
 pub use semver::{Version, VersionReq};
 #[doc(no_inline)]
 pub use serde_json::Value as JsonValue;
-// These are inlined -- generally, treat target_spec as a private dependency so expose these types
-// as part of guppy's API.
-pub use target_spec::{Error as TargetSpecError, Platform, TargetFeatures};

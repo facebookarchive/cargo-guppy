@@ -7,9 +7,9 @@ use crate::{
             CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform,
         },
         feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures},
-        DependencyDirection, EnabledTernary, PackageGraph, PackageIx, PackageLink, PackageSet,
+        DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
-    platform::PlatformSpec,
+    platform::{EnabledTernary, PlatformSpec},
     sorted_set::SortedSet,
     DependencyKind, Error,
 };

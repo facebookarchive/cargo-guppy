@@ -7,9 +7,9 @@ use crate::{
     graph::{
         feature::{build::FeatureGraphBuildState, Cycles, FeatureFilter, FeatureList},
         DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
-        PlatformStatus, PlatformStatusImpl,
     },
     petgraph_support::{scc::Sccs, topo::TopoWithCycles},
+    platform::{PlatformStatus, PlatformStatusImpl},
     DependencyKind, Error, PackageId,
 };
 use once_cell::sync::OnceCell;
