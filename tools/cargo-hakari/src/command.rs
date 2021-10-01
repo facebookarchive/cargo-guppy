@@ -258,10 +258,9 @@ impl CommandWithBuilder {
         hakari_output: HakariOutputOptions,
         output: OutputOpts,
     ) -> Result<i32> {
-        let hakari_package = builder
+        let hakari_package = *builder
             .hakari_package()
             .expect("hakari-package must be specified in hakari.toml");
-        let hakari_package_name = hakari_package.name();
 
         match self {
             CommandWithBuilder::Generate { diff } => {
@@ -280,14 +279,14 @@ impl CommandWithBuilder {
                 Ok(()) => {
                     info!(
                         "workspace-hack package {} works correctly",
-                        hakari_package_name.bold()
+                        hakari_package.name().bold()
                     );
                     Ok(0)
                 }
                 Err(errs) => {
                     info!(
                         "workspace-hack package {} didn't work correctly:\n{}",
-                        hakari_package_name.bold(),
+                        hakari_package.name().bold(),
                         errs
                     );
                     Ok(1)
@@ -306,7 +305,7 @@ impl CommandWithBuilder {
                     return Ok(0);
                 }
 
-                apply_on_dialog(dry_run, yes, &ops, &output, regenerate_lockfile(output))
+                apply_on_dialog(dry_run, yes, &ops, &output, || regenerate_lockfile(output))
             }
             CommandWithBuilder::RemoveDeps {
                 packages,
@@ -321,7 +320,7 @@ impl CommandWithBuilder {
                     return Ok(0);
                 }
 
-                apply_on_dialog(dry_run, yes, &ops, &output, regenerate_lockfile(output))
+                apply_on_dialog(dry_run, yes, &ops, &output, || regenerate_lockfile(output))
             }
             CommandWithBuilder::Publish {
                 package,
@@ -384,7 +383,7 @@ impl CommandWithBuilder {
                             hakari_package.name().bold()
                         );
                         add_ops.apply()?;
-                        (regenerate_lockfile(output))()?;
+                        regenerate_lockfile(output)?;
                         Ok(0)
                     }
                     (Ok(_), false) => {
@@ -396,7 +395,7 @@ impl CommandWithBuilder {
                         eprintln!("---");
                         error!("execution failed, rolling back changes");
                         add_ops.apply()?;
-                        (regenerate_lockfile(output))()?;
+                        regenerate_lockfile(output)?;
                         Err(err).wrap_err_with(|| format!("`{}` failed", all_args))
                     }
                     (Err(err), false) => {
@@ -498,7 +497,7 @@ fn write_to_cargo_toml(
                 .write_to_file(new_contents)
                 .with_context(|| "error writing updated Hakari contents")?;
             info!("contents updated");
-            (regenerate_lockfile(output))()?;
+            regenerate_lockfile(output)?;
         }
         Ok(0)
     }
@@ -547,15 +546,14 @@ fn apply_on_dialog(
 }
 
 /// Regenerate the lockfile after dependency updates.
-fn regenerate_lockfile(output: OutputOpts) -> impl FnOnce() -> Result<()> {
-    move || {
-        // This seems to be the cheapest way to update the lockfile.
-        let cargo_cli = CargoCli::new("tree", output);
-        cargo_cli
-            .to_expression()
-            .stdout_null()
-            .run()
-            .wrap_err("updating Cargo.lock failed")?;
-        Ok(())
-    }
+fn regenerate_lockfile(output: OutputOpts) -> Result<()> {
+    // This seems to be the cheapest way to update the lockfile.
+    // cargo update -p <hakari-package> can sometimes cause unnecessary index updates.
+    let cargo_cli = CargoCli::new("tree", output);
+    cargo_cli
+        .to_expression()
+        .stdout_null()
+        .run()
+        .wrap_err("updating Cargo.lock failed")?;
+    Ok(())
 }
