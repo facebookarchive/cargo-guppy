@@ -42,7 +42,7 @@ pub static DISABLE_MESSAGE: &str = r#"
 
 /// Set up and manage workspace-hack crates.
 ///
-/// For more about cargo-hakari, see https://docs.rs/cargo-hakari.
+/// For more about cargo-hakari, see <https://docs.rs/cargo-hakari>.
 #[derive(Debug, StructOpt)]
 pub struct Args {
     #[structopt(flatten)]
