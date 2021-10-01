@@ -36,7 +36,7 @@ pub struct HakariBuilder<'g> {
     traversal_excludes: HashSet<&'g PackageId>,
     final_excludes: HashSet<&'g PackageId>,
     unify_target_host: UnifyTargetHost,
-    unify_all: bool,
+    output_single_feature: bool,
 }
 
 impl<'g> HakariBuilder<'g> {
@@ -72,7 +72,7 @@ impl<'g> HakariBuilder<'g> {
             traversal_excludes: HashSet::new(),
             final_excludes: HashSet::new(),
             unify_target_host: UnifyTargetHost::default(),
-            unify_all: false,
+            output_single_feature: false,
         })
     }
 
@@ -267,14 +267,14 @@ impl<'g> HakariBuilder<'g> {
     /// including those that don't need to be unified.
     ///
     /// This is rarely needed in production, and is most useful for testing and debugging scenarios.
-    pub fn set_unify_all(&mut self, unify_all: bool) -> &mut Self {
-        self.unify_all = unify_all;
+    pub fn set_output_single_feature(&mut self, output_single_feature: bool) -> &mut Self {
+        self.output_single_feature = output_single_feature;
         self
     }
 
-    /// Returns the current value of `unify_all`.
-    pub fn unify_all(&self) -> bool {
-        self.unify_all
+    /// Returns the current value of `output_single_feature`.
+    pub fn output_single_feature(&self) -> bool {
+        self.output_single_feature
     }
 
     /// Computes the `Hakari` for this builder.
@@ -372,7 +372,7 @@ mod summaries {
                 resolver: summary.resolver,
                 verify_mode: false,
                 unify_target_host: summary.unify_target_host,
-                unify_all: summary.unify_all,
+                output_single_feature: summary.output_single_feature,
                 platforms,
                 traversal_excludes,
                 final_excludes,
@@ -506,11 +506,11 @@ impl<'g> Hakari<'g> {
         let mut map_build: OutputMapBuild<'g> = OutputMapBuild::new(graph);
         map_build.insert_all(
             computed_map_build.iter(),
-            builder.unify_all,
+            builder.output_single_feature,
             builder.unify_target_host,
         );
 
-        if !builder.unify_all {
+        if !builder.output_single_feature {
             // Adding packages might cause different feature sets for some dependencies. Simulate
             // further builds with the given target and host features, and use that to add in any
             // extra features that need to be considered.
@@ -593,7 +593,7 @@ impl<'g> Hakari<'g> {
                     add_extra
                         .iter()
                         .map(|(&(platform_idx, dep_id), &v)| (platform_idx, dep_id, v)),
-                    // Force insert by setting unify_all to true.
+                    // Force insert by setting output_single_feature to true.
                     true,
                     builder.unify_target_host,
                 );
@@ -934,7 +934,7 @@ enum ValueDescribe<'g, 'a> {
 impl<'g, 'a> ValueDescribe<'g, 'a> {
     fn insert(
         self,
-        unify_all: bool,
+        output_single_feature: bool,
         unify_target_host: UnifyTargetHost,
         mut insert_cb: impl FnMut(BuildPlatform, &'a ComputedInnerMap<'g>),
     ) {
@@ -946,7 +946,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
             }
             ValueDescribe::SingleTarget(target_inner) => {
                 // Just one way to unify these.
-                if unify_all {
+                if output_single_feature {
                     insert_cb(Target, target_inner);
                     if unify_target_host == UnifyTargetHost::ReplicateTargetAsHost {
                         insert_cb(Host, target_inner);
@@ -955,7 +955,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
             }
             ValueDescribe::SingleHost(host_inner) => {
                 // Just one way to unify other.
-                if unify_all {
+                if output_single_feature {
                     insert_cb(Host, host_inner);
                 }
             }
@@ -975,7 +975,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
                 host_inner,
             } => {
                 // Just one way to unify across both.
-                if unify_all {
+                if output_single_feature {
                     insert_cb(Target, target_inner);
                     insert_cb(Host, host_inner);
                 }
@@ -1056,16 +1056,20 @@ impl<'g> OutputMapBuild<'g> {
     fn insert_all<'a>(
         &mut self,
         values: impl IntoIterator<Item = (Option<usize>, &'g PackageId, &'a ComputedValue<'g>)>,
-        unify_all: bool,
+        output_single_feature: bool,
         unify_target_host: UnifyTargetHost,
     ) where
         'g: 'a,
     {
         for (platform_idx, dep_id, v) in values {
             let describe = v.describe();
-            describe.insert(unify_all, unify_target_host, |build_platform, inner| {
-                self.insert_inner(platform_idx, build_platform, dep_id, inner);
-            });
+            describe.insert(
+                output_single_feature,
+                unify_target_host,
+                |build_platform, inner| {
+                    self.insert_inner(platform_idx, build_platform, dep_id, inner);
+                },
+            );
         }
     }
 
