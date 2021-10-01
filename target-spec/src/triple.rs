@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{errors::TripleParseError, Platform};
-use cfg_expr::{target_lexicon, TargetPredicate};
+use cfg_expr::{
+    expr::TargetMatcher,
+    target_lexicon,
+    targets::{get_builtin_target_by_triple, TargetInfo},
+    TargetPredicate,
+};
 use std::{borrow::Cow, cmp::Ordering, hash, str::FromStr};
 
 /// A single, specific target, uniquely identified by a triple.
@@ -24,53 +29,35 @@ use std::{borrow::Cow, cmp::Ordering, hash, str::FromStr};
 /// ```
 #[derive(Clone, Debug)]
 pub struct Triple {
-    triple_str: Cow<'static, str>,
-    lexicon_triple: target_lexicon::Triple,
+    inner: TripleInner,
 }
 
 impl Triple {
     /// Creates a new `Triple` from a triple string.
     pub fn new(triple_str: impl Into<Cow<'static, str>>) -> Result<Self, TripleParseError> {
-        let triple_str = triple_str.into();
-        // Hack around this non-conformant triple added in Rust 1.48.
-        // https://github.com/EmbarkStudios/cfg-expr/blob/64b460831e020dc108e111663a0a38c922241f9e/tests/eval.rs#L19-L37
-        let lexicon_triple = if triple_str == "avr-unknown-gnu-atmega328" {
-            target_lexicon::Triple {
-                architecture: target_lexicon::Architecture::Avr,
-                vendor: target_lexicon::Vendor::Unknown,
-                operating_system: target_lexicon::OperatingSystem::Unknown,
-                environment: target_lexicon::Environment::Unknown,
-                binary_format: target_lexicon::BinaryFormat::Unknown,
-            }
-        } else {
-            match triple_str.parse::<target_lexicon::Triple>() {
-                Ok(lexicon_triple) => lexicon_triple,
-                Err(lexicon_err) => return Err(TripleParseError::new(triple_str, lexicon_err)),
-            }
-        };
-
-        Ok(Self {
-            triple_str,
-            lexicon_triple,
-        })
+        let inner = TripleInner::new(triple_str.into())?;
+        Ok(Self { inner })
     }
 
     /// Returns the string corresponding to this triple.
+    #[inline]
     pub fn as_str(&self) -> &str {
-        &self.triple_str
+        self.inner.as_str()
     }
 
     /// Evaluates this triple against the given platform.
     ///
     /// This simply compares `self` against the `Triple` the platform is based on, ignoring
     /// target features and flags.
+    #[inline]
     pub fn eval(&self, platform: &Platform) -> bool {
         self == platform.triple()
     }
 
     // Use cfg-expr's target matcher.
-    pub(crate) fn matches(&self, target: &TargetPredicate) -> bool {
-        target.matches(&self.lexicon_triple)
+    #[inline]
+    pub(crate) fn matches(&self, tp: &TargetPredicate) -> bool {
+        self.inner.matches(tp)
     }
 }
 
@@ -78,8 +65,49 @@ impl FromStr for Triple {
     type Err = TripleParseError;
 
     fn from_str(triple_str: &str) -> Result<Self, Self::Err> {
+        let inner = TripleInner::from_borrowed_str(triple_str)?;
+        Ok(Self { inner })
+    }
+}
+
+/// Inner representation of a triple.
+#[derive(Clone, Debug)]
+enum TripleInner {
+    /// Prefer the builtin representation as it's more accurate.
+    Builtin(&'static TargetInfo),
+    /// Fall back to the lexicon representation.
+    Lexicon {
+        triple_str: Cow<'static, str>,
+        lexicon_triple: target_lexicon::Triple,
+    },
+}
+
+impl TripleInner {
+    fn new(triple_str: Cow<'static, str>) -> Result<Self, TripleParseError> {
+        // First try getting the builtin.
+        if let Some(target_info) = get_builtin_target_by_triple(&triple_str) {
+            return Ok(TripleInner::Builtin(target_info));
+        }
+
+        // Next, try getting the lexicon representation.
         match triple_str.parse::<target_lexicon::Triple>() {
-            Ok(lexicon_triple) => Ok(Self {
+            Ok(lexicon_triple) => Ok(TripleInner::Lexicon {
+                triple_str,
+                lexicon_triple,
+            }),
+            Err(lexicon_err) => Err(TripleParseError::new(triple_str, lexicon_err)),
+        }
+    }
+
+    fn from_borrowed_str(triple_str: &str) -> Result<Self, TripleParseError> {
+        // First try getting the builtin.
+        if let Some(target_info) = get_builtin_target_by_triple(triple_str) {
+            return Ok(TripleInner::Builtin(target_info));
+        }
+
+        // Next, try getting the lexicon representation.
+        match triple_str.parse::<target_lexicon::Triple>() {
+            Ok(lexicon_triple) => Ok(TripleInner::Lexicon {
                 triple_str: triple_str.to_owned().into(),
                 lexicon_triple,
             }),
@@ -89,19 +117,33 @@ impl FromStr for Triple {
             )),
         }
     }
+
+    fn as_str(&self) -> &str {
+        match self {
+            TripleInner::Builtin(target_info) => target_info.triple.as_str(),
+            TripleInner::Lexicon { triple_str, .. } => triple_str,
+        }
+    }
+
+    fn matches(&self, tp: &TargetPredicate) -> bool {
+        match self {
+            TripleInner::Builtin(target_info) => target_info.matches(tp),
+            TripleInner::Lexicon { lexicon_triple, .. } => lexicon_triple.matches(tp),
+        }
+    }
 }
 
 // ---
 // Trait impls
 //
-// These impls only use the `triple_str`, which is valid because the `lexicon_triple` is a pure
+// These impls only use the `triple_str`, which is valid because the triple is a pure
 // function of the `triple_str`.
 // ---
 
 impl PartialEq for Triple {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.triple_str.eq(&other.triple_str)
+        self.as_str().eq(other.as_str())
     }
 }
 
@@ -110,20 +152,20 @@ impl Eq for Triple {}
 impl PartialOrd for Triple {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.triple_str.partial_cmp(&other.triple_str)
+        self.as_str().partial_cmp(other.as_str())
     }
 }
 
 impl Ord for Triple {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        self.triple_str.cmp(&other.triple_str)
+        self.as_str().cmp(other.as_str())
     }
 }
 
 impl hash::Hash for Triple {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        hash::Hash::hash(&self.triple_str, state);
+        hash::Hash::hash(self.as_str(), state);
     }
 }
 
@@ -144,8 +186,15 @@ mod tests {
             environment: Environment::Unknown,
             binary_format: BinaryFormat::Macho,
         };
+
+        let actual_triple = match target.inner {
+            TripleInner::Lexicon { lexicon_triple, .. } => lexicon_triple,
+            TripleInner::Builtin(_) => {
+                panic!("should not have been able to parse x86_64-pc-darwin as a builtin");
+            }
+        };
         assert_eq!(
-            target.lexicon_triple, expected_triple,
+            actual_triple, expected_triple,
             "lexicon triple matched correctly"
         );
     }
