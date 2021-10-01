@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.0] - 2021-10-01
+
+## Added
+
+- Target triples can now be parsed directly into a `PlatformSummary`.
+
+## Changed
+
+- `PlatformSummary::new` is now infallible.
+- MSRV updated to Rust 1.53.
+
+## Fixed
+
+- `target-spec` now uses `cfg-expr`'s builtins by default, falling back to `target-lexicon` if `cfg-expr` isn't
+available.
+  - This is because `target-lexicon` [may not always produce results](https://github.com/bytecodealliance/target-lexicon/issues/78)
+    that match `rustc`'s target JSONs.
+
 ## [0.8.0] - 2021-09-13
 
 ### Added
@@ -120,6 +138,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.9.0
 [0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.8.0
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.7.0
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.6.1

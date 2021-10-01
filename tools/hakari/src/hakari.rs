@@ -7,6 +7,7 @@ use crate::{
 };
 use guppy::{
     debug_ignore::DebugIgnore,
+    errors::TargetSpecError,
     graph::{
         cargo::{BuildPlatform, CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform},
         feature::{FeatureId, FeatureSet, StandardFeatures},
@@ -123,7 +124,7 @@ impl<'g> HakariBuilder<'g> {
     pub fn set_platforms(
         &mut self,
         platforms: impl IntoIterator<Item = impl Into<Cow<'static, str>>>,
-    ) -> Result<&mut Self, target_spec::Error> {
+    ) -> Result<&mut Self, TargetSpecError> {
         self.platforms = platforms
             .into_iter()
             .map(|s| Ok(Arc::new(Platform::new(s.into(), TargetFeatures::Unknown)?)))
