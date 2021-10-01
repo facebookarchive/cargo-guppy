@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.5.0] - 2021-10-01
+
+### Added
+
+- hakari now outputs packages corresponding to the intersection of all platforms, then outputs
+  any other platform-specific packages left. This simplifies the output greatly and is also more
+  correct.
+- A new option `final_excludes` to remove packages from the result at the end of computation.
+  - This is in constract to `traversal_excludes` (renamed from `omitted_packages`) which removes
+    packages both during and after computation.
+- A new `cli-support` feature contains several new structs used by `cargo-hakari`.
+- In `HakariBuilderSummary`, `version = "v2"` etc has been renamed to `resolver = "2"` to align with
+  cargo.
+  - The old options will continue to work.
+- In `HakariBuilderSummary`, `traversal-excludes` and `final-excludes` are now easier to describe while
+  deserializing: they now take a `workspace-members` list of names, and a `third-party` list of specifiers such as
+  `{ name = "serde", version = "1" }`.
+  - The resolver will now also fail if any specifiers are unmatched.
+
+### Changed
+
+- `omitted_packages` renamed to `traversal_excludes`.
+- Because of the changes to how excludes are represented, old-style `HakariBuilderSummary` instances
+  may no longer parse correctly.
+- Public dependency bump: `guppy` updated to 0.11.0.
+- MSRV updated to Rust 1.53.
+
 ## [0.4.1] - 2021-09-13
 
 ### Changed
@@ -44,6 +71,7 @@
 
 Initial release.
 
+[0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.5.0
 [0.4.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.4.1
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.4.0
 [0.3.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.3.0
