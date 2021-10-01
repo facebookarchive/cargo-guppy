@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["about","About workspace-hack crate, and how `cargo hakari` can help."]],"struct":[["Args","Manage workspace-hack crates."]]});
+initSidebarItems({"mod":[["about","About workspace-hack crates, how `cargo hakari` manages them, and how much faster they make builds."],["config","Configuration for `cargo hakari`."]],"struct":[["Args","Manage workspace-hack crates."]]});
