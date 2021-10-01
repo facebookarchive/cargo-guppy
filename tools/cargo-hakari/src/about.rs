@@ -1,9 +1,9 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! About workspace-hack crate, and how `cargo hakari` can help.
+//! About workspace-hack crates, how `cargo hakari` manages them, and how much faster they make builds.
 //!
-//! # What are workspace-hack packages?
+//! # What are workspace-hack crates?
 //!
 //! Let's say you have a Rust crate `my-crate` with two dependencies:
 //!
@@ -88,11 +88,11 @@
 //! # What can hakari do?
 //!
 //! Maintaining workspace-hack packages manually can result in:
-//! * Missing packages
-//! * Missing feature lists for packages
-//! * Outdated feature lists for packages
+//! * Missing crates
+//! * Missing feature lists for crates
+//! * Outdated feature lists for crates
 //!
-//! All of these can result in longer build times than is optimal.
+//! All of these can result in longer than optimal build times.
 //!
 //! `cargo hakari` can automate the maintenance of these packages, greatly reducing the amount of
 //! time and effort it takes to maintain these packages.
@@ -128,42 +128,44 @@
 //! On the [Diem repository](https://github.com/diem/diem/), at revision 6fa1c8c0, with the following
 //! `cargo build` commands in sequence:
 //!
-//! Command                               | Before (s) | After (s) | Change in time | Cum. before (s) | Cum. after (s) | Cum. change | Notes
-//! ------------------------------------- | ---------: | --------: | -------------: | --------------: | -------------: | ----------: | --------------------------------------------
-//! `-p move-lang`                        | 35.56      | 53.06     | 49.21%         | 35.56           | 53.06          | 49.21%      | First command has to build more dependencies
-//! `-p move-lang --all-targets`          | 46.64      | 25.45     | \-45.44%       | 82.20           | 78.51          | \-4.49%     |
-//! `-p move-vm-types`                    | 10.56      | 0.29      | \-97.24%       | 92.76           | 78.80          | \-15.05%    | This didn't have to build anything
-//! `-p network`                          | 19.16      | 14.10     | \-26.42%       | 111.92          | 92.89          | \-17.00%    |
-//! `-p network --all-features`           | 21.59      | 18.20     | \-15.70%       | 133.50          | 111.09         | \-16.79%    |
-//! `-p storage-interface`                | 7.04       | 2.97      | \-57.83%       | 140.55          | 114.06         | \-18.84%    |
-//! `-p storage-interface --all-features` | 12.78      | 1.15      | \-91.03%       | 153.33          | 115.21         | \-24.86%    |
-//! `-p diem-node`                        | 102.32     | 84.65     | \-17.27%       | 255.65          | 199.86         | \-21.82%    | This command built a large C++ dependency
-//! `-p backup-cli`                       | 52.47      | 33.26     | \-36.61%       | 308.12          | 233.12         | \-24.34%    | Linked several binaries
+//! | Command                               | Before (s) | After (s) | Change   | Notes                                        |
+//! |---------------------------------------|-----------:|----------:|---------:|----------------------------------------------|
+//! | `-p move-lang`                        | 35.56      | 53.06     | 49.21%   | First command has to build more dependencies |
+//! | `-p move-lang --all-targets`          | 46.64      | 25.45     | -45.44%  |                                              |
+//! | `-p move-vm-types`                    | 10.56      | 0.29      | -97.24%  | This didn't have to build anything           |
+//! | `-p network`                          | 19.16      | 14.10     | -26.42%  |                                              |
+//! | `-p network --all-features`           | 21.59      | 18.20     | -15.70%  |                                              |
+//! | `-p storage-interface`                | 7.04       | 2.97      | -57.83%  |                                              |
+//! | `-p storage-interface --all-features` | 12.78      | 1.15      | -91.03%  |                                              |
+//! | `-p diem-node`                        | 102.32     | 84.65     | -17.27%  | This command built a large C++ dependency    |
+//! | `-p backup-cli`                       | 52.47      | 33.26     | -36.61%  | Linked several binaries                      |
+//! | **Total**                             | 308.12     | 233.12    | -24.34%  |                                              |
 //!
 //! With the following `cargo check` commands in sequence:
 //!
-//! Command                                 | Before (s) | After (s) | Change in time | Cum. before (s) | Cum. after (s) | Cum. change | Notes
-//! --------------------------------------- | ---------: | --------: | -------------: | --------------: | -------------: | ----------: | --------------------------------------------
-//! | `-p move-lang`                        | 16.04      | 36.55     | 127.83%        | 16.04           | 36.55          | 127.83%     | First command has to build more dependencies  |
-//! | `-p move-lang --all-targets`          | 26.73      | 13.22     | -50.56%        | 42.78           | 49.77          | 16.34%      |                                               |
-//! | `-p move-vm-types`                    | 9.41       | 0.29      | -96.91%        | 52.18           | 50.06          | -4.07%      | This didn't have to build anything            |
-//! | `-p network`                          | 12.41      | 9.43      | -24.01%        | 64.59           | 59.49          | -7.90%      |                                               |
-//! | `-p network --all-features`           | 15.12      | 11.54     | -23.69%        | 79.72           | 71.03          | -10.90%     |                                               |
-//! | `-p storage-interface`                | 5.33       | 1.65      | -68.98%        | 85.05           | 72.68          | -14.54%     |                                               |
-//! | `-p storage-interface --all-features` | 8.22       | 1.02      | -87.59%        | 93.27           | 73.70          | -20.98%     |                                               |
-//! | `-p diem-node`                        | 56.60      | 51.29     | -9.38%         | 149.87          | 124.99         | -16.60%     | This command built two large C++ dependencies |
-//! | `-p backup-cli`                       | 13.57      | 5.51      | -59.40%        | 163.44          | 130.50         | -20.15%     | Linked several binaries                       |
-//!
+//! | Command                               | Before (s) | After (s) | Change  | Notes                                         |
+//! |---------------------------------------|-----------:|----------:|--------:|-----------------------------------------------|
+//! | `-p move-lang`                        | 16.04      | 36.55     | 127.83% | First command has to build more dependencies  |
+//! | `-p move-lang --all-targets`          | 26.73      | 13.22     | -50.56% |                                               |
+//! | `-p move-vm-types`                    | 9.41       | 0.29      | -96.91% | This didn't have to build anything            |
+//! | `-p network`                          | 12.41      | 9.43      | -24.01% |                                               |
+//! | `-p network --all-features`           | 15.12      | 11.54     | -23.69% |                                               |
+//! | `-p storage-interface`                | 5.33       | 1.65      | -68.98% |                                               |
+//! | `-p storage-interface --all-features` | 8.22       | 1.02      | -87.59% |                                               |
+//! | `-p diem-node`                        | 56.60      | 51.29     | -9.38%  | This command built two large C++ dependencies |
+//! | `-p backup-cli`                       | 13.57      | 5.51      | -59.40% |                                               |
+//! | **Total**                             | 163.44     | 130.50    | -20.15% |                                               |//!
 //! ---
 //!
 //! On the much smaller [cargo-guppy repository](https://github.com/facebookincubator/cargo-guppy),
 //! at revision 65e8c8d7, with the following `cargo build` commands in sequence:
 //!
-//! | Command                    | Before (s) | After (s) | Change in time | Cum. before (s) | Cum. after (s) | Cum. change | Notes                                        |
-//! |----------------------------|-----------:|----------:|---------------:|----------------:|---------------:|------------:|----------------------------------------------|
-//! | `-p guppy`                 | 11.77      | 13.48     | 14.53%         | 11.77           | 13.48          | 14.53%      | First command has to build more dependencies |
-//! | `-p guppy --all-features`  | 9.83       | 9.72      | -1.12%         | 21.60           | 23.20          | 7.41%       |                                              |
-//! | `-p hakari`                | 6.03       | 3.75      | -37.94%        | 27.63           | 26.95          | -2.49%      |                                              |
-//! | `-p hakari --all-features` | 10.78      | 10.28     | -4.68%         | 38.41           | 37.22          | -3.11%      |                                              |
-//! | `-p determinator`          | 4.60       | 3.90      | -15.22%        | 43.01           | 41.12          | -4.40%      |                                              |
-//! | `-p cargo-hakari`          | 17.72      | 7.22      | -59.26%        | 60.73           | 48.34          | -20.41%     |
+//! | Command                    | Before (s) | After (s) | Change  | Notes                                        |
+//! |----------------------------|-----------:|----------:|--------:|----------------------------------------------|
+//! | `-p guppy`                 | 11.77      | 13.48     | 14.53%  | First command has to build more dependencies |
+//! | `-p guppy --all-features`  | 9.83       | 9.72      | -1.12%  |                                              |
+//! | `-p hakari`                | 6.03       | 3.75      | -37.94% |                                              |
+//! | `-p hakari --all-features` | 10.78      | 10.28     | -4.68%  |                                              |
+//! | `-p determinator`          | 4.60       | 3.90      | -15.22% |                                              |
+//! | `-p cargo-hakari`          | 17.72      | 7.22      | -59.26% |                                              |
+//! | **Total**                  | 60.73      | 48.34     | -20.41% |                                              |
