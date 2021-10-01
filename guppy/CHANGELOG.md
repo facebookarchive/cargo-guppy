@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.11.0] - 2021-10-01
+## [0.11.1] - 2021-10-01
 
 ## Added
 
@@ -23,6 +23,10 @@
 - Because of the changes to how omitted packages are represented, old-style `CargoOptionsSummary` instances
   may no longer parse correctly.
 - MSRV updated to Rust 1.53.
+
+## [0.11.0] - 2021-10-01
+
+(This release was incorrectly made and was yanked.)
 
 ## [0.10.1] - 2021-09-13
 
@@ -392,6 +396,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.11.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.1
 [0.11.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.0
 [0.10.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.1
 [0.10.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.0

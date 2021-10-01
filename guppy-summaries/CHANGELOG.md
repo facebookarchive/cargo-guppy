@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1] - 2021-10-01
+
+### Added
+
+- `SummaryId` now implements `Display`, printing out the ID as a TOML inline table.
+- A new convenience module `path_forward_slashes` is provided to serialize and deserialize paths using
+  forward slashes.
+
 ## [0.5.0] - 2021-09-13
 
 ### Changed
@@ -45,6 +53,7 @@
 
 Initial release.
 
+[0.5.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.1
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.0
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.4.0
 [0.3.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.3.2
