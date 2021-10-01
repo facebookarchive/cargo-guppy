@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! `cargo hakari` is a command-line application to workspace-hack crates.
+//! `cargo hakari` is a command-line application to manage workspace-hack crates.
 //!
 //! For an explanation of what workspace-hack packages are and how they can help, see the
 //! [`about` module](https://docs.rs/cargo-hakari/*/cargo_hakari/about).
@@ -108,6 +108,7 @@
 pub mod about;
 mod cargo_cli;
 mod command;
+pub mod config;
 mod output;
 
 pub use command::Args;

@@ -26,7 +26,7 @@ pub struct HakariConfig {
     pub builder: HakariBuilderSummary,
 
     /// Output options.
-    #[serde(default)]
+    #[serde(flatten)]
     pub output: OutputOptionsSummary,
 }
 
