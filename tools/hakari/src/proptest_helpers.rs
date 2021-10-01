@@ -49,7 +49,7 @@ impl<'g> HakariBuilder<'g> {
                     traversal_excludes,
                     final_excludes,
                     unify_target_host,
-                    unify_all,
+                    output_single_feature,
                 )| {
                     let mut builder = HakariBuilder::new(graph, hakari_id)
                         .expect("HakariBuilder::new returned an error");
@@ -66,7 +66,7 @@ impl<'g> HakariBuilder<'g> {
                         .add_final_excludes(final_excludes)
                         .expect("final excludes obtained from PackageGraph should work")
                         .set_unify_target_host(unify_target_host)
-                        .set_unify_all(unify_all);
+                        .set_output_single_feature(output_single_feature);
                     builder
                 },
             )

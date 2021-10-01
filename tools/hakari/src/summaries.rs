@@ -64,7 +64,7 @@ pub struct HakariBuilderSummary {
 
     /// Whether all dependencies were unified.
     #[serde(default)]
-    pub unify_all: bool,
+    pub output_single_feature: bool,
 
     /// The platforms used by the `HakariBuilder`.
     #[serde(default)]
@@ -107,7 +107,7 @@ impl HakariBuilderSummary {
             )
             .expect("all package IDs are valid"),
             unify_target_host: builder.unify_target_host(),
-            unify_all: builder.unify_all(),
+            output_single_feature: builder.output_single_feature(),
         })
     }
 
