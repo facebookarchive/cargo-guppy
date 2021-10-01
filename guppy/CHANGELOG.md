@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.11.0] - 2021-10-01
+
+## Added
+
+- A new abstraction `PlatformSpec` can represent the union of all platforms, the intersection
+  of all platforms, or a single platform.
+  - Methods like `EnabledStatus::required_on` and `EnabledStatus::enabled_on` have been switched
+    to accepting a `&PlatformSpec` rather than a `&Platform`.
+  - `CargoOptions::set_platform` and related methods now accept either a `Platform` or a `PlatformSpec`.
+  - `EnabledStatus::enabled_on_any` is now `EnabledStatus::enabled_on(&PlatformSpec::Any)`.
+- Omitted packages are now easier to describe while deserializing: they now take a `workspace-members`
+  list of names, and a `third-party` list of specifiers such as `{ name = "serde", version = "1" }`.
+  - The resolver will now also fail if any specifiers are unmatched.
+
+## Changed
+
+- Platform-related types have been moved into the new `platform` module at the top level.
+- In Cargo options summaries, `version = "v1"` and `version = "v2"` have been renamed to `resolver = "1"` and
+  `resolver = "2"` respectively, to align with Cargo.
+  - The old specifiers will continue to work.
+- Because of the changes to how omitted packages are represented, old-style `CargoOptionsSummary` instances
+  may no longer parse correctly.
+- MSRV updated to Rust 1.53.
+
 ## [0.10.1] - 2021-09-13
 
 ### Changed
@@ -368,6 +392,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.11.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.0
 [0.10.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.1
 [0.10.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.0
 [0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.9.0
