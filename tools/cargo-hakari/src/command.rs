@@ -40,7 +40,9 @@ pub static DISABLE_MESSAGE: &str = r#"
 #     cargo hakari generate
 "#;
 
-/// Manage workspace-hack crates.
+/// Set up and manage workspace-hack crates.
+///
+/// For more about cargo-hakari, see https://docs.rs/cargo-hakari.
 #[derive(Debug, StructOpt)]
 pub struct Args {
     #[structopt(flatten)]
@@ -64,6 +66,7 @@ struct GlobalOpts {
     output: OutputOpts,
 }
 
+/// Manage workspace-hack crates.
 #[derive(Debug, StructOpt)]
 enum Command {
     /// Initialize a workspace-hack crate and a hakari.toml file
@@ -164,7 +167,6 @@ impl Command {
     }
 }
 
-/// Commands that require a `HakariBuilder` to work.
 #[derive(Debug, StructOpt)]
 enum CommandWithBuilder {
     /// Generate or update the contents of the workspace-hack crate
