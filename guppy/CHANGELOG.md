@@ -24,7 +24,7 @@
   may no longer parse correctly.
 - MSRV updated to Rust 1.53.
 
-## [0.11.0] - 2021-10-01
+## 0.11.0 - 2021-10-01
 
 (This release was incorrectly made and was yanked.)
 
@@ -397,7 +397,6 @@ lazy_static = "0.2"
 - Initial release.
 
 [0.11.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.1
-[0.11.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.0
 [0.10.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.1
 [0.10.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.0
 [0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.9.0
