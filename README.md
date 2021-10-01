@@ -10,8 +10,9 @@ This repository contains the source code for:
   * [`target-spec`](target-spec): an evaluator for `Cargo.toml` target specifications [![target-spec on crates.io](https://img.shields.io/crates/v/target-spec)](https://crates.io/crates/target-spec) [![Documentation (latest release)](https://docs.rs/target-spec/badge.svg)](https://docs.rs/target-spec/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/target_spec/)
 * tools built on top of guppy:
   * [`determinator`](tools/determinator): figure out what packages changed between two revisions [![determinator on crates.io](https://img.shields.io/crates/v/determinator)](https://crates.io/crates/determinator) [![Documentation (latest release)](https://docs.rs/determinator/badge.svg)](https://docs.rs/determinator/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/determinator/)
-  * [`hakari`](tools/hakari): manage workspace-hack packages [![hakari on crates.io](https://img.shields.io/crates/v/hakari)](https://crates.io/crates/hakari) [![Documentation (latest release)](https://docs.rs/hakari/badge.svg)](https://docs.rs/hakari/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/hakari/)
-  * [`cargo-guppy`](cargo-guppy): a command-line frontend for the `guppy` library [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_guppy/)
+  * [`cargo-hakari`](tools/cargo-hakari): a command-line tool to manage workspace-hack packages [![cargo-hakari on crates.io](https://img.shields.io/crates/v/cargo-hakari)](https://crates.io/crates/cargo-hakari) [![Documentation (latest release)](https://docs.rs/cargo-hakari/badge.svg)](https://docs.rs/cargo-hakari/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_hakari/)
+    * available in library form as [`hakari`](tools/hakari) [![hakari on crates.io](https://img.shields.io/crates/v/hakari)](https://crates.io/crates/hakari) [![Documentation (latest release)](https://docs.rs/hakari/badge.svg)](https://docs.rs/hakari/) [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/hakari/)
+  * [`cargo-guppy`](cargo-guppy): an experimental command-line frontend for `guppy` [![Documentation (main)](https://img.shields.io/badge/docs-main-59f)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_guppy/)
 * and a number of [internal tools](internal-tools) and [test fixtures](fixtures) used to verify that `guppy` behaves correctly.
 
 ## Use cases
@@ -82,7 +83,7 @@ metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html) format.
 
 ## Minimum supported Rust version
 
-The minimum supported Rust version (MSRV) is **1.51**.
+The minimum supported Rust version (MSRV) is **1.53**.
 
 While a crate is pre-release status (0.x.x) it may have its MSRV bumped in a patch release. Once a crate has reached
 1.x, any MSRV bump will be accompanied with a new minor version.
