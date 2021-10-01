@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="About workspace-hack crate, and how `cargo hakari` can help."><meta name="keywords" content="rust, rustlang, rust-lang, about"><title>cargo_hakari::about - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../cargo_hakari/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a><h2 class="location">Module about</h2><div class="sidebar-elems"><div id="sidebar-vars" data-name="about" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">cargo_hakari</a>::<wbr><a class="mod" href="#">about</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/cargo_hakari/about.rs.html#4-169" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>About workspace-hack crate, and how <code>cargo hakari</code> can help.</p>
+<h1 id="what-are-workspace-hack-packages" class="section-header"><a href="#what-are-workspace-hack-packages">What are workspace-hack packages?</a></h1>
+<p>Let’s say you have a Rust crate <code>my-crate</code> with two dependencies:</p>
+<div class="example-wrap"><pre class="language-toml">[dependencies]
+foo = &quot;1.0&quot;
+bar = &quot;2.0&quot;</pre></div>
+<p>Let’s say that <code>foo</code> and <code>bar</code> both depend on <code>baz</code>:</p>
+<div class="example-wrap"><pre class="language-toml">[dependencies]
+baz = { version = &quot;1&quot;, features = [&quot;a&quot;, &quot;b&quot;] }
+
+[dependencies]
+baz = { version = &quot;1&quot;, features = [&quot;b&quot;, &quot;c&quot;] }</pre></div>
+<p>What features is <code>baz</code> built with?</p>
+<p>One way to resolve this question might be to build <code>baz</code> twice with each requested set of
+features. But this is likely to cause a combinatorial explosion of crates to build, so Cargo
+doesn’t do that. Instead,
+<a href="https://doc.rust-lang.org/nightly/cargo/reference/features.html?highlight=feature#feature-unification">Cargo builds <code>baz</code> once</a>
+with the <em>union</em> of the features enabled for the package: <code>[a, b, c]</code>.</p>
+<hr />
+<p><strong>NOTE:</strong> This description elides some details around unifying build and dev-dependencies: for
+more about this, see the documentation for guppy’s
+<a href="../../guppy/graph/cargo/cargo_api/enum.CargoResolverVersion.html"><code>CargoResolverVersion</code></a>.</p>
+<hr />
+<p>Now let’s say you’re in a workspace, with a second crate <code>your-crate</code>:</p>
+<div class="example-wrap"><pre class="language-toml">[dependencies]
+baz = { version = &quot;1&quot;, features = [&quot;c&quot;, &quot;d&quot;] }</pre></div>
+<p>In this situation:</p>
+<table><thead><tr><th>if you build</th><th><code>baz</code> is built with</th></tr></thead><tbody>
+<tr><td>just <code>my-crate</code></td><td><code>a, b, c</code></td></tr>
+<tr><td>just <code>your-crate</code></td><td><code>c, d</code></td></tr>
+<tr><td><code>my-crate</code> and <code>your-crate</code> at the same time</td><td><code>a, b, c, d</code></td></tr>
+</tbody></table>
+<p>Even in this simplified scenario, there are three separate ways to build <code>baz</code>. For a dependency
+like <a href="https://crates.io/crates/syn"><code>syn</code></a> that has
+<a href="https://github.com/dtolnay/syn#optional-features">many optional features</a>,
+large workspaces end up with a very large number of possible build configurations.</p>
+<p>Even worse, the feature set of a package affects everything that depends on it, so <code>syn</code>
+being built with a slightly different feature set than before would cause *every package that
+directly or transitively depends on <code>syn</code> to be rebuilt. For large workspaces, this can result
+a lot of wasted build time.</p>
+<hr />
+<p>To avoid this problem, many large workspaces contain a <code>workspace-hack</code> crate. The
+purpose of this package is to ensure that dependencies like <code>syn</code> are always built with the same
+feature set no matter which workspace packages are currently being built. This is done by:</p>
+<ol>
+<li>adding dependencies like <code>syn</code> to <code>workspace-hack</code> with the full feature set required by any
+package in the workspace</li>
+<li>adding <code>workspace-hack</code> as a dependency of every crate in the repository.</li>
+</ol>
+<p>Some examples of <code>workspace-hack</code> packages:</p>
+<ul>
+<li>Rust’s <a href="https://github.com/rust-lang/rust/blob/0bfc45aa859b94cedeffcbd949f9aaad9f3ac8d8/src/tools/rustc-workspace-hack/Cargo.toml"><code>rustc-workspace-hack</code></a></li>
+<li>Firefox’s <a href="https://hg.mozilla.org/mozilla-central/file/cf6956a5ec8e21896736f96237b1476c9d0aaf45/build/workspace-hack/Cargo.toml"><code>mozilla-central-workspace-hack</code></a></li>
+<li>Diem’s <a href="https://github.com/diem/diem/blob/91578fec8d575294b47b3ee7af691fd9dc6eb240/common/workspace-hack/Cargo.toml"><code>diem-workspace-hack</code></a></li>
+</ul>
+<p>These packages have historically been maintained by hand, on a best-effort basis.</p>
+<h1 id="what-can-hakari-do" class="section-header"><a href="#what-can-hakari-do">What can hakari do?</a></h1>
+<p>Maintaining workspace-hack packages manually can result in:</p>
+<ul>
+<li>Missing packages</li>
+<li>Missing feature lists for packages</li>
+<li>Outdated feature lists for packages</li>
+</ul>
+<p>All of these can result in longer build times than is optimal.</p>
+<p><code>cargo hakari</code> can automate the maintenance of these packages, greatly reducing the amount of
+time and effort it takes to maintain these packages.</p>
+<h1 id="how-does-hakari-work" class="section-header"><a href="#how-does-hakari-work">How does hakari work?</a></h1>
+<p><code>cargo hakari</code> uses <a href="../../guppy/index.html" title="guppy">guppy</a>’s Cargo build simulations to determine the full set of features
+that can be built for each package. It then looks for</p>
+<p>For more details about the algorithm, see the documentation for the <a href="../../hakari/index.html" title="hakari"><code>hakari</code></a> library.</p>
+<h1 id="how-much-faster-do-builds-get" class="section-header"><a href="#how-much-faster-do-builds-get">How much faster do builds get?</a></h1>
+<p>The amount to which builds get faster depends on the size of the repository. In general, the
+benefit grows super-linearly with the size of the workspace and the number of crates in it.</p>
+<p>On moderately large workspaces with several hundred third-party dependencies, a cumulative
+performance benefit of 20-25% has been seen. Individual commands can be anywhere from 10%
+to 95+% faster. <code>cargo check</code> often benefits more than <code>cargo build</code> because expensive
+linker invocations aren’t a factor.</p>
+<h2 id="performance-metrics" class="section-header"><a href="#performance-metrics">Performance metrics</a></h2>
+<p>All measurements were taken on the following system:</p>
+<ul>
+<li><strong>Processor:</strong> AMD Ryzen 9 3900X processor (12 cores, 24 threads)</li>
+<li><strong>Memory:</strong> 64GB</li>
+<li><strong>Operating system:</strong> <a href="https://pop.system76.com/">Pop!_OS 20.10</a>, running Linux kernel 5.13</li>
+<li><strong>Filesystem:</strong> btrfs</li>
+</ul>
+<hr />
+<p>On the <a href="https://github.com/diem/diem/">Diem repository</a>, at revision 6fa1c8c0, with the following
+<code>cargo build</code> commands in sequence:</p>
+<table><thead><tr><th>Command</th><th align="right">Before (s)</th><th align="right">After (s)</th><th align="right">Change in time</th><th align="right">Cum. before (s)</th><th align="right">Cum. after (s)</th><th align="right">Cum. change</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>-p move-lang</code></td><td align="right">35.56</td><td align="right">53.06</td><td align="right">49.21%</td><td align="right">35.56</td><td align="right">53.06</td><td align="right">49.21%</td><td>First command has to build more dependencies</td></tr>
+<tr><td><code>-p move-lang --all-targets</code></td><td align="right">46.64</td><td align="right">25.45</td><td align="right">-45.44%</td><td align="right">82.20</td><td align="right">78.51</td><td align="right">-4.49%</td><td></td></tr>
+<tr><td><code>-p move-vm-types</code></td><td align="right">10.56</td><td align="right">0.29</td><td align="right">-97.24%</td><td align="right">92.76</td><td align="right">78.80</td><td align="right">-15.05%</td><td>This didn’t have to build anything</td></tr>
+<tr><td><code>-p network</code></td><td align="right">19.16</td><td align="right">14.10</td><td align="right">-26.42%</td><td align="right">111.92</td><td align="right">92.89</td><td align="right">-17.00%</td><td></td></tr>
+<tr><td><code>-p network --all-features</code></td><td align="right">21.59</td><td align="right">18.20</td><td align="right">-15.70%</td><td align="right">133.50</td><td align="right">111.09</td><td align="right">-16.79%</td><td></td></tr>
+<tr><td><code>-p storage-interface</code></td><td align="right">7.04</td><td align="right">2.97</td><td align="right">-57.83%</td><td align="right">140.55</td><td align="right">114.06</td><td align="right">-18.84%</td><td></td></tr>
+<tr><td><code>-p storage-interface --all-features</code></td><td align="right">12.78</td><td align="right">1.15</td><td align="right">-91.03%</td><td align="right">153.33</td><td align="right">115.21</td><td align="right">-24.86%</td><td></td></tr>
+<tr><td><code>-p diem-node</code></td><td align="right">102.32</td><td align="right">84.65</td><td align="right">-17.27%</td><td align="right">255.65</td><td align="right">199.86</td><td align="right">-21.82%</td><td>This command built a large C++ dependency</td></tr>
+<tr><td><code>-p backup-cli</code></td><td align="right">52.47</td><td align="right">33.26</td><td align="right">-36.61%</td><td align="right">308.12</td><td align="right">233.12</td><td align="right">-24.34%</td><td>Linked several binaries</td></tr>
+</tbody></table>
+<p>With the following <code>cargo check</code> commands in sequence:</p>
+<table><thead><tr><th>Command</th><th align="right">Before (s)</th><th align="right">After (s)</th><th align="right">Change in time</th><th align="right">Cum. before (s)</th><th align="right">Cum. after (s)</th><th align="right">Cum. change</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>-p move-lang</code></td><td align="right">16.04</td><td align="right">36.55</td><td align="right">127.83%</td><td align="right">16.04</td><td align="right">36.55</td><td align="right">127.83%</td><td>First command has to build more dependencies</td></tr>
+<tr><td><code>-p move-lang --all-targets</code></td><td align="right">26.73</td><td align="right">13.22</td><td align="right">-50.56%</td><td align="right">42.78</td><td align="right">49.77</td><td align="right">16.34%</td><td></td></tr>
+<tr><td><code>-p move-vm-types</code></td><td align="right">9.41</td><td align="right">0.29</td><td align="right">-96.91%</td><td align="right">52.18</td><td align="right">50.06</td><td align="right">-4.07%</td><td>This didn’t have to build anything</td></tr>
+<tr><td><code>-p network</code></td><td align="right">12.41</td><td align="right">9.43</td><td align="right">-24.01%</td><td align="right">64.59</td><td align="right">59.49</td><td align="right">-7.90%</td><td></td></tr>
+<tr><td><code>-p network --all-features</code></td><td align="right">15.12</td><td align="right">11.54</td><td align="right">-23.69%</td><td align="right">79.72</td><td align="right">71.03</td><td align="right">-10.90%</td><td></td></tr>
+<tr><td><code>-p storage-interface</code></td><td align="right">5.33</td><td align="right">1.65</td><td align="right">-68.98%</td><td align="right">85.05</td><td align="right">72.68</td><td align="right">-14.54%</td><td></td></tr>
+<tr><td><code>-p storage-interface --all-features</code></td><td align="right">8.22</td><td align="right">1.02</td><td align="right">-87.59%</td><td align="right">93.27</td><td align="right">73.70</td><td align="right">-20.98%</td><td></td></tr>
+<tr><td><code>-p diem-node</code></td><td align="right">56.60</td><td align="right">51.29</td><td align="right">-9.38%</td><td align="right">149.87</td><td align="right">124.99</td><td align="right">-16.60%</td><td>This command built two large C++ dependencies</td></tr>
+<tr><td><code>-p backup-cli</code></td><td align="right">13.57</td><td align="right">5.51</td><td align="right">-59.40%</td><td align="right">163.44</td><td align="right">130.50</td><td align="right">-20.15%</td><td>Linked several binaries</td></tr>
+</tbody></table>
+<hr />
+<p>On the much smaller <a href="https://github.com/facebookincubator/cargo-guppy">cargo-guppy repository</a>,
+at revision 65e8c8d7, with the following <code>cargo build</code> commands in sequence:</p>
+<table><thead><tr><th>Command</th><th align="right">Before (s)</th><th align="right">After (s)</th><th align="right">Change in time</th><th align="right">Cum. before (s)</th><th align="right">Cum. after (s)</th><th align="right">Cum. change</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>-p guppy</code></td><td align="right">11.77</td><td align="right">13.48</td><td align="right">14.53%</td><td align="right">11.77</td><td align="right">13.48</td><td align="right">14.53%</td><td>First command has to build more dependencies</td></tr>
+<tr><td><code>-p guppy --all-features</code></td><td align="right">9.83</td><td align="right">9.72</td><td align="right">-1.12%</td><td align="right">21.60</td><td align="right">23.20</td><td align="right">7.41%</td><td></td></tr>
+<tr><td><code>-p hakari</code></td><td align="right">6.03</td><td align="right">3.75</td><td align="right">-37.94%</td><td align="right">27.63</td><td align="right">26.95</td><td align="right">-2.49%</td><td></td></tr>
+<tr><td><code>-p hakari --all-features</code></td><td align="right">10.78</td><td align="right">10.28</td><td align="right">-4.68%</td><td align="right">38.41</td><td align="right">37.22</td><td align="right">-3.11%</td><td></td></tr>
+<tr><td><code>-p determinator</code></td><td align="right">4.60</td><td align="right">3.90</td><td align="right">-15.22%</td><td align="right">43.01</td><td align="right">41.12</td><td align="right">-4.40%</td><td></td></tr>
+<tr><td><code>-p cargo-hakari</code></td><td align="right">17.72</td><td align="right">7.22</td><td align="right">-59.26%</td><td align="right">60.73</td><td align="right">48.34</td><td align="right">-20.41%</td><td></td></tr>
+</tbody></table>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cargo_hakari" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
+    <script src="../../main.js"></script>
+</body></html>
