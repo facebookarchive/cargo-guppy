@@ -534,6 +534,8 @@ fn apply_on_dialog(
         };
         confirm
             .with_prompt("proceed?")
+            .default(true)
+            .show_default(true)
             .interact()
             .with_context(|| "error reading input")?
     };

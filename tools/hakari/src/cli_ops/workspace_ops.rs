@@ -492,6 +492,8 @@ impl<'g, 'a, 'ops> WorkspaceOpsDisplay<'g, 'a, 'ops> {
 
 impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let workspace_root = self.ops.graph.workspace().root();
+        let workspace_root_manifest = workspace_root.join("Cargo.toml");
         for op in &self.ops.ops {
             match op {
                 WorkspaceOp::NewCrate {
@@ -513,6 +515,15 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                     } else {
                         writeln!(f)?;
                     }
+                    writeln!(
+                        f,
+                        "* {} at {} to {}",
+                        self.styles.create_bold_style.paint("add crate"),
+                        self.styles.create_style.paint(crate_path.as_str()),
+                        self.styles
+                            .create_style
+                            .paint(workspace_root_manifest.as_str()),
+                    )?;
                     if !root_files.is_empty() {
                         writeln!(
                             f,
