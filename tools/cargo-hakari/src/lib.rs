@@ -42,7 +42,7 @@
 //! ```
 //!
 //! <p align="center">
-//! <img src="https://user-images.githubusercontent.com/180618/135725771-9395db82-73fa-4c0c-8908-8bfe5b1b0465.png">
+//! <img src="https://user-images.githubusercontent.com/180618/135726175-dc00dd0c-68a1-455f-a13d-0dd24f545ca6.png">
 //! </p>
 //!
 //! Generate or update the contents of a workspace-hack crate.
@@ -84,7 +84,7 @@
 //! ```
 //!
 //! <p align="center">
-//! <img src="https://user-images.githubusercontent.com/180618/135725775-5c874139-8188-40b3-8fd1-6bf65f19985f.png">
+//! <img src="https://user-images.githubusercontent.com/180618/135726181-9fe86782-6471-4a1d-a511-a6c55dffbbd7.png">
 //! </p>
 //!
 //! # Configuration

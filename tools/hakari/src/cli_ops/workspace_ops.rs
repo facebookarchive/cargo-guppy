@@ -518,10 +518,10 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                     writeln!(
                         f,
                         "* {} at {} to {}",
-                        self.styles.create_bold_style.paint("add crate"),
-                        self.styles.create_style.paint(crate_path.as_str()),
+                        self.styles.add_bold_style.paint("add crate"),
+                        self.styles.add_style.paint(crate_path.as_str()),
                         self.styles
-                            .create_style
+                            .add_to_style
                             .paint(workspace_root_manifest.as_str()),
                     )?;
                     if !root_files.is_empty() {
@@ -602,7 +602,7 @@ impl Styles {
         self.create_bold_style = self.create_style.bold();
         self.add_bold_style = self.add_style.bold();
         self.add_to_bold_style = self.add_to_style.bold();
-        self.remove_style = self.remove_style.bold();
+        self.remove_bold_style = self.remove_style.bold();
         self.remove_from_bold_style = self.remove_from_style.bold();
     }
 }
