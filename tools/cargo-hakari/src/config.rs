@@ -51,6 +51,9 @@
 //! these packages will not be included in the final result, unless those dependencices are reachable
 //! from other crates.
 //!
+//! Workspace crates excluded from traversals will not depend on the workspace-hack crate, and
+//! `cargo hakari manage-deps` will *remove* dependency edges rather than adding them.
+//!
 //! This is generally useful for crates that have mutually exclusive features, and that turn on
 //! mutually exclusive features in their transitive dependencies.
 //!
@@ -77,6 +80,9 @@
 //!
 //! Packages specified in `final-excludes` will be removed from the output at the very end. This
 //! means that any transitive dependencies of theirs will still be included.
+//!
+//! Workspace crates excluded from the final output will not depend on the workspace-hack crate, and
+//! `cargo hakari manage-deps` will *remove* dependency edges rather than adding them.
 //!
 //! This is generally useful for crates that have mutually exclusive features.
 //!
