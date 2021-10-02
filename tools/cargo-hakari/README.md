@@ -42,6 +42,10 @@ Initialize a workspace-hack crate for a workspace at path `my-workspace-hack`:
 cargo hakari init my-workspace-hack
 ```
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/180618/135725771-9395db82-73fa-4c0c-8908-8bfe5b1b0465.png">
+</p>
+
 Generate or update the contents of a workspace-hack crate.
 
 ```sh
@@ -53,6 +57,10 @@ Add the workspace-hack crate as a dependency to all other workspace crates:
 ```sh
 cargo hakari manage-deps
 ```
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/180618/135725773-c71fc4cd-8b7d-4a8e-b97c-d84a2b3b3662.png">
+</p>
 
 Publish a crate that currently depends on the workspace-hack crate (`cargo publish` can't be
 used in this circumstance):
@@ -75,6 +83,10 @@ Remove the workspace-hack crate as a dependency from all other workspace crates:
 ```sh
 cargo hakari remove-deps
 ```
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/180618/135725775-5c874139-8188-40b3-8fd1-6bf65f19985f.png">
+</p>
 
 ## Configuration
 
