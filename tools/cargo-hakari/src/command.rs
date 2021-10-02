@@ -484,7 +484,7 @@ fn write_to_cargo_toml(
         if output.should_colorize() {
             formatter = formatter.with_color();
         }
-        info!("{}", formatter.fmt_patch(&patch));
+        info!("\n{}", formatter.fmt_patch(&patch));
         if patch.hunks().is_empty() {
             // No differences.
             Ok(0)

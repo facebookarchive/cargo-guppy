@@ -32,8 +32,12 @@ let toml = hakari.to_toml_string(&HakariOutputOptions::default()).expect("TOML o
 println!("Cargo.toml contents:\n{}", toml);
 ```
 
+
+The `cargo-guppy` repository uses a workspace-hack crate managed by `cargo hakari`. [See the
+generated `Cargo.toml`.](https://github.com/facebookincubator/cargo-guppy/blob/main/workspace-hack/Cargo.toml)
+
 The `cargo-guppy` repository also has a number of fixtures that demonstrate Hakari's output.
-[Here is an example](https://github.com/facebookincubator/cargo-guppy/blob/main/fixtures/guppy/hakari/metadata_guppy_869476c-1.toml).
+[Here is an example.](https://github.com/facebookincubator/cargo-guppy/blob/main/fixtures/guppy/hakari/metadata_guppy_869476c-1.toml)
 
 ## How `hakari` works
 
@@ -107,7 +111,8 @@ The last step is to serialize the contents of the output map into the `workspace
 
 ## Future work
 
-`hakari` is a work-in-progress and is still missing many core features:
+`hakari` is still missing a few features:
+
 * Simulating cross-compilations
 * Omitting some packages on some environments
 * Only including a subset of packages in the final result (e.g. unifying core packages like
