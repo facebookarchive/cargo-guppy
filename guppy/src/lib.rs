@@ -89,7 +89,9 @@
 #[macro_use]
 mod macros;
 
-pub mod debug_ignore;
+// TODO: remove in the next major version of guppy
+#[doc(hidden)]
+pub use debug_ignore;
 mod dependency_kind;
 pub mod errors;
 pub mod graph;

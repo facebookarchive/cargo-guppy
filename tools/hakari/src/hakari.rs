@@ -5,8 +5,8 @@ use crate::{
     toml_out::{write_toml, HakariOutputOptions},
     CargoTomlError, HakariCargoToml, TomlOutError,
 };
+use debug_ignore::DebugIgnore;
 use guppy::{
-    debug_ignore::DebugIgnore,
     errors::TargetSpecError,
     graph::{
         cargo::{BuildPlatform, CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform},
