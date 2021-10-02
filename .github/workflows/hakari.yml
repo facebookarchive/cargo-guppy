@@ -1,0 +1,40 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+name: cargo hakari
+
+jobs:
+  workspace-hack-check:
+    name: Check workspace-hack
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # By default actions/checkout checks out a merge commit. This makes no sense whatsoever.
+          # https://github.com/actions/checkout#checkout-pull-request-head-commit-instead-of-merge-commit
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build cargo hakari
+        # TODO: switch this to the public version of cargo-hakari once it's out
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --package cargo-hakari
+      - name: Check workspace-hack Cargo.toml up-to-date
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: --package cargo-hakari generate --diff
+      - name: Check all crates depend on workspace-hack
+        with:
+          command: run
+          args: --package cargo-hakari manage-deps --dry-run

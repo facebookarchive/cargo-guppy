@@ -2,10 +2,17 @@
 
 [![cargo-hakari on crates.io](https://img.shields.io/crates/v/cargo-hakari)](https://crates.io/crates/cargo-hakari) [![Documentation (latest release)](https://docs.rs/cargo-hakari/badge.svg)](https://docs.rs/cargo-hakari/) [![Documentation (main)](https://img.shields.io/badge/docs-main-brightgreen)](https://facebookincubator.github.io/cargo-guppy/rustdoc/cargo_hakari/) [![License](https://img.shields.io/badge/license-Apache-green.svg)](../../LICENSE-APACHE) [![License](https://img.shields.io/badge/license-MIT-green.svg)](../../LICENSE-MIT)
 
-`cargo hakari` is a command-line application to manage workspace-hack crates.
+`cargo hakari` is a command-line application to manage workspace-hack crates. Use it to speed up
+local `cargo build` and `cargo check` commands by **15-95%**, and cumulatively by
+**20-25% or more**.
 
-For an explanation of what workspace-hack packages are and how they can help, see the
-[`about` module](https://docs.rs/cargo-hakari/*/cargo_hakari/about).
+For an explanation of what workspace-hack packages are and how they make your builds faster, see
+the [`about` module](https://docs.rs/cargo-hakari/*/cargo_hakari/about).
+
+## Examples
+
+The `cargo-guppy` repository uses a workspace-hack crate managed by `cargo hakari`. [See the
+generated `Cargo.toml`.](https://github.com/facebookincubator/cargo-guppy/blob/main/workspace-hack/Cargo.toml)
 
 ## Platform support
 
@@ -69,6 +76,24 @@ used in this circumstance):
 cargo hakari publish -p <crate>
 ```
 
+### Keeping the workspace-hack crate up-to-date
+
+Run the following commands in CI:
+
+```sh
+cargo hakari generate --diff  # workspace-hack Cargo.toml is up-to-date
+cargo hakari manage-deps --dry-run  # all workspace crates depend on workspace-hack
+```
+
+If either of these commands exits with a non-zero status, you can choose to fail CI or produce
+a warning message.
+
+For an example, see [this GitHub action used by
+`cargo-guppy`](https://github.com/facebookincubator/cargo-guppy/blob/main/.github/workflows/hakari.yml).
+
+All `cargo hakari` commands take a `--quiet` option to suppress output, though showing diff
+output in CI is often useful.
+
 ### Disabling and uninstalling
 
 Disable the workspace-hack crate temporarily by removing generated contents. (Re-enable by
@@ -116,7 +141,8 @@ platforms = [
 ## exact-versions = false
 ```
 
-For more options, see the [`config` module](https://docs.rs/cargo-hakari/*/cargo_hakari/config).
+For more options, including how to exclude crates from the output, see the
+[`config` module](https://docs.rs/cargo-hakari/*/cargo_hakari/config).
 
 ## Contributing
 
