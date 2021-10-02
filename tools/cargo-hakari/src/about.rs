@@ -120,7 +120,7 @@
 //!
 //! * **Processor:** AMD Ryzen 9 3900X processor (12 cores, 24 threads)
 //! * **Memory:** 64GB
-//! * **Operating system:** [Pop!_OS 20.10](https://pop.system76.com/), running Linux kernel 5.13
+//! * **Operating system:** [Pop!_OS 21.04](https://pop.system76.com/), running Linux kernel 5.13
 //! * **Filesystem:** btrfs
 //!
 //! ---
@@ -155,7 +155,6 @@
 //! | `-p diem-node`                        | 56.60      | 51.29     | -9.38%  | This command built two large C++ dependencies |
 //! | `-p backup-cli`                       | 13.57      | 5.51      | -59.40% |                                               |
 //! | **Total**                             | 163.44     | 130.50    | -20.15% |                                               |//!
-//! ---
 //!
 //! On the much smaller [cargo-guppy repository](https://github.com/facebookincubator/cargo-guppy),
 //! at revision 65e8c8d7, with the following `cargo build` commands in sequence:
@@ -169,3 +168,17 @@
 //! | `-p determinator`          | 4.60       | 3.90      | -15.22% |                                              |
 //! | `-p cargo-hakari`          | 17.72      | 7.22      | -59.26% |                                              |
 //! | **Total**                  | 60.73      | 48.34     | -20.41% |                                              |
+//!
+//! # Drawbacks
+//!
+//! * The first build in a workspace will take longer because more dependencies have to be cached.
+//!   - This also applies to builds performed after `cargo clean`, or after Rust version upgrades.
+//!   - However, this usually pays off over time.
+//! * Some crates may accidentally start skipping features they really need, because the
+//!   workspace-hack turns those features on for them.
+//!   - This is not a major issue for repositories that don't release crates to `crates.io`.
+//!   - It can also be caught at publish time, or with a periodic CI job that does a build after
+//!     running `cargo hakari disable`.
+//! * Publishing becomes more complex as the workspace-hack dependency needs to be removed from
+//!   `Cargo.toml`.
+//!   - `cargo hakari` provides a `publish` command to automatically do this for you.
