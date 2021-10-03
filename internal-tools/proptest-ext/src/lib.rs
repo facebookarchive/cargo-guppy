@@ -3,15 +3,17 @@
 
 use proptest::{
     strategy::{Strategy, ValueTree},
-    test_runner::{Config, TestRunner},
+    test_runner::{Config, RngAlgorithm, TestRng, TestRunner},
 };
+use std::hash::{Hash, Hasher};
+use twox_hash::XxHash64;
 
 /// Context for generating single values out of strategies.
 ///
 /// Proptest is designed to be built around "value trees", which represent a spectrum from complex
 /// values to simpler ones. But in some contexts, like benchmarking or generating corpuses, one just
 /// wants a single value. This is a convenience struct for that.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ValueGenerator {
     runner: TestRunner,
 }
@@ -31,6 +33,27 @@ impl ValueGenerator {
     pub fn deterministic() -> Self {
         Self {
             runner: TestRunner::deterministic(),
+        }
+    }
+
+    /// Creates a new value generator from the given seed.
+    ///
+    /// This generator is typically used with a hardcoded seed that is keyed on the input data
+    /// somehow. For example, for a test fixture it may be the name of the fixture.
+    pub fn from_seed(seed: impl Hash) -> Self {
+        // Convert the input seed into a 32-byte hash.
+        let mut rng_seed = [0u8; 32];
+        for hash_seed in 0usize..=3 {
+            let mut hasher = XxHash64::with_seed(hash_seed as u64);
+            seed.hash(&mut hasher);
+            rng_seed[hash_seed..(hash_seed + 8)].copy_from_slice(&hasher.finish().to_be_bytes());
+        }
+
+        Self {
+            runner: TestRunner::new_with_rng(
+                Config::default(),
+                TestRng::from_seed(RngAlgorithm::default(), &rng_seed),
+            ),
         }
     }
 

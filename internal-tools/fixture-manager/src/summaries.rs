@@ -39,7 +39,7 @@ impl<'g> ContextImpl<'g> for SummaryContext {
     ) -> Box<dyn Iterator<Item = Self::IterItem> + 'g> {
         // Make a fresh generator for each summary so that filtering by --fixtures continues to
         // produce deterministic results.
-        let mut generator = ValueGenerator::deterministic();
+        let mut generator = ValueGenerator::from_seed(fixture.name());
 
         let graph = fixture.graph();
 
