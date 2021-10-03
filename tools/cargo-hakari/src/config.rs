@@ -122,16 +122,15 @@
 //!
 //! Controls unification across target and host platforms.
 //!
-//! With version 2 of the feature resolver, if the same crate is included on both the target and
-//! host platforms, it may be built in two different ways. This is not always desirable, and
-//! `cargo hakari` can unify dependencies such that they're only built one way.
+//! If the same dependency is built on both the target and host platforms, this option controls
+//! whether and how they should be unified.
 //!
-//! The possible options are `"none"`, `"unify-on-both"`, and `"replicate-target-on-host"`
-//! (default). For more about these options, see the documentation for
+//! The possible options are `"none"`, `"auto"` (default), `"unify-if-both"`, and
+//! `"replicate-target-on-host"`. For more about these options, see the documentation for
 //! [`UnifyTargetHost`](hakari::UnifyTargetHost).
 //!
 //! ```toml
-//! unify-target-host = "replicate-host-on-target"
+//! unify-target-host = "replicate-target-on-host"
 //! ```
 //!
 //! ## output-single-feature
