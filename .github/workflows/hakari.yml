@@ -26,12 +26,29 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: Install cargo hakari
-        uses: actions-rs/install@v0.1
+
+      # Caching adapted from
+      # https://github.com/unicode-org/icu4x/blob/2d64d81d4661090c0d446b7bd700e65035840a5e/.github/workflows/build-test.yml#L32-L50.
+      - name: Get cargo-hakari version
+        id: cargo-hakari-version
+        run: |
+          echo "::set-output name=hash::$(cargo search cargo-hakari | grep '^cargo-hakari =' | md5sum)"
+        shell: bash
+      - name: Attempt to load cached cargo-hakari
+        uses: actions/cache@v2
+        id: cargo-hakari-cache
+        with:
+          path: |
+            ~/.cargo/bin/cargo-hakari
+            ~/.cargo/bin/cargo-hakari.exe
+          key: ${{ runner.os }}-${{ steps.cargo-hakari-version.outputs.hash }}
+      - name: Install cargo-hakari
+        if: steps.cargo-hakari-cache.outputs.cache-hit != 'true'
+        uses: actions-rs/install@v0.1.2
         with:
           crate: cargo-hakari
           version: latest
-          use-tool-cache: true
+
       - name: Check workspace-hack Cargo.toml is up-to-date
         uses: actions-rs/cargo@v1
         with:
