@@ -242,15 +242,10 @@ impl<'g> HakariBuilder<'g> {
         Ok(self.is_traversal_excluded(package_id)? || self.is_final_excluded(package_id)?)
     }
 
-    /// Whether to unify feature sets across target and host platforms.
+    /// Whether and how to unify feature sets across target and host platforms.
     ///
-    /// By default, `hakari` does not perform any unification across the target and host platforms.
-    /// This means that if a dependency is a target (regular) dependency with one set of features,
-    /// and a host (build) dependency with a different set of features, the two are treated
-    /// separately.
-    ///
-    /// For more information about this option, see the documentation for
-    /// [`UnifyTargetHost`](UnifyTargetHost).
+    /// This is an advanced feature that most users don't need to set. For more information about
+    /// this option, see the documentation for [`UnifyTargetHost`](UnifyTargetHost).
     pub fn set_unify_target_host(&mut self, unify_target_host: UnifyTargetHost) -> &mut Self {
         self.unify_target_host = unify_target_host;
         self
@@ -384,6 +379,27 @@ mod summaries {
 
 /// Whether to unify feature sets for a given dependency across target and host platforms.
 ///
+/// Consider a dependency that is built as both normally (on the target platform) and in a build
+/// script or proc macro. The normal dependency is considered to be built on the *target platform*,
+/// and is represented in the `[dependencies]` section in the generated `Cargo.toml`.
+/// The build dependency is built on the *host platform*, represented in the `[build-dependencies]`
+/// section.
+///
+/// Now consider that the target and host platforms need two different sets of features:
+///
+/// ```toml
+/// ## feature set on target platform
+/// [dependencies]
+/// my-dep = { version = "1.0", features = ["a", "b"] }
+///
+/// ## feature set on host platform
+/// [build-dependencies]
+/// my-dep = { version = "1.0", features = ["b", "c"] }
+/// ```
+///
+/// Should hakari unify the feature sets across the `[dependencies]` and `[build-dependencies]`
+/// feature sets?
+///
 /// Call `HakariBuilder::set_unify_target_host` to configure this option.
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "proptest1", derive(proptest_derive::Arbitrary))]
@@ -392,29 +408,42 @@ mod summaries {
 #[non_exhaustive]
 pub enum UnifyTargetHost {
     /// Perform no unification across the target and host feature sets.
+    ///
+    /// This is the most conservative option, but it means that some dependencies may be built with
+    /// two different sets of features. In this mode, Hakari will likely be significantly less
+    /// efficient.
     None,
+
+    /// Automatically choose between the [`UnifyIfBoth`](Self::UnifyIfBoth) and the
+    /// [`ReplicateTargetAsHost`](Self::ReplicateTargetAsHost) options:
+    /// * If the workspace contains proc macros, or crates that are build dependencies of other
+    ///   crates, choose the `ReplicateTargetAsHost` strategy.
+    /// * Otherwise, choose the `UnifyIfBoth` strategy.
+    ///
+    /// This is the default behavior.
+    Auto,
 
     /// Perform unification across target and host feature sets, but only if a dependency is built
     /// on both the target and the host.
     ///
     /// This is useful if cross-compilations are uncommon and one wishes to avoid the same package
     /// being built two different ways: once for the target and once for the host.
-    UnifyOnBoth,
+    UnifyIfBoth,
 
     /// Perform unification across target and host feature sets, and also replicate all target-only
     /// lines to the host.
     ///
-    /// This is most useful if every package in the workspace depends on the Hakari package, and
-    /// some of those packages are built on the host (e.g. proc macros or build dependencies).
-    ///
-    /// This is the default behavior.
-    ReplicateTargetAsHost,
+    /// This is most useful if some workspace packages are proc macros or build dependencies
+    /// used by other packages.
+    ReplicateTargetOnHost,
 }
 
-/// The default for `UnifyTargetHost`: replicate target as host.
+/// The default for `UnifyTargetHost`: automatically choose unification strategy based on the
+/// workspace.
 impl Default for UnifyTargetHost {
+    #[inline]
     fn default() -> Self {
-        UnifyTargetHost::ReplicateTargetAsHost
+        UnifyTargetHost::Auto
     }
 }
 
@@ -503,12 +532,14 @@ impl<'g> Hakari<'g> {
             .map(|platform| PlatformSpec::Platform(platform.clone()))
             .collect();
 
+        let unify_target_host = builder.unify_target_host.to_impl(graph);
+
         // Collect all the dependencies that need to be unified, by platform and build type.
         let mut map_build: OutputMapBuild<'g> = OutputMapBuild::new(graph);
         map_build.insert_all(
             computed_map_build.iter(),
             builder.output_single_feature,
-            builder.unify_target_host,
+            unify_target_host,
         );
 
         if !builder.output_single_feature {
@@ -565,7 +596,7 @@ impl<'g> Hakari<'g> {
                             let mut to_insert = BTreeSet::new();
                             v.describe().insert(
                                 true,
-                                builder.unify_target_host,
+                                unify_target_host,
                                 |insert_platform, inner_map| {
                                     if insert_platform == build_platform {
                                         any_inserted = true;
@@ -596,7 +627,7 @@ impl<'g> Hakari<'g> {
                         .map(|(&(platform_idx, dep_id), &v)| (platform_idx, dep_id, v)),
                     // Force insert by setting output_single_feature to true.
                     true,
-                    builder.unify_target_host,
+                    unify_target_host,
                 );
             }
         }
@@ -936,7 +967,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
     fn insert(
         self,
         output_single_feature: bool,
-        unify_target_host: UnifyTargetHost,
+        unify_target_host: UnifyTargetHostImpl,
         mut insert_cb: impl FnMut(BuildPlatform, &'a ComputedInnerMap<'g>),
     ) {
         use BuildPlatform::*;
@@ -949,7 +980,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
                 // Just one way to unify these.
                 if output_single_feature {
                     insert_cb(Target, target_inner);
-                    if unify_target_host == UnifyTargetHost::ReplicateTargetAsHost {
+                    if unify_target_host == UnifyTargetHostImpl::ReplicateTargetOnHost {
                         insert_cb(Host, target_inner);
                     }
                 }
@@ -963,7 +994,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
             ValueDescribe::MultiTarget(target_inner) => {
                 // Unify features for target.
                 insert_cb(Target, target_inner);
-                if unify_target_host == UnifyTargetHost::ReplicateTargetAsHost {
+                if unify_target_host == UnifyTargetHostImpl::ReplicateTargetOnHost {
                     insert_cb(Host, target_inner);
                 }
             }
@@ -988,7 +1019,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
                 // Unify features for both across both.
                 insert_cb(Target, target_inner);
                 insert_cb(Host, host_inner);
-                if unify_target_host != UnifyTargetHost::None {
+                if unify_target_host != UnifyTargetHostImpl::None {
                     insert_cb(Target, host_inner);
                     insert_cb(Host, target_inner);
                 }
@@ -1000,7 +1031,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
                 // Unify features for both across both.
                 insert_cb(Target, target_inner);
                 insert_cb(Host, host_inner);
-                if unify_target_host != UnifyTargetHost::None {
+                if unify_target_host != UnifyTargetHostImpl::None {
                     insert_cb(Target, host_inner);
                     insert_cb(Host, target_inner);
                 }
@@ -1012,7 +1043,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
                 // Unify features for both across both.
                 insert_cb(Target, target_inner);
                 insert_cb(Host, host_inner);
-                if unify_target_host != UnifyTargetHost::None {
+                if unify_target_host != UnifyTargetHostImpl::None {
                     insert_cb(Target, host_inner);
                     insert_cb(Host, target_inner);
                 }
@@ -1024,7 +1055,7 @@ impl<'g, 'a> ValueDescribe<'g, 'a> {
                 // Unify features for both across both.
                 insert_cb(Target, target_inner);
                 insert_cb(Host, host_inner);
-                if unify_target_host != UnifyTargetHost::None {
+                if unify_target_host != UnifyTargetHostImpl::None {
                     insert_cb(Target, host_inner);
                     insert_cb(Host, target_inner);
                 }
@@ -1058,7 +1089,7 @@ impl<'g> OutputMapBuild<'g> {
         &mut self,
         values: impl IntoIterator<Item = (Option<usize>, &'g PackageId, &'a ComputedValue<'g>)>,
         output_single_feature: bool,
-        unify_target_host: UnifyTargetHost,
+        unify_target_host: UnifyTargetHostImpl,
     ) where
         'g: 'a,
     {
@@ -1181,5 +1212,79 @@ impl<'g> OutputMapBuild<'g> {
         }
 
         self.output_map
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+enum UnifyTargetHostImpl {
+    None,
+    UnifyIfBoth,
+    ReplicateTargetOnHost,
+}
+
+impl UnifyTargetHost {
+    fn to_impl(self, graph: &PackageGraph) -> UnifyTargetHostImpl {
+        match self {
+            UnifyTargetHost::None => UnifyTargetHostImpl::None,
+            UnifyTargetHost::UnifyIfBoth => UnifyTargetHostImpl::UnifyIfBoth,
+            UnifyTargetHost::ReplicateTargetOnHost => UnifyTargetHostImpl::ReplicateTargetOnHost,
+            UnifyTargetHost::Auto => {
+                let workspace_set = graph.resolve_workspace();
+                // Is any package a proc macro?
+                if workspace_set
+                    .packages(DependencyDirection::Forward)
+                    .any(|package| package.is_proc_macro())
+                {
+                    return UnifyTargetHostImpl::ReplicateTargetOnHost;
+                }
+
+                // Is any package a build dependency of any other?
+                if workspace_set
+                    .links(DependencyDirection::Forward)
+                    .any(|link| link.build().is_present())
+                {
+                    return UnifyTargetHostImpl::ReplicateTargetOnHost;
+                }
+
+                UnifyTargetHostImpl::UnifyIfBoth
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::UnifyTargetHost;
+    use fixtures::json::JsonFixture;
+
+    #[test]
+    fn unify_target_host_auto() {
+        // Test that this "guppy" fixture (which does not have internal proc macros or build deps)
+        // turns into "unify if both".
+        let res = UnifyTargetHost::Auto.to_impl(JsonFixture::metadata_guppy_78cb7e8().graph());
+        assert_eq!(
+            res,
+            UnifyTargetHostImpl::UnifyIfBoth,
+            "no proc macros => unify if both"
+        );
+
+        // Test that this "libra" fixture (which has internal proc macros) turns into "replicate
+        // target on host".
+        let res = UnifyTargetHost::Auto.to_impl(JsonFixture::metadata_libra_9ffd93b().graph());
+        assert_eq!(
+            res,
+            UnifyTargetHostImpl::ReplicateTargetOnHost,
+            "proc macros => replicate target on host"
+        );
+
+        // Test that the "builddep" fixture (which has an internal build dependency) turns into
+        // "replicate target on host".
+        let res = UnifyTargetHost::Auto.to_impl(JsonFixture::metadata_builddep().graph());
+        assert_eq!(
+            res,
+            UnifyTargetHostImpl::ReplicateTargetOnHost,
+            "internal build deps => replicate target on host"
+        );
     }
 }

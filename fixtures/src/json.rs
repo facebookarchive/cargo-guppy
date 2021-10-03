@@ -35,6 +35,8 @@ pub static METADATA2_WALKDIR: &str =
     "walkdir 2.2.9 (path+file:///Users/fakeuser/local/testworkspace/walkdir)";
 pub static METADATA2_QUOTE: &str = "quote 1.0.2 (path+file:///Users/fakeuser/local/quote)";
 
+pub static METADATA_BUILDDEP_PATH: &str = "../small/builddep.json";
+
 pub static METADATA_DUPS_PATH: &str = "../small/metadata_dups.json";
 pub static METADATA_DUPS_TESTCRATE: &str =
     "testcrate-dups 0.1.0 (path+file:///Users/fakeuser/local/testcrates/testcrate-dups)";
@@ -184,6 +186,7 @@ macro_rules! define_fixtures {
 define_fixtures! {
     metadata1 => METADATA1_PATH,
     metadata2 => METADATA2_PATH,
+    metadata_builddep => METADATA_BUILDDEP_PATH,
     metadata_dups => METADATA_DUPS_PATH,
     metadata_cycle1 => METADATA_CYCLE1_PATH,
     metadata_cycle2 => METADATA_CYCLE2_PATH,
@@ -557,6 +560,12 @@ impl FixtureDetails {
             ("testcrate", METADATA2_TESTCRATE),
             ("walkdir", METADATA2_WALKDIR),
         ])
+    }
+
+    pub(crate) fn metadata_builddep() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details)
     }
 
     pub(crate) fn metadata_dups() -> Self {
