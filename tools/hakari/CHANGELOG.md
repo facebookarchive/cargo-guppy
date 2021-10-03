@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.0] - 2021-10-03
+
+### Added
+
+- A new `UnifyTargetHost::Auto` strategy, which uses the `ReplicateTargetOnHost` strategy
+  if there are internal build dependencies or proc macros in the workspace, or the `UnifyIfBoth` strategy
+  if not.
+
+### Changed
+
+- For `UnifyTargetHost`:
+  - `Auto` is the new default strategy.
+  - `ReplicateTargetAsHost` has been renamed to `ReplicateTargetOnHost`.
+  - `UnifyOnBoth` has been renamed to `UnifyIfBoth`.
+
+### Fixed
+
+- Fixed some formatting issues with `WorkspaceOps`.
+
 ## [0.5.0] - 2021-10-01
 
 ### Added
@@ -71,6 +90,7 @@
 
 Initial release.
 
+[0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.0
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.5.0
 [0.4.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.4.1
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.4.0
