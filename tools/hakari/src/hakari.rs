@@ -415,7 +415,7 @@ pub enum UnifyTargetHost {
     None,
 
     /// Automatically choose between the [`UnifyIfBoth`](Self::UnifyIfBoth) and the
-    /// [`ReplicateTargetAsHost`](Self::ReplicateTargetAsHost) options:
+    /// [`ReplicateTargetOnHost`](Self::ReplicateTargetOnHost) options:
     /// * If the workspace contains proc macros, or crates that are build dependencies of other
     ///   crates, choose the `ReplicateTargetAsHost` strategy.
     /// * Otherwise, choose the `UnifyIfBoth` strategy.
