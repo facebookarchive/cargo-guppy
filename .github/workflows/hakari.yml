@@ -1,3 +1,5 @@
+# This workflow file serves as an example for cargo-hakari CI integration.
+
 on:
   push:
     branches:
@@ -17,19 +19,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          # By default actions/checkout checks out a merge commit. This makes no sense whatsoever.
+          # cargo-guppy chooses to check out the tip of the pull request rather than a merge commit.
+          # If you're copying this CI job over, you may wish to use the default instead.
           # https://github.com/actions/checkout#checkout-pull-request-head-commit-instead-of-merge-commit
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
       - name: Install cargo hakari
-        # TODO: switch this to the public version of cargo-hakari once it's out
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/install@v0.1
         with:
-          command: install
-          args: --path tools/cargo-hakari
-      - name: Check workspace-hack Cargo.toml up-to-date
+          crate: cargo-hakari
+          version: latest
+          use-tool-cache: true
+      - name: Check workspace-hack Cargo.toml is up-to-date
         uses: actions-rs/cargo@v1
         with:
           command: hakari
