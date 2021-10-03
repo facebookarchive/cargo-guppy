@@ -35,7 +35,7 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
     ) -> Box<dyn Iterator<Item = Self::IterItem> + 'g> {
         // Make a fresh generator for each output so that filtering by --fixtures continues to
         // produce deterministic results.
-        let mut generator = ValueGenerator::deterministic();
+        let mut generator = ValueGenerator::from_seed(fixture.name());
 
         let graph = fixture.graph();
         // TODO: add tests for hakari id -- none of our fixtures appear to have a
