@@ -120,23 +120,23 @@ cargo hakari remove-deps
 Example configuration:
 
 ```toml
-## The name of the package used for workspace-hack unification.
+# The name of the package used for workspace-hack unification.
 hakari-package = "workspace-hack"
-## Cargo resolver version in use -- version 2 is highly recommended.
+# Cargo resolver version in use -- version 2 is highly recommended.
 resolver = "2"
 
-## Add triples corresponding to platforms commonly used by developers here.
-## https://doc.rust-lang.org/rustc/platform-support.html
+# Add triples corresponding to platforms commonly used by developers here.
+# https://doc.rust-lang.org/rustc/platform-support.html
 platforms = [
-    ## "x86_64-unknown-linux-gnu",
-    ## "x86_64-apple-darwin",
-    ## "x86_64-pc-windows-msvc",
+    # "x86_64-unknown-linux-gnu",
+    # "x86_64-apple-darwin",
+    # "x86_64-pc-windows-msvc",
 ]
 
-## Write out exact versions rather than specifications. Set this to true if version numbers in
-## `Cargo.toml` and `Cargo.lock` files are kept in sync, e.g. in some configurations of
-## https://dependabot.com/.
-## exact-versions = false
+# Write out exact versions rather than specifications. Set this to true if version numbers in
+# `Cargo.toml` and `Cargo.lock` files are kept in sync, e.g. in some configurations of
+# https://dependabot.com/.
+# exact-versions = false
 ```
 
 For more options, including how to exclude crates from the output, see the
