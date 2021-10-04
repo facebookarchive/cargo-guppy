@@ -132,8 +132,6 @@
 //!     ## "x86_64-pc-windows-msvc",
 //! ]
 //!
-//! ## Options to control Hakari output.
-//! [output]
 //! ## Write out exact versions rather than specifications. Set this to true if version numbers in
 //! ## `Cargo.toml` and `Cargo.lock` files are kept in sync, e.g. in some configurations of
 //! ## https://dependabot.com/.
