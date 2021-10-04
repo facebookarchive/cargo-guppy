@@ -142,6 +142,16 @@ platforms = [
 For more options, including how to exclude crates from the output, see the
 [`config` module](https://docs.rs/cargo-hakari/*/cargo_hakari/config).
 
+## Stability guarantees
+
+`cargo-hakari` follows semantic versioning, where the public API is the command-line interface.
+
+Within a given series, the command-line interface will be treated as append-only.
+The generated `Cargo.toml` will also be kept the same unless:
+* a new config option is added, in which case the different output will be gated on the new
+  option, or
+* there is a bugfix involved.
+
 ## Contributing
 
 See the [CONTRIBUTING](../../CONTRIBUTING.md) file for how to help out.
