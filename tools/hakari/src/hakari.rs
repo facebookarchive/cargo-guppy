@@ -714,13 +714,26 @@ struct ComputedMapBuild<'g, 'b> {
 
 impl<'g, 'b> ComputedMapBuild<'g, 'b> {
     fn new(builder: &'b HakariBuilder<'g>) -> Self {
+        // Previously we looked at default features as well, but that isn't necessary because
+        // Cargo's feature resolver is a morphism over the lattice formed by the power set of all
+        // features. Specifically, for any workspace package P and any
+        // dependency D, let F(k) be the set of features of D when P is built with feature
+        // set 'k'.
+        //
+        // For any set of features 'k' where {} ⊆ k ⊆ {all features},
+        // F({}) ⊆ F(k) ⊆ F({all features}).
+        //
+        // Therefore, looking at just 'none' and 'all' is guaranteed to be the same as looking at
+        // any set of features in between.
+        let none_or_all = [StandardFeatures::None, StandardFeatures::All];
+
         // Features for the "always" platform spec.
-        let always_features = StandardFeatures::VALUES
+        let always_features = none_or_all
             .iter()
             .map(|&features| (None, PlatformSpec::Always, features));
 
         // Features for specified platforms.
-        let specified_features = StandardFeatures::VALUES.iter().flat_map(|&features| {
+        let specified_features = none_or_all.iter().flat_map(|&features| {
             builder
                 .platforms
                 .iter()
