@@ -1288,6 +1288,19 @@
 <span id="1288">1288</span>
 <span id="1289">1289</span>
 <span id="1290">1290</span>
+<span id="1291">1291</span>
+<span id="1292">1292</span>
+<span id="1293">1293</span>
+<span id="1294">1294</span>
+<span id="1295">1295</span>
+<span id="1296">1296</span>
+<span id="1297">1297</span>
+<span id="1298">1298</span>
+<span id="1299">1299</span>
+<span id="1300">1300</span>
+<span id="1301">1301</span>
+<span id="1302">1302</span>
+<span id="1303">1303</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -2005,13 +2018,26 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">ComputedMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">builder</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="comment">// Previously we looked at default features as well, but that isn&#39;t necessary because</span>
+        <span class="comment">// Cargo&#39;s feature resolver is a morphism over the lattice formed by the power set of all</span>
+        <span class="comment">// features. Specifically, for any workspace package P and any</span>
+        <span class="comment">// dependency D, let F(k) be the set of features of D when P is built with feature</span>
+        <span class="comment">// set &#39;k&#39;.</span>
+        <span class="comment">//</span>
+        <span class="comment">// For any set of features &#39;k&#39; where {} ⊆ k ⊆ {all features},</span>
+        <span class="comment">// F({}) ⊆ F(k) ⊆ F({all features}).</span>
+        <span class="comment">//</span>
+        <span class="comment">// Therefore, looking at just &#39;none&#39; and &#39;all&#39; is guaranteed to be the same as looking at</span>
+        <span class="comment">// any set of features in between.</span>
+        <span class="kw">let</span> <span class="ident">none_or_all</span> <span class="op">=</span> [<span class="ident">StandardFeatures::None</span>, <span class="ident">StandardFeatures::All</span>];
+
         <span class="comment">// Features for the &quot;always&quot; platform spec.</span>
-        <span class="kw">let</span> <span class="ident">always_features</span> <span class="op">=</span> <span class="ident">StandardFeatures::VALUES</span>
+        <span class="kw">let</span> <span class="ident">always_features</span> <span class="op">=</span> <span class="ident">none_or_all</span>
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">features</span><span class="op">|</span> (<span class="prelude-val">None</span>, <span class="ident">PlatformSpec::Always</span>, <span class="ident">features</span>));
 
         <span class="comment">// Features for specified platforms.</span>
-        <span class="kw">let</span> <span class="ident">specified_features</span> <span class="op">=</span> <span class="ident">StandardFeatures::VALUES</span>.<span class="ident">iter</span>().<span class="ident">flat_map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">features</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="ident">specified_features</span> <span class="op">=</span> <span class="ident">none_or_all</span>.<span class="ident">iter</span>().<span class="ident">flat_map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">features</span><span class="op">|</span> {
             <span class="ident">builder</span>
                 .<span class="ident">platforms</span>
                 .<span class="ident">iter</span>()
