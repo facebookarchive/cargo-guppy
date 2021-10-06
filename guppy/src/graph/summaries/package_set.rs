@@ -178,7 +178,28 @@ impl PackageSetSummary {
         graph: &'g PackageGraph,
         error_message: impl Into<String>,
     ) -> Result<PackageSet<'g>, Error> {
-        let (package_set, matcher) = self.to_package_set_impl(graph);
+        let error_message = error_message.into();
+        let (package_set, matcher) = self.to_package_set_impl(graph, |_| None, &error_message)?;
+        matcher.finish(graph, error_message)?;
+        Ok(package_set)
+    }
+
+    /// Converts this `PackageSetSummary` to a [`PackageSet`], with the given source for registry
+    /// names.
+    ///
+    /// Returns an error if any of the elements weren't matched.
+    ///
+    /// This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)
+    /// is resolved.
+    pub fn to_package_set_registry<'g, 'a>(
+        &'a self,
+        graph: &'g PackageGraph,
+        registry_name_to_url: impl FnMut(&str) -> Option<&'a str>,
+        error_message: impl Into<String>,
+    ) -> Result<PackageSet<'g>, Error> {
+        let error_message = error_message.into();
+        let (package_set, matcher) =
+            self.to_package_set_impl(graph, registry_name_to_url, &error_message)?;
         matcher.finish(graph, error_message)?;
         Ok(package_set)
     }
@@ -187,17 +208,19 @@ impl PackageSetSummary {
     // Helper methods
     // ---
 
-    fn to_package_set_impl<'g>(
-        &self,
+    fn to_package_set_impl<'g, 'a>(
+        &'a self,
         graph: &'g PackageGraph,
-    ) -> (PackageSet<'g>, PackageMatcher<'_>) {
-        let mut package_matcher = PackageMatcher::new(self);
+        registry_name_to_url: impl FnMut(&str) -> Option<&'a str>,
+        error_message: &str,
+    ) -> Result<(PackageSet<'g>, PackageMatcher<'a>), Error> {
+        let mut package_matcher = PackageMatcher::new(self, registry_name_to_url, error_message)?;
         let package_set = graph
             .resolve_all()
             .filter(DependencyDirection::Forward, |metadata| {
                 package_matcher.is_match(metadata)
             });
-        (package_set, package_matcher)
+        Ok((package_set, package_matcher))
     }
 }
 
@@ -241,9 +264,7 @@ pub enum ThirdPartySource {
 
     /// A dependency on a registry. `crates.io` is represented as `None`.
     ///
-    /// This must currently be the full URL, not the short name. This will be switched to
-    /// the short name once [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)
-    /// is fixed.
+    /// This should be the short name of the registry.
     Registry(Option<String>),
 
     /// A dependency on a Git repository.
@@ -266,7 +287,7 @@ impl fmt::Display for ThirdPartySource {
         match self {
             ThirdPartySource::Path(path) => write!(f, "{{ path = {} }}", path),
             ThirdPartySource::Registry(Some(registry)) => {
-                write!(f, "{{ registry = {} }}", registry)
+                write!(f, "{{ registry = \"{}\" }}", registry)
             }
             ThirdPartySource::Registry(None) => write!(f, "crates.io"),
             ThirdPartySource::Git { repo, req } => match req {
@@ -561,10 +582,15 @@ struct PackageMatcher<'a> {
     summary_ids: HashMap<&'a SummaryId, bool>,
     workspace_members: &'a BTreeSet<String>,
     third_party: HashMap<&'a str, SmallVec<[(&'a ThirdPartySummary, bool); 2]>>,
+    registry_names_to_urls: HashMap<&'a str, &'a str>,
 }
 
 impl<'a> PackageMatcher<'a> {
-    fn new(summary: &'a PackageSetSummary) -> Self {
+    fn new(
+        summary: &'a PackageSetSummary,
+        mut registry_name_to_url: impl FnMut(&str) -> Option<&'a str>,
+        error_message: &str,
+    ) -> Result<Self, Error> {
         let summary_ids = summary
             .summary_ids
             .iter()
@@ -572,18 +598,36 @@ impl<'a> PackageMatcher<'a> {
             .collect();
 
         let mut third_party: HashMap<_, SmallVec<[_; 2]>> = HashMap::new();
+        let mut registry_names_to_urls = HashMap::new();
         for tp_summary in &summary.third_party {
+            if let ThirdPartySource::Registry(Some(name)) = &tp_summary.source {
+                if !registry_names_to_urls.contains_key(name.as_str()) {
+                    match registry_name_to_url(name) {
+                        Some(url) => {
+                            registry_names_to_urls.insert(name.as_str(), url);
+                        }
+                        None => {
+                            return Err(Error::UnknownRegistryName {
+                                message: error_message.to_owned(),
+                                summary: tp_summary.clone(),
+                                registry_name: name.clone(),
+                            });
+                        }
+                    }
+                }
+            }
             third_party
                 .entry(tp_summary.name.as_str())
                 .or_default()
                 .push((tp_summary, false));
         }
 
-        Self {
+        Ok(Self {
             summary_ids,
             workspace_members: &summary.workspace_members,
             third_party,
-        }
+            registry_names_to_urls,
+        })
     }
 
     /// Return whether something is a match, and record matches in `self`.
@@ -602,12 +646,17 @@ impl<'a> PackageMatcher<'a> {
         let in_selectors = if metadata.in_workspace() {
             self.workspace_members.contains(name)
         } else {
+            let registry_names_to_urls = &self.registry_names_to_urls;
             match self.third_party.get_mut(name) {
                 Some(matches) => {
                     let mut is_match = false;
                     for (summary, is_match_store) in matches {
                         if summary.version.matches(metadata.version())
-                            && Self::source_matches(metadata.source(), &summary.source)
+                            && Self::source_matches(
+                                metadata.source(),
+                                &summary.source,
+                                registry_names_to_urls,
+                            )
                         {
                             // This is a match.
                             is_match = true;
@@ -691,6 +740,7 @@ impl<'a> PackageMatcher<'a> {
     fn source_matches(
         package_source: PackageSource<'_>,
         third_party_source: &ThirdPartySource,
+        registry_names_to_urls: &HashMap<&'a str, &'a str>,
     ) -> bool {
         match (package_source, third_party_source) {
             (PackageSource::Workspace(_), _) => {
@@ -716,9 +766,14 @@ impl<'a> PackageMatcher<'a> {
 
                 match (external_source, third_party_source) {
                     (
-                        ExternalSource::Registry(external_registry),
-                        ThirdPartySource::Registry(Some(summary_registry)),
-                    ) => external_registry == summary_registry,
+                        ExternalSource::Registry(external_registry_url),
+                        ThirdPartySource::Registry(Some(summary_registry_name)),
+                    ) => {
+                        let &url = registry_names_to_urls
+                            .get(summary_registry_name.as_str())
+                            .expect("all names were already obtained in new()");
+                        url == external_registry_url
+                    }
                     (
                         ExternalSource::Registry(external_registry),
                         ThirdPartySource::Registry(None),

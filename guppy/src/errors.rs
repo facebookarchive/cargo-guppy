@@ -55,6 +55,19 @@ pub enum Error {
         /// Third-party packages that weren't known to the `PackageGraph`.
         unknown_third_party: Vec<crate::graph::summaries::ThirdPartySummary>,
     },
+    /// While resolving a [`PackageSetSummary`](crate::graph::summaries::PackageSetSummary),
+    /// an unknown external registry was encountered.
+    #[cfg(feature = "summaries")]
+    UnknownRegistryName {
+        /// A description attached to the error.
+        message: String,
+
+        /// The summary for which the name wasn't recognized.
+        summary: crate::graph::summaries::ThirdPartySummary,
+
+        /// The registry name that wasn't recognized.
+        registry_name: String,
+    },
 }
 
 impl Error {
@@ -115,6 +128,18 @@ impl fmt::Display for Error {
                 }
                 Ok(())
             }
+            #[cfg(feature = "summaries")]
+            UnknownRegistryName {
+                message,
+                summary,
+                registry_name,
+            } => {
+                writeln!(
+                    f,
+                    "unknown registry name: {}\n* for third-party: {}\n* name: {}\n",
+                    message, summary, registry_name
+                )
+            }
         }
     }
 }
@@ -137,6 +162,8 @@ impl error::Error for Error {
             UnknownSummaryId(_) => None,
             #[cfg(feature = "summaries")]
             UnknownPackageSetSummary { .. } => None,
+            #[cfg(feature = "summaries")]
+            UnknownRegistryName { .. } => None,
         }
     }
 }
