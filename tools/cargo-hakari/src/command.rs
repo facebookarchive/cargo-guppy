@@ -268,7 +268,7 @@ impl CommandWithBuilder {
             CommandWithBuilder::Generate { diff } => {
                 let package_graph = builder.graph();
                 let hakari = builder.compute();
-                let toml_out = match hakari.to_toml_string(&generate_options) {
+                let toml_out = match hakari.to_toml_string(&hakari_output) {
                     Ok(toml_out) => toml_out,
                     Err(TomlOutError::UnrecognizedRegistry {
                         package_id,
