@@ -1,8 +1,16 @@
 # Changelog
 
+## [0.11.2] - 2021-10-06
+
+### Added
+
+- Rudimentary support for alternate registries. This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)
+  is resolved.
+  - This is currently only hooked up to `hakari`.
+
 ## [0.11.1] - 2021-10-01
 
-## Added
+### Added
 
 - A new abstraction `PlatformSpec` can represent the union of all platforms, the intersection
   of all platforms, or a single platform.
@@ -14,7 +22,7 @@
   list of names, and a `third-party` list of specifiers such as `{ name = "serde", version = "1" }`.
   - The resolver will now also fail if any specifiers are unmatched.
 
-## Changed
+### Changed
 
 - Platform-related types have been moved into the new `platform` module at the top level.
 - In Cargo options summaries, `version = "v1"` and `version = "v2"` have been renamed to `resolver = "1"` and
@@ -396,6 +404,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.11.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.2
 [0.11.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.1
 [0.10.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.1
 [0.10.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.10.0

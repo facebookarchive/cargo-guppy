@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.1] - 2021-10-06
+
+### Added
+
+- Support for alternate registries through the `[registries]` section in the config.
+  - This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052) is resolved.
+
+### Optimized
+
+- An [algorithmic improvement](https://github.com/facebookincubator/cargo-guppy/pull/468) makes computation up to 33% faster.
+
 ## [0.6.0] - 2021-10-03
 
 ### Added
@@ -90,6 +101,7 @@
 
 Initial release.
 
+[0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.0
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.5.0
 [0.4.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.4.1

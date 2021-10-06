@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.5] - 2021-10-04
+
+### Added
+
+- Support for alternate registries through the `[registries]` section in the config.
+  - This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052) is resolved.
+- Enable ANSI color output on Windows.
+
+### Optimized
+
+- An [algorithmic improvement](https://github.com/facebookincubator/cargo-guppy/pull/468) in `hakari` makes computation up to 33% faster.
+
 ## [0.9.4] - 2021-10-04
 
 ### Fixed
@@ -32,6 +44,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.5
 [0.9.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.4
 [0.9.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.3
 [0.9.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.2
