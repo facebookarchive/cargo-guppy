@@ -32,6 +32,12 @@ fn args() -> impl Iterator<Item = String> {
 
 fn main() -> Result<()> {
     color_eyre::install()?;
+    cfg_if! {
+        if #[cfg(windows)] {
+            // Attempt to turn on ANSI color support. This may or may not work.
+            let _ = ansi_term::enable_ansi_support();
+        }
+    }
 
     let args = Args::from_iter(args());
     std::process::exit(args.exec()?)
