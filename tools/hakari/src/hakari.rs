@@ -5,6 +5,7 @@ use crate::{
     toml_out::{write_toml, HakariOutputOptions},
     CargoTomlError, HakariCargoToml, TomlOutError,
 };
+use bimap::BiHashMap;
 use debug_ignore::DebugIgnore;
 use guppy::{
     errors::TargetSpecError,
@@ -34,8 +35,9 @@ pub struct HakariBuilder<'g> {
     pub(crate) platforms: Vec<Arc<Platform>>,
     resolver: CargoResolverVersion,
     pub(crate) verify_mode: bool,
-    traversal_excludes: HashSet<&'g PackageId>,
+    pub(crate) traversal_excludes: HashSet<&'g PackageId>,
     final_excludes: HashSet<&'g PackageId>,
+    pub(crate) registries: BiHashMap<String, String>,
     unify_target_host: UnifyTargetHost,
     output_single_feature: bool,
 }
@@ -72,6 +74,7 @@ impl<'g> HakariBuilder<'g> {
             verify_mode: false,
             traversal_excludes: HashSet::new(),
             final_excludes: HashSet::new(),
+            registries: BiHashMap::new(),
             unify_target_host: UnifyTargetHost::default(),
             output_single_feature: false,
         })
@@ -242,6 +245,22 @@ impl<'g> HakariBuilder<'g> {
         Ok(self.is_traversal_excluded(package_id)? || self.is_final_excluded(package_id)?)
     }
 
+    /// Add alternate registries by (name, URL) pairs.
+    ///
+    /// This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)
+    /// is resolved.
+    pub fn add_registries(
+        &mut self,
+        registries: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) -> &mut Self {
+        self.registries.extend(
+            registries
+                .into_iter()
+                .map(|(name, url)| (name.into(), url.into())),
+        );
+        self
+    }
+
     /// Whether and how to unify feature sets across target and host platforms.
     ///
     /// This is an advanced feature that most users don't need to set. For more information about
@@ -351,14 +370,29 @@ mod summaries {
                     Ok(platform.into())
                 })
                 .collect::<Result<Vec<_>, _>>()?;
+
+            let registries: BiHashMap<_, _> = summary
+                .registries
+                .iter()
+                .map(|(name, url)| (name.clone(), url.clone()))
+                .collect();
+
             let traversal_excludes = summary
                 .traversal_excludes
-                .to_package_set(graph, "resolving hakari traversal-excludes")?
+                .to_package_set_registry(
+                    graph,
+                    |name| registries.get_by_left(name).map(|s| s.as_str()),
+                    "resolving hakari traversal-excludes",
+                )?
                 .package_ids(DependencyDirection::Forward)
                 .collect();
             let final_excludes = summary
                 .final_excludes
-                .to_package_set(graph, "resolving hakari final-excludes")?
+                .to_package_set_registry(
+                    graph,
+                    |name| registries.get_by_left(name).map(|s| s.as_str()),
+                    "resolving hakari final-excludes",
+                )?
                 .package_ids(DependencyDirection::Forward)
                 .collect();
 
@@ -370,6 +404,7 @@ mod summaries {
                 unify_target_host: summary.unify_target_host,
                 output_single_feature: summary.output_single_feature,
                 platforms,
+                registries,
                 traversal_excludes,
                 final_excludes,
             })

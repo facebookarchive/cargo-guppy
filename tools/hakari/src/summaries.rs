@@ -11,7 +11,7 @@ use guppy::{
     graph::{cargo::CargoResolverVersion, summaries::PackageSetSummary, PackageGraph},
 };
 use serde::{Deserialize, Serialize};
-use std::{fmt, str::FromStr};
+use std::{collections::BTreeMap, fmt, str::FromStr};
 use toml::Serializer;
 
 /// Configuration for `hakari`.
@@ -77,6 +77,17 @@ pub struct HakariBuilderSummary {
     /// The list of packages excluded from the final output.
     #[serde(default)]
     pub final_excludes: PackageSetSummary,
+
+    /// The list of alternate registries, as a map of name to URL.
+    ///
+    /// This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)
+    /// is resolved.
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeMap::is_empty",
+        with = "registries_impl"
+    )]
+    pub registries: BTreeMap<String, String>,
 }
 
 impl HakariBuilderSummary {
@@ -106,6 +117,11 @@ impl HakariBuilderSummary {
                 builder.final_excludes(),
             )
             .expect("all package IDs are valid"),
+            registries: builder
+                .registries
+                .iter()
+                .map(|(name, url)| (name.clone(), url.clone()))
+                .collect(),
             unify_target_host: builder.unify_target_host(),
             output_single_feature: builder.output_single_feature(),
         })
@@ -210,5 +226,113 @@ impl OutputOptionsSummary {
             absolute_paths: self.absolute_paths,
             builder_summary: self.builder_summary,
         }
+    }
+}
+
+mod registries_impl {
+    use super::*;
+    use serde::{Deserializer, Serializer};
+
+    #[derive(Debug, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct RegistryDe {
+        index: String,
+    }
+
+    #[derive(Debug, Serialize)]
+    struct RegistrySer<'a> {
+        index: &'a str,
+    }
+
+    /// Serializes a path using forward slashes.
+    pub fn serialize<S>(
+        registry_map: &BTreeMap<String, String>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let ser_map: BTreeMap<_, _> = registry_map
+            .iter()
+            .map(|(name, index)| {
+                (
+                    name.as_str(),
+                    RegistrySer {
+                        index: index.as_str(),
+                    },
+                )
+            })
+            .collect();
+        ser_map.serialize(serializer)
+    }
+
+    /// Deserializes a path, converting forward slashes to backslashes.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<BTreeMap<String, String>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let de_map = BTreeMap::<String, RegistryDe>::deserialize(deserializer)?;
+        let registry_map = de_map
+            .into_iter()
+            .map(|(name, RegistryDe { index })| (name, index))
+            .collect();
+        Ok(registry_map)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fixtures::json::*;
+
+    #[test]
+    fn parse_registries() {
+        static PARSE_REGISTRIES_INPUT: &str = r#"
+        resolver = "2"
+
+        [traversal-excludes]
+        third-party = [
+            { name = "serde_derive", registry = "my-registry" },
+        ]
+
+        [registries]
+        my-registry = { index = "https://github.com/fakeorg/crates.io-index" }
+        your-registry = { index = "https://foobar" }
+        "#;
+
+        let summary: HakariBuilderSummary =
+            toml::from_str(PARSE_REGISTRIES_INPUT).expect("failed to parse toml");
+        // Need an arbitrary graph for this.
+        let builder = summary
+            .to_hakari_builder(JsonFixture::metadata_alternate_registries().graph())
+            .expect("summary => builder conversion");
+
+        assert_eq!(
+            summary.registries.get("my-registry").map(|s| s.as_str()),
+            Some(METADATA_ALTERNATE_REGISTRY_URL),
+            "my-registry is correct"
+        );
+        assert_eq!(
+            summary.registries.get("your-registry").map(|s| s.as_str()),
+            Some("https://foobar"),
+            "your-registry is correct"
+        );
+
+        let summary2 = builder.to_summary().expect("builder => summary conversion");
+        let builder2 = summary
+            .to_hakari_builder(JsonFixture::metadata_alternate_registries().graph())
+            .expect("summary2 => builder2 conversion");
+        assert_eq!(
+            builder.traversal_excludes, builder2.traversal_excludes,
+            "builder == builder2 traversal excludes"
+        );
+
+        let serialized = toml::to_string(&summary2).expect("serialized to TOML correctly");
+        let summary3: HakariBuilderSummary =
+            toml::from_str(&serialized).expect("deserialized from TOML correctly");
+        assert_eq!(
+            summary2, summary3,
+            "summary => serialized => summary roundtrip"
+        );
     }
 }

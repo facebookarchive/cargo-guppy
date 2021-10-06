@@ -159,6 +159,15 @@ pub enum TomlOutError {
         /// The source string that wasn't recognized.
         source: String,
     },
+
+    /// An external registry was found and wasn't passed into [`HakariOutputOptions`].
+    UnrecognizedRegistry {
+        /// The package ID that Hakari tried to write out a dependency line for.
+        package_id: PackageId,
+
+        /// The registry URL that wasn't recognized.
+        registry_url: String,
+    },
 }
 
 impl From<TargetSpecError> for TomlOutError {
@@ -190,9 +199,19 @@ impl fmt::Display for TomlOutError {
             ),
             TomlOutError::UnrecognizedExternal { package_id, source } => write!(
                 f,
-                "for external dependency '{}', unrecognized external source {}",
+                "for third-party dependency '{}', unrecognized external source {}",
                 package_id, source,
             ),
+            TomlOutError::UnrecognizedRegistry {
+                package_id,
+                registry_url,
+            } => {
+                write!(
+                    f,
+                    "for third-party dependency '{}', unrecognized registry at URL {}",
+                    package_id, registry_url,
+                )
+            }
         }
     }
 }
@@ -204,9 +223,9 @@ impl error::Error for TomlOutError {
             #[cfg(feature = "cli-support")]
             TomlOutError::Toml { err, .. } => Some(err),
             TomlOutError::FmtWrite(err) => Some(err),
-            TomlOutError::PathWithoutHakari { .. } | TomlOutError::UnrecognizedExternal { .. } => {
-                None
-            }
+            TomlOutError::PathWithoutHakari { .. }
+            | TomlOutError::UnrecognizedExternal { .. }
+            | TomlOutError::UnrecognizedRegistry { .. } => None,
         }
     }
 }
@@ -306,45 +325,47 @@ pub(crate) fn write_toml(
                             }
                         }
                     }
-                    PackageSource::External(s) => {
-                        let external = source.parse_external().ok_or_else(|| {
-                            TomlOutError::UnrecognizedExternal {
+                    PackageSource::External(s) => match source.parse_external() {
+                        Some(ExternalSource::Git {
+                            repository, req, ..
+                        }) => {
+                            let mut out = String::new();
+                            write!(out, "git = \"{}\"", repository)?;
+                            match req {
+                                GitReq::Branch(branch) => write!(out, ", branch = \"{}\"", branch)?,
+                                GitReq::Tag(tag) => write!(out, ", tag = \"{}\"", tag)?,
+                                GitReq::Rev(rev) => write!(out, ", rev = \"{}\"", rev)?,
+                                GitReq::Default => {}
+                                _ => {
+                                    return Err(TomlOutError::UnrecognizedExternal {
+                                        package_id: dep.id().clone(),
+                                        source: s.to_string(),
+                                    });
+                                }
+                            };
+                            out
+                        }
+                        Some(ExternalSource::Registry(registry_url)) => {
+                            let registry_name = builder
+                                .registries
+                                .get_by_right(registry_url)
+                                .ok_or_else(|| TomlOutError::UnrecognizedRegistry {
+                                    package_id: dep.id().clone(),
+                                    registry_url: registry_url.to_owned(),
+                                })?;
+                            format!(
+                                "version = \"{}\", registry = \"{}\"",
+                                VersionDisplay::new(dep.version(), options.exact_versions),
+                                registry_name
+                            )
+                        }
+                        _ => {
+                            return Err(TomlOutError::UnrecognizedExternal {
                                 package_id: dep.id().clone(),
                                 source: s.to_string(),
-                            }
-                        })?;
-                        match external {
-                            ExternalSource::Git {
-                                repository, req, ..
-                            } => {
-                                let mut out = String::new();
-                                write!(out, "git = \"{}\"", repository)?;
-                                match req {
-                                    GitReq::Branch(branch) => {
-                                        write!(out, ", branch = \"{}\"", branch)?
-                                    }
-                                    GitReq::Tag(tag) => write!(out, ", tag = \"{}\"", tag)?,
-                                    GitReq::Rev(rev) => write!(out, ", rev = \"{}\"", rev)?,
-                                    GitReq::Default => {}
-                                    _ => {
-                                        return Err(TomlOutError::UnrecognizedExternal {
-                                            package_id: dep.id().clone(),
-                                            source: s.to_string(),
-                                        });
-                                    }
-                                };
-                                out
-                            }
-                            _ => {
-                                // Can't handle non-crates.io registries at the moment: requires
-                                // a fix to https://github.com/rust-lang/cargo/issues/9052.
-                                return Err(TomlOutError::UnrecognizedExternal {
-                                    package_id: dep.id().clone(),
-                                    source: s.to_string(),
-                                });
-                            }
+                            })
                         }
-                    }
+                    },
                 }
             };
 
@@ -429,7 +450,7 @@ impl<'a> fmt::Display for VersionDisplay<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fixtures::json::JsonFixture;
+    use fixtures::json::*;
     use guppy::{graph::DependencyDirection, VersionReq};
     use std::collections::{btree_map::Entry, BTreeMap};
 
@@ -505,6 +526,50 @@ mod tests {
                     version,
                 );
             }
+        }
+    }
+
+    #[test]
+    fn alternate_registries() {
+        let fixture = JsonFixture::metadata_alternate_registries();
+        let mut builder =
+            HakariBuilder::new(fixture.graph(), None).expect("builder initialization succeeded");
+        builder.set_output_single_feature(true);
+        let hakari = builder.compute();
+
+        // Not plugging in the registry should generate an error.
+        let output_options = HakariOutputOptions::new();
+        hakari
+            .to_toml_string(&output_options)
+            .expect_err("no alternate registry specified => error");
+
+        let mut builder =
+            HakariBuilder::new(fixture.graph(), None).expect("builder initialization succeeded");
+        builder.set_output_single_feature(true);
+        builder.add_registries([("alt-registry", METADATA_ALTERNATE_REGISTRY_URL)]);
+        let hakari = builder.compute();
+
+        let output = hakari
+            .to_toml_string(&output_options)
+            .expect("alternate registry specified => success");
+
+        static MATCH_STRINGS: &[&str] = &[
+            // Two copies of serde, one from the main registry and one from the alt
+            r#"serde-e7e45184a9cd0878 = { package = "serde", version = "1", registry = "alt-registry", default-features = false, "#,
+            r#"serde-dff4ba8e3ae991db = { package = "serde", version = "1", default-features = false, "#,
+            // serde_derive only in the alt registry
+            r#"serde_derive = { version = "1", registry = "alt-registry" }"#,
+            // itoa only from the main registry
+            r#"itoa = { version = "0.4", default-features = false }"#,
+        ];
+
+        for &needle in MATCH_STRINGS {
+            assert!(
+                output.contains(needle),
+                "output did not contain string '{}', actual output follows:\n***\n{}\n",
+                needle,
+                output
+            );
         }
     }
 }

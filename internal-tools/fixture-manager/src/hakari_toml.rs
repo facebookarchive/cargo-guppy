@@ -4,7 +4,7 @@
 use crate::context::ContextImpl;
 use anyhow::Result;
 use camino::{Utf8Path, Utf8PathBuf};
-use fixtures::json::JsonFixture;
+use fixtures::json::*;
 use hakari::{diffy::PatchFormatter, Hakari, HakariBuilder, HakariCargoToml, HakariOutputOptions};
 use once_cell::sync::Lazy;
 use proptest::prelude::*;
@@ -46,9 +46,15 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
             // The partial clones mean that a change to the algorithm in part of the strategy won't
             // affect the rest of it.
             let mut iter_generator = generator.partial_clone();
-            let builder = iter_generator
+            let mut builder = iter_generator
                 .partial_clone()
                 .generate(&hakari_builder_strategy);
+
+            // The alternate fixture uses this registry.
+            if fixture.name() == "metadata_alternate_registries" {
+                builder.add_registries([("my-registry", METADATA_ALTERNATE_REGISTRY_URL)]);
+            }
+
             let hakari = builder.compute();
             let mut output_options = HakariOutputOptions::default();
             output_options

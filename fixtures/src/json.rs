@@ -99,6 +99,9 @@ pub static METADATA_PROC_MACRO1_BUILD_USER: &str =
 pub static METADATA_PROC_MACRO1_DEV_USER: &str =
     "dev-user 0.1.0 (path+file:///Users/fakeuser/local/testcrates/proc-macro/dev-user)";
 
+pub static METADATA_ALTERNATE_REGISTRIES_PATH: &str = "../small/alternate-registries.json";
+pub static METADATA_ALTERNATE_REGISTRY_URL: &str = "https://github.com/fakeorg/crates.io-index";
+
 pub static METADATA_LIBRA_PATH: &str = "../large/metadata_libra.json";
 pub static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
     "admission-control-service 0.1.0 (path+file:///Users/fakeuser/local/libra/admission_control/admission-control-service)";
@@ -194,6 +197,7 @@ define_fixtures! {
     metadata_targets1 => METADATA_TARGETS1_PATH,
     metadata_build_targets1 => METADATA_BUILD_TARGETS1_PATH,
     metadata_proc_macro1 => METADATA_PROC_MACRO1_PATH,
+    metadata_alternate_registries => METADATA_ALTERNATE_REGISTRIES_PATH,
     metadata_libra => METADATA_LIBRA_PATH,
     metadata_libra_f0091a4 => METADATA_LIBRA_F0091A4_PATH,
     metadata_libra_9ffd93b => METADATA_LIBRA_9FFD93B_PATH,
@@ -1126,6 +1130,11 @@ impl FixtureDetails {
         ])
         .insert_into(&mut details);
 
+        Self::new(details)
+    }
+
+    pub(crate) fn metadata_alternate_registries() -> Self {
+        let details = HashMap::new();
         Self::new(details)
     }
 

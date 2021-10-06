@@ -13,7 +13,7 @@ use hakari::{
     cli_ops::{HakariInit, WorkspaceOps},
     diffy::PatchFormatter,
     summaries::HakariConfig,
-    HakariBuilder, HakariCargoToml, HakariOutputOptions,
+    HakariBuilder, HakariCargoToml, HakariOutputOptions, TomlOutError,
 };
 use log::{error, info};
 use std::convert::TryFrom;
@@ -266,10 +266,30 @@ impl CommandWithBuilder {
 
         match self {
             CommandWithBuilder::Generate { diff } => {
+                let package_graph = builder.graph();
                 let hakari = builder.compute();
-                let toml_out = hakari
-                    .to_toml_string(&hakari_output)
-                    .with_context(|| "error generating new hakari.toml")?;
+                let toml_out = match hakari.to_toml_string(&generate_options) {
+                    Ok(toml_out) => toml_out,
+                    Err(TomlOutError::UnrecognizedRegistry {
+                        package_id,
+                        registry_url,
+                    }) => {
+                        // Print out a better error message for this more common use case.
+                        let package = package_graph
+                            .metadata(&package_id)
+                            .expect("package ID obtained from the same graph");
+                        error!("unrecognized registry URL {} found for {} {}\n(add to {} section of {})",
+                            registry_url.bold(),
+                            package.name().bold(),
+                            format!("v{}", package.version()).bold(),
+                            "[registries]".bold(),
+                            CONFIG_PATH.blue().bold(),
+                        );
+                        // 102 is picked pretty arbitrarily because regular errors exit with 101.
+                        return Ok(102);
+                    }
+                    Err(err) => Err(err).with_context(|| "error generating new hakari.toml")?,
+                };
 
                 let existing_toml = hakari
                     .read_toml()

@@ -101,6 +101,20 @@
 //! ]
 //! ```
 //!
+//! ## registries
+//!
+//! Alternate registries,
+//! [in the same format](https://doc.rust-lang.org/cargo/reference/registries.html) as
+//! `.cargo/config.toml`.
+//!
+//! This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)
+//! is resolved.
+//!
+//! ```toml
+//! [registries]
+//! my-registry = { index = "https://my-intranet:8080/git/index" }
+//! ```
+//!
 //! # Output options
 //!
 //! ## exact-versions
