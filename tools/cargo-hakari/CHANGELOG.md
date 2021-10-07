@@ -8,6 +8,10 @@
   - This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052) is resolved.
 - Enable ANSI color output on Windows.
 
+### Fixed
+
+- Fixed some workspace-hack contents missing in an edge case.
+
 ### Optimized
 
 - An [algorithmic improvement](https://github.com/facebookincubator/cargo-guppy/pull/468) in `hakari` makes computation up to 33% faster.

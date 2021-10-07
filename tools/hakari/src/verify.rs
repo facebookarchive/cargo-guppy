@@ -15,7 +15,10 @@
 //! [`CargoSet::new`](guppy::graph::cargo::CargoSet::new). If, in the result, the
 //! [`output_map`](crate::Hakari::output_map) is empty, then features were unified.
 
-use crate::{hakari::ComputedInnerMap, HakariBuilder};
+use crate::{
+    hakari::{ComputedInnerMap, ComputedInnerValue},
+    HakariBuilder,
+};
 use guppy::{
     graph::{cargo::BuildPlatform, feature::StandardFeatures},
     PackageId,
@@ -115,7 +118,14 @@ impl<'g> fmt::Display for VerifyError<'g> {
             "on build platform {}, with third-party package {}:",
             self.build_platform, self.package_id
         )?;
-        for (feature_set, packages) in &self.inner_map {
+        for (
+            feature_set,
+            ComputedInnerValue {
+                workspace_packages,
+                fixed_up,
+            },
+        ) in &self.inner_map
+        {
             if feature_set.is_empty() {
                 writeln!(f, "  for dependency with no features, workspace packages:")?;
             } else {
@@ -126,7 +136,7 @@ impl<'g> fmt::Display for VerifyError<'g> {
                     features.join(", ")
                 )?;
             }
-            for (package, standard_features) in packages {
+            for (package, standard_features) in workspace_packages {
                 let feature_str = match standard_features {
                     StandardFeatures::None => "no features",
                     StandardFeatures::Default => "default features",
@@ -134,10 +144,34 @@ impl<'g> fmt::Display for VerifyError<'g> {
                 };
                 writeln!(f, "    * {} ({})", package.name(), feature_str)?;
             }
+            if *fixed_up {
+                writeln!(f, "    * at least one post-compute fixup")?;
+            }
         }
 
         Ok(())
     }
 }
 
-// TODO: write a test (maybe a doctest?) to ensure that this repo's workspace-hack works.
+#[cfg(test)]
+mod tests {
+    use crate::HakariBuilder;
+    use guppy::MetadataCommand;
+
+    /// Verify that this repo's `workspace-hack` works correctly.
+    #[test]
+    fn cargo_guppy_verify() {
+        let graph = MetadataCommand::new()
+            .build_graph()
+            .expect("package graph built correctly");
+        let workspace_hack = graph
+            .workspace()
+            .member_by_name("workspace-hack")
+            .expect("this repo contains a workspace-hack package");
+        let builder =
+            HakariBuilder::new(&graph, Some(workspace_hack.id())).expect("builder initialized");
+        if let Err(errs) = builder.verify() {
+            panic!("verify failed: {}", errs);
+        }
+    }
+}

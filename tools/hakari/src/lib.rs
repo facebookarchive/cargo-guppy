@@ -145,7 +145,9 @@ pub mod internals {
     //!
     //! These are provided in case some post-processing needs to be done.
 
-    pub use crate::hakari::{ComputedInnerMap, ComputedMap, ComputedValue, OutputKey, OutputMap};
+    pub use crate::hakari::{
+        ComputedInnerMap, ComputedInnerValue, ComputedMap, ComputedValue, OutputKey, OutputMap,
+    };
 }
 
 /// Re-export diffy.
