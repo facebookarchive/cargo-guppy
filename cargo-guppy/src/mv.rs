@@ -6,13 +6,13 @@ use camino::{Utf8Path, Utf8PathBuf};
 use dialoguer::Confirm;
 use guppy::graph::{PackageGraph, PackageLink, PackageMetadata};
 use guppy_cmdlib::CargoMetadataOptions;
-use pathdiff::diff_paths;
+use pathdiff::diff_utf8_paths;
 use std::{
     collections::{btree_map::Entry, BTreeMap, HashSet},
     fmt, fs,
     io::{self, Write},
     mem,
-    path::{Path, PathBuf, MAIN_SEPARATOR},
+    path::{Path, MAIN_SEPARATOR},
 };
 use structopt::StructOpt;
 use toml_edit::{decorated, Document, Item, Table, Value};
@@ -84,10 +84,9 @@ impl MvOptions {
                     continue;
                 }
 
-                let edit_path = diff_paths(old_path, &package_move.new_path)
+                let edit_path = diff_utf8_paths(old_path, &package_move.new_path)
                     .expect("paths are all relative so diff_paths can never return None");
 
-                let edit_path = check_utf8_path(edit_path)?;
                 manifest_edits
                     .entry(from.manifest_path())
                     .or_default()
@@ -102,13 +101,12 @@ impl MvOptions {
                     .expect("reverse deps of workspace packages must be in workspace");
                 // If the 'from' moves as well, compute the new path based on that.
                 let edit_path = if let Some(from_move) = src_moves.get(old_path) {
-                    diff_paths(&package_move.new_path, &from_move.new_path)
+                    diff_utf8_paths(&package_move.new_path, &from_move.new_path)
                 } else {
-                    diff_paths(&package_move.new_path, old_path)
+                    diff_utf8_paths(&package_move.new_path, old_path)
                 }
                 .expect("paths are all relative so diff_paths can never return None");
 
-                let edit_path = check_utf8_path(edit_path)?;
                 manifest_edits
                     .entry(from.manifest_path())
                     .or_default()
@@ -120,7 +118,7 @@ impl MvOptions {
         for (manifest_path, edits) in &manifest_edits {
             println!(
                 "manifest: {}",
-                diff_paths(manifest_path, workspace_root).unwrap().display()
+                diff_utf8_paths(manifest_path, workspace_root).unwrap()
             );
             for edit in edits {
                 println!("  * {}", edit);
@@ -292,13 +290,6 @@ fn rel_path<'a>(path: &'a Path, workspace_root: &Utf8Path) -> Result<&'a Utf8Pat
     })?;
     Utf8Path::from_path(rel_path)
         .ok_or_else(|| anyhow!("rel path {} is invalid UTF-8", rel_path.display()))
-}
-
-/// Checks that the path is valid Unicode. If it is, returns a string, otherwise returns an error.
-fn check_utf8_path(path: PathBuf) -> Result<Utf8PathBuf> {
-    // TODO: remove this, rely on Utf8PathBuf instead!
-    Utf8PathBuf::from_path_buf(path)
-        .map_err(|non_unicode| anyhow!("path {} is not valid Unicode", non_unicode.display()))
 }
 
 fn moves_for<'g: 'a, 'a>(
