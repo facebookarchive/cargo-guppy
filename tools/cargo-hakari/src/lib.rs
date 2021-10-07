@@ -22,7 +22,7 @@
 //!   [Here's how to do it in Git](https://stackoverflow.com/a/10017566).
 //!   (Pull requests to improve this are welcome.)
 //!
-//! # Installation and usage
+//! # Installation
 //!
 //! All of the below commands take options that control their behavior.
 //!
@@ -40,7 +40,13 @@
 //!
 //! If `$HOME/.cargo/bin` is in your `PATH`, the `cargo hakari` command will be available.
 //!
-//! ## Usage
+//! # Usage
+//!
+//! ## Getting started
+//!
+//! There are three steps you *must* take for `cargo hakari` to work properly.
+//!
+//! ### 1. Initialize the workspace-hack
 //!
 //! Initialize a workspace-hack crate for a workspace at path `my-workspace-hack`:
 //!
@@ -52,11 +58,15 @@
 //! <img src="https://user-images.githubusercontent.com/180618/135726175-dc00dd0c-68a1-455f-a13d-0dd24f545ca6.png">
 //! </p>
 //!
-//! Generate or update the contents of a workspace-hack crate.
+//! ### 2. Generate the `Cargo.toml`
+//!
+//! Generate or update the contents of a workspace-hack crate:
 //!
 //! ```sh
 //! cargo hakari generate
 //! ```
+//!
+//! ### 3. Add dependencies to the workspace-hack
 //!
 //! Add the workspace-hack crate as a dependency to all other workspace crates:
 //!
@@ -68,14 +78,23 @@
 //! <img src="https://user-images.githubusercontent.com/180618/135725773-c71fc4cd-8b7d-4a8e-b97c-d84a2b3b3662.png">
 //! </p>
 //!
-//! Publish a crate that currently depends on the workspace-hack crate (`cargo publish` can't be
-//! used in this circumstance):
+//! ## Making hakari work well
 //!
-//! ```sh
-//! cargo hakari publish -p <crate>
-//! ```
+//! These are things that are not absolutely necessary to do, but will make `cargo hakari` work
+//! better.
 //!
-//! ## Keeping the workspace-hack crate up-to-date
+//! ### 1. Update the hakari config
+//!
+//! Open up `.guppy/hakari.toml`, then:
+//!
+//! * uncomment or add commonly-used developer platforms
+//! * read the note about the resolver, and strongly consider
+//!   [setting `resolver = "2"`](https://blog.rust-lang.org/2021/03/25/Rust-1.51.0.html#cargos-new-feature-resolver)
+//!   in your workspace's `Cargo.toml`.
+//!
+//! Remember to run `cargo hakari generate` after changing the config.
+//!
+//! ### 2. Keep the workspace-hack up-to-date in CI
 //!
 //! Run the following commands in CI:
 //!
@@ -93,10 +112,20 @@
 //! All `cargo hakari` commands take a `--quiet` option to suppress output, though showing diff
 //! output in CI is often useful.
 //!
+//! ## Publishing a crate
+//!
+//! By default, `cargo publish` will not let you upload a crate that depends on a local-only path
+//! dependency like `workspace-hack`. `cargo hakari` has a command which temporarily removes the
+//! dependency for you:
+//!
+//! ```sh
+//! cargo hakari publish -p <crate>
+//! ```
+//!
 //! ## Disabling and uninstalling
 //!
-//! Disable the workspace-hack crate temporarily by removing generated contents. (Re-enable by
-//! running `cargo hakari generate`).
+//! Disable the workspace-hack crate temporarily by removing generated lines from `Cargo.toml`.
+//! (Re-enable by running `cargo hakari generate`.)
 //!
 //! ```sh
 //! cargo hakari disable
