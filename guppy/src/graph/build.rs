@@ -199,10 +199,8 @@ impl<'a> GraphBuildState<'a> {
                     )));
                 }
             };
-            let rel_path = pathdiff::diff_paths(dirname, self.workspace_root)
+            let rel_path = pathdiff::diff_utf8_paths(dirname, self.workspace_root)
                 .expect("workspace root is absolute");
-            let rel_path = Utf8PathBuf::from_path_buf(rel_path)
-                .expect("diff between two UTF-8 paths should produce a UTF-8 path");
             PackageSourceImpl::Path(rel_path.into_boxed_path())
         };
 
