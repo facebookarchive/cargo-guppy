@@ -20,7 +20,7 @@ use guppy::{
 use rayon::prelude::*;
 use std::{
     borrow::Cow,
-    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashSet},
     fmt,
     sync::Arc,
 };
@@ -560,7 +560,7 @@ impl<'g> Hakari<'g> {
 
     fn build(builder: HakariBuilder<'g>) -> Self {
         let graph = *builder.graph;
-        let computed_map_build = ComputedMapBuild::new(&builder);
+        let mut computed_map_build = ComputedMapBuild::new(&builder);
         let platform_specs: Vec<_> = builder
             .platforms
             .iter()
@@ -582,7 +582,7 @@ impl<'g> Hakari<'g> {
             // further builds with the given target and host features, and use that to add in any
             // extra features that need to be considered.
             loop {
-                let mut add_extra = HashMap::new();
+                let mut add_extra = HashSet::new();
                 for (output_key, features) in map_build.iter_feature_sets() {
                     let initials_platform = match output_key.build_platform {
                         BuildPlatform::Target => InitialsPlatform::Standard,
@@ -614,9 +614,11 @@ impl<'g> Hakari<'g> {
                         {
                             let dep = feature_list.package();
                             let dep_id = dep.id();
-                            let v = computed_map_build
-                                .get(output_key.platform_idx, dep_id)
+                            let v_mut = computed_map_build
+                                .get_mut(output_key.platform_idx, dep_id)
                                 .expect("full value should be present");
+
+                            // Is it already present in the output?
                             let new_key = OutputKey {
                                 platform_idx: output_key.platform_idx,
                                 build_platform,
@@ -626,27 +628,14 @@ impl<'g> Hakari<'g> {
                                 continue;
                             }
 
-                            // Figure out what *would* be inserted for this key. Does it match?
-                            let mut any_inserted = false;
-                            let mut to_insert = BTreeSet::new();
-                            v.describe().insert(
-                                true,
-                                unify_target_host,
-                                |insert_platform, inner_map| {
-                                    if insert_platform == build_platform {
-                                        any_inserted = true;
-                                        to_insert.extend(
-                                            inner_map.keys().flat_map(|f| f.iter().copied()),
-                                        );
-                                    }
-                                },
-                            );
-                            if any_inserted
-                                && feature_list.features()
-                                    != to_insert.iter().copied().collect::<Vec<_>>()
-                            {
+                            let this_list: BTreeSet<_> =
+                                feature_list.features().iter().copied().collect();
+
+                            let already_present = v_mut.contains(build_platform, &this_list);
+                            if !already_present {
                                 // The feature list added by this dependency is non-unique.
-                                add_extra.insert((output_key.platform_idx, dep_id), v);
+                                v_mut.mark_fixed_up(build_platform, this_list);
+                                add_extra.insert((output_key.platform_idx, dep_id));
                             }
                         }
                     }
@@ -657,11 +646,13 @@ impl<'g> Hakari<'g> {
                 }
 
                 map_build.insert_all(
-                    add_extra
-                        .iter()
-                        .map(|(&(platform_idx, dep_id), &v)| (platform_idx, dep_id, v)),
-                    // Force insert by setting output_single_feature to true.
-                    true,
+                    add_extra.iter().map(|&(platform_idx, dep_id)| {
+                        let v = computed_map_build
+                            .get(platform_idx, dep_id)
+                            .expect("full value should be present");
+                        (platform_idx, dep_id, v)
+                    }),
+                    builder.output_single_feature,
                     unify_target_host,
                 );
             }
@@ -718,11 +709,32 @@ pub struct ComputedValue<'g> {
 /// A target map or a host map in a [`ComputedValue`](ComputedValue).
 ///
 /// * The keys are sets of feature names (or empty for no features).
-/// * The values are the workspace packages and selected features that cause the key in
-///   `ComputedMap` to be built with the given feature set. They are not defined to be in any
-///   particular order.
-pub type ComputedInnerMap<'g> =
-    BTreeMap<BTreeSet<&'g str>, Vec<(PackageMetadata<'g>, StandardFeatures)>>;
+/// * The values are [`ComputedInnerValue`] instances.
+pub type ComputedInnerMap<'g> = BTreeMap<BTreeSet<&'g str>, ComputedInnerValue<'g>>;
+
+/// The values of [`ComputedInnerMap`].
+#[derive(Clone, Debug, Default)]
+pub struct ComputedInnerValue<'g> {
+    /// The workspace packages and selected features that cause the key in
+    /// `ComputedMap` to be built with the feature set that forms the key of `ComputedInnerMap`.
+    /// They are not defined to be in any particular order.
+    pub workspace_packages: Vec<(PackageMetadata<'g>, StandardFeatures)>,
+
+    /// Whether at least one post-computation fixup was performed with this feature set.
+    pub fixed_up: bool,
+}
+
+impl<'g> ComputedInnerValue<'g> {
+    fn extend(&mut self, other: ComputedInnerValue<'g>) {
+        self.workspace_packages.extend(other.workspace_packages);
+        self.fixed_up |= other.fixed_up;
+    }
+
+    #[inline]
+    fn push(&mut self, package: PackageMetadata<'g>, features: StandardFeatures) {
+        self.workspace_packages.push((package, features));
+    }
+}
 
 #[derive(Debug)]
 struct TraversalExcludes<'g, 'b> {
@@ -883,6 +895,14 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
         self.computed_map.get(&(platform_idx, package_id))
     }
 
+    fn get_mut(
+        &mut self,
+        platform_idx: Option<usize>,
+        package_id: &'g PackageId,
+    ) -> Option<&mut ComputedValue<'g>> {
+        self.computed_map.get_mut(&(platform_idx, package_id))
+    }
+
     fn iter<'a>(
         &'a self,
     ) -> impl Iterator<Item = (Option<usize>, &'g PackageId, &'a ComputedValue<'g>)> + 'a {
@@ -910,6 +930,14 @@ impl<'g> ComputedValue<'g> {
         ]
     }
 
+    /// Returns a reference to the inner map corresponding to the given build platform.
+    pub fn get_inner(&self, build_platform: BuildPlatform) -> &ComputedInnerMap<'g> {
+        match build_platform {
+            BuildPlatform::Target => &self.target_inner,
+            BuildPlatform::Host => &self.host_inner,
+        }
+    }
+
     /// Returns a mutable reference to the inner map corresponding to the given build platform.
     pub fn get_inner_mut(&mut self, build_platform: BuildPlatform) -> &mut ComputedInnerMap<'g> {
         match build_platform {
@@ -931,6 +959,10 @@ impl<'g> ComputedValue<'g> {
         }
     }
 
+    fn contains(&mut self, build_platform: BuildPlatform, features: &BTreeSet<&'g str>) -> bool {
+        self.get_inner(build_platform).contains_key(features)
+    }
+
     fn insert(
         &mut self,
         build_platform: BuildPlatform,
@@ -941,7 +973,14 @@ impl<'g> ComputedValue<'g> {
         self.get_inner_mut(build_platform)
             .entry(features)
             .or_default()
-            .push((package, feature_filter));
+            .push(package, feature_filter);
+    }
+
+    fn mark_fixed_up(&mut self, build_platform: BuildPlatform, features: BTreeSet<&'g str>) {
+        self.get_inner_mut(build_platform)
+            .entry(features)
+            .or_default()
+            .fixed_up = true;
     }
 
     fn describe<'a>(&'a self) -> ValueDescribe<'g, 'a> {
@@ -1012,6 +1051,22 @@ enum ValueDescribe<'g, 'a> {
 }
 
 impl<'g, 'a> ValueDescribe<'g, 'a> {
+    #[allow(dead_code)]
+    fn description(self) -> &'static str {
+        match self {
+            ValueDescribe::None => "None",
+            ValueDescribe::SingleTarget(_) => "SingleTarget",
+            ValueDescribe::SingleHost(_) => "SingleHost",
+            ValueDescribe::MultiTarget(_) => "MultiTarget",
+            ValueDescribe::MultiHost(_) => "MultiHost",
+            ValueDescribe::SingleMatchingBoth { .. } => "SingleMatchingBoth",
+            ValueDescribe::SingleNonMatchingBoth { .. } => "SingleNonMatchingBoth",
+            ValueDescribe::MultiTargetSingleHost { .. } => "MultiTargetSingleHost",
+            ValueDescribe::MultiHostSingleTarget { .. } => "MultiHostSingleTarget",
+            ValueDescribe::MultiBoth { .. } => "MultiBoth",
+        }
+    }
+
     fn insert(
         self,
         output_single_feature: bool,
@@ -1130,6 +1185,18 @@ impl<'g> OutputMapBuild<'g> {
         match self.output_map.get(&output_key) {
             Some(inner_map) => inner_map.contains_key(package_id),
             None => false,
+        }
+    }
+
+    #[allow(dead_code)]
+    fn get(
+        &self,
+        output_key: OutputKey,
+        package_id: &'g PackageId,
+    ) -> Option<&(PackageMetadata<'g>, BTreeSet<&'g str>)> {
+        match self.output_map.get(&output_key) {
+            Some(inner_map) => inner_map.get(package_id),
+            None => None,
         }
     }
 
