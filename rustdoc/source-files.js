@@ -7,6 +7,7 @@ sourcesIndex["anyhow"] = {"name":"","files":["backtrace.rs","chain.rs","context.
 sourcesIndex["atomicwrites"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["atty"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["backtrace"] = {"name":"","dirs":[{"name":"backtrace","files":["libunwind.rs","mod.rs"]},{"name":"symbolize","dirs":[{"name":"gimli","files":["elf.rs","libs_dl_iterate_phdr.rs","mmap_unix.rs","stash.rs"]}],"files":["gimli.rs","mod.rs"]}],"files":["capture.rs","lib.rs","print.rs","types.rs"]};
+sourcesIndex["bimap"] = {"name":"","files":["btree.rs","hash.rs","lib.rs","mem.rs"]};
 sourcesIndex["bit_set"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["bit_vec"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["bitflags"] = {"name":"","files":["lib.rs"]};

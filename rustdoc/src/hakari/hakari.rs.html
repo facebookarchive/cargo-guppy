@@ -1301,6 +1301,41 @@
 <span id="1301">1301</span>
 <span id="1302">1302</span>
 <span id="1303">1303</span>
+<span id="1304">1304</span>
+<span id="1305">1305</span>
+<span id="1306">1306</span>
+<span id="1307">1307</span>
+<span id="1308">1308</span>
+<span id="1309">1309</span>
+<span id="1310">1310</span>
+<span id="1311">1311</span>
+<span id="1312">1312</span>
+<span id="1313">1313</span>
+<span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
+<span id="1337">1337</span>
+<span id="1338">1338</span>
 </pre><pre class="rust">
 <span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
@@ -1309,6 +1344,7 @@
     <span class="ident">toml_out</span>::{<span class="ident">write_toml</span>, <span class="ident">HakariOutputOptions</span>},
     <span class="ident">CargoTomlError</span>, <span class="ident">HakariCargoToml</span>, <span class="ident">TomlOutError</span>,
 };
+<span class="kw">use</span> <span class="ident">bimap::BiHashMap</span>;
 <span class="kw">use</span> <span class="ident">debug_ignore::DebugIgnore</span>;
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">errors::TargetSpecError</span>,
@@ -1338,8 +1374,9 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">platforms</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Platform</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">resolver</span>: <span class="ident">CargoResolverVersion</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">verify_mode</span>: <span class="ident">bool</span>,
-    <span class="ident">traversal_excludes</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">traversal_excludes</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
     <span class="ident">final_excludes</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">registries</span>: <span class="ident">BiHashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">unify_target_host</span>: <span class="ident">UnifyTargetHost</span>,
     <span class="ident">output_single_feature</span>: <span class="ident">bool</span>,
 }
@@ -1376,6 +1413,7 @@
             <span class="ident">verify_mode</span>: <span class="bool-val">false</span>,
             <span class="ident">traversal_excludes</span>: <span class="ident">HashSet::new</span>(),
             <span class="ident">final_excludes</span>: <span class="ident">HashSet::new</span>(),
+            <span class="ident">registries</span>: <span class="ident">BiHashMap::new</span>(),
             <span class="ident">unify_target_host</span>: <span class="ident">UnifyTargetHost::default</span>(),
             <span class="ident">output_single_feature</span>: <span class="bool-val">false</span>,
         })
@@ -1546,6 +1584,22 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">is_traversal_excluded</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">is_final_excluded</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>)
     }
 
+    <span class="doccomment">/// Add alternate registries by (name, URL) pairs.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)</span>
+    <span class="doccomment">/// is resolved.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_registries</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">registries</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">registries</span>.<span class="ident">extend</span>(
+            <span class="ident">registries</span>
+                .<span class="ident">into_iter</span>()
+                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">name</span>, <span class="ident">url</span>)<span class="op">|</span> (<span class="ident">name</span>.<span class="ident">into</span>(), <span class="ident">url</span>.<span class="ident">into</span>())),
+        );
+        <span class="self">self</span>
+    }
+
     <span class="doccomment">/// Whether and how to unify feature sets across target and host platforms.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is an advanced feature that most users don&#39;t need to set. For more information about</span>
@@ -1655,14 +1709,29 @@
                     <span class="prelude-val">Ok</span>(<span class="ident">platform</span>.<span class="ident">into</span>())
                 })
                 .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+
+            <span class="kw">let</span> <span class="ident">registries</span>: <span class="ident">BiHashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">summary</span>
+                .<span class="ident">registries</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">name</span>, <span class="ident">url</span>)<span class="op">|</span> (<span class="ident">name</span>.<span class="ident">clone</span>(), <span class="ident">url</span>.<span class="ident">clone</span>()))
+                .<span class="ident">collect</span>();
+
             <span class="kw">let</span> <span class="ident">traversal_excludes</span> <span class="op">=</span> <span class="ident">summary</span>
                 .<span class="ident">traversal_excludes</span>
-                .<span class="ident">to_package_set</span>(<span class="ident">graph</span>, <span class="string">&quot;resolving hakari traversal-excludes&quot;</span>)<span class="question-mark">?</span>
+                .<span class="ident">to_package_set_registry</span>(
+                    <span class="ident">graph</span>,
+                    <span class="op">|</span><span class="ident">name</span><span class="op">|</span> <span class="ident">registries</span>.<span class="ident">get_by_left</span>(<span class="ident">name</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">as_str</span>()),
+                    <span class="string">&quot;resolving hakari traversal-excludes&quot;</span>,
+                )<span class="question-mark">?</span>
                 .<span class="ident">package_ids</span>(<span class="ident">DependencyDirection::Forward</span>)
                 .<span class="ident">collect</span>();
             <span class="kw">let</span> <span class="ident">final_excludes</span> <span class="op">=</span> <span class="ident">summary</span>
                 .<span class="ident">final_excludes</span>
-                .<span class="ident">to_package_set</span>(<span class="ident">graph</span>, <span class="string">&quot;resolving hakari final-excludes&quot;</span>)<span class="question-mark">?</span>
+                .<span class="ident">to_package_set_registry</span>(
+                    <span class="ident">graph</span>,
+                    <span class="op">|</span><span class="ident">name</span><span class="op">|</span> <span class="ident">registries</span>.<span class="ident">get_by_left</span>(<span class="ident">name</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">as_str</span>()),
+                    <span class="string">&quot;resolving hakari final-excludes&quot;</span>,
+                )<span class="question-mark">?</span>
                 .<span class="ident">package_ids</span>(<span class="ident">DependencyDirection::Forward</span>)
                 .<span class="ident">collect</span>();
 
@@ -1674,6 +1743,7 @@
                 <span class="ident">unify_target_host</span>: <span class="ident">summary</span>.<span class="ident">unify_target_host</span>,
                 <span class="ident">output_single_feature</span>: <span class="ident">summary</span>.<span class="ident">output_single_feature</span>,
                 <span class="ident">platforms</span>,
+                <span class="ident">registries</span>,
                 <span class="ident">traversal_excludes</span>,
                 <span class="ident">final_excludes</span>,
             })
