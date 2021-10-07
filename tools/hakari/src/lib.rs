@@ -118,8 +118,6 @@
 //! * Omitting some packages on some environments
 //! * Only including a subset of packages in the final result (e.g. unifying core packages like
 //!   `syn` but not any others)
-//! * Support for alternate registries (depends on
-//!   [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052))
 //!
 //! These features will be added as time permits.
 

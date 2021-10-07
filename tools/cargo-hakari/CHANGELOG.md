@@ -10,7 +10,7 @@
 
 ### Fixed
 
-- Fixed some workspace-hack contents missing in an edge case.
+- [Fixed some workspace-hack contents missing in an edge case.](https://github.com/facebookincubator/cargo-guppy/pull/476)
 
 ### Optimized
 
