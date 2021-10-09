@@ -1359,12 +1359,13 @@ impl<'g> OutputMapBuild<'g> {
             self.output_map.insert(always_key, always_map);
         }
 
-        // Remove final-excludes.
-        for inner_map in self.output_map.values_mut() {
+        // Remove final-excludes, and get rid of any maps that are empty.
+        self.output_map.retain(|_, inner_map| {
             for package_id in final_excludes {
                 inner_map.remove(package_id);
             }
-        }
+            !inner_map.is_empty()
+        });
 
         self.output_map
     }
