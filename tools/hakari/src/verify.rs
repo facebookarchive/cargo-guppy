@@ -136,13 +136,23 @@ impl<'g> fmt::Display for VerifyError<'g> {
                     features.join(", ")
                 )?;
             }
-            for (package, standard_features) in workspace_packages {
+            for (package, standard_features, include_dev) in workspace_packages {
                 let feature_str = match standard_features {
                     StandardFeatures::None => "no features",
                     StandardFeatures::Default => "default features",
                     StandardFeatures::All => "all features",
                 };
-                writeln!(f, "    * {} ({})", package.name(), feature_str)?;
+                let include_dev_str = match include_dev {
+                    true => "including dev",
+                    false => "excluding dev",
+                };
+                writeln!(
+                    f,
+                    "    * {} ({}, {})",
+                    package.name(),
+                    feature_str,
+                    include_dev_str
+                )?;
             }
             if *fixed_up {
                 writeln!(f, "    * at least one post-compute fixup")?;

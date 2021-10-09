@@ -715,10 +715,10 @@ pub type ComputedInnerMap<'g> = BTreeMap<BTreeSet<&'g str>, ComputedInnerValue<'
 /// The values of [`ComputedInnerMap`].
 #[derive(Clone, Debug, Default)]
 pub struct ComputedInnerValue<'g> {
-    /// The workspace packages and selected features that cause the key in
+    /// The workspace packages, selected features, and include dev that cause the key in
     /// `ComputedMap` to be built with the feature set that forms the key of `ComputedInnerMap`.
     /// They are not defined to be in any particular order.
-    pub workspace_packages: Vec<(PackageMetadata<'g>, StandardFeatures)>,
+    pub workspace_packages: Vec<(PackageMetadata<'g>, StandardFeatures, bool)>,
 
     /// Whether at least one post-computation fixup was performed with this feature set.
     pub fixed_up: bool,
@@ -731,8 +731,14 @@ impl<'g> ComputedInnerValue<'g> {
     }
 
     #[inline]
-    fn push(&mut self, package: PackageMetadata<'g>, features: StandardFeatures) {
-        self.workspace_packages.push((package, features));
+    fn push(
+        &mut self,
+        package: PackageMetadata<'g>,
+        features: StandardFeatures,
+        include_dev: bool,
+    ) {
+        self.workspace_packages
+            .push((package, features, include_dev));
     }
 }
 
@@ -761,38 +767,68 @@ struct ComputedMapBuild<'g, 'b> {
 
 impl<'g, 'b> ComputedMapBuild<'g, 'b> {
     fn new(builder: &'b HakariBuilder<'g>) -> Self {
-        // Previously we looked at default features as well, but that isn't necessary because
-        // Cargo's feature resolver is a morphism over the lattice formed by the power set of all
-        // features. Specifically, for any workspace package P and any
-        // dependency D, let F(k) be the set of features of D when P is built with feature
-        // set 'k'.
+        // This was just None or All for a bit under the theory that feature sets are additive only,
+        // but unfortunately we cannot exploit this property because it doesn't account for the fact
+        // that some dependencies might not be built *at all*, under certain feature combinations.
         //
-        // For any set of features 'k' where {} ⊆ k ⊆ {all features},
-        // F({}) ⊆ F(k) ⊆ F({all features}).
+        // That's also why we simulate builds with and without dev-only dependencies in all cases.
         //
-        // Therefore, looking at just 'none' and 'all' is guaranteed to be the same as looking at
-        // any set of features in between.
-        let none_or_all = [StandardFeatures::None, StandardFeatures::All];
+        // For example, for:
+        //
+        // ```toml
+        // [dependencies]
+        // dep = { version = "1", optional = true }
+        //
+        // [dev-dependencies]
+        // dep = { version = "1", optional = true, features = ["dev-feature"] }
+        //
+        // [features]
+        // default = ["dep"]
+        // extra = ["dep/extra", "dep/dev-feature"]
+        // ```
+        //
+        // | feature set | include dev | dep status         |
+        // | ----------- | ----------- | ------------------ |
+        // | none        | no          | not built          |
+        // | none        | yes         | not built          |
+        // | default     | no          | no features        |
+        // | default     | yes         | dev-feature        |
+        // | all         | no          | extra, dev-feature |
+        // | all         | yes         | extra, dev-feature |
+        //
+        // (And there's further complexity possible with transitive deps as well.)
+        let features_include_dev = [
+            (StandardFeatures::None, false),
+            (StandardFeatures::None, true),
+            (StandardFeatures::Default, false),
+            (StandardFeatures::Default, true),
+            (StandardFeatures::All, false),
+            (StandardFeatures::All, true),
+        ];
 
         // Features for the "always" platform spec.
-        let always_features = none_or_all
+        let always_features = features_include_dev
             .iter()
-            .map(|&features| (None, PlatformSpec::Always, features));
+            .map(|&(features, include_dev)| (None, PlatformSpec::Always, features, include_dev));
 
         // Features for specified platforms.
-        let specified_features = none_or_all.iter().flat_map(|&features| {
-            builder
-                .platforms
+        let specified_features =
+            features_include_dev
                 .iter()
-                .enumerate()
-                .map(move |(idx, platform)| {
-                    (
-                        Some(idx),
-                        PlatformSpec::Platform(platform.clone()),
-                        features,
-                    )
-                })
-        });
+                .flat_map(|&(features, include_dev)| {
+                    builder
+                        .platforms
+                        .iter()
+                        .enumerate()
+                        .map(move |(idx, platform)| {
+                            (
+                                Some(idx),
+                                PlatformSpec::Platform(platform.clone()),
+                                features,
+                                include_dev,
+                            )
+                        })
+                });
         let platforms_features: Vec<_> = always_features.chain(specified_features).collect();
 
         let workspace = builder.graph.workspace();
@@ -805,10 +841,10 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
             .into_par_iter()
             // The cargo_set computation in the inner iterator is the most expensive part of the
             // process, so use flat_map instead of flat_map_iter.
-            .flat_map(|(platform_idx, platform_spec, feature_filter)| {
+            .flat_map(|(idx, platform_spec, feature_filter, include_dev)| {
                 let mut cargo_options = CargoOptions::new();
                 cargo_options
-                    .set_include_dev(true)
+                    .set_include_dev(include_dev)
                     .set_resolver(builder.resolver)
                     .set_platform(platform_spec)
                     .add_omitted_packages(excludes.iter());
@@ -841,12 +877,13 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
                                 let features: BTreeSet<&'g str> =
                                     feature_list.features().iter().copied().collect();
                                 Some((
-                                    platform_idx,
+                                    idx,
                                     build_platform,
                                     dep.id(),
                                     features,
                                     workspace_package,
                                     feature_filter,
+                                    include_dev,
                                 ))
                             })
                     });
@@ -859,6 +896,7 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
                         features,
                         package,
                         feature_filter,
+                        include_dev,
                     ) in values
                     {
                         // Accumulate the features and package for each key.
@@ -867,6 +905,7 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
                             features,
                             package,
                             feature_filter,
+                            include_dev,
                         );
                     }
 
@@ -969,11 +1008,12 @@ impl<'g> ComputedValue<'g> {
         features: BTreeSet<&'g str>,
         package: PackageMetadata<'g>,
         feature_filter: StandardFeatures,
+        include_dev: bool,
     ) {
         self.get_inner_mut(build_platform)
             .entry(features)
             .or_default()
-            .push(package, feature_filter);
+            .push(package, feature_filter, include_dev);
     }
 
     fn mark_fixed_up(&mut self, build_platform: BuildPlatform, features: BTreeSet<&'g str>) {
