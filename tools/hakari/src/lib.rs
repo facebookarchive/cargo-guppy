@@ -115,7 +115,7 @@
 //! `hakari` is still missing a few features:
 //!
 //! * Simulating cross-compilations
-//! * Omitting some packages on some environments
+//! * Platform-specific excludes
 //! * Only including a subset of packages in the final result (e.g. unifying core packages like
 //!   `syn` but not any others)
 //!

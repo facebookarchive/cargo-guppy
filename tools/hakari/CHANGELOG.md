@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.2] - 2021-10-09
+
+### Fixed
+
+- Backed out the [algorithmic improvement](https://github.com/facebookincubator/cargo-guppy/pull/468) from earlier
+  because it didn't handle some edge cases.
+- Also simulate builds with dev-dependencies disabled.
+- Remove empty sections from the output.
+
 ## [0.6.1] - 2021-10-06
 
 ### Added
@@ -105,6 +114,7 @@
 
 Initial release.
 
+[0.6.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.2
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.0
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.5.0
