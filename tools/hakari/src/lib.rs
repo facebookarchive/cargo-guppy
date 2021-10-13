@@ -16,15 +16,17 @@
 //! let package_graph = MetadataCommand::new()
 //!     .build_graph()
 //!     .expect("obtained cargo-guppy's PackageGraph");
-//! // The second argument to HakariBuilder::new specifies a Hakari (workspace-hack) package. At
-//! // the moment cargo-guppy does not have such a package, and it is a TODO to add one.
-//! let hakari_builder = HakariBuilder::new(&package_graph, None)
+//!
+//! // The second argument to HakariBuilder::new specifies a Hakari (workspace-hack) package. For
+//! // the cargo-guppy repository it is called "workspace-hack".
+//! let hakari_package = package_graph.workspace().member_by_name("workspace-hack").unwrap().id();
+//! let hakari_builder = HakariBuilder::new(&package_graph, Some(hakari_package))
 //!     .expect("HakariBuilder was constructed");
 //!
 //! // HakariBuilder has a number of config options. For this example, use the defaults.
 //! let hakari = hakari_builder.compute();
 //!
-//! // "hakari" can be used to build a TOML representation that forms part of a Cargo.toml file.
+//! // hakari can be used to build a TOML representation that forms part of a Cargo.toml file.
 //! // Existing Cargo.toml files can be managed using Hakari::read_toml.
 //! let toml = hakari.to_toml_string(&HakariOutputOptions::default()).expect("TOML output was constructed");
 //!
@@ -32,7 +34,6 @@
 //! // written out through `HakariCargoToml` (returned by Hakari::read_toml) or manually.
 //! println!("Cargo.toml contents:\n{}", toml);
 //! ```
-//!
 //!
 //! The `cargo-guppy` repository uses a workspace-hack crate managed by `cargo hakari`. [See the
 //! generated `Cargo.toml`.](https://github.com/facebookincubator/cargo-guppy/blob/main/workspace-hack/Cargo.toml)
