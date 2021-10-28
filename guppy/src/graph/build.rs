@@ -291,6 +291,7 @@ impl<'a> GraphBuildState<'a> {
                 metadata_table: package.metadata,
                 links: package.links.map(|s| s.into()),
                 publish: PackagePublishImpl::new(package.publish),
+                rust_version: package.rust_version,
                 features,
 
                 package_ix,

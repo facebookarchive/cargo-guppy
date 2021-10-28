@@ -854,6 +854,16 @@ impl<'g> PackageMetadata<'g> {
         PackagePublish::new(&self.inner.publish)
     }
 
+    /// Returns the minimal Rust compiler version, which should be able to compile the package, if
+    /// specified.
+    ///
+    /// This is the same as the `rust-version` field of `Cargo.toml`. For more, see [the
+    /// `rust-version` field](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)
+    /// in the Cargo reference.
+    pub fn rust_version(&self) -> Option<&'g VersionReq> {
+        self.inner.rust_version.as_ref()
+    }
+
     /// Returns all the build targets for this package.
     ///
     /// For more, see [Cargo
@@ -1019,6 +1029,7 @@ pub(crate) struct PackageMetadataImpl {
     pub(super) metadata_table: JsonValue,
     pub(super) links: Option<Box<str>>,
     pub(super) publish: PackagePublishImpl,
+    pub(super) rust_version: Option<VersionReq>,
     // Some(...) means named feature with listed dependencies.
     // None means an optional dependency.
     pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
