@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.11.3] - 2021-11-20
+
+### Added
+
+- `PackageMetadata::rust_version` returns the `package.rust-version` field, if specified. Thanks [@foresterre](https://github.com/foresterre)!
+
 ## [0.11.2] - 2021-10-06
 
 ### Added
