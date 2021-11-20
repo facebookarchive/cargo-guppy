@@ -15,7 +15,7 @@ use std::{
     path::{Path, MAIN_SEPARATOR},
 };
 use structopt::StructOpt;
-use toml_edit::{decorated, Document, Item, Table, Value};
+use toml_edit::{Document, Item, Table, Value};
 
 #[derive(Debug, StructOpt)]
 #[structopt(rename_all = "kebab")]
@@ -363,13 +363,14 @@ fn apply_edits(manifest_path: &Utf8Path, edits: &[ManifestEdit<'_>]) -> Result<(
     let mut document = read_toml(manifest_path)?;
     let table = document.as_table_mut();
 
-    // This is annoying -- we need to grab a list of elements in target before processing it because
-    // there's no iter_mut on toml_edit::Table (as of 0.1.5).
-    let all_targets = match table.entry("target").as_table() {
-        Some(target_tables) => target_tables
-            .iter()
-            .map(|(target, _)| target.to_string())
-            .collect(),
+    // Grab the list of target specs.
+    let all_targets = match table.get("target") {
+        Some(target_section) => match target_section.as_table() {
+            Some(table) => table.iter().map(|(target, _)| target.to_string()).collect(),
+            None => {
+                bail!("in {}, [target] is not a table", manifest_path);
+            }
+        },
         None => {
             // There's no 'target' section in the manifest.
             Vec::new()
@@ -400,7 +401,7 @@ fn apply_edits(manifest_path: &Utf8Path, edits: &[ManifestEdit<'_>]) -> Result<(
         }
     }
 
-    fs::write(manifest_path, document.to_string_in_original_order())
+    fs::write(manifest_path, document.to_string())
         .with_context(|| anyhow!("error while writing manifest {}", manifest_path))?;
 
     Ok(())
@@ -411,9 +412,9 @@ fn apply_edit(table: &mut Table, edit: &ManifestEdit<'_>) -> Result<()> {
 
     let dep_name = edit.link.dep_name();
 
-    for section_name in SECTION_NAMES {
+    for &section_name in SECTION_NAMES {
         let section = &mut table[section_name];
-        let table = match section {
+        let section_table = match section {
             Item::None => {
                 // This section is empty -- skip it.
                 continue;
@@ -424,41 +425,26 @@ fn apply_edit(table: &mut Table, edit: &ManifestEdit<'_>) -> Result<()> {
             }
         };
 
-        match table.entry(dep_name) {
-            Item::Table(dep_table) => {
+        match section_table.get_mut(dep_name) {
+            Some(item) => {
+                let dep_table = item.as_table_like_mut().ok_or_else(|| {
+                    anyhow!("in section [{}], {} is not a table", section_name, dep_name)
+                })?;
                 // The dep table should have a path entry.
-                match dep_table.entry("path").as_value_mut() {
-                    Some(value) => {
+                match dep_table.get_mut("path") {
+                    Some(Item::Value(value)) => {
                         replace_decorated(value, edit.edit_path.as_str());
                     }
-                    None => bail!(
-                        "in section [{}], {}.path is not a string",
-                        section_name,
-                        dep_name
-                    ),
+                    _ => {
+                        bail!(
+                            "in section [{}], {}.path is not a string",
+                            section_name,
+                            dep_name
+                        );
+                    }
                 }
             }
-            Item::Value(value) => match value.as_inline_table_mut() {
-                Some(dep_table) => match dep_table.get_mut("path") {
-                    Some(value) => {
-                        replace_decorated(value, edit.edit_path.as_str());
-                    }
-                    None => bail!(
-                        "in section [{}], {}.path is not a string",
-                        section_name,
-                        dep_name
-                    ),
-                },
-                None => bail!(
-                    "in section [{}], {} is not an inline table",
-                    section_name,
-                    dep_name
-                ),
-            },
-            Item::None => continue,
-            Item::ArrayOfTables(_) => {
-                bail!("in section [{}], {} is not a table", section_name, dep_name)
-            }
+            None => continue,
         }
     }
 
@@ -473,24 +459,27 @@ fn update_root_toml(
     let mut document = read_toml(&root_manifest_path)?;
 
     // Fix up paths in workspace.members or workspace.default-members.
-    let workspace_table = match document.as_table_mut().entry("workspace") {
-        Item::Table(workspace_table) => workspace_table,
-        _ => bail!("[workspace] is not a table"),
+    let workspace_table = match document.as_table_mut().get_mut("workspace") {
+        Some(item) => item
+            .as_table_mut()
+            .ok_or_else(|| anyhow!("[workspace] is not a table"))?,
+        None => {
+            // No [workspace] section -- possibly a single-crate manifest?
+            return Ok(());
+        }
     };
 
     static TO_UPDATE: &[&str] = &["members", "default-members"];
 
     for to_update in TO_UPDATE {
-        let members = match workspace_table.entry(to_update) {
-            Item::Value(members) => match members.as_array_mut() {
-                Some(members) => members,
-                None => bail!("in [workspace], {} is not an array", to_update),
-            },
-            Item::None => {
+        let members = match workspace_table.get_mut(to_update) {
+            Some(item) => item
+                .as_array_mut()
+                .ok_or_else(|| anyhow!("in [workspace], {} is not an array", to_update))?,
+            None => {
                 // default-members may not always exist.
                 continue;
             }
-            _ => bail!("in [workspace], {} is not an array", to_update),
         };
 
         for idx in 0..members.len() {
@@ -511,9 +500,7 @@ fn update_root_toml(
 
                     if let Some(package_move) = src_moves.get(member_dir) {
                         // This path was moved.
-                        members
-                            .replace(idx, package_move.new_path.as_str())
-                            .expect("replacing string with string should work");
+                        members.replace(idx, package_move.new_path.as_str());
                     }
                 }
                 None => bail!("in [workspace], {} contains non-strings", to_update),
@@ -538,6 +525,15 @@ fn read_toml(manifest_path: &Utf8Path) -> Result<Document> {
 /// Replace the value while retaining the decor.
 fn replace_decorated(dest: &mut Value, new_value: impl Into<Value>) -> Value {
     let decor = dest.decor();
-    let new_value = decorated(new_value.into(), decor.prefix(), decor.suffix());
+    let mut new_value = new_value.into();
+    // Copy over the decor from dest into new_value.
+    let new_decor = new_value.decor_mut();
+    if let Some(prefix) = decor.prefix() {
+        new_decor.set_prefix(prefix);
+    }
+    if let Some(suffix) = decor.suffix() {
+        new_decor.set_suffix(suffix);
+    }
+
     mem::replace(dest, new_value)
 }
