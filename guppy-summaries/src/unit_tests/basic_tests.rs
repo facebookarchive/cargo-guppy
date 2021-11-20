@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{
-    diff::SummaryDiffStatus, PackageInfo, PackageMap, PackageStatus, SummaryId, SummarySource,
-    SummaryWithMetadata,
+    diff::SummaryDiffStatus, PackageInfo, PackageMap, PackageStatus, Summary, SummaryId,
+    SummarySource,
 };
 use pretty_assertions::assert_eq;
 use semver::Version;
 use std::collections::BTreeSet;
-
-type Summary = SummaryWithMetadata;
 
 static SERIALIZED_SUMMARY: &str = r#"# This is a test @generated summary.
 
@@ -168,7 +166,7 @@ fn basic_roundtrip() {
     ];
 
     let summary = Summary {
-        metadata: None,
+        metadata: Default::default(),
         target_packages: make_summary(target_packages),
         host_packages: make_summary(host_packages),
     };
