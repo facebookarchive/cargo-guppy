@@ -68,6 +68,9 @@ pub enum Error {
         /// The registry name that wasn't recognized.
         registry_name: String,
     },
+    /// An error occurred while serializing to TOML.
+    #[cfg(feature = "summaries")]
+    TomlSerializeError(toml::ser::Error),
 }
 
 impl Error {
@@ -140,6 +143,8 @@ impl fmt::Display for Error {
                     message, summary, registry_name
                 )
             }
+            #[cfg(feature = "summaries")]
+            TomlSerializeError(_) => write!(f, "failed to serialize to TOML"),
         }
     }
 }
@@ -164,6 +169,8 @@ impl error::Error for Error {
             UnknownPackageSetSummary { .. } => None,
             #[cfg(feature = "summaries")]
             UnknownRegistryName { .. } => None,
+            #[cfg(feature = "summaries")]
+            TomlSerializeError(err) => Some(err),
         }
     }
 }

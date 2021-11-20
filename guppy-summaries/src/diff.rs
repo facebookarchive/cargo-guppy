@@ -9,9 +9,7 @@
 //! summaries or through `SummaryDiff::new`.
 
 pub use crate::report::SummaryReport;
-use crate::{
-    PackageInfo, PackageMap, PackageStatus, SummaryId, SummarySource, SummaryWithMetadata,
-};
+use crate::{PackageInfo, PackageMap, PackageStatus, Summary, SummaryId, SummarySource};
 use diffus::{edit, Diffable};
 use semver::Version;
 use serde::{ser::SerializeStruct, Serialize};
@@ -82,7 +80,7 @@ pub struct SummaryDiff<'a> {
 
 impl<'a> SummaryDiff<'a> {
     /// Computes a diff between two summaries.
-    pub fn new<M1, M2>(old: &'a SummaryWithMetadata<M1>, new: &'a SummaryWithMetadata<M2>) -> Self {
+    pub fn new(old: &'a Summary, new: &'a Summary) -> Self {
         Self {
             target_packages: PackageDiff::new(&old.target_packages, &new.target_packages),
             host_packages: PackageDiff::new(&old.host_packages, &new.host_packages),

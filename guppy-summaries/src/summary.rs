@@ -9,7 +9,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
 };
-use toml::{Serializer, Value};
+use toml::{value::Table, Serializer};
 
 /// A type representing a package map as used in `Summary` instances.
 pub type PackageMap = BTreeMap<SummaryId, PackageInfo>;
@@ -19,16 +19,16 @@ pub type PackageMap = BTreeMap<SummaryId, PackageInfo>;
 /// The metadata parameter is customizable.
 ///
 /// For more, see the crate-level documentation.
-#[derive(Clone, Debug, Deserialize, Eq, Hash, Serialize, PartialEq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub struct SummaryWithMetadata<M = Value> {
+pub struct Summary {
     /// Extra metadata associated with the summary.
     ///
     /// This may be used for storing extra information about the summary.
     ///
     /// The type defaults to `toml::Value` but is customizable.
-    #[serde(default = "Option::default")]
-    pub metadata: Option<M>,
+    #[serde(default, skip_serializing_if = "Table::is_empty")]
+    pub metadata: Table,
 
     /// The packages and features built on the target platform.
     #[serde(
@@ -49,50 +49,43 @@ pub struct SummaryWithMetadata<M = Value> {
     pub host_packages: PackageMap,
 }
 
-impl<M> SummaryWithMetadata<M> {
+impl Summary {
+    /// Constructs a new summary with the provided metadata, and an empty `target_packages` and
+    /// `host_packages`.
+    pub fn with_metadata(metadata: &impl Serialize) -> Result<Self, toml::ser::Error> {
+        let toml_str = toml::to_string(metadata)?;
+        let metadata =
+            toml::from_str(&toml_str).expect("toml::to_string creates a valid TOML string");
+        Ok(Self {
+            metadata,
+            ..Self::default()
+        })
+    }
+
     /// Deserializes a summary from the given string, with optional custom metadata.
-    pub fn parse<'de>(s: &'de str) -> Result<Self, toml::de::Error>
-    where
-        M: Deserialize<'de>,
-    {
+    pub fn parse(s: &str) -> Result<Self, toml::de::Error> {
         toml::from_str(s)
     }
 
     /// Perform a diff of this summary against another.
     ///
     /// This doesn't diff the metadata, just the initials and packages.
-    pub fn diff<'a, M2>(&'a self, other: &'a SummaryWithMetadata<M2>) -> SummaryDiff<'a> {
+    pub fn diff<'a>(&'a self, other: &'a Summary) -> SummaryDiff<'a> {
         SummaryDiff::new(self, other)
     }
 
     /// Serializes this summary to a TOML string.
-    pub fn to_string(&self) -> Result<String, toml::ser::Error>
-    where
-        M: Serialize,
-    {
+    pub fn to_string(&self) -> Result<String, toml::ser::Error> {
         let mut dst = String::new();
         self.write_to_string(&mut dst)?;
         Ok(dst)
     }
 
     /// Serializes this summary into the given TOML string, using pretty TOML syntax.
-    pub fn write_to_string(&self, dst: &mut String) -> Result<(), toml::ser::Error>
-    where
-        M: Serialize,
-    {
+    pub fn write_to_string(&self, dst: &mut String) -> Result<(), toml::ser::Error> {
         let mut serializer = Serializer::pretty(dst);
         serializer.pretty_array(false);
         self.serialize(&mut serializer)
-    }
-}
-
-impl<M> Default for SummaryWithMetadata<M> {
-    fn default() -> Self {
-        Self {
-            metadata: None,
-            target_packages: PackageMap::new(),
-            host_packages: PackageMap::new(),
-        }
     }
 }
 
