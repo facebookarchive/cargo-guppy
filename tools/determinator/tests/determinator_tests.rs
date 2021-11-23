@@ -439,9 +439,26 @@ fn guppy_match_paths() {
     }
 }
 
+static GIT_MATCH_PATHS_DIFF: &str =
+    include_str!("../../../fixtures/determinator-paths/git-diff.out");
+
 // Test matching paths against this repository.
 #[test]
 fn git_match_paths() {
+    let paths = Utf8Paths0::new(GIT_MATCH_PATHS_DIFF);
+    git_match_paths_impl(paths)
+}
+
+#[cfg(windows)]
+#[test]
+fn git_match_paths_backslashes() {
+    // This will convert the forward slashes to backslashes on Windows, but keep them the same on
+    // Unix platforms.
+    let paths = Utf8Paths0::new_forward_slashes(GIT_MATCH_PATHS_DIFF);
+    git_match_paths_impl(paths)
+}
+
+fn git_match_paths_impl(paths: Utf8Paths0) {
     cfg_if! {
         if #[cfg(windows)] {
             let json = include_str!("../../../fixtures/determinator-paths/guppy-win.json");
@@ -449,7 +466,6 @@ fn git_match_paths() {
             let json = include_str!("../../../fixtures/determinator-paths/guppy-linux.json");
         }
     };
-    let git_diff = include_str!("../../../fixtures/determinator-paths/git-diff.out");
 
     let package_graph = CargoMetadata::parse_json(json)
         .expect("metadata json parsed correct")
@@ -457,9 +473,6 @@ fn git_match_paths() {
         .expect("PackageGraph built");
     let mut determinator = Determinator::new(&package_graph, &package_graph);
 
-    // This will convert the forward slashes to backslashes on Windows, but keep them the same on
-    // Unix platforms.
-    let paths = Utf8Paths0::new_forward_slashes(git_diff);
     determinator.add_changed_paths(paths.iter());
 
     let determinator_set = determinator.compute();

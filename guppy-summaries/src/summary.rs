@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::diff::SummaryDiff;
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -132,7 +132,10 @@ pub enum SummarySource {
     /// A workspace path.
     Workspace {
         /// The path of this package, relative to the workspace root.
-        #[serde(rename = "workspace-path", with = "path_forward_slashes")]
+        #[serde(
+            rename = "workspace-path",
+            serialize_with = "serialize_forward_slashes"
+        )]
         workspace_path: Utf8PathBuf,
     },
 
@@ -141,7 +144,7 @@ pub enum SummarySource {
     /// The path is expected to be relative to the workspace root.
     Path {
         /// The path of this package, relative to the workspace root.
-        #[serde(with = "path_forward_slashes")]
+        #[serde(serialize_with = "serialize_forward_slashes")]
         path: Utf8PathBuf,
     },
 
@@ -190,11 +193,11 @@ impl fmt::Display for SummarySource {
             // Don't differentiate here between workspace and non-workspace paths because
             // PackageStatus provides that info.
             SummarySource::Workspace { workspace_path } => {
-                let path_out = path_forward_slashes::ser_replace_slashes(workspace_path);
+                let path_out = path_replace_slashes(workspace_path);
                 write!(f, "path '{}'", path_out)
             }
             SummarySource::Path { path } => {
-                let path_out = path_forward_slashes::ser_replace_slashes(path);
+                let path_out = path_replace_slashes(path);
                 write!(f, "path '{}'", path_out)
             }
             SummarySource::CratesIo => write!(f, "crates.io"),
@@ -299,55 +302,23 @@ mod package_map_impl {
     }
 }
 
-/// Serialization and deserialization for paths that converts to and from forward slashes on
-/// Windows.
-pub mod path_forward_slashes {
-    use super::*;
-    use camino::Utf8Path;
-    use cfg_if::cfg_if;
-    use serde::{Deserializer, Serializer};
+/// Serializes a path with forward slashes on Windows.
+pub fn serialize_forward_slashes<S>(path: &Utf8PathBuf, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let path_out = path_replace_slashes(path);
+    path_out.serialize(serializer)
+}
 
-    /// Serializes a path using forward slashes.
-    pub fn serialize<S>(path: &Utf8PathBuf, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let path_out = ser_replace_slashes(path);
-        path_out.serialize(serializer)
-    }
-
-    /// Deserializes a path, converting forward slashes to backslashes.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Utf8PathBuf, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(de_replace_slashes(Utf8PathBuf::deserialize(deserializer)?))
-    }
-
-    // TODO: consider putting this logic in an actual newtype wrapper :/
-    /// Replaces backslashes with forward slashes on Windows.
-    pub fn ser_replace_slashes(path: &Utf8Path) -> impl fmt::Display + Serialize + '_ {
-        // (Note: serde doesn't support non-Unicode paths anyway.)
-        cfg_if! {
-            if #[cfg(windows)] {
-                path.as_str().replace("\\", "/")
-            } else {
-                path.as_str()
-            }
-        }
-    }
-
-    /// Replaces forward slashes with backslashes on Windows.
-    pub fn de_replace_slashes(path: Utf8PathBuf) -> Utf8PathBuf {
-        cfg_if! {
-            if #[cfg(windows)] {
-                let s = path.into_string();
-                // Convert forward slashes to backslashes on Windows.
-                let s = s.replace("/", "\\");
-                s.into()
-            } else {
-                path
-            }
+/// Replaces backslashes with forward slashes on Windows.
+fn path_replace_slashes(path: &Utf8Path) -> impl fmt::Display + Serialize + '_ {
+    // (Note: serde doesn't support non-Unicode paths anyway.)
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            path.as_str().replace("\\", "/")
+        } else {
+            path.as_str()
         }
     }
 }

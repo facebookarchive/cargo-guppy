@@ -62,8 +62,8 @@ impl<'g, 'a> Determinator<'g, 'a> {
     /// Adds a list of changed paths. This list is used as a source of information for the
     /// determinator.
     ///
-    /// This should consist of paths that are changed since the base revision, and should use the
-    /// canonical separator for the platform (e.g. `/` on Unix platforms and `\` on Windows).
+    /// This should consist of paths that are changed since the base revision. Paths on Windows may
+    /// use either `/` or `\\` as separators.
     ///
     /// [`Utf8Paths0`](crate::Utf8Paths0) in this crate provides a convenient way to handle
     /// null-separated paths as produced by source control systems.
