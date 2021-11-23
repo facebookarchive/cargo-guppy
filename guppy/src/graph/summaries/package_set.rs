@@ -371,7 +371,7 @@ struct ThirdPartySelectFields<'a> {
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",
-        with = "opt_path_fwdslash"
+        serialize_with = "serialize_opt_path_fwdslash"
     )]
     path: Option<Utf8PathBuf>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -544,26 +544,16 @@ impl Serialize for ThirdPartySummary {
     }
 }
 
-mod opt_path_fwdslash {
-    use super::*;
-    use guppy_summaries::path_forward_slashes;
-
-    pub fn serialize<S>(path: &Option<Utf8PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match path {
-            Some(path) => path_forward_slashes::serialize(path, serializer),
-            None => serializer.serialize_none(),
-        }
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Utf8PathBuf>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(Option::<Utf8PathBuf>::deserialize(deserializer)?
-            .map(path_forward_slashes::de_replace_slashes))
+fn serialize_opt_path_fwdslash<S>(
+    path: &Option<Utf8PathBuf>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match path {
+        Some(path) => guppy_summaries::serialize_forward_slashes(path, serializer),
+        None => serializer.serialize_none(),
     }
 }
 

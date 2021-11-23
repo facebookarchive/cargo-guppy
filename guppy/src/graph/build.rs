@@ -15,7 +15,10 @@ use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, Res
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, HashMap, HashSet},
+};
 use target_spec::TargetSpec;
 
 impl PackageGraph {
@@ -201,7 +204,7 @@ impl<'a> GraphBuildState<'a> {
             };
             let rel_path = pathdiff::diff_utf8_paths(dirname, self.workspace_root)
                 .expect("workspace root is absolute");
-            PackageSourceImpl::Path(rel_path.into_boxed_path())
+            PackageSourceImpl::Path(convert_forward_slashes(rel_path).into_boxed_path())
         };
 
         let mut build_targets = BuildTargets::new(&package_id);
@@ -336,7 +339,7 @@ impl<'a> GraphBuildState<'a> {
                 id, manifest_path
             ))
         })?;
-        Ok(workspace_path.to_path_buf().into_boxed_path())
+        Ok(convert_forward_slashes(workspace_path).into_boxed_path())
     }
 
     fn finish(self) -> Graph<PackageId, PackageLinkImpl, Directed, PackageIx> {
@@ -743,5 +746,37 @@ impl PackagePublishImpl {
             None => PackagePublishImpl::Unrestricted,
             Some(registries) => PackagePublishImpl::Registries(registries.into_boxed_slice()),
         }
+    }
+}
+
+/// Replace backslashes in a relative path with forward slashes on Windows.
+fn convert_forward_slashes<'a>(rel_path: impl Into<Cow<'a, Utf8Path>>) -> Utf8PathBuf {
+    let rel_path = rel_path.into();
+    debug_assert!(
+        rel_path.is_relative(),
+        "path {} should be relative",
+        rel_path,
+    );
+
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            rel_path.as_str().replace("\\", "/").into()
+        } else {
+            rel_path.into_owned()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_convert_forward_slashes() {
+        let components = vec!["..", "..", "foo", "bar", "baz.txt"];
+        let path: Utf8PathBuf = components.into_iter().collect();
+        let path = convert_forward_slashes(path);
+        // This should have forward slashes, even on Windows.
+        assert_eq!(path.as_str(), "../../foo/bar/baz.txt");
     }
 }
