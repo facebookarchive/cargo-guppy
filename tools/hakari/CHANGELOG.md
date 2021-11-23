@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.0] - 2021-11-23
+
+### Fixed
+
+- Updated example in `README.md` now that the `cargo-guppy` repository has a workspace-hack.
+
+### Changed
+
+- Updated to `guppy 0.12.0`.
+
 ## [0.6.2] - 2021-10-09
 
 ### Fixed
@@ -114,6 +124,7 @@
 
 Initial release.
 
+[0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.0
 [0.6.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.2
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.0

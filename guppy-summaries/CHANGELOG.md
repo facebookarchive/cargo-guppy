@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0] - 2021-11-23
+
+This is a minor breaking change that should not affect most consumers.
+
+### Changed
+
+- `SummaryWithMetadata` is now simply `Summary`, and no longer takes a type parameter.
+  - `metadata` is now a `toml::value::Table`.
+- `path_forward_slashes` is no longer exposed as a helper.
+
 ## [0.5.1] - 2021-10-01
 
 ### Added
@@ -53,6 +63,7 @@
 
 Initial release.
 
+[0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.6.0
 [0.5.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.1
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.0
 [0.4.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.4.0
