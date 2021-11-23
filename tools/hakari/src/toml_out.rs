@@ -307,10 +307,8 @@ pub(crate) fn write_toml(
                                     package_id: dep.id().clone(),
                                     rel_path: path.to_path_buf(),
                                 })?;
-                            let rel_path = pathdiff::diff_paths(path, hakari_path)
-                                .expect("both hakari_path and path are relative");
-                            Utf8PathBuf::from_path_buf(rel_path)
-                                .expect("both path and hakari_path are UTF-8 so this is as well")
+                            pathdiff::diff_utf8_paths(path, hakari_path)
+                                .expect("both hakari_path and path are relative")
                         };
 
                         let path_str = path_out.as_str();
