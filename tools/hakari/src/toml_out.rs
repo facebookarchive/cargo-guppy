@@ -17,9 +17,9 @@ use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
     error, fmt,
-    fmt::Write,
     hash::{Hash, Hasher},
 };
+use toml_edit::{Array, Document, InlineTable, Item, Table, Value};
 use twox_hash::XxHash64;
 
 /// Options for Hakari TOML output.
@@ -236,7 +236,7 @@ pub(crate) fn write_toml(
     options: &HakariOutputOptions,
     mut out: impl fmt::Write,
 ) -> Result<(), TomlOutError> {
-    cfg_if::cfg_if! {
+    cfg_if! {
         if #[cfg(feature = "cli-support")] {
             if options.builder_summary {
                 let summary = HakariBuilderSummary::new(builder)?;
@@ -263,35 +263,51 @@ pub(crate) fn write_toml(
             .expect("hakari package is in workspace")
     });
 
+    let mut document = Document::new();
+
+    // Remove the leading newline from the first visual table to match what older versions of
+    // hakari did.
+    let mut first_element = true;
+
     for (key, vals) in output_map {
-        let target_str = match key.platform_idx {
-            Some(idx) => format!("target.{}.", builder.platforms[idx].triple_str()),
-            None => "".to_owned(),
-        };
-        let dep_str = match key.build_platform {
-            BuildPlatform::Target => "dependencies",
-            BuildPlatform::Host => "build-dependencies",
+        let dep_table_parent = match key.platform_idx {
+            Some(idx) => {
+                let target_table = get_or_insert_table(document.as_table_mut(), "target");
+                get_or_insert_table(target_table, builder.platforms[idx].triple_str())
+            }
+            None => document.as_table_mut(),
         };
 
-        writeln!(out, "[{}{}]", target_str, dep_str)?;
+        let dep_table = match key.build_platform {
+            BuildPlatform::Target => get_or_insert_table(dep_table_parent, "dependencies"),
+            BuildPlatform::Host => get_or_insert_table(dep_table_parent, "build-dependencies"),
+        };
+
+        if first_element {
+            dep_table.decor_mut().set_prefix("");
+            first_element = false;
+        }
 
         for (dep, all_features) in vals.values() {
-            let mut all_kv: Vec<Cow<str>> = Vec::with_capacity(4);
+            let mut itable = InlineTable::new();
 
-            // We'd ideally use serde + toml but it doesn't support inline tables. Ugh.
             let name: Cow<str> = if packages_by_name[dep.name()].len() > 1 {
-                all_kv.push(format!("package = \"{}\"", dep.name()).into());
+                itable.insert("package", dep.name().into());
                 make_hashed_name(dep).into()
             } else {
                 dep.name().into()
             };
 
             let source = dep.source();
-            let source_kv = if source.is_crates_io() {
-                format!(
-                    "version = \"{}\"",
-                    VersionDisplay::new(dep.version(), options.exact_versions)
-                )
+            if source.is_crates_io() {
+                itable.insert(
+                    "version",
+                    format!(
+                        "{}",
+                        VersionDisplay::new(dep.version(), options.exact_versions)
+                    )
+                    .into(),
+                );
             } else {
                 match source {
                     PackageSource::Workspace(path) | PackageSource::Path(path) => {
@@ -309,30 +325,35 @@ pub(crate) fn write_toml(
                                 })?;
                             pathdiff::diff_utf8_paths(path, hakari_path)
                                 .expect("both hakari_path and path are relative")
-                        };
+                        }
+                        .into_string();
 
-                        let path_str = path_out.as_str();
                         cfg_if! {
                             if #[cfg(windows)] {
                                 // TODO: is replacing \\ with / totally safe on Windows? Might run
                                 // into issues with UNC paths.
-                                let path_str = path_str.replace("\\", "/");
-                                format!("path = \"{}\"", path_str)
+                                let path_out = path_out.replace("\\", "/");
+                                itable.insert("path", path_out.into());
                             } else {
-                                format!("path = \"{}\"", path_str)
+                                itable.insert("path", path_out.into());
                             }
-                        }
+                        };
                     }
                     PackageSource::External(s) => match source.parse_external() {
                         Some(ExternalSource::Git {
                             repository, req, ..
                         }) => {
-                            let mut out = String::new();
-                            write!(out, "git = \"{}\"", repository)?;
+                            itable.insert("git", repository.into());
                             match req {
-                                GitReq::Branch(branch) => write!(out, ", branch = \"{}\"", branch)?,
-                                GitReq::Tag(tag) => write!(out, ", tag = \"{}\"", tag)?,
-                                GitReq::Rev(rev) => write!(out, ", rev = \"{}\"", rev)?,
+                                GitReq::Branch(branch) => {
+                                    itable.insert("branch", branch.into());
+                                }
+                                GitReq::Tag(tag) => {
+                                    itable.insert("tag", tag.into());
+                                }
+                                GitReq::Rev(rev) => {
+                                    itable.insert("rev", rev.into());
+                                }
                                 GitReq::Default => {}
                                 _ => {
                                     return Err(TomlOutError::UnrecognizedExternal {
@@ -341,7 +362,6 @@ pub(crate) fn write_toml(
                                     });
                                 }
                             };
-                            out
                         }
                         Some(ExternalSource::Registry(registry_url)) => {
                             let registry_name = builder
@@ -351,45 +371,48 @@ pub(crate) fn write_toml(
                                     package_id: dep.id().clone(),
                                     registry_url: registry_url.to_owned(),
                                 })?;
-                            format!(
-                                "version = \"{}\", registry = \"{}\"",
-                                VersionDisplay::new(dep.version(), options.exact_versions),
-                                registry_name
-                            )
+                            itable.insert(
+                                "version",
+                                format!(
+                                    "{}",
+                                    VersionDisplay::new(dep.version(), options.exact_versions)
+                                )
+                                .into(),
+                            );
+                            itable.insert("registry", registry_name.into());
                         }
                         _ => {
                             return Err(TomlOutError::UnrecognizedExternal {
                                 package_id: dep.id().clone(),
                                 source: s.to_string(),
-                            })
+                            });
                         }
                     },
                 }
             };
 
-            all_kv.push(source_kv.into());
-
             if !all_features.contains("default") {
-                all_kv.push("default-features = false".into());
+                itable.insert("default-features", false.into());
             }
 
-            let features_to_write: Vec<_> = all_features
+            let feature_array: Array = all_features
                 .iter()
-                .filter_map(|&feature| {
-                    if feature == "default" {
-                        None
-                    } else {
-                        Some(format!("\"{}\"", feature))
-                    }
-                })
+                .filter_map(|&feature| (feature != "default").then(|| feature))
                 .collect();
-            if !features_to_write.is_empty() {
-                all_kv.push(format!("features = [{}]", features_to_write.join(", ")).into());
-            };
+            if !feature_array.is_empty() {
+                itable.insert("features", feature_array.into());
+            }
 
-            writeln!(out, "{} = {{ {} }}", name, all_kv.join(", "))?;
+            itable.fmt();
+
+            dep_table.insert(name.as_ref(), Item::Value(Value::InlineTable(itable)));
         }
+    }
 
+    // Match formatting with older versions of hakari: if the document is non-empty, print out a
+    // newline at the end.
+    write!(out, "{}", document)?;
+    if !document.is_empty() {
         writeln!(out)?;
     }
 
@@ -407,6 +430,16 @@ fn make_hashed_name(dep: &PackageMetadata<'_>) -> String {
     let hash = hasher.finish();
 
     format!("{}-{:x}", dep.name(), hash)
+}
+
+fn get_or_insert_table<'t>(parent: &'t mut Table, key: &str) -> &'t mut Table {
+    let table = parent
+        .entry(key)
+        .or_insert(Item::Table(Table::new()))
+        .as_table_mut()
+        .expect("just inserted this table");
+    table.set_implicit(true);
+    table
 }
 
 // TODO: filed https://github.com/steveklabnik/semver/issues/226 about this upstream
