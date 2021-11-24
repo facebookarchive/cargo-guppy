@@ -8,6 +8,7 @@ use crate::{
     HakariBuilder,
 };
 use guppy::graph::{DependencyDirection, PackageSet};
+use guppy::VersionReq;
 
 impl<'g> HakariBuilder<'g> {
     /// Returns the set of operations that need to be performed to add the workspace-hack
@@ -24,14 +25,25 @@ impl<'g> HakariBuilder<'g> {
 
         let (add_to, remove_from) =
             workspace_set.filter_partition(DependencyDirection::Reverse, |package| {
-                let currently_included = graph
-                    .directly_depends_on(package.id(), hakari_package.id())
+                let link_opt = package
+                    .link_to(hakari_package.id())
                     .expect("valid package ID");
                 let should_be_included = !self.is_excluded(package.id()).expect("valid package ID");
-                match (currently_included, should_be_included) {
-                    (false, true) => Some(true),
-                    (true, false) => Some(false),
-                    _ => None,
+                match (link_opt, should_be_included) {
+                    (None, true) => Some(true),
+                    (Some(_), false) => Some(false),
+                    (Some(link), true) => {
+                        if !link.version_req().matches(hakari_package.version()) {
+                            // The version number doesn't match: it must be updated.
+                            Some(true)
+                        } else if link.version_req() == &VersionReq::STAR {
+                            // The version number isn't specified.
+                            Some(true)
+                        } else {
+                            None
+                        }
+                    }
+                    (None, false) => None,
                 }
             });
 
@@ -43,6 +55,7 @@ impl<'g> HakariBuilder<'g> {
                     .source()
                     .workspace_path()
                     .expect("hakari package is in workspace"),
+                version: hakari_package.version(),
                 add_to,
             });
         }
@@ -73,15 +86,30 @@ impl<'g> HakariBuilder<'g> {
             workspace_set.clone()
         } else {
             workspace_set.filter(DependencyDirection::Reverse, |package| {
-                !graph
-                    .directly_depends_on(package.id(), hakari_package.id())
-                    .expect("valid package ID")
+                let link_opt = package
+                    .link_to(hakari_package.id())
+                    .expect("valid package ID");
+                match link_opt {
+                    Some(link) => {
+                        if !link.version_req().matches(hakari_package.version()) {
+                            // The version number doesn't match: it must be updated.
+                            true
+                        } else if link.version_req() == &VersionReq::STAR {
+                            // The version number isn't specified and force_version is true.
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    None => true,
+                }
             })
         };
 
         let op = if !add_to.is_empty() {
             Some(WorkspaceOp::AddDependency {
                 name: hakari_package.name(),
+                version: hakari_package.version(),
                 crate_path: hakari_package
                     .source()
                     .workspace_path()
