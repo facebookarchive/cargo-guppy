@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1] - 2021-11-23
+
+### Changed
+
+- The `toml` crate is now built with the `preserve_order` feature.
+  - This feature ensures that the key ordering in metadata is preserved.
+
 ## [0.6.0] - 2021-11-23
 
 This is a minor breaking change that should not affect most consumers.
@@ -63,6 +70,7 @@ This is a minor breaking change that should not affect most consumers.
 
 Initial release.
 
+[0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.6.0
 [0.5.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.1
 [0.5.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.0
