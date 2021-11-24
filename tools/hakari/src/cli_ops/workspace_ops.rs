@@ -1,10 +1,12 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use crate::helpers::VersionDisplay;
 use ansi_term::{Color, Style};
 use atomicwrites::{AtomicFile, OverwriteBehavior};
 use camino::{Utf8Path, Utf8PathBuf};
 use guppy::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet};
+use guppy::Version;
 use std::{
     borrow::Cow, cmp::Ordering, collections::BTreeMap, convert::TryFrom, error, fmt, fs, io,
     io::Write,
@@ -62,6 +64,7 @@ pub(crate) enum WorkspaceOp<'g, 'a> {
     AddDependency {
         name: &'a str,
         crate_path: &'a Utf8Path,
+        version: &'a Version,
         add_to: PackageSet<'g>,
     },
     RemoveDependency {
@@ -96,11 +99,12 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
             WorkspaceOp::AddDependency {
                 name,
                 crate_path,
+                version,
                 add_to,
             } => {
                 let crate_path = canonical_rel_path(crate_path, workspace_root)?;
                 for package in add_to.packages(DependencyDirection::Reverse) {
-                    Self::add_to_cargo_toml(name, &crate_path, package)?;
+                    Self::add_to_cargo_toml(name, version, &crate_path, package)?;
                 }
                 Ok(())
             }
@@ -258,6 +262,7 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
 
     fn add_to_cargo_toml(
         name: &str,
+        version: &Version,
         crate_path: &Utf8Path,
         package: PackageMetadata<'g>,
     ) -> Result<(), ApplyError> {
@@ -274,7 +279,14 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
             .expect("both new_path and package_path are relative");
 
         let mut path_table = InlineTable::new();
+
+        // Pass in exact_versions = false because we don't want unnecessary churn in the unlikely
+        // event that a published workspace-hack version has a minor bump in it.
+        let version_str = format!("{}", VersionDisplay::new(version, false));
+        path_table.insert("version", version_str.into());
         path_table.insert("path", with_forward_slashes(&path).into_string().into());
+
+        path_table.fmt();
         dep_table.insert(name, Item::Value(Value::InlineTable(path_table)));
 
         write_document(&doc, manifest_path)
@@ -537,14 +549,16 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                 }
                 WorkspaceOp::AddDependency {
                     name,
+                    version,
                     crate_path,
                     add_to,
                 } => {
                     writeln!(
                         f,
-                        "* {} {} (at path {}) to packages:",
-                        self.styles.add_bold_style.paint("add dependency"),
+                        "* {} {} v{} (at path {}) to packages:",
+                        self.styles.add_bold_style.paint("add or update dependency"),
                         self.styles.add_style.paint(*name),
+                        self.styles.add_style.paint(version.to_string()),
                         self.styles.add_style.paint(crate_path.as_str()),
                     )?;
                     for (name, path) in package_names_paths(add_to) {

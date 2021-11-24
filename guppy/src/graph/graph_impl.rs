@@ -325,6 +325,16 @@ impl PackageGraph {
             .map(move |edge| self.edge_ref_to_link(edge))
     }
 
+    fn link_between_ixs(
+        &self,
+        from_ix: NodeIndex<PackageIx>,
+        to_ix: NodeIndex<PackageIx>,
+    ) -> Option<PackageLink<'_>> {
+        self.dep_graph
+            .find_edge(from_ix, to_ix)
+            .map(|edge_ix| self.edge_ix_to_link(edge_ix))
+    }
+
     /// Constructs a map of strongly connected components for this graph.
     pub(super) fn sccs(&self) -> &Sccs<PackageIx> {
         self.sccs.get_or_init(|| {
@@ -685,6 +695,11 @@ impl<'g> PackageMetadata<'g> {
         &self.graph.dep_graph[self.inner.package_ix]
     }
 
+    /// Returns the package graph this `PackageMetadata` is derived from.
+    pub fn graph(&self) -> &'g PackageGraph {
+        self.graph
+    }
+
     /// Creates a `PackageQuery` consisting of this package, in the given direction.
     ///
     /// The `PackageQuery` can be used to inspect dependencies in this graph.
@@ -721,6 +736,36 @@ impl<'g> PackageMetadata<'g> {
     /// one.
     pub fn reverse_direct_links(&self) -> impl Iterator<Item = PackageLink<'g>> + 'g {
         self.direct_links_impl(Incoming)
+    }
+
+    /// Returns the direct `PackageLink` between `self` and `other` in the specified direction:
+    /// * `Forward`: from `self` to `other`
+    /// * `Reverse`: from `other` to `self`
+    ///
+    /// Returns `None` if the direct link does not exist, or an error if `to` isn't found in
+    /// `self.graph()`.
+    pub fn link_between(
+        &self,
+        other: &PackageId,
+        direction: DependencyDirection,
+    ) -> Result<Option<PackageLink<'g>>, Error> {
+        self.link_between_impl(other, direction.into())
+    }
+
+    /// Returns the direct `PackageLink` from `self` to the specified package, or `None` if `self`
+    /// does not directly depend on the specified package.
+    ///
+    /// Returns an error if `to` isn't found in `self.graph()`.
+    pub fn link_to(&self, to: &PackageId) -> Result<Option<PackageLink<'g>>, Error> {
+        self.link_between_impl(to, Outgoing)
+    }
+
+    /// Returns the direct `PackageLink` from the specified package to `self`, or `None` if the
+    /// specified package does not directly depend on `self`.
+    ///
+    /// Returns an error if `from` isn't found in `self.graph()`.
+    pub fn link_from(&self, from: &PackageId) -> Result<Option<PackageLink<'g>>, Error> {
+        self.link_between_impl(from, Incoming)
     }
 
     // ---
@@ -938,6 +983,18 @@ impl<'g> PackageMetadata<'g> {
     #[inline]
     pub(super) fn package_ix(&self) -> NodeIndex<PackageIx> {
         self.inner.package_ix
+    }
+
+    fn link_between_impl(
+        &self,
+        other: &PackageId,
+        dir: Direction,
+    ) -> Result<Option<PackageLink<'g>>, Error> {
+        let other_ix = self.graph.package_ix(other)?;
+        match dir {
+            Direction::Outgoing => Ok(self.graph.link_between_ixs(self.package_ix(), other_ix)),
+            Direction::Incoming => Ok(self.graph.link_between_ixs(other_ix, self.package_ix())),
+        }
     }
 
     fn direct_links_impl(&self, dir: Direction) -> impl Iterator<Item = PackageLink<'g>> + 'g {
