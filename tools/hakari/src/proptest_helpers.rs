@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{HakariBuilder, UnifyTargetHost};
+use crate::{hakari::DepFormatVersion, HakariBuilder, UnifyTargetHost};
 use guppy::{
     graph::{cargo::CargoResolverVersion, PackageGraph},
     platform::{Platform, TargetFeatures},
@@ -66,6 +66,7 @@ impl<'g> HakariBuilder<'g> {
                         .add_final_excludes(final_excludes)
                         .expect("final excludes obtained from PackageGraph should work")
                         .set_unify_target_host(unify_target_host)
+                        .set_dep_format_version(DepFormatVersion::V2)
                         .set_output_single_feature(output_single_feature);
                     builder
                 },

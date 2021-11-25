@@ -5,7 +5,9 @@
 //!
 //! Requires the `cli-support` feature to be enabled.
 
-use crate::{HakariBuilder, HakariOutputOptions, TomlOutError, UnifyTargetHost};
+use crate::{
+    hakari::DepFormatVersion, HakariBuilder, HakariOutputOptions, TomlOutError, UnifyTargetHost,
+};
 use guppy::{
     errors::TargetSpecError,
     graph::{cargo::CargoResolverVersion, summaries::PackageSetSummary, PackageGraph},
@@ -66,6 +68,10 @@ pub struct HakariBuilderSummary {
     #[serde(default)]
     pub output_single_feature: bool,
 
+    /// Version of `workspace-hack = ...` lines in other `Cargo.toml` to use.
+    #[serde(default)]
+    pub dep_format_version: DepFormatVersion,
+
     /// The platforms used by the `HakariBuilder`.
     #[serde(default)]
     pub platforms: Vec<String>,
@@ -124,6 +130,7 @@ impl HakariBuilderSummary {
                 .collect(),
             unify_target_host: builder.unify_target_host(),
             output_single_feature: builder.output_single_feature(),
+            dep_format_version: builder.dep_format_version,
         })
     }
 

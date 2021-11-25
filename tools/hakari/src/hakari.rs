@@ -40,6 +40,7 @@ pub struct HakariBuilder<'g> {
     pub(crate) registries: BiHashMap<String, String>,
     unify_target_host: UnifyTargetHost,
     output_single_feature: bool,
+    pub(crate) dep_format_version: DepFormatVersion,
 }
 
 impl<'g> HakariBuilder<'g> {
@@ -77,6 +78,7 @@ impl<'g> HakariBuilder<'g> {
             registries: BiHashMap::new(),
             unify_target_host: UnifyTargetHost::default(),
             output_single_feature: false,
+            dep_format_version: DepFormatVersion::default(),
         })
     }
 
@@ -292,6 +294,19 @@ impl<'g> HakariBuilder<'g> {
         self.output_single_feature
     }
 
+    /// Version of `workspace-hack = ...` lines to output.
+    ///
+    /// For more, see the documentation for [`DepFormatVersion`](DepFormatVersion).
+    pub fn set_dep_format_version(&mut self, dep_format_version: DepFormatVersion) -> &mut Self {
+        self.dep_format_version = dep_format_version;
+        self
+    }
+
+    /// Returns the current value of `dep_format_version`.
+    pub fn dep_format_version(&self) -> DepFormatVersion {
+        self.dep_format_version
+    }
+
     /// Computes the `Hakari` for this builder.
     pub fn compute(self) -> Hakari<'g> {
         Hakari::build(self)
@@ -403,6 +418,7 @@ mod summaries {
                 verify_mode: false,
                 unify_target_host: summary.unify_target_host,
                 output_single_feature: summary.output_single_feature,
+                dep_format_version: summary.dep_format_version,
                 platforms,
                 registries,
                 traversal_excludes,
@@ -479,6 +495,29 @@ impl Default for UnifyTargetHost {
     #[inline]
     fn default() -> Self {
         UnifyTargetHost::Auto
+    }
+}
+
+/// Version of `workspace-hack = ...` lines in other `Cargo.toml` files to use.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "cli-support", derive(serde::Deserialize, serde::Serialize))]
+#[non_exhaustive]
+pub enum DepFormatVersion {
+    /// `workspace-hack = { path = ...}`. (Note the lack of a trailing space.)
+    ///
+    /// This was used until `cargo hakari 0.9.6`.
+    #[cfg_attr(feature = "cli-support", serde(rename = "1"))]
+    V1,
+
+    /// `workspace-hack = { version = "0.1", path = ... }`. This was introduced in
+    /// `cargo hakari 0.9.7`.
+    #[cfg_attr(feature = "cli-support", serde(rename = "2"))]
+    V2,
+}
+
+impl Default for DepFormatVersion {
+    fn default() -> Self {
+        DepFormatVersion::V1
     }
 }
 

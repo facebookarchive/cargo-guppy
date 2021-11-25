@@ -136,7 +136,7 @@ pub mod verify;
 
 pub use crate::{
     cargo_toml::*,
-    hakari::{Hakari, HakariBuilder, UnifyTargetHost},
+    hakari::{DepFormatVersion, Hakari, HakariBuilder, UnifyTargetHost},
     toml_out::*,
 };
 

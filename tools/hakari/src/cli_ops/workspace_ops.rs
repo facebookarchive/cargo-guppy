@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::helpers::VersionDisplay;
+use crate::{hakari::DepFormatVersion, helpers::VersionDisplay};
 use ansi_term::{Color, Style};
 use atomicwrites::{AtomicFile, OverwriteBehavior};
 use camino::{Utf8Path, Utf8PathBuf};
@@ -67,6 +67,7 @@ pub(crate) enum WorkspaceOp<'g, 'a> {
         name: &'a str,
         crate_path: &'a Utf8Path,
         version: &'a Version,
+        dep_format: DepFormatVersion,
         add_to: PackageSet<'g>,
     },
     RemoveDependency {
@@ -102,11 +103,12 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
                 name,
                 crate_path,
                 version,
+                dep_format,
                 add_to,
             } => {
                 let crate_path = canonical_rel_path(crate_path, workspace_root)?;
                 for package in add_to.packages(DependencyDirection::Reverse) {
-                    Self::add_to_cargo_toml(name, version, &crate_path, package)?;
+                    Self::add_to_cargo_toml(name, version, &crate_path, *dep_format, package)?;
                 }
                 Ok(())
             }
@@ -266,6 +268,7 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
         name: &str,
         version: &Version,
         crate_path: &Utf8Path,
+        dep_format: DepFormatVersion,
         package: PackageMetadata<'g>,
     ) -> Result<(), ApplyError> {
         let manifest_path = package.manifest_path();
@@ -280,18 +283,33 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
         let path = pathdiff::diff_utf8_paths(crate_path, package_path)
             .expect("both new_path and package_path are relative");
 
-        let mut path_table = InlineTable::new();
+        let path_table = Self::inline_table_for_add(version, dep_format, &path);
+
+        dep_table.insert(name, Item::Value(Value::InlineTable(path_table)));
+
+        write_document(&doc, manifest_path)
+    }
+
+    fn inline_table_for_add(
+        version: &Version,
+        dep_format: DepFormatVersion,
+        path: &Utf8Path,
+    ) -> InlineTable {
+        let mut itable = InlineTable::new();
 
         // Pass in exact_versions = false because we don't want unnecessary churn in the unlikely
         // event that a published workspace-hack version has a minor bump in it.
         let version_str = format!("{}", VersionDisplay::new(version, false));
-        path_table.insert("version", version_str.into());
-        path_table.insert("path", with_forward_slashes(&path).into_string().into());
+        if dep_format == DepFormatVersion::V2 {
+            itable.insert("version", version_str.into());
+        }
+        itable.insert("path", with_forward_slashes(path).into_string().into());
 
-        path_table.fmt();
-        dep_table.insert(name, Item::Value(Value::InlineTable(path_table)));
-
-        write_document(&doc, manifest_path)
+        // Previous versions of `cargo hakari` accidentally missed formatting the line.
+        if dep_format == DepFormatVersion::V2 {
+            itable.fmt();
+        }
+        itable
     }
 
     fn remove_from_cargo_toml(name: &str, package: PackageMetadata<'g>) -> Result<(), ApplyError> {
@@ -553,6 +571,7 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                     name,
                     version,
                     crate_path,
+                    dep_format: _,
                     add_to,
                 } => {
                     writeln!(
@@ -638,4 +657,29 @@ fn package_names_paths<'g>(package_set: &PackageSet<'g>) -> Vec<(&'g str, &'g Ut
         .collect();
     package_names_paths.sort_unstable();
     package_names_paths
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_inline_table_for_add() {
+        let version: Version = "1.2.3".parse().unwrap();
+        let itable =
+            WorkspaceOp::inline_table_for_add(&version, DepFormatVersion::V1, "../../path".into());
+        assert_eq!(
+            format!("{}", itable),
+            "{ path = \"../../path\"}",
+            "dep format v1 matches"
+        );
+
+        let itable =
+            WorkspaceOp::inline_table_for_add(&version, DepFormatVersion::V2, "../../path".into());
+        assert_eq!(
+            format!("{}", itable),
+            "{ version = \"1\", path = \"../../path\" }",
+            "dep format v2 matches"
+        );
+    }
 }
