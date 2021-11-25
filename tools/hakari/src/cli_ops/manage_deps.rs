@@ -5,10 +5,11 @@
 
 use crate::{
     cli_ops::{WorkspaceOp, WorkspaceOps},
+    hakari::DepFormatVersion,
     HakariBuilder,
 };
 use guppy::{
-    graph::{DependencyDirection, PackageSet},
+    graph::{DependencyDirection, PackageLink, PackageMetadata, PackageSet},
     VersionReq,
 };
 
@@ -34,17 +35,10 @@ impl<'g> HakariBuilder<'g> {
                 match (link_opt, should_be_included) {
                     (None, true) => Some(true),
                     (Some(_), false) => Some(false),
-                    (Some(link), true) => {
-                        if !link.version_req().matches(hakari_package.version()) {
-                            // The version number doesn't match: it must be updated.
-                            Some(true)
-                        } else if link.version_req() == &VersionReq::STAR {
-                            // The version number isn't specified.
-                            Some(true)
-                        } else {
-                            None
-                        }
-                    }
+                    (Some(link), true) => match self.dep_format_version {
+                        DepFormatVersion::V1 => None,
+                        DepFormatVersion::V2 => needs_update_v2(hakari_package, link).then(|| true),
+                    },
                     (None, false) => None,
                 }
             });
@@ -58,6 +52,7 @@ impl<'g> HakariBuilder<'g> {
                     .workspace_path()
                     .expect("hakari package is in workspace"),
                 version: hakari_package.version(),
+                dep_format: self.dep_format_version,
                 add_to,
             });
         }
@@ -92,17 +87,7 @@ impl<'g> HakariBuilder<'g> {
                     .link_to(hakari_package.id())
                     .expect("valid package ID");
                 match link_opt {
-                    Some(link) => {
-                        if !link.version_req().matches(hakari_package.version()) {
-                            // The version number doesn't match: it must be updated.
-                            true
-                        } else if link.version_req() == &VersionReq::STAR {
-                            // The version number isn't specified and force_version is true.
-                            true
-                        } else {
-                            false
-                        }
-                    }
+                    Some(link) => needs_update_v2(hakari_package, link),
                     None => true,
                 }
             })
@@ -116,6 +101,7 @@ impl<'g> HakariBuilder<'g> {
                     .source()
                     .workspace_path()
                     .expect("hakari package is in workspace"),
+                dep_format: self.dep_format_version,
                 add_to,
             })
         } else {
@@ -157,5 +143,18 @@ impl<'g> HakariBuilder<'g> {
             None
         };
         Some(WorkspaceOps::new(graph, op))
+    }
+}
+
+#[allow(clippy::if_same_then_else, clippy::needless_bool)]
+fn needs_update_v2(hakari_package: &PackageMetadata<'_>, link: PackageLink<'_>) -> bool {
+    if !link.version_req().matches(hakari_package.version()) {
+        // The version number doesn't match: it must be updated.
+        true
+    } else if link.version_req() == &VersionReq::STAR {
+        // The version number isn't specified and force_version is true.
+        true
+    } else {
+        false
     }
 }

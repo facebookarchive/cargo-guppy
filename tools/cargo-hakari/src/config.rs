@@ -24,6 +24,22 @@
 //! resolver = "2"
 //! ```
 //!
+//! ## dep-format-version
+//!
+//! The version of `workspace-hack = ...` lines in other `Cargo.toml` files to use.
+//!
+//! Possible values:
+//! * *"1"*: `workspace-hack = { path = ...}`. (Note the lack of a trailing space.)
+//! * *"2"*: `workspace-hack = { version = "0.1", path = ... }`. This is required for the advanced
+//!   setup documented in the [Publishing](crate::publishing) section.
+//!
+//! Defaults to 1, but starting `cargo hakari 0.9.7`, new `.guppy/hakari.toml` files set it to
+//! 2.
+//!
+//! ```toml
+//! dep-format-version = "2"
+//! ```
+//!
 //! ## platforms
 //!
 //! Platforms to run specific queries on.
