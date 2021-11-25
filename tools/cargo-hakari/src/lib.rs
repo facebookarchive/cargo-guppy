@@ -114,13 +114,8 @@
 //!
 //! ## Publishing a crate
 //!
-//! By default, `cargo publish` will not let you upload a crate that depends on a local-only path
-//! dependency like `workspace-hack`. `cargo hakari` has a command which temporarily removes the
-//! dependency for you:
-//!
-//! ```sh
-//! cargo hakari publish -p <crate>
-//! ```
+//! If you publish crates to `crates.io` or other registries, see the
+//! [`publishing` module](publishing).
 //!
 //! ## Disabling and uninstalling
 //!
@@ -180,13 +175,14 @@
 //!   option, or
 //! * there is a bugfix involved.
 
-pub mod about;
 mod cargo_cli;
 mod command;
-pub mod config;
+mod docs;
 mod helpers;
 mod output;
 mod publish;
+
+pub use docs::*;
 
 // Not part of the stable API.
 #[doc(hidden)]
