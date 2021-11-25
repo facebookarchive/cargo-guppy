@@ -184,7 +184,9 @@ pub mod about;
 mod cargo_cli;
 mod command;
 pub mod config;
+mod helpers;
 mod output;
+mod publish;
 
 // Not part of the stable API.
 #[doc(hidden)]

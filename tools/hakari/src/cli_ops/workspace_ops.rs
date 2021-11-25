@@ -5,8 +5,10 @@ use crate::helpers::VersionDisplay;
 use ansi_term::{Color, Style};
 use atomicwrites::{AtomicFile, OverwriteBehavior};
 use camino::{Utf8Path, Utf8PathBuf};
-use guppy::graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet};
-use guppy::Version;
+use guppy::{
+    graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet},
+    Version,
+};
 use std::{
     borrow::Cow, cmp::Ordering, collections::BTreeMap, convert::TryFrom, error, fmt, fs, io,
     io::Write,

@@ -1,7 +1,7 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{cargo_cli::CargoCli, output::OutputOpts};
+use crate::{helpers::regenerate_lockfile, output::OutputOpts, publish::publish_hakari};
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::{bail, Result, WrapErr};
 use colored::Colorize;
@@ -348,83 +348,8 @@ impl CommandWithBuilder {
                 package,
                 pass_through,
             } => {
-                let workspace = builder.graph().workspace();
-                let package = workspace.member_by_name(&package)?;
-                let package_set = package.to_package_set();
-                let remove_ops = builder
-                    .remove_dep_ops(&package_set, false)
-                    .expect("hakari-package must be specified in hakari.toml");
-                let add_later = if remove_ops.is_empty() {
-                    info!(
-                        "dependency from {} to {} not present",
-                        package.name().bold(),
-                        hakari_package.name().bold()
-                    );
-                    false
-                } else {
-                    info!(
-                        "removing dependency from {} to {}",
-                        package.name().bold(),
-                        hakari_package.name().bold()
-                    );
-                    remove_ops.apply().wrap_err_with(|| {
-                        format!("error removing dependency from {}", package.name())
-                    })?;
-                    true
-                };
-
-                let mut cargo_cli = CargoCli::new("publish", output);
-                cargo_cli.add_args(pass_through.iter().map(|arg| arg.as_str()));
-                // Also set --allow-dirty because we make some changes to the working directory.
-                // TODO: is there a better way to handle this?
-                cargo_cli.add_arg("--allow-dirty");
-
-                let workspace_dir = package
-                    .source()
-                    .workspace_path()
-                    .expect("package is in workspace");
-                let abs_path = workspace.root().join(workspace_dir);
-
-                let all_args = cargo_cli.all_args().join(" ");
-
-                info!("{} {}\n---", "executing".bold(), all_args);
-                let expression = cargo_cli.to_expression().dir(&abs_path);
-
-                // The current PackageGraph doesn't know about the changes to the workspace yet, so
-                // force an add.
-                let add_ops = builder
-                    .add_dep_ops(&package_set, true)
-                    .expect("hakari-package must be specified in hakari.toml");
-
-                match (expression.run(), add_later) {
-                    (Ok(_), true) => {
-                        // Execution was successful + need to add the dep back.
-                        info!(
-                            "re-adding dependency from {} to {}",
-                            package.name().bold(),
-                            hakari_package.name().bold()
-                        );
-                        add_ops.apply()?;
-                        regenerate_lockfile(output)?;
-                        Ok(0)
-                    }
-                    (Ok(_), false) => {
-                        // Execution was successful but no need to add the dep back.
-                        Ok(0)
-                    }
-                    (Err(err), true) => {
-                        // Execution failed + need to add the dep back.
-                        eprintln!("---");
-                        error!("execution failed, rolling back changes");
-                        add_ops.apply()?;
-                        regenerate_lockfile(output)?;
-                        Err(err).wrap_err_with(|| format!("`{}` failed", all_args))
-                    }
-                    (Err(err), false) => {
-                        // Execution failed, no need to add the dep back.
-                        Err(err).wrap_err_with(|| format!("`{}` failed", all_args))
-                    }
-                }
+                publish_hakari(&package, builder, &pass_through, output)?;
+                Ok(0)
             }
             CommandWithBuilder::Disable { diff } => {
                 let existing_toml = builder
@@ -567,17 +492,4 @@ fn apply_on_dialog(
     } else {
         Ok(1)
     }
-}
-
-/// Regenerate the lockfile after dependency updates.
-fn regenerate_lockfile(output: OutputOpts) -> Result<()> {
-    // This seems to be the cheapest way to update the lockfile.
-    // cargo update -p <hakari-package> can sometimes cause unnecessary index updates.
-    let cargo_cli = CargoCli::new("tree", output);
-    cargo_cli
-        .to_expression()
-        .stdout_null()
-        .run()
-        .wrap_err("updating Cargo.lock failed")?;
-    Ok(())
 }

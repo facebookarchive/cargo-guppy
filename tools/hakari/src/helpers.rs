@@ -43,8 +43,7 @@ impl<'a> fmt::Display for VersionDisplay<'a> {
 mod tests {
     use super::*;
     use fixtures::json::*;
-    use guppy::graph::DependencyDirection;
-    use guppy::VersionReq;
+    use guppy::{graph::DependencyDirection, VersionReq};
 
     #[test]
     fn min_version() {

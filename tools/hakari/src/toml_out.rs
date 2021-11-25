@@ -3,10 +3,12 @@
 
 //! Facilities for writing out TOML data from a Hakari map.
 
-use crate::hakari::{HakariBuilder, OutputMap};
-use crate::helpers::VersionDisplay;
 #[cfg(feature = "cli-support")]
 use crate::summaries::HakariBuilderSummary;
+use crate::{
+    hakari::{HakariBuilder, OutputMap},
+    helpers::VersionDisplay,
+};
 use camino::Utf8PathBuf;
 use cfg_if::cfg_if;
 use guppy::{
