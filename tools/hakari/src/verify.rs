@@ -176,7 +176,7 @@ mod tests {
             .expect("package graph built correctly");
         let workspace_hack = graph
             .workspace()
-            .member_by_name("workspace-hack")
+            .member_by_name("guppy-workspace-hack")
             .expect("this repo contains a workspace-hack package");
         let builder =
             HakariBuilder::new(&graph, Some(workspace_hack.id())).expect("builder initialized");
