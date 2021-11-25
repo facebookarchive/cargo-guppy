@@ -7,8 +7,10 @@ use crate::{
     cli_ops::{WorkspaceOp, WorkspaceOps},
     HakariBuilder,
 };
-use guppy::graph::{DependencyDirection, PackageSet};
-use guppy::VersionReq;
+use guppy::{
+    graph::{DependencyDirection, PackageSet},
+    VersionReq,
+};
 
 impl<'g> HakariBuilder<'g> {
     /// Returns the set of operations that need to be performed to add the workspace-hack
