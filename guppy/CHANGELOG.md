@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.2] - 2021-11-25
+
+### Added
+
+- `PackageMetadata::link_between`, `link_from` and `link_to` look up a direct link from one package to another.
+
 ## [0.12.1] - 2021-11-23
 
 ### Changed
@@ -431,6 +437,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.12.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.2
 [0.12.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.1
 [0.12.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.0
 [0.11.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.11.3
