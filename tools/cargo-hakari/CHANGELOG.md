@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.7] - 2021-11-25
+
+### Added
+
+- Support for [publishing a dummy workspace-hack](https://docs.rs/cargo-hakari/*/cargo_hakari/publishing). This is an
+  alternate publishing method that integrates better with existing workflows.
+- New config option `dep-format-version`, to control `workspace-hack = ...` lines in other `Cargo.toml`s.
+  - Newly initialized workspaces have `dep-format-version = "2"`.
+  - Version 2 is required for the alternate publishing method.
+
 ## [0.9.6] - 2021-10-09
 
 ### Fixed
@@ -57,6 +67,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.7]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.7
 [0.9.6]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.6
 [0.9.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.5
 [0.9.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.4
