@@ -336,6 +336,16 @@
 <span id="336">336</span>
 <span id="337">337</span>
 <span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -343,7 +353,9 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Requires the `cli-support` feature to be enabled.</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">HakariBuilder</span>, <span class="ident">HakariOutputOptions</span>, <span class="ident">TomlOutError</span>, <span class="ident">UnifyTargetHost</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">hakari::DepFormatVersion</span>, <span class="ident">HakariBuilder</span>, <span class="ident">HakariOutputOptions</span>, <span class="ident">TomlOutError</span>, <span class="ident">UnifyTargetHost</span>,
+};
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">errors::TargetSpecError</span>,
     <span class="ident">graph</span>::{<span class="ident">cargo::CargoResolverVersion</span>, <span class="ident">summaries::PackageSetSummary</span>, <span class="ident">PackageGraph</span>},
@@ -351,6 +363,9 @@
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::BTreeMap</span>, <span class="ident">fmt</span>, <span class="ident">str::FromStr</span>};
 <span class="kw">use</span> <span class="ident">toml::Serializer</span>;
+
+<span class="doccomment">/// The location of the configuration used by `cargo hakari`, relative to the workspace root.</span>
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">DEFAULT_CONFIG_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;.guppy/hakari.toml&quot;</span>;
 
 <span class="doccomment">/// Configuration for `hakari`.</span>
 <span class="doccomment">///</span>
@@ -403,6 +418,10 @@
     <span class="doccomment">/// Whether all dependencies were unified.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
     <span class="kw">pub</span> <span class="ident">output_single_feature</span>: <span class="ident">bool</span>,
+
+    <span class="doccomment">/// Version of `workspace-hack = ...` lines in other `Cargo.toml` to use.</span>
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">dep_format_version</span>: <span class="ident">DepFormatVersion</span>,
 
     <span class="doccomment">/// The platforms used by the `HakariBuilder`.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">default</span>)]</span>
@@ -462,6 +481,7 @@
                 .<span class="ident">collect</span>(),
             <span class="ident">unify_target_host</span>: <span class="ident">builder</span>.<span class="ident">unify_target_host</span>(),
             <span class="ident">output_single_feature</span>: <span class="ident">builder</span>.<span class="ident">output_single_feature</span>(),
+            <span class="ident">dep_format_version</span>: <span class="ident">builder</span>.<span class="ident">dep_format_version</span>,
         })
     }
 
