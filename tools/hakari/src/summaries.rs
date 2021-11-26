@@ -16,6 +16,9 @@ use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fmt, str::FromStr};
 use toml::Serializer;
 
+/// The location of the configuration used by `cargo hakari`, relative to the workspace root.
+pub static DEFAULT_CONFIG_PATH: &str = ".guppy/hakari.toml";
+
 /// Configuration for `hakari`.
 ///
 /// Requires the `cli-support` feature to be enabled.

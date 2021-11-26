@@ -12,15 +12,12 @@ use guppy::{
 use hakari::{
     cli_ops::{HakariInit, WorkspaceOps},
     diffy::PatchFormatter,
-    summaries::HakariConfig,
+    summaries::{HakariConfig, DEFAULT_CONFIG_PATH},
     HakariBuilder, HakariCargoToml, HakariOutputOptions, TomlOutError,
 };
 use log::{error, info};
 use std::convert::TryFrom;
 use structopt::{clap::AppSettings, StructOpt};
-
-/// The location of the configuration used by `cargo hakari`, relative to the workspace root.
-pub static CONFIG_PATH: &str = ".guppy/hakari.toml";
 
 /// The comment to add to the top of the config file.
 pub static CONFIG_COMMENT: &str = r#"# This file contains settings for `cargo hakari`.
@@ -131,14 +128,14 @@ impl Command {
                     .with_context(|| "error initializing Hakari package")?;
                 init.set_cargo_toml_comment(CARGO_TOML_COMMENT);
                 if !skip_config {
-                    init.set_config(CONFIG_PATH.as_ref(), CONFIG_COMMENT)
+                    init.set_config(DEFAULT_CONFIG_PATH.as_ref(), CONFIG_COMMENT)
                         .with_context(|| "error initializing Hakari package")?;
                 }
 
                 let ops = init.make_ops();
                 apply_on_dialog(dry_run, yes, &ops, &output, || {
                     let steps = [
-                        format!("* configure at {}", CONFIG_PATH.bold()),
+                        format!("* configure at {}", DEFAULT_CONFIG_PATH.bold()),
                         format!(
                             "* run {} to generate contents",
                             "cargo hakari generate".bold()
@@ -283,7 +280,7 @@ impl CommandWithBuilder {
                             package.name().bold(),
                             format!("v{}", package.version()).bold(),
                             "[registries]".bold(),
-                            CONFIG_PATH.blue().bold(),
+                            DEFAULT_CONFIG_PATH.blue().bold(),
                         );
                         // 102 is picked pretty arbitrarily because regular errors exit with 101.
                         return Ok(102);
@@ -406,7 +403,7 @@ fn cwd_rel_to_workspace_rel(path: &Utf8Path, workspace_root: &Utf8Path) -> Resul
 }
 
 fn config_path(package_graph: &PackageGraph) -> Utf8PathBuf {
-    package_graph.workspace().root().join(CONFIG_PATH)
+    package_graph.workspace().root().join(DEFAULT_CONFIG_PATH)
 }
 
 fn read_config(path: &Utf8Path) -> Result<HakariConfig> {
