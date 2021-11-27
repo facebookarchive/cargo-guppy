@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.2] - 2021-11-27
+
+Internal updates for `cargo-hakari 0.9.8`.
+
 ## [0.7.1] - 2021-11-25
 
 ### Added
@@ -134,6 +138,8 @@
 
 Initial release.
 
+[0.7.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.2
+[0.7.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.1
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.0
 [0.6.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.2
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.6.1

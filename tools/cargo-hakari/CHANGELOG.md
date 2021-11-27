@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.9.7] - 2021-11-25
+## [0.9.8] - 2021-11-27
 
 ### Added
 
@@ -9,6 +9,15 @@
 - New config option `dep-format-version`, to control `workspace-hack = ...` lines in other `Cargo.toml`s.
   - Newly initialized workspaces have `dep-format-version = "2"`.
   - Version 2 is required for the alternate publishing method.
+  
+### Changed
+
+- The default config file location is now `.config/hakari.toml`. `.guppy/hakari.toml` continues to be supported
+  as a fallback, so existing users are unaffected.
+
+## [0.9.7] - 2021-11-25
+
+(This release was yanked because it contained a few bugs.)
 
 ## [0.9.6] - 2021-10-09
 
@@ -67,6 +76,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.8]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.8
 [0.9.7]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.7
 [0.9.6]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.6
 [0.9.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.5
