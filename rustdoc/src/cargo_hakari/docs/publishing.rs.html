@@ -98,16 +98,23 @@
 <span id="98"> 98</span>
 <span id="99"> 99</span>
 <span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="doccomment">//! Publishing a package to `crates.io` or other registries.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! *This section can be safely ignored if your workspace doesn&#39;t publish any crates to registries.*</span>
+<span class="doccomment">//! *This section can be ignored if your workspace doesn&#39;t publish any crates to registries.*</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Many projects using `cargo hakari` may wish to publish their crates to `crates.io` or other</span>
-<span class="doccomment">//! registries. However, these registries cannot work with local-only dependencies like</span>
-<span class="doccomment">//! `workspace-hack`.</span>
+<span class="doccomment">//! registries. However, if you attempt to publish a crate from a Hakari-managed workspace,</span>
+<span class="doccomment">//! `cargo publish` will reject it for containing the local-only `workspace-hack` dependency.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! `cargo hakari` provides two ways to handle this.</span>
 <span class="doccomment">//!</span>
@@ -130,15 +137,16 @@
 <span class="doccomment">//! # B. Publish a dummy workspace-hack crate to the registry</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! In this method, you will publish an empty workspace-hack crate to the registry. This is a small</span>
-<span class="doccomment">//! amount of **one-time** work.</span>
+<span class="doccomment">//! amount of **one-time effort**.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! This method is used by [this repository](https://crates.io/crates/guppy-workspace-hack), as</span>
 <span class="doccomment">//! well as [`rustc`](https://crates.io/crates/rustc-workspace-hack). It requires a few minutes of</span>
-<span class="doccomment">//! work, but will work with all workflows.</span>
+<span class="doccomment">//! effort, but will work with all workflows.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## 1. Give the workspace-hack a unique name</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! If your crate has a generic name like `workspace-hack`, rename it to something unique.</span>
+<span class="doccomment">//! If your crate has a generic name like `workspace-hack`, rename it to something that hasn&#39;t</span>
+<span class="doccomment">//! already been taken up by the registry.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! For the rest of this example, the crate will be renamed to `my-workspace-hack`.</span>
 <span class="doccomment">//!</span>
@@ -155,12 +163,18 @@
 <span class="doccomment">//! &gt; find . -name Cargo.toml | xargs perl -p -i -e &#39;s/^workspace-hack = /my-workspace-hack = /&#39;`</span>
 <span class="doccomment">//! &gt; ```</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Remember to update `.guppy/hakari.toml` with the new package name.</span>
+<span class="doccomment">//! Remember to update `.config/hakari.toml` (or `.guppy/hakari.toml`) with the new package name.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ## 2. Ensure `dep-format-version = &quot;2&quot;` is set in `.guppy/hakari.toml`</span>
+<span class="doccomment">//! ## 2. Ensure `dep-format-version = &quot;2&quot;` is set in `.config/hakari.toml`</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! If the config file was created with an older version of `cargo hakari`, it may not have this</span>
-<span class="doccomment">//! option set. Add this line:</span>
+<span class="doccomment">//! `dep-format-version = &quot;2&quot;` adds the `version` field to the `workspace-hack = ...` lines in other</span>
+<span class="doccomment">//! `Cargo.toml` files. `cargo publish` uses the `version` field to recognize published</span>
+<span class="doccomment">//! dependencies.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This option is new in cargo-hakari 0.9.8. Configuration files created by older versions of</span>
+<span class="doccomment">//! cargo-hakari may not have this option set.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Ensure that this option is present in `.config/hakari.toml`:</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```toml</span>
 <span class="doccomment">//! dep-format-version = &quot;2&quot;</span>
@@ -170,22 +184,22 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## 3. Set options in the workspace-hack&#39;s `Cargo.toml`</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Set the `package.publish` option to anything other than `false`. This lets you publish the</span>
-<span class="doccomment">//! workspace-hack crate to registries.</span>
+<span class="doccomment">//! In the workspace-hack&#39;s `Cargo.toml` file, set the `package.publish` option to anything other</span>
+<span class="doccomment">//! than `false`. This enables publication of the workspace-hack crate.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```toml</span>
 <span class="doccomment">//! [package]</span>
 <span class="doccomment">//! publish = true  # to allow publishing to any registry</span>
-<span class="doccomment">//! # or</span>
+<span class="doccomment">//! ## or</span>
 <span class="doccomment">//! publish = [&quot;crates-io&quot;]  # to allow publishing to crates.io only</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! While you&#39;re here, you may also wish to set other options like `repository` or `homepage`.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ## 4. Temporarily disable the workspace-hack</span>
+<span class="doccomment">//! ## 4. Temporarily disable the workspace-hack crate</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! **This step is really important.** Not doing it will cause the full workspace-hack to be</span>
-<span class="doccomment">//! published, which is not what you want.</span>
+<span class="doccomment">//! **This step is really important.** Not doing it will cause the full dependency set in the</span>
+<span class="doccomment">//! workspace-hack to be published, which is not what you want.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Run `cargo hakari disable` to disable the workspace-hack.</span>
 <span class="doccomment">//!</span>
@@ -194,7 +208,7 @@
 <span class="doccomment">//! Run `cargo publish -p my-workspace-hack --allow-dirty` to publish the crate to `crates.io`.</span>
 <span class="doccomment">//! For other registries, use the `--registry` flag.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ## 6. Re-enable the workspace-hack</span>
+<span class="doccomment">//! ## 6. Re-enable the workspace-hack crate</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Run `cargo hakari generate` to restore the workspace-hack&#39;s contents. You can also use your</span>
 <span class="doccomment">//! source control system&#39;s commands to do so, such as with `git restore`.</span>
