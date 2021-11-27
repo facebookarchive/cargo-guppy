@@ -3,7 +3,11 @@
 
 //! Configuration for `cargo hakari`.
 //!
-//! Set these config options in `.guppy/hakari.toml` at the root of the workspace.
+//! # Configuration file location
+//!
+//! The default config path for cargo-hakari versions 0.9.8 or above is `.config/hakari.toml`,
+//! relative to the root of the workspace. Previous versions used `.guppy/hakari.toml`, which
+//! continues to be supported as a fallback.
 //!
 //! # Common options
 //!
@@ -20,7 +24,7 @@
 //! The version of the Cargo feature resolver to use. Version 2 is highly recommended.
 //! For more, see this [Rust blog post](https://blog.rust-lang.org/2021/03/25/Rust-1.51.0.html#cargos-new-feature-resolver).
 //!
-//! Defaults to "1", but `.guppy/hakari.toml` files created by `cargo hakari init` set it to "2".
+//! Defaults to "1", but `.config/hakari.toml` files created by `cargo hakari init` set it to "2".
 //!
 //! ```toml
 //! resolver = "2"
@@ -35,7 +39,7 @@
 //! * *"2"*: `workspace-hack = { version = "0.1", path = ... }`. This is required for the advanced
 //!   setup documented in the [Publishing](crate::publishing) section.
 //!
-//! Defaults to "1", but starting `cargo hakari 0.9.8`, `.guppy/hakari.toml` files created by
+//! Defaults to "1", but starting `cargo hakari 0.9.8`, `.config/hakari.toml` files created by
 //! `cargo hakari init` set it to "2".
 //!
 //! ```toml

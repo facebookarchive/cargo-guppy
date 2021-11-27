@@ -1,7 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{helpers::regenerate_lockfile, output::OutputOpts, publish::publish_hakari};
+use crate::{
+    helpers::{read_contents, regenerate_lockfile},
+    output::OutputOpts,
+    publish::publish_hakari,
+};
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::{bail, Result, WrapErr};
 use colored::Colorize;
@@ -12,7 +16,7 @@ use guppy::{
 use hakari::{
     cli_ops::{HakariInit, WorkspaceOps},
     diffy::PatchFormatter,
-    summaries::{HakariConfig, DEFAULT_CONFIG_PATH},
+    summaries::{HakariConfig, DEFAULT_CONFIG_PATH, FALLBACK_CONFIG_PATH},
     HakariBuilder, HakariCargoToml, HakariOutputOptions, TomlOutError,
 };
 use log::{error, info};
@@ -103,7 +107,6 @@ impl Command {
         let package_graph = metadata_command
             .build_graph()
             .context("building package graph failed")?;
-        let config_path = config_path(&package_graph);
 
         match self {
             Command::Initialize {
@@ -150,14 +153,7 @@ impl Command {
                 })
             }
             Command::WithBuilder(cmd) => {
-                let config = read_config(&config_path)?;
-                let builder = config
-                    .builder
-                    .to_hakari_builder(&package_graph)
-                    .with_context(|| {
-                        format!("could not resolve Hakari config at {}", &config_path)
-                    })?;
-                let hakari_output = config.output.to_options();
+                let (builder, hakari_output) = make_builder_and_output(&package_graph)?;
                 cmd.exec(builder, hakari_output, output)
             }
         }
@@ -402,16 +398,26 @@ fn cwd_rel_to_workspace_rel(path: &Utf8Path, workspace_root: &Utf8Path) -> Resul
         })
 }
 
-fn config_path(package_graph: &PackageGraph) -> Utf8PathBuf {
-    package_graph.workspace().root().join(DEFAULT_CONFIG_PATH)
-}
+fn make_builder_and_output(
+    package_graph: &PackageGraph,
+) -> Result<(HakariBuilder<'_>, HakariOutputOptions)> {
+    let (config_path, contents) = read_contents(
+        package_graph.workspace().root(),
+        [DEFAULT_CONFIG_PATH, FALLBACK_CONFIG_PATH],
+    )
+    .wrap_err("error reading Hakari config")?;
 
-fn read_config(path: &Utf8Path) -> Result<HakariConfig> {
-    let config = std::fs::read_to_string(path)
-        .with_context(|| format!("could not read hakari config at {}", path))?;
-    config
+    let config: HakariConfig = contents
         .parse()
-        .with_context(|| format!("could not deserialize hakari config at {}", path))
+        .wrap_err_with(|| format!("error deserializing Hakari config at {}", config_path))?;
+
+    let builder = config
+        .builder
+        .to_hakari_builder(package_graph)
+        .wrap_err_with(|| format!("error resolving Hakari config at {}", config_path))?;
+    let hakari_output = config.output.to_options();
+
+    Ok((builder, hakari_output))
 }
 
 fn write_to_cargo_toml(
