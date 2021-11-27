@@ -85,7 +85,7 @@
 //!
 //! ### 1. Update the hakari config
 //!
-//! Open up `.guppy/hakari.toml`, then:
+//! Open up `.config/hakari.toml`, then:
 //!
 //! * uncomment or add commonly-used developer platforms
 //! * read the note about the resolver, and strongly consider
@@ -138,7 +138,7 @@
 //!
 //! # Configuration
 //!
-//! `cargo hakari` is configured through `.guppy/hakari.toml` at the root of the workspace. Running
+//! `cargo hakari` is configured through `.config/hakari.toml` at the root of the workspace. Running
 //! `cargo hakari init` causes a new file to be created at this location.
 //!
 //! Example configuration:

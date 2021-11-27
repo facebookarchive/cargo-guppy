@@ -55,9 +55,9 @@
 //! > find . -name Cargo.toml | xargs perl -p -i -e 's/^workspace-hack = /my-workspace-hack = /'`
 //! > ```
 //!
-//! Remember to update `.guppy/hakari.toml` with the new package name.
+//! Remember to update `.config/hakari.toml` with the new package name.
 //!
-//! ## 2. Ensure `dep-format-version = "2"` is set in `.guppy/hakari.toml`
+//! ## 2. Ensure `dep-format-version = "2"` is set in `.config/hakari.toml`
 //!
 //! If the config file was created with an older version of `cargo hakari`, it may not have this
 //! option set. Add this line:

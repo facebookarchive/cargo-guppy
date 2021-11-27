@@ -17,7 +17,10 @@ use std::{collections::BTreeMap, fmt, str::FromStr};
 use toml::Serializer;
 
 /// The location of the configuration used by `cargo hakari`, relative to the workspace root.
-pub static DEFAULT_CONFIG_PATH: &str = ".guppy/hakari.toml";
+pub static DEFAULT_CONFIG_PATH: &str = ".config/hakari.toml";
+
+/// The fallback location, used by previous versions of `cargo hakari`.
+pub static FALLBACK_CONFIG_PATH: &str = ".guppy/hakari.toml";
 
 /// Configuration for `hakari`.
 ///
