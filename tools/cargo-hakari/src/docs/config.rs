@@ -20,6 +20,8 @@
 //! The version of the Cargo feature resolver to use. Version 2 is highly recommended.
 //! For more, see this [Rust blog post](https://blog.rust-lang.org/2021/03/25/Rust-1.51.0.html#cargos-new-feature-resolver).
 //!
+//! Defaults to "1", but `.guppy/hakari.toml` files created by `cargo hakari init` set it to "2".
+//!
 //! ```toml
 //! resolver = "2"
 //! ```
@@ -33,8 +35,8 @@
 //! * *"2"*: `workspace-hack = { version = "0.1", path = ... }`. This is required for the advanced
 //!   setup documented in the [Publishing](crate::publishing) section.
 //!
-//! Defaults to 1, but starting `cargo hakari 0.9.7`, new `.guppy/hakari.toml` files set it to
-//! 2.
+//! Defaults to "1", but starting `cargo hakari 0.9.8`, `.guppy/hakari.toml` files created by
+//! `cargo hakari init` set it to "2".
 //!
 //! ```toml
 //! dep-format-version = "2"
@@ -48,6 +50,8 @@
 //! all possible platforms. However, in practice, most developers on a codebase use one of a
 //! few platforms. `cargo hakari` can run specific queries for a few platforms, producing better
 //! results for them.
+//!
+//! Defaults to an empty list.
 //!
 //! ```toml
 //! ## Unify features on x86_64 Linux, Mac and Windows.
@@ -72,6 +76,8 @@
 //!
 //! This is generally useful for crates that have mutually exclusive features, and that turn on
 //! mutually exclusive features in their transitive dependencies.
+//!
+//! Defaults to an empty set.
 //!
 //! ```toml
 //! [traversal-excludes]
@@ -104,6 +110,8 @@
 //!
 //! This accepts configuration in the same format as `traversal-excludes` above.
 //!
+//! Defaults to an empty set.
+//!
 //! ```toml
 //! [final-excludes]
 //! workspace-members = ["my-crate", "your-crate"]
@@ -126,6 +134,8 @@
 //! This is a temporary workaround until [Cargo issue #9052](https://github.com/rust-lang/cargo/issues/9052)
 //! is resolved.
 //!
+//! Defaults to an empty set.
+//!
 //! ```toml
 //! [registries]
 //! my-registry = { index = "https://my-intranet:8080/git/index" }
@@ -142,6 +152,8 @@
 //! version numbers are kept in sync across `Cargo.toml` and `Cargo.lock`. This includes some
 //! configurations of [Dependabot](https://dependabot.com/).
 //!
+//! Defaults to false.
+//!
 //! ```toml
 //! exact-versions = true
 //! ```
@@ -155,9 +167,11 @@
 //! If the same dependency is built on both the target and host platforms, this option controls
 //! whether and how they should be unified.
 //!
-//! The possible options are `"none"`, `"auto"` (default), `"unify-if-both"`, and
+//! The possible options are `"none"`, `"auto"`, `"unify-if-both"`, and
 //! `"replicate-target-on-host"`. For more about these options, see the documentation for
 //! [`UnifyTargetHost`](hakari::UnifyTargetHost).
+//!
+//! Defaults to `"auto"`.
 //!
 //! ```toml
 //! unify-target-host = "replicate-target-on-host"
@@ -171,6 +185,8 @@
 //! of features.
 //!
 //! This is generally not needed but may be useful in some situations.
+//!
+//! Defaults to false.
 //!
 //! ```toml
 //! output-single-feature = true

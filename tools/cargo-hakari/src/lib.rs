@@ -115,7 +115,7 @@
 //! ## Publishing a crate
 //!
 //! If you publish crates to `crates.io` or other registries, see the
-//! [`publishing` module](publishing).
+//! [`publishing` module](https://docs.rs/cargo-hakari/*/cargo_hakari/publishing).
 //!
 //! ## Disabling and uninstalling
 //!
@@ -138,7 +138,8 @@
 //!
 //! # Configuration
 //!
-//! `cargo hakari` is configured through `.guppy/hakari.toml` at the root of the workspace.
+//! `cargo hakari` is configured through `.guppy/hakari.toml` at the root of the workspace. Running
+//! `cargo hakari init` causes a new file to be created at this location.
 //!
 //! Example configuration:
 //!
@@ -147,6 +148,10 @@
 //! hakari-package = "workspace-hack"
 //! ## Cargo resolver version in use -- version 2 is highly recommended.
 //! resolver = "2"
+//!
+//! ## Format for `workspace-hack = ...` lines in other Cargo.tomls. Version 2 requires cargo-hakari
+//! ## 0.9.8 or above.
+//! dep-format-version = "2"
 //!
 //! ## Add triples corresponding to platforms commonly used by developers here.
 //! ## https://doc.rust-lang.org/rustc/platform-support.html

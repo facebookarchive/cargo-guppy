@@ -510,7 +510,7 @@ pub enum DepFormatVersion {
     V1,
 
     /// `workspace-hack = { version = "0.1", path = ... }`. This was introduced in
-    /// `cargo hakari 0.9.7`.
+    /// `cargo hakari 0.9.8`.
     #[cfg_attr(feature = "cli-support", serde(rename = "2"))]
     V2,
 }
