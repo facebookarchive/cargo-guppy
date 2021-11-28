@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.12.3] - 2021-11-28
+
+- Internal dependency `guppy-workspace-hack` updated to [`workspace-hack`](https://crates.io/crates/workspace-hack).
+
 ## [0.12.2] - 2021-11-25
 
 ### Added
@@ -437,6 +441,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.12.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.3
 [0.12.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.2
 [0.12.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.1
 [0.12.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.0

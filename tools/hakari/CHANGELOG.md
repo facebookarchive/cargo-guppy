@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.3] - 2021-11-28
+
+- Internal dependency `guppy-workspace-hack` updated to [`workspace-hack`](https://crates.io/crates/workspace-hack).
+
 ## [0.7.2] - 2021-11-27
 
 Internal updates for `cargo-hakari 0.9.8`.
@@ -138,6 +142,7 @@ Internal updates for `cargo-hakari 0.9.8`.
 
 Initial release.
 
+[0.7.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.3
 [0.7.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.2
 [0.7.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.1
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.0
