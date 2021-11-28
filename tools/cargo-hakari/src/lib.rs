@@ -18,8 +18,8 @@
 //! * **Unix platforms**: Hakari works and is supported.
 //! * **Windows**: Hakari works and outputs file paths with forward slashes for
 //!   consistency with Unix. CRLF line endings are not supported in the workspace-hack's
-//!   `Cargo.toml` -- it is recommended that repositories disable automatic line ending conversion.
-//!   [Here's how to do it in Git](https://stackoverflow.com/a/10017566).
+//!   `Cargo.toml`. Within Git repositories, `cargo hakari init` automatically does this for you.
+//!   [Here's how to do it manually.](https://stackoverflow.com/a/10017566)
 //!   (Pull requests to improve this are welcome.)
 //!
 //! # Installation
