@@ -166,7 +166,7 @@ impl<'g> fmt::Display for VerifyError<'g> {
 #[cfg(test)]
 #[cfg(feature = "cli-support")]
 mod cli_support_tests {
-    use crate::summaries::{HakariConfig, FALLBACK_CONFIG_PATH};
+    use crate::summaries::{HakariConfig, DEFAULT_CONFIG_PATH};
     use guppy::MetadataCommand;
 
     /// Verify that this repo's `workspace-hack` works correctly.
@@ -175,8 +175,7 @@ mod cli_support_tests {
         let graph = MetadataCommand::new()
             .build_graph()
             .expect("package graph built correctly");
-        // XXX: temporarily set to the fallback path
-        let config_path = graph.workspace().root().join(FALLBACK_CONFIG_PATH);
+        let config_path = graph.workspace().root().join(DEFAULT_CONFIG_PATH);
         let config_str = std::fs::read_to_string(&config_path).unwrap_or_else(|err| {
             panic!("could not read hakari config at {}: {}", config_path, err)
         });
