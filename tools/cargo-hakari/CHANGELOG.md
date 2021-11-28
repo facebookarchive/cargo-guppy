@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.9] - 2021-11-28
+
+### Added
+
+- Support for using the already-published [workspace-hack crate](https://crates.io/crates/workspace-hack)
+  on crates.io, which makes publishing seamless for new users.
+
+### Changed
+
+- `cargo hakari init`: the default crate name is always `workspace-hack` now.
+  - This makes publishing seamless for new users.
+
 ## [0.9.8] - 2021-11-27
 
 ### Added
@@ -76,6 +88,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.9]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.9
 [0.9.8]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.8
 [0.9.7]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.7
 [0.9.6]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.6
