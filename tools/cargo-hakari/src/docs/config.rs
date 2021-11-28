@@ -72,7 +72,7 @@
 //!
 //! Packages specified in `traversal-excludes` will be omitted while searching for dependencies.
 //! These packages will not be included in the final output. Any transitive dependencies of
-//! these packages will not be included in the final result, unless those dependencices are reachable
+//! these packages will not be included in the final result, unless those dependencies are reachable
 //! from other crates.
 //!
 //! Workspace crates excluded from traversals will not depend on the workspace-hack crate, and
