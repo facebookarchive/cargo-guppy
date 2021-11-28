@@ -13,7 +13,7 @@
 //!
 //! ## hakari-package
 //!
-//! The name of the hakari-managed crate in the workspace. For example:
+//! The name of the hakari-managed crate in the workspace. Must be specified. For example:
 //!
 //! ```toml
 //! hakari-package = "my-workspace-hack"
