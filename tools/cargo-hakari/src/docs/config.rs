@@ -150,7 +150,7 @@
 //! ## exact-versions
 //!
 //! By default, the workspace-hack crate's `Cargo.toml` file will contain a semver range. With
-//! `exact-versions` turned on, the version currently in use will be output.
+//! `exact-versions` turned on, the exact version currently in use will be output.
 //!
 //! This is most useful for situations where the `Cargo.lock` file is checked in, and if
 //! version numbers are kept in sync across `Cargo.toml` and `Cargo.lock`. This includes some

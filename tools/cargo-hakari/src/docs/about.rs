@@ -179,6 +179,7 @@
 //!   - This is not a major issue for repositories that don't release crates to `crates.io`.
 //!   - It can also be caught at publish time, or with a periodic CI job that does a build after
 //!     running `cargo hakari disable`.
-//! * Publishing becomes more complex as the workspace-hack dependency needs to be removed from
-//!   `Cargo.toml`.
-//!   - `cargo hakari` provides a `publish` command to automatically do this for you.
+//! * Downstream users that import your crate directly from your repository, rather than from the
+//!   registry, are going to import dependencies from the checked in workspace-hack.
+//! * Publishing crates to a registry becomes more complex: see the
+//!   [`publishing` module](crate::publishing) for more about this.
