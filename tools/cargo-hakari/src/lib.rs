@@ -6,7 +6,7 @@
 //! **20-25% or more**.
 //!
 //! For an explanation of what workspace-hack packages are and how they make your builds faster, see
-//! the [`about` module](https://docs.rs/cargo-hakari/*/cargo_hakari/about).
+//! the [`about` module](https://docs.rs/cargo-hakari/latest/cargo_hakari/about).
 //!
 //! # Examples
 //!
@@ -115,7 +115,7 @@
 //! ## Publishing a crate
 //!
 //! If you publish crates to `crates.io` or other registries, see the
-//! [`publishing` module](https://docs.rs/cargo-hakari/*/cargo_hakari/publishing).
+//! [`publishing` module](https://docs.rs/cargo-hakari/latest/cargo_hakari/publishing).
 //!
 //! ## Disabling and uninstalling
 //!
@@ -168,7 +168,7 @@
 //! ```
 //!
 //! For more options, including how to exclude crates from the output, see the
-//! [`config` module](https://docs.rs/cargo-hakari/*/cargo_hakari/config).
+//! [`config` module](https://docs.rs/cargo-hakari/latest/cargo_hakari/config).
 //!
 //! # Stability guarantees
 //!

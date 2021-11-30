@@ -6,4 +6,4 @@ It is intended for the [`cargo hakari`](https://crates.io/crates/cargo-hakari) w
 anyone is welcome to use it for any purpose.
 
 For more about why this crate has been published, see the
-[`cargo hakari` publishing docs](https://docs.rs/cargo-hakari/*/cargo_hakari/publishing).
+[`cargo hakari` publishing docs](https://docs.rs/cargo-hakari/latest/cargo_hakari/publishing).

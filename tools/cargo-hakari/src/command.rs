@@ -25,7 +25,7 @@ use structopt::{clap::AppSettings, StructOpt};
 
 /// The comment to add to the top of the config file.
 pub static CONFIG_COMMENT: &str = r#"# This file contains settings for `cargo hakari`.
-# See https://docs.rs/cargo-hakari/*/cargo_hakari/config for a full list of options.
+# See https://docs.rs/cargo-hakari/latest/cargo_hakari/config for a full list of options.
 "#;
 
 /// The comment to add to the top of the workspace-hack package's Cargo.toml.
