@@ -16,7 +16,7 @@
 
 ### Added
 
-- Support for [publishing a dummy workspace-hack](https://docs.rs/cargo-hakari/*/cargo_hakari/publishing). This is an
+- Support for [publishing a dummy workspace-hack](https://docs.rs/cargo-hakari/latest/cargo_hakari/publishing). This is an
   alternate publishing method that integrates better with existing workflows.
 - New config option `dep-format-version`, to control `workspace-hack = ...` lines in other `Cargo.toml`s.
   - Newly initialized workspaces have `dep-format-version = "2"`.
