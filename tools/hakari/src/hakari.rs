@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{
+    explain::HakariExplain,
+    toml_name_map,
     toml_out::{write_toml, HakariOutputOptions},
     CargoTomlError, HakariCargoToml, TomlOutError,
 };
@@ -20,7 +22,7 @@ use guppy::{
 use rayon::prelude::*;
 use std::{
     borrow::Cow,
-    collections::{BTreeMap, BTreeSet, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
     sync::Arc,
 };
@@ -583,6 +585,26 @@ impl<'g> Hakari<'g> {
         write_toml(&self.builder, &self.output_map, options, out)
     }
 
+    /// Returns a map of dependency names as present in the workspace-hack's `Cargo.toml` to their
+    /// corresponding [`PackageMetadata`].
+    ///
+    /// Packages which have one version are present as their original names, while packages with
+    /// more than one version have a hash appended to them.
+    pub fn toml_name_map(&self) -> HashMap<Cow<'g, str>, PackageMetadata<'g>> {
+        toml_name_map(&self.output_map)
+    }
+
+    /// Returns a `HakariExplain`, which can be used to print out why a specific package is
+    /// in the workspace-hack's `Cargo.toml`.
+    ///
+    /// Returns an error if the package ID was not found in the output.
+    pub fn explain(
+        &self,
+        package_id: &'g PackageId,
+    ) -> Result<HakariExplain<'g, '_>, guppy::Error> {
+        HakariExplain::new(self, package_id)
+    }
+
     /// A convenience method around `write_toml` that returns a new string with `Cargo.toml` lines.
     ///
     /// The returned string is guaranteed to be valid TOML, and can be provided to
@@ -726,7 +748,8 @@ pub type OutputMap<'g> =
 /// [`ComputedValue`](ComputedValue) instances that represent the different feature sets this
 /// dependency is built with on both the host and target platforms.
 ///
-/// The values that are most interesting are the ones where maps have two elements or more: they indicate dependencies with features that need to be unified.
+/// The values that are most interesting are the ones where maps have two elements or more: they
+/// indicate dependencies with features that need to be unified.
 ///
 /// This is an alias for the type of [`Hakari::computed_map`](Hakari::computed_map).
 pub type ComputedMap<'g> = BTreeMap<(Option<usize>, &'g PackageId), ComputedValue<'g>>;

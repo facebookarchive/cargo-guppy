@@ -173,6 +173,44 @@ pub enum TomlOutError {
     },
 }
 
+/// Returns a map from dependency names as present in the workspace `Cargo.toml` to their
+/// corresponding package metadatas.
+pub(crate) fn toml_name_map<'g>(
+    output_map: &OutputMap<'g>,
+) -> HashMap<Cow<'g, str>, PackageMetadata<'g>> {
+    let mut packages_by_name: HashMap<&'g str, HashMap<_, _>> = HashMap::new();
+    for vals in output_map.values() {
+        for (&package_id, (package, _)) in vals {
+            packages_by_name
+                .entry(package.name())
+                .or_default()
+                .insert(package_id, package);
+        }
+    }
+
+    let mut toml_name_map = HashMap::new();
+    for (name, packages) in packages_by_name {
+        if packages.len() > 1 {
+            // Make hashed names for each package.
+            for (_, package) in packages {
+                let hashed_name = make_hashed_name(package);
+                toml_name_map.insert(Cow::Owned(hashed_name), *package);
+            }
+        } else {
+            toml_name_map.insert(
+                Cow::Borrowed(name),
+                *packages
+                    .into_iter()
+                    .map(|(_k, v)| v)
+                    .next()
+                    .expect("at least 1 element"),
+            );
+        }
+    }
+
+    toml_name_map
+}
+
 impl From<TargetSpecError> for TomlOutError {
     fn from(err: TargetSpecError) -> Self {
         TomlOutError::Platform(err)

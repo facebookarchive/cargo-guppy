@@ -124,12 +124,15 @@
 mod cargo_toml;
 #[cfg(feature = "cli-support")]
 pub mod cli_ops;
+pub mod explain;
 mod hakari;
 mod helpers;
 #[cfg(feature = "proptest1")]
 mod proptest_helpers;
 #[cfg(feature = "cli-support")]
 pub mod summaries;
+#[cfg(feature = "cli-support")]
+mod tabular;
 mod toml_out;
 pub mod verify;
 
