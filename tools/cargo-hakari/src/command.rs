@@ -7,7 +7,7 @@ use crate::{
     publish::publish_hakari,
 };
 use camino::{Utf8Path, Utf8PathBuf};
-use color_eyre::eyre::{Result, WrapErr};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use colored::Colorize;
 use guppy::{
     graph::{PackageGraph, PackageSet},
@@ -208,11 +208,31 @@ enum CommandWithBuilder {
         yes: bool,
     },
 
-    /// Publish a package after removing the workspace-hack dependency from it.
+    /// Print out workspace crates responsible for adding a dependency to workspace-hack.
     ///
-    /// When publishing a crate containing a workspace-hack dependency, it needs to be removed
-    /// before it is published. This command automates that process, adding the
-    /// workspace-hack dependency back again after publishing.
+    /// For a dependency to be included in the workspace-hack, it must have been built with at least
+    /// two different feature sets by different crates in the workspace (unless the
+    /// output-single-feature option is set to true). The explain command prints out a table
+    /// consisting of the different feature sets that got built; and, for each feature set, the
+    /// workspace crates and options that resulted in it.
+    ///
+    /// Adding the initial set of dependencies to the workspace-hack can cause further dependencies
+    /// to be added if they're built with a second feature set. These cases are marked as
+    /// "post-compute fixup".
+    ///
+    /// Currently, this command only prints out the different feature sets that get built for a
+    /// dependency, and the workspace crates responsible for them. Further investigation can be done
+    /// through `cargo tree`. In the future, the scope of this command may be extended to provide
+    /// information about intermediate dependencies as well.
+    Explain {
+        /// The name of the dependency, as present in the workspace-hack.
+        dep_name: String,
+    },
+
+    /// Publish a package after temporarily removing the workspace-hack dependency from it.
+    ///
+    /// For more information about publishing options,
+    /// see {n}https://docs.rs/cargo-hakari/latest/cargo_hakari/publishing.
     ///
     /// Trailing arguments are passed through to cargo publish.
     #[structopt(setting = AppSettings::TrailingVarArg, setting = AppSettings::AllowLeadingHyphen)]
@@ -226,7 +246,7 @@ enum CommandWithBuilder {
         pass_through: Vec<String>,
     },
 
-    /// Disables the workspace-hack crate
+    /// Disables the workspace-hack crate.
     ///
     /// Removes all the generated contents from the workspace-hack crate.
     Disable {
@@ -328,6 +348,29 @@ impl CommandWithBuilder {
                 }
 
                 apply_on_dialog(dry_run, yes, &ops, &output, || regenerate_lockfile(output))
+            }
+            CommandWithBuilder::Explain {
+                dep_name: crate_name,
+            } => {
+                let hakari = builder.compute();
+                let toml_name_map = hakari.toml_name_map();
+                let dep = toml_name_map.get(crate_name.as_str()).ok_or_else(|| {
+                    eyre!(
+                        "crate name '{}' not found in workspace-hack\n\
+                        (hint: check spelling, or regenerate workspace-hack with `cargo hakari generate`)",
+                        crate_name
+                    )
+                })?;
+
+                let explain = hakari
+                    .explain(dep.id())
+                    .expect("package ID should be known since it was in the output");
+                let mut display = explain.display();
+                if output.should_colorize() {
+                    display.colorize();
+                }
+                info!("\n{}", display);
+                Ok(0)
             }
             CommandWithBuilder::Publish {
                 package,
