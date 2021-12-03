@@ -498,7 +498,7 @@ fn apply_on_dialog(
 ) -> Result<i32> {
     let mut display = ops.display();
     if output.should_colorize() {
-        display.color();
+        display.colorize();
     }
     info!("operations to perform:\n\n{}", display);
 

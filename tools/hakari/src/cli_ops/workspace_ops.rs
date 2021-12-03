@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{hakari::DepFormatVersion, helpers::VersionDisplay};
-use ansi_term::{Color, Style};
 use atomicwrites::{AtomicFile, OverwriteBehavior};
 use camino::{Utf8Path, Utf8PathBuf};
 use guppy::{
     graph::{DependencyDirection, PackageGraph, PackageMetadata, PackageSet},
     Version,
 };
+use owo_colors::{OwoColorize, Style};
 use std::{
     borrow::Cow, cmp::Ordering, collections::BTreeMap, convert::TryFrom, error, fmt, fs, io,
     io::Write,
@@ -516,8 +516,8 @@ impl<'g, 'a, 'ops> WorkspaceOpsDisplay<'g, 'a, 'ops> {
     }
 
     /// Adds ANSI color codes to the output.
-    pub fn color(&mut self) -> &mut Self {
-        self.styles.color();
+    pub fn colorize(&mut self) -> &mut Self {
+        self.styles.colorize();
         self
     }
 }
@@ -536,13 +536,13 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                     write!(
                         f,
                         "* {} at {}",
-                        self.styles.create_bold_style.paint("create crate"),
-                        self.styles.create_bold_style.paint(crate_path.as_str()),
+                        "create crate".style(self.styles.create_bold_style),
+                        crate_path.style(self.styles.create_bold_style),
                     )?;
                     if !files.is_empty() {
                         writeln!(f, ", with files:")?;
                         for file in files.keys() {
-                            writeln!(f, "   - {}", self.styles.create_style.paint(file.as_str()))?;
+                            writeln!(f, "   - {}", file.style(self.styles.create_style))?;
                         }
                     } else {
                         writeln!(f)?;
@@ -550,20 +550,18 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                     writeln!(
                         f,
                         "* {} at {} to {}",
-                        self.styles.add_bold_style.paint("add crate"),
-                        self.styles.add_style.paint(crate_path.as_str()),
-                        self.styles
-                            .add_to_style
-                            .paint(workspace_root_manifest.as_str()),
+                        "add crate".style(self.styles.add_bold_style),
+                        crate_path.style(self.styles.add_style),
+                        workspace_root_manifest.style(self.styles.add_to_style),
                     )?;
                     if !root_files.is_empty() {
                         writeln!(
                             f,
                             "* {} at workspace root:",
-                            self.styles.create_bold_style.paint("create files")
+                            "create files".style(self.styles.create_bold_style)
                         )?;
                         for file in root_files.keys() {
-                            writeln!(f, "   - {}", self.styles.create_style.paint(file.as_str()))?;
+                            writeln!(f, "   - {}", file.style(self.styles.create_style))?;
                         }
                     }
                 }
@@ -577,17 +575,17 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                     writeln!(
                         f,
                         "* {} {} v{} (at path {}) to packages:",
-                        self.styles.add_bold_style.paint("add or update dependency"),
-                        self.styles.add_style.paint(*name),
-                        self.styles.add_style.paint(version.to_string()),
-                        self.styles.add_style.paint(crate_path.as_str()),
+                        "add or update dependency".style(self.styles.add_bold_style),
+                        name.style(self.styles.add_style),
+                        version.style(self.styles.add_style),
+                        crate_path.style(self.styles.add_style),
                     )?;
                     for (name, path) in package_names_paths(add_to) {
                         writeln!(
                             f,
                             "   - {} (at path {})",
-                            self.styles.add_to_bold_style.paint(name),
-                            self.styles.add_to_style.paint(path.as_str())
+                            name.style(self.styles.add_to_bold_style),
+                            path.style(self.styles.add_to_style)
                         )?;
                     }
                 }
@@ -595,15 +593,15 @@ impl<'g, 'a, 'ops> fmt::Display for WorkspaceOpsDisplay<'g, 'a, 'ops> {
                     writeln!(
                         f,
                         "* {} {} from packages:",
-                        self.styles.remove_bold_style.paint("remove dependency"),
-                        self.styles.remove_style.paint(*name),
+                        "remove dependency".style(self.styles.remove_bold_style),
+                        name.style(self.styles.remove_style),
                     )?;
                     for (name, path) in package_names_paths(remove_from) {
                         writeln!(
                             f,
                             "   - {} (at path {})",
-                            self.styles.remove_from_bold_style.paint(name),
-                            self.styles.remove_from_style.paint(path.as_str())
+                            name.style(self.styles.remove_from_bold_style),
+                            path.style(self.styles.remove_from_style)
                         )?;
                     }
                 }
@@ -628,12 +626,12 @@ struct Styles {
 }
 
 impl Styles {
-    fn color(&mut self) {
-        self.create_style = Style::new().fg(Color::Green);
-        self.add_style = Style::new().fg(Color::Cyan);
-        self.add_to_style = Style::new().fg(Color::Blue);
-        self.remove_style = Style::new().fg(Color::Red);
-        self.remove_from_style = Style::new().fg(Color::Purple);
+    fn colorize(&mut self) {
+        self.create_style = Style::new().green();
+        self.add_style = Style::new().cyan();
+        self.add_to_style = Style::new().blue();
+        self.remove_style = Style::new().red();
+        self.remove_from_style = Style::new().purple();
         self.create_bold_style = self.create_style.bold();
         self.add_bold_style = self.add_style.bold();
         self.add_to_bold_style = self.add_to_style.bold();
