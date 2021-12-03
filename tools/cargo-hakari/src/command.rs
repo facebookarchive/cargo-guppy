@@ -304,17 +304,18 @@ impl CommandWithBuilder {
             }
             CommandWithBuilder::Verify => match builder.verify() {
                 Ok(()) => {
-                    info!(
-                        "workspace-hack package {} works correctly",
-                        hakari_package.name().bold()
-                    );
+                    info!("{} works correctly", hakari_package.name().bold());
                     Ok(0)
                 }
                 Err(errs) => {
+                    let mut display = errs.display();
+                    if output.should_colorize() {
+                        display.color();
+                    }
                     info!(
-                        "workspace-hack package {} didn't work correctly:\n{}",
+                        "{} didn't work correctly:\n{}",
                         hakari_package.name().bold(),
-                        errs
+                        display,
                     );
                     Ok(1)
                 }
