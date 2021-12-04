@@ -150,7 +150,7 @@ impl<'a> IntoIterator for &'a Utf8Paths0 {
             return Box::new(std::iter::empty());
         }
 
-        Box::new(self.buf.split('\0').map(|path| Utf8Path::new(path)))
+        Box::new(self.buf.split('\0').map(Utf8Path::new))
     }
 }
 

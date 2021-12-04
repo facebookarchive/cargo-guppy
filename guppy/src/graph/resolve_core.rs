@@ -70,11 +70,9 @@ impl<G: GraphSpec> ResolveCore<G> {
         mut edge_filter: impl FnMut(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
     ) -> Self {
         let (included, len) = match params {
-            QueryParams::Forward(initials) => reachable_map_filtered(
-                graph,
-                |edge_ref| edge_filter(edge_ref),
-                initials.into_inner(),
-            ),
+            QueryParams::Forward(initials) => {
+                reachable_map_filtered(graph, edge_filter, initials.into_inner())
+            }
             QueryParams::Reverse(initials) => reachable_map_filtered(
                 Reversed(graph),
                 |edge_ref| edge_filter(edge_ref.into_unreversed()),
