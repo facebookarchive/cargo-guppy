@@ -9,12 +9,15 @@ use petgraph::{
         Visitable, Walker,
     },
 };
+use std::marker::PhantomData;
 
 /// A cycle-aware topological sort of a graph.
 #[derive(Clone, Debug)]
 pub struct TopoWithCycles<Ix> {
-    topo: Box<[NodeIndex<Ix>]>,
+    // This is a map of each node index to its corresponding topo index.
     reverse_index: Box<[usize]>,
+    // Prevent mixing up index types.
+    _phantom: PhantomData<Ix>,
 }
 
 impl<Ix: IndexType> TopoWithCycles<Ix> {
@@ -47,8 +50,8 @@ impl<Ix: IndexType> TopoWithCycles<Ix> {
         });
 
         Self {
-            topo: topo.into_boxed_slice(),
             reverse_index: reverse_index.into_boxed_slice(),
+            _phantom: PhantomData,
         }
     }
 

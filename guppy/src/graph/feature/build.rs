@@ -19,8 +19,7 @@ use petgraph::prelude::*;
 use std::{collections::HashMap, iter};
 
 #[derive(Debug)]
-pub(super) struct FeatureGraphBuildState<'g> {
-    package_graph: &'g PackageGraph,
+pub(super) struct FeatureGraphBuildState {
     graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
     // Map from package ixs to the base (first) feature for each package.
     base_ixs: Vec<NodeIndex<FeatureIx>>,
@@ -28,11 +27,10 @@ pub(super) struct FeatureGraphBuildState<'g> {
     warnings: Vec<FeatureGraphWarning>,
 }
 
-impl<'g> FeatureGraphBuildState<'g> {
-    pub(super) fn new(package_graph: &'g PackageGraph) -> Self {
+impl FeatureGraphBuildState {
+    pub(super) fn new(package_graph: &PackageGraph) -> Self {
         let package_count = package_graph.package_count();
         Self {
-            package_graph,
             // Each package corresponds to at least one feature ID.
             graph: Graph::with_capacity(package_count, package_count),
             // Each package corresponds to exactly one base feature ix, and there's one last ix at
@@ -45,7 +43,7 @@ impl<'g> FeatureGraphBuildState<'g> {
 
     /// Add nodes for every feature in this package + the base package, and add edges from every
     /// feature to the base package.
-    pub(super) fn add_nodes(&mut self, package: PackageMetadata<'g>) {
+    pub(super) fn add_nodes(&mut self, package: PackageMetadata<'_>) {
         let base_node = FeatureNode::base(package.package_ix());
         let base_ix = self.add_node(base_node, FeatureType::BasePackage);
         self.base_ixs.push(base_ix);

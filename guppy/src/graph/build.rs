@@ -128,8 +128,8 @@ struct GraphBuildState<'a> {
     dep_graph: Graph<PackageId, PackageLinkImpl, Directed, PackageIx>,
     // The values of package_data are (package_ix, name, version).
     package_data: HashMap<PackageId, (NodeIndex<PackageIx>, String, Version)>,
-    // The values of resolve_data are (dependencies, all features).
-    resolve_data: HashMap<PackageId, (Vec<NodeDep>, Vec<String>)>,
+    // The values of resolve_data are the resolved dependencies.
+    resolve_data: HashMap<PackageId, Vec<NodeDep>>,
     workspace_root: &'a Utf8Path,
     workspace_members: &'a HashSet<PackageId>,
 }
@@ -162,7 +162,9 @@ impl<'a> GraphBuildState<'a> {
             .map(|node| {
                 (
                     PackageId::from_metadata(node.id),
-                    (node.deps, node.features),
+                    // This used to return resolved features (node.features) as well but guppy
+                    // now does its own feature handling, so it isn't used any more.
+                    node.deps,
                 )
             })
             .collect();
@@ -213,13 +215,12 @@ impl<'a> GraphBuildState<'a> {
         }
         let build_targets = build_targets.finish();
 
-        let (resolved_deps, resolved_features) =
-            self.resolve_data.remove(&package_id).ok_or_else(|| {
-                Error::PackageGraphConstructError(format!(
-                    "no resolved dependency data found for package '{}'",
-                    package_id
-                ))
-            })?;
+        let resolved_deps = self.resolve_data.remove(&package_id).ok_or_else(|| {
+            Error::PackageGraphConstructError(format!(
+                "no resolved dependency data found for package '{}'",
+                package_id
+            ))
+        })?;
 
         let dep_resolver =
             DependencyResolver::new(&package_id, &self.package_data, &package.dependencies);
@@ -228,12 +229,12 @@ impl<'a> GraphBuildState<'a> {
             name: resolved_name,
             pkg,
             ..
-        } in &resolved_deps
+        } in resolved_deps
         {
-            let dep_id = PackageId::from_metadata(pkg.clone());
-            let (name, deps) = dep_resolver.resolve(resolved_name, &dep_id)?;
+            let dep_id = PackageId::from_metadata(pkg);
+            let (name, deps) = dep_resolver.resolve(&resolved_name, &dep_id)?;
             let (dep_idx, _, _) = self.package_data(&dep_id)?;
-            let edge = PackageLinkImpl::new(&package_id, name, resolved_name, deps)?;
+            let edge = PackageLinkImpl::new(&package_id, name, &resolved_name, deps)?;
             // Use update_edge instead of add_edge to prevent multiple edges from being added
             // between these two nodes.
             // XXX maybe check for an existing edge?
@@ -301,8 +302,6 @@ impl<'a> GraphBuildState<'a> {
                 source,
                 build_targets,
                 has_default_feature,
-                resolved_deps,
-                resolved_features,
             },
         ))
     }

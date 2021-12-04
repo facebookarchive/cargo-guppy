@@ -13,7 +13,6 @@ use crate::{
     CargoMetadata, DependencyKind, Error, JsonValue, MetadataCommand, PackageId,
 };
 use camino::{Utf8Path, Utf8PathBuf};
-use cargo_metadata::NodeDep;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexMap;
 use once_cell::sync::OnceCell;
@@ -1096,8 +1095,6 @@ pub(crate) struct PackageMetadataImpl {
     pub(super) source: PackageSourceImpl,
     pub(super) build_targets: BTreeMap<OwnedBuildTargetId, BuildTargetImpl>,
     pub(super) has_default_feature: bool,
-    pub(super) resolved_deps: Vec<NodeDep>,
-    pub(super) resolved_features: Vec<String>,
 }
 
 /// The source of a package.
