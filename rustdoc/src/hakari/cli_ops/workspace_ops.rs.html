@@ -681,17 +681,19 @@
 <span id="681">681</span>
 <span id="682">682</span>
 <span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">hakari::DepFormatVersion</span>, <span class="ident">helpers::VersionDisplay</span>};
+<span class="kw">use</span> <span class="ident">ansi_term</span>::{<span class="ident">Color</span>, <span class="ident">Style</span>};
 <span class="kw">use</span> <span class="ident">atomicwrites</span>::{<span class="ident">AtomicFile</span>, <span class="ident">OverwriteBehavior</span>};
 <span class="kw">use</span> <span class="ident">camino</span>::{<span class="ident">Utf8Path</span>, <span class="ident">Utf8PathBuf</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>},
     <span class="ident">Version</span>,
 };
-<span class="kw">use</span> <span class="ident">owo_colors</span>::{<span class="ident">OwoColorize</span>, <span class="ident">Style</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">borrow::Cow</span>, <span class="ident">cmp::Ordering</span>, <span class="ident">collections::BTreeMap</span>, <span class="ident">convert::TryFrom</span>, <span class="ident">error</span>, <span class="ident">fmt</span>, <span class="ident">fs</span>, <span class="ident">io</span>,
     <span class="ident">io::Write</span>,
@@ -1199,8 +1201,8 @@
     }
 
     <span class="doccomment">/// Adds ANSI color codes to the output.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">colorize</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">colorize</span>();
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">color</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">color</span>();
         <span class="self">self</span>
     }
 }
@@ -1219,13 +1221,13 @@
                     <span class="macro">write!</span>(
                         <span class="ident">f</span>,
                         <span class="string">&quot;* {} at {}&quot;</span>,
-                        <span class="string">&quot;create crate&quot;</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_bold_style</span>),
-                        <span class="ident">crate_path</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_bold_style</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_bold_style</span>.<span class="ident">paint</span>(<span class="string">&quot;create crate&quot;</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_bold_style</span>.<span class="ident">paint</span>(<span class="ident">crate_path</span>.<span class="ident">as_str</span>()),
                     )<span class="question-mark">?</span>;
                     <span class="kw">if</span> <span class="op">!</span><span class="ident">files</span>.<span class="ident">is_empty</span>() {
                         <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;, with files:&quot;</span>)<span class="question-mark">?</span>;
                         <span class="kw">for</span> <span class="ident">file</span> <span class="kw">in</span> <span class="ident">files</span>.<span class="ident">keys</span>() {
-                            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;   - {}&quot;</span>, <span class="ident">file</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_style</span>))<span class="question-mark">?</span>;
+                            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;   - {}&quot;</span>, <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_style</span>.<span class="ident">paint</span>(<span class="ident">file</span>.<span class="ident">as_str</span>()))<span class="question-mark">?</span>;
                         }
                     } <span class="kw">else</span> {
                         <span class="macro">writeln!</span>(<span class="ident">f</span>)<span class="question-mark">?</span>;
@@ -1233,18 +1235,20 @@
                     <span class="macro">writeln!</span>(
                         <span class="ident">f</span>,
                         <span class="string">&quot;* {} at {} to {}&quot;</span>,
-                        <span class="string">&quot;add crate&quot;</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_bold_style</span>),
-                        <span class="ident">crate_path</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>),
-                        <span class="ident">workspace_root_manifest</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_to_style</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_bold_style</span>.<span class="ident">paint</span>(<span class="string">&quot;add crate&quot;</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>.<span class="ident">paint</span>(<span class="ident">crate_path</span>.<span class="ident">as_str</span>()),
+                        <span class="self">self</span>.<span class="ident">styles</span>
+                            .<span class="ident">add_to_style</span>
+                            .<span class="ident">paint</span>(<span class="ident">workspace_root_manifest</span>.<span class="ident">as_str</span>()),
                     )<span class="question-mark">?</span>;
                     <span class="kw">if</span> <span class="op">!</span><span class="ident">root_files</span>.<span class="ident">is_empty</span>() {
                         <span class="macro">writeln!</span>(
                             <span class="ident">f</span>,
                             <span class="string">&quot;* {} at workspace root:&quot;</span>,
-                            <span class="string">&quot;create files&quot;</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_bold_style</span>)
+                            <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_bold_style</span>.<span class="ident">paint</span>(<span class="string">&quot;create files&quot;</span>)
                         )<span class="question-mark">?</span>;
                         <span class="kw">for</span> <span class="ident">file</span> <span class="kw">in</span> <span class="ident">root_files</span>.<span class="ident">keys</span>() {
-                            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;   - {}&quot;</span>, <span class="ident">file</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_style</span>))<span class="question-mark">?</span>;
+                            <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;   - {}&quot;</span>, <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">create_style</span>.<span class="ident">paint</span>(<span class="ident">file</span>.<span class="ident">as_str</span>()))<span class="question-mark">?</span>;
                         }
                     }
                 }
@@ -1258,17 +1262,17 @@
                     <span class="macro">writeln!</span>(
                         <span class="ident">f</span>,
                         <span class="string">&quot;* {} {} v{} (at path {}) to packages:&quot;</span>,
-                        <span class="string">&quot;add or update dependency&quot;</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_bold_style</span>),
-                        <span class="ident">name</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>),
-                        <span class="ident">version</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>),
-                        <span class="ident">crate_path</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_bold_style</span>.<span class="ident">paint</span>(<span class="string">&quot;add or update dependency&quot;</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>.<span class="ident">paint</span>(<span class="kw-2">*</span><span class="ident">name</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>.<span class="ident">paint</span>(<span class="ident">version</span>.<span class="ident">to_string</span>()),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_style</span>.<span class="ident">paint</span>(<span class="ident">crate_path</span>.<span class="ident">as_str</span>()),
                     )<span class="question-mark">?</span>;
                     <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">path</span>) <span class="kw">in</span> <span class="ident">package_names_paths</span>(<span class="ident">add_to</span>) {
                         <span class="macro">writeln!</span>(
                             <span class="ident">f</span>,
                             <span class="string">&quot;   - {} (at path {})&quot;</span>,
-                            <span class="ident">name</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_to_bold_style</span>),
-                            <span class="ident">path</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_to_style</span>)
+                            <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_to_bold_style</span>.<span class="ident">paint</span>(<span class="ident">name</span>),
+                            <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">add_to_style</span>.<span class="ident">paint</span>(<span class="ident">path</span>.<span class="ident">as_str</span>())
                         )<span class="question-mark">?</span>;
                     }
                 }
@@ -1276,15 +1280,15 @@
                     <span class="macro">writeln!</span>(
                         <span class="ident">f</span>,
                         <span class="string">&quot;* {} {} from packages:&quot;</span>,
-                        <span class="string">&quot;remove dependency&quot;</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_bold_style</span>),
-                        <span class="ident">name</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_style</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_bold_style</span>.<span class="ident">paint</span>(<span class="string">&quot;remove dependency&quot;</span>),
+                        <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_style</span>.<span class="ident">paint</span>(<span class="kw-2">*</span><span class="ident">name</span>),
                     )<span class="question-mark">?</span>;
                     <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">path</span>) <span class="kw">in</span> <span class="ident">package_names_paths</span>(<span class="ident">remove_from</span>) {
                         <span class="macro">writeln!</span>(
                             <span class="ident">f</span>,
                             <span class="string">&quot;   - {} (at path {})&quot;</span>,
-                            <span class="ident">name</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_from_bold_style</span>),
-                            <span class="ident">path</span>.<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_from_style</span>)
+                            <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_from_bold_style</span>.<span class="ident">paint</span>(<span class="ident">name</span>),
+                            <span class="self">self</span>.<span class="ident">styles</span>.<span class="ident">remove_from_style</span>.<span class="ident">paint</span>(<span class="ident">path</span>.<span class="ident">as_str</span>())
                         )<span class="question-mark">?</span>;
                     }
                 }
@@ -1309,12 +1313,12 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Styles</span> {
-    <span class="kw">fn</span> <span class="ident">colorize</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">create_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">green</span>();
-        <span class="self">self</span>.<span class="ident">add_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">cyan</span>();
-        <span class="self">self</span>.<span class="ident">add_to_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">blue</span>();
-        <span class="self">self</span>.<span class="ident">remove_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">red</span>();
-        <span class="self">self</span>.<span class="ident">remove_from_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">purple</span>();
+    <span class="kw">fn</span> <span class="ident">color</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="self">self</span>.<span class="ident">create_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">fg</span>(<span class="ident">Color::Green</span>);
+        <span class="self">self</span>.<span class="ident">add_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">fg</span>(<span class="ident">Color::Cyan</span>);
+        <span class="self">self</span>.<span class="ident">add_to_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">fg</span>(<span class="ident">Color::Blue</span>);
+        <span class="self">self</span>.<span class="ident">remove_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">fg</span>(<span class="ident">Color::Red</span>);
+        <span class="self">self</span>.<span class="ident">remove_from_style</span> <span class="op">=</span> <span class="ident">Style::new</span>().<span class="ident">fg</span>(<span class="ident">Color::Purple</span>);
         <span class="self">self</span>.<span class="ident">create_bold_style</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">create_style</span>.<span class="ident">bold</span>();
         <span class="self">self</span>.<span class="ident">add_bold_style</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_style</span>.<span class="ident">bold</span>();
         <span class="self">self</span>.<span class="ident">add_to_bold_style</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_to_style</span>.<span class="ident">bold</span>();
