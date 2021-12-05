@@ -66,7 +66,7 @@
 <span class="comment">// ;; Array</span>
 
 <span class="comment">// array = array-open array-values array-close</span>
-<span class="macro">parse!</span>(<span class="ident">array</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Array</span>, {
+<span class="macro">parse!</span>(<span class="ident">array</span>() -&gt; <span class="ident">Array</span>, {
     <span class="ident">between</span>(<span class="ident">byte</span>(<span class="ident">ARRAY_OPEN</span>), <span class="ident">byte</span>(<span class="ident">ARRAY_CLOSE</span>),
             <span class="ident">array_values</span>())
 });
@@ -83,12 +83,12 @@
 <span class="comment">// note: this rule is modified</span>
 <span class="comment">// array-values = [ ( array-value array-sep array-values ) /</span>
 <span class="comment">//                  array-value / ws-comment-newline ]</span>
-<span class="macro">parse!</span>(<span class="ident">array_values</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Array</span>, {
+<span class="macro">parse!</span>(<span class="ident">array_values</span>() -&gt; <span class="ident">Array</span>, {
     (
         <span class="ident">optional</span>(
             <span class="ident">recognize_with_value</span>(
                 <span class="ident">sep_end_by1</span>(<span class="ident">array_value</span>(), <span class="ident">byte</span>(<span class="ident">ARRAY_SEP</span>))
-            ).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">r</span>, <span class="ident">v</span>): (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="ident">Array</span>)<span class="op">|</span> (<span class="ident">v</span>, <span class="ident">r</span>[<span class="ident">r</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>] <span class="op">=</span><span class="op">=</span> <span class="string">b&#39;,&#39;</span>))
+            ).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">r</span>, <span class="ident">v</span>): (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="ident">Array</span>)<span class="op">|</span> (<span class="ident">v</span>, <span class="ident">r</span>[<span class="ident">r</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>] <span class="op">==</span> <span class="string">b&#39;,&#39;</span>))
         ),
         <span class="ident">ws_comment_newline</span>(),
     ).<span class="ident">and_then</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="ident">std::str::Utf8Error</span><span class="op">&gt;</span>(<span class="op">|</span>(<span class="ident">array</span>, <span class="ident">trailing</span>)<span class="op">|</span> {
@@ -99,7 +99,7 @@
     })
 });
 
-<span class="macro">parse!</span>(<span class="ident">array_value</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Value</span>, {
+<span class="macro">parse!</span>(<span class="ident">array_value</span>() -&gt; <span class="ident">Value</span>, {
     <span class="ident">attempt</span>((
         <span class="ident">ws_comment_newline</span>(),
         <span class="ident">value</span>(),

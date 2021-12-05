@@ -303,8 +303,6 @@
 <span id="303">303</span>
 <span id="304">304</span>
 <span id="305">305</span>
-<span id="306">306</span>
-<span id="307">307</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -341,10 +339,10 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G::Node</span>, <span class="ident">G::Edge</span>, <span class="ident">Directed</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>,
         <span class="ident">params</span>: <span class="ident">QueryParams</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    ) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">included</span>, <span class="ident">len</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">params</span> {
-            <span class="ident">QueryParams::Forward</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map</span>(<span class="ident">graph</span>, <span class="ident">initials</span>.<span class="ident">into_inner</span>()),
-            <span class="ident">QueryParams::Reverse</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="ident">initials</span>.<span class="ident">into_inner</span>()),
+            <span class="ident">QueryParams::Forward</span>(<span class="ident">initials</span>) =&gt; <span class="ident">reachable_map</span>(<span class="ident">graph</span>, <span class="ident">initials</span>.<span class="ident">into_inner</span>()),
+            <span class="ident">QueryParams::Reverse</span>(<span class="ident">initials</span>) =&gt; <span class="ident">reachable_map</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="ident">initials</span>.<span class="ident">into_inner</span>()),
         };
         <span class="self">Self</span> {
             <span class="ident">included</span>,
@@ -353,7 +351,7 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">all_nodes</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G::Node</span>, <span class="ident">G::Edge</span>, <span class="ident">Directed</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">all_nodes</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G::Node</span>, <span class="ident">G::Edge</span>, <span class="ident">Directed</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">included</span>, <span class="ident">len</span>) <span class="op">=</span> <span class="ident">all_visit_map</span>(<span class="ident">graph</span>);
         <span class="self">Self</span> {
             <span class="ident">included</span>,
@@ -362,7 +360,7 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">empty</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">empty</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">included</span>: <span class="ident">FixedBitSet::with_capacity</span>(<span class="number">0</span>),
             <span class="ident">len</span>: <span class="number">0</span>,
@@ -374,15 +372,13 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">with_edge_filter</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G::Node</span>, <span class="ident">G::Edge</span>, <span class="ident">Directed</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>,
         <span class="ident">params</span>: <span class="ident">QueryParams</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
-        <span class="kw-2">mut</span> <span class="ident">edge_filter</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G::Edge</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw-2">mut</span> <span class="ident">edge_filter</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G::Edge</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span>,
+    ) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">included</span>, <span class="ident">len</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">params</span> {
-            <span class="ident">QueryParams::Forward</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map_filtered</span>(
-                <span class="ident">graph</span>,
-                <span class="op">|</span><span class="ident">edge_ref</span><span class="op">|</span> <span class="ident">edge_filter</span>(<span class="ident">edge_ref</span>),
-                <span class="ident">initials</span>.<span class="ident">into_inner</span>(),
-            ),
-            <span class="ident">QueryParams::Reverse</span>(<span class="ident">initials</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">reachable_map_filtered</span>(
+            <span class="ident">QueryParams::Forward</span>(<span class="ident">initials</span>) =&gt; {
+                <span class="ident">reachable_map_filtered</span>(<span class="ident">graph</span>, <span class="ident">edge_filter</span>, <span class="ident">initials</span>.<span class="ident">into_inner</span>())
+            }
+            <span class="ident">QueryParams::Reverse</span>(<span class="ident">initials</span>) =&gt; <span class="ident">reachable_map_filtered</span>(
                 <span class="ident">Reversed</span>(<span class="ident">graph</span>),
                 <span class="op">|</span><span class="ident">edge_ref</span><span class="op">|</span> <span class="ident">edge_filter</span>(<span class="ident">edge_ref</span>.<span class="ident">into_unreversed</span>()),
                 <span class="ident">initials</span>.<span class="ident">into_inner</span>(),
@@ -395,7 +391,7 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">included</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">from_included</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">FixedBitSet</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">included</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">included</span> <span class="op">=</span> <span class="ident">included</span>.<span class="ident">into</span>();
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">included</span>.<span class="ident">count_ones</span>(..);
         <span class="self">Self</span> {
@@ -405,15 +401,15 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">len</span>
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">len</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">len</span> <span class="op">==</span> <span class="number">0</span>
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">included</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">ix</span>)
     }
 
@@ -432,7 +428,7 @@
     }
 
     <span class="comment">// fixedbitset 0.2.0 doesn&#39;t have a difference_with :(</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::from_included</span>(
             <span class="self">self</span>.<span class="ident">included</span>
                 .<span class="ident">difference</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">included</span>)
@@ -455,13 +451,13 @@
         <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G::Node</span>, <span class="ident">G::Edge</span>, <span class="ident">Directed</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>,
         <span class="ident">sccs</span>: <span class="kw-2">&amp;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="comment">// This uses the SCCs in self.sccs. If any node in an SCC is a root, so is any other.</span>
         <span class="kw">match</span> <span class="ident">direction</span> {
-            <span class="ident">DependencyDirection::Forward</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">sccs</span>
+            <span class="ident">DependencyDirection::Forward</span> =&gt; <span class="ident">sccs</span>
                 .<span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">NodeFiltered</span>(<span class="ident">graph</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">included</span>))
                 .<span class="ident">collect</span>(),
-            <span class="ident">DependencyDirection::Reverse</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">sccs</span>
+            <span class="ident">DependencyDirection::Reverse</span> =&gt; <span class="ident">sccs</span>
                 .<span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">NodeFiltered</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">included</span>))
                 .<span class="ident">collect</span>(),
         }
@@ -471,7 +467,7 @@
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">sccs</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Topo</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">Topo</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span><span class="op">&gt;</span> {
         <span class="comment">// ---</span>
         <span class="comment">// IMPORTANT</span>
         <span class="comment">// ---</span>
@@ -503,13 +499,13 @@
         <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">G::Node</span>, <span class="ident">G::Edge</span>, <span class="ident">Directed</span>, <span class="ident">G::Ix</span><span class="op">&gt;</span>,
         <span class="ident">sccs</span>: <span class="kw-2">&amp;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Links</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">Links</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">edge_dfs</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">direction</span> {
-            <span class="ident">DependencyDirection::Forward</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">DependencyDirection::Forward</span> =&gt; {
                 <span class="kw">let</span> <span class="ident">filtered_graph</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="ident">graph</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">included</span>);
                 <span class="ident">EdgeDfs::new</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_graph</span>, <span class="ident">sccs</span>.<span class="ident">externals</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_graph</span>))
             }
-            <span class="ident">DependencyDirection::Reverse</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">DependencyDirection::Reverse</span> =&gt; {
                 <span class="kw">let</span> <span class="ident">filtered_reversed_graph</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="ident">Reversed</span>(<span class="ident">graph</span>), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">included</span>);
                 <span class="ident">EdgeDfs::new</span>(
                     <span class="kw-2">&amp;</span><span class="ident">filtered_reversed_graph</span>,
@@ -528,11 +524,11 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">ResolveCore</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">len</span> <span class="op">!</span><span class="op">=</span> <span class="ident">other</span>.<span class="ident">len</span> {
             <span class="kw">return</span> <span class="bool-val">false</span>;
         }
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">included</span> <span class="op">=</span><span class="op">=</span> <span class="ident">other</span>.<span class="ident">included</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">included</span> <span class="op">==</span> <span class="ident">other</span>.<span class="ident">included</span> {
             <span class="kw">return</span> <span class="bool-val">true</span>;
         }
         <span class="comment">// At the moment we don&#39;t normalize the capacity across self.included instances, so check</span>
@@ -557,7 +553,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Topo</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
         <span class="kw">for</span> <span class="ident">ix</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">node_iter</span> {
             <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">included</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">ix</span>) {
                 <span class="kw">continue</span>;
@@ -568,13 +564,13 @@
         <span class="prelude-val">None</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
+    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
         (<span class="self">self</span>.<span class="ident">remaining</span>, <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">remaining</span>))
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span>: <span class="ident">GraphSpec</span><span class="op">&gt;</span> <span class="ident">ExactSizeIterator</span> <span class="kw">for</span> <span class="ident">Topo</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">G</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">remaining</span>
     }
 }
@@ -593,13 +589,13 @@
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::type_complexity</span>)]</span>
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>, <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">G::Ix</span><span class="op">&gt;</span>);
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">direction</span> {
-            <span class="ident">DependencyDirection::Forward</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">DependencyDirection::Forward</span> =&gt; {
                 <span class="kw">let</span> <span class="ident">filtered</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>, <span class="self">self</span>.<span class="ident">included</span>);
                 <span class="self">self</span>.<span class="ident">edge_dfs</span>.<span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="ident">filtered</span>)
             }
-            <span class="ident">DependencyDirection::Reverse</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">DependencyDirection::Reverse</span> =&gt; {
                 <span class="kw">let</span> <span class="ident">filtered_reversed</span> <span class="op">=</span> <span class="ident">NodeFiltered</span>(<span class="ident">Reversed</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="number">0</span>), <span class="self">self</span>.<span class="ident">included</span>);
                 <span class="self">self</span>.<span class="ident">edge_dfs</span>
                     .<span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="ident">filtered_reversed</span>)

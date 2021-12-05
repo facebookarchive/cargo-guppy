@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Parser","A parser for Utf8 Characters"]],"trait":[["Receiver","Handles codepoint and invalid sequence events from the parser."]]});

@@ -799,7 +799,7 @@
 
 <span class="comment">// The conversion is not identical on all operating systems.</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::identity_conversion</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">oflag</span>: <span class="ident">OFlag</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">oflag</span>: <span class="ident">OFlag</span>, <span class="ident">mode</span>: <span class="ident">Mode</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">cstr</span><span class="op">|</span> {
         <span class="kw">unsafe</span> { <span class="ident">libc::open</span>(<span class="ident">cstr</span>.<span class="ident">as_ptr</span>(), <span class="ident">oflag</span>.<span class="ident">bits</span>(), <span class="ident">mode</span>.<span class="ident">bits</span>() <span class="kw">as</span> <span class="ident">c_uint</span>) }
     })<span class="question-mark">?</span>;
@@ -815,7 +815,7 @@
     <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>,
     <span class="ident">oflag</span>: <span class="ident">OFlag</span>,
     <span class="ident">mode</span>: <span class="ident">Mode</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">cstr</span><span class="op">|</span> {
         <span class="kw">unsafe</span> { <span class="ident">libc::openat</span>(<span class="ident">dirfd</span>, <span class="ident">cstr</span>.<span class="ident">as_ptr</span>(), <span class="ident">oflag</span>.<span class="ident">bits</span>(), <span class="ident">mode</span>.<span class="ident">bits</span>() <span class="kw">as</span> <span class="ident">c_uint</span>) }
     })<span class="question-mark">?</span>;
@@ -828,7 +828,7 @@
     <span class="ident">old_path</span>: <span class="kw-2">&amp;</span><span class="ident">P1</span>,
     <span class="ident">new_dirfd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span>,
     <span class="ident">new_path</span>: <span class="kw-2">&amp;</span><span class="ident">P2</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">old_path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">old_cstr</span><span class="op">|</span> {
         <span class="ident">new_path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">new_cstr</span><span class="op">|</span> <span class="kw">unsafe</span> {
             <span class="ident">libc::renameat</span>(
@@ -842,7 +842,7 @@
     <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
 }
 
-<span class="kw">fn</span> <span class="ident">wrap_readlink_result</span>(<span class="kw-2">mut</span> <span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">len</span>: <span class="ident">ssize_t</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">wrap_readlink_result</span>(<span class="kw-2">mut</span> <span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">len</span>: <span class="ident">ssize_t</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
     <span class="kw">unsafe</span> { <span class="ident">v</span>.<span class="ident">set_len</span>(<span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span>) }
     <span class="ident">v</span>.<span class="ident">shrink_to_fit</span>();
     <span class="prelude-val">Ok</span>(<span class="ident">OsString::from_vec</span>(<span class="ident">v</span>.<span class="ident">to_vec</span>()))
@@ -852,19 +852,19 @@
     <span class="ident">dirfd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span>,
     <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>,
     <span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">libc::ssize_t</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">libc::ssize_t</span><span class="op">&gt;</span> {
     <span class="ident">path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">cstr</span><span class="op">|</span> <span class="kw">unsafe</span> {
         <span class="kw">match</span> <span class="ident">dirfd</span> {
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>)]</span>
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
-            <span class="prelude-val">Some</span>(<span class="ident">dirfd</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::readlinkat</span>(
+            <span class="prelude-val">Some</span>(<span class="ident">dirfd</span>) =&gt; <span class="ident">libc::readlinkat</span>(
                 <span class="ident">dirfd</span>,
                 <span class="ident">cstr</span>.<span class="ident">as_ptr</span>(),
                 <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>,
                 <span class="ident">v</span>.<span class="ident">capacity</span>() <span class="kw">as</span> <span class="ident">size_t</span>,
             ),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::readlink</span>(
+            <span class="prelude-val">None</span> =&gt; <span class="ident">libc::readlink</span>(
                 <span class="ident">cstr</span>.<span class="ident">as_ptr</span>(),
                 <span class="ident">v</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_char</span>,
                 <span class="ident">v</span>.<span class="ident">capacity</span>() <span class="kw">as</span> <span class="ident">size_t</span>,
@@ -873,7 +873,7 @@
     })
 }
 
-<span class="kw">fn</span> <span class="ident">inner_readlink</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">dirfd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">inner_readlink</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">dirfd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">libc::PATH_MAX</span> <span class="kw">as</span> <span class="ident">usize</span>);
     <span class="comment">// simple case: result is strictly less than `PATH_MAX`</span>
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">readlink_maybe_at</span>(<span class="ident">dirfd</span>, <span class="ident">path</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">v</span>)<span class="question-mark">?</span>;
@@ -906,30 +906,30 @@
         } <span class="kw">else</span> {
             <span class="comment">// Ugh! Still not big enough!</span>
             <span class="kw">match</span> <span class="ident">try_size</span>.<span class="ident">checked_shl</span>(<span class="number">1</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">next_size</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">try_size</span> <span class="op">=</span> <span class="ident">next_size</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">next_size</span>) =&gt; <span class="ident">try_size</span> <span class="op">=</span> <span class="ident">next_size</span>,
                 <span class="comment">// It&#39;s absurd that this would happen, but handle it sanely</span>
                 <span class="comment">// anyway.</span>
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">break</span> <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">super</span>::Error::Sys</span>(<span class="ident">Errno::ENAMETOOLONG</span>)),
+                <span class="prelude-val">None</span> =&gt; <span class="kw">break</span> <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">super</span>::Error::Sys</span>(<span class="ident">Errno::ENAMETOOLONG</span>)),
             }
         }
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readlink</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readlink</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
     <span class="ident">inner_readlink</span>(<span class="prelude-val">None</span>, <span class="ident">path</span>)
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readlinkat</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">dirfd</span>: <span class="ident">RawFd</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readlinkat</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="ident">dirfd</span>: <span class="ident">RawFd</span>, <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span><span class="op">&gt;</span> {
     <span class="ident">inner_readlink</span>(<span class="prelude-val">Some</span>(<span class="ident">dirfd</span>), <span class="ident">path</span>)
 }
 
 <span class="doccomment">/// Computes the raw fd consumed by a function of the form `*at`.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">at_rawfd</span>(<span class="ident">fd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">raw::c_int</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">at_rawfd</span>(<span class="ident">fd</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span>) -&gt; <span class="ident">raw::c_int</span> {
     <span class="kw">match</span> <span class="ident">fd</span> {
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::AT_FDCWD</span>,
-        <span class="prelude-val">Some</span>(<span class="ident">fd</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">fd</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">libc::AT_FDCWD</span>,
+        <span class="prelude-val">Some</span>(<span class="ident">fd</span>) =&gt; <span class="ident">fd</span>,
     }
 }
 
@@ -1000,37 +1000,37 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="self">self</span>::FcntlArg</span>::<span class="kw-2">*</span>;
 
 <span class="comment">// TODO: Figure out how to handle value fcntl returns</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fcntl</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">arg</span>: <span class="ident">FcntlArg</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_int</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fcntl</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">arg</span>: <span class="ident">FcntlArg</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_int</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="kw">match</span> <span class="ident">arg</span> {
-            <span class="ident">F_DUPFD</span>(<span class="ident">rawfd</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_DUPFD</span>, <span class="ident">rawfd</span>),
-            <span class="ident">F_DUPFD_CLOEXEC</span>(<span class="ident">rawfd</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_DUPFD_CLOEXEC</span>, <span class="ident">rawfd</span>),
-            <span class="ident">F_GETFD</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETFD</span>),
-            <span class="ident">F_SETFD</span>(<span class="ident">flag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETFD</span>, <span class="ident">flag</span>.<span class="ident">bits</span>()),
-            <span class="ident">F_GETFL</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETFL</span>),
-            <span class="ident">F_SETFL</span>(<span class="ident">flag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETFL</span>, <span class="ident">flag</span>.<span class="ident">bits</span>()),
+            <span class="ident">F_DUPFD</span>(<span class="ident">rawfd</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_DUPFD</span>, <span class="ident">rawfd</span>),
+            <span class="ident">F_DUPFD_CLOEXEC</span>(<span class="ident">rawfd</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_DUPFD_CLOEXEC</span>, <span class="ident">rawfd</span>),
+            <span class="ident">F_GETFD</span> =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETFD</span>),
+            <span class="ident">F_SETFD</span>(<span class="ident">flag</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETFD</span>, <span class="ident">flag</span>.<span class="ident">bits</span>()),
+            <span class="ident">F_GETFL</span> =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETFL</span>),
+            <span class="ident">F_SETFL</span>(<span class="ident">flag</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETFL</span>, <span class="ident">flag</span>.<span class="ident">bits</span>()),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
-            <span class="ident">F_SETLK</span>(<span class="ident">flock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETLK</span>, <span class="ident">flock</span>),
+            <span class="ident">F_SETLK</span>(<span class="ident">flock</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETLK</span>, <span class="ident">flock</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
-            <span class="ident">F_SETLKW</span>(<span class="ident">flock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETLKW</span>, <span class="ident">flock</span>),
+            <span class="ident">F_SETLKW</span>(<span class="ident">flock</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETLKW</span>, <span class="ident">flock</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
-            <span class="ident">F_GETLK</span>(<span class="ident">flock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETLK</span>, <span class="ident">flock</span>),
+            <span class="ident">F_GETLK</span>(<span class="ident">flock</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETLK</span>, <span class="ident">flock</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            <span class="ident">F_OFD_SETLK</span>(<span class="ident">flock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_OFD_SETLK</span>, <span class="ident">flock</span>),
+            <span class="ident">F_OFD_SETLK</span>(<span class="ident">flock</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_OFD_SETLK</span>, <span class="ident">flock</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            <span class="ident">F_OFD_SETLKW</span>(<span class="ident">flock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_OFD_SETLKW</span>, <span class="ident">flock</span>),
+            <span class="ident">F_OFD_SETLKW</span>(<span class="ident">flock</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_OFD_SETLKW</span>, <span class="ident">flock</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            <span class="ident">F_OFD_GETLK</span>(<span class="ident">flock</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_OFD_GETLK</span>, <span class="ident">flock</span>),
+            <span class="ident">F_OFD_GETLK</span>(<span class="ident">flock</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_OFD_GETLK</span>, <span class="ident">flock</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            <span class="ident">F_ADD_SEALS</span>(<span class="ident">flag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_ADD_SEALS</span>, <span class="ident">flag</span>.<span class="ident">bits</span>()),
+            <span class="ident">F_ADD_SEALS</span>(<span class="ident">flag</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_ADD_SEALS</span>, <span class="ident">flag</span>.<span class="ident">bits</span>()),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>))]</span>
-            <span class="ident">F_GET_SEALS</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GET_SEALS</span>),
+            <span class="ident">F_GET_SEALS</span> =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GET_SEALS</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;ios&quot;</span>))]</span>
-            <span class="ident">F_FULLFSYNC</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_FULLFSYNC</span>),
+            <span class="ident">F_FULLFSYNC</span> =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_FULLFSYNC</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>))]</span>
-            <span class="ident">F_GETPIPE_SZ</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETPIPE_SZ</span>),
+            <span class="ident">F_GETPIPE_SZ</span> =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_GETPIPE_SZ</span>),
             <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>))]</span>
-            <span class="ident">F_SETPIPE_SZ</span>(<span class="ident">size</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETPIPE_SZ</span>, <span class="ident">size</span>),
+            <span class="ident">F_SETPIPE_SZ</span>(<span class="ident">size</span>) =&gt; <span class="ident">libc::fcntl</span>(<span class="ident">fd</span>, <span class="ident">libc::F_SETPIPE_SZ</span>, <span class="ident">size</span>),
         }
     };
 
@@ -1048,17 +1048,17 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;redox&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flock</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">arg</span>: <span class="ident">FlockArg</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flock</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">arg</span>: <span class="ident">FlockArg</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">use</span> <span class="ident"><span class="self">self</span>::FlockArg</span>::<span class="kw-2">*</span>;
 
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="kw">match</span> <span class="ident">arg</span> {
-            <span class="ident">LockShared</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_SH</span>),
-            <span class="ident">LockExclusive</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_EX</span>),
-            <span class="ident">Unlock</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_UN</span>),
-            <span class="ident">LockSharedNonblock</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_SH</span> <span class="op">|</span> <span class="ident">libc::LOCK_NB</span>),
-            <span class="ident">LockExclusiveNonblock</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_EX</span> <span class="op">|</span> <span class="ident">libc::LOCK_NB</span>),
-            <span class="ident">UnlockNonblock</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_UN</span> <span class="op">|</span> <span class="ident">libc::LOCK_NB</span>),
+            <span class="ident">LockShared</span> =&gt; <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_SH</span>),
+            <span class="ident">LockExclusive</span> =&gt; <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_EX</span>),
+            <span class="ident">Unlock</span> =&gt; <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_UN</span>),
+            <span class="ident">LockSharedNonblock</span> =&gt; <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_SH</span> <span class="op">|</span> <span class="ident">libc::LOCK_NB</span>),
+            <span class="ident">LockExclusiveNonblock</span> =&gt; <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_EX</span> <span class="op">|</span> <span class="ident">libc::LOCK_NB</span>),
+            <span class="ident">UnlockNonblock</span> =&gt; <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_UN</span> <span class="op">|</span> <span class="ident">libc::LOCK_NB</span>),
         }
     };
 
@@ -1109,7 +1109,7 @@
     <span class="ident">fd_out</span>: <span class="ident">RawFd</span>,
     <span class="ident">off_out</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">libc::loff_t</span><span class="op">&gt;</span>,
     <span class="ident">len</span>: <span class="ident">usize</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">off_in</span> <span class="op">=</span> <span class="ident">off_in</span>
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">offset</span><span class="op">|</span> <span class="ident">offset</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">libc::loff_t</span>)
         .<span class="ident">unwrap_or</span>(<span class="ident">ptr::null_mut</span>());
@@ -1139,7 +1139,7 @@
     <span class="ident">off_out</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">libc::loff_t</span><span class="op">&gt;</span>,
     <span class="ident">len</span>: <span class="ident">usize</span>,
     <span class="ident">flags</span>: <span class="ident">SpliceFFlags</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">off_in</span> <span class="op">=</span> <span class="ident">off_in</span>
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">offset</span><span class="op">|</span> <span class="ident">offset</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">libc::loff_t</span>)
         .<span class="ident">unwrap_or</span>(<span class="ident">ptr::null_mut</span>());
@@ -1152,13 +1152,13 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tee</span>(<span class="ident">fd_in</span>: <span class="ident">RawFd</span>, <span class="ident">fd_out</span>: <span class="ident">RawFd</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">flags</span>: <span class="ident">SpliceFFlags</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tee</span>(<span class="ident">fd_in</span>: <span class="ident">RawFd</span>, <span class="ident">fd_out</span>: <span class="ident">RawFd</span>, <span class="ident">len</span>: <span class="ident">usize</span>, <span class="ident">flags</span>: <span class="ident">SpliceFFlags</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::tee</span>(<span class="ident">fd_in</span>, <span class="ident">fd_out</span>, <span class="ident">len</span>, <span class="ident">flags</span>.<span class="ident">bits</span>()) };
     <span class="ident">Errno::result</span>(<span class="ident">ret</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span> <span class="kw">as</span> <span class="ident">usize</span>)
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">vmsplice</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">iov</span>: <span class="kw-2">&amp;</span>[<span class="ident">IoVec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>], <span class="ident">flags</span>: <span class="ident">SpliceFFlags</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">vmsplice</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">iov</span>: <span class="kw-2">&amp;</span>[<span class="ident">IoVec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span>], <span class="ident">flags</span>: <span class="ident">SpliceFFlags</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="ident">libc::vmsplice</span>(
             <span class="ident">fd</span>,
@@ -1211,7 +1211,7 @@
     <span class="ident">mode</span>: <span class="ident">FallocateFlags</span>,
     <span class="ident">offset</span>: <span class="ident">libc::off_t</span>,
     <span class="ident">len</span>: <span class="ident">libc::off_t</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::fallocate</span>(<span class="ident">fd</span>, <span class="ident">mode</span>.<span class="ident">bits</span>(), <span class="ident">offset</span>, <span class="ident">len</span>) };
     <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
 }
@@ -1248,7 +1248,7 @@
         <span class="ident">offset</span>: <span class="ident">libc::off_t</span>,
         <span class="ident">len</span>: <span class="ident">libc::off_t</span>,
         <span class="ident">advice</span>: <span class="ident">PosixFadviseAdvice</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">libc::c_int</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">libc::c_int</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::posix_fadvise</span>(<span class="ident">fd</span>, <span class="ident">offset</span>, <span class="ident">len</span>, <span class="ident">advice</span> <span class="kw">as</span> <span class="ident">libc::c_int</span>) };
         <span class="ident">Errno::result</span>(<span class="ident">res</span>)
     }
@@ -1262,12 +1262,12 @@
     <span class="ident">any</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;wasi&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;wasi&quot;</span>),
     <span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;freebsd&quot;</span>
 ))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">posix_fallocate</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">offset</span>: <span class="ident">libc::off_t</span>, <span class="ident">len</span>: <span class="ident">libc::off_t</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">posix_fallocate</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">offset</span>: <span class="ident">libc::off_t</span>, <span class="ident">len</span>: <span class="ident">libc::off_t</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::posix_fallocate</span>(<span class="ident">fd</span>, <span class="ident">offset</span>, <span class="ident">len</span>) };
     <span class="kw">match</span> <span class="ident">Errno::result</span>(<span class="ident">res</span>) {
-        <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>),
-        <span class="prelude-val">Ok</span>(<span class="number">0</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
-        <span class="prelude-val">Ok</span>(<span class="ident">errno</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">crate</span>::Error::Sys</span>(<span class="ident">Errno::from_i32</span>(<span class="ident">errno</span>))),
+        <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+        <span class="prelude-val">Ok</span>(<span class="number">0</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+        <span class="prelude-val">Ok</span>(<span class="ident">errno</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">crate</span>::Error::Sys</span>(<span class="ident">Errno::from_i32</span>(<span class="ident">errno</span>))),
     }
 }
 </code></pre></div>

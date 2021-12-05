@@ -642,14 +642,14 @@
     }
 }
 
-<span class="kw">fn</span> <span class="ident">ptrace_peek</span>(<span class="ident">request</span>: <span class="ident">Request</span>, <span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">addr</span>: <span class="ident">AddressType</span>, <span class="ident">data</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">ptrace_peek</span>(<span class="ident">request</span>: <span class="ident">Request</span>, <span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">addr</span>: <span class="ident">AddressType</span>, <span class="ident">data</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="ident">Errno::clear</span>();
         <span class="ident">libc::ptrace</span>(<span class="ident">request</span> <span class="kw">as</span> <span class="ident">RequestType</span>, <span class="ident">libc::pid_t::from</span>(<span class="ident">pid</span>), <span class="ident">addr</span>, <span class="ident">data</span>)
     };
     <span class="kw">match</span> <span class="ident">Errno::result</span>(<span class="ident">ret</span>) {
-        <span class="prelude-val">Ok</span>(..) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Sys</span>(<span class="ident">Errno::UnknownErrno</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">ret</span>),
-        <span class="ident">err</span> @ <span class="prelude-val">Err</span>(..) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">err</span>,
+        <span class="prelude-val">Ok</span>(..) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Sys</span>(<span class="ident">Errno::UnknownErrno</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">ret</span>),
+        <span class="ident">err</span> @ <span class="prelude-val">Err</span>(..) =&gt; <span class="ident">err</span>,
     }
 }
 
@@ -660,7 +660,7 @@
             <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)),
         <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>))
 ))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">getregs</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">user_regs_struct</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">getregs</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">user_regs_struct</span><span class="op">&gt;</span> {
     <span class="ident">ptrace_get_data</span>::<span class="op">&lt;</span><span class="ident">user_regs_struct</span><span class="op">&gt;</span>(<span class="ident">Request::PTRACE_GETREGS</span>, <span class="ident">pid</span>)
 }
 
@@ -671,7 +671,7 @@
             <span class="ident">any</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;musl&quot;</span>)),
         <span class="ident">all</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>))
 ))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setregs</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">regs</span>: <span class="ident">user_regs_struct</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setregs</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">regs</span>: <span class="ident">user_regs_struct</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="ident">libc::ptrace</span>(<span class="ident">Request::PTRACE_SETREGS</span> <span class="kw">as</span> <span class="ident">RequestType</span>,
                      <span class="ident">libc::pid_t::from</span>(<span class="ident">pid</span>),
@@ -685,7 +685,7 @@
 <span class="doccomment">/// Some ptrace get requests populate structs or larger elements than `c_long`</span>
 <span class="doccomment">/// and therefore use the data field to return values. This function handles these</span>
 <span class="doccomment">/// requests.</span>
-<span class="kw">fn</span> <span class="ident">ptrace_get_data</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">request</span>: <span class="ident">Request</span>, <span class="ident">pid</span>: <span class="ident">Pid</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">ptrace_get_data</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">request</span>: <span class="ident">Request</span>, <span class="ident">pid</span>: <span class="ident">Pid</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit::uninit</span>();
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="ident">libc::ptrace</span>(<span class="ident">request</span> <span class="kw">as</span> <span class="ident">RequestType</span>,
@@ -697,12 +697,12 @@
     <span class="prelude-val">Ok</span>(<span class="kw">unsafe</span>{ <span class="ident">data</span>.<span class="ident">assume_init</span>() })
 }
 
-<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">ptrace_other</span>(<span class="ident">request</span>: <span class="ident">Request</span>, <span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">addr</span>: <span class="ident">AddressType</span>, <span class="ident">data</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
+<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">ptrace_other</span>(<span class="ident">request</span>: <span class="ident">Request</span>, <span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">addr</span>: <span class="ident">AddressType</span>, <span class="ident">data</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
     <span class="ident">Errno::result</span>(<span class="ident">libc::ptrace</span>(<span class="ident">request</span> <span class="kw">as</span> <span class="ident">RequestType</span>, <span class="ident">libc::pid_t::from</span>(<span class="ident">pid</span>), <span class="ident">addr</span>, <span class="ident">data</span>)).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="number">0</span>)
 }
 
 <span class="doccomment">/// Set options, as with `ptrace(PTRACE_SETOPTIONS,...)`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setoptions</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">options</span>: <span class="ident">Options</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setoptions</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">options</span>: <span class="ident">Options</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="ident">libc::ptrace</span>(<span class="ident">Request::PTRACE_SETOPTIONS</span> <span class="kw">as</span> <span class="ident">RequestType</span>,
                      <span class="ident">libc::pid_t::from</span>(<span class="ident">pid</span>),
@@ -713,17 +713,17 @@
 }
 
 <span class="doccomment">/// Gets a ptrace event as described by `ptrace(PTRACE_GETEVENTMSG,...)`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">getevent</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">getevent</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
     <span class="ident">ptrace_get_data</span>::<span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span>(<span class="ident">Request::PTRACE_GETEVENTMSG</span>, <span class="ident">pid</span>)
 }
 
 <span class="doccomment">/// Get siginfo as with `ptrace(PTRACE_GETSIGINFO,...)`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">getsiginfo</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">siginfo_t</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">getsiginfo</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">siginfo_t</span><span class="op">&gt;</span> {
     <span class="ident">ptrace_get_data</span>::<span class="op">&lt;</span><span class="ident">siginfo_t</span><span class="op">&gt;</span>(<span class="ident">Request::PTRACE_GETSIGINFO</span>, <span class="ident">pid</span>)
 }
 
 <span class="doccomment">/// Set siginfo as with `ptrace(PTRACE_SETSIGINFO,...)`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setsiginfo</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident">siginfo_t</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setsiginfo</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident">siginfo_t</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">unsafe</span>{
         <span class="ident">Errno::clear</span>();
         <span class="ident">libc::ptrace</span>(<span class="ident">Request::PTRACE_SETSIGINFO</span> <span class="kw">as</span> <span class="ident">RequestType</span>,
@@ -732,8 +732,8 @@
                      <span class="ident">sig</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">c_void</span>)
     };
     <span class="kw">match</span> <span class="ident">Errno::result</span>(<span class="ident">ret</span>) {
-        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">e</span>),
     }
 }
 
@@ -741,7 +741,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Indicates that this process is to be traced by its parent.</span>
 <span class="doccomment">/// This is the only ptrace request to be issued by the tracee.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">traceme</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">traceme</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(
             <span class="ident">Request::PTRACE_TRACEME</span>,
@@ -756,10 +756,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Arranges for the tracee to be stopped at the next entry to or exit from a system call,</span>
 <span class="doccomment">/// optionally delivering a signal specified by `sig`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">syscall</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">syscall</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sig</span>.<span class="ident">into</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ptr::null_mut</span>(),
+        <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">ptr::null_mut</span>(),
     };
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(
@@ -777,10 +777,10 @@
 <span class="doccomment">/// Thus the the tracee will only be stopped once per syscall,</span>
 <span class="doccomment">/// optionally delivering a signal specified by `sig`.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>, <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sysemu</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sysemu</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sig</span>.<span class="ident">into</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ptr::null_mut</span>(),
+        <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">ptr::null_mut</span>(),
     };
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(<span class="ident">Request::PTRACE_SYSEMU</span>, <span class="ident">pid</span>, <span class="ident">ptr::null_mut</span>(), <span class="ident">data</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
@@ -791,7 +791,7 @@
 <span class="doccomment">/// Attach to a running process, as with `ptrace(PTRACE_ATTACH, ...)`</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Attaches to the process specified by `pid`, making it a tracee of the calling process.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">attach</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">attach</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(
             <span class="ident">Request::PTRACE_ATTACH</span>,
@@ -806,7 +806,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Attaches to the process specified in pid, making it a tracee of the calling process.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;mips64&quot;</span>))))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">seize</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">options</span>: <span class="ident">Options</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">seize</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">options</span>: <span class="ident">Options</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(
             <span class="ident">Request::PTRACE_SEIZE</span>,
@@ -821,10 +821,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Detaches from the process specified by `pid` allowing it to run freely, optionally delivering a</span>
 <span class="doccomment">/// signal specified by `sig`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">detach</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">detach</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sig</span>.<span class="ident">into</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ptr::null_mut</span>(),
+        <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">ptr::null_mut</span>(),
     };
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(
@@ -840,10 +840,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Continues the execution of the process with PID `pid`, optionally</span>
 <span class="doccomment">/// delivering a signal specified by `sig`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cont</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cont</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sig</span>.<span class="ident">into</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ptr::null_mut</span>(),
+        <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">ptr::null_mut</span>(),
     };
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(<span class="ident">Request::PTRACE_CONT</span>, <span class="ident">pid</span>, <span class="ident">ptr::null_mut</span>(), <span class="ident">data</span>).<span class="ident">map</span>(<span class="ident">drop</span>) <span class="comment">// ignore the useless return value</span>
@@ -853,7 +853,7 @@
 <span class="doccomment">/// Issues a kill request as with `ptrace(PTRACE_KILL, ...)`</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This request is equivalent to `ptrace(PTRACE_CONT, ..., SIGKILL);`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kill</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kill</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(<span class="ident">Request::PTRACE_KILL</span>, <span class="ident">pid</span>, <span class="ident">ptr::null_mut</span>(), <span class="ident">ptr::null_mut</span>()).<span class="ident">map</span>(<span class="ident">drop</span>)
     }
@@ -883,10 +883,10 @@
 <span class="doccomment">///     }</span>
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">step</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">step</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sig</span>.<span class="ident">into</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ptr::null_mut</span>(),
+        <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">ptr::null_mut</span>(),
     };
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(<span class="ident">Request::PTRACE_SINGLESTEP</span>, <span class="ident">pid</span>, <span class="ident">ptr::null_mut</span>(), <span class="ident">data</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
@@ -900,10 +900,10 @@
 <span class="doccomment">/// In case the tracee is stopped at a syscall, the syscall will not be executed.</span>
 <span class="doccomment">/// Optionally, the signal specified by `sig` is delivered to the tracee upon continuation.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;gnu&quot;</span>, <span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sysemu_step</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sysemu_step</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signal</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">sig</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">sig</span>.<span class="ident">into</span>() {
-        <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ptr::null_mut</span>(),
+        <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">ptr::null_mut</span>(),
     };
     <span class="kw">unsafe</span> {
         <span class="ident">ptrace_other</span>(
@@ -917,7 +917,7 @@
 }
 
 <span class="doccomment">/// Reads a word from a processes memory at the given address</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">addr</span>: <span class="ident">AddressType</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="ident">pid</span>: <span class="ident">Pid</span>, <span class="ident">addr</span>: <span class="ident">AddressType</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">c_long</span><span class="op">&gt;</span> {
     <span class="ident">ptrace_peek</span>(<span class="ident">Request::PTRACE_PEEKDATA</span>, <span class="ident">pid</span>, <span class="ident">addr</span>, <span class="ident">ptr::null_mut</span>())
 }
 
@@ -930,7 +930,7 @@
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">write</span>(
     <span class="ident">pid</span>: <span class="ident">Pid</span>,
     <span class="ident">addr</span>: <span class="ident">AddressType</span>,
-    <span class="ident">data</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
+    <span class="ident">data</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
 {
     <span class="ident">ptrace_other</span>(<span class="ident">Request::PTRACE_POKEDATA</span>, <span class="ident">pid</span>, <span class="ident">addr</span>, <span class="ident">data</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
 }

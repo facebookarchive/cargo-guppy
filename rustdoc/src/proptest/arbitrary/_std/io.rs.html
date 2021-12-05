@@ -187,11 +187,11 @@
 <span class="comment">// Consider: std::io::Initializer</span>
 
 <span class="macro">macro_rules!</span> <span class="ident">buffer</span> {
-    (<span class="macro-nonterminal">$</span><span class="kw">type</span>: <span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">bound</span>: <span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    (<span class="macro-nonterminal">$</span><span class="kw">type</span>: <span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">bound</span>: <span class="ident">path</span>) =&gt; {
         <span class="macro">arbitrary!</span>(
             [<span class="ident">A</span>: <span class="ident">Arbitrary</span> <span class="op">+</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">bound</span>] <span class="macro-nonterminal">$</span><span class="kw">type</span><span class="op">&lt;</span><span class="macro-nonterminal">A</span><span class="op">&gt;</span>,
             <span class="ident">SMapped</span><span class="op">&lt;</span>(<span class="ident">A</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span>), <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">A::Parameters</span>;
-            <span class="ident">args</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">static_map</span>(
+            <span class="ident">args</span> =&gt; <span class="ident">static_map</span>(
                 <span class="ident">arbitrary_with</span>(<span class="macro">product_pack!</span>[<span class="ident">args</span>, <span class="ident">Default::default</span>()]),
                 <span class="op">|</span>(<span class="ident">inner</span>, <span class="ident">cap</span>)<span class="op">|</span> {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cap</span>) <span class="op">=</span> <span class="ident">cap</span> {
@@ -203,7 +203,7 @@
             )
         );
 
-        <span class="macro">lift1!</span>([<span class="macro-nonterminal">$</span><span class="macro-nonterminal">bound</span>] <span class="macro-nonterminal">$</span><span class="kw">type</span><span class="op">&lt;</span><span class="macro-nonterminal">A</span><span class="op">&gt;</span>; <span class="ident">base</span> <span class="op">=</span><span class="op">&gt;</span>
+        <span class="macro">lift1!</span>([<span class="macro-nonterminal">$</span><span class="macro-nonterminal">bound</span>] <span class="macro-nonterminal">$</span><span class="kw">type</span><span class="op">&lt;</span><span class="macro-nonterminal">A</span><span class="op">&gt;</span>; <span class="ident">base</span> =&gt;
             (<span class="ident">base</span>, <span class="ident">any</span>::<span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span><span class="op">&gt;</span>()).<span class="ident">prop_map</span>(<span class="op">|</span>(<span class="ident">inner</span>, <span class="ident">cap</span>)<span class="op">|</span> {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cap</span>) <span class="op">=</span> <span class="ident">cap</span> {
                     <span class="macro-nonterminal">$</span><span class="kw">type</span><span class="macro-nonterminal">::with_capacity</span>(<span class="ident">cap</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">inner</span>)
@@ -222,7 +222,7 @@
 <span class="macro">arbitrary!</span>(
     [<span class="ident">A</span>: <span class="ident">Read</span> <span class="op">+</span> <span class="ident">Arbitrary</span>, <span class="ident">B</span>: <span class="ident">Read</span> <span class="op">+</span> <span class="ident">Arbitrary</span>] <span class="ident">Chain</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span>,
     <span class="ident">SMapped</span><span class="op">&lt;</span>(<span class="ident">A</span>, <span class="ident">B</span>), <span class="self">Self</span><span class="op">&gt;</span>, <span class="macro">product_type!</span>[<span class="ident">A::Parameters</span>, <span class="ident">B::Parameters</span>];
-    <span class="ident">args</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">static_map</span>(<span class="ident">arbitrary_with</span>(<span class="ident">args</span>), <span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">chain</span>(<span class="ident">b</span>))
+    <span class="ident">args</span> =&gt; <span class="ident">static_map</span>(<span class="ident">arbitrary_with</span>(<span class="ident">args</span>), <span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">chain</span>(<span class="ident">b</span>))
 );
 
 <span class="macro">wrap_ctor!</span>(<span class="ident">Cursor</span>);
@@ -241,23 +241,23 @@
 
 <span class="macro">arbitrary!</span>(
     [<span class="ident">A</span>: <span class="ident">BufRead</span> <span class="op">+</span> <span class="ident">Arbitrary</span>] <span class="ident">Split</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>, <span class="ident">SMapped</span><span class="op">&lt;</span>(<span class="ident">A</span>, <span class="ident">u8</span>), <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">A::Parameters</span>;
-    <span class="ident">args</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">static_map</span>(
+    <span class="ident">args</span> =&gt; <span class="ident">static_map</span>(
         <span class="ident">arbitrary_with</span>(<span class="macro">product_pack!</span>[<span class="ident">args</span>, <span class="ident">Default::default</span>()]),
         <span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">split</span>(<span class="ident">b</span>)
     )
 );
 <span class="macro">lift1!</span>([<span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">BufRead</span>] <span class="ident">Split</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>;
-    <span class="ident">base</span> <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">base</span>, <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>()).<span class="ident">prop_map</span>(<span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">split</span>(<span class="ident">b</span>)));
+    <span class="ident">base</span> =&gt; (<span class="ident">base</span>, <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>()).<span class="ident">prop_map</span>(<span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">split</span>(<span class="ident">b</span>)));
 
 <span class="macro">arbitrary!</span>(
     [<span class="ident">A</span>: <span class="ident">Read</span> <span class="op">+</span> <span class="ident">Arbitrary</span>] <span class="ident">Take</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>, <span class="ident">SMapped</span><span class="op">&lt;</span>(<span class="ident">A</span>, <span class="ident">u64</span>), <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">A::Parameters</span>;
-    <span class="ident">args</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">static_map</span>(
+    <span class="ident">args</span> =&gt; <span class="ident">static_map</span>(
         <span class="ident">arbitrary_with</span>(<span class="macro">product_pack!</span>[<span class="ident">args</span>, <span class="ident">Default::default</span>()]),
         <span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">take</span>(<span class="ident">b</span>)
     )
 );
 <span class="macro">lift1!</span>([<span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Read</span>] <span class="ident">Take</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>;
-    <span class="ident">base</span> <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">base</span>, <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()).<span class="ident">prop_map</span>(<span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">take</span>(<span class="ident">b</span>)));
+    <span class="ident">base</span> =&gt; (<span class="ident">base</span>, <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()).<span class="ident">prop_map</span>(<span class="op">|</span>(<span class="ident">a</span>, <span class="ident">b</span>)<span class="op">|</span> <span class="ident">a</span>.<span class="ident">take</span>(<span class="ident">b</span>)));
 
 <span class="macro">arbitrary!</span>(<span class="ident">ErrorKind</span>, <span class="ident">Union</span><span class="op">&lt;</span><span class="ident">Just</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>;
     <span class="ident">Union::new</span>(
@@ -307,23 +307,23 @@
 <span class="kw">mod</span> <span class="ident">test</span> {
 
     <span class="macro">no_panic_test!</span>(
-        <span class="ident">buf_reader</span>  <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BufReader</span><span class="op">&lt;</span><span class="ident">Repeat</span><span class="op">&gt;</span>,
-        <span class="ident">buf_writer</span>  <span class="op">=</span><span class="op">&gt;</span> <span class="ident">BufWriter</span><span class="op">&lt;</span><span class="ident">Sink</span><span class="op">&gt;</span>,
-        <span class="ident">line_writer</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LineWriter</span><span class="op">&lt;</span><span class="ident">Sink</span><span class="op">&gt;</span>,
-        <span class="ident">chain</span>       <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Chain</span><span class="op">&lt;</span><span class="ident">Empty</span>, <span class="ident">BufReader</span><span class="op">&lt;</span><span class="ident">Repeat</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">cursor</span>      <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Cursor</span><span class="op">&lt;</span><span class="ident">Empty</span><span class="op">&gt;</span>,
-        <span class="ident">empty</span>       <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Empty</span>,
-        <span class="ident">sink</span>        <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Sink</span>,
-        <span class="ident">stderr</span>      <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Stderr</span>,
-        <span class="ident">stdin</span>       <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Stdin</span>,
-        <span class="ident">stdout</span>      <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Stdout</span>,
-        <span class="ident">lines</span>       <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Lines</span><span class="op">&lt;</span><span class="ident">Empty</span><span class="op">&gt;</span>,
-        <span class="ident">repeat</span>      <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Repeat</span>,
-        <span class="ident">split</span>       <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Split</span><span class="op">&lt;</span><span class="ident">Cursor</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">take</span>        <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Take</span><span class="op">&lt;</span><span class="ident">Repeat</span><span class="op">&gt;</span>,
-        <span class="ident">error_kind</span>  <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ErrorKind</span>,
-        <span class="ident">seek_from</span>   <span class="op">=</span><span class="op">&gt;</span> <span class="ident">SeekFrom</span>,
-        <span class="ident">error</span>       <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Error</span>
+        <span class="ident">buf_reader</span>  =&gt; <span class="ident">BufReader</span><span class="op">&lt;</span><span class="ident">Repeat</span><span class="op">&gt;</span>,
+        <span class="ident">buf_writer</span>  =&gt; <span class="ident">BufWriter</span><span class="op">&lt;</span><span class="ident">Sink</span><span class="op">&gt;</span>,
+        <span class="ident">line_writer</span> =&gt; <span class="ident">LineWriter</span><span class="op">&lt;</span><span class="ident">Sink</span><span class="op">&gt;</span>,
+        <span class="ident">chain</span>       =&gt; <span class="ident">Chain</span><span class="op">&lt;</span><span class="ident">Empty</span>, <span class="ident">BufReader</span><span class="op">&lt;</span><span class="ident">Repeat</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">cursor</span>      =&gt; <span class="ident">Cursor</span><span class="op">&lt;</span><span class="ident">Empty</span><span class="op">&gt;</span>,
+        <span class="ident">empty</span>       =&gt; <span class="ident">Empty</span>,
+        <span class="ident">sink</span>        =&gt; <span class="ident">Sink</span>,
+        <span class="ident">stderr</span>      =&gt; <span class="ident">Stderr</span>,
+        <span class="ident">stdin</span>       =&gt; <span class="ident">Stdin</span>,
+        <span class="ident">stdout</span>      =&gt; <span class="ident">Stdout</span>,
+        <span class="ident">lines</span>       =&gt; <span class="ident">Lines</span><span class="op">&lt;</span><span class="ident">Empty</span><span class="op">&gt;</span>,
+        <span class="ident">repeat</span>      =&gt; <span class="ident">Repeat</span>,
+        <span class="ident">split</span>       =&gt; <span class="ident">Split</span><span class="op">&lt;</span><span class="ident">Cursor</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">take</span>        =&gt; <span class="ident">Take</span><span class="op">&lt;</span><span class="ident">Repeat</span><span class="op">&gt;</span>,
+        <span class="ident">error_kind</span>  =&gt; <span class="ident">ErrorKind</span>,
+        <span class="ident">seek_from</span>   =&gt; <span class="ident">SeekFrom</span>,
+        <span class="ident">error</span>       =&gt; <span class="ident">Error</span>
     );
 }
 </code></pre></div>

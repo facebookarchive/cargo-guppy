@@ -612,7 +612,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">FileFailurePersistence</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
         <span class="ident">SourceParallel</span>(<span class="string">&quot;proptest-regressions&quot;</span>)
     }
 }
@@ -621,7 +621,7 @@
     <span class="kw">fn</span> <span class="ident">load_persisted_failures2</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">source_file</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PersistedSeed</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PersistedSeed</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">resolve</span>(
             <span class="ident">source_file</span>
                 .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">absolutize_source_file</span>(<span class="ident">Path::new</span>(<span class="ident">s</span>)))
@@ -639,14 +639,14 @@
                     .<span class="ident">lines</span>()
                     .<span class="ident">enumerate</span>()
                     .<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="ident">lineno</span>, <span class="ident">line</span>)<span class="op">|</span> <span class="kw">match</span> <span class="ident">line</span> {
-                        <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)),
-                        <span class="prelude-val">Ok</span>(<span class="ident">line</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">parse_seed_line</span>(<span class="ident">line</span>, <span class="ident">path</span>, <span class="ident">lineno</span>).<span class="ident">map</span>(<span class="prelude-val">Ok</span>),
+                        <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)),
+                        <span class="prelude-val">Ok</span>(<span class="ident">line</span>) =&gt; <span class="ident">parse_seed_line</span>(<span class="ident">line</span>, <span class="ident">path</span>, <span class="ident">lineno</span>).<span class="ident">map</span>(<span class="prelude-val">Ok</span>),
                     })
                     .<span class="ident">collect</span>()
             },
         );
 
-        <span class="macro">unwrap_or!</span>(<span class="ident">result</span>, <span class="ident">err</span> <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="macro">unwrap_or!</span>(<span class="ident">result</span>, <span class="ident">err</span> =&gt; {
             <span class="kw">if</span> <span class="ident">io::ErrorKind::NotFound</span> <span class="op">!</span><span class="op">=</span> <span class="ident">err</span>.<span class="ident">kind</span>() {
                 <span class="macro">eprintln!</span>(
                     <span class="string">&quot;proptest: failed to open {}: {}&quot;</span>,
@@ -700,18 +700,18 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">box_clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">FailurePersistence</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">box_clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">FailurePersistence</span><span class="op">&gt;</span> {
         <span class="ident">Box::new</span>(<span class="kw-2">*</span><span class="self">self</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">FailurePersistence</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">FailurePersistence</span>) -&gt; <span class="ident">bool</span> {
         <span class="ident">other</span>
             .<span class="ident">as_any</span>()
             .<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>()
-            .<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>)
+            .<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">==</span> <span class="self">self</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">as_any</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Any</span> {
+    <span class="kw">fn</span> <span class="ident">as_any</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Any</span> {
         <span class="self">self</span>
     }
 }
@@ -731,14 +731,14 @@
 <span class="doccomment">/// This is normally called automatically by the `proptest!` macro, which</span>
 <span class="doccomment">/// passes `file!()`.</span>
 <span class="doccomment">///</span>
-<span class="kw">fn</span> <span class="ident">absolutize_source_file</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">source</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">absolutize_source_file</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">source</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="ident">absolutize_source_file_with_cwd</span>(<span class="ident">env::current_dir</span>, <span class="ident">source</span>)
 }
 
 <span class="kw">fn</span> <span class="ident">absolutize_source_file_with_cwd</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-    <span class="ident">getcwd</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
+    <span class="ident">getcwd</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
     <span class="ident">source</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Path</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="ident">source</span>.<span class="ident">is_absolute</span>() {
         <span class="comment">// On Unix, `file!()` is absolute. In these cases, we can use</span>
         <span class="comment">// that path directly.</span>
@@ -755,7 +755,7 @@
         <span class="comment">// If we can&#39;t figure out an absolute path, print a warning and act</span>
         <span class="comment">// as if no source had been given.</span>
         <span class="kw">match</span> <span class="ident">getcwd</span>() {
-            <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">cwd</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">loop</span> {
+            <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">cwd</span>) =&gt; <span class="kw">loop</span> {
                 <span class="kw">let</span> <span class="ident">joined</span> <span class="op">=</span> <span class="ident">cwd</span>.<span class="ident">join</span>(<span class="ident">source</span>);
                 <span class="kw">if</span> <span class="ident">joined</span>.<span class="ident">is_file</span>() {
                     <span class="kw">break</span> <span class="prelude-val">Some</span>(<span class="ident">Cow::Owned</span>(<span class="ident">joined</span>));
@@ -773,7 +773,7 @@
                 }
             },
 
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
                 <span class="macro">eprintln!</span>(
                     <span class="string">&quot;proptest: Failed to determine current \
                      directory, so the relative source path \
@@ -790,7 +790,7 @@
     <span class="kw-2">mut</span> <span class="ident">line</span>: <span class="ident">String</span>,
     <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">lineno</span>: <span class="ident">usize</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PersistedSeed</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PersistedSeed</span><span class="op">&gt;</span> {
     <span class="comment">// Remove anything after and including &#39;#&#39;:</span>
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">comment_start</span>) <span class="op">=</span> <span class="ident">line</span>.<span class="ident">find</span>(<span class="string">&#39;#&#39;</span>) {
         <span class="ident">line</span>.<span class="ident">truncate</span>(<span class="ident">comment_start</span>);
@@ -815,7 +815,7 @@
     <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
     <span class="ident">seed</span>: <span class="kw-2">&amp;</span><span class="ident">PersistedSeed</span>,
     <span class="ident">shrunken_value</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Debug</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="comment">// Write the seed itself</span>
     <span class="macro">write!</span>(<span class="ident">buf</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">seed</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
 
@@ -825,7 +825,7 @@
 
     <span class="comment">// Ensure there are no newlines in the debug output</span>
     <span class="kw">for</span> <span class="ident">byte</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[<span class="ident">debug_start</span>..] {
-        <span class="kw">if</span> <span class="string">b&#39;\n&#39;</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">byte</span> <span class="op">|</span><span class="op">|</span> <span class="string">b&#39;\r&#39;</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">byte</span> {
+        <span class="kw">if</span> <span class="string">b&#39;\n&#39;</span> <span class="op">==</span> <span class="kw-2">*</span><span class="ident">byte</span> <span class="op">|</span><span class="op">|</span> <span class="string">b&#39;\r&#39;</span> <span class="op">==</span> <span class="kw-2">*</span><span class="ident">byte</span> {
             <span class="kw-2">*</span><span class="ident">byte</span> <span class="op">=</span> <span class="string">b&#39; &#39;</span>;
         }
     }
@@ -835,7 +835,7 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">write_header</span>(<span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">write_header</span>(<span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="macro">writeln!</span>(
         <span class="ident">buf</span>,
         <span class="string">&quot;\
@@ -848,7 +848,7 @@
     )
 }
 
-<span class="kw">fn</span> <span class="ident">write_seed_data_to_file</span>(<span class="ident">dst</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">write_seed_data_to_file</span>(<span class="ident">dst</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">parent</span>) <span class="op">=</span> <span class="ident">dst</span>.<span class="ident">parent</span>() {
         <span class="ident">fs::create_dir_all</span>(<span class="ident">parent</span>)<span class="question-mark">?</span>;
     }
@@ -864,14 +864,14 @@
 <span class="kw">impl</span> <span class="ident">FileFailurePersistence</span> {
     <span class="doccomment">/// Given the nominal source path, determine the location of the failure</span>
     <span class="doccomment">/// persistence file, if any.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">resolve</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">source</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Path</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">resolve</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">source</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Path</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">source</span> <span class="op">=</span> <span class="ident">source</span>.<span class="ident">and_then</span>(<span class="ident">absolutize_source_file</span>);
 
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">Off</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">Off</span> =&gt; <span class="prelude-val">None</span>,
 
-            <span class="ident">SourceParallel</span>(<span class="ident">sibling</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">source</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">source_path</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">SourceParallel</span>(<span class="ident">sibling</span>) =&gt; <span class="kw">match</span> <span class="ident">source</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">source_path</span>) =&gt; {
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dir</span> <span class="op">=</span> <span class="ident">Cow::into_owned</span>(<span class="ident">source_path</span>.<span class="ident">clone</span>());
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">found</span> <span class="op">=</span> <span class="bool-val">false</span>;
                     <span class="kw">while</span> <span class="ident">dir</span>.<span class="ident">pop</span>() {
@@ -905,7 +905,7 @@
                         <span class="prelude-val">Some</span>(<span class="ident">result</span>)
                     }
                 }
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">None</span> =&gt; {
                     <span class="macro">eprintln!</span>(
                         <span class="string">&quot;proptest: FileFailurePersistence::SourceParallel set, \
                          but no source file known&quot;</span>
@@ -914,14 +914,14 @@
                 }
             },
 
-            <span class="ident">WithSource</span>(<span class="ident">extension</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">source</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">source_path</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">WithSource</span>(<span class="ident">extension</span>) =&gt; <span class="kw">match</span> <span class="ident">source</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">source_path</span>) =&gt; {
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">Cow::into_owned</span>(<span class="ident">source_path</span>);
                     <span class="ident">result</span>.<span class="ident">set_extension</span>(<span class="ident">extension</span>);
                     <span class="prelude-val">Some</span>(<span class="ident">result</span>)
                 }
 
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">None</span> =&gt; {
                     <span class="macro">eprintln!</span>(
                         <span class="string">&quot;proptest: FileFailurePersistence::WithSource set, \
                          but no source file known&quot;</span>
@@ -930,9 +930,9 @@
                 }
             },
 
-            <span class="ident">Direct</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">Path::new</span>(<span class="ident">path</span>).<span class="ident">to_owned</span>()),
+            <span class="ident">Direct</span>(<span class="ident">path</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">Path::new</span>(<span class="ident">path</span>).<span class="ident">to_owned</span>()),
 
-            <span class="ident">_NonExhaustive</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">_NonExhaustive</span> =&gt; {
                 <span class="macro">panic!</span>(<span class="string">&quot;FailurePersistence set to _NonExhaustive&quot;</span>)
             }
         }

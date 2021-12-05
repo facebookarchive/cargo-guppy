@@ -209,7 +209,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Strategy</span><span class="op">&gt;</span> <span class="ident">LazyValueTree</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Create a new value tree where initial generation is deferred until</span>
     <span class="doccomment">/// `maybe_init` is called.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">strategy</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">runner</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TestRunner</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">strategy</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">runner</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TestRunner</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">partial_clone</span>();
         <span class="self">Self</span> {
             <span class="ident">state</span>: <span class="ident">LazyValueTreeState::Uninitialized</span> { <span class="ident">strategy</span>, <span class="ident">runner</span> },
@@ -217,27 +217,27 @@
     }
 
     <span class="doccomment">/// Create a new value tree that has already been initialized.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new_initialized</span>(<span class="ident">value_tree</span>: <span class="ident">S::Tree</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new_initialized</span>(<span class="ident">value_tree</span>: <span class="ident">S::Tree</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">state</span>: <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">value_tree</span>),
         }
     }
 
     <span class="doccomment">/// Returns a reference to the inner value tree if initialized.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">as_inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">S::Tree</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">as_inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">S::Tree</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">state</span> {
-            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">v</span>),
+            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">v</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">v</span>),
             <span class="ident">LazyValueTreeState::Uninitialized</span> { .. }
-            <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
     <span class="doccomment">/// Returns a mutable reference to the inner value tree if uninitialized.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">as_inner_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">S::Tree</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">as_inner_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">S::Tree</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">state</span> {
-            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">v</span>),
+            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">v</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">v</span>),
             <span class="ident">LazyValueTreeState::Uninitialized</span> { .. }
-            <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
@@ -252,41 +252,41 @@
             <span class="ident">LazyValueTreeState::Uninitialized</span> {
                 <span class="ident">strategy</span>,
                 <span class="kw-2">mut</span> <span class="ident">runner</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="kw">match</span> <span class="ident">strategy</span>.<span class="ident">new_tree</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">runner</span>) {
-                    <span class="prelude-val">Ok</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="prelude-val">Ok</span>(<span class="ident">v</span>) =&gt; {
                         <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">mem::replace</span>(
                             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">state</span>,
                             <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">v</span>),
                         );
                     }
-                    <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
                         <span class="comment">// self.state is set to Failed above. Keep it that way.</span>
                     }
                 }
             }
-            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> =&gt; {
                 <span class="macro">unreachable!</span>(<span class="string">&quot;can only reach here if uninitialized&quot;</span>)
             }
         }
     }
 
     <span class="doccomment">/// Whether this value tree still needs to be initialized.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_uninitialized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_uninitialized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">state</span> {
-            <span class="ident">LazyValueTreeState::Uninitialized</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">LazyValueTreeState::Uninitialized</span> { .. } =&gt; <span class="bool-val">true</span>,
+            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> =&gt; {
                 <span class="bool-val">false</span>
             }
         }
     }
 
     <span class="doccomment">/// Whether the value tree was successfully initialized.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_initialized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_initialized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">state</span> {
-            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
             <span class="ident">LazyValueTreeState::Uninitialized</span> { .. }
-            <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+            <span class="op">|</span> <span class="ident">LazyValueTreeState::Failed</span> =&gt; <span class="bool-val">false</span>,
         }
     }
 }
@@ -295,7 +295,7 @@
 <span class="kw">where</span>
     <span class="ident">S::Tree</span>: <span class="ident">Clone</span>,
 {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">state</span>: <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">clone</span>(),
         }
@@ -306,7 +306,7 @@
 <span class="kw">where</span>
     <span class="ident">S::Tree</span>: <span class="ident">fmt::Debug</span>,
 {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;LazyValueTree&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;state&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">state</span>)
             .<span class="ident">finish</span>()
@@ -317,16 +317,16 @@
 <span class="kw">where</span>
     <span class="ident">S::Tree</span>: <span class="ident">Clone</span>,
 {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">use</span> <span class="ident">LazyValueTreeState</span>::<span class="kw-2">*</span>;
 
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Initialized</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Initialized</span>(<span class="ident">v</span>.<span class="ident">clone</span>()),
-            <span class="ident">Uninitialized</span> { <span class="ident">strategy</span>, <span class="ident">runner</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Uninitialized</span> {
+            <span class="ident">Initialized</span>(<span class="ident">v</span>) =&gt; <span class="ident">Initialized</span>(<span class="ident">v</span>.<span class="ident">clone</span>()),
+            <span class="ident">Uninitialized</span> { <span class="ident">strategy</span>, <span class="ident">runner</span> } =&gt; <span class="ident">Uninitialized</span> {
                 <span class="ident">strategy</span>: <span class="ident">Arc::clone</span>(<span class="ident">strategy</span>),
                 <span class="ident">runner</span>: <span class="ident">runner</span>.<span class="ident">clone</span>(),
             },
-            <span class="ident">Failed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Failed</span>,
+            <span class="ident">Failed</span> =&gt; <span class="ident">Failed</span>,
         }
     }
 }
@@ -335,16 +335,16 @@
 <span class="kw">where</span>
     <span class="ident">S::Tree</span>: <span class="ident">fmt::Debug</span>,
 {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">value_tree</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">LazyValueTreeState::Initialized</span>(<span class="ident">value_tree</span>) =&gt; {
                 <span class="ident">f</span>.<span class="ident">debug_tuple</span>(<span class="string">&quot;Initialized&quot;</span>).<span class="ident">field</span>(<span class="ident">value_tree</span>).<span class="ident">finish</span>()
             }
-            <span class="ident">LazyValueTreeState::Uninitialized</span> { <span class="ident">strategy</span>, .. } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>
+            <span class="ident">LazyValueTreeState::Uninitialized</span> { <span class="ident">strategy</span>, .. } =&gt; <span class="ident">f</span>
                 .<span class="ident">debug_struct</span>(<span class="string">&quot;Uninitialized&quot;</span>)
                 .<span class="ident">field</span>(<span class="string">&quot;strategy&quot;</span>, <span class="ident">strategy</span>)
                 .<span class="ident">finish</span>(),
-            <span class="ident">LazyValueTreeState::Failed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Failed&quot;</span>),
+            <span class="ident">LazyValueTreeState::Failed</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Failed&quot;</span>),
         }
     }
 }

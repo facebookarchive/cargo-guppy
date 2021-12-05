@@ -121,18 +121,18 @@
 <span class="doccomment">/// Returns the size of the terminal defaulting to STDOUT, if available.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// If STDOUT is not a tty, returns `None`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">terminal_size</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Width</span>, <span class="ident">Height</span>)<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">terminal_size</span>() -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Width</span>, <span class="ident">Height</span>)<span class="op">&gt;</span> {
     <span class="ident">terminal_size_using_fd</span>(<span class="ident">libc::STDOUT_FILENO</span>)
 }
 
 <span class="doccomment">/// Returns the size of the terminal using the given file descriptor, if available.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// If the given file descriptor is not a tty, returns `None`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">terminal_size_using_fd</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Width</span>, <span class="ident">Height</span>)<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">terminal_size_using_fd</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">Width</span>, <span class="ident">Height</span>)<span class="op">&gt;</span> {
     <span class="kw">use</span> <span class="ident">libc::ioctl</span>;
     <span class="kw">use</span> <span class="ident">libc::isatty</span>;
     <span class="kw">use</span> <span class="ident">libc</span>::{<span class="ident">winsize</span> <span class="kw">as</span> <span class="ident">WinSize</span>, <span class="ident">TIOCGWINSZ</span>};
-    <span class="kw">let</span> <span class="ident">is_tty</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">isatty</span>(<span class="ident">fd</span>) <span class="op">=</span><span class="op">=</span> <span class="number">1</span> };
+    <span class="kw">let</span> <span class="ident">is_tty</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">isatty</span>(<span class="ident">fd</span>) <span class="op">==</span> <span class="number">1</span> };
 
     <span class="kw">if</span> <span class="op">!</span><span class="ident">is_tty</span> {
         <span class="kw">return</span> <span class="prelude-val">None</span>;
@@ -145,7 +145,7 @@
         <span class="ident">ws_ypixel</span>: <span class="number">0</span>,
     };
 
-    <span class="kw">if</span> <span class="kw">unsafe</span> { <span class="ident">ioctl</span>(<span class="ident">fd</span>, <span class="ident">TIOCGWINSZ</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">winsize</span>) } <span class="op">=</span><span class="op">=</span> <span class="op">-</span><span class="number">1</span> {
+    <span class="kw">if</span> <span class="kw">unsafe</span> { <span class="ident">ioctl</span>(<span class="ident">fd</span>, <span class="ident">TIOCGWINSZ</span>.<span class="ident">into</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">winsize</span>) } <span class="op">==</span> <span class="op">-</span><span class="number">1</span> {
         <span class="kw">return</span> <span class="prelude-val">None</span>;
     }
 
@@ -189,8 +189,8 @@
             .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">term</span><span class="op">|</span> {
                 <span class="comment">// split each &quot;k = v&quot; string and look for rows/columns:</span>
                 <span class="kw">match</span> <span class="ident">term</span>.<span class="ident">splitn</span>(<span class="number">2</span>, <span class="string">&quot; = &quot;</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>().<span class="ident">as_slice</span>() {
-                    [<span class="string">&quot;rows&quot;</span>, <span class="ident">n</span>] <span class="op">|</span> [<span class="string">&quot;columns&quot;</span>, <span class="ident">n</span>] <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">n</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>()),
-                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+                    [<span class="string">&quot;rows&quot;</span>, <span class="ident">n</span>] <span class="op">|</span> [<span class="string">&quot;columns&quot;</span>, <span class="ident">n</span>] =&gt; <span class="prelude-val">Some</span>(<span class="ident">n</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>()),
+                    <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
                 }
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();

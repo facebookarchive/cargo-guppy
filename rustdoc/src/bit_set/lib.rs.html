@@ -1511,7 +1511,7 @@
 <span class="kw">type</span> <span class="ident">MatchWords</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Chain</span><span class="op">&lt;</span><span class="ident">Enumerate</span><span class="op">&lt;</span><span class="ident">Blocks</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Skip</span><span class="op">&lt;</span><span class="ident">Take</span><span class="op">&lt;</span><span class="ident">Enumerate</span><span class="op">&lt;</span><span class="ident">Repeat</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// Computes how many blocks are needed to store that many bits</span>
-<span class="kw">fn</span> <span class="ident">blocks_for_bits</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">bits</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+<span class="kw">fn</span> <span class="ident">blocks_for_bits</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">bits</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
     <span class="comment">// If we want 17 bits, dividing by 32 will produce 0. So we add 1 to make sure we</span>
     <span class="comment">// reserve enough. But if we want exactly a multiple of 32, this will actually allocate</span>
     <span class="comment">// one too many. So we need to check if that&#39;s the case. We can do that by computing if</span>
@@ -1520,7 +1520,7 @@
     <span class="comment">//</span>
     <span class="comment">// Note that we can technically avoid this branch with the expression</span>
     <span class="comment">// `(nbits + BITS - 1) / 32::BITS`, but if nbits is almost usize::MAX this will overflow.</span>
-    <span class="kw">if</span> <span class="ident">bits</span> <span class="op">%</span> <span class="ident">B::bits</span>() <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+    <span class="kw">if</span> <span class="ident">bits</span> <span class="op">%</span> <span class="ident">B::bits</span>() <span class="op">==</span> <span class="number">0</span> {
         <span class="ident">bits</span> <span class="op">/</span> <span class="ident">B::bits</span>()
     } <span class="kw">else</span> {
         <span class="ident">bits</span> <span class="op">/</span> <span class="ident">B::bits</span>() <span class="op">+</span> <span class="number">1</span>
@@ -1530,7 +1530,7 @@
 <span class="comment">// Take two BitVec&#39;s, and return iterators of their words, where the shorter one</span>
 <span class="comment">// has been padded with 0&#39;s</span>
 <span class="kw">fn</span> <span class="ident">match_words</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BitVec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">BitVec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>)
-    <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">MatchWords</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">MatchWords</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="ident">B</span><span class="op">&gt;</span>)
+    -&gt; (<span class="ident">MatchWords</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span>, <span class="ident">MatchWords</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="ident">B</span><span class="op">&gt;</span>)
 {
     <span class="kw">let</span> <span class="ident">a_len</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">storage</span>().<span class="ident">len</span>();
     <span class="kw">let</span> <span class="ident">b_len</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">storage</span>().<span class="ident">len</span>();
@@ -1550,7 +1550,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">BitSet</span> {
             <span class="ident">bit_vec</span>: <span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">clone</span>(),
         }
@@ -1563,11 +1563,11 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> { <span class="ident">BitSet</span> { <span class="ident">bit_vec</span>: <span class="ident">Default::default</span>() } }
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> { <span class="ident">BitSet</span> { <span class="ident">bit_vec</span>: <span class="ident">Default::default</span>() } }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from_iter</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">from_iter</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::default</span>();
         <span class="ident">ret</span>.<span class="ident">extend</span>(<span class="ident">iter</span>);
         <span class="ident">ret</span>
@@ -1585,21 +1585,21 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">iter</span>().<span class="ident">partial_cmp</span>(<span class="ident">other</span>)
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Ordering</span> {
+    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
         <span class="self">self</span>.<span class="ident">iter</span>().<span class="ident">cmp</span>(<span class="ident">other</span>)
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">iter</span>().<span class="ident">eq</span>(<span class="ident">other</span>)
     }
 }
@@ -1617,7 +1617,7 @@
     <span class="doccomment">/// let mut s = BitSet::new();</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::default</span>()
     }
 
@@ -1633,7 +1633,7 @@
     <span class="doccomment">/// assert!(s.capacity() &gt;= 100);</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_capacity</span>(<span class="ident">nbits</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_capacity</span>(<span class="ident">nbits</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">bit_vec</span> <span class="op">=</span> <span class="ident">BitVec::from_elem</span>(<span class="ident">nbits</span>, <span class="bool-val">false</span>);
         <span class="ident"><span class="self">Self</span>::from_bit_vec</span>(<span class="ident">bit_vec</span>)
     }
@@ -1660,11 +1660,11 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bit_vec</span>(<span class="ident">bit_vec</span>: <span class="ident">BitVec</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bit_vec</span>(<span class="ident">bit_vec</span>: <span class="ident">BitVec</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">BitSet</span> { <span class="ident">bit_vec</span>: <span class="ident">bit_vec</span> }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="self">Self</span> {
         <span class="ident">BitSet</span> { <span class="ident">bit_vec</span>: <span class="ident">BitVec::from_bytes</span>(<span class="ident">bytes</span>) }
     }
 }
@@ -1683,7 +1683,7 @@
     <span class="doccomment">/// assert!(s.capacity() &gt;= 100);</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">capacity</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">capacity</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">capacity</span>()
     }
 
@@ -1751,7 +1751,7 @@
     <span class="doccomment">/// assert!(bv[3]);</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_bit_vec</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BitVec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_bit_vec</span>(<span class="self">self</span>) -&gt; <span class="ident">BitVec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">bit_vec</span>
     }
 
@@ -1769,12 +1769,12 @@
     <span class="doccomment">/// assert_eq!(bv[0], true);</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">BitVec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">BitVec</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bit_vec</span>
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">other_op</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">F</span>) <span class="kw">where</span> <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">B</span>, <span class="ident">B</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">B</span> {
+    <span class="kw">fn</span> <span class="ident">other_op</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="kw-2">mut</span> <span class="ident">f</span>: <span class="ident">F</span>) <span class="kw">where</span> <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">B</span>, <span class="ident">B</span>) -&gt; <span class="ident">B</span> {
         <span class="comment">// Unwrap BitVecs</span>
         <span class="kw">let</span> <span class="ident">self_bit_vec</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">bit_vec</span>;
         <span class="kw">let</span> <span class="ident">other_bit_vec</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">bit_vec</span>;
@@ -1827,7 +1827,7 @@
         <span class="comment">// Obtain original length</span>
         <span class="kw">let</span> <span class="ident">old_len</span> <span class="op">=</span> <span class="ident">bit_vec</span>.<span class="ident">storage</span>().<span class="ident">len</span>();
         <span class="comment">// Obtain coarse trailing zero length</span>
-        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">bit_vec</span>.<span class="ident">storage</span>().<span class="ident">iter</span>().<span class="ident">rev</span>().<span class="ident">take_while</span>(<span class="op">|</span><span class="op">&amp;&amp;</span><span class="ident">n</span><span class="op">|</span> <span class="ident">n</span> <span class="op">=</span><span class="op">=</span> <span class="ident">B::zero</span>()).<span class="ident">count</span>();
+        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">bit_vec</span>.<span class="ident">storage</span>().<span class="ident">iter</span>().<span class="ident">rev</span>().<span class="ident">take_while</span>(<span class="op">|</span><span class="op">&amp;&amp;</span><span class="ident">n</span><span class="op">|</span> <span class="ident">n</span> <span class="op">==</span> <span class="ident">B::zero</span>()).<span class="ident">count</span>();
         <span class="comment">// Truncate</span>
         <span class="kw">let</span> <span class="ident">trunc_len</span> <span class="op">=</span> <span class="ident">cmp::max</span>(<span class="ident">old_len</span> <span class="op">-</span> <span class="ident">n</span>, <span class="number">1</span>);
         <span class="kw">unsafe</span> {
@@ -1851,7 +1851,7 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Iter</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
         <span class="ident">Iter</span>(<span class="ident">BlockIter::from_blocks</span>(<span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">blocks</span>()))
     }
 
@@ -1872,8 +1872,8 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">union</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Union</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">or</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">|</span> <span class="ident">w2</span> }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">union</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) -&gt; <span class="ident">Union</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">or</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) -&gt; <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">|</span> <span class="ident">w2</span> }
 
         <span class="ident">Union</span>(<span class="ident">BlockIter::from_blocks</span>(<span class="ident">TwoBitPositions</span> {
             <span class="ident">set</span>: <span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">blocks</span>(),
@@ -1899,8 +1899,8 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">intersection</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Intersection</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">bitand</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">&amp;</span> <span class="ident">w2</span> }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">intersection</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) -&gt; <span class="ident">Intersection</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">bitand</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) -&gt; <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">&amp;</span> <span class="ident">w2</span> }
         <span class="kw">let</span> <span class="ident">min</span> <span class="op">=</span> <span class="ident">cmp::min</span>(<span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">len</span>(), <span class="ident">other</span>.<span class="ident">bit_vec</span>.<span class="ident">len</span>());
 
         <span class="ident">Intersection</span>(<span class="ident">BlockIter::from_blocks</span>(<span class="ident">TwoBitPositions</span> {
@@ -1934,8 +1934,8 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">difference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Difference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">diff</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">&amp;</span> <span class="op">!</span><span class="ident">w2</span> }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">difference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) -&gt; <span class="ident">Difference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">diff</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) -&gt; <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">&amp;</span> <span class="op">!</span><span class="ident">w2</span> }
 
         <span class="ident">Difference</span>(<span class="ident">BlockIter::from_blocks</span>(<span class="ident">TwoBitPositions</span> {
             <span class="ident">set</span>: <span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">blocks</span>(),
@@ -1962,8 +1962,8 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symmetric_difference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SymmetricDifference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">bitxor</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">^</span> <span class="ident">w2</span> }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symmetric_difference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span>) -&gt; <span class="ident">SymmetricDifference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">bitxor</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span>(<span class="ident">w1</span>: <span class="ident">B</span>, <span class="ident">w2</span>: <span class="ident">B</span>) -&gt; <span class="ident">B</span> { <span class="ident">w1</span> <span class="op">^</span> <span class="ident">w2</span> }
 
         <span class="ident">SymmetricDifference</span>(<span class="ident">BlockIter::from_blocks</span>(<span class="ident">TwoBitPositions</span> {
             <span class="ident">set</span>: <span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">blocks</span>(),
@@ -2156,13 +2156,13 @@
 
     <span class="doccomment">/// Returns the number of set bits in this set.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span>  {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">len</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span>  {
         <span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">blocks</span>().<span class="ident">fold</span>(<span class="number">0</span>, <span class="op">|</span><span class="ident">acc</span>, <span class="ident">n</span><span class="op">|</span> <span class="ident">acc</span> <span class="op">+</span> <span class="ident">n</span>.<span class="ident">count_ones</span>() <span class="kw">as</span> <span class="ident">usize</span>)
     }
 
     <span class="doccomment">/// Returns whether there are no bits set in this set</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">bit_vec</span>.<span class="ident">none</span>()
     }
 
@@ -2174,7 +2174,7 @@
 
     <span class="doccomment">/// Returns `true` if this set contains the specified integer.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">let</span> <span class="ident">bit_vec</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bit_vec</span>;
         <span class="ident">value</span> <span class="op">&lt;</span> <span class="ident">bit_vec</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">bit_vec</span>[<span class="ident">value</span>]
     }
@@ -2182,32 +2182,32 @@
     <span class="doccomment">/// Returns `true` if the set has no elements in common with `other`.</span>
     <span class="doccomment">/// This is equivalent to checking for an empty intersection.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_disjoint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_disjoint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">intersection</span>(<span class="ident">other</span>).<span class="ident">next</span>().<span class="ident">is_none</span>()
     }
 
     <span class="doccomment">/// Returns `true` if the set is a subset of another.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_subset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_subset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">let</span> <span class="ident">self_bit_vec</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bit_vec</span>;
         <span class="kw">let</span> <span class="ident">other_bit_vec</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">bit_vec</span>;
         <span class="kw">let</span> <span class="ident">other_blocks</span> <span class="op">=</span> <span class="ident">blocks_for_bits</span>::<span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(<span class="ident">other_bit_vec</span>.<span class="ident">len</span>());
 
         <span class="comment">// Check that `self` intersect `other` is self</span>
-        <span class="ident">self_bit_vec</span>.<span class="ident">blocks</span>().<span class="ident">zip</span>(<span class="ident">other_bit_vec</span>.<span class="ident">blocks</span>()).<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">w1</span>, <span class="ident">w2</span>)<span class="op">|</span> <span class="ident">w1</span> <span class="op">&amp;</span> <span class="ident">w2</span> <span class="op">=</span><span class="op">=</span> <span class="ident">w1</span>) <span class="op">&amp;&amp;</span>
+        <span class="ident">self_bit_vec</span>.<span class="ident">blocks</span>().<span class="ident">zip</span>(<span class="ident">other_bit_vec</span>.<span class="ident">blocks</span>()).<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">w1</span>, <span class="ident">w2</span>)<span class="op">|</span> <span class="ident">w1</span> <span class="op">&amp;</span> <span class="ident">w2</span> <span class="op">==</span> <span class="ident">w1</span>) <span class="op">&amp;&amp;</span>
         <span class="comment">// Make sure if `self` has any more blocks than `other`, they&#39;re all 0</span>
-        <span class="ident">self_bit_vec</span>.<span class="ident">blocks</span>().<span class="ident">skip</span>(<span class="ident">other_blocks</span>).<span class="ident">all</span>(<span class="op">|</span><span class="ident">w</span><span class="op">|</span> <span class="ident">w</span> <span class="op">=</span><span class="op">=</span> <span class="ident">B::zero</span>())
+        <span class="ident">self_bit_vec</span>.<span class="ident">blocks</span>().<span class="ident">skip</span>(<span class="ident">other_blocks</span>).<span class="ident">all</span>(<span class="op">|</span><span class="ident">w</span><span class="op">|</span> <span class="ident">w</span> <span class="op">==</span> <span class="ident">B::zero</span>())
     }
 
     <span class="doccomment">/// Returns `true` if the set is a superset of another.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_superset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_superset</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="ident">other</span>.<span class="ident">is_subset</span>(<span class="self">self</span>)
     }
 
     <span class="doccomment">/// Adds a value to the set. Returns `true` if the value was not already</span>
     <span class="doccomment">/// present in the set.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">contains</span>(<span class="ident">value</span>) {
             <span class="kw">return</span> <span class="bool-val">false</span>;
         }
@@ -2224,7 +2224,7 @@
 
     <span class="doccomment">/// Removes a value from the set. Returns `true` if the value was</span>
     <span class="doccomment">/// present in the set.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">contains</span>(<span class="ident">value</span>) {
             <span class="kw">return</span> <span class="bool-val">false</span>;
         }
@@ -2236,7 +2236,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="ident">fmt</span>.<span class="ident">debug_set</span>().<span class="ident">entries</span>(<span class="self">self</span>).<span class="ident">finish</span>()
     }
 }
@@ -2257,7 +2257,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">BlockIter</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">B</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span><span class="op">=</span><span class="ident">B</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from_blocks</span>(<span class="kw-2">mut</span> <span class="ident">blocks</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BlockIter</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">B</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from_blocks</span>(<span class="kw-2">mut</span> <span class="ident">blocks</span>: <span class="ident">T</span>) -&gt; <span class="ident">BlockIter</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">B</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">h</span> <span class="op">=</span> <span class="ident">blocks</span>.<span class="ident">next</span>().<span class="ident">unwrap_or</span>(<span class="ident">B::zero</span>());
         <span class="ident">BlockIter</span> {<span class="ident">tail</span>: <span class="ident">blocks</span>, <span class="ident">head</span>: <span class="ident">h</span>, <span class="ident">head_offset</span>: <span class="number">0</span>}
     }
@@ -2268,7 +2268,7 @@
 <span class="kw">struct</span> <span class="ident">TwoBitPositions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="ident">set</span>: <span class="ident">Blocks</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span>,
     <span class="ident">other</span>: <span class="ident">Blocks</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span>,
-    <span class="ident">merge</span>: <span class="kw">fn</span>(<span class="ident">B</span>, <span class="ident">B</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">B</span>,
+    <span class="ident">merge</span>: <span class="kw">fn</span>(<span class="ident">B</span>, <span class="ident">B</span>) -&gt; <span class="ident">B</span>,
 }
 
 <span class="doccomment">/// An iterator for `BitSet`.</span>
@@ -2286,11 +2286,11 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">BlockIter</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">B</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span><span class="op">=</span><span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="kw">while</span> <span class="self">self</span>.<span class="ident">head</span> <span class="op">=</span><span class="op">=</span> <span class="ident">B::zero</span>() {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+        <span class="kw">while</span> <span class="self">self</span>.<span class="ident">head</span> <span class="op">==</span> <span class="ident">B::zero</span>() {
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">next</span>() {
-                <span class="prelude-val">Some</span>(<span class="ident">w</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">head</span> <span class="op">=</span> <span class="ident">w</span>,
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>
+                <span class="prelude-val">Some</span>(<span class="ident">w</span>) =&gt; <span class="self">self</span>.<span class="ident">head</span> <span class="op">=</span> <span class="ident">w</span>,
+                <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>
             }
             <span class="self">self</span>.<span class="ident">head_offset</span> <span class="op">+</span><span class="op">=</span> <span class="ident">B::bits</span>();
         }
@@ -2307,10 +2307,10 @@
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
+    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">tail</span>.<span class="ident">size_hint</span>() {
-            (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="ident">h</span>)) <span class="op">=</span><span class="op">&gt;</span> (<span class="number">0</span>, <span class="prelude-val">Some</span>(<span class="number">1</span> <span class="op">+</span> <span class="ident">h</span> <span class="op">*</span> <span class="ident">B::bits</span>())),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> (<span class="number">0</span>, <span class="prelude-val">None</span>)
+            (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="ident">h</span>)) =&gt; (<span class="number">0</span>, <span class="prelude-val">Some</span>(<span class="number">1</span> <span class="op">+</span> <span class="ident">h</span> <span class="op">*</span> <span class="ident">B::bits</span>())),
+            <span class="kw">_</span> =&gt; (<span class="number">0</span>, <span class="prelude-val">None</span>)
         }
     }
 }
@@ -2318,23 +2318,23 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">TwoBitPositions</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">B</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
         <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">set</span>.<span class="ident">next</span>(), <span class="self">self</span>.<span class="ident">other</span>.<span class="ident">next</span>()) {
-            (<span class="prelude-val">Some</span>(<span class="ident">a</span>), <span class="prelude-val">Some</span>(<span class="ident">b</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>((<span class="self">self</span>.<span class="ident">merge</span>)(<span class="ident">a</span>, <span class="ident">b</span>)),
-            (<span class="prelude-val">Some</span>(<span class="ident">a</span>), <span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>((<span class="self">self</span>.<span class="ident">merge</span>)(<span class="ident">a</span>, <span class="ident">B::zero</span>())),
-            (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="ident">b</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>((<span class="self">self</span>.<span class="ident">merge</span>)(<span class="ident">B::zero</span>(), <span class="ident">b</span>)),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>
+            (<span class="prelude-val">Some</span>(<span class="ident">a</span>), <span class="prelude-val">Some</span>(<span class="ident">b</span>)) =&gt; <span class="prelude-val">Some</span>((<span class="self">self</span>.<span class="ident">merge</span>)(<span class="ident">a</span>, <span class="ident">b</span>)),
+            (<span class="prelude-val">Some</span>(<span class="ident">a</span>), <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Some</span>((<span class="self">self</span>.<span class="ident">merge</span>)(<span class="ident">a</span>, <span class="ident">B::zero</span>())),
+            (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="ident">b</span>)) =&gt; <span class="prelude-val">Some</span>((<span class="self">self</span>.<span class="ident">merge</span>)(<span class="ident">B::zero</span>(), <span class="ident">b</span>)),
+            <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">None</span>
         }
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
+    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
         <span class="kw">let</span> (<span class="ident">a</span>, <span class="ident">au</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">set</span>.<span class="ident">size_hint</span>();
         <span class="kw">let</span> (<span class="ident">b</span>, <span class="ident">bu</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">other</span>.<span class="ident">size_hint</span>();
 
         <span class="kw">let</span> <span class="ident">upper</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">au</span>, <span class="ident">bu</span>) {
-            (<span class="prelude-val">Some</span>(<span class="ident">au</span>), <span class="prelude-val">Some</span>(<span class="ident">bu</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">cmp::max</span>(<span class="ident">au</span>, <span class="ident">bu</span>)),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>
+            (<span class="prelude-val">Some</span>(<span class="ident">au</span>), <span class="prelude-val">Some</span>(<span class="ident">bu</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="ident">cmp::max</span>(<span class="ident">au</span>, <span class="ident">bu</span>)),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>
         };
 
         (<span class="ident">cmp::max</span>(<span class="ident">a</span>, <span class="ident">b</span>), <span class="ident">upper</span>)
@@ -2344,43 +2344,43 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Union</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Intersection</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Difference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">SymmetricDifference</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
-    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">next</span>() }
+    <span class="attribute">#[<span class="ident">inline</span>]</span> <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) { <span class="self">self</span>.<span class="number">0</span>.<span class="ident">size_hint</span>() }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span>: <span class="ident">BitBlock</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">BitSet</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
     <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) -&gt; <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">iter</span>()
     }
 }
@@ -2421,7 +2421,7 @@
         <span class="kw">let</span> <span class="ident">idxs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">bit_vec</span>.<span class="ident">iter</span>().<span class="ident">collect</span>();
         <span class="macro">assert_eq!</span>(<span class="ident">idxs</span>, [<span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>]);
 
-        <span class="kw">let</span> <span class="ident">long</span>: <span class="ident">BitSet</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">10000</span>).<span class="ident">filter</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">n</span><span class="op">|</span> <span class="ident">n</span> <span class="op">%</span> <span class="number">2</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>).<span class="ident">collect</span>();
+        <span class="kw">let</span> <span class="ident">long</span>: <span class="ident">BitSet</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">10000</span>).<span class="ident">filter</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">n</span><span class="op">|</span> <span class="ident">n</span> <span class="op">%</span> <span class="number">2</span> <span class="op">==</span> <span class="number">0</span>).<span class="ident">collect</span>();
         <span class="kw">let</span> <span class="ident">real</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">10000</span><span class="op">/</span><span class="number">2</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span><span class="kw-2">*</span><span class="number">2</span>).<span class="ident">collect</span>();
 
         <span class="kw">let</span> <span class="ident">idxs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">long</span>.<span class="ident">iter</span>().<span class="ident">collect</span>();
@@ -2712,12 +2712,12 @@
         <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">BitSet::from_bytes</span>(<span class="kw-2">&amp;</span>[<span class="number">0b00000000</span>]);
         <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">BitSet::new</span>();
 
-        <span class="macro">assert!</span>(<span class="ident">a</span> <span class="op">=</span><span class="op">=</span> <span class="ident">a</span>);
+        <span class="macro">assert!</span>(<span class="ident">a</span> <span class="op">==</span> <span class="ident">a</span>);
         <span class="macro">assert!</span>(<span class="ident">a</span> <span class="op">!</span><span class="op">=</span> <span class="ident">b</span>);
         <span class="macro">assert!</span>(<span class="ident">a</span> <span class="op">!</span><span class="op">=</span> <span class="ident">c</span>);
-        <span class="macro">assert!</span>(<span class="ident">b</span> <span class="op">=</span><span class="op">=</span> <span class="ident">b</span>);
-        <span class="macro">assert!</span>(<span class="ident">b</span> <span class="op">=</span><span class="op">=</span> <span class="ident">c</span>);
-        <span class="macro">assert!</span>(<span class="ident">c</span> <span class="op">=</span><span class="op">=</span> <span class="ident">c</span>);
+        <span class="macro">assert!</span>(<span class="ident">b</span> <span class="op">==</span> <span class="ident">b</span>);
+        <span class="macro">assert!</span>(<span class="ident">b</span> <span class="op">==</span> <span class="ident">c</span>);
+        <span class="macro">assert!</span>(<span class="ident">c</span> <span class="op">==</span> <span class="ident">c</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -2759,7 +2759,7 @@
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">a</span>.<span class="ident">clone</span>();
 
-        <span class="macro">assert!</span>(<span class="ident">a</span> <span class="op">=</span><span class="op">=</span> <span class="ident">b</span>);
+        <span class="macro">assert!</span>(<span class="ident">a</span> <span class="op">==</span> <span class="ident">b</span>);
 
         <span class="macro">assert!</span>(<span class="ident">b</span>.<span class="ident">remove</span>(<span class="number">1</span>));
         <span class="macro">assert!</span>(<span class="ident">a</span>.<span class="ident">contains</span>(<span class="number">1</span>));
@@ -2843,7 +2843,7 @@
     <span class="kw">const</span> <span class="ident">BENCH_BITS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">14</span>;
     <span class="kw">const</span> <span class="ident">BITS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">32</span>;
 
-    <span class="kw">fn</span> <span class="ident">rng</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ThreadRng</span> {
+    <span class="kw">fn</span> <span class="ident">rng</span>() -&gt; <span class="ident">ThreadRng</span> {
         <span class="ident">thread_rng</span>()
     }
 
@@ -2874,7 +2874,7 @@
     <span class="attribute">#[<span class="ident">bench</span>]</span>
     <span class="kw">fn</span> <span class="ident">bench_bit_vecset_iter</span>(<span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Bencher</span>) {
         <span class="kw">let</span> <span class="ident">bit_vec</span> <span class="op">=</span> <span class="ident">BitSet::from_bit_vec</span>(<span class="ident">BitVec::from_fn</span>(<span class="ident">BENCH_BITS</span>,
-                                              <span class="op">|</span><span class="ident">idx</span><span class="op">|</span> {<span class="ident">idx</span> <span class="op">%</span> <span class="number">3</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>}));
+                                              <span class="op">|</span><span class="ident">idx</span><span class="op">|</span> {<span class="ident">idx</span> <span class="op">%</span> <span class="number">3</span> <span class="op">==</span> <span class="number">0</span>}));
         <span class="ident">b</span>.<span class="ident">iter</span>(<span class="op">|</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sum</span> <span class="op">=</span> <span class="number">0</span>;
             <span class="kw">for</span> <span class="ident">idx</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">bit_vec</span> {

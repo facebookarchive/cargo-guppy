@@ -488,7 +488,7 @@
 <span class="kw">use</span> <span class="ident">core::fmt</span>;
 
 <span class="macro">macro_rules!</span> <span class="ident">paint</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">colour</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">fmt</span>:<span class="ident">expr</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> (
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">colour</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">fmt</span>:<span class="ident">expr</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) =&gt; (
         <span class="macro">write!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">colour</span>.<span class="ident">paint</span>(<span class="macro">format!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">fmt</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">args</span>)<span class="kw-2">*</span>)))
     )
 }
@@ -497,7 +497,7 @@
 <span class="kw">const</span> <span class="ident">SIGN_LEFT</span>: <span class="ident">char</span> <span class="op">=</span> <span class="string">&#39;&lt;&#39;</span>; <span class="comment">// - &lt; ←</span>
 
 <span class="doccomment">/// Present the diff output for two mutliline strings in a pretty, colorised manner.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">write_header</span>(<span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">write_header</span>(<span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
     <span class="macro">writeln!</span>(
         <span class="ident">f</span>,
         <span class="string">&quot;{} {} / {} :&quot;</span>,
@@ -529,8 +529,8 @@
     <span class="doccomment">/// Take the underlying chunk value, if it&#39;s suitable for inline diffing.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If there is no value of we&#39;ve seen more than one line, return `None`.</span>
-    <span class="kw">fn</span> <span class="ident">take</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">count</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
+    <span class="kw">fn</span> <span class="ident">take</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">count</span> <span class="op">==</span> <span class="number">1</span> {
             <span class="self">self</span>.<span class="ident">value</span>.<span class="ident">take</span>()
         } <span class="kw">else</span> {
             <span class="prelude-val">None</span>
@@ -541,7 +541,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// If a value is not set, reset the count to zero (as we&#39;ve called `flush` twice,</span>
     <span class="doccomment">/// without seeing another deletion. Therefore the line in the middle was something else).</span>
-    <span class="kw">fn</span> <span class="ident">flush</span><span class="op">&lt;</span><span class="ident">TWrite</span>: <span class="ident">fmt::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TWrite</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">flush</span><span class="op">&lt;</span><span class="ident">TWrite</span>: <span class="ident">fmt::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TWrite</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">value</span> {
             <span class="macro">paint!</span>(<span class="ident">f</span>, <span class="ident">Red</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident">SIGN_LEFT</span>, <span class="ident">value</span>)<span class="question-mark">?</span>;
             <span class="macro">writeln!</span>(<span class="ident">f</span>)<span class="question-mark">?</span>;
@@ -563,7 +563,7 @@
     <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TWrite</span>,
     <span class="ident">left</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     <span class="ident">right</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+) -&gt; <span class="ident">fmt::Result</span> {
     <span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">::diff::lines</span>(<span class="ident">left</span>, <span class="ident">right</span>);
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changes</span> <span class="op">=</span> <span class="ident">diff</span>.<span class="ident">into_iter</span>().<span class="ident">peekable</span>();
@@ -572,27 +572,27 @@
     <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">change</span>) <span class="op">=</span> <span class="ident">changes</span>.<span class="ident">next</span>() {
         <span class="kw">match</span> (<span class="ident">change</span>, <span class="ident">changes</span>.<span class="ident">peek</span>()) {
             <span class="comment">// If the text is unchanged, just print it plain</span>
-            (<span class="ident">::diff::Result::Both</span>(<span class="ident">value</span>, <span class="kw">_</span>), <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">::diff::Result::Both</span>(<span class="ident">value</span>, <span class="kw">_</span>), <span class="kw">_</span>) =&gt; {
                 <span class="ident">previous_deletion</span>.<span class="ident">flush</span>(<span class="ident">f</span>)<span class="question-mark">?</span>;
                 <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot; {}&quot;</span>, <span class="ident">value</span>)<span class="question-mark">?</span>;
             }
             <span class="comment">// Defer any deletions to next loop</span>
-            (<span class="ident">::diff::Result::Left</span>(<span class="ident">deleted</span>), <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">::diff::Result::Left</span>(<span class="ident">deleted</span>), <span class="kw">_</span>) =&gt; {
                 <span class="ident">previous_deletion</span>.<span class="ident">flush</span>(<span class="ident">f</span>)<span class="question-mark">?</span>;
                 <span class="ident">previous_deletion</span>.<span class="ident">set</span>(<span class="ident">deleted</span>);
             }
             <span class="comment">// Underlying diff library should never return this sequence</span>
-            (<span class="ident">::diff::Result::Right</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="ident">::diff::Result::Left</span>(<span class="kw">_</span>))) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">::diff::Result::Right</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="ident">::diff::Result::Left</span>(<span class="kw">_</span>))) =&gt; {
                 <span class="macro">panic!</span>(<span class="string">&quot;insertion followed by deletion&quot;</span>);
             }
             <span class="comment">// If we&#39;re being followed by more insertions, don&#39;t inline diff</span>
-            (<span class="ident">::diff::Result::Right</span>(<span class="ident">inserted</span>), <span class="prelude-val">Some</span>(<span class="ident">::diff::Result::Right</span>(<span class="kw">_</span>))) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">::diff::Result::Right</span>(<span class="ident">inserted</span>), <span class="prelude-val">Some</span>(<span class="ident">::diff::Result::Right</span>(<span class="kw">_</span>))) =&gt; {
                 <span class="ident">previous_deletion</span>.<span class="ident">flush</span>(<span class="ident">f</span>)<span class="question-mark">?</span>;
                 <span class="macro">paint!</span>(<span class="ident">f</span>, <span class="ident">Green</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident">SIGN_RIGHT</span>, <span class="ident">inserted</span>)<span class="question-mark">?</span>;
                 <span class="macro">writeln!</span>(<span class="ident">f</span>)<span class="question-mark">?</span>;
             }
             <span class="comment">// Otherwise, check if we need to inline diff with the previous line (if it was a deletion)</span>
-            (<span class="ident">::diff::Result::Right</span>(<span class="ident">inserted</span>), <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="ident">::diff::Result::Right</span>(<span class="ident">inserted</span>), <span class="kw">_</span>) =&gt; {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">deleted</span>) <span class="op">=</span> <span class="ident">previous_deletion</span>.<span class="ident">take</span>() {
                     <span class="ident">write_inline_diff</span>(<span class="ident">f</span>, <span class="ident">deleted</span>, <span class="ident">inserted</span>)<span class="question-mark">?</span>;
                 } <span class="kw">else</span> {
@@ -621,7 +621,7 @@
 <span class="kw">where</span>
     <span class="ident">Writer</span>: <span class="ident">fmt::Write</span>,
 {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Writer</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Writer</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">InlineWriter</span> {
             <span class="ident">f</span>,
             <span class="ident">style</span>: <span class="ident">Style::new</span>(),
@@ -629,9 +629,9 @@
     }
 
     <span class="doccomment">/// Push a new character into the buffer, specifying the style it should be written in.</span>
-    <span class="kw">fn</span> <span class="ident">write_with_style</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">c</span>: <span class="kw-2">&amp;</span><span class="ident">char</span>, <span class="ident">style</span>: <span class="ident">Style</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">write_with_style</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">c</span>: <span class="kw-2">&amp;</span><span class="ident">char</span>, <span class="ident">style</span>: <span class="ident">Style</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="comment">// If the style is the same as previously, just write character</span>
-        <span class="kw">if</span> <span class="ident">style</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">style</span> {
+        <span class="kw">if</span> <span class="ident">style</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">style</span> {
             <span class="macro">write!</span>(<span class="self">self</span>.<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">c</span>)<span class="question-mark">?</span>;
         } <span class="kw">else</span> {
             <span class="comment">// Close out previous style</span>
@@ -645,7 +645,7 @@
     }
 
     <span class="doccomment">/// Finish any existing style and reset to default state.</span>
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="comment">// Close out previous style</span>
         <span class="macro">writeln!</span>(<span class="self">self</span>.<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">style</span>.<span class="ident">suffix</span>())<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">style</span> <span class="op">=</span> <span class="ident">Default::default</span>();
@@ -658,7 +658,7 @@
 <span class="doccomment">/// The given strings should not have a trailing newline.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// The output of this function will be two lines, each with a trailing newline.</span>
-<span class="kw">fn</span> <span class="ident">write_inline_diff</span><span class="op">&lt;</span><span class="ident">TWrite</span>: <span class="ident">fmt::Write</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TWrite</span>, <span class="ident">left</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">right</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+<span class="kw">fn</span> <span class="ident">write_inline_diff</span><span class="op">&lt;</span><span class="ident">TWrite</span>: <span class="ident">fmt::Write</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">TWrite</span>, <span class="ident">left</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">right</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">fmt::Result</span> {
     <span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">::diff::chars</span>(<span class="ident">left</span>, <span class="ident">right</span>);
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">InlineWriter::new</span>(<span class="ident">f</span>);
 
@@ -668,9 +668,9 @@
     <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="kw-2">&amp;</span><span class="ident">SIGN_LEFT</span>, <span class="ident">light</span>)<span class="question-mark">?</span>;
     <span class="kw">for</span> <span class="ident">change</span> <span class="kw">in</span> <span class="ident">diff</span>.<span class="ident">iter</span>() {
         <span class="kw">match</span> <span class="ident">change</span> {
-            <span class="ident">::diff::Result::Both</span>(<span class="ident">value</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">light</span>)<span class="question-mark">?</span>,
-            <span class="ident">::diff::Result::Left</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">heavy</span>)<span class="question-mark">?</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="ident">::diff::Result::Both</span>(<span class="ident">value</span>, <span class="kw">_</span>) =&gt; <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">light</span>)<span class="question-mark">?</span>,
+            <span class="ident">::diff::Result::Left</span>(<span class="ident">value</span>) =&gt; <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">heavy</span>)<span class="question-mark">?</span>,
+            <span class="kw">_</span> =&gt; (),
         }
     }
     <span class="ident">writer</span>.<span class="ident">finish</span>()<span class="question-mark">?</span>;
@@ -681,9 +681,9 @@
     <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="kw-2">&amp;</span><span class="ident">SIGN_RIGHT</span>, <span class="ident">light</span>)<span class="question-mark">?</span>;
     <span class="kw">for</span> <span class="ident">change</span> <span class="kw">in</span> <span class="ident">diff</span>.<span class="ident">iter</span>() {
         <span class="kw">match</span> <span class="ident">change</span> {
-            <span class="ident">::diff::Result::Both</span>(<span class="ident">value</span>, <span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">light</span>)<span class="question-mark">?</span>,
-            <span class="ident">::diff::Result::Right</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">heavy</span>)<span class="question-mark">?</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> (),
+            <span class="ident">::diff::Result::Both</span>(<span class="ident">value</span>, <span class="kw">_</span>) =&gt; <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">light</span>)<span class="question-mark">?</span>,
+            <span class="ident">::diff::Result::Right</span>(<span class="ident">value</span>) =&gt; <span class="ident">writer</span>.<span class="ident">write_with_style</span>(<span class="ident">value</span>, <span class="ident">heavy</span>)<span class="question-mark">?</span>,
+            <span class="kw">_</span> =&gt; (),
         }
     }
     <span class="ident">writer</span>.<span class="ident">finish</span>()
@@ -711,7 +711,7 @@
     <span class="doccomment">/// This could probably be nicer with traits!</span>
     <span class="kw">fn</span> <span class="ident">check_printer</span><span class="op">&lt;</span><span class="ident">TPrint</span><span class="op">&gt;</span>(<span class="ident">printer</span>: <span class="ident">TPrint</span>, <span class="ident">left</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">right</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>)
     <span class="kw">where</span>
-        <span class="ident">TPrint</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">String</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span>,
+        <span class="ident">TPrint</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">String</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">fmt::Result</span>,
     {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">actual</span> <span class="op">=</span> <span class="ident">String::new</span>();
         <span class="ident">printer</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actual</span>, <span class="ident">left</span>, <span class="ident">right</span>).<span class="ident">expect</span>(<span class="string">&quot;printer function failed&quot;</span>);

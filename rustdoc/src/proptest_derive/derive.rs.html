@@ -882,13 +882,13 @@
 <span class="comment">// API</span>
 <span class="comment">//==============================================================================</span>
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">impl_proptest_arbitrary</span>(<span class="ident">ast</span>: <span class="ident">DeriveInput</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">impl_proptest_arbitrary</span>(<span class="ident">ast</span>: <span class="ident">DeriveInput</span>) -&gt; <span class="ident">TokenStream</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">Context::default</span>();
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">derive_proptest_arbitrary</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ctx</span>, <span class="ident">ast</span>);
     <span class="kw">match</span> (<span class="ident">result</span>, <span class="ident">ctx</span>.<span class="ident">check</span>()) {
-        (<span class="prelude-val">Ok</span>(<span class="ident">derive</span>), <span class="prelude-val">Ok</span>(())) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">derive</span>,
-        (<span class="kw">_</span>, <span class="prelude-val">Err</span>(<span class="ident">err</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">err</span>,
-        (<span class="prelude-val">Err</span>(<span class="ident">result</span>), <span class="prelude-val">Ok</span>(())) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(
+        (<span class="prelude-val">Ok</span>(<span class="ident">derive</span>), <span class="prelude-val">Ok</span>(())) =&gt; <span class="ident">derive</span>,
+        (<span class="kw">_</span>, <span class="prelude-val">Err</span>(<span class="ident">err</span>)) =&gt; <span class="ident">err</span>,
+        (<span class="prelude-val">Err</span>(<span class="ident">result</span>), <span class="prelude-val">Ok</span>(())) =&gt; <span class="macro">panic!</span>(
             <span class="string">&quot;[proptest_derive]: internal error, this is a bug! \
              result: {:?}&quot;</span>,
             <span class="ident">result</span>
@@ -909,7 +909,7 @@
 <span class="kw">fn</span> <span class="ident">derive_proptest_arbitrary</span>(
     <span class="ident">ctx</span>: <span class="ident">Ctx</span>,
     <span class="ident">ast</span>: <span class="ident">DeriveInput</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">TokenStream</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">TokenStream</span><span class="op">&gt;</span> {
     <span class="kw">use</span> <span class="ident">syn::Data</span>::<span class="kw-2">*</span>;
 
     <span class="comment">// Deny lifetimes on type.</span>
@@ -927,7 +927,7 @@
     <span class="comment">// Compile into our own high level IR for the impl:</span>
     <span class="kw">let</span> <span class="ident">the_impl</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">ast</span>.<span class="ident">data</span> {
         <span class="comment">// Deal with structs:</span>
-        <span class="ident">Struct</span>(<span class="ident">data</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">derive_struct</span>(
+        <span class="ident">Struct</span>(<span class="ident">data</span>) =&gt; <span class="ident">derive_struct</span>(
             <span class="ident">ctx</span>,
             <span class="ident">DeriveData</span> {
                 <span class="ident">tracker</span>,
@@ -937,7 +937,7 @@
             },
         ),
         <span class="comment">// Deal with enums:</span>
-        <span class="ident">Enum</span>(<span class="ident">data</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">derive_enum</span>(
+        <span class="ident">Enum</span>(<span class="ident">data</span>) =&gt; <span class="ident">derive_enum</span>(
             <span class="ident">ctx</span>,
             <span class="ident">DeriveData</span> {
                 <span class="ident">tracker</span>,
@@ -947,7 +947,7 @@
             },
         ),
         <span class="comment">// Unions are not supported:</span>
-        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">error::not_struct_or_enum</span>(<span class="ident">ctx</span>)<span class="question-mark">?</span>,
+        <span class="kw">_</span> =&gt; <span class="ident">error::not_struct_or_enum</span>(<span class="ident">ctx</span>)<span class="question-mark">?</span>,
     }<span class="question-mark">?</span>;
 
     <span class="comment">// Linearise the IR into Rust code:</span>
@@ -965,7 +965,7 @@
 <span class="kw">fn</span> <span class="ident">derive_struct</span>(
     <span class="ident">ctx</span>: <span class="ident">Ctx</span>,
     <span class="kw-2">mut</span> <span class="ident">ast</span>: <span class="ident">DeriveData</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">Impl</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">Impl</span><span class="op">&gt;</span> {
     <span class="comment">// Deny attributes that are only for enum variants:</span>
     <span class="ident">error::if_enum_attrs_present</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">ast</span>.<span class="ident">attrs</span>, <span class="ident">error::STRUCT</span>);
 
@@ -1027,14 +1027,14 @@
 }
 
 <span class="doccomment">/// Apply the filter at the top level if provided.</span>
-<span class="kw">fn</span> <span class="ident">add_top_filter</span>(<span class="ident">filter</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Expr</span><span class="op">&gt;</span>, <span class="ident">parts</span>: <span class="ident">ImplParts</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ImplParts</span> {
+<span class="kw">fn</span> <span class="ident">add_top_filter</span>(<span class="ident">filter</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Expr</span><span class="op">&gt;</span>, <span class="ident">parts</span>: <span class="ident">ImplParts</span>) -&gt; <span class="ident">ImplParts</span> {
     <span class="kw">let</span> (<span class="ident">params</span>, <span class="ident">strat</span>, <span class="ident">ctor</span>) <span class="op">=</span> <span class="ident">parts</span>;
     <span class="kw">let</span> (<span class="ident">strat</span>, <span class="ident">ctor</span>) <span class="op">=</span> <span class="ident">add_filter_self</span>(<span class="ident">filter</span>, (<span class="ident">strat</span>, <span class="ident">ctor</span>));
     (<span class="ident">params</span>, <span class="ident">strat</span>, <span class="ident">ctor</span>)
 }
 
 <span class="doccomment">/// Apply a filter with `Self` as the input type to the predicate.</span>
-<span class="kw">fn</span> <span class="ident">add_filter_self</span>(<span class="ident">filter</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Expr</span><span class="op">&gt;</span>, <span class="ident">pair</span>: <span class="ident">StratPair</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StratPair</span> {
+<span class="kw">fn</span> <span class="ident">add_filter_self</span>(<span class="ident">filter</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Expr</span><span class="op">&gt;</span>, <span class="ident">pair</span>: <span class="ident">StratPair</span>) -&gt; <span class="ident">StratPair</span> {
     <span class="ident">pair_filter</span>(<span class="ident">filter</span>, <span class="ident">self_ty</span>(), <span class="ident">pair</span>)
 }
 
@@ -1044,7 +1044,7 @@
 <span class="kw">fn</span> <span class="ident">add_top_params</span>(
     <span class="ident">param_ty</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Type</span><span class="op">&gt;</span>,
     (<span class="ident">strat</span>, <span class="ident">ctor</span>): <span class="ident">StratPair</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ImplParts</span> {
+) -&gt; <span class="ident">ImplParts</span> {
     <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">Params::empty</span>();
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">params_ty</span>) <span class="op">=</span> <span class="ident">param_ty</span> {
         <span class="comment">// We need to add `let params = _top;`.</span>
@@ -1062,7 +1062,7 @@
     <span class="ident">item</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     <span class="ident">closure</span>: <span class="ident">MapClosure</span>,
     <span class="ident">fields</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
     <span class="comment">// Fold into an accumulator of the strategy types and the expressions</span>
     <span class="comment">// that produces the strategy. Finally turn the accumulator into</span>
     <span class="comment">// a `.prop_map(..)` that produces the composite strategy.</span>
@@ -1095,17 +1095,17 @@
     <span class="ident">ty</span>: <span class="ident">Type</span>,
     <span class="ident">span</span>: <span class="ident">Span</span>,
     <span class="ident">strategy</span>: <span class="ident">StratMode</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StratPair</span> {
+) -&gt; <span class="ident">StratPair</span> {
     <span class="kw">match</span> <span class="ident">strategy</span> {
         <span class="comment">// Specific strategy - use the given expr and erase the type</span>
         <span class="comment">// (since we don&#39;t know about it):</span>
-        <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pair_existential</span>(<span class="ident">ty</span>, <span class="ident">strat</span>),
+        <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) =&gt; <span class="ident">pair_existential</span>(<span class="ident">ty</span>, <span class="ident">strat</span>),
         <span class="comment">// Specific value - use the given expr:</span>
-        <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pair_value</span>(<span class="ident">ty</span>, <span class="ident">value</span>),
+        <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) =&gt; <span class="ident">pair_value</span>(<span class="ident">ty</span>, <span class="ident">value</span>),
         <span class="comment">// Specific regex - dispatch to `_regex` function based on `ty`:</span>
-        <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pair_regex</span>(<span class="ident">ty</span>, <span class="ident">regex</span>),
+        <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) =&gt; <span class="ident">pair_regex</span>(<span class="ident">ty</span>, <span class="ident">regex</span>),
         <span class="comment">// Use Arbitrary for the given type and mark the type as used:</span>
-        <span class="ident">StratMode::Arbitrary</span> <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="ident">StratMode::Arbitrary</span> =&gt; {
             <span class="ident">ty</span>.<span class="ident">mark_uses</span>(<span class="ident">ut</span>);
             <span class="ident">pair_any</span>(<span class="ident">ty</span>, <span class="ident">span</span>)
         }
@@ -1119,7 +1119,7 @@
     <span class="ident">ut</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">UseTracker</span>,
     <span class="ident">fields</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>,
     <span class="ident">item</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">PartsAcc</span><span class="op">&lt;</span><span class="ident">Ctor</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">PartsAcc</span><span class="op">&lt;</span><span class="ident">Ctor</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="comment">// Fold into an accumulator of the strategy types and the expressions</span>
     <span class="comment">// that produces the strategy. We then just return that accumulator</span>
     <span class="comment">// and let the caller of this function determine what to do with it.</span>
@@ -1138,15 +1138,15 @@
             <span class="ident">ty</span>.<span class="ident">clone</span>(),
             <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">params</span> {
                 <span class="comment">// Parameters were not set on the field:</span>
-                <span class="ident">ParamsMode::Passthrough</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">strategy</span> {
+                <span class="ident">ParamsMode::Passthrough</span> =&gt; <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">strategy</span> {
                     <span class="comment">// Specific strategy - use the given expr and erase the type:</span>
-                    <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pair_existential</span>(<span class="ident">ty</span>, <span class="ident">strat</span>),
+                    <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) =&gt; <span class="ident">pair_existential</span>(<span class="ident">ty</span>, <span class="ident">strat</span>),
                     <span class="comment">// Specific value - use the given expr:</span>
-                    <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pair_value</span>(<span class="ident">ty</span>, <span class="ident">value</span>),
+                    <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) =&gt; <span class="ident">pair_value</span>(<span class="ident">ty</span>, <span class="ident">value</span>),
                     <span class="comment">// Specific regex - dispatch to `_regex` function:</span>
-                    <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pair_regex</span>(<span class="ident">ty</span>, <span class="ident">regex</span>),
+                    <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) =&gt; <span class="ident">pair_regex</span>(<span class="ident">ty</span>, <span class="ident">regex</span>),
                     <span class="comment">// Use Arbitrary for the given type and mark the type as used:</span>
-                    <span class="ident">StratMode::Arbitrary</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">StratMode::Arbitrary</span> =&gt; {
                         <span class="ident">ty</span>.<span class="ident">mark_uses</span>(<span class="ident">ut</span>);
 
                         <span class="comment">// We use the Parameters type of the field&#39;s type.</span>
@@ -1155,11 +1155,11 @@
                     }
                 },
                 <span class="comment">// no_params set on the field:</span>
-                <span class="ident">ParamsMode::Default</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">ParamsMode::Default</span> =&gt; {
                     <span class="ident">product_handle_default_params</span>(<span class="ident">ut</span>, <span class="ident">ty</span>, <span class="ident">span</span>, <span class="ident">attrs</span>.<span class="ident">strategy</span>)
                 }
                 <span class="comment">// params(&lt;type&gt;) set on the field:</span>
-                <span class="ident">ParamsMode::Specified</span>(<span class="ident">params_ty</span>) <span class="op">=</span><span class="op">&gt;</span>
+                <span class="ident">ParamsMode::Specified</span>(<span class="ident">params_ty</span>) =&gt;
                 <span class="comment">// We need to extract the param as the binding `params`:</span>
                 {
                     <span class="ident">extract_nparam</span>(
@@ -1167,22 +1167,22 @@
                         <span class="ident">params_ty</span>,
                         <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">strategy</span> {
                             <span class="comment">// Specific strategy - use the given expr and erase the type:</span>
-                            <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) =&gt; {
                                 <span class="ident">pair_existential</span>(<span class="ident">ty</span>, <span class="ident">strat</span>)
                             }
                             <span class="comment">// Specific value - use the given expr in a closure and erase:</span>
-                            <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) =&gt; {
                                 <span class="ident">pair_value_exist</span>(<span class="ident">ty</span>, <span class="ident">value</span>)
                             }
                             <span class="comment">// Logic error by user; Pointless to specify params and</span>
                             <span class="comment">// regex because the params can never be used in the regex.</span>
-                            <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) =&gt; {
                                 <span class="ident">error::cant_set_param_and_regex</span>(<span class="ident">ctx</span>, <span class="ident">item</span>);
                                 <span class="ident">pair_regex</span>(<span class="ident">ty</span>, <span class="ident">regex</span>)
                             }
                             <span class="comment">// Logic error by user.</span>
                             <span class="comment">// Pointless to specify params and not the strategy. Bail!</span>
-                            <span class="ident">StratMode::Arbitrary</span> <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="ident">StratMode::Arbitrary</span> =&gt; {
                                 <span class="ident">error::cant_set_param_but_not_strat</span>(
                                     <span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">ty</span>, <span class="ident">item</span>,
                                 )<span class="question-mark">?</span>
@@ -1202,7 +1202,7 @@
     <span class="ident">acc</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">PartsAcc</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
     <span class="ident">params_ty</span>: <span class="ident">Type</span>,
     (<span class="ident">strat</span>, <span class="ident">ctor</span>): <span class="ident">StratPair</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StratPair</span> {
+) -&gt; <span class="ident">StratPair</span> {
     (
         <span class="ident">strat</span>,
         <span class="ident">extract_api</span>(<span class="ident">ctor</span>, <span class="ident">FromReg::Num</span>(<span class="ident">acc</span>.<span class="ident">add_param</span>(<span class="ident">params_ty</span>))),
@@ -1217,7 +1217,7 @@
 <span class="kw">fn</span> <span class="ident">derive_enum</span>(
     <span class="ident">ctx</span>: <span class="ident">Ctx</span>,
     <span class="kw-2">mut</span> <span class="ident">ast</span>: <span class="ident">DeriveData</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variant</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">Impl</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">Impl</span><span class="op">&gt;</span> {
     <span class="comment">// An enum can&#39;t be skipped, ensure it hasn&#39;t been:</span>
     <span class="ident">error::if_skip_present</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">ast</span>.<span class="ident">attrs</span>, <span class="ident">error::ENUM</span>);
 
@@ -1259,7 +1259,7 @@
     <span class="ident">ut</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">UseTracker</span>,
     <span class="ident">_self</span>: <span class="kw-2">&amp;</span><span class="ident">Ident</span>,
     <span class="ident">variants</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variant</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">ImplParts</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">ImplParts</span><span class="op">&gt;</span> {
     <span class="comment">// Initialize the accumulator:</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">acc</span> <span class="op">=</span> <span class="ident">PartsAcc::new</span>(<span class="ident">variants</span>.<span class="ident">len</span>());
 
@@ -1306,60 +1306,60 @@
     <span class="ident">attrs</span>: <span class="ident">ParsedAttributes</span>,
     <span class="ident">fields</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>,
     <span class="ident">acc</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">PartsAcc</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">filter</span> <span class="op">=</span> <span class="ident">attrs</span>.<span class="ident">filter</span>.<span class="ident">clone</span>();
 
     <span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">params</span> {
         <span class="comment">// Parameters were not set on the variant:</span>
-        <span class="ident">ParamsMode::Passthrough</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">strategy</span> {
+        <span class="ident">ParamsMode::Passthrough</span> =&gt; <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">strategy</span> {
             <span class="comment">// Specific strategy - use the given expr and erase the type:</span>
-            <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) =&gt; {
                 <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
                 <span class="ident">pair_existential_self</span>(<span class="ident">strat</span>)
             }
             <span class="comment">// Specific value - use the given expr:</span>
-            <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) =&gt; {
                 <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
                 <span class="ident">pair_value_self</span>(<span class="ident">value</span>)
             }
-            <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) =&gt; {
                 <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
                 <span class="ident">pair_regex_self</span>(<span class="ident">regex</span>)
             }
             <span class="comment">// No explicit strategy, use strategies for variant fields instead:</span>
-            <span class="ident">StratMode::Arbitrary</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">StratMode::Arbitrary</span> =&gt; {
                 <span class="ident">variant_no_explicit_strategy</span>(<span class="ident">ctx</span>, <span class="ident">ut</span>, <span class="ident">v_path</span>, <span class="ident">fields</span>, <span class="ident">acc</span>)<span class="question-mark">?</span>
             }
         },
         <span class="comment">// no_params set on the variant:</span>
-        <span class="ident">ParamsMode::Default</span> <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="ident">ParamsMode::Default</span> =&gt; {
             <span class="ident">variant_handle_default_params</span>(<span class="ident">ctx</span>, <span class="ident">ut</span>, <span class="ident">v_path</span>, <span class="ident">attrs</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>
         }
         <span class="comment">// params(&lt;type&gt;) set on the variant:</span>
-        <span class="ident">ParamsMode::Specified</span>(<span class="ident">params_ty</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">extract_nparam</span>(
+        <span class="ident">ParamsMode::Specified</span>(<span class="ident">params_ty</span>) =&gt; <span class="ident">extract_nparam</span>(
             <span class="ident">acc</span>,
             <span class="ident">params_ty</span>,
             <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">strategy</span> {
                 <span class="comment">// Specific strategy - use the given expr and erase the type:</span>
-                <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) =&gt; {
                     <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
                     <span class="ident">pair_existential_self</span>(<span class="ident">strat</span>)
                 }
                 <span class="comment">// Specific value - use the given expr in a closure and erase:</span>
-                <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) =&gt; {
                     <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
                     <span class="ident">pair_value_exist_self</span>(<span class="ident">value</span>)
                 }
                 <span class="comment">// Logic error by user; Pointless to specify params and regex</span>
                 <span class="comment">// because the params can never be used in the regex.</span>
-                <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) =&gt; {
                     <span class="ident">error::cant_set_param_and_regex</span>(<span class="ident">ctx</span>, <span class="ident">error::ENUM_VARIANT</span>);
                     <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
                     <span class="ident">pair_regex_self</span>(<span class="ident">regex</span>)
                 }
                 <span class="comment">// Logic error by user. Pointless to specify params and not</span>
                 <span class="comment">// the strategy. Bail!</span>
-                <span class="ident">StratMode::Arbitrary</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">StratMode::Arbitrary</span> =&gt; {
                     <span class="kw">let</span> <span class="ident">ty</span> <span class="op">=</span> <span class="ident">self_ty</span>();
                     <span class="ident">error::cant_set_param_but_not_strat</span>(
                         <span class="ident">ctx</span>,
@@ -1382,7 +1382,7 @@
     <span class="ident">v_path</span>: <span class="ident">Path</span>,
     <span class="ident">fields</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>,
     <span class="ident">acc</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">PartsAcc</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
     <span class="comment">// Compute parts for the inner product:</span>
     <span class="kw">let</span> <span class="ident">closure</span> <span class="op">=</span> <span class="ident">map_closure</span>(<span class="ident">v_path</span>, <span class="kw-2">&amp;</span><span class="ident">fields</span>);
     <span class="kw">let</span> <span class="ident">fields_acc</span> <span class="op">=</span>
@@ -1411,24 +1411,24 @@
     <span class="ident">v_path</span>: <span class="ident">Path</span>,
     <span class="ident">attrs</span>: <span class="ident">ParsedAttributes</span>,
     <span class="ident">fields</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">StratPair</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">pair</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">attrs</span>.<span class="ident">strategy</span> {
         <span class="comment">// Specific strategy - use the given expr and erase the type:</span>
-        <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="ident">StratMode::Strategy</span>(<span class="ident">strat</span>) =&gt; {
             <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
             <span class="ident">pair_existential_self</span>(<span class="ident">strat</span>)
         }
         <span class="comment">// Specific value - use the given expr:</span>
-        <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="ident">StratMode::Value</span>(<span class="ident">value</span>) =&gt; {
             <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
             <span class="ident">pair_value_self</span>(<span class="ident">value</span>)
         }
-        <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="ident">StratMode::Regex</span>(<span class="ident">regex</span>) =&gt; {
             <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>, <span class="ident">fields</span>)<span class="question-mark">?</span>;
             <span class="ident">pair_regex_self</span>(<span class="ident">regex</span>)
         }
         <span class="comment">// Use Arbitrary for the factors (fields) of variant:</span>
-        <span class="ident">StratMode::Arbitrary</span> <span class="op">=</span><span class="op">&gt;</span>
+        <span class="ident">StratMode::Arbitrary</span> =&gt;
         <span class="comment">// Fields are not allowed to specify params.</span>
         {
             <span class="ident">derive_product_has_params</span>(
@@ -1445,7 +1445,7 @@
 }
 
 <span class="doccomment">/// Ensures that there are no proptest attributes on any of the fields.</span>
-<span class="kw">fn</span> <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>: <span class="ident">Ctx</span>, <span class="ident">fields</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">deny_all_attrs_on_fields</span>(<span class="ident">ctx</span>: <span class="ident">Ctx</span>, <span class="ident">fields</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="ident">fields</span>.<span class="ident">into_iter</span>().<span class="ident">try_for_each</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> {
         <span class="kw">let</span> <span class="ident">f_attr</span> <span class="op">=</span> <span class="ident">attr::parse_attributes</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">field</span>.<span class="ident">attrs</span>)<span class="question-mark">?</span>;
         <span class="ident">error::if_anything_specified</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">f_attr</span>, <span class="ident">error::ENUM_VARIANT_FIELD</span>);
@@ -1461,7 +1461,7 @@
     <span class="ident">_self</span>: <span class="kw-2">&amp;</span><span class="ident">Ident</span>,
     <span class="ident">variants</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Variant</span><span class="op">&gt;</span>,
     <span class="ident">sty</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Type</span><span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">ImplParts</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="ident">ImplParts</span><span class="op">&gt;</span> {
     <span class="comment">// Initialize the accumulator:</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">acc</span> <span class="op">=</span> <span class="ident">StratAcc::new</span>(<span class="ident">variants</span>.<span class="ident">len</span>());
 
@@ -1497,7 +1497,7 @@
     <span class="ident">ctx</span>: <span class="ident">Ctx</span>,
     <span class="ident">_self</span>: <span class="kw-2">&amp;</span><span class="ident">Ident</span>,
     <span class="ident">variant</span>: <span class="ident">Variant</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">Ident</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>, <span class="ident">ParsedAttributes</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">DeriveResult</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">u32</span>, <span class="ident">Ident</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Field</span><span class="op">&gt;</span>, <span class="ident">ParsedAttributes</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">attrs</span> <span class="op">=</span> <span class="ident">attr::parse_attributes</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">variant</span>.<span class="ident">attrs</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">fields</span> <span class="op">=</span> <span class="ident">fields_to_vec</span>(<span class="ident">variant</span>.<span class="ident">fields</span>);
 
@@ -1550,7 +1550,7 @@
     <span class="ident">ctx</span>: <span class="ident">Ctx</span>,
     <span class="ident">attrs</span>: <span class="kw-2">&amp;</span><span class="ident">ParsedAttributes</span>,
     <span class="ident">v_path</span>: <span class="ident">Path</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StratPair</span> {
+) -&gt; <span class="ident">StratPair</span> {
     <span class="ident">error::if_present_on_unit_variant</span>(<span class="ident">ctx</span>, <span class="ident">attrs</span>);
     <span class="ident">pair_unit_self</span>(<span class="kw-2">&amp;</span><span class="ident">v_path</span>)
 }
@@ -1570,7 +1570,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">PartsAcc</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Constructs a new accumulator with the size</span>
     <span class="doccomment">/// passed on to the accumulator for the strategies.</span>
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">size</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">params</span>: <span class="ident">ParamAcc::empty</span>(),
             <span class="ident">strats</span>: <span class="ident">StratAcc::new</span>(<span class="ident">size</span>),
@@ -1578,7 +1578,7 @@
     }
 
     <span class="doccomment">/// Adds a strategy to the accumulator.</span>
-    <span class="kw">fn</span> <span class="ident">add_strat</span>(<span class="self">self</span>, <span class="ident">pair</span>: (<span class="ident">Strategy</span>, <span class="ident">C</span>)) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">add_strat</span>(<span class="self">self</span>, <span class="ident">pair</span>: (<span class="ident">Strategy</span>, <span class="ident">C</span>)) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">strats</span>: <span class="self">self</span>.<span class="ident">strats</span>.<span class="ident">add</span>(<span class="ident">pair</span>),
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
@@ -1587,7 +1587,7 @@
 
     <span class="doccomment">/// Adds a parameter type to the accumulator and returns how many types</span>
     <span class="doccomment">/// there were before adding.</span>
-    <span class="kw">fn</span> <span class="ident">add_param</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ty</span>: <span class="ident">Type</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">fn</span> <span class="ident">add_param</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ty</span>: <span class="ident">Type</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">add</span>(<span class="ident">ty</span>)
     }
 }
@@ -1596,7 +1596,7 @@
     <span class="doccomment">/// Finishes off the accumulator by returning the parts needed for</span>
     <span class="doccomment">/// deriving. The resulting strategy is a mapping of the parts into</span>
     <span class="doccomment">/// the `Self` type.</span>
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">closure</span>: <span class="ident">MapClosure</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ImplParts</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">closure</span>: <span class="ident">MapClosure</span>) -&gt; <span class="ident">ImplParts</span> {
         <span class="kw">let</span> (<span class="ident">params</span>, <span class="ident">count</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">consume</span>();
         <span class="kw">let</span> (<span class="ident">strat</span>, <span class="ident">ctor</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">strats</span>.<span class="ident">finish</span>(<span class="ident">closure</span>);
         (<span class="ident">params</span>, <span class="ident">strat</span>, <span class="ident">extract_all</span>(<span class="ident">ctor</span>, <span class="ident">count</span>, <span class="ident">FromReg::Top</span>))
@@ -1607,7 +1607,7 @@
     <span class="doccomment">/// Finishes off the accumulator by returning the parts needed for</span>
     <span class="doccomment">/// deriving. The resultant strategy is one that randomly picks</span>
     <span class="doccomment">/// one of the parts based on the relative weights in the `u32`.</span>
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">ctx</span>: <span class="ident">Ctx</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ImplParts</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">ctx</span>: <span class="ident">Ctx</span>) -&gt; <span class="ident">ImplParts</span> {
         <span class="kw">let</span> (<span class="ident">params</span>, <span class="ident">count</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">consume</span>();
         <span class="kw">let</span> (<span class="ident">strat</span>, <span class="ident">ctor</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">strats</span>.<span class="ident">finish</span>(<span class="ident">ctx</span>);
         (<span class="ident">params</span>, <span class="ident">strat</span>, <span class="ident">extract_all</span>(<span class="ident">ctor</span>, <span class="ident">count</span>, <span class="ident">FromReg::Top</span>))
@@ -1626,21 +1626,21 @@
 
 <span class="kw">impl</span> <span class="ident">ParamAcc</span> {
     <span class="doccomment">/// Returns an empty accumulator.</span>
-    <span class="kw">fn</span> <span class="ident">empty</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">empty</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">types</span>: <span class="ident">Params::empty</span>(),
         }
     }
 
     <span class="doccomment">/// Adds a type to the accumulator and returns the type count before adding.</span>
-    <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ty</span>: <span class="ident">Type</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ty</span>: <span class="ident">Type</span>) -&gt; <span class="ident">usize</span> {
         <span class="kw">let</span> <span class="ident">var</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">types</span>.<span class="ident">len</span>();
         <span class="self">self</span>.<span class="ident">types</span> <span class="op">+</span><span class="op">=</span> <span class="ident">ty</span>;
         <span class="ident">var</span>
     }
 
     <span class="doccomment">/// Consumes the accumulator returning the types and the count.</span>
-    <span class="kw">fn</span> <span class="ident">consume</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">Params</span>, <span class="ident">usize</span>) {
+    <span class="kw">fn</span> <span class="ident">consume</span>(<span class="self">self</span>) -&gt; (<span class="ident">Params</span>, <span class="ident">usize</span>) {
         <span class="kw">let</span> <span class="ident">count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">types</span>.<span class="ident">len</span>();
         (<span class="self">self</span>.<span class="ident">types</span>, <span class="ident">count</span>)
     }
@@ -1661,7 +1661,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> <span class="ident">StratAcc</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Construct the given accumulator with</span>
     <span class="doccomment">/// initial capacity according to `size`.</span>
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">size</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">size</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">types</span>: <span class="ident">Vec::with_capacity</span>(<span class="ident">size</span>),
             <span class="ident">ctors</span>: <span class="ident">Vec::with_capacity</span>(<span class="ident">size</span>),
@@ -1670,7 +1670,7 @@
 
     <span class="doccomment">/// Add the given type and constructor pair to</span>
     <span class="doccomment">/// the accumulator which is moved and returned.</span>
-    <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">mut</span> <span class="self">self</span>, (<span class="ident">strat</span>, <span class="ident">ctor</span>): (<span class="ident">Strategy</span>, <span class="ident">C</span>)) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">mut</span> <span class="self">self</span>, (<span class="ident">strat</span>, <span class="ident">ctor</span>): (<span class="ident">Strategy</span>, <span class="ident">C</span>)) -&gt; <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">types</span>.<span class="ident">push</span>(<span class="ident">strat</span>);
         <span class="self">self</span>.<span class="ident">ctors</span>.<span class="ident">push</span>(<span class="ident">ctor</span>);
         <span class="self">self</span>
@@ -1679,12 +1679,12 @@
     <span class="doccomment">/// Consume the accumulator returning the:</span>
     <span class="doccomment">/// + sequence of strategies</span>
     <span class="doccomment">/// + sequence of constructors</span>
-    <span class="kw">fn</span> <span class="ident">consume</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Strategy</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) {
+    <span class="kw">fn</span> <span class="ident">consume</span>(<span class="self">self</span>) -&gt; (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Strategy</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>) {
         (<span class="self">self</span>.<span class="ident">types</span>, <span class="self">self</span>.<span class="ident">ctors</span>)
     }
 
     <span class="doccomment">/// Returns `true` iff nothing has been accumulated yet.</span>
-    <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">types</span>.<span class="ident">is_empty</span>()
     }
 }
@@ -1692,7 +1692,7 @@
 <span class="kw">impl</span> <span class="ident">StratAcc</span><span class="op">&lt;</span><span class="ident">Ctor</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Finishes off the accumulator by returning</span>
     <span class="doccomment">/// a `.prop_map(&lt;closure&gt;)` of the strategies.</span>
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">closure</span>: <span class="ident">MapClosure</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StratPair</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">closure</span>: <span class="ident">MapClosure</span>) -&gt; <span class="ident">StratPair</span> {
         <span class="ident">pair_map</span>(<span class="self">self</span>.<span class="ident">consume</span>(), <span class="ident">closure</span>)
     }
 }
@@ -1701,7 +1701,7 @@
     <span class="doccomment">/// Finishes off the accumulator by returning a union of the</span>
     <span class="doccomment">/// strategies where the resultant strategy randomly picks</span>
     <span class="doccomment">/// one of the summands based on the relative weights provided.</span>
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">ctx</span>: <span class="ident">Ctx</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StratPair</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>, <span class="ident">ctx</span>: <span class="ident">Ctx</span>) -&gt; <span class="ident">StratPair</span> {
         <span class="comment">// Check that the weight sum &lt;= u32::MAX</span>
         <span class="kw">if</span> <span class="self">self</span>
             .<span class="ident">ctors</span>

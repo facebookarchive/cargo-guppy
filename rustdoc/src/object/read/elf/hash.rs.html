@@ -231,7 +231,7 @@
     <span class="doccomment">/// segment pointed to via the `DT_HASH` entry.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The header is read at offset 0 in the given `data`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">endian</span>: <span class="ident">Elf::Endian</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">endian</span>: <span class="ident">Elf::Endian</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">header</span> <span class="op">=</span> <span class="ident">data</span>
             .<span class="ident">read</span>::<span class="op">&lt;</span><span class="ident">elf::HashHeader</span><span class="op">&lt;</span><span class="ident">Elf::Endian</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">offset</span>)
@@ -246,7 +246,7 @@
     }
 
     <span class="doccomment">/// Return the symbol table length.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symbol_table_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symbol_table_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
         <span class="self">self</span>.<span class="ident">chains</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u32</span>
     }
 
@@ -257,7 +257,7 @@
         <span class="ident">name</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">hash</span>: <span class="ident">u32</span>,
         <span class="ident">symbols</span>: <span class="kw-2">&amp;</span><span class="ident">SymbolTable</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">Elf</span>, <span class="ident">R</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="ident">Elf::Sym</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="ident">Elf::Sym</span><span class="op">&gt;</span> {
         <span class="comment">// Get the chain start from the bucket for this hash.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buckets</span>[(<span class="ident">hash</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">%</span> <span class="self">self</span>.<span class="ident">buckets</span>.<span class="ident">len</span>()].<span class="ident">get</span>(<span class="ident">endian</span>) <span class="kw">as</span> <span class="ident">usize</span>;
         <span class="comment">// Avoid infinite loop.</span>
@@ -265,7 +265,7 @@
         <span class="kw">let</span> <span class="ident">strings</span> <span class="op">=</span> <span class="ident">symbols</span>.<span class="ident">strings</span>();
         <span class="kw">while</span> <span class="ident">index</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">chains</span>.<span class="ident">len</span>() {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">symbol</span>) <span class="op">=</span> <span class="ident">symbols</span>.<span class="ident">symbol</span>(<span class="ident">index</span>) {
-                <span class="kw">if</span> <span class="ident">symbol</span>.<span class="ident">name</span>(<span class="ident">endian</span>, <span class="ident">strings</span>) <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Ok</span>(<span class="ident">name</span>) {
+                <span class="kw">if</span> <span class="ident">symbol</span>.<span class="ident">name</span>(<span class="ident">endian</span>, <span class="ident">strings</span>) <span class="op">==</span> <span class="prelude-val">Ok</span>(<span class="ident">name</span>) {
                     <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">symbol</span>);
                 }
             }
@@ -298,7 +298,7 @@
     <span class="doccomment">/// will be used as the hash table values. It does not matter if this</span>
     <span class="doccomment">/// is longer than needed, and this will often the case when accessing</span>
     <span class="doccomment">/// the hash table via the `DT_GNU_HASH` entry.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">endian</span>: <span class="ident">Elf::Endian</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">endian</span>: <span class="ident">Elf::Endian</span>, <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> [<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">offset</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">header</span> <span class="op">=</span> <span class="ident">data</span>
             .<span class="ident">read</span>::<span class="op">&lt;</span><span class="ident">elf::GnuHashHeader</span><span class="op">&lt;</span><span class="ident">Elf::Endian</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">offset</span>)
@@ -325,16 +325,16 @@
     }
 
     <span class="doccomment">/// Return the symbol table index of the first symbol in the hash table.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symbol_base</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symbol_base</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
         <span class="self">self</span>.<span class="ident">symbol_base</span>
     }
 
     <span class="doccomment">/// Determine the symbol table length by finding the last entry in the hash table.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns `None` if the hash table is empty or invalid.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symbol_table_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">endian</span>: <span class="ident">Elf::Endian</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">symbol_table_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">endian</span>: <span class="ident">Elf::Endian</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
         <span class="comment">// Ensure we find a non-empty bucket.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">symbol_base</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">symbol_base</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
 
@@ -368,14 +368,14 @@
         <span class="ident">name</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">hash</span>: <span class="ident">u32</span>,
         <span class="ident">symbols</span>: <span class="kw-2">&amp;</span><span class="ident">SymbolTable</span><span class="op">&lt;</span><span class="lifetime">&#39;data</span>, <span class="ident">Elf</span>, <span class="ident">R</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="ident">Elf::Sym</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;data</span> <span class="ident">Elf::Sym</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">word_bits</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">Elf::Word</span><span class="op">&gt;</span>() <span class="kw">as</span> <span class="ident">u32</span> <span class="op">*</span> <span class="number">8</span>;
 
         <span class="comment">// Test against bloom filter.</span>
         <span class="kw">let</span> <span class="ident">bloom_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">bloom_filters</span>.<span class="ident">len</span>() <span class="op">/</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">Elf::Word</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span>
             ((<span class="ident">hash</span> <span class="op">/</span> <span class="ident">word_bits</span>) <span class="op">&amp;</span> (<span class="ident">bloom_count</span> <span class="kw">as</span> <span class="ident">u32</span> <span class="op">-</span> <span class="number">1</span>)) <span class="op">*</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">Elf::Word</span><span class="op">&gt;</span>() <span class="kw">as</span> <span class="ident">u32</span>;
-        <span class="kw">let</span> <span class="ident">filter</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">word_bits</span> <span class="op">=</span><span class="op">=</span> <span class="number">64</span> {
+        <span class="kw">let</span> <span class="ident">filter</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">word_bits</span> <span class="op">==</span> <span class="number">64</span> {
             <span class="self">self</span>.<span class="ident">bloom_filters</span>
                 .<span class="ident">read_at</span>::<span class="op">&lt;</span><span class="ident">U64</span><span class="op">&lt;</span><span class="ident">Elf::Endian</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">offset</span>.<span class="ident">into</span>())
                 .<span class="ident">ok</span>()<span class="question-mark">?</span>
@@ -387,16 +387,16 @@
                 .<span class="ident">get</span>(<span class="ident">endian</span>)
                 .<span class="ident">into</span>()
         };
-        <span class="kw">if</span> <span class="ident">filter</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident">hash</span> <span class="op">%</span> <span class="ident">word_bits</span>)) <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="ident">filter</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident">hash</span> <span class="op">%</span> <span class="ident">word_bits</span>)) <span class="op">==</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
-        <span class="kw">if</span> <span class="ident">filter</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> ((<span class="ident">hash</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">bloom_shift</span>) <span class="op">%</span> <span class="ident">word_bits</span>)) <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="ident">filter</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> ((<span class="ident">hash</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">bloom_shift</span>) <span class="op">%</span> <span class="ident">word_bits</span>)) <span class="op">==</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
 
         <span class="comment">// Get the chain start from the bucket for this hash.</span>
         <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buckets</span>[(<span class="ident">hash</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">%</span> <span class="self">self</span>.<span class="ident">buckets</span>.<span class="ident">len</span>()].<span class="ident">get</span>(<span class="ident">endian</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">if</span> <span class="ident">index</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="ident">index</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
 
@@ -408,8 +408,8 @@
             .<span class="ident">get</span>(<span class="ident">index</span>.<span class="ident">checked_sub</span>(<span class="self">self</span>.<span class="ident">symbol_base</span> <span class="kw">as</span> <span class="ident">usize</span>)<span class="question-mark">?</span>..)<span class="question-mark">?</span>;
         <span class="kw">for</span> (<span class="ident">symbol</span>, <span class="ident">value</span>) <span class="kw">in</span> <span class="ident">symbols</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="ident">values</span>.<span class="ident">iter</span>()) {
             <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">get</span>(<span class="ident">endian</span>);
-            <span class="kw">if</span> <span class="ident">value</span> <span class="op">|</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="ident">hash</span> <span class="op">|</span> <span class="number">1</span> {
-                <span class="kw">if</span> <span class="ident">symbol</span>.<span class="ident">name</span>(<span class="ident">endian</span>, <span class="ident">strings</span>) <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Ok</span>(<span class="ident">name</span>) {
+            <span class="kw">if</span> <span class="ident">value</span> <span class="op">|</span> <span class="number">1</span> <span class="op">==</span> <span class="ident">hash</span> <span class="op">|</span> <span class="number">1</span> {
+                <span class="kw">if</span> <span class="ident">symbol</span>.<span class="ident">name</span>(<span class="ident">endian</span>, <span class="ident">strings</span>) <span class="op">==</span> <span class="prelude-val">Ok</span>(<span class="ident">name</span>) {
                     <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">symbol</span>);
                 }
             }

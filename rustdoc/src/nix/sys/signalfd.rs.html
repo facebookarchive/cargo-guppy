@@ -225,7 +225,7 @@
 <span class="doccomment">/// signalfd (the default handler will be invoked instead).</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// See [the signalfd man page for more information](http://man7.org/linux/man-pages/man2/signalfd.2.html)</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">signalfd</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>, <span class="ident">flags</span>: <span class="ident">SfdFlags</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">signalfd</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>, <span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>, <span class="ident">flags</span>: <span class="ident">SfdFlags</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RawFd</span><span class="op">&gt;</span> {
     <span class="kw">unsafe</span> {
         <span class="ident">Errno::result</span>(<span class="ident">libc::signalfd</span>(<span class="ident">fd</span> <span class="kw">as</span> <span class="ident">libc::c_int</span>, <span class="ident">mask</span>.<span class="ident">as_ref</span>(), <span class="ident">flags</span>.<span class="ident">bits</span>()))
     }
@@ -261,21 +261,21 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SignalFd</span>(<span class="ident">RawFd</span>);
 
 <span class="kw">impl</span> <span class="ident">SignalFd</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SignalFd</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SignalFd</span><span class="op">&gt;</span> {
         <span class="ident"><span class="self">Self</span>::with_flags</span>(<span class="ident">mask</span>, <span class="ident">SfdFlags::empty</span>())
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_flags</span>(<span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>, <span class="ident">flags</span>: <span class="ident">SfdFlags</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SignalFd</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_flags</span>(<span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>, <span class="ident">flags</span>: <span class="ident">SfdFlags</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SignalFd</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="ident">signalfd</span>(<span class="ident">SIGNALFD_NEW</span>, <span class="ident">mask</span>, <span class="ident">flags</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">SignalFd</span>(<span class="ident">fd</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_mask</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_mask</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">mask</span>: <span class="kw-2">&amp;</span><span class="ident">SigSet</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="ident">signalfd</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">mask</span>, <span class="ident">SfdFlags::empty</span>()).<span class="ident">map</span>(<span class="ident">drop</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_signal</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">siginfo</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_signal</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">siginfo</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">mem::MaybeUninit</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="ident">SIGNALFD_SIGINFO_SIZE</span>]<span class="op">&gt;</span><span class="ident">::uninit</span>();
 
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">Errno::result</span>(<span class="kw">unsafe</span> {
@@ -284,10 +284,10 @@
                        <span class="ident">SIGNALFD_SIGINFO_SIZE</span> <span class="kw">as</span> <span class="ident">libc::size_t</span>)
         }).<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span> <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">match</span> <span class="ident">res</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">SIGNALFD_SIGINFO_SIZE</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw">unsafe</span> { <span class="ident">mem::transmute</span>(<span class="ident">buffer</span>.<span class="ident">assume_init</span>()) })),
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(<span class="string">&quot;partial read on signalfd&quot;</span>),
-            <span class="prelude-val">Err</span>(<span class="ident">Error::Sys</span>(<span class="ident">Errno::EAGAIN</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-            <span class="prelude-val">Err</span>(<span class="ident">error</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>)
+            <span class="prelude-val">Ok</span>(<span class="ident">SIGNALFD_SIGINFO_SIZE</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw">unsafe</span> { <span class="ident">mem::transmute</span>(<span class="ident">buffer</span>.<span class="ident">assume_init</span>()) })),
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;partial read on signalfd&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">Error::Sys</span>(<span class="ident">Errno::EAGAIN</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">error</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">error</span>)
         }
     }
 }
@@ -295,14 +295,14 @@
 <span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">SignalFd</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> <span class="ident">unistd::close</span>(<span class="self">self</span>.<span class="number">0</span>);
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">std::thread::panicking</span>() <span class="op">&amp;&amp;</span> <span class="ident">e</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Sys</span>(<span class="ident">Errno::EBADF</span>)) {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">std::thread::panicking</span>() <span class="op">&amp;&amp;</span> <span class="ident">e</span> <span class="op">==</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Sys</span>(<span class="ident">Errno::EBADF</span>)) {
             <span class="macro">panic!</span>(<span class="string">&quot;Closing an invalid file descriptor!&quot;</span>);
         };
     }
 }
 
 <span class="kw">impl</span> <span class="ident">AsRawFd</span> <span class="kw">for</span> <span class="ident">SignalFd</span> {
-    <span class="kw">fn</span> <span class="ident">as_raw_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RawFd</span> {
+    <span class="kw">fn</span> <span class="ident">as_raw_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">RawFd</span> {
         <span class="self">self</span>.<span class="number">0</span>
     }
 }
@@ -310,10 +310,10 @@
 <span class="kw">impl</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">SignalFd</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">siginfo</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">read_signal</span>() {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">sig</span>)) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">sig</span>),
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">sig</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="ident">sig</span>),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
         }
     }
 }

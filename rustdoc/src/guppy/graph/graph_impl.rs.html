@@ -2005,9 +2005,6 @@
 <span id="2005">2005</span>
 <span id="2006">2006</span>
 <span id="2007">2007</span>
-<span id="2008">2008</span>
-<span id="2009">2009</span>
-<span id="2010">2010</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -2023,7 +2020,6 @@
     <span class="ident">CargoMetadata</span>, <span class="ident">DependencyKind</span>, <span class="ident">Error</span>, <span class="ident">JsonValue</span>, <span class="ident">MetadataCommand</span>, <span class="ident">PackageId</span>,
 };
 <span class="kw">use</span> <span class="ident">camino</span>::{<span class="ident">Utf8Path</span>, <span class="ident">Utf8PathBuf</span>};
-<span class="kw">use</span> <span class="ident">cargo_metadata::NodeDep</span>;
 <span class="kw">use</span> <span class="ident">fixedbitset::FixedBitSet</span>;
 <span class="kw">use</span> <span class="ident">indexmap::IndexMap</span>;
 <span class="kw">use</span> <span class="ident">once_cell::sync::OnceCell</span>;
@@ -2068,12 +2064,12 @@
 
 <span class="kw">impl</span> <span class="ident">PackageGraph</span> {
     <span class="doccomment">/// Executes the given `MetadataCommand` and constructs a `PackageGraph` from it.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_command</span>(<span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">MetadataCommand</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_command</span>(<span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">MetadataCommand</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident">command</span>.<span class="ident">build_graph</span>()
     }
 
     <span class="doccomment">/// Parses the given `Metadata` and constructs a `PackageGraph` from it.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_metadata</span>(<span class="ident">metadata</span>: <span class="ident">CargoMetadata</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_metadata</span>(<span class="ident">metadata</span>: <span class="ident">CargoMetadata</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident"><span class="self">Self</span>::build</span>(<span class="ident">metadata</span>.<span class="number">0</span>)
     }
 
@@ -2082,14 +2078,14 @@
     <span class="doccomment">/// Generally, `guppy` expects the `cargo metadata` command to be run:</span>
     <span class="doccomment">/// * with `--all-features`, so that `guppy` has a full view of the dependency graph.</span>
     <span class="doccomment">/// * without `--no-deps`, so that `guppy` knows about non-workspace dependencies.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_json</span>(<span class="ident">json</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_json</span>(<span class="ident">json</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">CargoMetadata::parse_json</span>(<span class="ident">json</span>)<span class="question-mark">?</span>;
         <span class="ident"><span class="self">Self</span>::from_metadata</span>(<span class="ident">metadata</span>)
     }
 
     <span class="doccomment">/// Verifies internal invariants on this graph. Not part of the documented API.</span>
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// Graph structure checks.</span>
         <span class="kw">let</span> <span class="ident">node_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">node_count</span>();
         <span class="kw">let</span> <span class="ident">package_count</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">packages</span>.<span class="ident">len</span>();
@@ -2110,12 +2106,12 @@
             <span class="kw">let</span> <span class="ident">package_id</span> <span class="op">=</span> <span class="ident">metadata</span>.<span class="ident">id</span>();
 
             <span class="kw">match</span> <span class="ident">metadata</span>.<span class="ident">source</span>().<span class="ident">workspace_path</span>() {
-                <span class="prelude-val">Some</span>(<span class="ident">workspace_path</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">workspace_path</span>) =&gt; {
                     <span class="comment">// This package is in the workspace, so the workspace should have information</span>
                     <span class="comment">// about it.</span>
                     <span class="kw">let</span> <span class="ident">metadata2</span> <span class="op">=</span> <span class="ident">workspace</span>.<span class="ident">member_by_path</span>(<span class="ident">workspace_path</span>);
                     <span class="kw">let</span> <span class="ident">metadata2_id</span> <span class="op">=</span> <span class="ident">metadata2</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">metadata</span><span class="op">|</span> <span class="ident">metadata</span>.<span class="ident">id</span>());
-                    <span class="kw">if</span> <span class="op">!</span><span class="macro">matches!</span>(<span class="ident">metadata2_id</span>, <span class="prelude-val">Ok</span>(<span class="ident">id</span>) <span class="kw">if</span> <span class="ident">id</span> <span class="op">=</span><span class="op">=</span> <span class="ident">package_id</span>) {
+                    <span class="kw">if</span> <span class="op">!</span><span class="macro">matches!</span>(<span class="ident">metadata2_id</span>, <span class="prelude-val">Ok</span>(<span class="ident">id</span>) <span class="kw">if</span> <span class="ident">id</span> <span class="op">==</span> <span class="ident">package_id</span>) {
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::PackageGraphInternalError</span>(<span class="macro">format!</span>(
                             <span class="string">&quot;package {} has workspace path {:?} but query by path returned {:?}&quot;</span>,
                             <span class="ident">package_id</span>, <span class="ident">workspace_path</span>, <span class="ident">metadata2_id</span>,
@@ -2124,7 +2120,7 @@
 
                     <span class="kw">let</span> <span class="ident">metadata3</span> <span class="op">=</span> <span class="ident">workspace</span>.<span class="ident">member_by_name</span>(<span class="ident">metadata</span>.<span class="ident">name</span>());
                     <span class="kw">let</span> <span class="ident">metadata3_id</span> <span class="op">=</span> <span class="ident">metadata3</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">metadata</span><span class="op">|</span> <span class="ident">metadata</span>.<span class="ident">id</span>());
-                    <span class="kw">if</span> <span class="op">!</span><span class="macro">matches!</span>(<span class="ident">metadata3_id</span>, <span class="prelude-val">Ok</span>(<span class="ident">id</span>) <span class="kw">if</span> <span class="ident">id</span> <span class="op">=</span><span class="op">=</span> <span class="ident">package_id</span>) {
+                    <span class="kw">if</span> <span class="op">!</span><span class="macro">matches!</span>(<span class="ident">metadata3_id</span>, <span class="prelude-val">Ok</span>(<span class="ident">id</span>) <span class="kw">if</span> <span class="ident">id</span> <span class="op">==</span> <span class="ident">package_id</span>) {
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::PackageGraphInternalError</span>(<span class="macro">format!</span>(
                             <span class="string">&quot;package {} has name {}, but workspace query by name returned {:?}&quot;</span>,
                             <span class="ident">package_id</span>,
@@ -2133,7 +2129,7 @@
                         )));
                     }
                 }
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">None</span> =&gt; {
                     <span class="comment">// This package is not in the workspace.</span>
                     <span class="kw">if</span> <span class="ident">workspace_ids</span>.<span class="ident">contains</span>(<span class="ident">package_id</span>) {
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::PackageGraphInternalError</span>(<span class="macro">format!</span>(
@@ -2146,14 +2142,14 @@
 
             <span class="kw">for</span> <span class="ident">build_target</span> <span class="kw">in</span> <span class="ident">metadata</span>.<span class="ident">build_targets</span>() {
                 <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">id</span>() {
-                    <span class="ident">BuildTargetId::Library</span> <span class="op">|</span> <span class="ident">BuildTargetId::BuildScript</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">BuildTargetId::Library</span> <span class="op">|</span> <span class="ident">BuildTargetId::BuildScript</span> =&gt; {
                         <span class="comment">// Ensure that the name is populated (this may panic if it isn&#39;t).</span>
                         <span class="ident">build_target</span>.<span class="ident">name</span>();
                     }
                     <span class="ident">BuildTargetId::Binary</span>(<span class="ident">name</span>)
                     <span class="op">|</span> <span class="ident">BuildTargetId::Example</span>(<span class="ident">name</span>)
                     <span class="op">|</span> <span class="ident">BuildTargetId::Test</span>(<span class="ident">name</span>)
-                    <span class="op">|</span> <span class="ident">BuildTargetId::Benchmark</span>(<span class="ident">name</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="op">|</span> <span class="ident">BuildTargetId::Benchmark</span>(<span class="ident">name</span>) =&gt; {
                         <span class="kw">if</span> <span class="ident">name</span> <span class="op">!</span><span class="op">=</span> <span class="ident">build_target</span>.<span class="ident">name</span>() {
                             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::PackageGraphInternalError</span>(<span class="macro">format!</span>(
                                 <span class="string">&quot;package {} has build target name mismatch ({} != {})&quot;</span>,
@@ -2166,20 +2162,20 @@
                 }
 
                 <span class="kw">let</span> <span class="ident">id_kind_mismatch</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">id</span>() {
-                    <span class="ident">BuildTargetId::Library</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
-                        <span class="ident">BuildTargetKind::LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">BuildTargetKind::ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-                        <span class="ident">BuildTargetKind::Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+                    <span class="ident">BuildTargetId::Library</span> =&gt; <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
+                        <span class="ident">BuildTargetKind::LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">BuildTargetKind::ProcMacro</span> =&gt; <span class="bool-val">false</span>,
+                        <span class="ident">BuildTargetKind::Binary</span> =&gt; <span class="bool-val">true</span>,
                     },
-                    <span class="ident">BuildTargetId::Example</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
-                        <span class="ident">BuildTargetKind::LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-                        <span class="ident">BuildTargetKind::ProcMacro</span> <span class="op">|</span> <span class="ident">BuildTargetKind::Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
+                    <span class="ident">BuildTargetId::Example</span>(<span class="kw">_</span>) =&gt; <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
+                        <span class="ident">BuildTargetKind::LibraryOrExample</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
+                        <span class="ident">BuildTargetKind::ProcMacro</span> <span class="op">|</span> <span class="ident">BuildTargetKind::Binary</span> =&gt; <span class="bool-val">true</span>,
                     },
                     <span class="ident">BuildTargetId::BuildScript</span>
                     <span class="op">|</span> <span class="ident">BuildTargetId::Binary</span>(<span class="kw">_</span>)
                     <span class="op">|</span> <span class="ident">BuildTargetId::Test</span>(<span class="kw">_</span>)
-                    <span class="op">|</span> <span class="ident">BuildTargetId::Benchmark</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
-                        <span class="ident">BuildTargetKind::LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">BuildTargetKind::ProcMacro</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-                        <span class="ident">BuildTargetKind::Binary</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+                    <span class="op">|</span> <span class="ident">BuildTargetId::Benchmark</span>(<span class="kw">_</span>) =&gt; <span class="kw">match</span> <span class="ident">build_target</span>.<span class="ident">kind</span>() {
+                        <span class="ident">BuildTargetKind::LibraryOrExample</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">BuildTargetKind::ProcMacro</span> =&gt; <span class="bool-val">true</span>,
+                        <span class="ident">BuildTargetKind::Binary</span> =&gt; <span class="bool-val">false</span>,
                     },
                 };
 
@@ -2233,7 +2229,7 @@
     }
 
     <span class="doccomment">/// Returns information about the workspace.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Workspace</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Workspace</span> {
         <span class="ident">Workspace</span> {
             <span class="ident">graph</span>: <span class="self">self</span>,
             <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">workspace</span>,
@@ -2241,12 +2237,12 @@
     }
 
     <span class="doccomment">/// Returns an iterator over all the package IDs in this graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">package_ids</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">package_ids</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
         <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">package_ids</span>()
     }
 
     <span class="doccomment">/// Returns an iterator over all the packages in this graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">packages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageMetadata</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">packages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageMetadata</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
         <span class="self">self</span>.<span class="ident">data</span>
             .<span class="ident">packages</span>
             .<span class="ident">values</span>()
@@ -2254,7 +2250,7 @@
     }
 
     <span class="doccomment">/// Returns the metadata for the given package ID.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">data</span>
             .<span class="ident">metadata_impl</span>(<span class="ident">package_id</span>)
@@ -2263,7 +2259,7 @@
     }
 
     <span class="doccomment">/// Returns the number of packages in this graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">package_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">package_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="comment">// This can be obtained in two different ways: self.dep_graph.node_count() or</span>
         <span class="comment">// self.data.packages.len(). verify() checks that they return the same results.</span>
         <span class="comment">//</span>
@@ -2273,14 +2269,14 @@
     }
 
     <span class="doccomment">/// Returns the number of links in this graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">link_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">link_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">edge_count</span>()
     }
 
     <span class="doccomment">/// Creates a new cache for `depends_on` queries.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The cache is optional but can speed up some queries.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_depends_cache</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependsCache</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_depends_cache</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DependsCache</span> {
         <span class="ident">DependsCache::new</span>(<span class="self">self</span>)
     }
 
@@ -2292,7 +2288,7 @@
     <span class="doccomment">/// This also returns true if `package_a` is the same as `package_b`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For repeated queries, consider using `new_depends_cache` to speed up queries.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">depends_on</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_a</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>, <span class="ident">package_b</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">depends_on</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_a</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>, <span class="ident">package_b</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">depends_cache</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">new_depends_cache</span>();
         <span class="ident">depends_cache</span>.<span class="ident">depends_on</span>(<span class="ident">package_a</span>, <span class="ident">package_b</span>)
     }
@@ -2306,7 +2302,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">package_a</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">package_b</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">a_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_ix</span>(<span class="ident">package_a</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">b_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_ix</span>(<span class="ident">package_b</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">dep_graph</span>.<span class="ident">contains_edge</span>(<span class="ident">a_ix</span>, <span class="ident">b_ix</span>))
@@ -2315,7 +2311,7 @@
     <span class="doccomment">/// Returns information about dependency cycles in this graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more information, see the documentation for `Cycles`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cycles</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Cycles</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cycles</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Cycles</span> {
         <span class="ident">Cycles::new</span>(<span class="self">self</span>)
     }
 
@@ -2329,7 +2325,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">package_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">dir</span>: <span class="ident">Direction</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
             .<span class="ident">edges_directed</span>(<span class="ident">package_ix</span>, <span class="ident">dir</span>)
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">edge</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">edge_ref_to_link</span>(<span class="ident">edge</span>))
@@ -2339,14 +2335,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">from_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">to_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
             .<span class="ident">find_edge</span>(<span class="ident">from_ix</span>, <span class="ident">to_ix</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">edge_ix</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">edge_ix_to_link</span>(<span class="ident">edge_ix</span>))
     }
 
     <span class="doccomment">/// Constructs a map of strongly connected components for this graph.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">sccs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">sccs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Sccs</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">sccs</span>.<span class="ident">get_or_init</span>(<span class="op">|</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">edge_filtered</span> <span class="op">=</span>
                 <span class="ident">EdgeFiltered::from_fn</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>, <span class="op">|</span><span class="ident">edge</span><span class="op">|</span> <span class="op">!</span><span class="ident">edge</span>.<span class="ident">weight</span>().<span class="ident">dev_only</span>());
@@ -2371,7 +2367,7 @@
     <span class="doccomment">/// Returns the inner dependency graph.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Should this be exposed publicly? Not sure.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">dep_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">dep_graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dep_graph</span>
     }
 
@@ -2379,7 +2375,7 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">edge_ref_to_link</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">edge</span>: <span class="ident">EdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">PackageLink::new</span>(
             <span class="self">self</span>,
             <span class="ident">edge</span>.<span class="ident">source</span>(),
@@ -2390,7 +2386,7 @@
     }
 
     <span class="doccomment">/// Maps an edge index to a dependency link.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">edge_ix_to_link</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageLink</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">edge_ix_to_link</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>) -&gt; <span class="ident">PackageLink</span> {
         <span class="kw">let</span> (<span class="ident">source_ix</span>, <span class="ident">target_ix</span>) <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dep_graph</span>
             .<span class="ident">edge_endpoints</span>(<span class="ident">edge_ix</span>)
@@ -2408,7 +2404,7 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">package_ixs</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span>, <span class="ident">B</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">package_ids</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">iter::FromIterator</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
@@ -2420,14 +2416,14 @@
 
     <span class="doccomment">/// Maps a package ID to its internal graph node index, and returns an `UnknownPackageId` error</span>
     <span class="doccomment">/// if the package isn&#39;t found.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">package_ix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">package_ix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>.<span class="ident">package_ix</span>())
     }
 }
 
 <span class="kw">impl</span> <span class="ident">PackageGraphData</span> {
     <span class="doccomment">/// Returns an iterator over all the package IDs in this graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">package_ids</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">package_ids</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
         <span class="self">self</span>.<span class="ident">packages</span>.<span class="ident">keys</span>()
     }
 
@@ -2436,7 +2432,7 @@
     <span class="comment">// ---</span>
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">metadata_impl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageMetadataImpl</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">metadata_impl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageMetadataImpl</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">packages</span>.<span class="ident">get</span>(<span class="ident">package_id</span>)
     }
 }
@@ -2455,7 +2451,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This holds a shared reference to the package graph. This is to ensure that the cache is</span>
     <span class="doccomment">/// invalidated if the package graph is mutated.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">package_graph</span>,
             <span class="ident">dfs_space</span>: <span class="ident">DfsSpace::new</span>(<span class="kw-2">&amp;</span><span class="ident">package_graph</span>.<span class="ident">dep_graph</span>),
@@ -2470,7 +2466,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">package_a</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">package_b</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">a_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">package_ix</span>(<span class="ident">package_a</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">b_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_graph</span>.<span class="ident">package_ix</span>(<span class="ident">package_b</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">has_path_connecting</span>(
@@ -2495,27 +2491,27 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">Workspace</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns the workspace root.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">root</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">root</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">root</span>
     }
 
     <span class="doccomment">/// Returns the number of packages in this workspace.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_path</span>.<span class="ident">len</span>()
     }
 
     <span class="doccomment">/// Returns true if the workspace contains a package by the given name.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_name</span>.<span class="ident">contains_key</span>(<span class="ident">name</span>.<span class="ident">as_ref</span>())
     }
 
     <span class="doccomment">/// Returns true if the workspace contains a package by the given workspace path.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">path</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">path</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_path</span>.<span class="ident">contains_key</span>(<span class="ident">path</span>.<span class="ident">as_ref</span>())
     }
 
     <span class="doccomment">/// Returns an iterator over package metadatas, sorted by the path they&#39;re in.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
         <span class="self">self</span>.<span class="ident">iter_by_path</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">package</span>)<span class="op">|</span> <span class="ident">package</span>)
     }
 
@@ -2523,7 +2519,7 @@
     <span class="doccomment">/// they&#39;re in.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter_by_path</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_path</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">path</span>, <span class="ident">id</span>)<span class="op">|</span> {
             (
@@ -2536,7 +2532,7 @@
     <span class="doccomment">/// Returns an iterator over workspace names and package metadatas, sorted by names.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter_by_name</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">members_by_name</span>
@@ -2546,14 +2542,14 @@
 
     <span class="doccomment">/// Returns an iterator over package IDs for workspace members. The package IDs will be returned</span>
     <span class="doccomment">/// in the same order as `members`, sorted by the path they&#39;re in.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_ids</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_ids</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">members_by_path</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">_path</span>, <span class="ident">id</span>)<span class="op">|</span> <span class="ident">id</span>)
     }
 
     <span class="doccomment">/// Maps the given path to the corresponding workspace member.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if the path didn&#39;t match any workspace members.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_by_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">path</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_by_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">path</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">as_ref</span>();
         <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">inner</span>
@@ -2570,7 +2566,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">members_by_paths</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">paths</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Utf8Path</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
@@ -2583,7 +2579,7 @@
     <span class="doccomment">/// Maps the given name to the corresponding workspace member.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if the name didn&#39;t match any workspace members.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_by_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">member_by_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">as_ref</span>();
         <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">inner</span>
@@ -2600,7 +2596,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">members_by_names</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">names</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">B</span>, <span class="ident">Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">B</span>: <span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
@@ -2621,7 +2617,7 @@
         <span class="doccomment">/// Returns a parallel iterator over package metadatas, sorted by workspace path.</span>
         <span class="doccomment">///</span>
         <span class="doccomment">/// Requires the `rayon1` feature to be enabled.</span>
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">par_iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">ParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">par_iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">ParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
             <span class="self">self</span>.<span class="ident">par_iter_by_path</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">package</span>)<span class="op">|</span> <span class="ident">package</span>)
         }
 
@@ -2631,7 +2627,7 @@
         <span class="doccomment">/// Requires the `rayon1` feature to be enabled.</span>
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">par_iter_by_path</span>(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">ParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
+        ) -&gt; <span class="kw">impl</span> <span class="ident">ParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
             <span class="self">self</span>.<span class="ident">inner</span>
                 .<span class="ident">members_by_path</span>
@@ -2650,7 +2646,7 @@
         <span class="doccomment">/// Requires the `rayon1` feature to be enabled.</span>
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">par_iter_by_name</span>(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">ParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
+        ) -&gt; <span class="kw">impl</span> <span class="ident">ParallelIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>;
             <span class="self">self</span>.<span class="ident">inner</span>
                 .<span class="ident">members_by_name</span>
@@ -2685,7 +2681,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;PackageMetadata&quot;</span>)
             .<span class="ident">field</span>(<span class="string">&quot;package_id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>().<span class="ident">repr</span>())
             .<span class="ident">field</span>(<span class="string">&quot;..&quot;</span>, <span class="kw-2">&amp;</span><span class="string">&quot;..&quot;</span>)
@@ -2696,30 +2692,30 @@
 <span class="macro">assert_covariant!</span>(<span class="ident">PackageMetadata</span>);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadataImpl</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>, <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageMetadataImpl</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">graph</span>, <span class="ident">inner</span> }
     }
 
     <span class="doccomment">/// Returns the unique identifier for this package.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_graph</span>[<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">package_ix</span>]
     }
 
     <span class="doccomment">/// Returns the package graph this `PackageMetadata` is derived from.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span> {
         <span class="self">self</span>.<span class="ident">graph</span>
     }
 
     <span class="doccomment">/// Creates a `PackageQuery` consisting of this package, in the given direction.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The `PackageQuery` can be used to inspect dependencies in this graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_package_query</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_package_query</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>) -&gt; <span class="ident">PackageQuery</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">graph</span>
             .<span class="ident">query_from_parts</span>(<span class="ident">iter::once</span>(<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">package_ix</span>).<span class="ident">collect</span>(), <span class="ident">direction</span>)
     }
 
     <span class="doccomment">/// Creates a `PackageSet` consisting of just this package.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_package_set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_package_set</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">included</span>: <span class="ident">IxBitSet</span> <span class="op">=</span> <span class="ident">iter::once</span>(<span class="self">self</span>.<span class="ident">package_ix</span>()).<span class="ident">collect</span>();
         <span class="ident">PackageSet::from_included</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">included</span>)
     }
@@ -2733,18 +2729,18 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direct_links_directed</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">direct_links_impl</span>(<span class="ident">direction</span>.<span class="ident">into</span>())
     }
 
     <span class="doccomment">/// Returns `PackageLink` instances corresponding to the direct dependencies for this package.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direct_links</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">direct_links</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">direct_links_impl</span>(<span class="ident">Outgoing</span>)
     }
 
     <span class="doccomment">/// Returns `PackageLink` instances corresponding to the packages that directly depend on this</span>
     <span class="doccomment">/// one.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reverse_direct_links</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reverse_direct_links</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">direct_links_impl</span>(<span class="ident">Incoming</span>)
     }
 
@@ -2758,7 +2754,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">direction</span>: <span class="ident">DependencyDirection</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">link_between_impl</span>(<span class="ident">other</span>, <span class="ident">direction</span>.<span class="ident">into</span>())
     }
 
@@ -2766,7 +2762,7 @@
     <span class="doccomment">/// does not directly depend on the specified package.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if `to` isn&#39;t found in `self.graph()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">link_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">to</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">link_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">to</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">link_between_impl</span>(<span class="ident">to</span>, <span class="ident">Outgoing</span>)
     }
 
@@ -2774,7 +2770,7 @@
     <span class="doccomment">/// specified package does not directly depend on `self`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if `from` isn&#39;t found in `self.graph()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">link_from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">from</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">link_from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">from</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">link_between_impl</span>(<span class="ident">from</span>, <span class="ident">Incoming</span>)
     }
 
@@ -2785,28 +2781,28 @@
     <span class="doccomment">/// Returns the name of this package.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `name` field of `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">name</span>
     }
 
     <span class="doccomment">/// Returns the version of this package as resolved by Cargo.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `version` field of `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Version</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Version</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">version</span>
     }
 
     <span class="doccomment">/// Returns the authors of this package.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `authors` field of `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">authors</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">authors</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">authors</span>
     }
 
     <span class="doccomment">/// Returns a short description for this package.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `description` field of `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">description</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">description</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">description</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_ref</span>())
     }
 
@@ -2814,7 +2810,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `license` field of `Cargo.toml`. Note that `guppy` does not perform</span>
     <span class="doccomment">/// any validation on this, though `crates.io` does if a crate is uploaded there.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">license</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">license</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">license</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_ref</span>())
     }
 
@@ -2822,28 +2818,28 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `license_file` field of `Cargo.toml`. It is typically only specified</span>
     <span class="doccomment">/// for nonstandard licenses.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">license_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">license_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">license_file</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">path</span>.<span class="ident">as_ref</span>())
     }
 
     <span class="doccomment">/// Returns the source from which this package was retrieved.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This may be the workspace path, an external path, or a registry like `crates.io`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PackageSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">PackageSource::new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">source</span>)
     }
 
     <span class="doccomment">/// Returns true if this package is in the workspace.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more detailed information, use `source()`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">in_workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">source</span>().<span class="ident">is_workspace</span>()
     }
 
     <span class="doccomment">/// Returns the full path to the `Cargo.toml` for this package.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is specific to the system that `cargo metadata` was run on.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">manifest_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">manifest_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">manifest_path</span>
     }
 
@@ -2852,14 +2848,14 @@
     <span class="doccomment">/// This is the same as the `categories` field of `Cargo.toml`. For packages on `crates.io`,</span>
     <span class="doccomment">/// returned values are guaranteed to be</span>
     <span class="doccomment">/// [valid category slugs](https://crates.io/category_slugs).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">categories</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">categories</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">categories</span>
     }
 
     <span class="doccomment">/// Returns keywords for this package.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `keywords` field of `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">keywords</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">keywords</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">keywords</span>
     }
 
@@ -2867,21 +2863,21 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `readme` field of `Cargo.toml`. The path returned is relative to the</span>
     <span class="doccomment">/// directory the `Cargo.toml` is in (i.e. relative to the parent of `self.manifest_path()`).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readme</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">readme</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">readme</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="ident">path</span>.<span class="ident">as_ref</span>())
     }
 
     <span class="doccomment">/// Returns the source code repository for this package, if specified.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `repository` field of `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">repository</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">repository</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">repository</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_ref</span>())
     }
 
     <span class="doccomment">/// Returns the Rust edition this package is written against.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `edition` field of `Cargo.toml`. It is `&quot;2015&quot;` by default.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">edition</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">edition</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">edition</span>
     }
 
@@ -2889,7 +2885,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is the same as the `package.metadata` section of `Cargo.toml`. This section is</span>
     <span class="doccomment">/// typically used by tools which would like to store package configuration in `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata_table</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">JsonValue</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata_table</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">JsonValue</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">metadata_table</span>
     }
 
@@ -2898,14 +2894,14 @@
     <span class="doccomment">/// This is the same as the `links` field of `Cargo.toml`. See [The `links` Manifest</span>
     <span class="doccomment">/// Key](https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key) in</span>
     <span class="doccomment">/// the Cargo book for more details.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">links</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">links</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">links</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">as_ref</span>())
     }
 
     <span class="doccomment">/// Returns the registries to which this package may be published.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is derived from the `publish` field of `Cargo.toml`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">publish</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackagePublish</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">publish</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PackagePublish</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">PackagePublish::new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">publish</span>)
     }
 
@@ -2915,7 +2911,7 @@
     <span class="doccomment">/// This is the same as the `rust-version` field of `Cargo.toml`. For more, see [the</span>
     <span class="doccomment">/// `rust-version` field](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)</span>
     <span class="doccomment">/// in the Cargo reference.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rust_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">VersionReq</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rust_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">VersionReq</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">rust_version</span>.<span class="ident">as_ref</span>()
     }
 
@@ -2924,12 +2920,12 @@
     <span class="doccomment">/// For more, see [Cargo</span>
     <span class="doccomment">/// Targets](https://doc.rust-lang.org/nightly/cargo/reference/cargo-targets.html#cargo-targets)</span>
     <span class="doccomment">/// in the Cargo reference.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_targets</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">BuildTarget</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_targets</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">BuildTarget</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">build_targets</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">BuildTarget::new</span>)
     }
 
     <span class="doccomment">/// Looks up a build target by identifier.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_target</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">BuildTargetId</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BuildTarget</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_target</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">BuildTargetId</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BuildTarget</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">build_targets</span>
             .<span class="ident">get_key_value</span>(<span class="ident">id</span>.<span class="ident">as_key</span>())
@@ -2940,10 +2936,10 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more about procedural macros, see [Procedural</span>
     <span class="doccomment">/// Macros](https://doc.rust-lang.org/reference/procedural-macros.html) in the Rust reference.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_proc_macro</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_proc_macro</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">build_target</span>(<span class="kw-2">&amp;</span><span class="ident">BuildTargetId::Library</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">build_target</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">matches!</span>(<span class="ident">build_target</span>.<span class="ident">kind</span>(), <span class="ident">BuildTargetKind::ProcMacro</span>),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+            <span class="prelude-val">Some</span>(<span class="ident">build_target</span>) =&gt; <span class="macro">matches!</span>(<span class="ident">build_target</span>.<span class="ident">kind</span>(), <span class="ident">BuildTargetKind::ProcMacro</span>),
+            <span class="prelude-val">None</span> =&gt; <span class="bool-val">false</span>,
         }
     }
 
@@ -2954,7 +2950,7 @@
     <span class="doccomment">/// For more about build scripts, see [Build</span>
     <span class="doccomment">/// Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html) in the Cargo</span>
     <span class="doccomment">/// reference.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_build_script</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_build_script</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">build_target</span>(<span class="kw-2">&amp;</span><span class="ident">BuildTargetId::BuildScript</span>).<span class="ident">is_some</span>()
     }
 
@@ -2963,12 +2959,12 @@
     <span class="doccomment">/// For more about default features, see [The `[features]`</span>
     <span class="doccomment">/// section](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section) in</span>
     <span class="doccomment">/// the Cargo reference.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_default_feature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_default_feature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">has_default_feature</span>
     }
 
     <span class="doccomment">/// Returns the `FeatureId` corresponding to the default feature.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_feature_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_feature_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">FeatureId</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">has_default_feature</span> {
             <span class="ident">FeatureId::new</span>(<span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;default&quot;</span>)
         } <span class="kw">else</span> {
@@ -2981,7 +2977,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// A named feature is listed in the `[features]` section of `Cargo.toml`. For more, see</span>
     <span class="doccomment">/// [the reference](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">named_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">named_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">named_features_full</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">named_feature</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">named_feature</span>)
     }
@@ -2991,7 +2987,7 @@
     <span class="comment">// --</span>
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">package_ix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">package_ix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">package_ix</span>
     }
 
@@ -2999,23 +2995,23 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>,
         <span class="ident">dir</span>: <span class="ident">Direction</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">other_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">package_ix</span>(<span class="ident">other</span>)<span class="question-mark">?</span>;
         <span class="kw">match</span> <span class="ident">dir</span> {
-            <span class="ident">Direction::Outgoing</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">link_between_ixs</span>(<span class="self">self</span>.<span class="ident">package_ix</span>(), <span class="ident">other_ix</span>)),
-            <span class="ident">Direction::Incoming</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">link_between_ixs</span>(<span class="ident">other_ix</span>, <span class="self">self</span>.<span class="ident">package_ix</span>())),
+            <span class="ident">Direction::Outgoing</span> =&gt; <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">link_between_ixs</span>(<span class="self">self</span>.<span class="ident">package_ix</span>(), <span class="ident">other_ix</span>)),
+            <span class="ident">Direction::Incoming</span> =&gt; <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">link_between_ixs</span>(<span class="ident">other_ix</span>, <span class="self">self</span>.<span class="ident">package_ix</span>())),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">direct_links_impl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">dir</span>: <span class="ident">Direction</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">fn</span> <span class="ident">direct_links_impl</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">dir</span>: <span class="ident">Direction</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">dep_links_ixs_directed</span>(<span class="self">self</span>.<span class="ident">package_ix</span>(), <span class="ident">dir</span>)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">get_feature_idx</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">get_feature_idx</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">features</span>.<span class="ident">get_full</span>(<span class="ident">feature</span>).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">n</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">n</span>)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">feature_idx_to_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">idx</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">feature_idx_to_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">idx</span>: <span class="ident">usize</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">features</span>
             .<span class="ident">get_index</span>(<span class="ident">idx</span>)
@@ -3025,7 +3021,7 @@
     }
 
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">all_feature_nodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">FeatureNode</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">all_feature_nodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">FeatureNode</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="kw">let</span> <span class="ident">package_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">package_ix</span>();
         <span class="ident">iter::once</span>(<span class="ident">FeatureNode::base</span>(<span class="self">self</span>.<span class="ident">package_ix</span>())).<span class="ident">chain</span>(
             (<span class="number">0</span>..<span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">features</span>.<span class="ident">len</span>())
@@ -3035,7 +3031,7 @@
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">named_features_full</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>])<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> [<span class="ident">String</span>])<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;g</span> {
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">features</span>
             .<span class="ident">iter</span>()
@@ -3048,7 +3044,7 @@
             })
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">optional_deps_full</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>)<span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">optional_deps_full</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">usize</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>)<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">features</span>
             .<span class="ident">iter</span>()
@@ -3067,10 +3063,10 @@
 
 <span class="doccomment">/// `PackageMetadata`&#39;s `PartialEq` implementation uses pointer equality for the `PackageGraph`.</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="comment">// Checking for the same package ix is enough as each package is guaranteed to be a 1:1 map</span>
         <span class="comment">// with ixs.</span>
-        <span class="ident">std::ptr::eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>) <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">package_ix</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">other</span>.<span class="ident">package_ix</span>()
+        <span class="ident">std::ptr::eq</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="ident">other</span>.<span class="ident">graph</span>) <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">package_ix</span>() <span class="op">==</span> <span class="ident">other</span>.<span class="ident">package_ix</span>()
     }
 }
 
@@ -3106,8 +3102,6 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">source</span>: <span class="ident">PackageSourceImpl</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">build_targets</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">OwnedBuildTargetId</span>, <span class="ident">BuildTargetImpl</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">has_default_feature</span>: <span class="ident">bool</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">resolved_deps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeDep</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="ident">resolved_features</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// The source of a package.</span>
@@ -3142,39 +3136,39 @@
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CRATES_IO_REGISTRY</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span>
         <span class="string">&quot;registry+https://github.com/rust-lang/crates.io-index&quot;</span>;
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageSourceImpl</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageSourceImpl</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">inner</span> {
-            <span class="ident">PackageSourceImpl::Workspace</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>),
-            <span class="ident">PackageSourceImpl::Path</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>),
-            <span class="ident">PackageSourceImpl::CratesIo</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackageSource::External</span>(<span class="ident"><span class="self">Self</span>::CRATES_IO_REGISTRY</span>),
-            <span class="ident">PackageSourceImpl::External</span>(<span class="ident">source</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackageSource::External</span>(<span class="ident">source</span>),
+            <span class="ident">PackageSourceImpl::Workspace</span>(<span class="ident">path</span>) =&gt; <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>),
+            <span class="ident">PackageSourceImpl::Path</span>(<span class="ident">path</span>) =&gt; <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>),
+            <span class="ident">PackageSourceImpl::CratesIo</span> =&gt; <span class="ident">PackageSource::External</span>(<span class="ident"><span class="self">Self</span>::CRATES_IO_REGISTRY</span>),
+            <span class="ident">PackageSourceImpl::External</span>(<span class="ident">source</span>) =&gt; <span class="ident">PackageSource::External</span>(<span class="ident">source</span>),
         }
     }
 
     <span class="doccomment">/// Returns true if this package source represents a workspace.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_workspace</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">PackageSource::Workspace</span>(<span class="kw">_</span>))
     }
 
     <span class="doccomment">/// Returns true if this package source represents a path dependency that isn&#39;t in the</span>
     <span class="doccomment">/// workspace.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">PackageSource::Path</span>(<span class="kw">_</span>))
     }
 
     <span class="doccomment">/// Returns true if this package source represents an external dependency.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_external</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_external</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">PackageSource::External</span>(<span class="kw">_</span>))
     }
 
     <span class="doccomment">/// Returns true if the source is `crates.io`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_crates_io</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_crates_io</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">PackageSource::External</span>(<span class="ident"><span class="self">Self</span>::CRATES_IO_REGISTRY</span>))
     }
 
     <span class="doccomment">/// Returns true if this package is a local dependency, i.e. either in the workspace or a local</span>
     <span class="doccomment">/// path.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_local</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_local</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="op">!</span><span class="self">self</span>.<span class="ident">is_external</span>()
     }
 
@@ -3182,10 +3176,10 @@
     <span class="doccomment">/// dependency.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The path is relative to the workspace root.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">workspace_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">path</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">path</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
@@ -3193,19 +3187,19 @@
     <span class="doccomment">/// dependency.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The path is relative to the workspace root.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">local_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">local_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Utf8Path</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>) <span class="op">|</span> <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">path</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>) <span class="op">|</span> <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">path</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
     <span class="doccomment">/// Returns the external source if this is an external dependency, or `None` if it is a local</span>
     <span class="doccomment">/// dependency.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">external_source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">external_source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">source</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">source</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
@@ -3215,20 +3209,20 @@
     <span class="doccomment">/// dependency.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more about external sources, see the documentation for [`ExternalSource`](ExternalSource).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_external</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ExternalSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_external</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ExternalSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ExternalSource::new</span>(<span class="ident">source</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) =&gt; <span class="ident">ExternalSource::new</span>(<span class="ident">source</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">PackageSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">path</span>),
-            <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">path</span>),
-            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">source</span>),
+            <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">path</span>),
+            <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">path</span>),
+            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">source</span>),
         }
     }
 }
@@ -3395,7 +3389,7 @@
     <span class="doccomment">/// Attempts to parse the given string as an external source.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns `None` if the string could not be recognized as an external source.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">source</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">source</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="comment">// We *could* pull in a URL parsing library, but Cargo&#39;s sources are so limited that it</span>
         <span class="comment">// seems like a waste to.</span>
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">registry</span>) <span class="op">=</span> <span class="ident">source</span>.<span class="ident">strip_prefix</span>(<span class="ident"><span class="self">Self</span>::REGISTRY_PLUS</span>) {
@@ -3450,20 +3444,20 @@
 <span class="doccomment">/// );</span>
 <span class="doccomment">/// ```</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">ExternalSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ExternalSource::Registry</span>(<span class="ident">url</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::REGISTRY_PLUS</span>, <span class="ident">url</span>),
+            <span class="ident">ExternalSource::Registry</span>(<span class="ident">url</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::REGISTRY_PLUS</span>, <span class="ident">url</span>),
             <span class="ident">ExternalSource::Git</span> {
                 <span class="ident">repository</span>,
                 <span class="ident">req</span>,
                 <span class="ident">resolved</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::GIT_PLUS</span>, <span class="ident">repository</span>)<span class="question-mark">?</span>;
                 <span class="kw">match</span> <span class="ident">req</span> {
-                    <span class="ident">GitReq::Branch</span>(<span class="ident">branch</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::BRANCH_EQ</span>, <span class="ident">branch</span>)<span class="question-mark">?</span>,
-                    <span class="ident">GitReq::Tag</span>(<span class="ident">tag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::TAG_EQ</span>, <span class="ident">tag</span>)<span class="question-mark">?</span>,
-                    <span class="ident">GitReq::Rev</span>(<span class="ident">rev</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::REV_EQ</span>, <span class="ident">rev</span>)<span class="question-mark">?</span>,
-                    <span class="ident">GitReq::Default</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                    <span class="ident">GitReq::Branch</span>(<span class="ident">branch</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::BRANCH_EQ</span>, <span class="ident">branch</span>)<span class="question-mark">?</span>,
+                    <span class="ident">GitReq::Tag</span>(<span class="ident">tag</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::TAG_EQ</span>, <span class="ident">tag</span>)<span class="question-mark">?</span>,
+                    <span class="ident">GitReq::Rev</span>(<span class="ident">rev</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="ident"><span class="self">Self</span>::REV_EQ</span>, <span class="ident">rev</span>)<span class="question-mark">?</span>,
+                    <span class="ident">GitReq::Default</span> =&gt; {}
                 };
                 <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;#{}&quot;</span>, <span class="ident">resolved</span>)
             }
@@ -3548,10 +3542,10 @@
 <span class="macro">assert_covariant!</span>(<span class="ident">PackagePublish</span>);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PackagePublish</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackagePublishImpl</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackagePublishImpl</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">inner</span> {
-            <span class="ident">PackagePublishImpl::Unrestricted</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackagePublish::Unrestricted</span>,
-            <span class="ident">PackagePublishImpl::Registries</span>(<span class="ident">registries</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PackagePublish::Registries</span>(<span class="ident">registries</span>),
+            <span class="ident">PackagePublishImpl::Unrestricted</span> =&gt; <span class="ident">PackagePublish::Unrestricted</span>,
+            <span class="ident">PackagePublishImpl::Registries</span>(<span class="ident">registries</span>) =&gt; <span class="ident">PackagePublish::Registries</span>(<span class="ident">registries</span>),
         }
     }
 
@@ -3570,7 +3564,7 @@
     <span class="doccomment">/// assert!(!PackagePublish::Registries(&amp;[PackagePublish::CRATES_IO.to_owned()]).is_unrestricted());</span>
     <span class="doccomment">/// assert!(!PackagePublish::Registries(&amp;[]).is_unrestricted());</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_unrestricted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_unrestricted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">PackagePublish::Unrestricted</span>)
     }
 
@@ -3594,16 +3588,16 @@
     <span class="doccomment">/// // Cannot publish to any registries.</span>
     <span class="doccomment">/// assert!(!PackagePublish::Registries(&amp;[]).can_publish_to(PackagePublish::CRATES_IO));</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">can_publish_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">registry</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">can_publish_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">registry</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">as_ref</span>();
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackagePublish::Unrestricted</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="ident">PackagePublish::Registries</span>(<span class="ident">registries</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">registries</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span> <span class="op">=</span><span class="op">=</span> <span class="ident">registry</span>),
+            <span class="ident">PackagePublish::Unrestricted</span> =&gt; <span class="bool-val">true</span>,
+            <span class="ident">PackagePublish::Registries</span>(<span class="ident">registries</span>) =&gt; <span class="ident">registries</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span> <span class="op">==</span> <span class="ident">registry</span>),
         }
     }
 
     <span class="doccomment">/// Returns true if a package can be published to crates.io.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">can_publish_to_crates_io</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">can_publish_to_crates_io</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">can_publish_to</span>(<span class="ident"><span class="self">Self</span>::CRATES_IO</span>)
     }
 
@@ -3618,10 +3612,10 @@
     <span class="doccomment">/// assert!(!PackagePublish::Registries(&amp;[PackagePublish::CRATES_IO.to_owned()]).is_never());</span>
     <span class="doccomment">/// assert!(PackagePublish::Registries(&amp;[]).is_never());</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_never</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_never</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackagePublish::Unrestricted</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
-            <span class="ident">PackagePublish::Registries</span>(<span class="ident">registries</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">registries</span>.<span class="ident">is_empty</span>(),
+            <span class="ident">PackagePublish::Unrestricted</span> =&gt; <span class="bool-val">false</span>,
+            <span class="ident">PackagePublish::Registries</span>(<span class="ident">registries</span>) =&gt; <span class="ident">registries</span>.<span class="ident">is_empty</span>(),
         }
     }
 }
@@ -3657,7 +3651,7 @@
         <span class="ident">target_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
         <span class="ident">inner</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageLinkImpl</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    ) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">from</span> <span class="op">=</span> <span class="ident">graph</span>
             .<span class="ident">data</span>
             .<span class="ident">metadata_impl</span>(<span class="kw-2">&amp;</span><span class="ident">graph</span>.<span class="ident">dep_graph</span>[<span class="ident">source_ix</span>])
@@ -3676,28 +3670,28 @@
     }
 
     <span class="doccomment">/// Returns the package which depends on the `to` package.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">PackageMetadata::new</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="self">self</span>.<span class="ident">from</span>)
     }
 
     <span class="doccomment">/// Returns the package which is depended on by the `from` package.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">PackageMetadata::new</span>(<span class="self">self</span>.<span class="ident">graph</span>, <span class="self">self</span>.<span class="ident">to</span>)
     }
 
     <span class="doccomment">/// Returns the endpoints as a pair of packages `(from, to)`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">endpoints</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">endpoints</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) {
         (<span class="self">self</span>.<span class="ident">from</span>(), <span class="self">self</span>.<span class="ident">to</span>())
     }
 
     <span class="doccomment">/// Returns the name for this dependency edge. This can be affected by a crate rename.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">dep_name</span>
     }
 
     <span class="doccomment">/// Returns the resolved name for this dependency edge. This may involve renaming the crate and</span>
     <span class="doccomment">/// replacing - with _.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolved_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolved_name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">resolved_name</span>
     }
 
@@ -3713,26 +3707,26 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// See [Specifying Dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#specifying-dependencies)</span>
     <span class="doccomment">/// in the Cargo reference for more details.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version_req</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">VersionReq</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version_req</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">VersionReq</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">version_req</span>
     }
 
     <span class="doccomment">/// Returns details about this dependency from the `[dependencies]` section.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">normal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">normal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">DependencyReq</span> {
             <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">normal</span>,
         }
     }
 
     <span class="doccomment">/// Returns details about this dependency from the `[build-dependencies]` section.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">DependencyReq</span> {
             <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">build</span>,
         }
     }
 
     <span class="doccomment">/// Returns details about this dependency from the `[dev-dependencies]` section.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dev</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dev</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">DependencyReq</span> {
             <span class="ident">inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">dev</span>,
         }
@@ -3740,17 +3734,17 @@
 
     <span class="doccomment">/// Returns details about this dependency from the section specified by the given dependency</span>
     <span class="doccomment">/// kind.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">req_for_kind</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">kind</span>: <span class="ident">DependencyKind</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">req_for_kind</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">kind</span>: <span class="ident">DependencyKind</span>) -&gt; <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">kind</span> {
-            <span class="ident">DependencyKind::Normal</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">normal</span>(),
-            <span class="ident">DependencyKind::Development</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">dev</span>(),
-            <span class="ident">DependencyKind::Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">build</span>(),
+            <span class="ident">DependencyKind::Normal</span> =&gt; <span class="self">self</span>.<span class="ident">normal</span>(),
+            <span class="ident">DependencyKind::Development</span> =&gt; <span class="self">self</span>.<span class="ident">dev</span>(),
+            <span class="ident">DependencyKind::Build</span> =&gt; <span class="self">self</span>.<span class="ident">build</span>(),
         }
     }
 
     <span class="doccomment">/// Return true if this edge is dev-only, i.e. code from this edge will not be included in</span>
     <span class="doccomment">/// normal builds.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dev_only</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dev_only</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">dev_only</span>()
     }
 
@@ -3760,13 +3754,13 @@
 
     <span class="doccomment">/// Returns the edge index.</span>
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">edge_ix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">edge_ix</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">edge_ix</span>
     }
 
     <span class="doccomment">/// Returns (source, target, edge) as a triple of pointers. Useful for testing.</span>
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_inner_ptrs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageLinkPtrs</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_inner_ptrs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PackageLinkPtrs</span> {
         <span class="ident">PackageLinkPtrs</span> {
             <span class="ident">from</span>: <span class="self">self</span>.<span class="ident">from</span>,
             <span class="ident">to</span>: <span class="self">self</span>.<span class="ident">to</span>,
@@ -3796,7 +3790,7 @@
 
 <span class="kw">impl</span> <span class="ident">PackageLinkImpl</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">dev_only</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">dev_only</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">normal</span>.<span class="ident">enabled</span>().<span class="ident">is_never</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">build</span>.<span class="ident">enabled</span>().<span class="ident">is_never</span>()
     }
 }
@@ -3815,7 +3809,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// For example, if this dependency is specified in the `[dev-dependencies]` section,</span>
     <span class="doccomment">/// `edge.dev().is_present()` will return true.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_present</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_present</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="op">!</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">enabled</span>().<span class="ident">is_never</span>()
     }
 
@@ -3824,14 +3818,14 @@
     <span class="doccomment">/// `status` is the union of `default_features` and `no_default_features`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// See the documentation for `EnabledStatus` for more.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">enabled</span>()
     }
 
     <span class="doccomment">/// Returns the enabled status of this dependency when `default-features = true`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// See the documentation for `EnabledStatus` for more.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">default_features</span>()
     }
 
@@ -3841,14 +3835,14 @@
     <span class="doccomment">/// completeness.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// See the documentation for `EnabledStatus` for more.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">no_default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">no_default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">no_default_features</span>()
     }
 
     <span class="doccomment">/// Returns a list of all features possibly enabled by this dependency. This includes features</span>
     <span class="doccomment">/// that are only turned on if the dependency is optional, or features enabled by inactive</span>
     <span class="doccomment">/// platforms.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">all_features</span>()
     }
 
@@ -3860,7 +3854,7 @@
     <span class="doccomment">/// more.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// See the documentation for `EnabledStatus` for more.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">feature_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">feature_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">feature_status</span>(<span class="ident">feature</span>)
     }
 }
@@ -3914,7 +3908,7 @@
 <span class="macro">assert_covariant!</span>(<span class="ident">EnabledStatus</span>);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">required</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PlatformStatusImpl</span>, <span class="ident">optional</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PlatformStatusImpl</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">required</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PlatformStatusImpl</span>, <span class="ident">optional</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PlatformStatusImpl</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">required</span>: <span class="ident">PlatformStatus::new</span>(<span class="ident">required</span>),
             <span class="ident">optional</span>: <span class="ident">PlatformStatus::new</span>(<span class="ident">optional</span>),
@@ -3922,7 +3916,7 @@
     }
 
     <span class="doccomment">/// Returns true if this dependency is never enabled on any platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_never</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_never</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">required</span>.<span class="ident">is_never</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">optional</span>.<span class="ident">is_never</span>()
     }
 
@@ -3930,7 +3924,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns `Unknown` if the result was unknown, which may happen if evaluating against an</span>
     <span class="doccomment">/// individual platform and its target features are unknown.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">required_on</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">platform_spec</span>: <span class="kw-2">&amp;</span><span class="ident">PlatformSpec</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledTernary</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">required_on</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">platform_spec</span>: <span class="kw-2">&amp;</span><span class="ident">PlatformSpec</span>) -&gt; <span class="ident">EnabledTernary</span> {
         <span class="self">self</span>.<span class="ident">required</span>.<span class="ident">enabled_on</span>(<span class="ident">platform_spec</span>)
     }
 
@@ -3939,7 +3933,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns `Unknown` if the result was unknown, which may happen if evaluating against an</span>
     <span class="doccomment">/// individual platform and its target features are unknown.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enabled_on</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">platform_spec</span>: <span class="kw-2">&amp;</span><span class="ident">PlatformSpec</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledTernary</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enabled_on</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">platform_spec</span>: <span class="kw-2">&amp;</span><span class="ident">PlatformSpec</span>) -&gt; <span class="ident">EnabledTernary</span> {
         <span class="kw">let</span> <span class="ident">required</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">required</span>.<span class="ident">enabled_on</span>(<span class="ident">platform_spec</span>);
         <span class="kw">let</span> <span class="ident">optional</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">optional</span>.<span class="ident">enabled_on</span>(<span class="ident">platform_spec</span>);
 
@@ -3947,12 +3941,12 @@
     }
 
     <span class="doccomment">/// Returns the `PlatformStatus` corresponding to whether this dependency is required.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">required_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PlatformStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">required_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PlatformStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">required</span>
     }
 
     <span class="doccomment">/// Returns the `PlatformStatus` corresponding to whether this dependency is optional.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optional_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PlatformStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optional_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PlatformStatus</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">optional</span>
     }
 }
@@ -3965,25 +3959,25 @@
 }
 
 <span class="kw">impl</span> <span class="ident">DependencyReqImpl</span> {
-    <span class="kw">fn</span> <span class="ident">all_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">all_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">required</span>
             .<span class="ident">all_features</span>()
             .<span class="ident">chain</span>(<span class="self">self</span>.<span class="ident">optional</span>.<span class="ident">all_features</span>())
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">enabled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">enabled</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EnabledStatus</span> {
         <span class="self">self</span>.<span class="ident">make_status</span>(<span class="op">|</span><span class="ident">req_impl</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">req_impl</span>.<span class="ident">build_if</span>)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EnabledStatus</span> {
         <span class="self">self</span>.<span class="ident">make_status</span>(<span class="op">|</span><span class="ident">req_impl</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">req_impl</span>.<span class="ident">default_features_if</span>)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">no_default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">no_default_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">EnabledStatus</span> {
         <span class="self">self</span>.<span class="ident">make_status</span>(<span class="op">|</span><span class="ident">req_impl</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">req_impl</span>.<span class="ident">no_default_features_if</span>)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">feature_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">feature_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">EnabledStatus</span> {
         <span class="comment">// This PlatformStatusImpl in static memory is so that the lifetimes work out.</span>
         <span class="kw">static</span> <span class="ident">DEFAULT_STATUS</span>: <span class="ident">PlatformStatusImpl</span> <span class="op">=</span> <span class="ident">PlatformStatusImpl::Specs</span>(<span class="ident">Vec::new</span>());
 
@@ -3997,8 +3991,8 @@
 
     <span class="kw">fn</span> <span class="ident">make_status</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">pred_fn</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">DepRequiredOrOptional</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">PlatformStatusImpl</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EnabledStatus</span> {
+        <span class="ident">pred_fn</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">DepRequiredOrOptional</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">PlatformStatusImpl</span>,
+    ) -&gt; <span class="ident">EnabledStatus</span> {
         <span class="ident">EnabledStatus::new</span>(<span class="ident">pred_fn</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">required</span>), <span class="ident">pred_fn</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">optional</span>))
     }
 }
@@ -4014,7 +4008,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">DepRequiredOrOptional</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">all_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">all_features</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">feature_targets</span>.<span class="ident">keys</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">as_str</span>())
     }
 }

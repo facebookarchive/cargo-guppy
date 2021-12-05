@@ -325,7 +325,7 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bellman_ford</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(
     <span class="ident">g</span>: <span class="ident">G</span>,
     <span class="ident">source</span>: <span class="ident">G::NodeId</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Paths</span><span class="op">&lt;</span><span class="ident">G::NodeId</span>, <span class="ident">G::EdgeWeight</span><span class="op">&gt;</span>, <span class="ident">NegativeCycle</span><span class="op">&gt;</span>
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Paths</span><span class="op">&lt;</span><span class="ident">G::NodeId</span>, <span class="ident">G::EdgeWeight</span><span class="op">&gt;</span>, <span class="ident">NegativeCycle</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">NodeCount</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoEdges</span> <span class="op">+</span> <span class="ident">NodeIndexable</span>,
     <span class="ident">G::EdgeWeight</span>: <span class="ident">FloatMeasure</span>,
@@ -385,7 +385,7 @@
 <span class="doccomment">///     Some([NodeIndex::new(1), NodeIndex::new(3), NodeIndex::new(2)].to_vec())</span>
 <span class="doccomment">/// );</span>
 <span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_negative_cycle</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>, <span class="ident">source</span>: <span class="ident">G::NodeId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_negative_cycle</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>, <span class="ident">source</span>: <span class="ident">G::NodeId</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">NodeCount</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoEdges</span> <span class="op">+</span> <span class="ident">NodeIndexable</span> <span class="op">+</span> <span class="ident">Visitable</span>,
     <span class="ident">G::EdgeWeight</span>: <span class="ident">FloatMeasure</span>,
@@ -409,12 +409,12 @@
                 <span class="comment">// Go backward in the predecessor chain</span>
                 <span class="kw">loop</span> {
                     <span class="kw">let</span> <span class="ident">ancestor</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">predecessor</span>[<span class="ident">ix</span>(<span class="ident">node</span>)] {
-                        <span class="prelude-val">Some</span>(<span class="ident">predecessor_node</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">predecessor_node</span>,
-                        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">node</span>, <span class="comment">// no predecessor, self cycle</span>
+                        <span class="prelude-val">Some</span>(<span class="ident">predecessor_node</span>) =&gt; <span class="ident">predecessor_node</span>,
+                        <span class="prelude-val">None</span> =&gt; <span class="ident">node</span>, <span class="comment">// no predecessor, self cycle</span>
                     };
                     <span class="comment">// We have only 2 ways to find the cycle and break the loop:</span>
                     <span class="comment">// 1. start is reached</span>
-                    <span class="kw">if</span> <span class="ident">ancestor</span> <span class="op">=</span><span class="op">=</span> <span class="ident">start</span> {
+                    <span class="kw">if</span> <span class="ident">ancestor</span> <span class="op">==</span> <span class="ident">start</span> {
                         <span class="ident">path</span>.<span class="ident">push</span>(<span class="ident">ancestor</span>);
                         <span class="kw">break</span>;
                     }
@@ -423,7 +423,7 @@
                         <span class="comment">// Drop any node in path that is before the first ancestor</span>
                         <span class="kw">let</span> <span class="ident">pos</span> <span class="op">=</span> <span class="ident">path</span>
                             .<span class="ident">iter</span>()
-                            .<span class="ident">position</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ancestor</span>)
+                            .<span class="ident">position</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span> <span class="op">==</span> <span class="ident">ancestor</span>)
                             .<span class="ident">expect</span>(<span class="string">&quot;we should always have a position&quot;</span>);
                         <span class="ident">path</span> <span class="op">=</span> <span class="ident">path</span>[<span class="ident">pos</span>..<span class="ident">path</span>.<span class="ident">len</span>()].<span class="ident">to_vec</span>();
 
@@ -455,7 +455,7 @@
 <span class="kw">fn</span> <span class="ident">bellman_ford_initialize_relax</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(
     <span class="ident">g</span>: <span class="ident">G</span>,
     <span class="ident">source</span>: <span class="ident">G::NodeId</span>,
-) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::EdgeWeight</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>)
+) -&gt; (<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::EdgeWeight</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>)
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">NodeCount</span> <span class="op">+</span> <span class="ident">IntoNodeIdentifiers</span> <span class="op">+</span> <span class="ident">IntoEdges</span> <span class="op">+</span> <span class="ident">NodeIndexable</span>,
     <span class="ident">G::EdgeWeight</span>: <span class="ident">FloatMeasure</span>,

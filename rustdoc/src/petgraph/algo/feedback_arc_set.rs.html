@@ -508,7 +508,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// [feedback arc set]: https://en.wikipedia.org/wiki/Feedback_arc_set</span>
 <span class="doccomment">/// [greedy heuristic algorithm]: https://doi.org/10.1016/0020-0190(93)90079-O</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">greedy_feedback_arc_set</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">G::EdgeRef</span><span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">greedy_feedback_arc_set</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>(<span class="ident">g</span>: <span class="ident">G</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">G::EdgeRef</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">G</span>: <span class="ident">IntoEdgeReferences</span> <span class="op">+</span> <span class="ident">GraphProp</span><span class="op">&lt;</span><span class="ident">EdgeType</span> <span class="op">=</span> <span class="ident">Directed</span><span class="op">&gt;</span>,
     <span class="ident">G::NodeId</span>: <span class="ident">GraphIndex</span>,
@@ -527,7 +527,7 @@
 
 <span class="kw">fn</span> <span class="ident">good_node_sequence</span>(
     <span class="ident">edge_refs</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">usize</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">nodes</span> <span class="op">=</span> <span class="ident">FasNodeContainer</span> { <span class="ident">nodes</span>: <span class="ident">Vec::new</span>() };
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buckets</span> <span class="op">=</span> <span class="ident">Buckets</span> {
         <span class="ident">sinks_or_isolated</span>: <span class="ident">NodeLinkedList::new</span>(),
@@ -540,10 +540,10 @@
 
     <span class="comment">// Build node entries</span>
     <span class="kw">for</span> (<span class="ident">from_g_ix</span>, <span class="ident">to_g_ix</span>) <span class="kw">in</span> <span class="ident">edge_refs</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fas_node_entry</span> <span class="op">=</span> <span class="op">|</span><span class="ident">g_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">|</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FasNodeIndex</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fas_node_entry</span> <span class="op">=</span> <span class="op">|</span><span class="ident">g_ix</span>: <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">|</span> -&gt; <span class="ident">FasNodeIndex</span> {
             <span class="kw">match</span> <span class="ident">graph_ix_lookup</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">g_ix</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">fas_ix</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">fas_ix</span>,
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">fas_ix</span>) =&gt; <span class="kw-2">*</span><span class="ident">fas_ix</span>,
+                <span class="prelude-val">None</span> =&gt; {
                     <span class="kw">let</span> <span class="ident">fas_ix</span> <span class="op">=</span> <span class="ident">FasNodeIndex</span>(<span class="ident">nodes</span>.<span class="ident">nodes</span>.<span class="ident">len</span>());
 
                     <span class="ident">nodes</span>.<span class="ident">nodes</span>.<span class="ident">push</span>(<span class="ident">LinkedListEntry::new</span>(<span class="ident">FasNode</span> {
@@ -639,13 +639,13 @@
 <span class="kw">impl</span> <span class="ident">Index</span><span class="op">&lt;</span><span class="ident">FasNodeIndex</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">FasNodeContainer</span> {
     <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">LinkedListEntry</span><span class="op">&lt;</span><span class="ident">FasNode</span>, <span class="ident">FasNodeIndex</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">FasNodeIndex</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Output</span> {
+    <span class="kw">fn</span> <span class="ident">index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">FasNodeIndex</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Output</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">index</span>.<span class="number">0</span>]
     }
 }
 
 <span class="kw">impl</span> <span class="ident">IndexMut</span><span class="op">&lt;</span><span class="ident">FasNodeIndex</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">FasNodeContainer</span> {
-    <span class="kw">fn</span> <span class="ident">index_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">FasNodeIndex</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Output</span> {
+    <span class="kw">fn</span> <span class="ident">index_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">FasNodeIndex</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Output</span> {
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">nodes</span>[<span class="ident">index</span>.<span class="number">0</span>]
     }
 }
@@ -689,12 +689,12 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">ix</span>: <span class="ident">FasNodeIndex</span>,
         <span class="ident">nodes</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">FasNodeContainer</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">NodeLinkedList</span> {
+    ) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">NodeLinkedList</span> {
         <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="ident">nodes</span>[<span class="ident">ix</span>].<span class="ident">data</span>();
 
-        <span class="kw">if</span> <span class="ident">node</span>.<span class="ident">out_degree</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="ident">node</span>.<span class="ident">out_degree</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">sinks_or_isolated</span>
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">node</span>.<span class="ident">in_degree</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">node</span>.<span class="ident">in_degree</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">sources</span>
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="ident">delta_degree</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">out_degree</span> <span class="kw">as</span> <span class="ident">isize</span> <span class="op">-</span> <span class="ident">node</span>.<span class="ident">in_degree</span> <span class="kw">as</span> <span class="ident">isize</span>;
@@ -725,7 +725,7 @@
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nodes</span>[<span class="ident">ix</span>].<span class="ident">data</span>().<span class="ident">out_edges</span>.<span class="ident">len</span>() {
             <span class="kw">let</span> <span class="ident">out_ix</span> <span class="op">=</span> <span class="ident">nodes</span>[<span class="ident">ix</span>].<span class="ident">data</span>().<span class="ident">out_edges</span>[<span class="ident">i</span>];
 
-            <span class="kw">if</span> <span class="ident">out_ix</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ix</span> {
+            <span class="kw">if</span> <span class="ident">out_ix</span> <span class="op">==</span> <span class="ident">ix</span> {
                 <span class="kw">continue</span>;
             }
 
@@ -746,7 +746,7 @@
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nodes</span>[<span class="ident">ix</span>].<span class="ident">data</span>().<span class="ident">in_edges</span>.<span class="ident">len</span>() {
             <span class="kw">let</span> <span class="ident">in_ix</span> <span class="op">=</span> <span class="ident">nodes</span>[<span class="ident">ix</span>].<span class="ident">data</span>().<span class="ident">in_edges</span>[<span class="ident">i</span>];
 
-            <span class="kw">if</span> <span class="ident">in_ix</span> <span class="op">=</span><span class="op">=</span> <span class="ident">ix</span> {
+            <span class="kw">if</span> <span class="ident">in_ix</span> <span class="op">==</span> <span class="ident">ix</span> {
                 <span class="kw">continue</span>;
             }
 
@@ -799,19 +799,19 @@
     }
 
     <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Data</span>, <span class="ident">Ix</span><span class="op">&gt;</span> <span class="ident">LinkedListEntry</span><span class="op">&lt;</span><span class="ident">Data</span>, <span class="ident">Ix</span><span class="op">&gt;</span> {
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">data</span>: <span class="ident">Data</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">data</span>: <span class="ident">Data</span>) -&gt; <span class="self">Self</span> {
             <span class="ident">LinkedListEntry</span> { <span class="ident">pos</span>: <span class="prelude-val">None</span>, <span class="ident">data</span> }
         }
 
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">data</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Data</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">data</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Data</span> {
             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">data</span>
         }
 
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_in_list</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_in_list</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="ident">bool</span> {
             <span class="self">self</span>.<span class="ident">pos</span>.<span class="ident">is_some</span>()
         }
 
-        <span class="kw">fn</span> <span class="ident">pos_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">LinkedListPosition</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">pos_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">LinkedListPosition</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
             <span class="self">self</span>.<span class="ident">pos</span>
                 .<span class="ident">as_mut</span>()
                 .<span class="ident">expect</span>(<span class="string">&quot;expected linked list entry to have populated position&quot;</span>)
@@ -823,7 +823,7 @@
         <span class="ident">Container</span>: <span class="ident">IndexMut</span><span class="op">&lt;</span><span class="ident">Ix</span>, <span class="ident">Output</span> <span class="op">=</span> <span class="ident">LinkedListEntry</span><span class="op">&lt;</span><span class="ident">Data</span>, <span class="ident">Ix</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">Ix</span>: <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Copy</span>,
     {
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
             <span class="ident">LinkedList</span> {
                 <span class="ident">start</span>: <span class="prelude-val">None</span>,
                 <span class="ident">marker</span>: <span class="ident">PhantomData</span>,
@@ -845,7 +845,7 @@
             <span class="self">self</span>.<span class="ident">start</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">push_ix</span>);
         }
 
-        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">container</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Container</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">container</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Container</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">remove_ix</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">start</span> {
                 <span class="self">self</span>.<span class="ident">remove</span>(<span class="ident">remove_ix</span>, <span class="ident">container</span>);
                 <span class="prelude-val">Some</span>(<span class="ident">remove_ix</span>)
@@ -875,13 +875,13 @@
             }
 
             <span class="comment">// If the removed node was head of the list</span>
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">start</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">remove_ix</span>) {
+            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">start</span> <span class="op">==</span> <span class="prelude-val">Some</span>(<span class="ident">remove_ix</span>) {
                 <span class="self">self</span>.<span class="ident">start</span> <span class="op">=</span> <span class="ident">ll_entry</span>.<span class="ident">next</span>;
             }
         }
 
         <span class="doccomment">/// For debug purposes</span>
-        <span class="kw">fn</span> <span class="ident">to_vec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">container</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Container</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">to_vec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">container</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Container</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Ix</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ixs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
 
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">node_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">start</span>;

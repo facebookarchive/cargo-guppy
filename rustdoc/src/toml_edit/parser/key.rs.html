@@ -66,7 +66,7 @@
 
 <span class="comment">// key = simple-key / dotted-key</span>
 <span class="comment">// dotted-key = simple-key 1*( dot-sep simple-key )</span>
-<span class="macro">parse!</span>(<span class="ident">key</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>, {
+<span class="macro">parse!</span>(<span class="ident">key</span>() -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span>, {
     <span class="ident">sep_by1</span>(
         <span class="ident">attempt</span>((
             <span class="ident">ws</span>(),
@@ -81,13 +81,13 @@
 
 <span class="comment">// simple-key = quoted-key / unquoted-key</span>
 <span class="comment">// quoted-key = basic-string / literal-string</span>
-<span class="macro">parse!</span>(<span class="ident">simple_key</span>() <span class="op">-</span><span class="op">&gt;</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>, <span class="ident">InternalString</span>), {
+<span class="macro">parse!</span>(<span class="ident">simple_key</span>() -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>, <span class="ident">InternalString</span>), {
     <span class="ident">recognize_with_value</span>(
         <span class="ident">look_ahead</span>(<span class="ident">any</span>()).<span class="ident">then</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
             <span class="macro">dispatch!</span>(<span class="ident">e</span>;
-                <span class="ident"><span class="kw">crate</span>::parser::strings::QUOTATION_MARK</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">basic_string</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span>: <span class="ident">String</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
-                <span class="ident"><span class="kw">crate</span>::parser::strings::APOSTROPHE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">literal_string</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">unquoted_key</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="ident"><span class="kw">crate</span>::parser::strings::QUOTATION_MARK</span> =&gt; <span class="ident">basic_string</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span>: <span class="ident">String</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="ident"><span class="kw">crate</span>::parser::strings::APOSTROPHE</span> =&gt; <span class="ident">literal_string</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
+                <span class="kw">_</span> =&gt; <span class="ident">unquoted_key</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
             )
         })
     ).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">b</span>, <span class="ident">k</span>)<span class="op">|</span> {
@@ -97,14 +97,14 @@
 });
 
 <span class="comment">// unquoted-key = 1*( ALPHA / DIGIT / %x2D / %x5F ) ; A-Z / a-z / 0-9 / - / _</span>
-<span class="macro">parse!</span>(<span class="ident">unquoted_key</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>, {
+<span class="macro">parse!</span>(<span class="ident">unquoted_key</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>, {
     <span class="ident">take_while1</span>(<span class="ident">is_unquoted_char</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> {
         <span class="kw">unsafe</span> { <span class="ident">from_utf8_unchecked</span>(<span class="ident">b</span>, <span class="string">&quot;`is_unquoted_char` filters out on-ASCII&quot;</span>) }
     })
 });
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_unquoted_char</span>(<span class="ident">c</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_unquoted_char</span>(<span class="ident">c</span>: <span class="ident">u8</span>) -&gt; <span class="ident">bool</span> {
     <span class="macro">matches!</span>(<span class="ident">c</span>, <span class="string">b&#39;A&#39;</span>..<span class="op">=</span><span class="string">b&#39;Z&#39;</span> <span class="op">|</span> <span class="string">b&#39;a&#39;</span>..<span class="op">=</span><span class="string">b&#39;z&#39;</span> <span class="op">|</span> <span class="string">b&#39;0&#39;</span>..<span class="op">=</span><span class="string">b&#39;9&#39;</span> <span class="op">|</span> <span class="string">b&#39;-&#39;</span> <span class="op">|</span> <span class="string">b&#39;_&#39;</span>)
 }
 

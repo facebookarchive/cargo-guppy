@@ -360,7 +360,7 @@
     <span class="doccomment">/// Creates a build summary with the given options.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Requires the `summaries` feature to be enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_summary</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Summary</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_summary</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Summary</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">initials</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">initials</span>();
         <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span>
             <span class="ident">CargoOptionsSummary::new</span>(<span class="ident">initials</span>.<span class="ident">graph</span>().<span class="ident">package_graph</span>, <span class="self">self</span>.<span class="ident">features_only</span>(), <span class="ident">opts</span>)<span class="question-mark">?</span>;
@@ -384,7 +384,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">initials</span>: <span class="kw-2">&amp;</span><span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
         <span class="ident">direct_deps</span>: <span class="kw-2">&amp;</span><span class="ident">PackageSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PackageMap</span> {
+    ) -&gt; <span class="ident">PackageMap</span> {
         <span class="self">self</span>.<span class="ident">packages_with_features</span>(<span class="ident">DependencyDirection::Forward</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature_list</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">package</span> <span class="op">=</span> <span class="ident">feature_list</span>.<span class="ident">package</span>();
@@ -420,21 +420,21 @@
     <span class="doccomment">/// Returns an error if the summary ID could not be matched.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Requires the `summaries` feature to be enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata_by_summary_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">summary_id</span>: <span class="kw-2">&amp;</span><span class="ident">SummaryId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata_by_summary_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">summary_id</span>: <span class="kw-2">&amp;</span><span class="ident">SummaryId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PackageMetadata</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">summary_id</span>.<span class="ident">source</span> {
-            <span class="ident">SummarySource::Workspace</span> { <span class="ident">workspace_path</span> } <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">SummarySource::Workspace</span> { <span class="ident">workspace_path</span> } =&gt; {
                 <span class="self">self</span>.<span class="ident">workspace</span>().<span class="ident">member_by_path</span>(<span class="ident">workspace_path</span>)
             }
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">_</span> =&gt; {
                 <span class="comment">// Do a linear search for now -- this appears to be the easiest thing to do and is</span>
                 <span class="comment">// pretty fast. This could potentially be sped up by building an index by name, but</span>
                 <span class="comment">// at least for reasonably-sized graphs it&#39;s really fast.</span>
                 <span class="comment">//</span>
                 <span class="comment">// TODO: consider optimizing this in the future.</span>
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">filter</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">packages</span>().<span class="ident">filter</span>(<span class="op">|</span><span class="ident">package</span><span class="op">|</span> {
-                    <span class="ident">package</span>.<span class="ident">name</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">summary_id</span>.<span class="ident">name</span>
-                        <span class="op">&amp;&amp;</span> <span class="ident">package</span>.<span class="ident">version</span>() <span class="op">=</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">summary_id</span>.<span class="ident">version</span>
-                        <span class="op">&amp;&amp;</span> <span class="ident">package</span>.<span class="ident">source</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">summary_id</span>.<span class="ident">source</span>
+                    <span class="ident">package</span>.<span class="ident">name</span>() <span class="op">==</span> <span class="ident">summary_id</span>.<span class="ident">name</span>
+                        <span class="op">&amp;&amp;</span> <span class="ident">package</span>.<span class="ident">version</span>() <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">summary_id</span>.<span class="ident">version</span>
+                        <span class="op">&amp;&amp;</span> <span class="ident">package</span>.<span class="ident">source</span>() <span class="op">==</span> <span class="ident">summary_id</span>.<span class="ident">source</span>
                 });
                 <span class="ident">filter</span>
                     .<span class="ident">next</span>()
@@ -448,7 +448,7 @@
     <span class="doccomment">/// Converts this metadata to a `SummaryId`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Requires the `summaries` feature to be enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_summary_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SummaryId</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_summary_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">SummaryId</span> {
         <span class="ident">SummaryId</span> {
             <span class="ident">name</span>: <span class="self">self</span>.<span class="ident">name</span>().<span class="ident">to_string</span>(),
             <span class="ident">version</span>: <span class="self">self</span>.<span class="ident">version</span>().<span class="ident">clone</span>(),
@@ -500,7 +500,7 @@
         <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span>,
         <span class="ident">features_only</span>: <span class="kw-2">&amp;</span><span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">omitted_packages</span> <span class="op">=</span>
             <span class="ident">PackageSetSummary::from_package_ids</span>(<span class="ident">graph</span>, <span class="ident">opts</span>.<span class="ident">omitted_packages</span>.<span class="ident">iter</span>().<span class="ident">copied</span>())<span class="question-mark">?</span>;
 
@@ -534,7 +534,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_cargo_options</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="self">self</span>,
         <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CargoOptions</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">omitted_packages</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">omitted_packages</span>
             .<span class="ident">to_package_set</span>(<span class="ident">package_graph</span>, <span class="string">&quot;resolving omitted-packages&quot;</span>)<span class="question-mark">?</span>;
@@ -580,18 +580,18 @@
 }
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">InitialsPlatformSummary</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">InitialsPlatform</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">s</span>: <span class="ident">InitialsPlatformSummary</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">s</span>: <span class="ident">InitialsPlatformSummary</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">s</span> {
             <span class="ident">InitialsPlatformSummary::V1</span> {
                 <span class="ident">proc_macros_on_target</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="kw">if</span> <span class="ident">proc_macros_on_target</span> {
                     <span class="ident">InitialsPlatform::ProcMacrosOnTarget</span>
                 } <span class="kw">else</span> {
                     <span class="ident">InitialsPlatform::Standard</span>
                 }
             }
-            <span class="ident">InitialsPlatformSummary::V2</span> { <span class="ident">initials_platform</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">initials_platform</span>,
+            <span class="ident">InitialsPlatformSummary::V2</span> { <span class="ident">initials_platform</span> } =&gt; <span class="ident">initials_platform</span>,
         }
     }
 }
@@ -616,12 +616,12 @@
     <span class="doccomment">/// Converts a `PackageSource` into a `SummarySource`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Requires the `summaries` feature to be enabled.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_summary_source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SummarySource</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_summary_source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">SummarySource</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">SummarySource::workspace</span>(<span class="ident">path</span>),
-            <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">SummarySource::path</span>(<span class="ident">path</span>),
-            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">source</span> <span class="op">=</span><span class="op">=</span> <span class="ident">PackageSource::CRATES_IO_REGISTRY</span> {
+            <span class="ident">PackageSource::Workspace</span>(<span class="ident">path</span>) =&gt; <span class="ident">SummarySource::workspace</span>(<span class="ident">path</span>),
+            <span class="ident">PackageSource::Path</span>(<span class="ident">path</span>) =&gt; <span class="ident">SummarySource::path</span>(<span class="ident">path</span>),
+            <span class="ident">PackageSource::External</span>(<span class="ident">source</span>) =&gt; {
+                <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">source</span> <span class="op">==</span> <span class="ident">PackageSource::CRATES_IO_REGISTRY</span> {
                     <span class="ident">SummarySource::crates_io</span>()
                 } <span class="kw">else</span> {
                     <span class="ident">SummarySource::external</span>(<span class="kw-2">*</span><span class="ident">source</span>)
@@ -632,16 +632,16 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">SummarySource</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PackageSource</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">summary_source</span>: <span class="kw-2">&amp;</span><span class="ident">SummarySource</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">summary_source</span>: <span class="kw-2">&amp;</span><span class="ident">SummarySource</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="ident">summary_source</span> {
-            <span class="ident">SummarySource::Workspace</span> { <span class="ident">workspace_path</span> } <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="self">self</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::Workspace</span>(<span class="ident">workspace_path</span>)
+            <span class="ident">SummarySource::Workspace</span> { <span class="ident">workspace_path</span> } =&gt; {
+                <span class="self">self</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::Workspace</span>(<span class="ident">workspace_path</span>)
             }
-            <span class="ident">SummarySource::Path</span> { <span class="ident">path</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::Path</span>(<span class="ident">path</span>),
-            <span class="ident">SummarySource::CratesIo</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="self">self</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::External</span>(<span class="ident">PackageSource::CRATES_IO_REGISTRY</span>)
+            <span class="ident">SummarySource::Path</span> { <span class="ident">path</span> } =&gt; <span class="self">self</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::Path</span>(<span class="ident">path</span>),
+            <span class="ident">SummarySource::CratesIo</span> =&gt; {
+                <span class="self">self</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::External</span>(<span class="ident">PackageSource::CRATES_IO_REGISTRY</span>)
             }
-            <span class="ident">SummarySource::External</span> { <span class="ident">source</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::External</span>(<span class="ident">source</span>),
+            <span class="ident">SummarySource::External</span> { <span class="ident">source</span> } =&gt; <span class="self">self</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">PackageSource::External</span>(<span class="ident">source</span>),
         }
     }
 }

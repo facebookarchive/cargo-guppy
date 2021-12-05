@@ -474,8 +474,6 @@
 <span id="474">474</span>
 <span id="475">475</span>
 <span id="476">476</span>
-<span id="477">477</span>
-<span id="478">478</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -497,8 +495,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">iter</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">FeatureGraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">FeatureGraphBuildState</span> {
     <span class="ident">graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>, <span class="ident">Directed</span>, <span class="ident">FeatureIx</span><span class="op">&gt;</span>,
     <span class="comment">// Map from package ixs to the base (first) feature for each package.</span>
     <span class="ident">base_ixs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
@@ -506,11 +503,10 @@
     <span class="ident">warnings</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FeatureGraphWarning</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureGraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+<span class="kw">impl</span> <span class="ident">FeatureGraphBuildState</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_graph</span>: <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">package_count</span> <span class="op">=</span> <span class="ident">package_graph</span>.<span class="ident">package_count</span>();
         <span class="self">Self</span> {
-            <span class="ident">package_graph</span>,
             <span class="comment">// Each package corresponds to at least one feature ID.</span>
             <span class="ident">graph</span>: <span class="ident">Graph::with_capacity</span>(<span class="ident">package_count</span>, <span class="ident">package_count</span>),
             <span class="comment">// Each package corresponds to exactly one base feature ix, and there&#39;s one last ix at</span>
@@ -523,7 +519,7 @@
 
     <span class="doccomment">/// Add nodes for every feature in this package + the base package, and add edges from every</span>
     <span class="doccomment">/// feature to the base package.</span>
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">add_nodes</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">package</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">add_nodes</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">package</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) {
         <span class="kw">let</span> <span class="ident">base_node</span> <span class="op">=</span> <span class="ident">FeatureNode::base</span>(<span class="ident">package</span>.<span class="ident">package_ix</span>());
         <span class="kw">let</span> <span class="ident">base_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">base_node</span>, <span class="ident">FeatureType::BasePackage</span>);
         <span class="self">self</span>.<span class="ident">base_ixs</span>.<span class="ident">push</span>(<span class="ident">base_ix</span>);
@@ -563,7 +559,7 @@
                     .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">feature_dep</span><span class="op">|</span> {
                         <span class="kw">let</span> (<span class="ident">dep_name</span>, <span class="ident">to_feature</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::split_feature_dep</span>(<span class="ident">feature_dep</span>);
                         <span class="kw">let</span> (<span class="ident">cross_node_edge</span>, <span class="ident">same_node_edge</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">dep_name</span> {
-                            <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>) =&gt; {
                                 <span class="kw">let</span> <span class="ident">cross_node_edge</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">link</span>) <span class="op">=</span>
                                     <span class="ident">dep_name_to_link</span>.<span class="ident">get</span>(<span class="ident">dep_name</span>)
                                 {
@@ -600,7 +596,7 @@
                                     .<span class="ident">map</span>(<span class="op">|</span><span class="ident">same_node</span><span class="op">|</span> (<span class="ident">same_node</span>, <span class="ident">FeatureEdge::FeatureDependency</span>));
                                 (<span class="ident">cross_node_edge</span>, <span class="ident">same_node_edge</span>)
                             }
-                            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="prelude-val">None</span> =&gt; {
                                 <span class="kw">let</span> <span class="ident">same_node_edge</span> <span class="op">=</span> <span class="self">self</span>
                                     .<span class="ident">make_named_feature_node</span>(
                                         <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
@@ -630,7 +626,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// &quot;foo&quot; -&gt; (None, &quot;foo&quot;)</span>
     <span class="doccomment">/// &quot;dep/foo&quot; -&gt; (Some(&quot;dep&quot;), &quot;foo&quot;)</span>
-    <span class="kw">fn</span> <span class="ident">split_feature_dep</span>(<span class="ident">feature_dep</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>) {
+    <span class="kw">fn</span> <span class="ident">split_feature_dep</span>(<span class="ident">feature_dep</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>) {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rsplit</span> <span class="op">=</span> <span class="ident">feature_dep</span>.<span class="ident">rsplitn</span>(<span class="number">2</span>, <span class="string">&#39;/&#39;</span>);
         <span class="kw">let</span> <span class="ident">to_feature_name</span> <span class="op">=</span> <span class="ident">rsplit</span>
             .<span class="ident">next</span>()
@@ -647,10 +643,10 @@
         <span class="ident">to_package</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">to_feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
         <span class="ident">warn</span>: <span class="ident">bool</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FeatureNode</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FeatureNode</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">to_package</span>.<span class="ident">get_feature_idx</span>(<span class="ident">to_feature</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">idx</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">FeatureNode::new</span>(<span class="ident">to_package</span>.<span class="ident">package_ix</span>(), <span class="ident">idx</span>)),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">idx</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">FeatureNode::new</span>(<span class="ident">to_package</span>.<span class="ident">package_ix</span>(), <span class="ident">idx</span>)),
+            <span class="prelude-val">None</span> =&gt; {
                 <span class="comment">// It is possible to specify a feature that doesn&#39;t actually exist, and cargo will</span>
                 <span class="comment">// accept that if the feature isn&#39;t resolved. One example is the cfg-if crate, where</span>
                 <span class="comment">// version 0.1.9 has the `rustc-dep-of-std` feature commented out, and several</span>
@@ -682,10 +678,10 @@
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// (a link (`from`, `a`) to (`dep`, `foo`) is created.</span>
-    <span class="kw">fn</span> <span class="ident">make_named_feature_cross_edge</span>(<span class="ident">link</span>: <span class="kw-2">&amp;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureEdge</span> {
+    <span class="kw">fn</span> <span class="ident">make_named_feature_cross_edge</span>(<span class="ident">link</span>: <span class="kw-2">&amp;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">FeatureEdge</span> {
         <span class="comment">// This edge is enabled if the feature is enabled, which means the union of (required,</span>
         <span class="comment">// optional) build conditions.</span>
-        <span class="kw">fn</span> <span class="ident">combine_req_opt</span>(<span class="ident">req</span>: <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PlatformStatusImpl</span> {
+        <span class="kw">fn</span> <span class="ident">combine_req_opt</span>(<span class="ident">req</span>: <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">PlatformStatusImpl</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">required</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">inner</span>.<span class="ident">required</span>.<span class="ident">build_if</span>.<span class="ident">clone</span>();
             <span class="ident">required</span>.<span class="ident">extend</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">inner</span>.<span class="ident">optional</span>.<span class="ident">build_if</span>);
             <span class="ident">required</span>
@@ -778,7 +774,7 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">feature_id</span>: <span class="ident">FeatureNode</span>,
         <span class="ident">feature_type</span>: <span class="ident">FeatureType</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">feature_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">add_node</span>(<span class="ident">feature_id</span>);
         <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">insert</span>(
             <span class="ident">feature_id</span>,
@@ -810,11 +806,11 @@
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">lookup_node</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">node</span>: <span class="kw-2">&amp;</span><span class="ident">FeatureNode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">lookup_node</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">node</span>: <span class="kw-2">&amp;</span><span class="ident">FeatureNode</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">get</span>(<span class="ident">node</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">metadata</span><span class="op">|</span> <span class="ident">metadata</span>.<span class="ident">feature_ix</span>)
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">build</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureGraphImpl</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">build</span>(<span class="self">self</span>) -&gt; <span class="ident">FeatureGraphImpl</span> {
         <span class="ident">FeatureGraphImpl</span> {
             <span class="ident">graph</span>: <span class="self">self</span>.<span class="ident">graph</span>,
             <span class="ident">base_ixs</span>: <span class="self">self</span>.<span class="ident">base_ixs</span>,
@@ -836,7 +832,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">to</span> <span class="op">=</span> <span class="ident">link</span>.<span class="ident">to</span>();
         <span class="self">Self</span> {
             <span class="ident">link</span>,
@@ -847,7 +843,7 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="comment">// self.features only consists of non-empty build states.</span>
         <span class="self">self</span>.<span class="ident">features</span>.<span class="ident">is_empty</span>()
     }
@@ -865,10 +861,10 @@
 
         <span class="kw">for</span> (<span class="ident">feature</span>, <span class="ident">status</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">feature_targets</span> {
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">to</span>.<span class="ident">get_feature_idx</span>(<span class="ident">feature</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">feature_idx</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">feature_idx</span>) =&gt; {
                     <span class="self">self</span>.<span class="ident">extend</span>(<span class="prelude-val">Some</span>(<span class="ident">feature_idx</span>), <span class="ident">dep_kind</span>, <span class="ident">status</span>);
                 }
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">None</span> =&gt; {
                     <span class="comment">// The destination feature is missing -- this is accepted by cargo</span>
                     <span class="comment">// in some circumstances, so use a warning rather than an error.</span>
                     <span class="ident">warnings</span>.<span class="ident">push</span>(<span class="ident">FeatureGraphWarning::MissingFeature</span> {
@@ -899,7 +895,7 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>)<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>)<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">package_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">to</span>.<span class="ident">package_ix</span>();
         <span class="self">self</span>.<span class="ident">features</span>
             .<span class="ident">into_iter</span>()
@@ -923,7 +919,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">DependencyBuildState</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">package_edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">package_edge_ix</span>,
             <span class="ident">normal</span>: <span class="ident">PlatformStatusImpl::default</span>(),
@@ -934,18 +930,18 @@
 
     <span class="kw">fn</span> <span class="ident">extend</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">dep_kind</span>: <span class="ident">DependencyKind</span>, <span class="ident">status</span>: <span class="kw-2">&amp;</span><span class="ident">PlatformStatusImpl</span>) {
         <span class="kw">match</span> <span class="ident">dep_kind</span> {
-            <span class="ident">DependencyKind::Normal</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">normal</span>.<span class="ident">extend</span>(<span class="ident">status</span>),
-            <span class="ident">DependencyKind::Build</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">build</span>.<span class="ident">extend</span>(<span class="ident">status</span>),
-            <span class="ident">DependencyKind::Development</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">dev</span>.<span class="ident">extend</span>(<span class="ident">status</span>),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;unknown dependency kind&quot;</span>),
+            <span class="ident">DependencyKind::Normal</span> =&gt; <span class="self">self</span>.<span class="ident">normal</span>.<span class="ident">extend</span>(<span class="ident">status</span>),
+            <span class="ident">DependencyKind::Build</span> =&gt; <span class="self">self</span>.<span class="ident">build</span>.<span class="ident">extend</span>(<span class="ident">status</span>),
+            <span class="ident">DependencyKind::Development</span> =&gt; <span class="self">self</span>.<span class="ident">dev</span>.<span class="ident">extend</span>(<span class="ident">status</span>),
+            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;unknown dependency kind&quot;</span>),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">is_empty</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">normal</span>.<span class="ident">is_never</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">build</span>.<span class="ident">is_never</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">dev</span>.<span class="ident">is_never</span>()
     }
 
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureEdge</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) -&gt; <span class="ident">FeatureEdge</span> {
         <span class="ident">FeatureEdge::CrossPackage</span>(<span class="ident">CrossLinkImpl</span> {
             <span class="ident">package_edge_ix</span>: <span class="self">self</span>.<span class="ident">package_edge_ix</span>,
             <span class="ident">normal</span>: <span class="self">self</span>.<span class="ident">normal</span>,

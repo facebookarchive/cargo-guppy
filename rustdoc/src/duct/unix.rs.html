@@ -83,24 +83,24 @@
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">HandleExt</span> {
     <span class="doccomment">/// Send a signal to all child processes running under this expression.</span>
-    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
 }
 
 <span class="kw">impl</span> <span class="ident">HandleExt</span> <span class="kw">for</span> <span class="ident">Handle</span> {
-    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>)
     }
 }
 
 <span class="kw">impl</span> <span class="ident">HandleExt</span> <span class="kw">for</span> <span class="ident">HandleInner</span> {
-    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident">HandleInner::Child</span>(<span class="kw-2">ref</span> <span class="ident">child_handle</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">child_handle</span>.<span class="ident">child</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>),
-            <span class="ident">HandleInner::Pipe</span>(<span class="kw-2">ref</span> <span class="ident">pipe_handle</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">pipe_handle</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>),
-            <span class="ident">HandleInner::StdinBytes</span>(<span class="kw-2">ref</span> <span class="ident">stdin_bytes_handle</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">HandleInner::Child</span>(<span class="kw-2">ref</span> <span class="ident">child_handle</span>) =&gt; <span class="ident">child_handle</span>.<span class="ident">child</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>),
+            <span class="ident">HandleInner::Pipe</span>(<span class="kw-2">ref</span> <span class="ident">pipe_handle</span>) =&gt; <span class="ident">pipe_handle</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>),
+            <span class="ident">HandleInner::StdinBytes</span>(<span class="kw-2">ref</span> <span class="ident">stdin_bytes_handle</span>) =&gt; {
                 <span class="ident">stdin_bytes_handle</span>.<span class="ident">inner_handle</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>)
             }
-            <span class="ident">HandleInner::Unchecked</span>(<span class="kw-2">ref</span> <span class="ident">inner_handle</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">inner_handle</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>),
+            <span class="ident">HandleInner::Unchecked</span>(<span class="kw-2">ref</span> <span class="ident">inner_handle</span>) =&gt; <span class="ident">inner_handle</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>),
         }
     }
 }
@@ -108,7 +108,7 @@
 <span class="kw">impl</span> <span class="ident">HandleExt</span> <span class="kw">for</span> <span class="ident">PipeHandle</span> {
     <span class="doccomment">/// Signals both parts of this `pipe` expression. Returns an error if signalling one of the</span>
     <span class="doccomment">/// expressions returned an error.</span>
-    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">send_signal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signal</span>: <span class="ident">libc::c_int</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">left_result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">left_handle</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>);
         <span class="kw">let</span> <span class="ident">right_result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">right_handle</span>.<span class="ident">send_signal</span>(<span class="ident">signal</span>);
         <span class="ident">left_result</span>.<span class="ident">and</span>(<span class="ident">right_result</span>)

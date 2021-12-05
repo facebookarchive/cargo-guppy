@@ -351,7 +351,7 @@
     <span class="doccomment">/// Returns a Result containing an inotify instance.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more information see, [inotify_init(2)](http://man7.org/linux/man-pages/man2/inotify_init.2.html).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>(<span class="ident">flags</span>: <span class="ident">InitFlags</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Inotify</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>(<span class="ident">flags</span>: <span class="ident">InitFlags</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Inotify</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">Errno::result</span>(<span class="kw">unsafe</span> {
             <span class="ident">libc::inotify_init1</span>(<span class="ident">flags</span>.<span class="ident">bits</span>())
         });
@@ -367,7 +367,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_watch</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">NixPath</span><span class="op">&gt;</span>(<span class="self">self</span>,
                                           <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>,
                                           <span class="ident">mask</span>: <span class="ident">AddWatchFlags</span>) 
-                                            <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">WatchDescriptor</span><span class="op">&gt;</span>
+                                            -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">WatchDescriptor</span><span class="op">&gt;</span>
     {
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">with_nix_path</span>(<span class="op">|</span><span class="ident">cstr</span><span class="op">|</span> {
             <span class="kw">unsafe</span> {
@@ -385,14 +385,14 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more information see, [inotify_rm_watch(2)](http://man7.org/linux/man-pages/man2/inotify_rm_watch.2.html).</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rm_watch</span>(<span class="self">self</span>, <span class="ident">wd</span>: <span class="ident">WatchDescriptor</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rm_watch</span>(<span class="self">self</span>, <span class="ident">wd</span>: <span class="ident">WatchDescriptor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::inotify_rm_watch</span>(<span class="self">self</span>.<span class="ident">fd</span>, <span class="ident">wd</span>.<span class="ident">wd</span>) };
 
         <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
     }
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;android&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rm_watch</span>(<span class="self">self</span>, <span class="ident">wd</span>: <span class="ident">WatchDescriptor</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">rm_watch</span>(<span class="self">self</span>, <span class="ident">wd</span>: <span class="ident">WatchDescriptor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::inotify_rm_watch</span>(<span class="self">self</span>.<span class="ident">fd</span>, <span class="ident">wd</span>.<span class="ident">wd</span> <span class="kw">as</span> <span class="ident">u32</span>) };
 
         <span class="ident">Errno::result</span>(<span class="ident">res</span>).<span class="ident">map</span>(<span class="ident">drop</span>)
@@ -404,7 +404,7 @@
     <span class="doccomment">/// </span>
     <span class="doccomment">/// Returns as many events as available. If the call was non blocking and no</span>
     <span class="doccomment">/// events could be read then the EAGAIN error is returned.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_events</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InotifyEvent</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_events</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InotifyEvent</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">header_size</span> <span class="op">=</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">libc::inotify_event</span><span class="op">&gt;</span>();
         <span class="kw">const</span> <span class="ident">BUFSIZ</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4096</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">BUFSIZ</span>];
@@ -425,8 +425,8 @@
             };
 
             <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">event</span>.<span class="ident">len</span> {
-                <span class="number">0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="number">0</span> =&gt; <span class="prelude-val">None</span>,
+                <span class="kw">_</span> =&gt; {
                     <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="kw">unsafe</span> { 
                         <span class="ident">buffer</span>
                             .<span class="ident">as_ptr</span>()
@@ -454,13 +454,13 @@
 }
 
 <span class="kw">impl</span> <span class="ident">AsRawFd</span> <span class="kw">for</span> <span class="ident">Inotify</span> {
-    <span class="kw">fn</span> <span class="ident">as_raw_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RawFd</span> {
+    <span class="kw">fn</span> <span class="ident">as_raw_fd</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">RawFd</span> {
         <span class="self">self</span>.<span class="ident">fd</span>
     }
 }
 
 <span class="kw">impl</span> <span class="ident">FromRawFd</span> <span class="kw">for</span> <span class="ident">Inotify</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw_fd</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw_fd</span>(<span class="ident">fd</span>: <span class="ident">RawFd</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">Inotify</span> { <span class="ident">fd</span> }
     }
 }

@@ -5,7 +5,7 @@ registries. However, if you attempt to publish a crate from a Hakari-managed wor
 <code>cargo publish</code> may reject it for containing the local-only workspace-hack dependency.</p>
 <p><code>cargo hakari</code> provides three ways to handle this. <strong>For most users publishing to crates.io,
 <a href="#b-target-the-workspace-hack-crate-already-on-cratesio">method B</a> is the easiest</strong>.</p>
-<h1 id="a-temporarily-remove-the-workspace-hack-dependency-before-publishing" class="section-header"><a href="#a-temporarily-remove-the-workspace-hack-dependency-before-publishing">A. Temporarily remove the workspace-hack dependency before publishing</a></h1>
+<h2 id="a-temporarily-remove-the-workspace-hack-dependency-before-publishing" class="section-header"><a href="#a-temporarily-remove-the-workspace-hack-dependency-before-publishing">A. Temporarily remove the workspace-hack dependency before publishing</a></h2>
 <p>Simply run:</p>
 <div class="example-wrap"><pre class="language-sh"><code>cargo hakari publish -p &lt;crate&gt;</code></pre></div>
 <p>This command temporarily removes the dependency on the <code>workspace-hack</code> before publishing the
@@ -14,7 +14,7 @@ ctrl-C (in which case you can use <code>cargo hakari manage-deps</code> to finis
 <p>This works out of the box. However, it has the downside of requiring <code>cargo hakari publish</code>.
 If you don’t have control over the commands run while publishing the package, it won’t be
 possible to use this method.</p>
-<h1 id="b-target-the-workspace-hack-crate-already-on-cratesio" class="section-header"><a href="#b-target-the-workspace-hack-crate-already-on-cratesio">B. Target the “workspace-hack” crate already on crates.io</a></h1>
+<h2 id="b-target-the-workspace-hack-crate-already-on-cratesio" class="section-header"><a href="#b-target-the-workspace-hack-crate-already-on-cratesio">B. Target the “workspace-hack” crate already on crates.io</a></h2>
 <p>Methods B and C preserve workspace-hack dependencies in <code>Cargo.toml</code>s by targeting a stub
 crate on the registry. The crates.io registry already contains an empty package called
 <a href="https://crates.io/crates/workspace-hack">workspace-hack</a>, meant just for this.</p>
@@ -22,7 +22,7 @@ crate on the registry. The crates.io registry already contains an empty package 
 2 unnecessary, making this method zero-setup.</p>
 <p>However, if the workspace-hack crate was initialized by an older version of cargo-hakari,
 perform the following actions.</p>
-<h2 id="1-ensure-the-local-crate-is-called-workspace-hack" class="section-header"><a href="#1-ensure-the-local-crate-is-called-workspace-hack">1. Ensure the local crate is called “workspace-hack”</a></h2>
+<h3 id="1-ensure-the-local-crate-is-called-workspace-hack" class="section-header"><a href="#1-ensure-the-local-crate-is-called-workspace-hack">1. Ensure the local crate is called “workspace-hack”</a></h3>
 <p>If your crate has a different name, rename it to <code>&quot;workspace-hack&quot;</code>.</p>
 <blockquote>
 <p><strong>TIP:</strong> On Unix platforms, to rename <code>my-workspace-hack</code> to <code>workspace-hack</code> in other
@@ -31,7 +31,7 @@ perform the following actions.</p>
 <p>If not in the context of a Git repository, run:</p>
 <div class="example-wrap"><pre class="language-sh"><code>find . -name Cargo.toml | xargs perl -p -i -e &#39;s/^my-workspace-hack = /workspace-hack = /&#39;`</code></pre></div></blockquote>
 <p>Remember to update <code>.config/hakari.toml</code> (or <code>.guppy/hakari.toml</code>) with the new name.</p>
-<h2 id="2-ensure-dep-format-version--2-is-set-in-confighakaritoml" class="section-header"><a href="#2-ensure-dep-format-version--2-is-set-in-confighakaritoml">2. Ensure <code>dep-format-version = &quot;2&quot;</code> is set in <code>.config/hakari.toml</code></a></h2>
+<h3 id="2-ensure-dep-format-version--2-is-set-in-confighakaritoml" class="section-header"><a href="#2-ensure-dep-format-version--2-is-set-in-confighakaritoml">2. Ensure <code>dep-format-version = &quot;2&quot;</code> is set in <code>.config/hakari.toml</code></a></h3>
 <p><code>dep-format-version = &quot;2&quot;</code> adds the <code>version</code> field to the <code>workspace-hack = ...</code> lines in other
 <code>Cargo.toml</code> files. <code>cargo publish</code> uses the <code>version</code> field to recognize published
 dependencies.</p>
@@ -42,14 +42,14 @@ cargo-hakari may not have this option set.</p>
 <p>Then run <code>cargo hakari manage-deps</code> to update the <code>workspace-hack = ...</code> lines.</p>
 <hr />
 <p>After performing the above actions, simply run <code>cargo publish</code> as usual to publish the crate.</p>
-<h2 id="c-publish-your-own-workspace-hack-crate-to-the-registry" class="section-header"><a href="#c-publish-your-own-workspace-hack-crate-to-the-registry">C. Publish your own workspace-hack crate to the registry</a></h2>
+<h3 id="c-publish-your-own-workspace-hack-crate-to-the-registry" class="section-header"><a href="#c-publish-your-own-workspace-hack-crate-to-the-registry">C. Publish your own workspace-hack crate to the registry</a></h3>
 <p>If your crates need to be published to a different registry, or you wish to publish your own
 version of the workspace-hack, follow these instructions.</p>
-<h2 id="1-give-the-workspace-hack-a-unique-name" class="section-header"><a href="#1-give-the-workspace-hack-a-unique-name">1. Give the workspace-hack a unique name</a></h2>
+<h3 id="1-give-the-workspace-hack-a-unique-name" class="section-header"><a href="#1-give-the-workspace-hack-a-unique-name">1. Give the workspace-hack a unique name</a></h3>
 <p>If your crate has a name that is already taken up on the registry, give it a unique name.</p>
-<h2 id="2-ensure-dep-format-version--2-is-set-in-confighakaritoml-1" class="section-header"><a href="#2-ensure-dep-format-version--2-is-set-in-confighakaritoml-1">2. Ensure <code>dep-format-version = &quot;2&quot;</code> is set in <code>.config/hakari.toml</code></a></h2>
+<h3 id="2-ensure-dep-format-version--2-is-set-in-confighakaritoml-1" class="section-header"><a href="#2-ensure-dep-format-version--2-is-set-in-confighakaritoml-1">2. Ensure <code>dep-format-version = &quot;2&quot;</code> is set in <code>.config/hakari.toml</code></a></h3>
 <p>See <a href="#b-target-the-workspace-hack-crate-already-on-cratesio">Method B</a> above for more about this.</p>
-<h2 id="3-set-options-in-the-workspace-hacks-cargotoml" class="section-header"><a href="#3-set-options-in-the-workspace-hacks-cargotoml">3. Set options in the workspace-hack’s <code>Cargo.toml</code></a></h2>
+<h3 id="3-set-options-in-the-workspace-hacks-cargotoml" class="section-header"><a href="#3-set-options-in-the-workspace-hacks-cargotoml">3. Set options in the workspace-hack’s <code>Cargo.toml</code></a></h3>
 <p>In the workspace-hack’s <code>Cargo.toml</code> file, set the <code>package.publish</code> option to anything other
 than <code>false</code>. This enables publication of the workspace-hack crate.</p>
 <div class="example-wrap"><pre class="language-toml"><code>[package]
@@ -57,14 +57,14 @@ publish = true  # to allow publishing to any registry
 # or
 publish = [&quot;crates-io&quot;]  # to allow publishing to crates.io only</code></pre></div>
 <p>While you’re here, you may also wish to set other options like <code>repository</code> or <code>homepage</code>.</p>
-<h2 id="4-temporarily-disable-the-workspace-hack-crate" class="section-header"><a href="#4-temporarily-disable-the-workspace-hack-crate">4. Temporarily disable the workspace-hack crate</a></h2>
+<h3 id="4-temporarily-disable-the-workspace-hack-crate" class="section-header"><a href="#4-temporarily-disable-the-workspace-hack-crate">4. Temporarily disable the workspace-hack crate</a></h3>
 <p><strong>This step is really important.</strong> Not doing it will cause the full dependency set in the
 workspace-hack to be published, which is not what you want.</p>
 <p>Run <code>cargo hakari disable</code> to disable the workspace-hack.</p>
-<h2 id="5-publish-the-stub-workspace-hack-crate" class="section-header"><a href="#5-publish-the-stub-workspace-hack-crate">5. Publish the stub workspace-hack crate</a></h2>
+<h3 id="5-publish-the-stub-workspace-hack-crate" class="section-header"><a href="#5-publish-the-stub-workspace-hack-crate">5. Publish the stub workspace-hack crate</a></h3>
 <p>If the workspace-hack crate has been renamed to <code>my-workspace-hack</code>, run <code>cargo publish -p my-workspace-hack --allow-dirty</code> to publish the crate to <code>crates.io</code>. For other registries, use
 the <code>--registry</code> flag.</p>
-<h2 id="6-re-enable-the-workspace-hack-crate" class="section-header"><a href="#6-re-enable-the-workspace-hack-crate">6. Re-enable the workspace-hack crate</a></h2>
+<h3 id="6-re-enable-the-workspace-hack-crate" class="section-header"><a href="#6-re-enable-the-workspace-hack-crate">6. Re-enable the workspace-hack crate</a></h3>
 <p>Run <code>cargo hakari generate</code> to restore the workspace-hack’s contents. You can also use your
 source control system’s commands to do so, such as with <code>git restore</code>.</p>
 </div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cargo_hakari" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>

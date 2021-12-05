@@ -595,42 +595,42 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">gimli::Reader</span><span class="op">&gt;</span> <span class="ident">Functions</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">gimli::Unit</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">dwarf</span>: <span class="kw-2">&amp;</span><span class="ident">ResDwarf</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Functions</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">gimli::Unit</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">dwarf</span>: <span class="kw-2">&amp;</span><span class="ident">ResDwarf</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Functions</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">functions</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">addresses</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">entries</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">entries_raw</span>(<span class="prelude-val">None</span>)<span class="question-mark">?</span>;
         <span class="kw">while</span> <span class="op">!</span><span class="ident">entries</span>.<span class="ident">is_empty</span>() {
             <span class="kw">let</span> <span class="ident">dw_die_offset</span> <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">next_offset</span>();
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">abbrev</span>) <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">read_abbreviation</span>()<span class="question-mark">?</span> {
-                <span class="kw">if</span> <span class="ident">abbrev</span>.<span class="ident">tag</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">gimli::DW_TAG_subprogram</span> {
+                <span class="kw">if</span> <span class="ident">abbrev</span>.<span class="ident">tag</span>() <span class="op">==</span> <span class="ident">gimli::DW_TAG_subprogram</span> {
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ranges</span> <span class="op">=</span> <span class="ident">RangeAttributes::default</span>();
                     <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
                         <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-                            <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) =&gt; {
                                 <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">name</span>() {
-                                    <span class="ident">gimli::DW_AT_low_pc</span> <span class="op">=</span><span class="op">&gt;</span> {
+                                    <span class="ident">gimli::DW_AT_low_pc</span> =&gt; {
                                         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">gimli::AttributeValue::Addr</span>(<span class="ident">val</span>) <span class="op">=</span> <span class="ident">attr</span>.<span class="ident">value</span>() {
                                             <span class="ident">ranges</span>.<span class="ident">low_pc</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>);
                                         }
                                     }
-                                    <span class="ident">gimli::DW_AT_high_pc</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">value</span>() {
-                                        <span class="ident">gimli::AttributeValue::Addr</span>(<span class="ident">val</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                                    <span class="ident">gimli::DW_AT_high_pc</span> =&gt; <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">value</span>() {
+                                        <span class="ident">gimli::AttributeValue::Addr</span>(<span class="ident">val</span>) =&gt; {
                                             <span class="ident">ranges</span>.<span class="ident">high_pc</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>)
                                         }
-                                        <span class="ident">gimli::AttributeValue::Udata</span>(<span class="ident">val</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                                        <span class="ident">gimli::AttributeValue::Udata</span>(<span class="ident">val</span>) =&gt; {
                                             <span class="ident">ranges</span>.<span class="ident">size</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>)
                                         }
-                                        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                                        <span class="kw">_</span> =&gt; {}
                                     },
-                                    <span class="ident">gimli::DW_AT_ranges</span> <span class="op">=</span><span class="op">&gt;</span> {
+                                    <span class="ident">gimli::DW_AT_ranges</span> =&gt; {
                                         <span class="ident">ranges</span>.<span class="ident">ranges_offset</span> <span class="op">=</span> <span class="ident">dwarf</span>
                                             .<span class="ident">sections</span>
                                             .<span class="ident">attr_ranges_offset</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>())<span class="question-mark">?</span>;
                                     }
-                                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                                    <span class="kw">_</span> =&gt; {}
                                 };
                             }
-                            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
                         }
                     }
 
@@ -646,8 +646,8 @@
                 } <span class="kw">else</span> {
                     <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
                         <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-                            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {}
-                            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
+                            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
                         }
                     }
                 }
@@ -670,7 +670,7 @@
         })
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">find_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">probe</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">find_address</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">probe</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">addresses</span>
             .<span class="ident">binary_search_by</span>(<span class="op">|</span><span class="ident">address</span><span class="op">|</span> {
                 <span class="kw">if</span> <span class="ident">probe</span> <span class="op">&lt;</span> <span class="ident">address</span>.<span class="ident">range</span>.<span class="ident">begin</span> {
@@ -688,7 +688,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">gimli::Unit</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
         <span class="ident">dwarf</span>: <span class="kw-2">&amp;</span><span class="ident">ResDwarf</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">for</span> <span class="ident">function</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">functions</span> {
             <span class="ident">function</span>
                 .<span class="number">1</span>
@@ -705,7 +705,7 @@
         <span class="ident">dw_die_offset</span>: <span class="ident">gimli::UnitOffset</span><span class="op">&lt;</span><span class="ident">R::Offset</span><span class="op">&gt;</span>,
         <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">gimli::Unit</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
         <span class="ident">dwarf</span>: <span class="kw-2">&amp;</span><span class="ident">ResDwarf</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">entries</span> <span class="op">=</span> <span class="ident">unit</span>.<span class="ident">entries_raw</span>(<span class="prelude-val">Some</span>(<span class="ident">dw_die_offset</span>))<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">depth</span> <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">next_depth</span>();
         <span class="kw">let</span> <span class="ident">abbrev</span> <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">read_abbreviation</span>()<span class="question-mark">?</span>.<span class="ident">unwrap</span>();
@@ -714,27 +714,27 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">name</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
             <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-                <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) =&gt; {
                     <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">name</span>() {
-                        <span class="ident">gimli::DW_AT_linkage_name</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_MIPS_linkage_name</span> <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="ident">gimli::DW_AT_linkage_name</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_MIPS_linkage_name</span> =&gt; {
                             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">val</span>) <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">sections</span>.<span class="ident">attr_string</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>()) {
                                 <span class="ident">name</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>);
                             }
                         }
-                        <span class="ident">gimli::DW_AT_name</span> <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="ident">gimli::DW_AT_name</span> =&gt; {
                             <span class="kw">if</span> <span class="ident">name</span>.<span class="ident">is_none</span>() {
                                 <span class="ident">name</span> <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">sections</span>.<span class="ident">attr_string</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>()).<span class="ident">ok</span>();
                             }
                         }
-                        <span class="ident">gimli::DW_AT_abstract_origin</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_specification</span> <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="ident">gimli::DW_AT_abstract_origin</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_specification</span> =&gt; {
                             <span class="kw">if</span> <span class="ident">name</span>.<span class="ident">is_none</span>() {
                                 <span class="ident">name</span> <span class="op">=</span> <span class="ident">name_attr</span>(<span class="ident">attr</span>.<span class="ident">value</span>(), <span class="ident">unit</span>, <span class="ident">dwarf</span>, <span class="number">16</span>)<span class="question-mark">?</span>;
                             }
                         }
-                        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                        <span class="kw">_</span> =&gt; {}
                     };
                 }
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
             }
         }
 
@@ -790,7 +790,7 @@
         <span class="ident">inlined_functions</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InlinedFunction</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">inlined_addresses</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InlinedFunctionAddress</span><span class="op">&gt;</span>,
         <span class="ident">inlined_depth</span>: <span class="ident">usize</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">loop</span> {
             <span class="kw">let</span> <span class="ident">dw_die_offset</span> <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">next_offset</span>();
             <span class="kw">let</span> <span class="ident">next_depth</span> <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">next_depth</span>();
@@ -799,10 +799,10 @@
             }
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">abbrev</span>) <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">read_abbreviation</span>()<span class="question-mark">?</span> {
                 <span class="kw">match</span> <span class="ident">abbrev</span>.<span class="ident">tag</span>() {
-                    <span class="ident">gimli::DW_TAG_subprogram</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_TAG_subprogram</span> =&gt; {
                         <span class="ident">Function::skip</span>(<span class="ident">entries</span>, <span class="ident">abbrev</span>, <span class="ident">next_depth</span>)<span class="question-mark">?</span>;
                     }
-                    <span class="ident">gimli::DW_TAG_inlined_subroutine</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_TAG_inlined_subroutine</span> =&gt; {
                         <span class="ident">InlinedFunction::parse</span>(
                             <span class="ident">dw_die_offset</span>,
                             <span class="ident">entries</span>,
@@ -815,11 +815,11 @@
                             <span class="ident">inlined_depth</span>,
                         )<span class="question-mark">?</span>;
                     }
-                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">_</span> =&gt; {
                         <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
                             <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-                                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {}
-                                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
+                                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
                             }
                         }
                     }
@@ -832,20 +832,20 @@
         <span class="ident">entries</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">gimli::EntriesRaw</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
         <span class="ident">abbrev</span>: <span class="kw-2">&amp;</span><span class="ident">gimli::Abbreviation</span>,
         <span class="ident">depth</span>: <span class="ident">isize</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// TODO: use DW_AT_sibling</span>
         <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
             <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {}
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
             }
         }
         <span class="kw">while</span> <span class="ident">entries</span>.<span class="ident">next_depth</span>() <span class="op">&gt;</span> <span class="ident">depth</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">abbrev</span>) <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">read_abbreviation</span>()<span class="question-mark">?</span> {
                 <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
                     <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-                        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {}
-                        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
+                        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
                     }
                 }
             }
@@ -857,7 +857,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">find_inlined_functions</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">probe</span>: <span class="ident">u64</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">iter::Rev</span><span class="op">&lt;</span><span class="ident">maybe_small::IntoIter</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">InlinedFunction</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">iter::Rev</span><span class="op">&lt;</span><span class="ident">maybe_small::IntoIter</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">InlinedFunction</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="comment">// `inlined_functions` is ordered from outside to inside.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inlined_functions</span> <span class="op">=</span> <span class="ident">maybe_small::Vec::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">inlined_addresses</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inlined_addresses</span>[..];
@@ -903,7 +903,7 @@
         <span class="ident">inlined_functions</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InlinedFunction</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">inlined_addresses</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">InlinedFunctionAddress</span><span class="op">&gt;</span>,
         <span class="ident">inlined_depth</span>: <span class="ident">usize</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ranges</span> <span class="op">=</span> <span class="ident">RangeAttributes::default</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">name</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">call_file</span> <span class="op">=</span> <span class="number">0</span>;
@@ -911,50 +911,50 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">call_column</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
             <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-                <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">name</span>() {
-                    <span class="ident">gimli::DW_AT_low_pc</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) =&gt; <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">name</span>() {
+                    <span class="ident">gimli::DW_AT_low_pc</span> =&gt; {
                         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">gimli::AttributeValue::Addr</span>(<span class="ident">val</span>) <span class="op">=</span> <span class="ident">attr</span>.<span class="ident">value</span>() {
                             <span class="ident">ranges</span>.<span class="ident">low_pc</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>);
                         }
                     }
-                    <span class="ident">gimli::DW_AT_high_pc</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">value</span>() {
-                        <span class="ident">gimli::AttributeValue::Addr</span>(<span class="ident">val</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ranges</span>.<span class="ident">high_pc</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>),
-                        <span class="ident">gimli::AttributeValue::Udata</span>(<span class="ident">val</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ranges</span>.<span class="ident">size</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>),
-                        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                    <span class="ident">gimli::DW_AT_high_pc</span> =&gt; <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">value</span>() {
+                        <span class="ident">gimli::AttributeValue::Addr</span>(<span class="ident">val</span>) =&gt; <span class="ident">ranges</span>.<span class="ident">high_pc</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>),
+                        <span class="ident">gimli::AttributeValue::Udata</span>(<span class="ident">val</span>) =&gt; <span class="ident">ranges</span>.<span class="ident">size</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>),
+                        <span class="kw">_</span> =&gt; {}
                     },
-                    <span class="ident">gimli::DW_AT_ranges</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_AT_ranges</span> =&gt; {
                         <span class="ident">ranges</span>.<span class="ident">ranges_offset</span> <span class="op">=</span>
                             <span class="ident">dwarf</span>.<span class="ident">sections</span>.<span class="ident">attr_ranges_offset</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>())<span class="question-mark">?</span>;
                     }
-                    <span class="ident">gimli::DW_AT_linkage_name</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_MIPS_linkage_name</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_AT_linkage_name</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_MIPS_linkage_name</span> =&gt; {
                         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">val</span>) <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">sections</span>.<span class="ident">attr_string</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>()) {
                             <span class="ident">name</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>);
                         }
                     }
-                    <span class="ident">gimli::DW_AT_name</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_AT_name</span> =&gt; {
                         <span class="kw">if</span> <span class="ident">name</span>.<span class="ident">is_none</span>() {
                             <span class="ident">name</span> <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">sections</span>.<span class="ident">attr_string</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>()).<span class="ident">ok</span>();
                         }
                     }
-                    <span class="ident">gimli::DW_AT_abstract_origin</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_specification</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_AT_abstract_origin</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_specification</span> =&gt; {
                         <span class="kw">if</span> <span class="ident">name</span>.<span class="ident">is_none</span>() {
                             <span class="ident">name</span> <span class="op">=</span> <span class="ident">name_attr</span>(<span class="ident">attr</span>.<span class="ident">value</span>(), <span class="ident">unit</span>, <span class="ident">dwarf</span>, <span class="number">16</span>)<span class="question-mark">?</span>;
                         }
                     }
-                    <span class="ident">gimli::DW_AT_call_file</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_AT_call_file</span> =&gt; {
                         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">gimli::AttributeValue::FileIndex</span>(<span class="ident">fi</span>) <span class="op">=</span> <span class="ident">attr</span>.<span class="ident">value</span>() {
                             <span class="ident">call_file</span> <span class="op">=</span> <span class="ident">fi</span>;
                         }
                     }
-                    <span class="ident">gimli::DW_AT_call_line</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_AT_call_line</span> =&gt; {
                         <span class="ident">call_line</span> <span class="op">=</span> <span class="ident">attr</span>.<span class="ident">udata_value</span>().<span class="ident">unwrap_or</span>(<span class="number">0</span>) <span class="kw">as</span> <span class="ident">u32</span>;
                     }
-                    <span class="ident">gimli::DW_AT_call_column</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">gimli::DW_AT_call_column</span> =&gt; {
                         <span class="ident">call_column</span> <span class="op">=</span> <span class="ident">attr</span>.<span class="ident">udata_value</span>().<span class="ident">unwrap_or</span>(<span class="number">0</span>) <span class="kw">as</span> <span class="ident">u32</span>;
                     }
-                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                    <span class="kw">_</span> =&gt; {}
                 },
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
             }
         }
 
@@ -992,17 +992,17 @@
     <span class="ident">unit</span>: <span class="kw-2">&amp;</span><span class="ident">gimli::Unit</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
     <span class="ident">dwarf</span>: <span class="kw-2">&amp;</span><span class="ident">ResDwarf</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
     <span class="ident">recursion_limit</span>: <span class="ident">usize</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">R</span>: <span class="ident">gimli::Reader</span>,
 {
-    <span class="kw">if</span> <span class="ident">recursion_limit</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+    <span class="kw">if</span> <span class="ident">recursion_limit</span> <span class="op">==</span> <span class="number">0</span> {
         <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
     }
 
     <span class="kw">match</span> <span class="ident">attr</span> {
-        <span class="ident">gimli::AttributeValue::UnitRef</span>(<span class="ident">offset</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">name_entry</span>(<span class="ident">unit</span>, <span class="ident">offset</span>, <span class="ident">dwarf</span>, <span class="ident">recursion_limit</span>),
-        <span class="ident">gimli::AttributeValue::DebugInfoRef</span>(<span class="ident">dr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="ident">gimli::AttributeValue::UnitRef</span>(<span class="ident">offset</span>) =&gt; <span class="ident">name_entry</span>(<span class="ident">unit</span>, <span class="ident">offset</span>, <span class="ident">dwarf</span>, <span class="ident">recursion_limit</span>),
+        <span class="ident">gimli::AttributeValue::DebugInfoRef</span>(<span class="ident">dr</span>) =&gt; {
             <span class="kw">let</span> <span class="ident">res_unit</span> <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">find_unit</span>(<span class="ident">dr</span>)<span class="question-mark">?</span>;
             <span class="ident">name_entry</span>(
                 <span class="kw-2">&amp;</span><span class="ident">res_unit</span>.<span class="ident">dw_unit</span>,
@@ -1011,7 +1011,7 @@
                 <span class="ident">recursion_limit</span>,
             )
         }
-        <span class="ident">gimli::AttributeValue::DebugInfoRefSup</span>(<span class="ident">dr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="ident">gimli::AttributeValue::DebugInfoRefSup</span>(<span class="ident">dr</span>) =&gt; {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">sup_dwarf</span>) <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">sup</span>.<span class="ident">as_ref</span>() {
                 <span class="kw">let</span> <span class="ident">res_unit</span> <span class="op">=</span> <span class="ident">sup_dwarf</span>.<span class="ident">find_unit</span>(<span class="ident">dr</span>)<span class="question-mark">?</span>;
                 <span class="ident">name_entry</span>(
@@ -1024,7 +1024,7 @@
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             }
         }
-        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+        <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
     }
 }
 
@@ -1033,7 +1033,7 @@
     <span class="ident">offset</span>: <span class="ident">gimli::UnitOffset</span><span class="op">&lt;</span><span class="ident">R::Offset</span><span class="op">&gt;</span>,
     <span class="ident">dwarf</span>: <span class="kw-2">&amp;</span><span class="ident">ResDwarf</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
     <span class="ident">recursion_limit</span>: <span class="ident">usize</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">R</span>: <span class="ident">gimli::Reader</span>,
 {
@@ -1048,23 +1048,23 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">next</span> <span class="op">=</span> <span class="prelude-val">None</span>;
     <span class="kw">for</span> <span class="ident">spec</span> <span class="kw">in</span> <span class="ident">abbrev</span>.<span class="ident">attributes</span>() {
         <span class="kw">match</span> <span class="ident">entries</span>.<span class="ident">read_attribute</span>(<span class="kw-2">*</span><span class="ident">spec</span>) {
-            <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">name</span>() {
-                <span class="ident">gimli::DW_AT_linkage_name</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_MIPS_linkage_name</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">attr</span>) =&gt; <span class="kw">match</span> <span class="ident">attr</span>.<span class="ident">name</span>() {
+                <span class="ident">gimli::DW_AT_linkage_name</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_MIPS_linkage_name</span> =&gt; {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">val</span>) <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">sections</span>.<span class="ident">attr_string</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>()) {
                         <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">val</span>));
                     }
                 }
-                <span class="ident">gimli::DW_AT_name</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">gimli::DW_AT_name</span> =&gt; {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">val</span>) <span class="op">=</span> <span class="ident">dwarf</span>.<span class="ident">sections</span>.<span class="ident">attr_string</span>(<span class="ident">unit</span>, <span class="ident">attr</span>.<span class="ident">value</span>()) {
                         <span class="ident">name</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">val</span>);
                     }
                 }
-                <span class="ident">gimli::DW_AT_abstract_origin</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_specification</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">gimli::DW_AT_abstract_origin</span> <span class="op">|</span> <span class="ident">gimli::DW_AT_specification</span> =&gt; {
                     <span class="ident">next</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">attr</span>.<span class="ident">value</span>());
                 }
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                <span class="kw">_</span> =&gt; {}
             },
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
         }
     }
 

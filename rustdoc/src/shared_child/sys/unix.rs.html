@@ -84,12 +84,12 @@
 <span class="comment">// A handle on Unix is just the PID.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Handle</span>(<span class="ident">u32</span>);
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_handle</span>(<span class="ident">child</span>: <span class="kw-2">&amp;</span><span class="ident">Child</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Handle</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_handle</span>(<span class="ident">child</span>: <span class="kw-2">&amp;</span><span class="ident">Child</span>) -&gt; <span class="ident">Handle</span> {
     <span class="ident">Handle</span>(<span class="ident">child</span>.<span class="ident">id</span>())
 }
 
 <span class="comment">// This blocks until a child exits, without reaping the child.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait_without_reaping</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait_without_reaping</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">loop</span> {
         <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">siginfo</span> <span class="op">=</span> <span class="ident">std::mem::zeroed</span>();
@@ -100,7 +100,7 @@
                 <span class="ident">libc::WEXITED</span> <span class="op">|</span> <span class="ident">libc::WNOWAIT</span>,
             )
         };
-        <span class="kw">if</span> <span class="ident">ret</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="ident">ret</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
         }
         <span class="kw">let</span> <span class="ident">error</span> <span class="op">=</span> <span class="ident">io::Error::last_os_error</span>();
@@ -112,7 +112,7 @@
 }
 
 <span class="comment">// This checks whether the child has already exited, without reaping the child.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_wait_without_reaping</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_wait_without_reaping</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">siginfo</span>: <span class="ident">libc::siginfo_t</span>;
     <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="comment">// Darwin doesn&#39;t touch the siginfo_t struct if the child hasn&#39;t exited</span>
@@ -141,10 +141,10 @@
     <span class="kw">if</span> <span class="ident">ret</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
         <span class="comment">// EINTR should be impossible here</span>
         <span class="prelude-val">Err</span>(<span class="ident">io::Error::last_os_error</span>())
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">siginfo</span>.<span class="ident">si_signo</span> <span class="op">=</span><span class="op">=</span> <span class="ident">libc::SIGCHLD</span> {
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">siginfo</span>.<span class="ident">si_signo</span> <span class="op">==</span> <span class="ident">libc::SIGCHLD</span> {
         <span class="comment">// The child has exited.</span>
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">siginfo</span>.<span class="ident">si_signo</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">siginfo</span>.<span class="ident">si_signo</span> <span class="op">==</span> <span class="number">0</span> {
         <span class="comment">// The child has not exited.</span>
         <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
     } <span class="kw">else</span> {

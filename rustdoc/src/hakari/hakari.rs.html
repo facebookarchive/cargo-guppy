@@ -1483,10 +1483,35 @@
 <span id="1483">1483</span>
 <span id="1484">1484</span>
 <span id="1485">1485</span>
+<span id="1486">1486</span>
+<span id="1487">1487</span>
+<span id="1488">1488</span>
+<span id="1489">1489</span>
+<span id="1490">1490</span>
+<span id="1491">1491</span>
+<span id="1492">1492</span>
+<span id="1493">1493</span>
+<span id="1494">1494</span>
+<span id="1495">1495</span>
+<span id="1496">1496</span>
+<span id="1497">1497</span>
+<span id="1498">1498</span>
+<span id="1499">1499</span>
+<span id="1500">1500</span>
+<span id="1501">1501</span>
+<span id="1502">1502</span>
+<span id="1503">1503</span>
+<span id="1504">1504</span>
+<span id="1505">1505</span>
+<span id="1506">1506</span>
+<span id="1507">1507</span>
+<span id="1508">1508</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">explain::HakariExplain</span>,
+    <span class="ident">toml_name_map</span>,
     <span class="ident">toml_out</span>::{<span class="ident">write_toml</span>, <span class="ident">HakariOutputOptions</span>},
     <span class="ident">CargoTomlError</span>, <span class="ident">HakariCargoToml</span>, <span class="ident">TomlOutError</span>,
 };
@@ -1505,7 +1530,7 @@
 <span class="kw">use</span> <span class="ident">rayon::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">borrow::Cow</span>,
-    <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>, <span class="ident">HashSet</span>},
+    <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>},
     <span class="ident">fmt</span>,
     <span class="ident">sync::Arc</span>,
 };
@@ -1539,7 +1564,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
         <span class="ident">hakari_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="ident">hakari_id</span>
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package_id</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">package</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>;
@@ -1568,12 +1593,12 @@
     }
 
     <span class="doccomment">/// Returns the `PackageGraph` used to construct this `Hakari` instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">graph</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span> {
         <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">graph</span>
     }
 
     <span class="doccomment">/// Returns the Hakari package, or `None` if it wasn&#39;t passed into [`new`](Self::new).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hakari_package</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hakari_package</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">hakari_package</span>.<span class="ident">as_ref</span>()
     }
 
@@ -1585,7 +1610,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if there was an issue reading the TOML file from disk, or `None` if</span>
     <span class="doccomment">/// this builder was created without a Hakari package.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HakariCargoToml</span>, <span class="ident">CargoTomlError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HakariCargoToml</span>, <span class="ident">CargoTomlError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">hakari_package</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">workspace_path</span> <span class="op">=</span> <span class="ident">hakari_package</span>
             .<span class="ident">source</span>()
@@ -1614,7 +1639,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_platforms</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">platforms</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="ident">TargetSpecError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="ident">TargetSpecError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">platforms</span> <span class="op">=</span> <span class="ident">platforms</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">Platform::new</span>(<span class="ident">s</span>.<span class="ident">into</span>(), <span class="ident">TargetFeatures::Unknown</span>)<span class="question-mark">?</span>)))
@@ -1624,7 +1649,7 @@
 
     <span class="doccomment">/// Returns the platforms set through `set_platforms`, or an empty list if no platforms are</span>
     <span class="doccomment">/// set.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">platforms</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;_</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">platforms</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ExactSizeIterator</span> <span class="op">+</span> <span class="lifetime">&#39;_</span> {
         <span class="self">self</span>.<span class="ident">platforms</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">platform</span><span class="op">|</span> <span class="ident">platform</span>.<span class="ident">triple_str</span>())
     }
 
@@ -1633,13 +1658,13 @@
     <span class="doccomment">/// By default, `HakariBuilder` uses [version 2](CargoResolverVersion::V2) of the Cargo</span>
     <span class="doccomment">/// resolver. For more about Cargo resolvers, see the documentation for</span>
     <span class="doccomment">/// [`CargoResolverVersion`](CargoResolverVersion).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_resolver</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">resolver</span>: <span class="ident">CargoResolverVersion</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_resolver</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">resolver</span>: <span class="ident">CargoResolverVersion</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">resolver</span> <span class="op">=</span> <span class="ident">resolver</span>;
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// Returns the current Cargo resolver version.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolver</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CargoResolverVersion</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resolver</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">CargoResolverVersion</span> {
         <span class="self">self</span>.<span class="ident">resolver</span>
     }
 
@@ -1659,7 +1684,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_traversal_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">excludes</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">traversal_exclude</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">excludes</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package_id</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>.<span class="ident">id</span>()))
@@ -1672,7 +1697,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Also returns the Hakari package if specified. This is because the Hakari package is treated</span>
     <span class="doccomment">/// as excluded while performing unification.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">traversal_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">traversal_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
         <span class="kw">let</span> <span class="ident">excludes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_traversal_excludes</span>();
         <span class="ident">excludes</span>.<span class="ident">iter</span>()
     }
@@ -1683,7 +1708,7 @@
     <span class="doccomment">/// treated as excluded by the algorithm.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if this package ID isn&#39;t known to the underlying graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_traversal_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_traversal_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">excludes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_traversal_excludes</span>();
@@ -1699,7 +1724,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_final_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">excludes</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">PackageId</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">final_excludes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">excludes</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">package_id</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>.<span class="ident">id</span>()))
@@ -1709,14 +1734,14 @@
     }
 
     <span class="doccomment">/// Returns the packages to be removed from the final output.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">final_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">final_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
         <span class="self">self</span>.<span class="ident">final_excludes</span>.<span class="ident">iter</span>().<span class="ident">copied</span>()
     }
 
     <span class="doccomment">/// Returns true if a package ID is currently excluded from the final output.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if this package ID isn&#39;t known to the underlying graph.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_final_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_final_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">metadata</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">final_excludes</span>.<span class="ident">contains</span>(<span class="ident">package_id</span>))
     }
@@ -1728,7 +1753,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if this package ID isn&#39;t known to the underlying graph.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">is_traversal_excluded</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span> <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">is_final_excluded</span>(<span class="ident">package_id</span>)<span class="question-mark">?</span>)
     }
 
@@ -1739,7 +1764,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_registries</span>(
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">registries</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    ) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">registries</span>.<span class="ident">extend</span>(
             <span class="ident">registries</span>
                 .<span class="ident">into_iter</span>()
@@ -1752,13 +1777,13 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is an advanced feature that most users don&#39;t need to set. For more information about</span>
     <span class="doccomment">/// this option, see the documentation for [`UnifyTargetHost`](UnifyTargetHost).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_unify_target_host</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">unify_target_host</span>: <span class="ident">UnifyTargetHost</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_unify_target_host</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">unify_target_host</span>: <span class="ident">UnifyTargetHost</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">unify_target_host</span> <span class="op">=</span> <span class="ident">unify_target_host</span>;
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// Returns the current value of `unify_target_host`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unify_target_host</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UnifyTargetHost</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unify_target_host</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">UnifyTargetHost</span> {
         <span class="self">self</span>.<span class="ident">unify_target_host</span>
     }
 
@@ -1769,31 +1794,31 @@
     <span class="doccomment">/// including those that don&#39;t need to be unified.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is rarely needed in production, and is most useful for testing and debugging scenarios.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_output_single_feature</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">output_single_feature</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_output_single_feature</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">output_single_feature</span>: <span class="ident">bool</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">output_single_feature</span> <span class="op">=</span> <span class="ident">output_single_feature</span>;
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// Returns the current value of `output_single_feature`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">output_single_feature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">output_single_feature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">output_single_feature</span>
     }
 
     <span class="doccomment">/// Version of `workspace-hack = ...` lines to output.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// For more, see the documentation for [`DepFormatVersion`](DepFormatVersion).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_dep_format_version</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">dep_format_version</span>: <span class="ident">DepFormatVersion</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_dep_format_version</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">dep_format_version</span>: <span class="ident">DepFormatVersion</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">dep_format_version</span> <span class="op">=</span> <span class="ident">dep_format_version</span>;
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// Returns the current value of `dep_format_version`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_format_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DepFormatVersion</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dep_format_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">DepFormatVersion</span> {
         <span class="self">self</span>.<span class="ident">dep_format_version</span>
     }
 
     <span class="doccomment">/// Computes the `Hakari` for this builder.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compute</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Hakari</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compute</span>(<span class="self">self</span>) -&gt; <span class="ident">Hakari</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="ident">Hakari::build</span>(<span class="self">self</span>)
     }
 
@@ -1804,11 +1829,11 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cli-support&quot;</span>)]</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">traversal_excludes_only</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
         <span class="self">self</span>.<span class="ident">traversal_excludes</span>.<span class="ident">iter</span>().<span class="ident">copied</span>()
     }
 
-    <span class="kw">fn</span> <span class="ident">make_traversal_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TraversalExcludes</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">make_traversal_excludes</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) -&gt; <span class="ident">TraversalExcludes</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">verify_mode</span> {
             <span class="prelude-val">None</span>
         } <span class="kw">else</span> {
@@ -1821,11 +1846,11 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">make_features_only</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">make_features_only</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="self">self</span>) -&gt; <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">verify_mode</span> {
             <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">hakari_package</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">package</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">package</span>.<span class="ident">to_package_set</span>(),
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">resolve_none</span>(),
+                <span class="prelude-val">Some</span>(<span class="ident">package</span>) =&gt; <span class="ident">package</span>.<span class="ident">to_package_set</span>(),
+                <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">resolve_none</span>(),
             }
             .<span class="ident">to_feature_set</span>(<span class="ident">StandardFeatures::Default</span>)
         } <span class="kw">else</span> {
@@ -1850,7 +1875,7 @@
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_summary</span>(
             <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>,
             <span class="ident">summary</span>: <span class="kw-2">&amp;</span><span class="ident">HakariBuilderSummary</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="ident">summary</span>
                 .<span class="ident">hakari_package</span>
                 .<span class="ident">as_ref</span>()
@@ -1978,7 +2003,7 @@
 <span class="doccomment">/// workspace.</span>
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">UnifyTargetHost</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
         <span class="ident">UnifyTargetHost::Auto</span>
     }
 }
@@ -2001,7 +2026,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DepFormatVersion</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
         <span class="ident">DepFormatVersion::V1</span>
     }
 }
@@ -2041,7 +2066,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">Hakari</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns the `HakariBuilder` used to create this instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">builder</span>
     }
 
@@ -2053,7 +2078,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if there was an issue reading the TOML file from disk, or `None` if</span>
     <span class="doccomment">/// the builder&#39;s [`hakari_package`](HakariBuilder::hakari_package) is `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HakariCargoToml</span>, <span class="ident">CargoTomlError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HakariCargoToml</span>, <span class="ident">CargoTomlError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">builder</span>.<span class="ident">read_toml</span>()
     }
 
@@ -2064,15 +2089,35 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">HakariOutputOptions</span>,
         <span class="ident">out</span>: <span class="kw">impl</span> <span class="ident">fmt::Write</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TomlOutError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TomlOutError</span><span class="op">&gt;</span> {
         <span class="ident">write_toml</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">builder</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">output_map</span>, <span class="ident">options</span>, <span class="ident">out</span>)
+    }
+
+    <span class="doccomment">/// Returns a map of dependency names as present in the workspace-hack&#39;s `Cargo.toml` to their</span>
+    <span class="doccomment">/// corresponding [`PackageMetadata`].</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Packages which have one version are present as their original names, while packages with</span>
+    <span class="doccomment">/// more than one version have a hash appended to them.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">toml_name_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="ident">str</span><span class="op">&gt;</span>, <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="ident">toml_name_map</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">output_map</span>)
+    }
+
+    <span class="doccomment">/// Returns a `HakariExplain`, which can be used to print out why a specific package is</span>
+    <span class="doccomment">/// in the workspace-hack&#39;s `Cargo.toml`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns an error if the package ID was not found in the output.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">explain</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">HakariExplain</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">guppy::Error</span><span class="op">&gt;</span> {
+        <span class="ident">HakariExplain::new</span>(<span class="self">self</span>, <span class="ident">package_id</span>)
     }
 
     <span class="doccomment">/// A convenience method around `write_toml` that returns a new string with `Cargo.toml` lines.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The returned string is guaranteed to be valid TOML, and can be provided to</span>
     <span class="doccomment">/// a [`HakariCargoToml`](crate::HakariCargoToml) obtained from [`read_toml`](Self::read_toml).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_toml_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">HakariOutputOptions</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">TomlOutError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_toml_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">HakariOutputOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">TomlOutError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">String::new</span>();
         <span class="self">self</span>.<span class="ident">write_toml</span>(<span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">out</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">out</span>)
@@ -2082,7 +2127,7 @@
     <span class="comment">// Helper methods</span>
     <span class="comment">// ---</span>
 
-    <span class="kw">fn</span> <span class="ident">build</span>(<span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">build</span>(<span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">builder</span>.<span class="ident">graph</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">computed_map_build</span> <span class="op">=</span> <span class="ident">ComputedMapBuild::new</span>(<span class="kw-2">&amp;</span><span class="ident">builder</span>);
         <span class="kw">let</span> <span class="ident">platform_specs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">builder</span>
@@ -2109,14 +2154,14 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">add_extra</span> <span class="op">=</span> <span class="ident">HashSet::new</span>();
                 <span class="kw">for</span> (<span class="ident">output_key</span>, <span class="ident">features</span>) <span class="kw">in</span> <span class="ident">map_build</span>.<span class="ident">iter_feature_sets</span>() {
                     <span class="kw">let</span> <span class="ident">initials_platform</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">output_key</span>.<span class="ident">build_platform</span> {
-                        <span class="ident">BuildPlatform::Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">InitialsPlatform::Standard</span>,
-                        <span class="ident">BuildPlatform::Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">InitialsPlatform::Host</span>,
+                        <span class="ident">BuildPlatform::Target</span> =&gt; <span class="ident">InitialsPlatform::Standard</span>,
+                        <span class="ident">BuildPlatform::Host</span> =&gt; <span class="ident">InitialsPlatform::Host</span>,
                     };
 
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cargo_opts</span> <span class="op">=</span> <span class="ident">CargoOptions::new</span>();
                     <span class="kw">let</span> <span class="ident">platform_spec</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">output_key</span>.<span class="ident">platform_idx</span> {
-                        <span class="prelude-val">Some</span>(<span class="ident">idx</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">platform_specs</span>[<span class="ident">idx</span>].<span class="ident">clone</span>(),
-                        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PlatformSpec::Always</span>,
+                        <span class="prelude-val">Some</span>(<span class="ident">idx</span>) =&gt; <span class="ident">platform_specs</span>[<span class="ident">idx</span>].<span class="ident">clone</span>(),
+                        <span class="prelude-val">None</span> =&gt; <span class="ident">PlatformSpec::Always</span>,
                     };
                     <span class="comment">// Third-party dependencies are built without including dev.</span>
                     <span class="ident">cargo_opts</span>
@@ -2211,7 +2256,8 @@
 <span class="doccomment">/// [`ComputedValue`](ComputedValue) instances that represent the different feature sets this</span>
 <span class="doccomment">/// dependency is built with on both the host and target platforms.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// The values that are most interesting are the ones where maps have two elements or more: they indicate dependencies with features that need to be unified.</span>
+<span class="doccomment">/// The values that are most interesting are the ones where maps have two elements or more: they</span>
+<span class="doccomment">/// indicate dependencies with features that need to be unified.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This is an alias for the type of [`Hakari::computed_map`](Hakari::computed_map).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ComputedMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>), <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span>;
@@ -2273,12 +2319,12 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">TraversalExcludes</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
+    <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;b</span> {
         <span class="self">self</span>.<span class="ident">excludes</span>.<span class="ident">iter</span>().<span class="ident">copied</span>().<span class="ident">chain</span>(<span class="self">self</span>.<span class="ident">hakari_package</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">is_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">hakari_package</span> <span class="op">=</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">package_id</span>) <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">excludes</span>.<span class="ident">contains</span>(<span class="ident">package_id</span>)
+    <span class="kw">fn</span> <span class="ident">is_excluded</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="ident">PackageId</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">hakari_package</span> <span class="op">==</span> <span class="prelude-val">Some</span>(<span class="ident">package_id</span>) <span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">excludes</span>.<span class="ident">contains</span>(<span class="ident">package_id</span>)
     }
 }
 
@@ -2290,7 +2336,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">ComputedMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">builder</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">builder</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="comment">// This was just None or All for a bit under the theory that feature sets are additive only,</span>
         <span class="comment">// but unfortunately we cannot exploit this property because it doesn&#39;t account for the fact</span>
         <span class="comment">// that some dependencies might not be built *at all*, under certain feature combinations.</span>
@@ -2454,7 +2500,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">platform_idx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">computed_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">platform_idx</span>, <span class="ident">package_id</span>))
     }
 
@@ -2462,13 +2508,13 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">platform_idx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">computed_map</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span>(<span class="ident">platform_idx</span>, <span class="ident">package_id</span>))
     }
 
     <span class="kw">fn</span> <span class="ident">iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
         <span class="self">self</span>.<span class="ident">computed_map</span>
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="kw-2">&amp;</span>(<span class="ident">platform_idx</span>, <span class="ident">package_id</span>), <span class="ident">v</span>)<span class="op">|</span> (<span class="ident">platform_idx</span>, <span class="ident">package_id</span>, <span class="ident">v</span>))
@@ -2477,7 +2523,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">ComputedValue</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns both the inner maps along with the build platforms they represent.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inner_maps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> [(<span class="ident">BuildPlatform</span>, <span class="kw-2">&amp;</span><span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>); <span class="number">2</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">inner_maps</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [(<span class="ident">BuildPlatform</span>, <span class="kw-2">&amp;</span><span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>); <span class="number">2</span>] {
         [
             (<span class="ident">BuildPlatform::Target</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>),
             (<span class="ident">BuildPlatform::Host</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>),
@@ -2486,7 +2532,7 @@
 
     <span class="doccomment">/// Converts `self` into [`ComputedInnerMap`] instances, along with the build platforms they</span>
     <span class="doccomment">/// represent.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner_maps</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> [(<span class="ident">BuildPlatform</span>, <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>); <span class="number">2</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner_maps</span>(<span class="self">self</span>) -&gt; [(<span class="ident">BuildPlatform</span>, <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>); <span class="number">2</span>] {
         [
             (<span class="ident">BuildPlatform::Target</span>, <span class="self">self</span>.<span class="ident">target_inner</span>),
             (<span class="ident">BuildPlatform::Host</span>, <span class="self">self</span>.<span class="ident">host_inner</span>),
@@ -2494,18 +2540,18 @@
     }
 
     <span class="doccomment">/// Returns a reference to the inner map corresponding to the given build platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">build_platform</span> {
-            <span class="ident">BuildPlatform::Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>,
-            <span class="ident">BuildPlatform::Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>,
+            <span class="ident">BuildPlatform::Target</span> =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>,
+            <span class="ident">BuildPlatform::Host</span> =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>,
         }
     }
 
     <span class="doccomment">/// Returns a mutable reference to the inner map corresponding to the given build platform.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_inner_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_inner_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ComputedInnerMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">build_platform</span> {
-            <span class="ident">BuildPlatform::Target</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">target_inner</span>,
-            <span class="ident">BuildPlatform::Host</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">host_inner</span>,
+            <span class="ident">BuildPlatform::Target</span> =&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">target_inner</span>,
+            <span class="ident">BuildPlatform::Host</span> =&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">host_inner</span>,
         }
     }
 
@@ -2522,7 +2568,7 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>, <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">build_platform</span>: <span class="ident">BuildPlatform</span>, <span class="ident">features</span>: <span class="kw-2">&amp;</span><span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">get_inner</span>(<span class="ident">build_platform</span>).<span class="ident">contains_key</span>(<span class="ident">features</span>)
     }
 
@@ -2547,15 +2593,15 @@
             .<span class="ident">fixed_up</span> <span class="op">=</span> <span class="bool-val">true</span>;
     }
 
-    <span class="kw">fn</span> <span class="ident">describe</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ValueDescribe</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">describe</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) -&gt; <span class="ident">ValueDescribe</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
         <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">target_inner</span>.<span class="ident">len</span>(), <span class="self">self</span>.<span class="ident">host_inner</span>.<span class="ident">len</span>()) {
-            (<span class="number">0</span>, <span class="number">0</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::None</span>,
-            (<span class="number">0</span>, <span class="number">1</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::SingleHost</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>),
-            (<span class="number">1</span>, <span class="number">0</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::SingleTarget</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>),
-            (<span class="number">1</span>, <span class="number">1</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            (<span class="number">0</span>, <span class="number">0</span>) =&gt; <span class="ident">ValueDescribe::None</span>,
+            (<span class="number">0</span>, <span class="number">1</span>) =&gt; <span class="ident">ValueDescribe::SingleHost</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>),
+            (<span class="number">1</span>, <span class="number">0</span>) =&gt; <span class="ident">ValueDescribe::SingleTarget</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>),
+            (<span class="number">1</span>, <span class="number">1</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">target_features</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">target_inner</span>.<span class="ident">keys</span>().<span class="ident">next</span>().<span class="ident">expect</span>(<span class="string">&quot;1 element&quot;</span>);
                 <span class="kw">let</span> <span class="ident">host_features</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">host_inner</span>.<span class="ident">keys</span>().<span class="ident">next</span>().<span class="ident">expect</span>(<span class="string">&quot;1 element&quot;</span>);
-                <span class="kw">if</span> <span class="ident">target_features</span> <span class="op">=</span><span class="op">=</span> <span class="ident">host_features</span> {
+                <span class="kw">if</span> <span class="ident">target_features</span> <span class="op">==</span> <span class="ident">host_features</span> {
                     <span class="ident">ValueDescribe::SingleMatchingBoth</span> {
                         <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>,
                         <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>,
@@ -2567,17 +2613,17 @@
                     }
                 }
             }
-            (<span class="ident">_m</span>, <span class="number">0</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::MultiTarget</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>),
-            (<span class="ident">_m</span>, <span class="number">1</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::MultiTargetSingleHost</span> {
+            (<span class="ident">_m</span>, <span class="number">0</span>) =&gt; <span class="ident">ValueDescribe::MultiTarget</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>),
+            (<span class="ident">_m</span>, <span class="number">1</span>) =&gt; <span class="ident">ValueDescribe::MultiTargetSingleHost</span> {
                 <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>,
             },
-            (<span class="number">0</span>, <span class="ident">_n</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::MultiHost</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>),
-            (<span class="number">1</span>, <span class="ident">_n</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::MultiHostSingleTarget</span> {
+            (<span class="number">0</span>, <span class="ident">_n</span>) =&gt; <span class="ident">ValueDescribe::MultiHost</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>),
+            (<span class="number">1</span>, <span class="ident">_n</span>) =&gt; <span class="ident">ValueDescribe::MultiHostSingleTarget</span> {
                 <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>,
             },
-            (<span class="ident">_m</span>, <span class="ident">_n</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ValueDescribe::MultiBoth</span> {
+            (<span class="ident">_m</span>, <span class="ident">_n</span>) =&gt; <span class="ident">ValueDescribe::MultiBoth</span> {
                 <span class="ident">target_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">host_inner</span>,
             },
@@ -2616,18 +2662,18 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">ValueDescribe</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span>, <span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">description</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
+    <span class="kw">fn</span> <span class="ident">description</span>(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ValueDescribe::None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;None&quot;</span>,
-            <span class="ident">ValueDescribe::SingleTarget</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;SingleTarget&quot;</span>,
-            <span class="ident">ValueDescribe::SingleHost</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;SingleHost&quot;</span>,
-            <span class="ident">ValueDescribe::MultiTarget</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;MultiTarget&quot;</span>,
-            <span class="ident">ValueDescribe::MultiHost</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;MultiHost&quot;</span>,
-            <span class="ident">ValueDescribe::SingleMatchingBoth</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;SingleMatchingBoth&quot;</span>,
-            <span class="ident">ValueDescribe::SingleNonMatchingBoth</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;SingleNonMatchingBoth&quot;</span>,
-            <span class="ident">ValueDescribe::MultiTargetSingleHost</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;MultiTargetSingleHost&quot;</span>,
-            <span class="ident">ValueDescribe::MultiHostSingleTarget</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;MultiHostSingleTarget&quot;</span>,
-            <span class="ident">ValueDescribe::MultiBoth</span> { .. } <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;MultiBoth&quot;</span>,
+            <span class="ident">ValueDescribe::None</span> =&gt; <span class="string">&quot;None&quot;</span>,
+            <span class="ident">ValueDescribe::SingleTarget</span>(<span class="kw">_</span>) =&gt; <span class="string">&quot;SingleTarget&quot;</span>,
+            <span class="ident">ValueDescribe::SingleHost</span>(<span class="kw">_</span>) =&gt; <span class="string">&quot;SingleHost&quot;</span>,
+            <span class="ident">ValueDescribe::MultiTarget</span>(<span class="kw">_</span>) =&gt; <span class="string">&quot;MultiTarget&quot;</span>,
+            <span class="ident">ValueDescribe::MultiHost</span>(<span class="kw">_</span>) =&gt; <span class="string">&quot;MultiHost&quot;</span>,
+            <span class="ident">ValueDescribe::SingleMatchingBoth</span> { .. } =&gt; <span class="string">&quot;SingleMatchingBoth&quot;</span>,
+            <span class="ident">ValueDescribe::SingleNonMatchingBoth</span> { .. } =&gt; <span class="string">&quot;SingleNonMatchingBoth&quot;</span>,
+            <span class="ident">ValueDescribe::MultiTargetSingleHost</span> { .. } =&gt; <span class="string">&quot;MultiTargetSingleHost&quot;</span>,
+            <span class="ident">ValueDescribe::MultiHostSingleTarget</span> { .. } =&gt; <span class="string">&quot;MultiHostSingleTarget&quot;</span>,
+            <span class="ident">ValueDescribe::MultiBoth</span> { .. } =&gt; <span class="string">&quot;MultiBoth&quot;</span>,
         }
     }
 
@@ -2640,39 +2686,39 @@
         <span class="kw">use</span> <span class="ident">BuildPlatform</span>::<span class="kw-2">*</span>;
 
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ValueDescribe::None</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">ValueDescribe::None</span> =&gt; {
                 <span class="comment">// Empty, ignore. (This should probably never happen anyway.)</span>
             }
-            <span class="ident">ValueDescribe::SingleTarget</span>(<span class="ident">target_inner</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">ValueDescribe::SingleTarget</span>(<span class="ident">target_inner</span>) =&gt; {
                 <span class="comment">// Just one way to unify these.</span>
                 <span class="kw">if</span> <span class="ident">output_single_feature</span> {
                     <span class="ident">insert_cb</span>(<span class="ident">Target</span>, <span class="ident">target_inner</span>);
-                    <span class="kw">if</span> <span class="ident">unify_target_host</span> <span class="op">=</span><span class="op">=</span> <span class="ident">UnifyTargetHostImpl::ReplicateTargetOnHost</span> {
+                    <span class="kw">if</span> <span class="ident">unify_target_host</span> <span class="op">==</span> <span class="ident">UnifyTargetHostImpl::ReplicateTargetOnHost</span> {
                         <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">target_inner</span>);
                     }
                 }
             }
-            <span class="ident">ValueDescribe::SingleHost</span>(<span class="ident">host_inner</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">ValueDescribe::SingleHost</span>(<span class="ident">host_inner</span>) =&gt; {
                 <span class="comment">// Just one way to unify other.</span>
                 <span class="kw">if</span> <span class="ident">output_single_feature</span> {
                     <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">host_inner</span>);
                 }
             }
-            <span class="ident">ValueDescribe::MultiTarget</span>(<span class="ident">target_inner</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">ValueDescribe::MultiTarget</span>(<span class="ident">target_inner</span>) =&gt; {
                 <span class="comment">// Unify features for target.</span>
                 <span class="ident">insert_cb</span>(<span class="ident">Target</span>, <span class="ident">target_inner</span>);
-                <span class="kw">if</span> <span class="ident">unify_target_host</span> <span class="op">=</span><span class="op">=</span> <span class="ident">UnifyTargetHostImpl::ReplicateTargetOnHost</span> {
+                <span class="kw">if</span> <span class="ident">unify_target_host</span> <span class="op">==</span> <span class="ident">UnifyTargetHostImpl::ReplicateTargetOnHost</span> {
                     <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">target_inner</span>);
                 }
             }
-            <span class="ident">ValueDescribe::MultiHost</span>(<span class="ident">host_inner</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">ValueDescribe::MultiHost</span>(<span class="ident">host_inner</span>) =&gt; {
                 <span class="comment">// Unify features for host.</span>
                 <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">host_inner</span>);
             }
             <span class="ident">ValueDescribe::SingleMatchingBoth</span> {
                 <span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="comment">// Just one way to unify across both.</span>
                 <span class="kw">if</span> <span class="ident">output_single_feature</span> {
                     <span class="ident">insert_cb</span>(<span class="ident">Target</span>, <span class="ident">target_inner</span>);
@@ -2682,7 +2728,7 @@
             <span class="ident">ValueDescribe::SingleNonMatchingBoth</span> {
                 <span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="comment">// Unify features for both across both.</span>
                 <span class="ident">insert_cb</span>(<span class="ident">Target</span>, <span class="ident">target_inner</span>);
                 <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">host_inner</span>);
@@ -2694,7 +2740,7 @@
             <span class="ident">ValueDescribe::MultiTargetSingleHost</span> {
                 <span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="comment">// Unify features for both across both.</span>
                 <span class="ident">insert_cb</span>(<span class="ident">Target</span>, <span class="ident">target_inner</span>);
                 <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">host_inner</span>);
@@ -2706,7 +2752,7 @@
             <span class="ident">ValueDescribe::MultiHostSingleTarget</span> {
                 <span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="comment">// Unify features for both across both.</span>
                 <span class="ident">insert_cb</span>(<span class="ident">Target</span>, <span class="ident">target_inner</span>);
                 <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">host_inner</span>);
@@ -2718,7 +2764,7 @@
             <span class="ident">ValueDescribe::MultiBoth</span> {
                 <span class="ident">target_inner</span>,
                 <span class="ident">host_inner</span>,
-            } <span class="op">=</span><span class="op">&gt;</span> {
+            } =&gt; {
                 <span class="comment">// Unify features for both across both.</span>
                 <span class="ident">insert_cb</span>(<span class="ident">Target</span>, <span class="ident">target_inner</span>);
                 <span class="ident">insert_cb</span>(<span class="ident">Host</span>, <span class="ident">host_inner</span>);
@@ -2738,17 +2784,17 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">OutputMapBuild</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageGraph</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">graph</span>,
             <span class="ident">output_map</span>: <span class="ident">OutputMap::new</span>(),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">is_inserted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">output_key</span>: <span class="ident">OutputKey</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">is_inserted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">output_key</span>: <span class="ident">OutputKey</span>, <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">output_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">output_key</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">inner_map</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">inner_map</span>.<span class="ident">contains_key</span>(<span class="ident">package_id</span>),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+            <span class="prelude-val">Some</span>(<span class="ident">inner_map</span>) =&gt; <span class="ident">inner_map</span>.<span class="ident">contains_key</span>(<span class="ident">package_id</span>),
+            <span class="prelude-val">None</span> =&gt; <span class="bool-val">false</span>,
         }
     }
 
@@ -2757,10 +2803,10 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">output_key</span>: <span class="ident">OutputKey</span>,
         <span class="ident">package_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>, <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">str</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">output_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">output_key</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">inner_map</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">inner_map</span>.<span class="ident">get</span>(<span class="ident">package_id</span>),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="prelude-val">Some</span>(<span class="ident">inner_map</span>) =&gt; <span class="ident">inner_map</span>.<span class="ident">get</span>(<span class="ident">package_id</span>),
+            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
@@ -2819,7 +2865,7 @@
         <span class="ident">inner</span>.<span class="ident">extend</span>(<span class="ident">features</span>);
     }
 
-    <span class="kw">fn</span> <span class="ident">iter_feature_sets</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">OutputKey</span>, <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
+    <span class="kw">fn</span> <span class="ident">iter_feature_sets</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">OutputKey</span>, <span class="ident">FeatureSet</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span> {
         <span class="self">self</span>.<span class="ident">output_map</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="kw-2">&amp;</span><span class="ident">output_key</span>, <span class="ident">deps</span>)<span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">feature_ids</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">iter</span>().<span class="ident">flat_map</span>(<span class="op">|</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>, (<span class="kw">_</span>, <span class="ident">features</span>))<span class="op">|</span> {
                 <span class="ident">features</span>
@@ -2836,7 +2882,7 @@
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">final_excludes</span>: <span class="kw-2">&amp;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">OutputMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">finish</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">final_excludes</span>: <span class="kw-2">&amp;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">PackageId</span><span class="op">&gt;</span>) -&gt; <span class="ident">OutputMap</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
         <span class="comment">// Remove all features that are already unified in the &quot;always&quot; set.</span>
         <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">build_platform</span> <span class="kw">in</span> <span class="ident">BuildPlatform::VALUES</span> {
             <span class="kw">let</span> <span class="ident">always_key</span> <span class="op">=</span> <span class="ident">OutputKey</span> {
@@ -2846,8 +2892,8 @@
             <span class="comment">// Temporarily remove the set to avoid &amp;mut issues.</span>
 
             <span class="kw">let</span> <span class="ident">always_map</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">output_map</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">always_key</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">always_map</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">always_map</span>,
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">always_map</span>) =&gt; <span class="ident">always_map</span>,
+                <span class="prelude-val">None</span> =&gt; {
                     <span class="comment">// No packages unified for the always set.</span>
                     <span class="kw">continue</span>;
                 }
@@ -2861,8 +2907,8 @@
                 <span class="kw">for</span> (<span class="ident">package_id</span>, (<span class="ident">_always_package</span>, <span class="ident">always_features</span>)) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">always_map</span> {
                     <span class="kw">let</span> (<span class="ident">package</span>, <span class="ident">remaining_features</span>) <span class="op">=</span> {
                         <span class="kw">let</span> (<span class="ident">package</span>, <span class="ident">features</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">inner_map</span>.<span class="ident">get</span>(<span class="ident">package_id</span>) {
-                            <span class="prelude-val">Some</span>(<span class="ident">v</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">v</span>,
-                            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="prelude-val">Some</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>,
+                            <span class="prelude-val">None</span> =&gt; {
                                 <span class="comment">// The package ID isn&#39;t present in the platform-specific map --</span>
                                 <span class="comment">// nothing to be done.</span>
                                 <span class="kw">continue</span>;
@@ -2903,12 +2949,12 @@
 }
 
 <span class="kw">impl</span> <span class="ident">UnifyTargetHost</span> {
-    <span class="kw">fn</span> <span class="ident">to_impl</span>(<span class="self">self</span>, <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UnifyTargetHostImpl</span> {
+    <span class="kw">fn</span> <span class="ident">to_impl</span>(<span class="self">self</span>, <span class="ident">graph</span>: <span class="kw-2">&amp;</span><span class="ident">PackageGraph</span>) -&gt; <span class="ident">UnifyTargetHostImpl</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">UnifyTargetHost::None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">UnifyTargetHostImpl::None</span>,
-            <span class="ident">UnifyTargetHost::UnifyIfBoth</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">UnifyTargetHostImpl::UnifyIfBoth</span>,
-            <span class="ident">UnifyTargetHost::ReplicateTargetOnHost</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">UnifyTargetHostImpl::ReplicateTargetOnHost</span>,
-            <span class="ident">UnifyTargetHost::Auto</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">UnifyTargetHost::None</span> =&gt; <span class="ident">UnifyTargetHostImpl::None</span>,
+            <span class="ident">UnifyTargetHost::UnifyIfBoth</span> =&gt; <span class="ident">UnifyTargetHostImpl::UnifyIfBoth</span>,
+            <span class="ident">UnifyTargetHost::ReplicateTargetOnHost</span> =&gt; <span class="ident">UnifyTargetHostImpl::ReplicateTargetOnHost</span>,
+            <span class="ident">UnifyTargetHost::Auto</span> =&gt; {
                 <span class="kw">let</span> <span class="ident">workspace_set</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">resolve_workspace</span>();
                 <span class="comment">// Is any package a proc macro?</span>
                 <span class="kw">if</span> <span class="ident">workspace_set</span>

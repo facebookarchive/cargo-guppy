@@ -306,11 +306,11 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">DEFAULT_WIDTH</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">80</span>;
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_a_terminal</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="ident">Term</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_a_terminal</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="ident">Term</span>) -&gt; <span class="ident">bool</span> {
     <span class="kw">unsafe</span> { <span class="ident">libc::isatty</span>(<span class="ident">out</span>.<span class="ident">as_raw_fd</span>()) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_a_color_terminal</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="ident">Term</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_a_color_terminal</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="ident">Term</span>) -&gt; <span class="ident">bool</span> {
     <span class="kw">if</span> <span class="op">!</span><span class="ident">is_a_terminal</span>(<span class="ident">out</span>) {
         <span class="kw">return</span> <span class="bool-val">false</span>;
     }
@@ -320,12 +320,12 @@
     }
 
     <span class="kw">match</span> <span class="ident">env::var</span>(<span class="string">&quot;TERM&quot;</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">term</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">term</span> <span class="op">!</span><span class="op">=</span> <span class="string">&quot;dumb&quot;</span>,
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">term</span>) =&gt; <span class="ident">term</span> <span class="op">!</span><span class="op">=</span> <span class="string">&quot;dumb&quot;</span>,
+        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">c_result</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_int</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">c_result</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident">libc::c_int</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">f</span>();
     <span class="kw">if</span> <span class="ident">res</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
         <span class="prelude-val">Err</span>(<span class="ident">io::Error::last_os_error</span>())
@@ -335,14 +335,14 @@
 }
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">terminal_size</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="ident">Term</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">u16</span>, <span class="ident">u16</span>)<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">terminal_size</span>(<span class="ident">out</span>: <span class="kw-2">&amp;</span><span class="ident">Term</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">u16</span>, <span class="ident">u16</span>)<span class="op">&gt;</span> {
     <span class="ident">terminal_size::terminal_size_using_fd</span>(<span class="ident">out</span>.<span class="ident">as_raw_fd</span>()).<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> ((<span class="ident">x</span>.<span class="number">1</span>).<span class="number">0</span>, (<span class="ident">x</span>.<span class="number">0</span>).<span class="number">0</span>))
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_secure</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_secure</span>() -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">f_tty</span>;
     <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-        <span class="kw">if</span> <span class="ident">libc::isatty</span>(<span class="ident">libc::STDIN_FILENO</span>) <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
+        <span class="kw">if</span> <span class="ident">libc::isatty</span>(<span class="ident">libc::STDIN_FILENO</span>) <span class="op">==</span> <span class="number">1</span> {
             <span class="ident">f_tty</span> <span class="op">=</span> <span class="prelude-val">None</span>;
             <span class="ident">libc::STDIN_FILENO</span>
         } <span class="kw">else</span> {
@@ -376,7 +376,7 @@
     })
 }
 
-<span class="kw">fn</span> <span class="ident">read_single_char</span>(<span class="ident">fd</span>: <span class="ident">i32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">char</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">read_single_char</span>(<span class="ident">fd</span>: <span class="ident">i32</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">char</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pollfd</span> <span class="op">=</span> <span class="ident">libc::pollfd</span> {
         <span class="ident">fd</span>,
         <span class="ident">events</span>: <span class="ident">libc::POLLIN</span>,
@@ -406,16 +406,16 @@
 <span class="comment">// Similar to libc::read. Read count bytes into slice buf from descriptor fd.</span>
 <span class="comment">// If successful, return the number of bytes read.</span>
 <span class="comment">// Will return an error if nothing was read, i.e when called at end of file.</span>
-<span class="kw">fn</span> <span class="ident">read_bytes</span>(<span class="ident">fd</span>: <span class="ident">i32</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="ident">count</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">read_bytes</span>(<span class="ident">fd</span>: <span class="ident">i32</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="ident">count</span>: <span class="ident">u8</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">read</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::read</span>(<span class="ident">fd</span>, <span class="ident">buf</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>, <span class="ident">count</span> <span class="kw">as</span> <span class="ident">usize</span>) };
     <span class="kw">if</span> <span class="ident">read</span> <span class="op">&lt;</span> <span class="number">0</span> {
         <span class="prelude-val">Err</span>(<span class="ident">io::Error::last_os_error</span>())
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">read</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">read</span> <span class="op">==</span> <span class="number">0</span> {
         <span class="prelude-val">Err</span>(<span class="ident">io::Error::new</span>(
             <span class="ident">io::ErrorKind::UnexpectedEof</span>,
             <span class="string">&quot;Reached end of file&quot;</span>,
         ))
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">buf</span>[<span class="number">0</span>] <span class="op">=</span><span class="op">=</span> <span class="string">b&#39;\x03&#39;</span> {
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">buf</span>[<span class="number">0</span>] <span class="op">==</span> <span class="string">b&#39;\x03&#39;</span> {
         <span class="prelude-val">Err</span>(<span class="ident">io::Error::new</span>(
             <span class="ident">io::ErrorKind::Interrupted</span>,
             <span class="string">&quot;read interrupted&quot;</span>,
@@ -425,10 +425,10 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_single_key</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read_single_key</span>() -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Key</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">tty_f</span>;
     <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-        <span class="kw">if</span> <span class="ident">libc::isatty</span>(<span class="ident">libc::STDIN_FILENO</span>) <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
+        <span class="kw">if</span> <span class="ident">libc::isatty</span>(<span class="ident">libc::STDIN_FILENO</span>) <span class="op">==</span> <span class="number">1</span> {
             <span class="ident">libc::STDIN_FILENO</span>
         } <span class="kw">else</span> {
             <span class="ident">tty_f</span> <span class="op">=</span> <span class="ident">fs::File::open</span>(<span class="string">&quot;/dev/tty&quot;</span>)<span class="question-mark">?</span>;
@@ -443,33 +443,33 @@
     <span class="ident">c_result</span>(<span class="op">|</span><span class="op">|</span> <span class="kw">unsafe</span> { <span class="ident">libc::tcsetattr</span>(<span class="ident">fd</span>, <span class="ident">libc::TCSADRAIN</span>, <span class="kw-2">&amp;</span><span class="ident">termios</span>) })<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">rv</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">read_single_char</span>(<span class="ident">fd</span>)<span class="question-mark">?</span> {
-        <span class="prelude-val">Some</span>(<span class="string">&#39;\x1b&#39;</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Some</span>(<span class="string">&#39;\x1b&#39;</span>) =&gt; {
             <span class="comment">// Escape was read, keep reading in case we find a familiar key</span>
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c1</span>) <span class="op">=</span> <span class="ident">read_single_char</span>(<span class="ident">fd</span>)<span class="question-mark">?</span> {
-                <span class="kw">if</span> <span class="ident">c1</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;[&#39;</span> {
+                <span class="kw">if</span> <span class="ident">c1</span> <span class="op">==</span> <span class="string">&#39;[&#39;</span> {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c2</span>) <span class="op">=</span> <span class="ident">read_single_char</span>(<span class="ident">fd</span>)<span class="question-mark">?</span> {
                         <span class="kw">match</span> <span class="ident">c2</span> {
-                            <span class="string">&#39;A&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowUp</span>),
-                            <span class="string">&#39;B&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowDown</span>),
-                            <span class="string">&#39;C&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowRight</span>),
-                            <span class="string">&#39;D&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowLeft</span>),
-                            <span class="string">&#39;H&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::Home</span>),
-                            <span class="string">&#39;F&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::End</span>),
-                            <span class="string">&#39;Z&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::BackTab</span>),
-                            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="string">&#39;A&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowUp</span>),
+                            <span class="string">&#39;B&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowDown</span>),
+                            <span class="string">&#39;C&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowRight</span>),
+                            <span class="string">&#39;D&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::ArrowLeft</span>),
+                            <span class="string">&#39;H&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::Home</span>),
+                            <span class="string">&#39;F&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::End</span>),
+                            <span class="string">&#39;Z&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::BackTab</span>),
+                            <span class="kw">_</span> =&gt; {
                                 <span class="kw">let</span> <span class="ident">c3</span> <span class="op">=</span> <span class="ident">read_single_char</span>(<span class="ident">fd</span>)<span class="question-mark">?</span>;
                                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c3</span>) <span class="op">=</span> <span class="ident">c3</span> {
-                                    <span class="kw">if</span> <span class="ident">c3</span> <span class="op">=</span><span class="op">=</span> <span class="string">&#39;~&#39;</span> {
+                                    <span class="kw">if</span> <span class="ident">c3</span> <span class="op">==</span> <span class="string">&#39;~&#39;</span> {
                                         <span class="kw">match</span> <span class="ident">c2</span> {
-                                            <span class="string">&#39;1&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::Home</span>), <span class="comment">// tmux</span>
-                                            <span class="string">&#39;2&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::Insert</span>),
-                                            <span class="string">&#39;3&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::Del</span>),
-                                            <span class="string">&#39;4&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::End</span>), <span class="comment">// tmux</span>
-                                            <span class="string">&#39;5&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::PageUp</span>),
-                                            <span class="string">&#39;6&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::PageDown</span>),
-                                            <span class="string">&#39;7&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::Home</span>), <span class="comment">// xrvt</span>
-                                            <span class="string">&#39;8&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::End</span>),  <span class="comment">// xrvt</span>
-                                            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Key::UnknownEscSeq</span>(<span class="macro">vec!</span>[<span class="ident">c1</span>, <span class="ident">c2</span>, <span class="ident">c3</span>])),
+                                            <span class="string">&#39;1&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::Home</span>), <span class="comment">// tmux</span>
+                                            <span class="string">&#39;2&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::Insert</span>),
+                                            <span class="string">&#39;3&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::Del</span>),
+                                            <span class="string">&#39;4&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::End</span>), <span class="comment">// tmux</span>
+                                            <span class="string">&#39;5&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::PageUp</span>),
+                                            <span class="string">&#39;6&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::PageDown</span>),
+                                            <span class="string">&#39;7&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::Home</span>), <span class="comment">// xrvt</span>
+                                            <span class="string">&#39;8&#39;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::End</span>),  <span class="comment">// xrvt</span>
+                                            <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Key::UnknownEscSeq</span>(<span class="macro">vec!</span>[<span class="ident">c1</span>, <span class="ident">c2</span>, <span class="ident">c3</span>])),
                                         }
                                     } <span class="kw">else</span> {
                                         <span class="prelude-val">Ok</span>(<span class="ident">Key::UnknownEscSeq</span>(<span class="macro">vec!</span>[<span class="ident">c1</span>, <span class="ident">c2</span>, <span class="ident">c3</span>]))
@@ -493,35 +493,35 @@
                 <span class="prelude-val">Ok</span>(<span class="ident">Key::Escape</span>)
             }
         }
-        <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Some</span>(<span class="ident">c</span>) =&gt; {
             <span class="kw">let</span> <span class="ident">byte</span> <span class="op">=</span> <span class="ident">c</span> <span class="kw">as</span> <span class="ident">u8</span>;
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span>: [<span class="ident">u8</span>; <span class="number">4</span>] <span class="op">=</span> [<span class="ident">byte</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>];
 
-            <span class="kw">if</span> <span class="ident">byte</span> <span class="op">&amp;</span> <span class="number">224u8</span> <span class="op">=</span><span class="op">=</span> <span class="number">192u8</span> {
+            <span class="kw">if</span> <span class="ident">byte</span> <span class="op">&amp;</span> <span class="number">224u8</span> <span class="op">==</span> <span class="number">192u8</span> {
                 <span class="comment">// a two byte unicode character</span>
                 <span class="ident">read_bytes</span>(<span class="ident">fd</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[<span class="number">1</span>..], <span class="number">1</span>)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(<span class="ident">key_from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="number">2</span>]))
-            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">byte</span> <span class="op">&amp;</span> <span class="number">240u8</span> <span class="op">=</span><span class="op">=</span> <span class="number">224u8</span> {
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">byte</span> <span class="op">&amp;</span> <span class="number">240u8</span> <span class="op">==</span> <span class="number">224u8</span> {
                 <span class="comment">// a three byte unicode character</span>
                 <span class="ident">read_bytes</span>(<span class="ident">fd</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[<span class="number">1</span>..], <span class="number">2</span>)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(<span class="ident">key_from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="number">3</span>]))
-            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">byte</span> <span class="op">&amp;</span> <span class="number">248u8</span> <span class="op">=</span><span class="op">=</span> <span class="number">240u8</span> {
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">byte</span> <span class="op">&amp;</span> <span class="number">248u8</span> <span class="op">==</span> <span class="number">240u8</span> {
                 <span class="comment">// a four byte unicode character</span>
                 <span class="ident">read_bytes</span>(<span class="ident">fd</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[<span class="number">1</span>..], <span class="number">3</span>)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(<span class="ident">key_from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="number">4</span>]))
             } <span class="kw">else</span> {
                 <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">c</span> {
-                    <span class="string">&#39;\n&#39;</span> <span class="op">|</span> <span class="string">&#39;\r&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Key::Enter</span>,
-                    <span class="string">&#39;\x7f&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Key::Backspace</span>,
-                    <span class="string">&#39;\t&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Key::Tab</span>,
-                    <span class="string">&#39;\x01&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Key::Home</span>,      <span class="comment">// Control-A (home)</span>
-                    <span class="string">&#39;\x05&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Key::End</span>,       <span class="comment">// Control-E (end)</span>
-                    <span class="string">&#39;\x08&#39;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Key::Backspace</span>, <span class="comment">// Control-H (8) (Identical to &#39;\b&#39;)</span>
-                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Key::Char</span>(<span class="ident">c</span>),
+                    <span class="string">&#39;\n&#39;</span> <span class="op">|</span> <span class="string">&#39;\r&#39;</span> =&gt; <span class="ident">Key::Enter</span>,
+                    <span class="string">&#39;\x7f&#39;</span> =&gt; <span class="ident">Key::Backspace</span>,
+                    <span class="string">&#39;\t&#39;</span> =&gt; <span class="ident">Key::Tab</span>,
+                    <span class="string">&#39;\x01&#39;</span> =&gt; <span class="ident">Key::Home</span>,      <span class="comment">// Control-A (home)</span>
+                    <span class="string">&#39;\x05&#39;</span> =&gt; <span class="ident">Key::End</span>,       <span class="comment">// Control-E (end)</span>
+                    <span class="string">&#39;\x08&#39;</span> =&gt; <span class="ident">Key::Backspace</span>, <span class="comment">// Control-H (8) (Identical to &#39;\b&#39;)</span>
+                    <span class="kw">_</span> =&gt; <span class="ident">Key::Char</span>(<span class="ident">c</span>),
                 })
             }
         }
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="prelude-val">None</span> =&gt; {
             <span class="comment">// there is no subsequent byte ready to be read, block and wait for input</span>
 
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pollfd</span> <span class="op">=</span> <span class="ident">libc::pollfd</span> {
@@ -543,7 +543,7 @@
 
     <span class="comment">// if the user hit ^C we want to signal SIGINT to outselves.</span>
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="kw-2">ref</span> <span class="ident">err</span>) <span class="op">=</span> <span class="ident">rv</span> {
-        <span class="kw">if</span> <span class="ident">err</span>.<span class="ident">kind</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">io::ErrorKind::Interrupted</span> {
+        <span class="kw">if</span> <span class="ident">err</span>.<span class="ident">kind</span>() <span class="op">==</span> <span class="ident">io::ErrorKind::Interrupted</span> {
             <span class="kw">unsafe</span> {
                 <span class="ident">libc::raise</span>(<span class="ident">libc::SIGINT</span>);
             }
@@ -553,7 +553,7 @@
     <span class="ident">rv</span>
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">key_from_utf8</span>(<span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Key</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">key_from_utf8</span>(<span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Key</span> {
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span> <span class="ident">str::from_utf8</span>(<span class="ident">buf</span>) {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">chars</span>().<span class="ident">next</span>() {
             <span class="kw">return</span> <span class="ident">Key::Char</span>(<span class="ident">c</span>);
@@ -565,17 +565,17 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>))]</span>
 <span class="kw">static</span> <span class="ident">IS_LANG_UTF8</span>: <span class="ident">once_cell::sync::Lazy</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> <span class="op">=</span>
     <span class="ident">once_cell::sync::Lazy::new</span>(<span class="op">|</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">std::env::var</span>(<span class="string">&quot;LANG&quot;</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">lang</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">lang</span>.<span class="ident">to_uppercase</span>().<span class="ident">ends_with</span>(<span class="string">&quot;UTF-8&quot;</span>),
-        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">lang</span>) =&gt; <span class="ident">lang</span>.<span class="ident">to_uppercase</span>().<span class="ident">ends_with</span>(<span class="string">&quot;UTF-8&quot;</span>),
+        <span class="kw">_</span> =&gt; <span class="bool-val">false</span>,
     });
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wants_emoji</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wants_emoji</span>() -&gt; <span class="ident">bool</span> {
     <span class="bool-val">true</span>
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;macos&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wants_emoji</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wants_emoji</span>() -&gt; <span class="ident">bool</span> {
     <span class="kw-2">*</span><span class="ident">IS_LANG_UTF8</span>
 }
 

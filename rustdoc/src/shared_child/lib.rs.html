@@ -434,7 +434,7 @@
 
 <span class="kw">impl</span> <span class="ident">SharedChild</span> {
     <span class="doccomment">/// Spawn a new `SharedChild` from a `std::process::Command`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Command</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">SharedChild</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn</span>(<span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Command</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">SharedChild</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">spawn</span>()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">SharedChild</span> {
             <span class="ident">child</span>: <span class="ident">Mutex::new</span>(<span class="ident">child</span>),
@@ -444,34 +444,34 @@
     }
 
     <span class="doccomment">/// Return the child process ID.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u32</span> {
         <span class="self">self</span>.<span class="ident">child</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">id</span>()
     }
 
-    <span class="kw">fn</span> <span class="ident">get_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">sys::Handle</span> {
+    <span class="kw">fn</span> <span class="ident">get_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">sys::Handle</span> {
         <span class="ident">sys::get_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">child</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>())
     }
 
     <span class="doccomment">/// Wait for the child to exit, blocking the current thread, and return its</span>
     <span class="doccomment">/// exit status.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">ExitStatus</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">ExitStatus</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state_lock</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
         <span class="kw">loop</span> {
             <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">state</span> {
-                <span class="ident">NotWaiting</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">NotWaiting</span> =&gt; {
                     <span class="comment">// Either no one is waiting on the child yet, or a previous</span>
                     <span class="comment">// waiter failed. That means we need to do it ourselves.</span>
                     <span class="comment">// Break out of this loop.</span>
                     <span class="kw">break</span>;
                 }
-                <span class="ident">Waiting</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">Waiting</span> =&gt; {
                     <span class="comment">// Another thread is already waiting on the child. We&#39;ll</span>
                     <span class="comment">// block until it signal us on the condvar, then loop again.</span>
                     <span class="comment">// Spurious wakeups could bring us here multiple times</span>
                     <span class="comment">// though, see the Condvar docs.</span>
                     <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state_condvar</span>.<span class="ident">wait</span>(<span class="ident">state</span>).<span class="ident">unwrap</span>();
                 }
-                <span class="ident">Exited</span>(<span class="ident">exit_status</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">exit_status</span>),
+                <span class="ident">Exited</span>(<span class="ident">exit_status</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">exit_status</span>),
             }
         }
 
@@ -511,7 +511,7 @@
 
     <span class="doccomment">/// Return the child&#39;s exit status if it has already exited. If the child is</span>
     <span class="doccomment">/// still running, return `Ok(None)`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ExitStatus</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_wait</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ExitStatus</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state_lock</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
 
         <span class="comment">// Unlike wait() above, we don&#39;t loop on the Condvar here. If the status</span>
@@ -519,9 +519,9 @@
         <span class="comment">// is NotWaiting, we&#39;ll do a non-blocking wait below, in case the child</span>
         <span class="comment">// has already exited.</span>
         <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">status</span> {
-            <span class="ident">NotWaiting</span> <span class="op">=</span><span class="op">&gt;</span> {}
-            <span class="ident">Waiting</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-            <span class="ident">Exited</span>(<span class="ident">exit_status</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">exit_status</span>)),
+            <span class="ident">NotWaiting</span> =&gt; {}
+            <span class="ident">Waiting</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="ident">Exited</span>(<span class="ident">exit_status</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">exit_status</span>)),
         };
 
         <span class="comment">// No one is waiting on the child. Check to see if it&#39;s already exited.</span>
@@ -541,7 +541,7 @@
     <span class="doccomment">/// Send a kill signal to the child. On Unix this sends SIGKILL, and you</span>
     <span class="doccomment">/// should call `wait` afterwards to avoid leaving a zombie. If the process</span>
     <span class="doccomment">/// has already been waited on, this returns `Ok(())` and does nothing.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kill</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">kill</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state_lock</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Exited</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="kw-2">*</span><span class="ident">status</span> {
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
@@ -558,7 +558,7 @@
     <span class="doccomment">/// We never reap the child process except through `Child::wait`, so the</span>
     <span class="doccomment">/// child object&#39;s inner state is correct, even if it was waited on while it</span>
     <span class="doccomment">/// was shared.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Child</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner</span>(<span class="self">self</span>) -&gt; <span class="ident">Child</span> {
         <span class="self">self</span>.<span class="ident">child</span>.<span class="ident">into_inner</span>().<span class="ident">unwrap</span>()
     }
 }
@@ -581,26 +581,26 @@
 
     <span class="comment">// Python isn&#39;t available on some Unix platforms, e.g. Android, so we need this instead.</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">true_cmd</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Command</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">true_cmd</span>() -&gt; <span class="ident">Command</span> {
         <span class="ident">Command::new</span>(<span class="string">&quot;true&quot;</span>)
     }
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">unix</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">true_cmd</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Command</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">true_cmd</span>() -&gt; <span class="ident">Command</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">Command::new</span>(<span class="string">&quot;python&quot;</span>);
         <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;-c&quot;</span>).<span class="ident">arg</span>(<span class="string">&quot;&quot;</span>);
         <span class="ident">cmd</span>
     }
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sleep_forever_cmd</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Command</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sleep_forever_cmd</span>() -&gt; <span class="ident">Command</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">Command::new</span>(<span class="string">&quot;sleep&quot;</span>);
         <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;1000000&quot;</span>);
         <span class="ident">cmd</span>
     }
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">unix</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sleep_forever_cmd</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Command</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sleep_forever_cmd</span>() -&gt; <span class="ident">Command</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cmd</span> <span class="op">=</span> <span class="ident">Command::new</span>(<span class="string">&quot;python&quot;</span>);
         <span class="ident">cmd</span>.<span class="ident">arg</span>(<span class="string">&quot;-c&quot;</span>).<span class="ident">arg</span>(<span class="string">&quot;import time; time.sleep(1000000)&quot;</span>);
         <span class="ident">cmd</span>
