@@ -161,21 +161,29 @@
 <span id="161">161</span>
 <span id="162">162</span>
 <span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">cargo_cli::CargoCli</span>, <span class="ident">helpers::regenerate_lockfile</span>, <span class="ident">output::OutputOpts</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">cargo_cli::CargoCli</span>, <span class="ident">helpers::regenerate_lockfile</span>, <span class="ident">output::OutputContext</span>};
 <span class="kw">use</span> <span class="ident">color_eyre</span>::{<span class="ident">eyre::WrapErr</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">colored::Colorize</span>;
 <span class="kw">use</span> <span class="ident">guppy::graph::PackageMetadata</span>;
 <span class="kw">use</span> <span class="ident">hakari::HakariBuilder</span>;
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">error</span>, <span class="ident">info</span>};
+<span class="kw">use</span> <span class="ident">owo_colors::OwoColorize</span>;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">publish_hakari</span>(
     <span class="ident">package_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     <span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
     <span class="ident">pass_through</span>: <span class="kw-2">&amp;</span>[<span class="ident">String</span>],
-    <span class="ident">output</span>: <span class="ident">OutputOpts</span>,
+    <span class="ident">output</span>: <span class="ident">OutputContext</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="ident">builder</span>
         .<span class="ident">hakari_package</span>()
@@ -185,16 +193,16 @@
 
     <span class="comment">// Remove the workspace-hack dependency from the package if it isn&#39;t published as open source.</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remove_dep</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">hakari_package</span>.<span class="ident">publish</span>().<span class="ident">is_never</span>() {
-        <span class="ident">TempRemoveDep::new</span>(<span class="ident">builder</span>, <span class="ident">package</span>, <span class="ident">output</span>)<span class="question-mark">?</span>
+        <span class="ident">TempRemoveDep::new</span>(<span class="ident">builder</span>, <span class="ident">package</span>, <span class="ident">output</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>
     } <span class="kw">else</span> {
         <span class="macro">info!</span>(
             <span class="string">&quot;not removing dependency to {} because it is marked as published (publish != false)&quot;</span>,
-            <span class="ident">hakari_package</span>.<span class="ident">name</span>().<span class="ident">bold</span>()
+            <span class="ident">hakari_package</span>.<span class="ident">name</span>().<span class="ident">style</span>(<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">package_name</span>)
         );
         <span class="ident">TempRemoveDep::none</span>()
     };
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cargo_cli</span> <span class="op">=</span> <span class="ident">CargoCli::new</span>(<span class="string">&quot;publish&quot;</span>, <span class="ident">output</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cargo_cli</span> <span class="op">=</span> <span class="ident">CargoCli::new</span>(<span class="string">&quot;publish&quot;</span>, <span class="ident">output</span>.<span class="ident">clone</span>());
     <span class="ident">cargo_cli</span>.<span class="ident">add_args</span>(<span class="ident">pass_through</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">arg</span><span class="op">|</span> <span class="ident">arg</span>.<span class="ident">as_str</span>()));
     <span class="comment">// Also set --allow-dirty because we make some changes to the working directory.</span>
     <span class="comment">// TODO: is there a better way to handle this?</span>
@@ -210,7 +218,11 @@
 
     <span class="kw">let</span> <span class="ident">all_args</span> <span class="op">=</span> <span class="ident">cargo_cli</span>.<span class="ident">all_args</span>().<span class="ident">join</span>(<span class="string">&quot; &quot;</span>);
 
-    <span class="macro">info!</span>(<span class="string">&quot;{} {}\n---&quot;</span>, <span class="string">&quot;executing&quot;</span>.<span class="ident">bold</span>(), <span class="ident">all_args</span>);
+    <span class="macro">info!</span>(
+        <span class="string">&quot;{} {}\n---&quot;</span>,
+        <span class="string">&quot;executing&quot;</span>.<span class="ident">style</span>(<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">command</span>),
+        <span class="ident">all_args</span>
+    );
     <span class="kw">let</span> <span class="ident">expression</span> <span class="op">=</span> <span class="ident">cargo_cli</span>.<span class="ident">to_expression</span>().<span class="ident">dir</span>(<span class="kw-2">&amp;</span><span class="ident">abs_path</span>);
 
     <span class="kw">match</span> <span class="ident">expression</span>.<span class="ident">run</span>() {
@@ -232,7 +244,7 @@
     <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
         <span class="ident">package</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-        <span class="ident">output</span>: <span class="ident">OutputOpts</span>,
+        <span class="ident">output</span>: <span class="ident">OutputContext</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">hakari_package</span> <span class="op">=</span> <span class="ident">builder</span>
             .<span class="ident">hakari_package</span>()
@@ -244,15 +256,15 @@
         <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">remove_ops</span>.<span class="ident">is_empty</span>() {
             <span class="macro">info!</span>(
                 <span class="string">&quot;dependency from {} to {} not present&quot;</span>,
-                <span class="ident">package</span>.<span class="ident">name</span>().<span class="ident">bold</span>(),
-                <span class="ident">hakari_package</span>.<span class="ident">name</span>().<span class="ident">bold</span>()
+                <span class="ident">package</span>.<span class="ident">name</span>().<span class="ident">style</span>(<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">package_name</span>),
+                <span class="ident">hakari_package</span>.<span class="ident">name</span>().<span class="ident">style</span>(<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">package_name</span>),
             );
             <span class="prelude-val">None</span>
         } <span class="kw">else</span> {
             <span class="macro">info!</span>(
                 <span class="string">&quot;removing dependency from {} to {}&quot;</span>,
-                <span class="ident">package</span>.<span class="ident">name</span>().<span class="ident">bold</span>(),
-                <span class="ident">hakari_package</span>.<span class="ident">name</span>().<span class="ident">bold</span>()
+                <span class="ident">package</span>.<span class="ident">name</span>().<span class="ident">style</span>(<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">package_name</span>),
+                <span class="ident">hakari_package</span>.<span class="ident">name</span>().<span class="ident">style</span>(<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">package_name</span>),
             );
             <span class="ident">remove_ops</span>
                 .<span class="ident">apply</span>()
@@ -297,7 +309,7 @@
 <span class="kw">struct</span> <span class="ident">TempRemoveDepInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
     <span class="ident">builder</span>: <span class="ident">HakariBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     <span class="ident">package</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
-    <span class="ident">output</span>: <span class="ident">OutputOpts</span>,
+    <span class="ident">output</span>: <span class="ident">OutputContext</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">TempRemoveDepInner</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
@@ -311,8 +323,12 @@
         <span class="kw">if</span> <span class="ident">success</span> {
             <span class="macro">info!</span>(
                 <span class="string">&quot;re-adding dependency from {} to {}&quot;</span>,
-                <span class="self">self</span>.<span class="ident">package</span>.<span class="ident">name</span>().<span class="ident">bold</span>(),
-                <span class="self">self</span>.<span class="ident">builder</span>.<span class="ident">hakari_package</span>().<span class="ident">unwrap</span>().<span class="ident">name</span>().<span class="ident">bold</span>(),
+                <span class="self">self</span>.<span class="ident">package</span>.<span class="ident">name</span>().<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">package_name</span>),
+                <span class="self">self</span>.<span class="ident">builder</span>
+                    .<span class="ident">hakari_package</span>()
+                    .<span class="ident">unwrap</span>()
+                    .<span class="ident">name</span>()
+                    .<span class="ident">style</span>(<span class="self">self</span>.<span class="ident">output</span>.<span class="ident">styles</span>.<span class="ident">package_name</span>),
             );
         } <span class="kw">else</span> {
             <span class="macro">eprintln!</span>(<span class="string">&quot;---&quot;</span>);

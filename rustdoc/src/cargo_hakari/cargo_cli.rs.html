@@ -74,24 +74,24 @@
 
 <span class="doccomment">//! Cargo CLI support.</span>
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::output::OutputOpts</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::output::OutputContext</span>;
 <span class="kw">use</span> <span class="ident">camino::Utf8PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">convert::TryInto</span>, <span class="ident">env</span>, <span class="ident">path::PathBuf</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">CargoCli</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="ident">cargo_path</span>: <span class="ident">Utf8PathBuf</span>,
-    <span class="ident">output_opts</span>: <span class="ident">OutputOpts</span>,
+    <span class="ident">output</span>: <span class="ident">OutputContext</span>,
     <span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>,
     <span class="ident">args</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">CargoCli</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>, <span class="ident">output_opts</span>: <span class="ident">OutputOpts</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>, <span class="ident">output</span>: <span class="ident">OutputContext</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">cargo_path</span> <span class="op">=</span> <span class="ident">cargo_path</span>();
         <span class="self">Self</span> {
             <span class="ident">cargo_path</span>,
-            <span class="ident">output_opts</span>,
+            <span class="ident">output</span>,
             <span class="ident">command</span>,
             <span class="ident">args</span>: <span class="macro">vec!</span>[],
         }
@@ -115,13 +115,13 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">to_expression</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">duct::Expression</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">initial_args</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">output_opts</span>.<span class="ident">quiet</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">output</span>.<span class="ident">quiet</span> {
             <span class="ident">initial_args</span>.<span class="ident">push</span>(<span class="string">&quot;--quiet&quot;</span>);
         }
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">output_opts</span>.<span class="ident">verbose</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">output</span>.<span class="ident">verbose</span> {
             <span class="ident">initial_args</span>.<span class="ident">push</span>(<span class="string">&quot;--verbose&quot;</span>);
         }
-        <span class="ident">initial_args</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">output_opts</span>.<span class="ident">color</span>.<span class="ident">to_arg</span>());
+        <span class="ident">initial_args</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">output</span>.<span class="ident">color</span>.<span class="ident">to_arg</span>());
 
         <span class="ident">initial_args</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">command</span>);
 
