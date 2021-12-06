@@ -13,7 +13,9 @@ use std::{
     borrow::Cow, cmp::Ordering, collections::BTreeMap, convert::TryFrom, error, fmt, fs, io,
     io::Write,
 };
-use toml_edit::{Array, Document, InlineTable, Item, Table, TableLike, TomlError, Value};
+use toml_edit::{
+    Array, Document, Formatted, InlineTable, Item, Table, TableLike, TomlError, Value,
+};
 
 /// Represents a set of write operations to the workspace.
 #[derive(Clone, Debug)]
@@ -303,9 +305,16 @@ impl<'g, 'a> WorkspaceOp<'g, 'a> {
         if dep_format == DepFormatVersion::V2 {
             itable.insert("version", version_str.into());
         }
-        itable.insert("path", with_forward_slashes(path).into_string().into());
 
-        // Previous versions of `cargo hakari` accidentally missed formatting the line.
+        let mut path = Formatted::new(with_forward_slashes(path).into_string());
+        if dep_format == DepFormatVersion::V1 {
+            // Previous versions of `cargo hakari` accidentally missed adding the space to the end
+            // of the line. Newer versions of toml_edit do that automatically, so restore the old
+            // behavior.
+            path.decor_mut().set_suffix("");
+        }
+        itable.insert("path", Value::String(path));
+
         if dep_format == DepFormatVersion::V2 {
             itable.fmt();
         }
