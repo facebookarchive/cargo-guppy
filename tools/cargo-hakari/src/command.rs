@@ -3,12 +3,11 @@
 
 use crate::{
     helpers::{read_contents, regenerate_lockfile},
-    output::OutputOpts,
+    output::{OutputContext, OutputOpts},
     publish::publish_hakari,
 };
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::eyre::{eyre, Result, WrapErr};
-use colored::Colorize;
 use guppy::{
     graph::{PackageGraph, PackageSet},
     MetadataCommand,
@@ -20,6 +19,7 @@ use hakari::{
     HakariBuilder, HakariCargoToml, HakariOutputOptions, TomlOutError,
 };
 use log::{error, info};
+use owo_colors::OwoColorize;
 use std::convert::TryFrom;
 use structopt::{clap::AppSettings, StructOpt};
 
@@ -61,7 +61,7 @@ impl Args {
     }
 }
 
-#[derive(Clone, Debug, StructOpt)]
+#[derive(Debug, StructOpt)]
 struct GlobalOpts {
     #[structopt(flatten)]
     output: OutputOpts,
@@ -102,7 +102,7 @@ enum Command {
 
 impl Command {
     fn exec(self, output: OutputOpts) -> Result<i32> {
-        output.init_logger();
+        let output = output.init();
         let metadata_command = MetadataCommand::new();
         let package_graph = metadata_command
             .build_graph()
@@ -130,14 +130,17 @@ impl Command {
                 let ops = init.make_ops();
                 apply_on_dialog(dry_run, yes, &ops, &output, || {
                     let steps = [
-                        format!("* configure at {}", DEFAULT_CONFIG_PATH.bold()),
+                        format!(
+                            "* configure at {}",
+                            DEFAULT_CONFIG_PATH.style(output.styles.config_path),
+                        ),
                         format!(
                             "* run {} to generate contents",
-                            "cargo hakari generate".bold()
+                            "cargo hakari generate".style(output.styles.command),
                         ),
                         format!(
                             "* run {} to add dependency lines",
-                            "cargo hakari manage-deps".bold()
+                            "cargo hakari manage-deps".style(output.styles.command),
                         ),
                     ];
                     info!("next steps:\n{}\n", steps.join("\n"));
@@ -263,7 +266,7 @@ impl CommandWithBuilder {
         self,
         builder: HakariBuilder<'_>,
         hakari_output: HakariOutputOptions,
-        output: OutputOpts,
+        output: OutputContext,
     ) -> Result<i32> {
         let hakari_package = *builder
             .hakari_package()
@@ -283,12 +286,13 @@ impl CommandWithBuilder {
                         let package = package_graph
                             .metadata(&package_id)
                             .expect("package ID obtained from the same graph");
-                        error!("unrecognized registry URL {} found for {} {}\n(add to {} section of {})",
-                            registry_url.bold(),
-                            package.name().bold(),
-                            format!("v{}", package.version()).bold(),
-                            "[registries]".bold(),
-                            DEFAULT_CONFIG_PATH.blue().bold(),
+                        error!(
+                            "unrecognized registry URL {} found for {} v{}\n\
+                             (add to [registries] section of {})",
+                            registry_url.style(output.styles.registry_url),
+                            package.name().style(output.styles.package_name),
+                            package.version().style(output.styles.package_version),
+                            "hakari.toml".style(output.styles.config_path),
                         );
                         // 102 is picked pretty arbitrarily because regular errors exit with 101.
                         return Ok(102);
@@ -304,17 +308,20 @@ impl CommandWithBuilder {
             }
             CommandWithBuilder::Verify => match builder.verify() {
                 Ok(()) => {
-                    info!("{} works correctly", hakari_package.name().bold());
+                    info!(
+                        "{} works correctly",
+                        hakari_package.name().style(output.styles.package_name),
+                    );
                     Ok(0)
                 }
                 Err(errs) => {
                     let mut display = errs.display();
-                    if output.should_colorize() {
-                        display.color();
+                    if output.color.is_enabled() {
+                        display.colorize();
                     }
                     info!(
                         "{} didn't work correctly:\n{}",
-                        hakari_package.name().bold(),
+                        hakari_package.name().style(output.styles.package_name),
                         display,
                     );
                     Ok(1)
@@ -333,7 +340,9 @@ impl CommandWithBuilder {
                     return Ok(0);
                 }
 
-                apply_on_dialog(dry_run, yes, &ops, &output, || regenerate_lockfile(output))
+                apply_on_dialog(dry_run, yes, &ops, &output, || {
+                    regenerate_lockfile(output.clone())
+                })
             }
             CommandWithBuilder::RemoveDeps {
                 packages,
@@ -348,7 +357,9 @@ impl CommandWithBuilder {
                     return Ok(0);
                 }
 
-                apply_on_dialog(dry_run, yes, &ops, &output, || regenerate_lockfile(output))
+                apply_on_dialog(dry_run, yes, &ops, &output, || {
+                    regenerate_lockfile(output.clone())
+                })
             }
             CommandWithBuilder::Explain {
                 dep_name: crate_name,
@@ -367,7 +378,7 @@ impl CommandWithBuilder {
                     .explain(dep.id())
                     .expect("package ID should be known since it was in the output");
                 let mut display = explain.display();
-                if output.should_colorize() {
+                if output.color.is_enabled() {
                     display.colorize();
                 }
                 info!("\n{}", display);
@@ -460,12 +471,12 @@ fn write_to_cargo_toml(
     existing_toml: HakariCargoToml,
     new_contents: &str,
     diff: bool,
-    output: OutputOpts,
+    output: OutputContext,
 ) -> Result<i32> {
     if diff {
         let patch = existing_toml.diff_toml(new_contents);
         let mut formatter = PatchFormatter::new();
-        if output.should_colorize() {
+        if output.color.is_enabled() {
             formatter = formatter.with_color();
         }
         info!("\n{}", formatter.fmt_patch(&patch));
@@ -493,11 +504,11 @@ fn apply_on_dialog(
     dry_run: bool,
     yes: bool,
     ops: &WorkspaceOps<'_, '_>,
-    output: &OutputOpts,
+    output: &OutputContext,
     after: impl FnOnce() -> Result<()>,
 ) -> Result<i32> {
     let mut display = ops.display();
-    if output.should_colorize() {
+    if output.color.is_enabled() {
         display.colorize();
     }
     info!("operations to perform:\n\n{}", display);
@@ -511,7 +522,7 @@ fn apply_on_dialog(
         true
     } else {
         let colorful_theme = dialoguer::theme::ColorfulTheme::default();
-        let mut confirm = if output.should_colorize() {
+        let mut confirm = if output.color.is_enabled() {
             dialoguer::Confirm::with_theme(&colorful_theme)
         } else {
             dialoguer::Confirm::with_theme(&dialoguer::theme::SimpleTheme)

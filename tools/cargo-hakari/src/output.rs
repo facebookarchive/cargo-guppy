@@ -1,13 +1,13 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use colored::Colorize;
 use env_logger::fmt::Formatter;
 use log::{Level, LevelFilter, Record};
-use std::io::Write;
+use owo_colors::{OwoColorize, Stream, Style};
+use std::{io::Write, sync::Arc};
 use structopt::StructOpt;
 
-#[derive(Copy, Clone, Debug, StructOpt)]
+#[derive(Debug, StructOpt)]
 #[must_use]
 pub(crate) struct OutputOpts {
     /// Suppress output
@@ -40,35 +40,84 @@ pub(crate) struct OutputOpts {
 }
 
 impl OutputOpts {
-    pub(crate) fn init_logger(&self) {
-        let level = if self.quiet {
+    pub(crate) fn init(self) -> OutputContext {
+        let OutputOpts {
+            quiet,
+            verbose,
+            color,
+        } = self;
+        let level = if quiet {
             LevelFilter::Error
-        } else if self.verbose {
+        } else if verbose {
             LevelFilter::Debug
         } else {
             LevelFilter::Info
         };
 
-        self.color.init_colored();
+        color.init_colored();
+
+        let mut styles = Styles::default();
+        if stderr_supports_color() {
+            styles.colorize();
+        }
 
         env_logger::Builder::from_default_env()
             .filter_level(level)
             .format(format_fn)
             .init();
-    }
 
-    pub(crate) fn should_colorize(&self) -> bool {
-        colored::control::SHOULD_COLORIZE.should_colorize()
+        OutputContext {
+            quiet,
+            verbose,
+            color,
+            styles: Arc::new(styles),
+        }
     }
+}
+
+#[derive(Clone, Debug)]
+#[must_use]
+pub(crate) struct OutputContext {
+    pub(crate) quiet: bool,
+    pub(crate) verbose: bool,
+    pub(crate) color: Color,
+    pub(crate) styles: Arc<Styles>,
 }
 
 fn format_fn(f: &mut Formatter, record: &Record<'_>) -> std::io::Result<()> {
     match record.level() {
-        Level::Error => writeln!(f, "{} {}", "error:".bold().red(), record.args()),
-        Level::Warn => writeln!(f, "{} {}", "warning:".bold().yellow(), record.args()),
-        Level::Info => writeln!(f, "{} {}", "info:".bold(), record.args()),
-        Level::Debug => writeln!(f, "{} {}", "debug:".bold(), record.args()),
+        Level::Error => writeln!(
+            f,
+            "{} {}",
+            "error:".if_supports_color(Stream::Stderr, |s| s.style(Style::new().bold().red())),
+            record.args()
+        ),
+        Level::Warn => writeln!(
+            f,
+            "{} {}",
+            "warning:".if_supports_color(Stream::Stderr, |s| s.style(Style::new().bold().yellow())),
+            record.args()
+        ),
+        Level::Info => writeln!(
+            f,
+            "{} {}",
+            "info:".if_supports_color(Stream::Stderr, |s| s.bold()),
+            record.args()
+        ),
+        Level::Debug => writeln!(
+            f,
+            "{} {}",
+            "debug:".if_supports_color(Stream::Stderr, |s| s.bold()),
+            record.args()
+        ),
         _other => Ok(()),
+    }
+}
+
+fn stderr_supports_color() -> bool {
+    match supports_color::on_cached(Stream::Stderr) {
+        Some(level) => level.has_basic,
+        None => false,
     }
 }
 
@@ -83,9 +132,18 @@ pub enum Color {
 impl Color {
     fn init_colored(self) {
         match self {
-            Color::Auto => colored::control::unset_override(),
-            Color::Always => colored::control::set_override(true),
-            Color::Never => colored::control::set_override(false),
+            Color::Auto => owo_colors::unset_override(),
+            Color::Always => owo_colors::set_override(true),
+            Color::Never => owo_colors::set_override(false),
+        }
+    }
+
+    pub(crate) fn is_enabled(self) -> bool {
+        match self {
+            // Currently, all output from cargo-hakari goes to stderr.
+            Color::Auto => stderr_supports_color(),
+            Color::Always => true,
+            Color::Never => false,
         }
     }
 
@@ -111,5 +169,24 @@ impl std::str::FromStr for Color {
                 s
             )),
         }
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct Styles {
+    pub(crate) config_path: Style,
+    pub(crate) command: Style,
+    pub(crate) registry_url: Style,
+    pub(crate) package_name: Style,
+    pub(crate) package_version: Style,
+}
+
+impl Styles {
+    fn colorize(&mut self) {
+        self.config_path = Style::new().blue().bold();
+        self.command = Style::new().bold();
+        self.registry_url = Style::new().magenta().bold();
+        self.package_name = Style::new().bold();
+        self.package_version = Style::new().bold();
     }
 }

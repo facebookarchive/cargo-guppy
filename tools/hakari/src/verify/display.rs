@@ -26,7 +26,7 @@ impl<'g, 'verify> VerifyErrorsDisplay<'g, 'verify> {
     }
 
     /// Adds ANSI color codes to the output.
-    pub fn color(&mut self) -> &mut Self {
+    pub fn colorize(&mut self) -> &mut Self {
         self.styles.colorize();
         self.color = true;
         self

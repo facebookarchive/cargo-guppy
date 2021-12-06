@@ -3,24 +3,24 @@
 
 //! Cargo CLI support.
 
-use crate::output::OutputOpts;
+use crate::output::OutputContext;
 use camino::Utf8PathBuf;
 use std::{convert::TryInto, env, path::PathBuf};
 
 #[derive(Clone, Debug)]
 pub(crate) struct CargoCli<'a> {
     cargo_path: Utf8PathBuf,
-    output_opts: OutputOpts,
+    output: OutputContext,
     command: &'a str,
     args: Vec<&'a str>,
 }
 
 impl<'a> CargoCli<'a> {
-    pub(crate) fn new(command: &'a str, output_opts: OutputOpts) -> Self {
+    pub(crate) fn new(command: &'a str, output: OutputContext) -> Self {
         let cargo_path = cargo_path();
         Self {
             cargo_path,
-            output_opts,
+            output,
             command,
             args: vec![],
         }
@@ -44,13 +44,13 @@ impl<'a> CargoCli<'a> {
 
     pub(crate) fn to_expression(&self) -> duct::Expression {
         let mut initial_args = vec![];
-        if self.output_opts.quiet {
+        if self.output.quiet {
             initial_args.push("--quiet");
         }
-        if self.output_opts.verbose {
+        if self.output.verbose {
             initial_args.push("--verbose");
         }
-        initial_args.push(self.output_opts.color.to_arg());
+        initial_args.push(self.output.color.to_arg());
 
         initial_args.push(self.command);
 
