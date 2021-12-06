@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.0] - 2021-12-06
+
+### Added
+
+- Support for explaining why a crate is in the workspace-hack, used by `cargo hakari explain`.
+
+### Changed
+
+- `VerifyErrors` now prints out information in the same format as explain---as a result, some of its APIs have
+  changed.
+
 ## [0.7.3] - 2021-11-28
 
 - Internal dependency `guppy-workspace-hack` updated to [`workspace-hack`](https://crates.io/crates/workspace-hack).
@@ -142,6 +153,7 @@ Internal updates for `cargo-hakari 0.9.8`.
 
 Initial release.
 
+[0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.8.0
 [0.7.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.3
 [0.7.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.2
 [0.7.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.7.1

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.10] - 2021-12-06
+
+### Added
+
+- A new `explain` command prints out information about why a dependency is in the workspace-hack.
+
+### Changed
+
+- The `verify` command now uses `explain` to print out information about failing crates.
+
 ## [0.9.9] - 2021-11-28
 
 ### Added
@@ -88,6 +98,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.10]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.10
 [0.9.9]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.9
 [0.9.8]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.8
 [0.9.7]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.7
