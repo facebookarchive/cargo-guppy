@@ -681,6 +681,15 @@
 <span id="681">681</span>
 <span id="682">682</span>
 <span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
+<span id="686">686</span>
+<span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -696,7 +705,9 @@
     <span class="ident">borrow::Cow</span>, <span class="ident">cmp::Ordering</span>, <span class="ident">collections::BTreeMap</span>, <span class="ident">convert::TryFrom</span>, <span class="ident">error</span>, <span class="ident">fmt</span>, <span class="ident">fs</span>, <span class="ident">io</span>,
     <span class="ident">io::Write</span>,
 };
-<span class="kw">use</span> <span class="ident">toml_edit</span>::{<span class="ident">Array</span>, <span class="ident">Document</span>, <span class="ident">InlineTable</span>, <span class="ident">Item</span>, <span class="ident">Table</span>, <span class="ident">TableLike</span>, <span class="ident">TomlError</span>, <span class="ident">Value</span>};
+<span class="kw">use</span> <span class="ident">toml_edit</span>::{
+    <span class="ident">Array</span>, <span class="ident">Document</span>, <span class="ident">Formatted</span>, <span class="ident">InlineTable</span>, <span class="ident">Item</span>, <span class="ident">Table</span>, <span class="ident">TableLike</span>, <span class="ident">TomlError</span>, <span class="ident">Value</span>,
+};
 
 <span class="doccomment">/// Represents a set of write operations to the workspace.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
@@ -986,9 +997,16 @@
         <span class="kw">if</span> <span class="ident">dep_format</span> <span class="op">==</span> <span class="ident">DepFormatVersion::V2</span> {
             <span class="ident">itable</span>.<span class="ident">insert</span>(<span class="string">&quot;version&quot;</span>, <span class="ident">version_str</span>.<span class="ident">into</span>());
         }
-        <span class="ident">itable</span>.<span class="ident">insert</span>(<span class="string">&quot;path&quot;</span>, <span class="ident">with_forward_slashes</span>(<span class="ident">path</span>).<span class="ident">into_string</span>().<span class="ident">into</span>());
 
-        <span class="comment">// Previous versions of `cargo hakari` accidentally missed formatting the line.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">Formatted::new</span>(<span class="ident">with_forward_slashes</span>(<span class="ident">path</span>).<span class="ident">into_string</span>());
+        <span class="kw">if</span> <span class="ident">dep_format</span> <span class="op">==</span> <span class="ident">DepFormatVersion::V1</span> {
+            <span class="comment">// Previous versions of `cargo hakari` accidentally missed adding the space to the end</span>
+            <span class="comment">// of the line. Newer versions of toml_edit do that automatically, so restore the old</span>
+            <span class="comment">// behavior.</span>
+            <span class="ident">path</span>.<span class="ident">decor_mut</span>().<span class="ident">set_suffix</span>(<span class="string">&quot;&quot;</span>);
+        }
+        <span class="ident">itable</span>.<span class="ident">insert</span>(<span class="string">&quot;path&quot;</span>, <span class="ident">Value::String</span>(<span class="ident">path</span>));
+
         <span class="kw">if</span> <span class="ident">dep_format</span> <span class="op">==</span> <span class="ident">DepFormatVersion::V2</span> {
             <span class="ident">itable</span>.<span class="ident">fmt</span>();
         }
