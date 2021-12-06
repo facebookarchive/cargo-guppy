@@ -112,6 +112,35 @@
 //! All `cargo hakari` commands take a `--quiet` option to suppress output, though showing diff
 //! output in CI is often useful.
 //!
+//! ## Information about the workspace-hack
+//!
+//! The commands in this section provide information about components in the workspace-hack.
+//!
+//! ### Why is a dependency in the workspace-hack?
+//!
+//! Print out information about why a dependency is present in the workspace-hack:
+//!
+//! ```sh
+//! cargo hakari explain <dependency-name>
+//! ```
+//!
+//! <p align="center">
+//! <img src="https://user-images.githubusercontent.com/180618/144933657-c45cf719-ecaf-49e0-b2c7-c8d12adf11c0.png" width=550>
+//! </p>
+//!
+//! ### Does the workspace-hack ensure that each dependency is built with exactly one feature set?
+//!
+//! ```sh
+//! cargo hakari verify
+//! ```
+//!
+//! If some dependencies are built with more than one feature set, this command will print out
+//! details about them. **This is always a bug**---if you encounter it, [a bug report] with more
+//! information would be greatly appreciated!
+//!
+//! [a bug report]: https://github.com/facebookincubator/cargo-guppy/issues/new
+//!
+//! ###
 //! ## Publishing a crate
 //!
 //! If you publish crates to `crates.io` or other registries, see the
