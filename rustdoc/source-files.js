@@ -52,6 +52,7 @@ sourcesIndex["globset"] = {"name":"","files":["glob.rs","lib.rs","pathutil.rs"]}
 sourcesIndex["guppy"] = {"name":"","dirs":[{"name":"graph","dirs":[{"name":"cargo","files":["build.rs","cargo_api.rs","mod.rs"]},{"name":"feature","files":["build.rs","cycles.rs","feature_list.rs","graph_impl.rs","mod.rs","proptest_helpers.rs","query.rs","resolve.rs"]},{"name":"summaries","files":["package_set.rs"]}],"files":["build.rs","build_targets.rs","cycles.rs","graph_impl.rs","mod.rs","proptest_helpers.rs","query.rs","query_core.rs","resolve.rs","resolve_core.rs","summaries.rs"]},{"name":"petgraph_support","files":["dfs.rs","dot.rs","edge_ref.rs","mod.rs","scc.rs","topo.rs","walk.rs"]},{"name":"platform","files":["mod.rs","platform_eval.rs","platform_spec.rs","proptest_helpers.rs","summaries.rs"]}],"files":["dependency_kind.rs","errors.rs","lib.rs","macros.rs","metadata_command.rs","package_id.rs","sorted_set.rs"]};
 sourcesIndex["guppy_cmdlib"] = {"name":"","files":["lib.rs","proptest.rs"]};
 sourcesIndex["guppy_summaries"] = {"name":"","files":["diff.rs","lib.rs","report.rs","summary.rs"]};
+sourcesIndex["guppy_workspace_hack"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["hakari"] = {"name":"","dirs":[{"name":"cli_ops","files":["initialize.rs","manage_deps.rs","mod.rs","workspace_ops.rs"]},{"name":"explain","files":["display.rs","mod.rs","simplify.rs"]},{"name":"tabular","files":["column_spec.rs","error.rs","mod.rs","row.rs","table.rs","width_string.rs"]},{"name":"verify","files":["display.rs","mod.rs"]}],"files":["cargo_toml.rs","hakari.rs","helpers.rs","lib.rs","proptest_helpers.rs","summaries.rs","toml_out.rs"]};
 sourcesIndex["hashbrown"] = {"name":"","dirs":[{"name":"external_trait_impls","files":["mod.rs"]},{"name":"raw","files":["alloc.rs","bitmask.rs","mod.rs","sse2.rs"]}],"files":["lib.rs","macros.rs","map.rs","scopeguard.rs","set.rs"]};
 sourcesIndex["heck"] = {"name":"","files":["camel.rs","kebab.rs","lib.rs","mixed.rs","shouty_kebab.rs","shouty_snake.rs","snake.rs","title.rs"]};
@@ -131,6 +132,5 @@ sourcesIndex["vec_map"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["vte"] = {"name":"","files":["definitions.rs","lib.rs","params.rs","table.rs"]};
 sourcesIndex["vte_generate_state_changes"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["wait_timeout"] = {"name":"","files":["lib.rs","unix.rs"]};
-sourcesIndex["workspace_hack"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["zeroize"] = {"name":"","files":["lib.rs","x86.rs"]};
 createSourceSidebar();
