@@ -17,7 +17,8 @@ let package_graph = MetadataCommand::new()
     .expect("obtained cargo-guppy's PackageGraph");
 
 // The second argument to HakariBuilder::new specifies a Hakari (workspace-hack) package.
-let hakari_package = package_graph.workspace().member_by_name("workspace-hack").unwrap().id();
+// In this repository, the package is called "guppy-workspace-hack".
+let hakari_package = package_graph.workspace().member_by_name("guppy-workspace-hack").unwrap().id();
 let hakari_builder = HakariBuilder::new(&package_graph, Some(hakari_package))
     .expect("HakariBuilder was constructed");
 
