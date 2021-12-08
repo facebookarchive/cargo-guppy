@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.11] - 2021-12-08
+
+- Reverted the changes in version 0.9.9 because of [#524](https://github.com/facebookincubator/cargo-guppy/issues/524).
+
 ## [0.9.10] - 2021-12-06
 
 ### Added
@@ -98,6 +102,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.11]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.11
 [0.9.10]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.10
 [0.9.9]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.9
 [0.9.8]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.8
