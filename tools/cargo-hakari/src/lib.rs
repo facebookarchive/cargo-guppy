@@ -48,10 +48,10 @@
 //!
 //! ### 1. Initialize the workspace-hack
 //!
-//! Initialize a workspace-hack crate for a workspace at path `workspace-hack`:
+//! Initialize a workspace-hack crate for a workspace at path `my-workspace-hack`:
 //!
 //! ```sh
-//! cargo hakari init workspace-hack
+//! cargo hakari init my-workspace-hack
 //! ```
 //!
 //! <p align="center">

@@ -7,7 +7,7 @@ use crate::{
     publish::publish_hakari,
 };
 use camino::{Utf8Path, Utf8PathBuf};
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{bail, eyre, Result, WrapErr};
 use guppy::{
     graph::{PackageGraph, PackageSet},
     MetadataCommand,
@@ -76,9 +76,9 @@ enum Command {
         /// Path to generate the workspace-hack crate at, relative to the current directory.
         path: Utf8PathBuf,
 
-        /// The name of the crate
-        #[structopt(long, short, default_value = "workspace-hack")]
-        package_name: String,
+        /// The name of the crate (default: derived from path)
+        #[structopt(long, short)]
+        package_name: Option<String>,
 
         /// Skip writing a stub config to hakari.toml
         #[structopt(long)]
@@ -116,10 +116,18 @@ impl Command {
                 dry_run,
                 yes,
             } => {
+                let package_name = match package_name.as_deref() {
+                    Some(name) => name,
+                    None => match path.file_name() {
+                        Some(name) => name,
+                        None => bail!("invalid path {}", path),
+                    },
+                };
+
                 let workspace_path =
                     cwd_rel_to_workspace_rel(&path, package_graph.workspace().root())?;
 
-                let mut init = HakariInit::new(&package_graph, &package_name, &workspace_path)
+                let mut init = HakariInit::new(&package_graph, package_name, &workspace_path)
                     .with_context(|| "error initializing Hakari package")?;
                 init.set_cargo_toml_comment(CARGO_TOML_COMMENT);
                 if !skip_config {
