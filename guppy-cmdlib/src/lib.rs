@@ -8,7 +8,7 @@
 #[cfg(feature = "proptest1")]
 pub mod proptest;
 
-use anyhow::Result;
+use color_eyre::eyre::Result;
 use guppy::{
     graph::{
         cargo::{CargoResolverVersion, InitialsPlatform},

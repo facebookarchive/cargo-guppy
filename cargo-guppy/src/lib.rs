@@ -42,8 +42,8 @@ mod mv;
 
 pub use crate::{core::*, mv::*};
 
-use anyhow::{bail, Context, Result};
 use clap::arg_enum;
+use color_eyre::eyre::{bail, Result, WrapErr};
 use guppy::{
     graph::{
         cargo::{CargoOptions, CargoSet},
@@ -68,7 +68,7 @@ use std::{
 };
 use structopt::StructOpt;
 
-pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<(), anyhow::Error> {
+pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<()> {
     let old_json = fs::read_to_string(old)?;
     let new_json = fs::read_to_string(new)?;
 
@@ -103,14 +103,14 @@ pub struct DiffSummariesOptions {
 impl DiffSummariesOptions {
     pub fn exec(&self) -> Result<()> {
         let old_summary = fs::read_to_string(&self.old)
-            .with_context(|| format!("reading old summary {} failed", self.old.display()))?;
+            .wrap_err_with(|| format!("reading old summary {} failed", self.old.display()))?;
         let old_summary = Summary::parse(&old_summary)
-            .with_context(|| format!("parsing old summary {} failed", self.old.display()))?;
+            .wrap_err_with(|| format!("parsing old summary {} failed", self.old.display()))?;
 
         let new_summary = fs::read_to_string(&self.new)
-            .with_context(|| format!("reading new summary {} failed", self.new.display()))?;
+            .wrap_err_with(|| format!("reading new summary {} failed", self.new.display()))?;
         let new_summary = Summary::parse(&new_summary)
-            .with_context(|| format!("parsing new summary {} failed", self.new.display()))?;
+            .wrap_err_with(|| format!("parsing new summary {} failed", self.new.display()))?;
 
         let diff = old_summary.diff(&new_summary);
 
@@ -133,7 +133,7 @@ pub struct DupsOptions {
     metadata_opts: CargoMetadataOptions,
 }
 
-pub fn cmd_dups(opts: &DupsOptions) -> Result<(), anyhow::Error> {
+pub fn cmd_dups(opts: &DupsOptions) -> Result<()> {
     let command = opts.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 
@@ -203,7 +203,7 @@ pub struct ResolveCargoOptions {
     metadata_opts: CargoMetadataOptions,
 }
 
-pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<(), anyhow::Error> {
+pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<()> {
     let target_platform = string_to_platform_spec(opts.target_platform.as_deref())?;
     let host_platform = string_to_platform_spec(opts.host_platform.as_deref())?;
     let command = opts.metadata_opts.make_command();
@@ -318,8 +318,9 @@ pub struct CmdSelectOptions {
     metadata_opts: CargoMetadataOptions,
 }
 
-pub fn cmd_select(options: &CmdSelectOptions) -> Result<(), anyhow::Error> {
-    let command = options.metadata_opts.make_command();
+pub fn cmd_select(options: &CmdSelectOptions) -> Result<()> {
+    let mut command = options.metadata_opts.make_command();
+    command.other_options(["--no-deps"]);
     let pkg_graph = command.build_graph()?;
 
     let query = options.query_opts.apply(&pkg_graph)?;
@@ -366,7 +367,7 @@ pub struct SubtreeSizeOptions {
     metadata_opts: CargoMetadataOptions,
 }
 
-pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<(), anyhow::Error> {
+pub fn cmd_subtree_size(options: &SubtreeSizeOptions) -> Result<()> {
     let command = options.metadata_opts.make_command();
     let pkg_graph = command.build_graph()?;
 

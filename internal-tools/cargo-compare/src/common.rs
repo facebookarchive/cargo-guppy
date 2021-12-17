@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use crate::{type_conversions::ToGuppy, GlobalContext};
-use anyhow::Result;
 use cargo::{
     core::{
         compiler::{CompileKind, CompileTarget, RustcTargetData},
@@ -13,6 +12,7 @@ use cargo::{
     util::interning::InternedString,
     Config,
 };
+use color_eyre::eyre::{bail, Result};
 use guppy::{
     graph::{
         cargo::{CargoOptions, CargoResolverVersion, CargoSet},
@@ -57,7 +57,7 @@ pub struct GuppyCargoCommon {
 
 impl GuppyCargoCommon {
     /// Resolves data for this query using Cargo.
-    pub fn resolve_cargo(&self, ctx: &GlobalContext<'_>) -> Result<FeatureMap> {
+    pub fn resolve_cargo(&self, ctx: &GlobalContext<'_>) -> anyhow::Result<FeatureMap> {
         let config = self.cargo_make_config(ctx)?;
         let root_manifest = self.cargo_discover_root(&config)?;
         let mut workspace = self.cargo_make_workspace(&config, &root_manifest)?;
@@ -84,7 +84,7 @@ impl GuppyCargoCommon {
             packages
                 .iter()
                 .map(|spec| PackageIdSpec::parse(spec))
-                .collect::<Result<_>>()?
+                .collect::<anyhow::Result<_>>()?
         };
 
         let ws_resolve = resolve_ws_with_opts(
@@ -206,7 +206,7 @@ impl GuppyCargoCommon {
     // Helper methods
     // ---
 
-    fn cargo_make_config(&self, _ctx: &GlobalContext) -> Result<Config> {
+    fn cargo_make_config(&self, _ctx: &GlobalContext) -> anyhow::Result<Config> {
         // XXX This should use the home dir from ctx, but that appears to cause caching to break???
         // XXX Use default() for now, figure this out at some point.
         let mut config = Config::default()?;
@@ -221,8 +221,11 @@ impl GuppyCargoCommon {
         Ok(config)
     }
 
-    fn cargo_discover_root(&self, config: &Config) -> Result<PathBuf> {
-        let manifest_path = self.metadata_opts.abs_manifest_path()?;
+    fn cargo_discover_root(&self, config: &Config) -> anyhow::Result<PathBuf> {
+        let manifest_path = self
+            .metadata_opts
+            .abs_manifest_path()
+            .expect("failed to fetch absolute manifest path");
         // Create a workspace to discover the root manifest.
         let workspace = Workspace::new(&manifest_path, config)?;
 
@@ -234,7 +237,7 @@ impl GuppyCargoCommon {
         &self,
         config: &'cfg Config,
         root_manifest: &Path,
-    ) -> Result<Workspace<'cfg>> {
+    ) -> anyhow::Result<Workspace<'cfg>> {
         // Now create another workspace with the root that was found.
         Workspace::new(root_manifest, config)
     }
@@ -287,5 +290,12 @@ impl FeatureMap {
                 (feature_list.package().id().clone(), features)
             })
             .collect()
+    }
+}
+
+pub(crate) fn anyhow_to_eyre<T>(x: anyhow::Result<T>) -> Result<T> {
+    match x {
+        Ok(x) => Ok(x),
+        Err(err) => bail!("{}", err),
     }
 }
