@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.5] - 2021-12-17
+
+### Added
+
+- `guppy` now supports a "light" mode if `--no-deps` is passed in. This mode doesn't provide any information
+  about third-party packages or dependency edges, but is much faster if the only information needed
+  is workspace lookups.
+
 ## [0.12.4] - 2021-12-08
 
 - Reverted change in 0.12.3 because of [#524](https://github.com/facebookincubator/cargo-guppy/issues/524).
@@ -445,6 +453,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.12.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.5
 [0.12.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.4
 [0.12.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.3
 [0.12.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.2
