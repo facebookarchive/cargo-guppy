@@ -64,7 +64,21 @@ impl MetadataCommand {
         self
     }
 
-    // *Do not* implement no_deps or features.
+    /// Output information only about the workspace and do not fetch dependencies.
+    ///
+    /// For full functionality, `cargo metadata` should be run without `--no-deps`, so that `guppy`
+    /// knows about third-party crates and dependency edges. However, `guppy` supports a "light"
+    /// mode if `--no-deps` is run, in which case the following limitations will apply:
+    /// * dependency queries will not work
+    /// * there will be no information about non-workspace crates
+    ///
+    /// Constructing a graph with this option can be several times faster than the default.
+    pub fn no_deps(&mut self) -> &mut Self {
+        self.inner.no_deps();
+        self
+    }
+
+    // *Do not* implement features.
 
     /// Arbitrary flags to pass to `cargo metadata`. These will be added to the end of the
     /// command invocation.
@@ -72,7 +86,6 @@ impl MetadataCommand {
     /// Note that `guppy` internally:
     /// * uses `--format-version 1` as its metadata format.
     /// * passes in `--all-features`, so that `guppy` has a full view of the dependency graph.
-    /// * does not pass in `--no-deps`, so that `guppy` knows about non-workspace dependencies.
     ///
     /// Attempting to override either of those options may lead to unexpected results.
     pub fn other_options(

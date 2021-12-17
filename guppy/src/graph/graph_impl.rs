@@ -68,9 +68,14 @@ impl PackageGraph {
 
     /// Constructs a package graph from the given JSON output of `cargo metadata`.
     ///
-    /// Generally, `guppy` expects the `cargo metadata` command to be run:
-    /// * with `--all-features`, so that `guppy` has a full view of the dependency graph.
-    /// * without `--no-deps`, so that `guppy` knows about non-workspace dependencies.
+    /// Generally, `guppy` expects the `cargo metadata` command to be run with `--all-features`, so
+    /// that `guppy` has a full view of the dependency graph.
+    ///
+    /// For full functionality, `cargo metadata` should be run without `--no-deps`, so that `guppy`
+    /// knows about third-party crates and dependency edges. However, `guppy` supports a "light"
+    /// mode if `--no-deps` is run, in which case the following limitations will apply:
+    /// * dependency queries will not work
+    /// * there will be no information about non-workspace crates
     pub fn from_json(json: impl AsRef<str>) -> Result<Self, Error> {
         let metadata = CargoMetadata::parse_json(json)?;
         Self::from_metadata(metadata)

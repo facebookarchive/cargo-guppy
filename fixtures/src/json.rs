@@ -156,6 +156,10 @@ pub static METADATA_GUPPY_869476C_PATH: &str = "../guppy/metadata_guppy_869476c.
 
 pub static METADATA_GUPPY_C9B4F76_PATH: &str = "../guppy/metadata_guppy_c9b4f76.json";
 
+pub static METADATA_GUPPY_44B62FA_PATH: &str = "../guppy/metadata_guppy_44b62fa.json";
+pub static METADATA_GUPPY_CARGO_GUPPY: &str =
+    "cargo-guppy 0.1.0 (path+file:///home/fakeuser/dev/cargo-guppy/cargo-guppy)";
+
 pub static FAKE_AUTHOR: &str = "Fake Author <fakeauthor@example.com>";
 
 macro_rules! define_fixtures {
@@ -204,6 +208,7 @@ define_fixtures! {
     metadata_guppy_78cb7e8 => METADATA_GUPPY_78CB7E8_PATH,
     metadata_guppy_869476c => METADATA_GUPPY_869476C_PATH,
     metadata_guppy_c9b4f76 => METADATA_GUPPY_C9B4F76_PATH,
+    metadata_guppy_44b62fa => METADATA_GUPPY_44B62FA_PATH,
 }
 
 pub struct JsonFixture {
@@ -1320,6 +1325,12 @@ impl FixtureDetails {
     }
 
     pub(crate) fn metadata_guppy_c9b4f76() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details)
+    }
+
+    pub(crate) fn metadata_guppy_44b62fa() -> Self {
         let details = HashMap::new();
 
         Self::new(details)
