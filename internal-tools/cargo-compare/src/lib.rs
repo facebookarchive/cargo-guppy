@@ -4,7 +4,7 @@
 //! Support for comparing Cargo and Guppy.
 
 use crate::{check::CheckOpts, diff::DiffOpts};
-use anyhow::Result;
+use color_eyre::eyre::Result;
 use either::Either;
 use guppy::graph::PackageGraph;
 use std::{

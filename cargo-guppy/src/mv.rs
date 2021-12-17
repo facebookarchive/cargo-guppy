@@ -1,8 +1,8 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use anyhow::{anyhow, bail, Context, Result};
 use camino::{Utf8Path, Utf8PathBuf};
+use color_eyre::eyre::{bail, eyre, Result, WrapErr};
 use dialoguer::Confirm;
 use guppy::graph::{PackageGraph, PackageLink, PackageMetadata};
 use guppy_cmdlib::CargoMetadataOptions;
@@ -150,7 +150,7 @@ impl MvOptions {
             // Next, update the root manifest. Do this before moving directories because this relies
             // on the old directories existing.
             update_root_toml(workspace_root, &src_moves)
-                .with_context(|| anyhow!("error while updating root toml at {}", workspace_root))?;
+                .wrap_err_with(|| eyre!("error while updating root toml at {}", workspace_root))?;
 
             // Finally, move directories into their new spots.
             // Rely on the fact that BTreeMap is sorted so that "foo" always shows up before
@@ -172,8 +172,8 @@ impl MvOptions {
                 );
                 // fs::rename behaves differently on Unix and Windows if the destination exists.
                 // But we don't expect it to, as the assertion above checks.
-                fs::rename(&abs_src, &abs_dest).with_context(|| {
-                    anyhow!("renaming {} to {} failed", src_dir, package_move.new_path)
+                fs::rename(&abs_src, &abs_dest).wrap_err_with(|| {
+                    eyre!("renaming {} to {} failed", src_dir, package_move.new_path)
                 })?;
                 done.insert(src_dir);
             }
@@ -209,10 +209,10 @@ impl DestDir {
                 // Canonicalize the parent, then glue the last component to it.
                 let last_component = dest_dir
                     .file_name()
-                    .with_context(|| anyhow!("destination {} cannot end with ..", dest_dir))?;
+                    .ok_or_else(|| eyre!("destination {} cannot end with ..", dest_dir))?;
                 let parent = dest_dir
                     .parent()
-                    .with_context(|| anyhow!("destination {} cannot be /", dest_dir))?;
+                    .ok_or_else(|| eyre!("destination {} cannot end with ..", dest_dir))?;
                 let parent = if parent.as_os_str() == "" {
                     Utf8Path::new(".")
                 } else {
@@ -222,9 +222,7 @@ impl DestDir {
                 let parent = canonicalize_dir(pkg_graph, parent)?;
                 Ok(DestDir::Create(parent.join(last_component)))
             }
-            Err(err) => {
-                Err(err).with_context(|| anyhow!("reading destination {} failed", dest_dir))
-            }
+            Err(err) => Err(err).wrap_err_with(|| eyre!("reading destination {} failed", dest_dir)),
         }
     }
 
@@ -272,7 +270,7 @@ fn canonicalize_dir(pkg_graph: &PackageGraph, path: impl AsRef<Utf8Path>) -> Res
     let path = path.as_ref();
     let canonical_path = path
         .canonicalize()
-        .with_context(|| anyhow!("reading path {} failed", path))?;
+        .wrap_err_with(|| eyre!("reading path {} failed", path))?;
     if !canonical_path.is_dir() {
         bail!("path {} is not a directory", canonical_path.display());
     }
@@ -281,15 +279,15 @@ fn canonicalize_dir(pkg_graph: &PackageGraph, path: impl AsRef<Utf8Path>) -> Res
 }
 
 fn rel_path<'a>(path: &'a Path, workspace_root: &Utf8Path) -> Result<&'a Utf8Path> {
-    let rel_path = path.strip_prefix(workspace_root).with_context(|| {
-        anyhow!(
+    let rel_path = path.strip_prefix(workspace_root).wrap_err_with(|| {
+        eyre!(
             "path {} not in workspace root {}",
             path.display(),
             workspace_root
         )
     })?;
     Utf8Path::from_path(rel_path)
-        .ok_or_else(|| anyhow!("rel path {} is invalid UTF-8", rel_path.display()))
+        .ok_or_else(|| eyre!("rel path {} is invalid UTF-8", rel_path.display()))
 }
 
 fn moves_for<'g: 'a, 'a>(
@@ -382,7 +380,7 @@ fn apply_edits(manifest_path: &Utf8Path, edits: &[ManifestEdit<'_>]) -> Result<(
     // * [target.'foo'.dependencies], .build-dependencies and .dev-dependencies
     for edit in edits {
         apply_edit(table, edit)
-            .with_context(|| anyhow!("error while applying edits to {}", manifest_path))?;
+            .wrap_err_with(|| eyre!("error while applying edits to {}", manifest_path))?;
         for target in &all_targets {
             let target_table = match &mut table["target"][target] {
                 Item::Table(target_table) => target_table,
@@ -391,8 +389,8 @@ fn apply_edits(manifest_path: &Utf8Path, edits: &[ManifestEdit<'_>]) -> Result<(
                     continue;
                 }
             };
-            apply_edit(target_table, edit).with_context(|| {
-                anyhow!(
+            apply_edit(target_table, edit).wrap_err_with(|| {
+                eyre!(
                     "error while applying edits to {}, section [target.'{}']",
                     manifest_path,
                     target
@@ -402,7 +400,7 @@ fn apply_edits(manifest_path: &Utf8Path, edits: &[ManifestEdit<'_>]) -> Result<(
     }
 
     fs::write(manifest_path, document.to_string())
-        .with_context(|| anyhow!("error while writing manifest {}", manifest_path))?;
+        .wrap_err_with(|| eyre!("error while writing manifest {}", manifest_path))?;
 
     Ok(())
 }
@@ -428,7 +426,7 @@ fn apply_edit(table: &mut Table, edit: &ManifestEdit<'_>) -> Result<()> {
         match section_table.get_mut(dep_name) {
             Some(item) => {
                 let dep_table = item.as_table_like_mut().ok_or_else(|| {
-                    anyhow!("in section [{}], {} is not a table", section_name, dep_name)
+                    eyre!("in section [{}], {} is not a table", section_name, dep_name)
                 })?;
                 // The dep table should have a path entry.
                 match dep_table.get_mut("path") {
@@ -462,7 +460,7 @@ fn update_root_toml(
     let workspace_table = match document.as_table_mut().get_mut("workspace") {
         Some(item) => item
             .as_table_mut()
-            .ok_or_else(|| anyhow!("[workspace] is not a table"))?,
+            .ok_or_else(|| eyre!("[workspace] is not a table"))?,
         None => {
             // No [workspace] section -- possibly a single-crate manifest?
             return Ok(());
@@ -475,7 +473,7 @@ fn update_root_toml(
         let members = match workspace_table.get_mut(to_update) {
             Some(item) => item
                 .as_array_mut()
-                .ok_or_else(|| anyhow!("in [workspace], {} is not an array", to_update))?,
+                .ok_or_else(|| eyre!("in [workspace], {} is not an array", to_update))?,
             None => {
                 // default-members may not always exist.
                 continue;
@@ -488,8 +486,8 @@ fn update_root_toml(
                 Some(path) => {
                     let abs_member_dir = workspace_root.join(path);
                     // The workspace path saved in the TOML may not be in canonical form.
-                    let abs_member_dir = abs_member_dir.canonicalize().with_context(|| {
-                        anyhow!(
+                    let abs_member_dir = abs_member_dir.canonicalize().wrap_err_with(|| {
+                        eyre!(
                             "in [workspace] {}, error while canonicalizing path {}",
                             to_update,
                             path
@@ -509,7 +507,7 @@ fn update_root_toml(
     }
 
     let mut out = fs::File::create(&root_manifest_path)
-        .with_context(|| anyhow!("Error while opening {}", root_manifest_path))?;
+        .wrap_err_with(|| eyre!("Error while opening {}", root_manifest_path))?;
     write!(out, "{}", document)?;
 
     Ok(())
@@ -517,9 +515,9 @@ fn update_root_toml(
 
 fn read_toml(manifest_path: &Utf8Path) -> Result<Document> {
     let toml = fs::read_to_string(manifest_path)
-        .with_context(|| anyhow!("error while reading manifest {}", manifest_path))?;
+        .wrap_err_with(|| eyre!("error while reading manifest {}", manifest_path))?;
     toml.parse::<Document>()
-        .with_context(|| anyhow!("error while parsing manifest {}", manifest_path))
+        .wrap_err_with(|| eyre!("error while parsing manifest {}", manifest_path))
 }
 
 /// Replace the value while retaining the decor.

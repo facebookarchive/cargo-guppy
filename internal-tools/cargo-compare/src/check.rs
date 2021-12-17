@@ -6,7 +6,7 @@ use crate::{
     diff::{FeatureDiff, TargetHostDiff},
     GlobalContext,
 };
-use anyhow::{Error, Result};
+use color_eyre::eyre::{eyre, Result};
 use guppy::graph::cargo::CargoResolverVersion;
 use guppy_cmdlib::CargoMetadataOptions;
 use proptest::{
@@ -92,10 +92,10 @@ impl CheckOpts {
             })
             .map_err(|e| match e {
                 TestError::Abort(e) => {
-                    Error::msg(format!("Aborted cargo/guppy diff check, {:?}", e))
+                    eyre!("Aborted cargo/guppy diff check, {:?}", e)
                 }
                 TestError::Fail(e, v) => {
-                    Error::msg(format!("Failed cargo/guppy diff check {:?}\n{:?}", e, v))
+                    eyre!("Failed cargo/guppy diff check {:?}\n{:?}", e, v)
                 }
             })
     }

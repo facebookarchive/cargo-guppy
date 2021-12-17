@@ -1,8 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{common::GuppyCargoCommon, GlobalContext};
-use anyhow::{bail, Result};
+use crate::{
+    common::{anyhow_to_eyre, GuppyCargoCommon},
+    GlobalContext,
+};
+use color_eyre::eyre::{bail, Result};
 use diffus::{edit, Diffable};
 use guppy::{graph::PackageGraph, PackageId};
 use itertools::Itertools;
@@ -37,7 +40,7 @@ impl DiffOpts {
     }
 
     pub fn compute_diff<'g>(self, ctx: &'g GlobalContext) -> Result<TargetHostDiff<'g>> {
-        let cargo_map = self.common.resolve_cargo(ctx)?;
+        let cargo_map = anyhow_to_eyre(self.common.resolve_cargo(ctx))?;
         let guppy_map = self.common.resolve_guppy(ctx)?;
 
         let target_diff = FeatureDiff {

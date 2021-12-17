@@ -1,11 +1,11 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use anyhow::Result;
 use cargo_guppy::{
     CmdSelectOptions, DiffSummariesOptions, DupsOptions, MvOptions, ResolveCargoOptions,
     SubtreeSizeOptions,
 };
+use color_eyre::Result;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -76,6 +76,8 @@ fn args() -> impl Iterator<Item = String> {
 }
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let args = Args::from_iter(args());
 
     match args.cmd {

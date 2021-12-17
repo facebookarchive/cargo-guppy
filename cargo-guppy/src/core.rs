@@ -3,8 +3,8 @@
 
 //! Implementations for options shared by commands.
 
-use anyhow::{anyhow, ensure, Context};
 use clap::arg_enum;
+use color_eyre::eyre::{ensure, eyre, Result, WrapErr};
 use guppy::{
     graph::{DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageQuery},
     platform::EnabledTernary,
@@ -50,10 +50,7 @@ pub struct QueryOptions {
 
 impl QueryOptions {
     /// Constructs a `PackageQuery` based on these options.
-    pub fn apply<'g>(
-        &self,
-        pkg_graph: &'g PackageGraph,
-    ) -> Result<PackageQuery<'g>, anyhow::Error> {
+    pub fn apply<'g>(&self, pkg_graph: &'g PackageGraph) -> Result<PackageQuery<'g>> {
         if !self.roots.is_empty() {
             // NOTE: The root set packages are specified by name. The tool currently
             // does not handle multiple version of the same package as the current use
@@ -64,7 +61,7 @@ impl QueryOptions {
         } else {
             ensure!(
                 self.direction == DependencyDirection::Forward,
-                anyhow!("--query-reverse requires roots to be specified")
+                eyre!("--query-reverse requires roots to be specified")
             );
             Ok(pkg_graph.query_workspace())
         }
@@ -122,12 +119,12 @@ impl FilterOptions {
     pub fn make_resolver<'g>(
         &'g self,
         pkg_graph: &'g PackageGraph,
-    ) -> anyhow::Result<impl Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool + 'g> {
+    ) -> Result<impl Fn(&PackageQuery<'g>, PackageLink<'g>) -> bool + 'g> {
         let omitted_package_ids: HashSet<_> =
             self.base_opts.omitted_package_ids(pkg_graph).collect();
 
         let platform_spec = string_to_platform_spec(self.target.as_deref())
-            .with_context(|| "target platform isn't known")?;
+            .wrap_err_with(|| "target platform isn't known")?;
 
         let ret = move |_: &PackageQuery<'g>, link| {
             // filter by the kind of dependency (--kind)
