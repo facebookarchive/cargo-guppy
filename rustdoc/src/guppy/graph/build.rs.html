@@ -771,14 +771,6 @@
 <span id="771">771</span>
 <span id="772">772</span>
 <span id="773">773</span>
-<span id="774">774</span>
-<span id="775">775</span>
-<span id="776">776</span>
-<span id="777">777</span>
-<span id="778">778</span>
-<span id="779">779</span>
-<span id="780">780</span>
-<span id="781">781</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -792,7 +784,7 @@
     <span class="ident">Error</span>, <span class="ident">PackageId</span>,
 };
 <span class="kw">use</span> <span class="ident">camino</span>::{<span class="ident">Utf8Path</span>, <span class="ident">Utf8PathBuf</span>};
-<span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">Dependency</span>, <span class="ident">DependencyKind</span>, <span class="ident">Metadata</span>, <span class="ident">NodeDep</span>, <span class="ident">Package</span>, <span class="ident">Resolve</span>, <span class="ident">Target</span>};
+<span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">Dependency</span>, <span class="ident">DependencyKind</span>, <span class="ident">Metadata</span>, <span class="ident">Node</span>, <span class="ident">NodeDep</span>, <span class="ident">Package</span>, <span class="ident">Target</span>};
 <span class="kw">use</span> <span class="ident">once_cell::sync::OnceCell</span>;
 <span class="kw">use</span> <span class="ident">petgraph::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">semver::Version</span>;
@@ -805,11 +797,8 @@
 <span class="kw">impl</span> <span class="ident">PackageGraph</span> {
     <span class="doccomment">/// Constructs a new `PackageGraph` instances from the given metadata.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">build</span>(<span class="ident">metadata</span>: <span class="ident">Metadata</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">resolve</span> <span class="op">=</span> <span class="ident">metadata</span>.<span class="ident">resolve</span>.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-            <span class="ident">Error::PackageGraphConstructError</span>(
-                <span class="string">&quot;no &#39;resolve&#39; entries found: ensure you don&#39;t have no_deps set&quot;</span>.<span class="ident">into</span>(),
-            )
-        })<span class="question-mark">?</span>;
+        <span class="comment">// resolve_nodes is missing if the metadata was generated with --no-deps.</span>
+        <span class="kw">let</span> <span class="ident">resolve_nodes</span> <span class="op">=</span> <span class="ident">metadata</span>.<span class="ident">resolve</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>.<span class="ident">nodes</span>).<span class="ident">unwrap_or_default</span>();
 
         <span class="kw">let</span> <span class="ident">workspace_members</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">metadata</span>
             .<span class="ident">workspace_members</span>
@@ -821,7 +810,7 @@
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">build_state</span> <span class="op">=</span> <span class="ident">GraphBuildState::new</span>(
             <span class="kw-2">&amp;</span><span class="ident">metadata</span>.<span class="ident">packages</span>,
-            <span class="ident">resolve</span>,
+            <span class="ident">resolve_nodes</span>,
             <span class="kw-2">&amp;</span><span class="ident">workspace_root</span>,
             <span class="kw-2">&amp;</span><span class="ident">workspace_members</span>,
         );
@@ -918,7 +907,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">GraphBuildState</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">packages</span>: <span class="kw-2">&amp;</span>[<span class="ident">Package</span>],
-        <span class="ident">resolve</span>: <span class="ident">Resolve</span>,
+        <span class="ident">resolve_nodes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Node</span><span class="op">&gt;</span>,
         <span class="ident">workspace_root</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Utf8Path</span>,
         <span class="ident">workspace_members</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">PackageId</span><span class="op">&gt;</span>,
     ) -&gt; <span class="self">Self</span> {
@@ -937,8 +926,7 @@
             })
             .<span class="ident">collect</span>();
 
-        <span class="kw">let</span> <span class="ident">resolve_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">resolve</span>
-            .<span class="ident">nodes</span>
+        <span class="kw">let</span> <span class="ident">resolve_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">resolve_nodes</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">node</span><span class="op">|</span> {
                 (
@@ -996,12 +984,8 @@
         }
         <span class="kw">let</span> <span class="ident">build_targets</span> <span class="op">=</span> <span class="ident">build_targets</span>.<span class="ident">finish</span>();
 
-        <span class="kw">let</span> <span class="ident">resolved_deps</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">resolve_data</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-            <span class="ident">Error::PackageGraphConstructError</span>(<span class="macro">format!</span>(
-                <span class="string">&quot;no resolved dependency data found for package &#39;{}&#39;&quot;</span>,
-                <span class="ident">package_id</span>
-            ))
-        })<span class="question-mark">?</span>;
+        <span class="comment">// resolved_deps is missing if the metadata was generated with --no-deps.</span>
+        <span class="kw">let</span> <span class="ident">resolved_deps</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">resolve_data</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>).<span class="ident">unwrap_or_default</span>();
 
         <span class="kw">let</span> <span class="ident">dep_resolver</span> <span class="op">=</span>
             <span class="ident">DependencyResolver::new</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">package_data</span>, <span class="kw-2">&amp;</span><span class="ident">package</span>.<span class="ident">dependencies</span>);

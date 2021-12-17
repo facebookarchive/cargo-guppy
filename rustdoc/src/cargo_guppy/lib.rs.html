@@ -450,6 +450,7 @@
 <span id="450">450</span>
 <span id="451">451</span>
 <span id="452">452</span>
+<span id="453">453</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -494,8 +495,8 @@
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">core</span>::<span class="kw-2">*</span>, <span class="ident">mv</span>::<span class="kw-2">*</span>};
 
-<span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">bail</span>, <span class="ident">Context</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use</span> <span class="ident">clap::arg_enum</span>;
+<span class="kw">use</span> <span class="ident">color_eyre::eyre</span>::{<span class="ident">bail</span>, <span class="prelude-ty">Result</span>, <span class="ident">WrapErr</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">graph</span>::{
         <span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoSet</span>},
@@ -520,7 +521,7 @@
 };
 <span class="kw">use</span> <span class="ident">structopt::StructOpt</span>;
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_diff</span>(<span class="ident">json</span>: <span class="ident">bool</span>, <span class="ident">old</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">new</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow::Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_diff</span>(<span class="ident">json</span>: <span class="ident">bool</span>, <span class="ident">old</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">new</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">old_json</span> <span class="op">=</span> <span class="ident">fs::read_to_string</span>(<span class="ident">old</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">new_json</span> <span class="op">=</span> <span class="ident">fs::read_to_string</span>(<span class="ident">new</span>)<span class="question-mark">?</span>;
 
@@ -555,14 +556,14 @@
 <span class="kw">impl</span> <span class="ident">DiffSummariesOptions</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">exec</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">old_summary</span> <span class="op">=</span> <span class="ident">fs::read_to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">old</span>)
-            .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;reading old summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
+            .<span class="ident">wrap_err_with</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;reading old summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">old_summary</span> <span class="op">=</span> <span class="ident">Summary::parse</span>(<span class="kw-2">&amp;</span><span class="ident">old_summary</span>)
-            .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;parsing old summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
+            .<span class="ident">wrap_err_with</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;parsing old summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">old</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">new_summary</span> <span class="op">=</span> <span class="ident">fs::read_to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">new</span>)
-            .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;reading new summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">new</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
+            .<span class="ident">wrap_err_with</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;reading new summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">new</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">new_summary</span> <span class="op">=</span> <span class="ident">Summary::parse</span>(<span class="kw-2">&amp;</span><span class="ident">new_summary</span>)
-            .<span class="ident">with_context</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;parsing new summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">new</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
+            .<span class="ident">wrap_err_with</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;parsing new summary {} failed&quot;</span>, <span class="self">self</span>.<span class="ident">new</span>.<span class="ident">display</span>()))<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">old_summary</span>.<span class="ident">diff</span>(<span class="kw-2">&amp;</span><span class="ident">new_summary</span>);
 
@@ -585,7 +586,7 @@
     <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_dups</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">DupsOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow::Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_dups</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">DupsOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
     <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
 
@@ -655,7 +656,7 @@
     <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_resolve_cargo</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ResolveCargoOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow::Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_resolve_cargo</span>(<span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">ResolveCargoOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">target_platform</span> <span class="op">=</span> <span class="ident">string_to_platform_spec</span>(<span class="ident">opts</span>.<span class="ident">target_platform</span>.<span class="ident">as_deref</span>())<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">host_platform</span> <span class="op">=</span> <span class="ident">string_to_platform_spec</span>(<span class="ident">opts</span>.<span class="ident">host_platform</span>.<span class="ident">as_deref</span>())<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">opts</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
@@ -770,8 +771,9 @@
     <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_select</span>(<span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CmdSelectOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow::Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_select</span>(<span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">CmdSelectOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
+    <span class="ident">command</span>.<span class="ident">other_options</span>([<span class="string">&quot;--no-deps&quot;</span>]);
     <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">query</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">query_opts</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">pkg_graph</span>)<span class="question-mark">?</span>;
@@ -818,7 +820,7 @@
     <span class="ident">metadata_opts</span>: <span class="ident">CargoMetadataOptions</span>,
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_subtree_size</span>(<span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">SubtreeSizeOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">anyhow::Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmd_subtree_size</span>(<span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">SubtreeSizeOptions</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">metadata_opts</span>.<span class="ident">make_command</span>();
     <span class="kw">let</span> <span class="ident">pkg_graph</span> <span class="op">=</span> <span class="ident">command</span>.<span class="ident">build_graph</span>()<span class="question-mark">?</span>;
 
