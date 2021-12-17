@@ -90,7 +90,7 @@ impl fmt::Display for Error {
             CommandError(_) => write!(f, "`cargo metadata` execution failed"),
             MetadataParseError(_) => write!(f, "`cargo metadata` returned invalid JSON output"),
             MetadataSerializeError(_) => write!(f, "failed to serialize `cargo metadata` to JSON"),
-            PackageGraphConstructError(_) => write!(f, "failed to construct package graph"),
+            PackageGraphConstructError(s) => write!(f, "failed to construct package graph: {}", s),
             UnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
             UnknownFeatureId(package_id, feature) => match feature {
                 Some(feature) => write!(f, "unknown feature ID: '{}' '{}'", package_id, feature),
