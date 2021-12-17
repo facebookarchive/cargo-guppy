@@ -436,6 +436,32 @@ mod large {
     proptest_suite!(metadata_libra_9ffd93b);
 }
 
+mod guppy_tests {
+    use super::*;
+    use fixtures::json::METADATA_GUPPY_CARGO_GUPPY;
+    use guppy::PackageId;
+
+    #[test]
+    fn metadata_guppy_44b62fa() {
+        let metadata = JsonFixture::metadata_guppy_44b62fa();
+        metadata.verify();
+
+        // This is --no-deps metadata: check that there are no dependency edges at all.
+        let graph = metadata.graph();
+        let package = graph
+            .metadata(&PackageId::new(METADATA_GUPPY_CARGO_GUPPY))
+            .expect("cargo-guppy package found");
+        assert_eq!(
+            package.direct_links().count(),
+            0,
+            "no-deps => package has no direct links"
+        );
+        assert_eq!(graph.link_count(), 0, "no-deps => no edges");
+    }
+
+    proptest_suite!(metadata_guppy_44b62fa);
+}
+
 struct NameVisitor;
 
 impl PackageDotVisitor for NameVisitor {

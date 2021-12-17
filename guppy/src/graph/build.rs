@@ -11,7 +11,7 @@ use crate::{
     Error, PackageId,
 };
 use camino::{Utf8Path, Utf8PathBuf};
-use cargo_metadata::{Dependency, DependencyKind, Metadata, NodeDep, Package, Resolve, Target};
+use cargo_metadata::{Dependency, DependencyKind, Metadata, Node, NodeDep, Package, Target};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
@@ -24,11 +24,8 @@ use target_spec::TargetSpec;
 impl PackageGraph {
     /// Constructs a new `PackageGraph` instances from the given metadata.
     pub(crate) fn build(metadata: Metadata) -> Result<Self, Error> {
-        let resolve = metadata.resolve.ok_or_else(|| {
-            Error::PackageGraphConstructError(
-                "no 'resolve' entries found: ensure you don't have no_deps set".into(),
-            )
-        })?;
+        // resolve_nodes is missing if the metadata was generated with --no-deps.
+        let resolve_nodes = metadata.resolve.map(|r| r.nodes).unwrap_or_default();
 
         let workspace_members: HashSet<_> = metadata
             .workspace_members
@@ -40,7 +37,7 @@ impl PackageGraph {
 
         let mut build_state = GraphBuildState::new(
             &metadata.packages,
-            resolve,
+            resolve_nodes,
             &workspace_root,
             &workspace_members,
         );
@@ -137,7 +134,7 @@ struct GraphBuildState<'a> {
 impl<'a> GraphBuildState<'a> {
     fn new(
         packages: &[Package],
-        resolve: Resolve,
+        resolve_nodes: Vec<Node>,
         workspace_root: &'a Utf8Path,
         workspace_members: &'a HashSet<PackageId>,
     ) -> Self {
@@ -156,8 +153,7 @@ impl<'a> GraphBuildState<'a> {
             })
             .collect();
 
-        let resolve_data: HashMap<_, _> = resolve
-            .nodes
+        let resolve_data: HashMap<_, _> = resolve_nodes
             .into_iter()
             .map(|node| {
                 (
@@ -215,12 +211,8 @@ impl<'a> GraphBuildState<'a> {
         }
         let build_targets = build_targets.finish();
 
-        let resolved_deps = self.resolve_data.remove(&package_id).ok_or_else(|| {
-            Error::PackageGraphConstructError(format!(
-                "no resolved dependency data found for package '{}'",
-                package_id
-            ))
-        })?;
+        // resolved_deps is missing if the metadata was generated with --no-deps.
+        let resolved_deps = self.resolve_data.remove(&package_id).unwrap_or_default();
 
         let dep_resolver =
             DependencyResolver::new(&package_id, &self.package_data, &package.dependencies);
