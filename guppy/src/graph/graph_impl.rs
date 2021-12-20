@@ -872,6 +872,20 @@ impl<'g> PackageMetadata<'g> {
         self.inner.repository.as_ref().map(|x| x.as_ref())
     }
 
+    /// Returns the homepage for this package, if specified.
+    ///
+    /// This is the same as the `homepage` field of `Cargo.toml`.
+    pub fn homepage(&self) -> Option<&'g str> {
+        self.inner.homepage.as_ref().map(|x| x.as_ref())
+    }
+
+    /// Returns the documentation URL for this package, if specified.
+    ///
+    /// This is the same as the `homepage` field of `Cargo.toml`.
+    pub fn documentation(&self) -> Option<&'g str> {
+        self.inner.documentation.as_ref().map(|x| x.as_ref())
+    }
+
     /// Returns the Rust edition this package is written against.
     ///
     /// This is the same as the `edition` field of `Cargo.toml`. It is `"2015"` by default.
@@ -901,6 +915,16 @@ impl<'g> PackageMetadata<'g> {
     /// This is derived from the `publish` field of `Cargo.toml`.
     pub fn publish(&self) -> PackagePublish<'g> {
         PackagePublish::new(&self.inner.publish)
+    }
+
+    /// Returns the binary that is run by default, if specified.
+    ///
+    /// Information about this binary can be queried using [the `build_target`
+    /// method](Self::build_target).
+    ///
+    /// This is derived from the `default-run` field of `Cargo.toml`.
+    pub fn default_run(&self) -> Option<&'g str> {
+        self.inner.default_run.as_ref().map(|x| x.as_ref())
     }
 
     /// Returns the minimal Rust compiler version, which should be able to compile the package, if
@@ -1086,10 +1110,13 @@ pub(crate) struct PackageMetadataImpl {
     pub(super) keywords: Vec<String>,
     pub(super) readme: Option<Box<Utf8Path>>,
     pub(super) repository: Option<Box<str>>,
+    pub(super) homepage: Option<Box<str>>,
+    pub(super) documentation: Option<Box<str>>,
     pub(super) edition: Box<str>,
     pub(super) metadata_table: JsonValue,
     pub(super) links: Option<Box<str>>,
     pub(super) publish: PackagePublishImpl,
+    pub(super) default_run: Option<Box<str>>,
     pub(super) rust_version: Option<VersionReq>,
     // Some(...) means named feature with listed dependencies.
     // None means an optional dependency.

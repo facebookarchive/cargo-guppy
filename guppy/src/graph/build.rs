@@ -283,10 +283,13 @@ impl<'a> GraphBuildState<'a> {
                 keywords: package.keywords,
                 readme: package.readme.map(|s| s.into()),
                 repository: package.repository.map(|s| s.into()),
+                homepage: package.homepage.map(|s| s.into()),
+                documentation: package.documentation.map(|s| s.into()),
                 edition: package.edition.into(),
                 metadata_table: package.metadata,
                 links: package.links.map(|s| s.into()),
                 publish: PackagePublishImpl::new(package.publish),
+                default_run: package.default_run.map(|s| s.into()),
                 rust_version: package.rust_version,
                 features,
 
