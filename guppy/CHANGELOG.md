@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.6] - 2021-12-19
+
+### Added
+
+- `PackageMetadata::homepage`, `documentation` and `default_run`, exposed by newer versions of Cargo.
+
 ## [0.12.5] - 2021-12-17
 
 ### Added
@@ -453,6 +459,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.12.6]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.6
 [0.12.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.5
 [0.12.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.4
 [0.12.3]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.3
