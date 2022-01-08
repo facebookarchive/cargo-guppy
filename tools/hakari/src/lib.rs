@@ -132,8 +132,6 @@ mod helpers;
 mod proptest_helpers;
 #[cfg(feature = "cli-support")]
 pub mod summaries;
-#[cfg(feature = "cli-support")]
-mod tabular;
 mod toml_out;
 pub mod verify;
 
