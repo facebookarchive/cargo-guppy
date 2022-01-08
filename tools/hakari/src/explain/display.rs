@@ -1,14 +1,12 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use crate::{
-    explain::HakariExplain,
-    tabular::{Row, Table},
-};
+use crate::explain::HakariExplain;
 use guppy::graph::{feature::StandardFeatures, DependencyDirection};
 use itertools::{Itertools, Position};
 use owo_colors::{OwoColorize, Style};
 use std::{collections::BTreeSet, fmt};
+use tabular::{Row, Table};
 
 /// A display formatter for [`HakariExplain`].
 ///
