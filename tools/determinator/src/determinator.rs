@@ -19,7 +19,6 @@ use guppy::{
     platform::PlatformSpec,
     PackageId,
 };
-use itertools::Itertools;
 use petgraph::{graphmap::GraphMap, Directed};
 use rayon::prelude::*;
 use std::collections::{hash_map::Entry, HashMap, HashSet};
@@ -508,12 +507,12 @@ impl<'g> BuildResult<'g> {
         let target_set = self
             .all_cargo_sets()
             .map(|x| x.target_features().to_package_set())
-            .fold1(|a, b| a.union(&b))
+            .reduce(|a, b| a.union(&b))
             .expect("at least one set");
         let host_set = self
             .all_cargo_sets()
             .map(|x| x.host_features().to_package_set())
-            .fold1(|a, b| a.union(&b))
+            .reduce(|a, b| a.union(&b))
             .expect("at least one set");
 
         target_set.union(&host_set).intersection(workspace_set)
