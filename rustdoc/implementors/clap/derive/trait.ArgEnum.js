@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["cargo_guppy"] = [{"text":"impl <a class=\"trait\" href=\"clap/derive/trait.ArgEnum.html\" title=\"trait clap::derive::ArgEnum\">ArgEnum</a> for <a class=\"enum\" href=\"cargo_guppy/enum.Kind.html\" title=\"enum cargo_guppy::Kind\">Kind</a>","synthetic":false,"types":["cargo_guppy::core::Kind"]},{"text":"impl <a class=\"trait\" href=\"clap/derive/trait.ArgEnum.html\" title=\"trait clap::derive::ArgEnum\">ArgEnum</a> for <a class=\"enum\" href=\"cargo_guppy/enum.BuildKind.html\" title=\"enum cargo_guppy::BuildKind\">BuildKind</a>","synthetic":false,"types":["cargo_guppy::BuildKind"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -551,6 +551,7 @@
 <span id="551">551</span>
 <span id="552">552</span>
 <span id="553">553</span>
+<span id="554">554</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -560,6 +561,7 @@
     <span class="ident">publish::publish_hakari</span>,
 };
 <span class="kw">use</span> <span class="ident">camino</span>::{<span class="ident">Utf8Path</span>, <span class="ident">Utf8PathBuf</span>};
+<span class="kw">use</span> <span class="ident">clap</span>::{<span class="ident">AppSettings</span>, <span class="ident">Parser</span>};
 <span class="kw">use</span> <span class="ident">color_eyre::eyre</span>::{<span class="ident">bail</span>, <span class="ident">eyre</span>, <span class="prelude-ty">Result</span>, <span class="ident">WrapErr</span>};
 <span class="kw">use</span> <span class="ident">guppy</span>::{
     <span class="ident">graph</span>::{<span class="ident">PackageGraph</span>, <span class="ident">PackageSet</span>},
@@ -574,7 +576,6 @@
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">error</span>, <span class="ident">info</span>};
 <span class="kw">use</span> <span class="ident">owo_colors::OwoColorize</span>;
 <span class="kw">use</span> <span class="ident">std::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">structopt</span>::{<span class="ident">clap::AppSettings</span>, <span class="ident">StructOpt</span>};
 
 <span class="doccomment">/// The comment to add to the top of the config file.</span>
 <span class="kw">pub</span> <span class="kw">static</span> <span class="ident">CONFIG_COMMENT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">r#&quot;# This file contains settings for `cargo hakari`.
@@ -597,11 +598,12 @@
 <span class="doccomment">/// Set up and manage workspace-hack crates.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// For more about cargo-hakari, see &lt;https://docs.rs/cargo-hakari&gt;.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
+<span class="attribute">#[<span class="ident">clap</span>(<span class="ident">author</span>, <span class="ident">version</span>, <span class="ident">about</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Args</span> {
-    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">flatten</span>)]</span>
     <span class="ident">global</span>: <span class="ident">GlobalOpts</span>,
-    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">subcommand</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">subcommand</span>)]</span>
     <span class="ident">command</span>: <span class="ident">Command</span>,
 }
 
@@ -614,38 +616,38 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="kw">struct</span> <span class="ident">GlobalOpts</span> {
-    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">flatten</span>)]</span>
     <span class="ident">output</span>: <span class="ident">OutputOpts</span>,
 }
 
 <span class="doccomment">/// Manage workspace-hack crates.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="kw">enum</span> <span class="ident">Command</span> {
     <span class="doccomment">/// Initialize a workspace-hack crate and a hakari.toml file</span>
-    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;init&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;init&quot;</span>)]</span>
     <span class="ident">Initialize</span> {
         <span class="doccomment">/// Path to generate the workspace-hack crate at, relative to the current directory.</span>
         <span class="ident">path</span>: <span class="ident">Utf8PathBuf</span>,
 
         <span class="doccomment">/// The name of the crate (default: derived from path)</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>, <span class="ident">short</span>)]</span>
         <span class="ident">package_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
         <span class="doccomment">/// Skip writing a stub config to hakari.toml</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>)]</span>
         <span class="ident">skip_config</span>: <span class="ident">bool</span>,
 
         <span class="doccomment">/// Print operations that need to be performed, but do not actually perform them.</span>
         <span class="doccomment">///</span>
         <span class="doccomment">/// Exits with status 1 if any operations need to be performed. Can be combined with</span>
         <span class="doccomment">/// `--quiet`.</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span> <span class="op">=</span> <span class="string">&quot;n&quot;</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;yes&quot;</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>, <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;n&#39;</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;yes&quot;</span>)]</span>
         <span class="ident">dry_run</span>: <span class="ident">bool</span>,
 
         <span class="doccomment">/// Proceed with the operation without prompting for confirmation.</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;dry-run&quot;</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>, <span class="ident">short</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;dry-run&quot;</span>)]</span>
         <span class="ident">yes</span>: <span class="ident">bool</span>,
     },
 
@@ -716,14 +718,14 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="kw">enum</span> <span class="ident">CommandWithBuilder</span> {
     <span class="doccomment">/// Generate or update the contents of the workspace-hack crate</span>
     <span class="ident">Generate</span> {
         <span class="doccomment">/// Print a diff of contents instead of writing them out. Can be combined with `--quiet`.</span>
         <span class="doccomment">///</span>
         <span class="doccomment">/// Exits with status 1 if the contents are different.</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>)]</span>
         <span class="ident">diff</span>: <span class="ident">bool</span>,
     },
 
@@ -740,14 +742,14 @@
     <span class="doccomment">/// * Add the dependency to all non-excluded workspace crates.</span>
     <span class="doccomment">/// * Remove the dependency from all excluded workspace crates.</span>
     <span class="ident">ManageDeps</span> {
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">flatten</span>)]</span>
         <span class="ident">packages</span>: <span class="ident">PackageSelection</span>,
 
         <span class="doccomment">/// Print operations that need to be performed, but do not actually perform them.</span>
         <span class="doccomment">///</span>
         <span class="doccomment">/// Exits with status 1 if any operations need to be performed. Can be combined with</span>
         <span class="doccomment">/// `--quiet`.</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span> <span class="op">=</span> <span class="string">&quot;n&quot;</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;yes&quot;</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>, <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;n&#39;</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;yes&quot;</span>)]</span>
         <span class="ident">dry_run</span>: <span class="ident">bool</span>,
 
         <span class="doccomment">/// Proceed with the operation without prompting for confirmation.</span>
@@ -757,14 +759,14 @@
 
     <span class="doccomment">/// Remove dependencies from workspace crates to workspace-hack.</span>
     <span class="ident">RemoveDeps</span> {
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
+        <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">flatten</span>)]</span>
         <span class="ident">packages</span>: <span class="ident">PackageSelection</span>,
 
         <span class="doccomment">/// Print operations that need to be performed, but do not actually perform them.</span>
         <span class="doccomment">///</span>
         <span class="doccomment">/// Exits with status 1 if any operations need to be performed. Can be combined with</span>
         <span class="doccomment">/// `--quiet`.</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span> <span class="op">=</span> <span class="string">&quot;n&quot;</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;yes&quot;</span>)]</span>
+        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;n&#39;</span>, <span class="ident">conflicts_with</span> <span class="op">=</span> <span class="string">&quot;yes&quot;</span>)]</span>
         <span class="ident">dry_run</span>: <span class="ident">bool</span>,
 
         <span class="doccomment">/// Proceed with the operation without prompting for confirmation.</span>
@@ -799,14 +801,14 @@
     <span class="doccomment">/// see {n}https://docs.rs/cargo-hakari/latest/cargo_hakari/publishing.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Trailing arguments are passed through to cargo publish.</span>
-    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">setting</span> <span class="op">=</span> <span class="ident">AppSettings::TrailingVarArg</span>, <span class="ident">setting</span> <span class="op">=</span> <span class="ident">AppSettings::AllowLeadingHyphen</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">setting</span> <span class="op">=</span> <span class="ident">AppSettings::TrailingVarArg</span>, <span class="ident">setting</span> <span class="op">=</span> <span class="ident">AppSettings::AllowHyphenValues</span>)]</span>
     <span class="ident">Publish</span> {
         <span class="doccomment">/// The name of the package to publish.</span>
         <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">short</span>)]</span>
         <span class="ident">package</span>: <span class="ident">String</span>,
 
         <span class="doccomment">/// Arguments to pass through to `cargo publish`.</span>
-        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">multiple</span> <span class="op">=</span> <span class="bool-val">true</span>)]</span>
+        <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">multiple_values</span> <span class="op">=</span> <span class="bool-val">true</span>)]</span>
         <span class="ident">pass_through</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     },
 
@@ -963,9 +965,9 @@
 }
 
 <span class="doccomment">/// Support for packages and features.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="kw">struct</span> <span class="ident">PackageSelection</span> {
-    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;package&quot;</span>, <span class="ident">short</span>, <span class="ident">number_of_values</span> <span class="op">=</span> <span class="number">1</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;package&quot;</span>, <span class="ident">short</span>, <span class="ident">number_of_values</span> <span class="op">=</span> <span class="number">1</span>)]</span>
     <span class="doccomment">/// Packages to operate on (default: entire workspace)</span>
     <span class="ident">packages</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
