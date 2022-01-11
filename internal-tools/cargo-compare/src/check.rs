@@ -6,6 +6,7 @@ use crate::{
     diff::{FeatureDiff, TargetHostDiff},
     GlobalContext,
 };
+use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
 use guppy::graph::cargo::CargoResolverVersion;
 use guppy_cmdlib::CargoMetadataOptions;
@@ -14,18 +15,17 @@ use proptest::{
     test_runner::{Config, TestError, TestRunner},
 };
 use std::sync::atomic::{AtomicUsize, Ordering};
-use structopt::StructOpt;
 
 /// Options for cargo/guppy comparisons.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct CheckOpts {
     /// Number of randomly generated diff operations to run
-    #[structopt(long, default_value = "256")]
+    #[clap(long, default_value = "256")]
     pub cases: u32,
     /// Print a message every n test cases. Use '0' to disable
-    #[structopt(long, default_value = "16")]
+    #[clap(long, default_value = "16")]
     pub print_every: usize,
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub metadata: CargoMetadataOptions,
     /// Print out unchanged packages and features as well
     #[structopt(long)]

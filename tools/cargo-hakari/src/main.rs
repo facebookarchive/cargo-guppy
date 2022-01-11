@@ -3,8 +3,8 @@
 
 use cargo_hakari::Args;
 use cfg_if::cfg_if;
+use clap::Parser;
 use color_eyre::eyre::Result;
-use structopt::StructOpt;
 
 // On Unix-like operating systems, the executable name of the Cargo subcommand usually doesn't have
 // a file extension, while on Windows, executables usually have a ".exe" extension.
@@ -35,6 +35,6 @@ fn main() -> Result<()> {
     // Attempt to turn on ANSI color support on Windows. This may or may not work.
     let _ = enable_ansi_support::enable_ansi_support();
 
-    let args = Args::from_iter(args());
+    let args = Args::parse_from(args());
     std::process::exit(args.exec()?)
 }

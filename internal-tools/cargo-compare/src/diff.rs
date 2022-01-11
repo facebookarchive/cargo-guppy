@@ -5,6 +5,7 @@ use crate::{
     common::{anyhow_to_eyre, GuppyCargoCommon},
     GlobalContext,
 };
+use clap::Parser;
 use color_eyre::eyre::{bail, Result};
 use diffus::{edit, Diffable};
 use guppy::{graph::PackageGraph, PackageId};
@@ -14,15 +15,14 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
 };
-use structopt::StructOpt;
 
 /// Options for cargo/guppy comparisons.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct DiffOpts {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub common: GuppyCargoCommon,
     /// Print out unchanged packages and features as well
-    #[structopt(long)]
+    #[clap(long)]
     pub verbose: bool,
 }
 

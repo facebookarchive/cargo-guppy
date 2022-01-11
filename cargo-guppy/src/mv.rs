@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use camino::{Utf8Path, Utf8PathBuf};
+use clap::Parser;
 use color_eyre::eyre::{bail, eyre, Result, WrapErr};
 use dialoguer::Confirm;
 use guppy::graph::{PackageGraph, PackageLink, PackageMetadata};
@@ -14,25 +15,23 @@ use std::{
     mem,
     path::{Path, MAIN_SEPARATOR},
 };
-use structopt::StructOpt;
 use toml_edit::{Document, Item, Table, Value};
 
-#[derive(Debug, StructOpt)]
-#[structopt(rename_all = "kebab")]
+#[derive(Debug, Parser)]
 pub struct MvOptions {
     /// Source directories to move
-    #[structopt(name = "DIR", required = true)]
+    #[clap(name = "DIR", required = true)]
     src_dirs: Vec<Utf8PathBuf>,
 
     /// Destination directory to move to
-    #[structopt(name = "DEST")]
+    #[clap(name = "DEST")]
     dest_dir: Utf8PathBuf,
 
     /// Print out operations instead of performing them
-    #[structopt(long)]
+    #[clap(long)]
     dry_run: bool,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     metadata_opts: CargoMetadataOptions,
 }
 

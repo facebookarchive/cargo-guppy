@@ -5,18 +5,18 @@ use cargo_guppy::{
     CmdSelectOptions, DiffSummariesOptions, DupsOptions, MvOptions, ResolveCargoOptions,
     SubtreeSizeOptions,
 };
+use clap::Parser;
 use color_eyre::Result;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 #[structopt(about = "Cargo.lock file analysis")]
 struct Args {
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     cmd: Command,
 }
 
 // Ensure this list is kept up to date with the doc comment in lib.rs.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 enum Command {
     #[structopt(name = "diff")]
     /// Perform a diff of two cargo metadata JSON files
@@ -78,7 +78,7 @@ fn args() -> impl Iterator<Item = String> {
 fn main() -> Result<()> {
     color_eyre::install()?;
 
-    let args = Args::from_iter(args());
+    let args = Args::parse_from(args());
 
     match args.cmd {
         Command::Diff { json, old, new } => cargo_guppy::cmd_diff(json, &old, &new),

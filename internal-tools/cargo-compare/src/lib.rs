@@ -4,6 +4,7 @@
 //! Support for comparing Cargo and Guppy.
 
 use crate::{check::CheckOpts, diff::DiffOpts};
+use clap::Parser;
 use color_eyre::eyre::Result;
 use either::Either;
 use guppy::graph::PackageGraph;
@@ -11,7 +12,6 @@ use std::{
     env,
     path::{Path, PathBuf},
 };
-use structopt::StructOpt;
 use tempfile::TempDir;
 
 pub mod check;
@@ -21,10 +21,10 @@ pub mod diff;
 mod tests;
 pub mod type_conversions;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct CargoCompare {
     // TODO: add global options
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     cmd: Command,
 }
 
@@ -47,9 +47,8 @@ impl CargoCompare {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 enum Command {
-    #[structopt(name = "diff")]
     /// Perform a diff of Cargo's results against Guppy's
     Diff(DiffOpts),
     /// Generate many queries and compare Cargo and Guppy

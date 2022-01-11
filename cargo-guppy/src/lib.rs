@@ -42,7 +42,8 @@ mod mv;
 
 pub use crate::{core::*, mv::*};
 
-use clap::arg_enum;
+use camino::Utf8PathBuf;
+use clap::{ArgEnum, Parser};
 use color_eyre::eyre::{bail, Result, WrapErr};
 use guppy::{
     graph::{
@@ -66,7 +67,6 @@ use std::{
     iter,
     path::PathBuf,
 };
-use structopt::StructOpt;
 
 pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<()> {
     let old_json = fs::read_to_string(old)?;
@@ -89,28 +89,28 @@ pub fn cmd_diff(json: bool, old: &str, new: &str) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct DiffSummariesOptions {
     /// The old summary
-    #[structopt(name = "OLD")]
-    pub old: PathBuf,
+    #[clap(name = "OLD")]
+    pub old: Utf8PathBuf,
 
     /// The new summary
-    #[structopt(name = "NEW")]
-    pub new: PathBuf,
+    #[clap(name = "NEW")]
+    pub new: Utf8PathBuf,
 }
 
 impl DiffSummariesOptions {
     pub fn exec(&self) -> Result<()> {
         let old_summary = fs::read_to_string(&self.old)
-            .wrap_err_with(|| format!("reading old summary {} failed", self.old.display()))?;
+            .wrap_err_with(|| format!("reading old summary {} failed", self.old))?;
         let old_summary = Summary::parse(&old_summary)
-            .wrap_err_with(|| format!("parsing old summary {} failed", self.old.display()))?;
+            .wrap_err_with(|| format!("parsing old summary {} failed", self.old))?;
 
         let new_summary = fs::read_to_string(&self.new)
-            .wrap_err_with(|| format!("reading new summary {} failed", self.new.display()))?;
+            .wrap_err_with(|| format!("reading new summary {} failed", self.new))?;
         let new_summary = Summary::parse(&new_summary)
-            .wrap_err_with(|| format!("parsing new summary {} failed", self.new.display()))?;
+            .wrap_err_with(|| format!("parsing new summary {} failed", self.new))?;
 
         let diff = old_summary.diff(&new_summary);
 
@@ -124,12 +124,12 @@ impl DiffSummariesOptions {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct DupsOptions {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     filter_opts: FilterOptions,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     metadata_opts: CargoMetadataOptions,
 }
 
@@ -161,45 +161,43 @@ pub fn cmd_dups(opts: &DupsOptions) -> Result<()> {
     Ok(())
 }
 
-arg_enum! {
-    #[derive(Debug)]
-    pub enum BuildKind {
-        All,
-        Target,
-        ProcMacro,
-        TargetAndProcMacro,
-        Host,
-    }
+#[derive(ArgEnum, Copy, Clone, Debug)]
+pub enum BuildKind {
+    All,
+    Target,
+    ProcMacro,
+    TargetAndProcMacro,
+    Host,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct ResolveCargoOptions {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pf: PackagesAndFeatures,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     resolver_opts: CargoResolverOpts,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     base_filter_opts: BaseFilterOptions,
 
-    #[structopt(long = "target-platform")]
+    #[clap(long = "target-platform")]
     /// Evaluate against target platform, "current" or "any" (default: any)
     target_platform: Option<String>,
 
-    #[structopt(long = "host-platform")]
+    #[clap(long = "host-platform")]
     /// Evaluate against host platform, "current" or "any" (default: any)
     host_platform: Option<String>,
 
-    #[structopt(long, possible_values = &BuildKind::variants(), case_insensitive = true, default_value = "all")]
+    #[clap(long, arg_enum, default_value = "all")]
     /// Print packages built on target, host or both
     build_kind: BuildKind,
 
-    #[structopt(long, parse(from_os_str))]
+    #[clap(long, parse(from_os_str))]
     /// Write summary file
     summary: Option<PathBuf>,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     metadata_opts: CargoMetadataOptions,
 }
 
@@ -298,23 +296,23 @@ impl PackageDotVisitor for NameVisitor {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct CmdSelectOptions {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     filter_opts: FilterOptions,
 
-    #[structopt(long = "output-reverse", parse(from_flag = parse_direction))]
+    #[clap(long = "output-reverse", parse(from_flag = parse_direction))]
     /// Output results in reverse topological order (default: forward)
     output_direction: DependencyDirection,
 
-    #[structopt(long, rename_all = "kebab-case")]
+    #[clap(long, rename_all = "kebab-case")]
     /// Save selection graph in .dot format
     output_dot: Option<String>,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     query_opts: QueryOptions,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     metadata_opts: CargoMetadataOptions,
 }
 
@@ -353,17 +351,17 @@ pub fn cmd_select(options: &CmdSelectOptions) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct SubtreeSizeOptions {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     filter_opts: FilterOptions,
 
     // TODO: potentially replace this with SelectOptions
-    #[structopt(rename_all = "screaming_snake_case")]
+    #[clap(rename_all = "screaming_snake_case")]
     /// The root packages to start the selection from
     root: Option<String>,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     metadata_opts: CargoMetadataOptions,
 }
 

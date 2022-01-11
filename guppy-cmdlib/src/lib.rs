@@ -8,6 +8,7 @@
 #[cfg(feature = "proptest1")]
 pub mod proptest;
 
+use clap::{ArgEnum, Parser};
 use color_eyre::eyre::Result;
 use guppy::{
     graph::{
@@ -19,32 +20,31 @@ use guppy::{
     MetadataCommand,
 };
 use std::{env, path::PathBuf};
-use structopt::{clap::arg_enum, StructOpt};
 
 /// Support for packages and features.
 ///
 /// The options here mirror Cargo's.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct PackagesAndFeatures {
-    #[structopt(long = "package", short = "p", number_of_values = 1)]
+    #[clap(long = "package", short = 'p', number_of_values = 1)]
     /// Packages to start the query from (default: entire workspace)
     pub packages: Vec<String>,
 
-    #[structopt(long = "features-only", number_of_values = 1)]
+    #[clap(long = "features-only", number_of_values = 1)]
     /// Packages that take part in feature unification but aren't in the result set (default: none)
     pub features_only: Vec<String>,
 
     // TODO: support --workspace and --exclude
     /// List of features to activate across all packages
-    #[structopt(long = "features", use_delimiter = true)]
+    #[clap(long = "features", use_delimiter = true)]
     pub features: Vec<String>,
 
     /// Activate all available features
-    #[structopt(long = "all-features")]
+    #[clap(long = "all-features")]
     pub all_features: bool,
 
     /// Do not activate the `default` feature
-    #[structopt(long = "no-default-features")]
+    #[clap(long = "no-default-features")]
     pub no_default_features: bool,
 }
 
@@ -83,44 +83,43 @@ impl PackagesAndFeatures {
     }
 }
 
-arg_enum! {
-    // Identical to guppy's CargoResolverVersion, except with additional string metadata generated
-    // for matching.
-    enum ResolverVersion {
-        V1,
-        V1Install,
-        V2,
-    }
+// Identical to guppy's CargoResolverVersion, except with additional string metadata generated
+// for matching.
+#[derive(ArgEnum, Clone, Copy)]
+enum ResolverVersion {
+    V1,
+    V1Install,
+    V2,
 }
 
-arg_enum! {
-    enum InitialsPlatformCmd {
-        Host,
-        Standard,
-        ProcMacrosOnTarget,
-    }
+#[derive(ArgEnum, Clone, Copy)]
+enum InitialsPlatformCmd {
+    Host,
+    Standard,
+    ProcMacrosOnTarget,
 }
 
 /// Support for options like the Cargo resolver version.
-#[derive(Clone, Debug, StructOpt)]
+#[derive(Clone, Debug, Parser)]
 pub struct CargoResolverOpts {
-    #[structopt(long = "include-dev")]
+    #[clap(long = "include-dev")]
     /// Include dev-dependencies of initial packages (default: false)
     pub include_dev: bool,
 
-    #[structopt(long = "initials-platform", parse(try_from_str = parse_initials_platform))]
-    #[structopt(possible_values = &InitialsPlatformCmd::variants(), case_insensitive = true, default_value = "Standard")]
+    #[clap(long = "initials-platform", parse(try_from_str = parse_initials_platform))]
+    #[clap(possible_values = ResolverVersion::value_variants().iter().filter_map(ArgEnum::to_possible_value), default_value = "standard")]
     /// Include initial proc-macros on target platform (default: false)
     pub initials_platform: InitialsPlatform,
 
-    #[structopt(long = "resolver-version", parse(try_from_str = parse_resolver_version))]
-    #[structopt(possible_values = &ResolverVersion::variants(), case_insensitive = true, default_value = "V1")]
+    #[clap(long = "resolver-version", parse(try_from_str = parse_resolver_version))]
+    #[clap(possible_values = ResolverVersion::value_variants().iter().filter_map(ArgEnum::to_possible_value), default_value = "v1")]
+    /// Cargo resolver version to use
     pub resolver_version: CargoResolverVersion,
 }
 
 /// Parses a named resolver version into a CargoResolverVersion.
 pub fn parse_resolver_version(s: &str) -> Result<CargoResolverVersion, String> {
-    let version = s.parse::<ResolverVersion>()?;
+    let version = ResolverVersion::from_str(s, true)?;
     match version {
         ResolverVersion::V1 => Ok(CargoResolverVersion::V1),
         ResolverVersion::V1Install => Ok(CargoResolverVersion::V1Install),
@@ -130,7 +129,7 @@ pub fn parse_resolver_version(s: &str) -> Result<CargoResolverVersion, String> {
 
 /// Parses a named initials platform into an InitialsPlatform.
 pub fn parse_initials_platform(s: &str) -> Result<InitialsPlatform, String> {
-    let p = s.parse::<InitialsPlatformCmd>()?;
+    let p = InitialsPlatformCmd::from_str(s, true)?;
     match p {
         InitialsPlatformCmd::Host => Ok(InitialsPlatform::Host),
         InitialsPlatformCmd::Standard => Ok(InitialsPlatform::Standard),
@@ -141,10 +140,10 @@ pub fn parse_initials_platform(s: &str) -> Result<InitialsPlatform, String> {
 /// Context for invoking the `cargo metadata` command.
 ///
 /// The options mirror Cargo's.
-#[derive(Clone, Debug, StructOpt)]
+#[derive(Clone, Debug, Parser)]
 pub struct CargoMetadataOptions {
     /// Path to Cargo.toml
-    #[structopt(long = "manifest-path")]
+    #[clap(long)]
     pub manifest_path: Option<PathBuf>,
 }
 

@@ -12,6 +12,7 @@ use cargo::{
     util::interning::InternedString,
     Config,
 };
+use clap::Parser;
 use color_eyre::eyre::{bail, Result};
 use guppy::{
     graph::{
@@ -29,29 +30,28 @@ use std::{
     path::{Path, PathBuf},
     rc::Rc,
 };
-use structopt::StructOpt;
 
 /// Options that are common to Guppy and Cargo.
 ///
 /// Guppy supports more options than Cargo. This describes the minimal set that both support.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct GuppyCargoCommon {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub pf: PackagesAndFeatures,
 
     /// Include dev dependencies for initial packages
-    #[structopt(long = "include-dev")]
+    #[clap(long)]
     pub include_dev: bool,
 
     /// Use new feature resolver
-    #[structopt(long = "v2")]
+    #[clap(long)]
     pub v2: bool,
 
     /// Evaluate for the target triple (default: current platform)
-    #[structopt(long = "target")]
+    #[clap(long = "target")]
     pub target_platform: Option<String>,
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub metadata_opts: CargoMetadataOptions,
 }
 
