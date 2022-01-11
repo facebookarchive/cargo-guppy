@@ -1,36 +1,36 @@
 // Copyright (c) The cargo-guppy Contributors
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+use clap::Parser;
 use env_logger::fmt::Formatter;
 use log::{Level, LevelFilter, Record};
 use owo_colors::{OwoColorize, Stream, Style};
 use std::{io::Write, sync::Arc};
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 #[must_use]
 pub(crate) struct OutputOpts {
     /// Suppress output
-    #[structopt(
+    #[clap(
         name = "outputquiet",
         global = true,
         long = "quiet",
-        short = "q",
+        short = 'q',
         conflicts_with = "outputverbose"
     )]
     pub(crate) quiet: bool,
     /// Produce extra output
-    #[structopt(
+    #[clap(
         name = "outputverbose",
         global = true,
         long = "verbose",
-        short = "v",
+        short = 'v',
         conflicts_with = "outputquiet"
     )]
     pub(crate) verbose: bool,
 
     /// Produce color output
-    #[structopt(
+    #[clap(
         long,
         global = true,
         default_value = "auto",

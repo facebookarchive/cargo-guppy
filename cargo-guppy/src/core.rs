@@ -3,7 +3,7 @@
 
 //! Implementations for options shared by commands.
 
-use clap::arg_enum;
+use clap::{ArgEnum, Parser};
 use color_eyre::eyre::{ensure, eyre, Result, WrapErr};
 use guppy::{
     graph::{DependencyDirection, DependencyReq, PackageGraph, PackageLink, PackageQuery},
@@ -12,16 +12,13 @@ use guppy::{
 };
 use guppy_cmdlib::string_to_platform_spec;
 use std::collections::HashSet;
-use structopt::StructOpt;
 
-arg_enum! {
-    #[derive(Copy, Clone, Debug)]
-    pub enum Kind {
-        All,
-        Workspace,
-        DirectThirdParty,
-        ThirdParty,
-    }
+#[derive(ArgEnum, Copy, Clone, Debug)]
+pub enum Kind {
+    All,
+    Workspace,
+    DirectThirdParty,
+    ThirdParty,
 }
 
 impl Kind {
@@ -37,13 +34,13 @@ impl Kind {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct QueryOptions {
     /// Query reverse transitive dependencies (default: forward)
-    #[structopt(long = "query-reverse", parse(from_flag = parse_direction))]
+    #[clap(long = "query-reverse", parse(from_flag = parse_direction))]
     direction: DependencyDirection,
 
-    #[structopt(rename_all = "screaming_snake_case")]
+    #[clap(rename_all = "screaming_snake_case")]
     /// The root packages to start the query from
     roots: Vec<String>,
 }
@@ -68,9 +65,9 @@ impl QueryOptions {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct BaseFilterOptions {
-    #[structopt(
+    #[clap(
         long,
         rename_all = "kebab-case",
         name = "package",
@@ -80,7 +77,7 @@ pub struct BaseFilterOptions {
     /// removing a dependency affects the graph
     pub omit_edges_into: Vec<String>,
 
-    #[structopt(long, short, possible_values = &Kind::variants(), case_insensitive = true, default_value = "all")]
+    #[clap(long, short, arg_enum, default_value = "all")]
     /// Kind of crates to select
     pub kind: Kind,
 }
@@ -96,20 +93,20 @@ impl BaseFilterOptions {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct FilterOptions {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub base_opts: BaseFilterOptions,
 
-    #[structopt(long, rename_all = "kebab-case")]
+    #[clap(long, rename_all = "kebab-case")]
     /// Include dev dependencies
     pub include_dev: bool,
 
-    #[structopt(long, rename_all = "kebab-case")]
+    #[clap(long, rename_all = "kebab-case")]
     /// Include build dependencies
     pub include_build: bool,
 
-    #[structopt(long)]
+    #[clap(long)]
     /// Target to filter, "current", "any" or "always" [default: any]
     pub target: Option<String>,
 }

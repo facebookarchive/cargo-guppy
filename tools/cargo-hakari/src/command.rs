@@ -7,6 +7,7 @@ use crate::{
     publish::publish_hakari,
 };
 use camino::{Utf8Path, Utf8PathBuf};
+use clap::{AppSettings, Parser};
 use color_eyre::eyre::{bail, eyre, Result, WrapErr};
 use guppy::{
     graph::{PackageGraph, PackageSet},
@@ -21,7 +22,6 @@ use hakari::{
 use log::{error, info};
 use owo_colors::OwoColorize;
 use std::convert::TryFrom;
-use structopt::{clap::AppSettings, StructOpt};
 
 /// The comment to add to the top of the config file.
 pub static CONFIG_COMMENT: &str = r#"# This file contains settings for `cargo hakari`.
@@ -44,11 +44,12 @@ pub static DISABLE_MESSAGE: &str = r#"
 /// Set up and manage workspace-hack crates.
 ///
 /// For more about cargo-hakari, see <https://docs.rs/cargo-hakari>.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+#[clap(author, version, about)]
 pub struct Args {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     global: GlobalOpts,
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     command: Command,
 }
 
@@ -61,38 +62,38 @@ impl Args {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct GlobalOpts {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     output: OutputOpts,
 }
 
 /// Manage workspace-hack crates.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 enum Command {
     /// Initialize a workspace-hack crate and a hakari.toml file
-    #[structopt(name = "init")]
+    #[clap(name = "init")]
     Initialize {
         /// Path to generate the workspace-hack crate at, relative to the current directory.
         path: Utf8PathBuf,
 
         /// The name of the crate (default: derived from path)
-        #[structopt(long, short)]
+        #[clap(long, short)]
         package_name: Option<String>,
 
         /// Skip writing a stub config to hakari.toml
-        #[structopt(long)]
+        #[clap(long)]
         skip_config: bool,
 
         /// Print operations that need to be performed, but do not actually perform them.
         ///
         /// Exits with status 1 if any operations need to be performed. Can be combined with
         /// `--quiet`.
-        #[structopt(long, short = "n", conflicts_with = "yes")]
+        #[clap(long, short = 'n', conflicts_with = "yes")]
         dry_run: bool,
 
         /// Proceed with the operation without prompting for confirmation.
-        #[structopt(long, short, conflicts_with = "dry-run")]
+        #[clap(long, short, conflicts_with = "dry-run")]
         yes: bool,
     },
 
@@ -163,14 +164,14 @@ impl Command {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 enum CommandWithBuilder {
     /// Generate or update the contents of the workspace-hack crate
     Generate {
         /// Print a diff of contents instead of writing them out. Can be combined with `--quiet`.
         ///
         /// Exits with status 1 if the contents are different.
-        #[structopt(long)]
+        #[clap(long)]
         diff: bool,
     },
 
@@ -187,14 +188,14 @@ enum CommandWithBuilder {
     /// * Add the dependency to all non-excluded workspace crates.
     /// * Remove the dependency from all excluded workspace crates.
     ManageDeps {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         packages: PackageSelection,
 
         /// Print operations that need to be performed, but do not actually perform them.
         ///
         /// Exits with status 1 if any operations need to be performed. Can be combined with
         /// `--quiet`.
-        #[structopt(long, short = "n", conflicts_with = "yes")]
+        #[clap(long, short = 'n', conflicts_with = "yes")]
         dry_run: bool,
 
         /// Proceed with the operation without prompting for confirmation.
@@ -204,14 +205,14 @@ enum CommandWithBuilder {
 
     /// Remove dependencies from workspace crates to workspace-hack.
     RemoveDeps {
-        #[structopt(flatten)]
+        #[clap(flatten)]
         packages: PackageSelection,
 
         /// Print operations that need to be performed, but do not actually perform them.
         ///
         /// Exits with status 1 if any operations need to be performed. Can be combined with
         /// `--quiet`.
-        #[structopt(long, short = "n", conflicts_with = "yes")]
+        #[structopt(long, short = 'n', conflicts_with = "yes")]
         dry_run: bool,
 
         /// Proceed with the operation without prompting for confirmation.
@@ -246,14 +247,14 @@ enum CommandWithBuilder {
     /// see {n}https://docs.rs/cargo-hakari/latest/cargo_hakari/publishing.
     ///
     /// Trailing arguments are passed through to cargo publish.
-    #[structopt(setting = AppSettings::TrailingVarArg, setting = AppSettings::AllowLeadingHyphen)]
+    #[clap(setting = AppSettings::TrailingVarArg, setting = AppSettings::AllowHyphenValues)]
     Publish {
         /// The name of the package to publish.
         #[structopt(long, short)]
         package: String,
 
         /// Arguments to pass through to `cargo publish`.
-        #[structopt(multiple = true)]
+        #[structopt(multiple_values = true)]
         pass_through: Vec<String>,
     },
 
@@ -410,9 +411,9 @@ impl CommandWithBuilder {
 }
 
 /// Support for packages and features.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct PackageSelection {
-    #[structopt(long = "package", short, number_of_values = 1)]
+    #[clap(long = "package", short, number_of_values = 1)]
     /// Packages to operate on (default: entire workspace)
     packages: Vec<String>,
 }
