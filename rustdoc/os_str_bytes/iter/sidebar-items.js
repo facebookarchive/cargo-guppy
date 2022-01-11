@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Split","The iterator returned by [`RawOsStr::split`]."]]});
