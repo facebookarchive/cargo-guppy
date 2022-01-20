@@ -413,7 +413,7 @@ impl CommandWithBuilder {
 /// Support for packages and features.
 #[derive(Debug, Parser)]
 struct PackageSelection {
-    #[clap(long = "package", short, number_of_values = 1)]
+    #[clap(long = "package", short)]
     /// Packages to operate on (default: entire workspace)
     packages: Vec<String>,
 }
