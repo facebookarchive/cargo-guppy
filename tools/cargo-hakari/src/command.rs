@@ -97,7 +97,7 @@ enum Command {
         yes: bool,
     },
 
-    #[structopt(flatten)]
+    #[clap(flatten)]
     WithBuilder(CommandWithBuilder),
 }
 
@@ -199,7 +199,7 @@ enum CommandWithBuilder {
         dry_run: bool,
 
         /// Proceed with the operation without prompting for confirmation.
-        #[structopt(long, short, conflicts_with = "dry-run")]
+        #[clap(long, short, conflicts_with = "dry-run")]
         yes: bool,
     },
 
@@ -212,11 +212,11 @@ enum CommandWithBuilder {
         ///
         /// Exits with status 1 if any operations need to be performed. Can be combined with
         /// `--quiet`.
-        #[structopt(long, short = 'n', conflicts_with = "yes")]
+        #[clap(long, short = 'n', conflicts_with = "yes")]
         dry_run: bool,
 
         /// Proceed with the operation without prompting for confirmation.
-        #[structopt(long, short, conflicts_with = "dry-run")]
+        #[clap(long, short, conflicts_with = "dry-run")]
         yes: bool,
     },
 
@@ -250,11 +250,11 @@ enum CommandWithBuilder {
     #[clap(setting = AppSettings::TrailingVarArg, setting = AppSettings::AllowHyphenValues)]
     Publish {
         /// The name of the package to publish.
-        #[structopt(long, short)]
+        #[clap(long, short)]
         package: String,
 
         /// Arguments to pass through to `cargo publish`.
-        #[structopt(multiple_values = true)]
+        #[clap(multiple_values = true)]
         pass_through: Vec<String>,
     },
 
@@ -265,7 +265,7 @@ enum CommandWithBuilder {
         /// Print a diff of changes instead of writing them out. Can be combined with `--quiet`.
         ///
         /// Exits with status 1 if the contents are different.
-        #[structopt(long)]
+        #[clap(long)]
         diff: bool,
     },
 }
