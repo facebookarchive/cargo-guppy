@@ -67,12 +67,7 @@ impl QueryOptions {
 
 #[derive(Debug, Parser)]
 pub struct BaseFilterOptions {
-    #[clap(
-        long,
-        rename_all = "kebab-case",
-        name = "package",
-        number_of_values = 1
-    )]
+    #[clap(long, rename_all = "kebab-case", name = "package")]
     /// Omit edges that point into a given package; useful for seeing how
     /// removing a dependency affects the graph
     pub omit_edges_into: Vec<String>,

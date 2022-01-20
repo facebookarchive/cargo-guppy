@@ -26,11 +26,11 @@ use std::{env, path::PathBuf};
 /// The options here mirror Cargo's.
 #[derive(Debug, Parser)]
 pub struct PackagesAndFeatures {
-    #[clap(long = "package", short = 'p', number_of_values = 1)]
+    #[clap(long = "package", short = 'p')]
     /// Packages to start the query from (default: entire workspace)
     pub packages: Vec<String>,
 
-    #[clap(long = "features-only", number_of_values = 1)]
+    #[clap(long = "features-only")]
     /// Packages that take part in feature unification but aren't in the result set (default: none)
     pub features_only: Vec<String>,
 
