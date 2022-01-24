@@ -4,7 +4,7 @@
 use crate::{graph::PackageGraph, Error};
 use cargo_metadata::CargoOpt;
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom, io, path::PathBuf};
+use std::{convert::TryFrom, io, path::PathBuf, process::Command};
 
 /// A builder for configuring `cargo metadata` invocations.
 ///
@@ -95,6 +95,12 @@ impl MetadataCommand {
         self.inner
             .other_options(options.into_iter().map(|s| s.into()).collect::<Vec<_>>());
         self
+    }
+
+    /// Builds a [`Command`] instance. This is the first part of calling
+    /// [`exec`](Self::exec).
+    pub fn cargo_command(&self) -> Command {
+        self.inner.cargo_command()
     }
 
     /// Runs the configured `cargo metadata` and returns a deserialized `CargoMetadata`.
