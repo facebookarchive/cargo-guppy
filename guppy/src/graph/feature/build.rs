@@ -84,41 +84,45 @@ impl FeatureGraphBuildState {
                         let (dep_name, to_feature) = Self::split_feature_dep(feature_dep);
                         let (cross_node_edge, same_node_edge) = match dep_name {
                             Some(dep_name) => {
-                                let cross_node_edge = if let Some(link) =
-                                    dep_name_to_link.get(dep_name)
-                                {
-                                    self.make_named_feature_node(
-                                        &metadata,
-                                        from_feature,
-                                        &link.to(),
-                                        to_feature,
-                                        true,
-                                    )
-                                    .map(|cross_node| {
-                                        // This is a cross-package link. The platform-specific
-                                        // requirements still apply, so grab them from the
-                                        // PackageLink.
-                                        (cross_node, Self::make_named_feature_cross_edge(link))
-                                    })
+                                if let Some(link) = dep_name_to_link.get(dep_name) {
+                                    // dependency from (`main`, `a`) to (`dep, `foo`)
+                                    let cross_node_edge = self
+                                        .make_named_feature_node(
+                                            &metadata,
+                                            from_feature,
+                                            &link.to(),
+                                            to_feature,
+                                            true,
+                                        )
+                                        .map(|cross_node| {
+                                            // This is a cross-package link. The platform-specific
+                                            // requirements still apply, so grab them from the
+                                            // PackageLink.
+                                            (cross_node, Self::make_named_feature_cross_edge(link))
+                                        });
+
+                                    // If the package is present as an optional dependency, it is
+                                    // implicitly activated by the feature:
+                                    // from (`main`, `a`) to (`main`, `dep`)
+                                    let same_node_edge = self
+                                        .make_named_feature_node(
+                                            &metadata,
+                                            from_feature,
+                                            &metadata,
+                                            dep_name,
+                                            // Don't warn if this dep isn't optional.
+                                            false,
+                                        )
+                                        .map(|same_node| {
+                                            (same_node, Self::make_named_feature_cross_edge(link))
+                                        });
+                                    (cross_node_edge, same_node_edge)
                                 } else {
                                     // The destination package was unknown to the graph.
                                     // XXX may need to be revisited if we start modeling unresolved
                                     // dependencies.
-                                    None
-                                };
-                                // If the package is present as an optional dependency, it is
-                                // implicitly activated by the feature.
-                                let same_node_edge = self
-                                    .make_named_feature_node(
-                                        &metadata,
-                                        from_feature,
-                                        &metadata,
-                                        dep_name,
-                                        // Don't warn if this dep isn't optional.
-                                        false,
-                                    )
-                                    .map(|same_node| (same_node, FeatureEdge::FeatureDependency));
-                                (cross_node_edge, same_node_edge)
+                                    (None, None)
+                                }
                             }
                             None => {
                                 let same_node_edge = self
@@ -202,6 +206,9 @@ impl FeatureGraphBuildState {
     /// ```
     ///
     /// (a link (`from`, `a`) to (`dep`, `foo`) is created.
+    ///
+    /// If `dep` is optional, the edge (`from`, `a`) to (`from`, `dep`) is also a `CrossPackage`
+    /// edge.
     fn make_named_feature_cross_edge(link: &PackageLink<'_>) -> FeatureEdge {
         // This edge is enabled if the feature is enabled, which means the union of (required,
         // optional) build conditions.
@@ -326,7 +333,46 @@ impl FeatureGraphBuildState {
             let to_ix = self.lookup_node(&to_node).unwrap_or_else(|| {
                 panic!("while adding feature edges, missing 'to': {:?}", to_node)
             });
-            self.graph.update_edge(from_ix, to_ix, edge);
+
+            match self.graph.find_edge(from_ix, to_ix) {
+                Some(edge_ix) => {
+                    // The edge already exists. This could be an upgrade from a cross link to a
+                    // feature dependency, for example:
+                    //
+                    // [package]
+                    // name = "main"
+                    //
+                    // [dependencies]
+                    // dep = { ..., optional = true }
+                    //
+                    // [features]
+                    // "feat" = ["dep/feat", "dep"]
+                    //
+                    // "dep/feat" causes a cross link to be created from "main/feat" to "main/dep".
+                    // However, the "dep" encountered later upgrades this link to a feature
+                    // dependency.
+                    let old_edge = self
+                        .graph
+                        .edge_weight_mut(edge_ix)
+                        .expect("this edge was just found");
+                    #[allow(clippy::single_match)]
+                    match (old_edge, edge) {
+                        (
+                            old_edge @ FeatureEdge::CrossPackage(_),
+                            edge @ FeatureEdge::FeatureDependency,
+                        ) => {
+                            // Upgrade this edge.
+                            *old_edge = edge;
+                        }
+                        _ => {
+                            // In all other cases, leave the old edge alone.
+                        }
+                    }
+                }
+                None => {
+                    self.graph.add_edge(from_ix, to_ix, edge);
+                }
+            }
         })
     }
 

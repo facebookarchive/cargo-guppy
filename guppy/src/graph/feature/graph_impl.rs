@@ -595,7 +595,25 @@ impl FeatureGraphImpl {
 
 /// A feature dependency across packages.
 ///
-/// This is currently an opaque type -- it will be filled out in the future.
+/// This is most relevant in case of platform-specific dependencies. For example:
+///
+/// ```toml
+/// [package]
+/// name = "main"
+///
+/// [target.'cfg(unix)'.dependencies]
+/// dep = { ... }
+///
+/// [features]
+/// feat = ["dep/feat"]
+/// ```
+///
+/// In this case, the dependency from `main/feat` to `dep/feat` is a `CrossLink`, and the link
+/// represents the `cfg(unix)` condition.
+///
+/// If `dep` is optional, an implicit feature is created in the package `main` with the name `dep`.
+/// In this case, the dependency from `main/feat` to `main/dep` is also a `CrossLink` representing
+/// the same `cfg(unix)` condition.
 #[derive(Copy, Clone, Debug)]
 pub struct CrossLink<'g> {
     graph: DebugIgnore<FeatureGraph<'g>>,
