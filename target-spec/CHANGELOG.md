@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+## Changed
+
+- Internal dependency version bump: `cfg-expr` updated to 0.10.0.
+
 ## [0.9.0] - 2021-10-01
 
 ## Added
