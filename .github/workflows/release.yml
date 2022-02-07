@@ -1,0 +1,24 @@
+# adapted from https://github.com/taiki-e/cargo-hack/blob/main/.github/workflows/release.yml
+
+name: Publish releases to GitHub
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  target-spec-release:
+    if: github.repository_owner == 'facebookincubator' && startsWith(github.ref_name, 'target-spec-')
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          prefix: target-spec
+          changelog: target-spec/CHANGELOG.md
+          title: $prefix $version
+          branch: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
