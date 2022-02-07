@@ -4,16 +4,11 @@
 
 ## [1.0.0] - 2022-02-06
 
-No breaking changes in this release compared to version 0.9. The last release of version 0.9, version [0.9.1], re-exports
-types from this series.
+No breaking changes in this release compared to version 0.9.
 
 ## Changed
 
 - Internal dependency version bump: `cfg-expr` updated to 0.10.0.
-
-## [0.9.1] - 2022-02-06
-
-- This is a stub release that re-exports types from version 1.0.
 
 ## [0.9.0] - 2021-10-01
 
@@ -154,7 +149,6 @@ This was mistakenly published and was yanked.
 - Initial release.
 
 [1.0.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.0
-[0.9.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.9.1
 [0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.9.0
 [0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.8.0
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.7.0
