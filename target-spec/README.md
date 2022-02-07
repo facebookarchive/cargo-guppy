@@ -37,6 +37,11 @@ assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"), Ok(Some(f
 
 For more advanced usage, see [`Platform`] and [`TargetSpec`].
 
+### Minimum supported Rust version
+
+The minimum supported Rust version (MSRV) is **Rust 1.54**. Within the 1.x series, MSRV bumps will
+be accompanied by a minor version update.
+
 ## Contributing
 
 See the [CONTRIBUTING](../CONTRIBUTING.md) file for how to help out.
