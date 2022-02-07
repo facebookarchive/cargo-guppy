@@ -154,16 +154,15 @@ The standard Cargo method for declaring a dependency on a file or environment va
 output `rerun-if-changed` or `rerun-if-env-changed` instructions in build scripts. These
 instructions must be duplicated through custom rules.
 
-**The determinator doesn't track the [`include` and `exclude` fields in `Cargo.toml`][include].**
-This is because the determinator's view of what's changed doesn't always align with these fields.
-For example, packages typically include `README` files, but the determinator has a default rule
-to ignore them.
+**The determinator doesn't track the [`include` and `exclude` fields in
+`Cargo.toml`](https://doc.rust-lang.org/cargo/reference/manifest.html#the-exclude-and-include-fields).**
+This is because the determinator's view of what's changed doesn't always align with these
+fields. For example, packages typically include `README` files, but the determinator has a
+default rule to ignore them.
 
 If a package includes a file outside of it, either move it into the package (recommended) or
 add a custom rule for it. Exclusions may be duplicated as custom rules that cause those files
 to be ignored.
-
-[include]: https://doc.rust-lang.org/cargo/reference/manifest.html#the-exclude-and-include-fields
 
 ### Path dependencies outside the workspace
 
@@ -224,17 +223,15 @@ These other systems end up making different tradeoffs:
 * Cargo can use build scripts to track file and environment changes over time. However, it
   relies on a previous build being done on the same machine. Also, as of Rust 1.48, there is no
   way to use Cargo caching for test results, only for builds.
-* `sccache` [requires paths to be exact across machines][known-caveats], and is unable to cache
-  [some kinds of Rust artifacts][rust-caveats]. Also, just like Cargo's caching, there is no way
-  to use it for test results, only for builds.
+* `sccache` [requires paths to be exact across
+  machines](https://github.com/mozilla/sccache#known-caveats), and is unable to cache [some
+  kinds of Rust artifacts](https://github.com/mozilla/sccache/blob/master/docs/Rust.md). Also,
+  just like Cargo's caching, there is no way to use it for test results, only for builds.
 * Bazel and Buck have stringent requirements around the environment not affecting build results.
   They're also not seamlessly integrated with Cargo.
 * The determinator works for both builds and tests, but cannot track file and environment
   changes over time and must rely on custom rules. This scheme may produce both false negatives
   and false positives.
-
-[known-caveats]: https://github.com/mozilla/sccache#known-caveats
-[rust-caveats]: https://github.com/mozilla/sccache/blob/master/docs/Rust.md
 
 While the determinator is geared towards test runs, it also works for builds. If you wish to
 use the determinator for build runs, consider stacking it with another layer of caching:

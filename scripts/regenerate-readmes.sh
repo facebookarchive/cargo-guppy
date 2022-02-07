@@ -11,6 +11,6 @@ cd "$(git rev-parse --show-toplevel)"
 git ls-files | grep README.tpl$ | while read -r readme; do
   dir=$(dirname "$readme")
   cargo readme --project-root "$dir" > "$dir/README.md.tmp"
-  awk -f "scripts/remove-double-pound.awk" "$dir/README.md.tmp" > "$dir/README.md"
+  gawk -f "scripts/fix-readmes.awk" "$dir/README.md.tmp" > "$dir/README.md"
   rm "$dir/README.md.tmp"
 done

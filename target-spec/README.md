@@ -35,13 +35,13 @@ assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"), Ok(Some
 assert_eq!(eval("x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"), Ok(Some(false)));
 ```
 
-For more advanced usage, see [`Platform`] and [`TargetSpec`].
+For more advanced usage, see `Platform` and `TargetSpec`.
 
 ### Optional features
 
-* **`summaries`**: Adds the [`summaries`] module to enable serialization of [`Platform`] and [`TargetFeatures`].
-* **`proptest1`**: Enables support for property-based testing of [`Platform`] and
-  [`TargetFeatures`] using [`proptest`].
+* **`summaries`**: Adds the `summaries` module to enable serialization of `Platform` and `TargetFeatures`.
+* **`proptest1`**: Enables support for property-based testing of `Platform` and
+  `TargetFeatures` using `proptest`.
 
 ### Minimum supported Rust version
 
