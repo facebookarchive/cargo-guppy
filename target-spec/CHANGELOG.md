@@ -1,6 +1,14 @@
+
 # Changelog
 
 ## Unreleased
+
+## [1.0.1] - 2022-02-07
+
+### Added
+
+- Update badges in README.
+- Add `doc_cfg` to [the docs.rs build](https://docs.rs/target-spec).
 
 ## [1.0.0] - 2022-02-06
 
@@ -148,6 +156,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[1.0.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.1
 [1.0.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.0
 [0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.9.0
 [0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.8.0
