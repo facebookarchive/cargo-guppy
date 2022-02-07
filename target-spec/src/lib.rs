@@ -36,6 +36,12 @@
 //!
 //! For more advanced usage, see [`Platform`] and [`TargetSpec`].
 //!
+//! ## Optional features
+//!
+//! * **`summaries`**: Adds the [`summaries`] module to enable serialization of [`Platform`] and [`TargetFeatures`].
+//! * **`proptest1`**: Enables support for property-based testing of [`Platform`] and
+//!   [`TargetFeatures`] using [`proptest`].
+//!
 //! ## Minimum supported Rust version
 //!
 //! The minimum supported Rust version (MSRV) is **Rust 1.54**. Within the 1.x series, MSRV bumps will
@@ -43,6 +49,7 @@
 
 #![warn(missing_docs)]
 #![forbid(unsafe_code)]
+#![cfg_attr(doc_cfg, feature(doc_cfg, doc_auto_cfg))]
 
 pub mod errors;
 mod platform;
