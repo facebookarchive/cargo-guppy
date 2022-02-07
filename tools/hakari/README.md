@@ -84,7 +84,7 @@ The result of this computation is a [`Hakari`](Hakari) instance.
 The last step is to serialize the contents of the output map into the `workspace-hack` package's
 `Cargo.toml` file.
 
-1. [`Hakari::read_toml`] reads an existing `Cargo.toml` file on disk. This file is
+1. `Hakari::read_toml` reads an existing `Cargo.toml` file on disk. This file is
    *partially generated*:
 
    ```toml

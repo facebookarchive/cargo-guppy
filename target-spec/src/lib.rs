@@ -54,7 +54,7 @@
 pub mod errors;
 mod platform;
 #[cfg(feature = "proptest1")]
-mod proptest;
+mod proptest_helpers;
 mod simple_eval;
 mod spec;
 #[cfg(feature = "summaries")]

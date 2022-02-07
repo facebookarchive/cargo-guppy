@@ -136,10 +136,9 @@ cargo hakari verify
 ```
 
 If some dependencies are built with more than one feature set, this command will print out
-details about them. **This is always a bug**---if you encounter it, [a bug report] with more
-information would be greatly appreciated!
-
-[a bug report]: https://github.com/facebookincubator/cargo-guppy/issues/new
+details about them. **This is always a bug**---if you encounter it, [a bug
+report](https://github.com/facebookincubator/cargo-guppy/issues/new) with more information would
+be greatly appreciated!
 
 ####
 ### Publishing a crate

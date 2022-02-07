@@ -20,7 +20,7 @@ that. A lifetime parameter named `'g` always indicates that data is borrowed fro
 
 [`PackageMetadata`](crate::graph::PackageMetadata) contains information about individual
 packages, such as the data in
-[the `[package]` section](https://doc.rust-lang.org/cargo/reference/manifest.html#the-package-section).
+[the `package` section](https://doc.rust-lang.org/cargo/reference/manifest.html#the-package-section).
 
 For traversing the graph, `guppy` provides a few types:
 * [`PackageLink`](crate::graph::PackageLink) represents both ends of a dependency edge, along

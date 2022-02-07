@@ -94,9 +94,9 @@
 //!    version = "0.1.0"
 //!    # more options...
 //!
-//!    ### BEGIN HAKARI SECTION
+//!    #### BEGIN HAKARI SECTION
 //!    ...
-//!    ### END HAKARI SECTION
+//!    #### END HAKARI SECTION
 //!    ```
 //!
 //!    The contents outside the `BEGIN HAKARI SECTION` and `END HAKARI SECTION` lines may be
