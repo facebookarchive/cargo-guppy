@@ -6,22 +6,22 @@
 
 No breaking changes in this release compared to version 0.9.
 
-## Changed
+### Changed
 
 - Internal dependency version bump: `cfg-expr` updated to 0.10.0.
 
-## [0.9.0] - 2021-10-01
+### [0.9.0] - 2021-10-01
 
 ## Added
 
 - Target triples can now be parsed directly into a `PlatformSummary`.
 
-## Changed
+### Changed
 
 - `PlatformSummary::new` is now infallible.
 - MSRV updated to Rust 1.53.
 
-## Fixed
+### Fixed
 
 - `target-spec` now uses `cfg-expr`'s builtins by default, falling back to `target-lexicon` if `cfg-expr` isn't
 available.
