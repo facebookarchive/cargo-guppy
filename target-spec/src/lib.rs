@@ -35,6 +35,11 @@
 //! ```
 //!
 //! For more advanced usage, see [`Platform`] and [`TargetSpec`].
+//!
+//! ## Minimum supported Rust version
+//!
+//! The minimum supported Rust version (MSRV) is **Rust 1.54**. Within the 1.x series, MSRV bumps will
+//! be accompanied by a minor version update.
 
 #![warn(missing_docs)]
 #![forbid(unsafe_code)]
