@@ -85,7 +85,7 @@ pub struct GenerateHakariOpts {
 
 impl GenerateHakariOpts {
     /// The default value of the `count` field, as a string.
-    pub const DEFAULT_COUNT_STR: &'static str = "8";
+    pub const DEFAULT_COUNT_STR: &'static str = "4";
 
     /// The default value of the `count` field.
     pub fn default_count() -> usize {
