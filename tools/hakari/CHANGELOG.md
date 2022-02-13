@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `doc_cfg`-based feature labels to rustdoc.
+
+### Changed
+
+- Public dependency bump: guppy updated to 0.13.0.
+
+### Fixed
+
+- A small fix to Cargo build simulations ([#596](https://github.com/facebookincubator/cargo-guppy/issues/596)). This is not a breaking change to the hakari output because it is a bugfix.
+
 ## [0.8.1] - 2021-12-08
 
 - Reverted the changes in version 0.7.3 because of [#524](https://github.com/facebookincubator/cargo-guppy/issues/524).

@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.13.0] - 2022-02-13
+
+### Added
+
+- `doc_cfg`-based feature labels to rustdoc.
+- `MetadataCommand::cargo_command` returns the underlying `std::process::Command` instance.
+
+### Changed
+
+- `guppy::graph::feature::CrossLink` renamed to `ConditionalLink`, and now covers some same-package
+  features. For more, see the documentation for [`ConditionalLink`].
+- Public dependency bump: `target-spec` updated to version 1.
+
+### Fixed
+
+- A small fix to Cargo build simulations ([#596](https://github.com/facebookincubator/cargo-guppy/issues/596)).
+
+[`ConditionalLink`]: https://docs.rs/guppy/0.13/guppy/graph/feature/struct.ConditionalLink.html
+
 ## [0.12.6] - 2021-12-19
 
 ### Added
@@ -459,6 +478,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.13.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.13.0
 [0.12.6]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.6
 [0.12.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.5
 [0.12.4]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.4

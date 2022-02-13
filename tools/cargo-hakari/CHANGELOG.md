@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- A small fix to Cargo build simulations ([#596](https://github.com/facebookincubator/cargo-guppy/issues/596)). This is not a breaking change to the hakari output because it is a bugfix.
+
 ## [0.9.11] - 2021-12-08
 
 - Reverted the changes in version 0.9.9 because of [#524](https://github.com/facebookincubator/cargo-guppy/issues/524).
