@@ -45,9 +45,16 @@ If `$HOME/.cargo/bin` is in your `PATH`, the `cargo hakari` command will be avai
 
 ### Getting started
 
-There are three steps you *must* take for `cargo hakari` to work properly.
+There are four steps you *must* take for `cargo hakari` to work properly.
 
-#### 1. Initialize the workspace-hack
+#### 1. Check in your `Cargo.lock`
+
+For hakari to work correctly, you *must* [add your `Cargo.lock` to version
+control](https://doc.rust-lang.org/cargo/faq.html#why-do-binaries-have-cargolock-in-version-control-but-not-libraries)
+file, even if you don't have any binary crates. This is because patch version bumps in
+dependencies can add or remove features or even entire transitive dependencies.
+
+#### 2. Initialize the workspace-hack
 
 Initialize a workspace-hack crate for a workspace at path `my-workspace-hack`:
 
@@ -59,7 +66,7 @@ cargo hakari init my-workspace-hack
 <img src="https://user-images.githubusercontent.com/180618/135726175-dc00dd0c-68a1-455f-a13d-0dd24f545ca6.png">
 </p>
 
-#### 2. Generate the `Cargo.toml`
+#### 3. Generate the `Cargo.toml`
 
 Generate or update the contents of a workspace-hack crate:
 
@@ -67,7 +74,7 @@ Generate or update the contents of a workspace-hack crate:
 cargo hakari generate
 ```
 
-#### 3. Add dependencies to the workspace-hack
+#### 4. Add dependencies to the workspace-hack
 
 Add the workspace-hack crate as a dependency to all other workspace crates:
 
