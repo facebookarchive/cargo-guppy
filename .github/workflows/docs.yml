@@ -14,13 +14,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
+          override: true
       - name: Build rustdoc
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          # cargo-compare currently pulls in cargo which bloats build times massively
-          args: --all-features --workspace --exclude cargo-compare
+        # cargo-compare currently pulls in cargo which bloats build times massively
+        run: |
+          RUSTDOCFLAGS='--cfg=doc_cfg' cargo doc --all-features --workspace --exclude cargo-compare
       - name: Organize
         run: |
           mkdir target/gh-pages

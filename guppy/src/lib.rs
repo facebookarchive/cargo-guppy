@@ -85,6 +85,7 @@
 //! [the `examples` directory](https://github.com/facebookincubator/cargo-guppy/tree/main/guppy/examples).
 
 #![warn(missing_docs)]
+#![cfg_attr(doc_cfg, feature(doc_cfg, doc_auto_cfg))]
 
 #[macro_use]
 mod macros;
