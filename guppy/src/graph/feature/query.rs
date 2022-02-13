@@ -4,7 +4,7 @@
 use crate::{
     debug_ignore::DebugIgnore,
     graph::{
-        feature::{CrossLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet},
+        feature::{ConditionalLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet},
         query_core::QueryParams,
         DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata,
     },
@@ -322,7 +322,7 @@ impl<'g> FeatureQuery<'g> {
     /// determine which links are followed.
     pub fn resolve_with_fn(
         self,
-        resolver_fn: impl FnMut(&FeatureQuery<'g>, CrossLink<'g>) -> bool,
+        resolver_fn: impl FnMut(&FeatureQuery<'g>, ConditionalLink<'g>) -> bool,
     ) -> FeatureSet<'g> {
         self.resolve_with(ResolverFn(resolver_fn))
     }
@@ -344,27 +344,27 @@ impl<'g> FeatureQuery<'g> {
 /// Represents whether a particular link within a feature graph should be followed during a
 /// resolve operation.
 pub trait FeatureResolver<'g> {
-    /// Returns true if this cross-package link should be followed during a resolve operation.
-    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool;
+    /// Returns true if this conditional link should be followed during a resolve operation.
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: ConditionalLink<'g>) -> bool;
 }
 
 impl<'g, 'a, T> FeatureResolver<'g> for &'a mut T
 where
     T: FeatureResolver<'g>,
 {
-    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: ConditionalLink<'g>) -> bool {
         (**self).accept(query, link)
     }
 }
 
 impl<'g, 'a> FeatureResolver<'g> for Box<dyn FeatureResolver<'g> + 'a> {
-    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: ConditionalLink<'g>) -> bool {
         (**self).accept(query, link)
     }
 }
 
 impl<'g, 'a> FeatureResolver<'g> for &'a mut dyn FeatureResolver<'g> {
-    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: ConditionalLink<'g>) -> bool {
         (**self).accept(query, link)
     }
 }
@@ -374,9 +374,9 @@ struct ResolverFn<F>(pub F);
 
 impl<'g, F> FeatureResolver<'g> for ResolverFn<F>
 where
-    F: FnMut(&FeatureQuery<'g>, CrossLink<'g>) -> bool,
+    F: FnMut(&FeatureQuery<'g>, ConditionalLink<'g>) -> bool,
 {
-    fn accept(&mut self, query: &FeatureQuery<'g>, link: CrossLink<'g>) -> bool {
+    fn accept(&mut self, query: &FeatureQuery<'g>, link: ConditionalLink<'g>) -> bool {
         (self.0)(query, link)
     }
 }

@@ -127,7 +127,7 @@ impl<'g> FeatureGraph<'g> {
     /// ## Cycles
     ///
     /// A cyclic dev-dependency may cause additional features to be turned on. This computation
-    /// does *not* follow cross-package links and will *not* return true for such additional
+    /// does *not* follow conditional links and will *not* return true for such additional
     /// features.
     pub fn is_default_feature<'a>(
         &self,
@@ -140,8 +140,8 @@ impl<'g> FeatureGraph<'g> {
                 .default_feature_id(),
         )?;
         let feature_ix = self.feature_ix(feature_id)?;
-        // Do not follow cross-package links.
-        Ok(self.feature_ix_depends_on_no_cross(default_ix, feature_ix))
+        // Do not follow conditional links.
+        Ok(self.feature_ix_depends_on_no_conditional(default_ix, feature_ix))
     }
 
     /// Returns true if `feature_a` depends (directly or indirectly) on `feature_b`.
@@ -151,8 +151,7 @@ impl<'g> FeatureGraph<'g> {
     ///
     /// This also returns true if `feature_a` is the same as `feature_b`.
     ///
-    /// Note that this returns true if `feature_a` conditionally depends on `feature_b`, such as
-    /// only turning it on for dev builds or only on particular platforms.
+    /// Note that this returns true if `feature_a` [conditionally depends on][ConditionalLink] `feature_b`.
     pub fn depends_on<'a>(
         &self,
         feature_a: impl Into<FeatureId<'a>>,
@@ -197,11 +196,11 @@ impl<'g> FeatureGraph<'g> {
     #[doc(hidden)]
     pub fn verify(&self) -> Result<(), Error> {
         let feature_set = self.resolve_all();
-        for cross_link in feature_set.cross_links(DependencyDirection::Forward) {
-            let (from, to) = cross_link.endpoints();
-            let is_any = cross_link.normal().is_present()
-                || cross_link.build().is_present()
-                || cross_link.dev().is_present();
+        for conditional_link in feature_set.conditional_links(DependencyDirection::Forward) {
+            let (from, to) = conditional_link.endpoints();
+            let is_any = conditional_link.normal().is_present()
+                || conditional_link.build().is_present()
+                || conditional_link.dev().is_present();
 
             if !is_any {
                 return Err(Error::FeatureGraphInternalError(format!(
@@ -220,7 +219,7 @@ impl<'g> FeatureGraph<'g> {
         self.inner.sccs.get_or_init(|| {
             let edge_filtered =
                 EdgeFiltered::from_fn(self.dep_graph(), |edge| match edge.weight() {
-                    FeatureEdge::CrossPackage(cross_link) => !cross_link.dev_only(),
+                    FeatureEdge::Conditional(conditional_link) => !conditional_link.dev_only(),
                     FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => true,
                 });
             // Sort the entire graph without dev-only edges -- a correct graph would be cycle-free
@@ -264,19 +263,19 @@ impl<'g> FeatureGraph<'g> {
         &self.inner.graph
     }
 
-    /// If this is a cross edge, return the cross link. Otherwise, return None.
-    pub(super) fn edge_to_cross_link(
+    /// If this is a conditional edge, return the conditional link. Otherwise, return None.
+    pub(super) fn edge_to_conditional_link(
         &self,
         source_ix: NodeIndex<FeatureIx>,
         target_ix: NodeIndex<FeatureIx>,
         edge_ix: EdgeIndex<FeatureIx>,
         edge: Option<&'g FeatureEdge>,
-    ) -> Option<CrossLink<'g>> {
+    ) -> Option<ConditionalLink<'g>> {
         match edge.unwrap_or_else(|| &self.dep_graph()[edge_ix]) {
             FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => None,
-            FeatureEdge::CrossPackage(inner) => {
-                Some(CrossLink::new(*self, source_ix, target_ix, edge_ix, inner))
-            }
+            FeatureEdge::Conditional(inner) => Some(ConditionalLink::new(
+                *self, source_ix, target_ix, edge_ix, inner,
+            )),
         }
     }
 
@@ -288,14 +287,14 @@ impl<'g> FeatureGraph<'g> {
         has_path_connecting(self.dep_graph(), a_ix, b_ix, None)
     }
 
-    fn feature_ix_depends_on_no_cross(
+    fn feature_ix_depends_on_no_conditional(
         &self,
         a_ix: NodeIndex<FeatureIx>,
         b_ix: NodeIndex<FeatureIx>,
     ) -> bool {
-        // Filter out cross-package edges.
+        // Filter out conditional edges.
         let edge_filtered = EdgeFiltered::from_fn(self.dep_graph(), |edge_ref| {
-            !matches!(edge_ref.weight(), FeatureEdge::CrossPackage(_))
+            !matches!(edge_ref.weight(), FeatureEdge::Conditional(_))
         });
         has_path_connecting(&edge_filtered, a_ix, b_ix, None)
     }
@@ -593,46 +592,53 @@ impl FeatureGraphImpl {
     }
 }
 
-/// A feature dependency across packages.
+/// A feature dependency that is conditionally activated.
 ///
-/// This is most relevant in case of platform-specific dependencies. For example:
+/// A `ConditionalLink` is typically a link across packages. For example:
 ///
 /// ```toml
 /// [package]
 /// name = "main"
 ///
-/// [target.'cfg(unix)'.dependencies]
+/// [dependencies]
 /// dep = { ... }
 ///
+/// [dev-dependencies]
+/// dev-dep = { ... }
+///
+/// [target.'cfg(unix)'.dependencies]
+/// unix-dep = { ... }
+///
 /// [features]
-/// feat = ["dep/feat"]
+/// feat = ["dep/feat", "dev-dep/feat", "unix-dep/feat"]
 /// ```
 ///
-/// In this case, the dependency from `main/feat` to `dep/feat` is a `CrossLink`, and the link
-/// represents the `cfg(unix)` condition.
+/// In this example, there are `ConditionalLink`s from `main/feat` to `dep/feat`, `dev-dep/feat` and
+/// `unix-dep/feat`. Each link is only activated if the conditions for it are met. For example,
+/// the link to `dev-dep/feat` is only followed if Cargo is interested in dev-dependencies of `main`.
 ///
-/// If `dep` is optional, an implicit feature is created in the package `main` with the name `dep`.
-/// In this case, the dependency from `main/feat` to `main/dep` is also a `CrossLink` representing
-/// the same `cfg(unix)` condition.
+/// If a dependency, for example `unix-dep` above, is optional, an implicit feature is created in
+/// the package `main` with the name `unix-dep`. In this case, the dependency from `main/feat` to
+/// `main/unix-dep` is also a `ConditionalLink` representing the same `cfg(unix)` condition.
 #[derive(Copy, Clone, Debug)]
-pub struct CrossLink<'g> {
+pub struct ConditionalLink<'g> {
     graph: DebugIgnore<FeatureGraph<'g>>,
     from: &'g FeatureMetadataImpl,
     to: &'g FeatureMetadataImpl,
     edge_ix: EdgeIndex<FeatureIx>,
-    inner: &'g CrossLinkImpl,
+    inner: &'g ConditionalLinkImpl,
 }
 
-assert_covariant!(CrossLink);
+assert_covariant!(ConditionalLink);
 
-impl<'g> CrossLink<'g> {
+impl<'g> ConditionalLink<'g> {
     #[allow(dead_code)]
     pub(super) fn new(
         graph: FeatureGraph<'g>,
         source_ix: NodeIndex<FeatureIx>,
         target_ix: NodeIndex<FeatureIx>,
         edge_ix: EdgeIndex<FeatureIx>,
-        inner: &'g CrossLinkImpl,
+        inner: &'g ConditionalLinkImpl,
     ) -> Self {
         let dep_graph = graph.dep_graph();
         Self {
@@ -702,7 +708,7 @@ impl<'g> CrossLink<'g> {
         self.inner.dev_only()
     }
 
-    /// Returns the `PackageLink` from which this `CrossLink` was derived.
+    /// Returns the `PackageLink` from which this `ConditionalLink` was derived.
     pub fn package_link(&self) -> PackageLink<'g> {
         self.graph
             .package_graph
@@ -793,7 +799,7 @@ impl FeatureNode {
 pub enum FeatureEdge {
     /// This edge is from a feature to its base package.
     FeatureToBase,
-    /// This is a cross-package edge, e.g. through:
+    /// This is a conditional edge, e.g. through:
     ///
     /// ```toml
     /// [dependencies]
@@ -806,7 +812,7 @@ pub enum FeatureEdge {
     /// [features]
     /// "a" = ["foo/b"]
     /// ```
-    CrossPackage(CrossLinkImpl),
+    Conditional(ConditionalLinkImpl),
     /// This edge is from a feature depending on other features within the same package:
     ///
     /// ```toml
@@ -819,14 +825,14 @@ pub enum FeatureEdge {
 /// Not part of the stable API -- only exposed for FeatureSet::links().
 #[derive(Clone, Debug)]
 #[doc(hidden)]
-pub struct CrossLinkImpl {
+pub struct ConditionalLinkImpl {
     pub(super) package_edge_ix: EdgeIndex<PackageIx>,
     pub(super) normal: PlatformStatusImpl,
     pub(super) build: PlatformStatusImpl,
     pub(super) dev: PlatformStatusImpl,
 }
 
-impl CrossLinkImpl {
+impl ConditionalLinkImpl {
     #[inline]
     fn dev_only(&self) -> bool {
         self.normal.is_never() && self.build.is_never()
