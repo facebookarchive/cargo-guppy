@@ -50,8 +50,8 @@ There are four steps you *must* take for `cargo hakari` to work properly.
 #### 1. Check in your `Cargo.lock`
 
 For hakari to work correctly, you *must* [add your `Cargo.lock` to version
-control](https://doc.rust-lang.org/cargo/faq.html#why-do-binaries-have-cargolock-in-version-control-but-not-libraries)
-file, even if you don't have any binary crates. This is because patch version bumps in
+control](https://doc.rust-lang.org/cargo/faq.html#why-do-binaries-have-cargolock-in-version-control-but-not-libraries),
+even if you don't have any binary crates. This is because patch version bumps in
 dependencies can add or remove features or even entire transitive dependencies.
 
 #### 2. Initialize the workspace-hack
