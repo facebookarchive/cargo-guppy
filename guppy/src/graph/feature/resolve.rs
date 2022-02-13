@@ -6,7 +6,7 @@ use crate::{
     graph::{
         cargo::{CargoOptions, CargoSet},
         feature::{
-            CrossLink, FeatureEdge, FeatureGraph, FeatureId, FeatureList, FeatureMetadata,
+            ConditionalLink, FeatureEdge, FeatureGraph, FeatureId, FeatureList, FeatureMetadata,
             FeatureQuery, FeatureResolver,
         },
         resolve_core::ResolveCore,
@@ -87,13 +87,13 @@ impl<'g> FeatureSet<'g> {
         Self {
             graph,
             core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge| {
-                match graph.edge_to_cross_link(
+                match graph.edge_to_conditional_link(
                     edge.source(),
                     edge.target(),
                     edge.id(),
                     Some(edge.weight()),
                 ) {
-                    Some(cross_link) => resolver.accept(&query, cross_link),
+                    Some(conditional_link) => resolver.accept(&query, conditional_link),
                     None => {
                         // Feature links within the same package are always followed.
                         true
@@ -489,22 +489,22 @@ impl<'g> FeatureSet<'g> {
             })
     }
 
-    /// Creates an iterator over `CrossLink` instances in the direction specified.
+    /// Creates an iterator over `ConditionalLink` instances in the direction specified.
     ///
     /// ## Cycles
     ///
     /// The links in a dependency cycle will be returned in non-dev order. When the direction is
     /// forward, if feature Foo has a dependency on Bar, and Bar has a cyclic dev-dependency on Foo,
     /// then the link Foo -> Bar is returned before the link Bar -> Foo.
-    pub fn cross_links<'a>(
+    pub fn conditional_links<'a>(
         &'a self,
         direction: DependencyDirection,
-    ) -> impl Iterator<Item = CrossLink<'g>> + 'a {
+    ) -> impl Iterator<Item = ConditionalLink<'g>> + 'a {
         let graph = self.graph;
         self.core
             .links(graph.dep_graph(), graph.sccs(), direction)
             .filter_map(move |(source_ix, target_ix, edge_ix)| {
-                graph.edge_to_cross_link(source_ix, target_ix, edge_ix, None)
+                graph.edge_to_conditional_link(source_ix, target_ix, edge_ix, None)
             })
     }
 

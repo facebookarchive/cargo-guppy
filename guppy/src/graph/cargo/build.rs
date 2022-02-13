@@ -6,7 +6,7 @@ use crate::{
         cargo::{
             CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform,
         },
-        feature::{CrossLink, FeatureQuery, FeatureSet, StandardFeatures},
+        feature::{ConditionalLink, FeatureQuery, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
     platform::{EnabledTernary, PlatformSpec},
@@ -359,7 +359,7 @@ impl<'a> CargoSetBuildState<'a> {
             .collect();
 
         let is_enabled =
-            |link: &CrossLink<'_>, kind: DependencyKind, platform_spec: &PlatformSpec| {
+            |link: &ConditionalLink<'_>, kind: DependencyKind, platform_spec: &PlatformSpec| {
                 let platform_status = link.status_for_kind(kind);
                 platform_status.enabled_on(platform_spec) != EnabledTernary::Disabled
             };

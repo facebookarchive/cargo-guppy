@@ -5,7 +5,7 @@ use crate::{
     errors::{FeatureBuildStage, FeatureGraphWarning},
     graph::{
         feature::{
-            CrossLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode,
+            ConditionalLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode,
             FeatureType,
         },
         DepRequiredOrOptional, DependencyReq, FeatureIx, PackageGraph, PackageIx, PackageLink,
@@ -218,7 +218,7 @@ impl FeatureGraphBuildState {
             required
         }
 
-        FeatureEdge::CrossPackage(CrossLinkImpl {
+        FeatureEdge::Conditional(ConditionalLinkImpl {
             package_edge_ix: link.edge_ix(),
             normal: combine_req_opt(link.normal()),
             build: combine_req_opt(link.build()),
@@ -358,7 +358,7 @@ impl FeatureGraphBuildState {
                     #[allow(clippy::single_match)]
                     match (old_edge, edge) {
                         (
-                            old_edge @ FeatureEdge::CrossPackage(_),
+                            old_edge @ FeatureEdge::Conditional(_),
                             edge @ FeatureEdge::FeatureDependency,
                         ) => {
                             // Upgrade this edge.
@@ -512,7 +512,7 @@ impl DependencyBuildState {
     }
 
     fn finish(self) -> FeatureEdge {
-        FeatureEdge::CrossPackage(CrossLinkImpl {
+        FeatureEdge::Conditional(ConditionalLinkImpl {
             package_edge_ix: self.package_edge_ix,
             normal: self.normal,
             build: self.build,
