@@ -36,18 +36,16 @@ jobs:
           command: xfmt
           args: --check
       - name: Install cargo readme
-        uses: actions-rs/install@v0.1
+        uses: baptiste0928/cargo-install@v1
         with:
           crate: cargo-readme
-          version: latest
-          use-tool-cache: true
       - name: Run cargo readme
         run: ./scripts/regenerate-readmes.sh
       - name: Check for differences
         run: git diff --exit-code
 
   build:
-    name: Build and test
+    name: Build and test core crates
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -75,6 +73,11 @@ jobs:
         with:
           command: build
           args: --all-targets --package target-spec
+      - name: Build guppy-summaries
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-targets --package guppy-summaries
       - name: Build guppy
         uses: actions-rs/cargo@v1
         with:
@@ -85,41 +88,21 @@ jobs:
         with:
           command: build
           args: --all-targets --package determinator
-      - name: Build cargo-guppy
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --all-targets --package cargo-guppy
       - name: Build hakari
         uses: actions-rs/cargo@v1
         with:
           command: build
           args: --all-targets --package hakari
-      - name: Test target-spec
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+          version: 0.9
+      - name: Run tests for core crates
         uses: actions-rs/cargo@v1
         with:
-          command: test
-          args: --all-targets --package target-spec
-      - name: Test guppy
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-targets --package guppy
-      - name: Test determinator
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-targets --package determinator
-      - name: Test cargo-guppy
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-targets --package cargo-guppy
-      - name: Test hakari
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-targets --package hakari
+          command: nextest
+          args: run --package target-spec --package guppy-summaries --package guppy --package determinator --package hakari
 
   build-all-features:
     name: Build and test (all features)
@@ -153,12 +136,17 @@ jobs:
         with:
           command: test
           args: --doc --all-features --workspace --exclude cargo-compare
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+          version: 0.9
       - name: Run all other tests
         uses: actions-rs/cargo@v1
         with:
-          command: test
+          command: nextest
           # Exclude cargo-compare so that it only runs on the cfg-expr version below.
-          args: --all-targets --all-features --workspace --exclude cargo-compare
+          args: run --all-features --workspace --exclude cargo-compare
 
   build-rustdoc:
     name: Build documentation
