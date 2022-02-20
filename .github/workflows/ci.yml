@@ -46,11 +46,16 @@ jobs:
 
   build:
     name: Build and test core crates
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.runs-on }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        # 1.54 is the MSRV
+        os:
+          - runs-on: ubuntu-latest
+            nextest-url: https://get.nexte.st/latest/linux
+          - runs-on: macos-latest
+            nextest-url: https://get.nexte.st/latest/mac
+          - runs-on: windows-latest
+            nextest-url: https://get.nexte.st/latest/windows-tar
         rust-version: [ 1.54, stable ]
       fail-fast: false
     env:
@@ -93,11 +98,10 @@ jobs:
         with:
           command: build
           args: --all-targets --package hakari
-      - name: Install cargo-nextest
-        uses: baptiste0928/cargo-install@v1
-        with:
-          crate: cargo-nextest
-          version: 0.9
+      - name: Install latest nextest release
+        shell: bash
+        run: |
+          curl -LsSf ${{ matrix.os.nextest-url }} | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
       - name: Run tests for core crates
         uses: actions-rs/cargo@v1
         with:
@@ -106,11 +110,16 @@ jobs:
 
   build-all-features:
     name: Build and test (all features)
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.runs-on }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        # 1.54 is the MSRV
+        os:
+          - runs-on: ubuntu-latest
+            nextest-url: https://get.nexte.st/latest/linux
+          - runs-on: macos-latest
+            nextest-url: https://get.nexte.st/latest/mac
+          - runs-on: windows-latest
+            nextest-url: https://get.nexte.st/latest/windows-tar
         rust-version: [ 1.54, stable ]
       fail-fast: false
     env:
@@ -136,11 +145,10 @@ jobs:
         with:
           command: test
           args: --doc --all-features --workspace --exclude cargo-compare
-      - name: Install cargo-nextest
-        uses: baptiste0928/cargo-install@v1
-        with:
-          crate: cargo-nextest
-          version: 0.9
+      - name: Install latest nextest release
+        shell: bash
+        run: |
+          curl -LsSf ${{ matrix.os.nextest-url }} | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
       - name: Run all other tests
         uses: actions-rs/cargo@v1
         with:
