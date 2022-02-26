@@ -501,7 +501,7 @@ impl<'g> DependencyResolver<'g> {
                 Some(rename) if rename != &dep.name => {
                     // The resolved name is the same as the renamed name, except dashes are replaced
                     // with underscores.
-                    let resolved_name = rename.replace("-", "_");
+                    let resolved_name = rename.replace('-', "_");
                     let (_, deps) = renamed_map
                         .entry(resolved_name.into())
                         .or_insert_with(|| (rename.as_str(), DependencyReqs::default()));

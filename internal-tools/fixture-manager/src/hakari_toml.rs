@@ -92,7 +92,7 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
                 .expect("contents are in correct format")
         });
 
-        let existing = existing.unwrap_or_else(|| &*DEFAULT_EXISTING);
+        let existing = existing.unwrap_or(&*DEFAULT_EXISTING);
 
         let diff = existing.diff_toml(&item.toml);
         let formatter = PatchFormatter::new();

@@ -100,7 +100,7 @@ pub(crate) fn assert_deps_internal(
             )
         })
         .iter()
-        .map(|(dep_name, id)| (*dep_name, dep_name.replace("-", "_"), id))
+        .map(|(dep_name, id)| (*dep_name, dep_name.replace('-', "_"), id))
         .collect();
     let actual_deps: Vec<_> = graph
         .metadata(known_details.id())
