@@ -6,7 +6,7 @@ use fixtures::{
     package_id,
 };
 use guppy::graph::{
-    feature::{feature_filter, FeatureId},
+    feature::{named_feature_filter, FeatureId, FeatureLabel, StandardFeatures},
     BuildTargetId, BuildTargetKind, DependencyDirection, DotWrite, PackageDotVisitor, PackageLink,
     PackageMetadata,
 };
@@ -16,7 +16,6 @@ mod small {
     use super::*;
     use crate::feature_helpers::assert_features_for_package;
     use fixtures::json::METADATA_CYCLE_FEATURES_BASE;
-    use guppy::graph::feature::StandardFeatures;
     use pretty_assertions::assert_eq;
 
     // Test specific details extracted from metadata1.json.
@@ -118,14 +117,14 @@ mod small {
         // ---
 
         let feature_graph = graph.feature_graph();
-        assert_eq!(feature_graph.feature_count(), 492, "feature count");
-        assert_eq!(feature_graph.link_count(), 610, "link count");
+        assert_eq!(feature_graph.feature_count(), 506, "feature count");
+        assert_eq!(feature_graph.link_count(), 639, "link count");
         let feature_set = feature_graph
             .query_workspace(StandardFeatures::All)
             .resolve();
         let root_ids: Vec<_> = feature_set.root_ids(DependencyDirection::Forward).collect();
         let testcrate_id = package_id(json::METADATA1_TESTCRATE);
-        let expected = vec![FeatureId::new(&testcrate_id, "datatest")];
+        let expected = vec![FeatureId::named(&testcrate_id, "datatest")];
         assert_eq!(root_ids, expected, "feature graph root IDs match");
     }
 
@@ -137,8 +136,8 @@ mod small {
         metadata2.verify();
 
         let feature_graph = metadata2.graph().feature_graph();
-        assert_eq!(feature_graph.feature_count(), 472, "feature count");
-        assert_eq!(feature_graph.link_count(), 572, "link count");
+        assert_eq!(feature_graph.feature_count(), 484, "feature count");
+        assert_eq!(feature_graph.link_count(), 597, "link count");
         let root_ids: Vec<_> = feature_graph
             .query_workspace(StandardFeatures::None)
             .resolve()
@@ -182,11 +181,11 @@ mod small {
         let feature_graph = metadata_cycle_features.graph().feature_graph();
 
         let base_id = package_id(METADATA_CYCLE_FEATURES_BASE);
-        let default_id = FeatureId::new(&base_id, "default");
+        let default_id = FeatureId::named(&base_id, "default");
 
         // default, default-enable and default-transitive are default features.
         for &f in &["default", "default-enable", "default-transitive"] {
-            let this_id = FeatureId::new(&base_id, f);
+            let this_id = FeatureId::named(&base_id, f);
             assert!(
                 feature_graph
                     .is_default_feature(this_id)
@@ -207,7 +206,7 @@ mod small {
         // helper-enable and helper-transitive are *not* default features even though they are
         // enabled by the cyclic dev dependency. But the dependency relation is present.
         for &f in &["helper-enable", "helper-transitive"] {
-            let this_id = FeatureId::new(&base_id, f);
+            let this_id = FeatureId::named(&base_id, f);
             assert!(
                 !feature_graph
                     .is_default_feature(this_id)
@@ -236,7 +235,7 @@ mod small {
         let package_graph = metadata_targets1.graph();
         let package_set = package_graph.resolve_all();
         let feature_graph = metadata_targets1.graph().feature_graph();
-        assert_eq!(feature_graph.feature_count(), 31, "feature count");
+        assert_eq!(feature_graph.feature_count(), 38, "feature count");
 
         // Some code that might be useful for debugging.
         if false {
@@ -251,52 +250,56 @@ mod small {
                     "feature link: {}:{} {} -> {}:{} {} {:?}",
                     source_metadata.name(),
                     source_metadata.version(),
-                    source.feature().unwrap_or("[base]"),
+                    source.label(),
                     target_metadata.name(),
                     target_metadata.version(),
-                    target.feature().unwrap_or("[base]"),
+                    target.label(),
                     edge
                 );
             }
         }
 
-        assert_eq!(feature_graph.link_count(), 48, "feature link count");
+        assert_eq!(feature_graph.link_count(), 62, "feature link count");
 
         // Check that resolve_packages + a feature filter works.
-        let feature_set = package_set.to_feature_set(feature_filter(
+        let feature_set = package_set.to_feature_set(named_feature_filter(
             StandardFeatures::Default,
             ["foo", "bar"].iter().copied(),
         ));
         let dep_a_id = package_id(json::METADATA_TARGETS1_DEP_A);
         assert!(feature_set
-            .contains((&dep_a_id, "foo"))
+            .contains((&dep_a_id, FeatureLabel::Named("foo")))
             .expect("valid feature ID"));
         assert!(feature_set
-            .contains((&dep_a_id, "bar"))
+            .contains((&dep_a_id, FeatureLabel::Named("bar")))
             .expect("valid feature ID"));
         assert!(!feature_set
-            .contains((&dep_a_id, "baz"))
+            .contains((&dep_a_id, FeatureLabel::Named("baz")))
             .expect("valid feature ID"));
         assert!(!feature_set
-            .contains((&dep_a_id, "quux"))
+            .contains((&dep_a_id, FeatureLabel::Named("quux")))
             .expect("valid feature ID"));
 
         assert_features_for_package(
             &feature_set,
             &package_id(json::METADATA_TARGETS1_TESTCRATE),
-            &[None],
+            Some(&[FeatureLabel::Base]),
             "testcrate",
         );
         assert_features_for_package(
             &feature_set,
             &dep_a_id,
-            &[None, Some("foo"), Some("bar")],
+            Some(&[
+                FeatureLabel::Base,
+                FeatureLabel::Named("bar"),
+                FeatureLabel::Named("foo"),
+            ]),
             "dep a",
         );
         assert_features_for_package(
             &feature_set,
             &package_id(json::METADATA_TARGETS1_LAZY_STATIC_1),
-            &[None],
+            Some(&[FeatureLabel::Base]),
             "lazy_static",
         );
     }

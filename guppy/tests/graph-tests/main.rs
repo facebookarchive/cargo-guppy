@@ -15,3 +15,4 @@ macro_rules! proptest_suite {
 mod feature_helpers;
 mod graph_tests;
 mod invalid_tests;
+mod weak_namespaced;

@@ -4,7 +4,7 @@
 use fixtures::dep_helpers::{assert_link_order, GraphAssert, GraphMetadata, GraphQuery, GraphSet};
 use guppy::{
     graph::{
-        feature::{FeatureId, FeatureSet, StandardFeatures},
+        feature::{FeatureId, FeatureLabel, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, Prop010Resolver,
     },
     PackageId,
@@ -542,7 +542,7 @@ pub(super) fn package_feature_set_roundtrip(
                 .contains(test_id.package_id())
                 .expect("valid package ID"),
             no_feature_set
-                .contains((test_id.package_id(), None))
+                .contains((test_id.package_id(), FeatureLabel::Base))
                 .expect("valid feature ID"),
             "none => package ID present == base feature ID present"
         );

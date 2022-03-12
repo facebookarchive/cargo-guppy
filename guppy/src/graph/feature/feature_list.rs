@@ -4,7 +4,10 @@
 //! A sorted, deduplicated list of features from a single package.
 
 use crate::{
-    graph::{feature::FeatureId, PackageMetadata},
+    graph::{
+        feature::{FeatureId, FeatureLabel},
+        PackageMetadata,
+    },
     sorted_set::SortedSet,
     PackageId,
 };
@@ -18,31 +21,18 @@ use std::{fmt, slice, vec};
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FeatureList<'g> {
     package: PackageMetadata<'g>,
-    features: SortedSet<&'g str>,
-    has_base: bool,
+    labels: SortedSet<FeatureLabel<'g>>,
 }
 
 impl<'g> FeatureList<'g> {
-    /// Creates a new `FeatureList` from a package and an iterator over features.
+    /// Creates a new `FeatureList` from a package and an iterator over feature labels.
     pub fn new(
         package: PackageMetadata<'g>,
-        features: impl IntoIterator<Item = Option<&'g str>>,
+        labels: impl IntoIterator<Item = FeatureLabel<'g>>,
     ) -> Self {
-        let mut has_base = false;
-        let features = features
-            .into_iter()
-            .filter_map(|feature| match feature {
-                Some(feature) => Some(feature),
-                None => {
-                    has_base = true;
-                    None
-                }
-            })
-            .collect();
         Self {
             package,
-            features,
-            has_base,
+            labels: labels.into_iter().collect(),
         }
     }
 
@@ -51,23 +41,58 @@ impl<'g> FeatureList<'g> {
         &self.package
     }
 
-    /// Returns true if this feature list contains this feature.
-    pub fn contains(&self, feature: impl AsRef<str>) -> bool {
-        self.features.contains(&feature.as_ref())
+    /// Returns true if this feature list contains this feature label.
+    pub fn contains(&self, label: FeatureLabel<'_>) -> bool {
+        self.labels.contains(&label)
     }
 
     /// Returns true if this feature list contains the "base" feature.
     ///
     /// The "base" feature represents the package with no features enabled.
+    #[inline]
     pub fn has_base(&self) -> bool {
-        self.has_base
+        self.contains(FeatureLabel::Base)
     }
 
-    /// Returns the list of features as a slice.
+    /// Returns true if this feature list contains the specified named feature.
+    #[inline]
+    pub fn has_named_feature(&self, feature_name: &str) -> bool {
+        self.contains(FeatureLabel::Named(feature_name))
+    }
+
+    /// Returns true if this feature list contains the specified optional dependency.
+    #[inline]
+    pub fn has_optional_dependency(&self, dep_name: &str) -> bool {
+        self.contains(FeatureLabel::OptionalDependency(dep_name))
+    }
+
+    /// Returns the list of labels as a slice.
     ///
     /// This slice is guaranteed to be sorted and unique.
-    pub fn features(&self) -> &[&'g str] {
-        self.features.as_slice()
+    pub fn labels(&self) -> &[FeatureLabel<'g>] {
+        self.labels.as_slice()
+    }
+
+    /// Returns an iterator containing all named features.
+    ///
+    /// The iterator is guaranteed to be sorted and unique.
+    pub fn named_features(&self) -> impl Iterator<Item = &'g str> + '_ {
+        // XXX: binary search?
+        self.labels.iter().filter_map(|label| match label {
+            FeatureLabel::Named(feature_name) => Some(*feature_name),
+            _ => None,
+        })
+    }
+
+    /// Returns an iterator containing all optional dependencies.
+    ///
+    /// The iterator is guaranteed to be sorted and unique.
+    pub fn optional_dependencies(&self) -> impl Iterator<Item = &'g str> + '_ {
+        // XXX: binary search?
+        self.labels.iter().filter_map(|label| match label {
+            FeatureLabel::OptionalDependency(dep_name) => Some(*dep_name),
+            _ => None,
+        })
     }
 
     /// Returns a borrowed iterator over feature IDs.
@@ -75,16 +100,16 @@ impl<'g> FeatureList<'g> {
         self.into_iter()
     }
 
-    /// Returns a pretty-printer over the list of features.
+    /// Returns a pretty-printer over the list of feature labels.
     pub fn display_features<'a>(&'a self) -> DisplayFeatures<'g, 'a> {
-        DisplayFeatures(self.features())
+        DisplayFeatures(self.labels())
     }
 
-    /// Returns a vector of feature names.
+    /// Returns a vector of feature labels.
     ///
     /// The vector is guaranteed to be sorted and unique.
-    pub fn into_features(self) -> Vec<&'g str> {
-        self.features.into_inner().into_vec()
+    pub fn into_labels(self) -> Vec<FeatureLabel<'g>> {
+        self.labels.into_inner().into_vec()
     }
 }
 
@@ -109,8 +134,7 @@ impl<'a, 'g> IntoIterator for &'a FeatureList<'g> {
 /// An owned iterator over a `FeatureList`.
 pub struct IntoIter<'g> {
     package_id: &'g PackageId,
-    has_base: bool,
-    iter: vec::IntoIter<&'g str>,
+    iter: vec::IntoIter<FeatureLabel<'g>>,
 }
 
 impl<'g> IntoIter<'g> {
@@ -118,8 +142,7 @@ impl<'g> IntoIter<'g> {
     pub fn new(feature_list: FeatureList<'g>) -> Self {
         Self {
             package_id: feature_list.package.id(),
-            has_base: feature_list.has_base,
-            iter: feature_list.into_features().into_iter(),
+            iter: feature_list.into_labels().into_iter(),
         }
     }
 }
@@ -128,21 +151,16 @@ impl<'g> Iterator for IntoIter<'g> {
     type Item = FeatureId<'g>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.has_base {
-            self.has_base = false;
-            return Some(FeatureId::base(self.package_id));
-        }
         self.iter
             .next()
-            .map(|feature| FeatureId::new(self.package_id, feature))
+            .map(|label| FeatureId::new(self.package_id, label))
     }
 }
 
 /// A borrowed iterator over a `FeatureList`.
 pub struct Iter<'g, 'a> {
     package_id: &'g PackageId,
-    has_base: bool,
-    iter: slice::Iter<'a, &'g str>,
+    iter: slice::Iter<'a, FeatureLabel<'g>>,
 }
 
 impl<'g, 'a> Iter<'g, 'a> {
@@ -150,8 +168,7 @@ impl<'g, 'a> Iter<'g, 'a> {
     pub fn new(feature_list: &'a FeatureList<'g>) -> Self {
         Self {
             package_id: feature_list.package.id(),
-            has_base: feature_list.has_base,
-            iter: feature_list.features().iter(),
+            iter: feature_list.labels().iter(),
         }
     }
 }
@@ -160,13 +177,9 @@ impl<'g, 'a> Iterator for Iter<'g, 'a> {
     type Item = FeatureId<'g>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.has_base {
-            self.has_base = false;
-            return Some(FeatureId::base(self.package_id));
-        }
         self.iter
             .next()
-            .map(|feature| FeatureId::new(self.package_id, feature))
+            .map(|&label| FeatureId::new(self.package_id, label))
     }
 }
 
@@ -174,10 +187,17 @@ impl<'g, 'a> Iterator for Iter<'g, 'a> {
 ///
 /// Returned by `FeatureList::display_filters`.
 #[derive(Clone, Copy, Debug)]
-pub struct DisplayFeatures<'g, 'a>(&'a [&'g str]);
+pub struct DisplayFeatures<'g, 'a>(&'a [FeatureLabel<'g>]);
 
 impl<'g, 'a> fmt::Display for DisplayFeatures<'g, 'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0.join(", "))
+        let len = self.0.len();
+        for (idx, label) in self.0.iter().enumerate() {
+            write!(f, "{}", label)?;
+            if idx < len - 1 {
+                write!(f, ", ")?;
+            }
+        }
+        Ok(())
     }
 }

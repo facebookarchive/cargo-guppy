@@ -4,7 +4,7 @@
 use crate::{
     graph::{
         cargo_version_matches,
-        feature::{FeatureGraphImpl, FeatureId, FeatureNode},
+        feature::{FeatureGraphImpl, FeatureId, FeatureLabel, FeatureNode},
         BuildTarget, BuildTargetId, BuildTargetImpl, BuildTargetKind, Cycles, DependencyDirection,
         OwnedBuildTargetId, PackageIx, PackageQuery, PackageSet,
     },
@@ -14,7 +14,7 @@ use crate::{
 };
 use camino::{Utf8Path, Utf8PathBuf};
 use fixedbitset::FixedBitSet;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use once_cell::sync::OnceCell;
 use petgraph::{
     algo::{has_path_connecting, DfsSpace},
@@ -23,6 +23,7 @@ use petgraph::{
     visit::EdgeFiltered,
 };
 use semver::{Version, VersionReq};
+use smallvec::SmallVec;
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt, iter,
@@ -988,7 +989,7 @@ impl<'g> PackageMetadata<'g> {
     /// Returns the `FeatureId` corresponding to the default feature.
     pub fn default_feature_id(&self) -> FeatureId<'g> {
         if self.inner.has_default_feature {
-            FeatureId::new(self.id(), "default")
+            FeatureId::new(self.id(), FeatureLabel::Named("default"))
         } else {
             FeatureId::base(self.id())
         }
@@ -1029,58 +1030,101 @@ impl<'g> PackageMetadata<'g> {
         self.graph.dep_links_ixs_directed(self.package_ix(), dir)
     }
 
-    pub(super) fn get_feature_idx(&self, feature: &str) -> Option<usize> {
-        self.inner.features.get_full(feature).map(|(n, _, _)| n)
+    pub(super) fn get_feature_idx(&self, label: FeatureLabel<'_>) -> Option<FeatureIndexInPackage> {
+        match label {
+            FeatureLabel::Base => Some(FeatureIndexInPackage::Base),
+            FeatureLabel::OptionalDependency(dep_name) => self
+                .inner
+                .optional_deps
+                .get_index_of(dep_name)
+                .map(FeatureIndexInPackage::OptionalDependency),
+            FeatureLabel::Named(feature_name) => self
+                .inner
+                .named_features
+                .get_index_of(feature_name)
+                .map(FeatureIndexInPackage::Named),
+        }
     }
 
-    pub(super) fn feature_idx_to_name(&self, idx: usize) -> &'g str {
-        self.inner
-            .features
-            .get_index(idx)
-            .expect("feature idx should be valid")
-            .0
-            .as_ref()
+    pub(super) fn feature_idx_to_label(&self, idx: FeatureIndexInPackage) -> FeatureLabel<'g> {
+        match idx {
+            FeatureIndexInPackage::Base => FeatureLabel::Base,
+            FeatureIndexInPackage::OptionalDependency(idx) => FeatureLabel::OptionalDependency(
+                self.inner
+                    .optional_deps
+                    .get_index(idx)
+                    .expect("feature idx in optional_deps should be valid")
+                    .as_ref(),
+            ),
+            FeatureIndexInPackage::Named(idx) => FeatureLabel::Named(
+                self.inner
+                    .named_features
+                    .get_index(idx)
+                    .expect("feature idx in optional_deps should be valid")
+                    .0
+                    .as_ref(),
+            ),
+        }
     }
 
     #[allow(dead_code)]
     pub(super) fn all_feature_nodes(&self) -> impl Iterator<Item = FeatureNode> + 'g {
         let package_ix = self.package_ix();
-        iter::once(FeatureNode::base(self.package_ix())).chain(
-            (0..self.inner.features.len())
-                .map(move |feature_idx| FeatureNode::new(package_ix, feature_idx)),
+        iter::once(FeatureNode::new(
+            self.package_ix(),
+            FeatureIndexInPackage::Base,
+        ))
+        .chain(
+            (0..self.inner.named_features.len())
+                .map(move |named_idx| FeatureNode::named_feature(package_ix, named_idx)),
+        )
+        .chain(
+            (0..self.inner.optional_deps.len())
+                .map(move |dep_idx| FeatureNode::optional_dep(package_ix, dep_idx)),
         )
     }
 
     pub(super) fn named_features_full(
         &self,
-    ) -> impl Iterator<Item = (usize, &'g str, &'g [String])> + 'g {
+    ) -> impl Iterator<Item = (FeatureIndexInPackage, &'g str, &'g [NamedFeatureDep])> + 'g {
         self.inner
-            .features
+            .named_features
             .iter()
             // IndexMap is documented to use indexes 0..n without holes, so this enumerate()
             // is correct.
             .enumerate()
-            .filter_map(|(n, (feature, deps))| {
-                deps.as_ref()
-                    .map(|deps| (n, feature.as_ref(), deps.as_slice()))
+            .map(|(idx, (feature, deps))| {
+                (
+                    FeatureIndexInPackage::Named(idx),
+                    feature.as_ref(),
+                    deps.as_slice(),
+                )
             })
     }
 
-    pub(super) fn optional_deps_full(&self) -> impl Iterator<Item = (usize, &str)> {
+    pub(super) fn optional_deps_full(
+        &self,
+    ) -> impl Iterator<Item = (FeatureIndexInPackage, &'g str)> + 'g {
         self.inner
-            .features
+            .optional_deps
             .iter()
             // IndexMap is documented to use indexes 0..n without holes, so this enumerate()
             // is correct.
             .enumerate()
-            .filter_map(|(n, (feature, deps))| {
-                if deps.is_none() {
-                    Some((n, feature.as_ref()))
-                } else {
-                    None
-                }
+            .map(|(idx, dep_name)| {
+                (
+                    FeatureIndexInPackage::OptionalDependency(idx),
+                    dep_name.as_ref(),
+                )
             })
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub(crate) enum FeatureIndexInPackage {
+    Base,
+    OptionalDependency(usize),
+    Named(usize),
 }
 
 /// `PackageMetadata`'s `PartialEq` implementation uses pointer equality for the `PackageGraph`.
@@ -1118,9 +1162,8 @@ pub(crate) struct PackageMetadataImpl {
     pub(super) publish: PackagePublishImpl,
     pub(super) default_run: Option<Box<str>>,
     pub(super) rust_version: Option<VersionReq>,
-    // Some(...) means named feature with listed dependencies.
-    // None means an optional dependency.
-    pub(super) features: IndexMap<Box<str>, Option<Vec<String>>>,
+    pub(super) named_features: IndexMap<Box<str>, SmallVec<[NamedFeatureDep; 4]>>,
+    pub(super) optional_deps: IndexSet<Box<str>>,
 
     // Other information.
     pub(super) package_ix: NodeIndex<PackageIx>,
@@ -1973,6 +2016,64 @@ impl<'g> EnabledStatus<'g> {
     /// Returns the `PlatformStatus` corresponding to whether this dependency is optional.
     pub fn optional_status(&self) -> PlatformStatus<'g> {
         self.optional
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub(super) enum NamedFeatureDep {
+    NamedFeature(Box<str>),
+    OptionalDependency(Box<str>),
+    DependencyNamedFeature {
+        dep_name: Box<str>,
+        feature: Box<str>,
+        weak: bool,
+    },
+}
+
+impl NamedFeatureDep {
+    #[inline]
+    pub(super) fn named_feature(feature_name: impl Into<String>) -> Self {
+        Self::NamedFeature(feature_name.into().into_boxed_str())
+    }
+
+    #[inline]
+    pub(super) fn optional_dependency(dep_name: impl Into<String>) -> Self {
+        Self::OptionalDependency(dep_name.into().into_boxed_str())
+    }
+
+    #[inline]
+    pub(super) fn dep_named_feature(
+        dep_name: impl Into<String>,
+        feature: impl Into<String>,
+        weak: bool,
+    ) -> Self {
+        Self::DependencyNamedFeature {
+            dep_name: dep_name.into().into_boxed_str(),
+            feature: feature.into().into_boxed_str(),
+            weak,
+        }
+    }
+}
+
+impl fmt::Display for NamedFeatureDep {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::NamedFeature(feature) => write!(f, "{}", feature),
+            Self::OptionalDependency(dep_name) => write!(f, "dep:{}", dep_name),
+            Self::DependencyNamedFeature {
+                dep_name,
+                feature,
+                weak,
+            } => {
+                write!(
+                    f,
+                    "{}{}/{}",
+                    dep_name,
+                    if *weak { "?" } else { "" },
+                    feature
+                )
+            }
+        }
     }
 }
 

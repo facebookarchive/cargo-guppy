@@ -96,7 +96,19 @@ impl<'g> ContextImpl<'g> for HakariTomlContext {
 
         let diff = existing.diff_toml(&item.toml);
         let formatter = PatchFormatter::new();
+
         format!("{}", formatter.fmt_patch(&diff))
+
+        // let package_id = guppy::PackageId::new(
+        //     "curl-sys 0.4.36+curl-7.71.1 (registry+https://github.com/rust-lang/crates.io-index)",
+        // );
+        // let explain = item.hakari.explain(&package_id);
+        // let explain = if let Ok(explain) = explain {
+        //     format!("{}", explain.display())
+        // } else {
+        //     "".to_owned()
+        // };
+        // format!("{}\n\n{}", formatter.fmt_patch(&diff), explain)
     }
 
     fn write_to_string(

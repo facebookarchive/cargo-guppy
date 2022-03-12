@@ -282,9 +282,7 @@ impl FeatureMap {
             .packages_with_features(DependencyDirection::Forward)
             .map(|feature_list| {
                 let features = feature_list
-                    .features()
-                    .iter()
-                    .copied()
+                    .named_features()
                     .map(|feature| feature.to_string())
                     .collect();
                 (feature_list.package().id().clone(), features)
