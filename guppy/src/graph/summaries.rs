@@ -67,9 +67,8 @@ impl<'g> FeatureSet<'g> {
                 let info = PackageInfo {
                     status,
                     features: feature_list
-                        .features()
-                        .iter()
-                        .map(|feature| feature.to_string())
+                        .named_features()
+                        .map(|feature| feature.to_owned())
                         .collect(),
                 };
 
@@ -174,10 +173,14 @@ impl CargoOptionsSummary {
             .map(|features| FeaturesOnlySummary {
                 summary_id: features.package().to_summary_id(),
                 features: features
-                    .features()
-                    .iter()
-                    .map(|&feature| feature.to_owned())
+                    .named_features()
+                    .map(|feature| feature.to_owned())
                     .collect(),
+                // TODO: uncomment out after output is shown to not change
+                // optional_dependencies: features
+                //     .optional_dependencies()
+                //     .map(|feature| feature.to_owned())
+                //     .collect(),
             })
             .collect::<Vec<_>>();
         features_only.sort_unstable();
@@ -273,8 +276,12 @@ pub struct FeaturesOnlySummary {
     #[serde(flatten)]
     pub summary_id: SummaryId,
 
-    /// The features built for this package.
+    /// The named features built for this package.
     pub features: BTreeSet<String>,
+    // TODO: uncomment out after change is shown to be stable
+    // /// The optional dependencies built for this package.
+    // #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
+    // pub optional_dependencies: BTreeSet<String>,
 }
 
 impl<'g> PackageSource<'g> {

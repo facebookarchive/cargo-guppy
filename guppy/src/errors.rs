@@ -24,7 +24,7 @@ pub enum Error {
     /// A package ID was unknown to this `PackageGraph`.
     UnknownPackageId(PackageId),
     /// A feature ID was unknown to this `FeatureGraph`.
-    UnknownFeatureId(PackageId, Option<String>),
+    UnknownFeatureId(PackageId, String),
     /// A package specified by path was unknown to this workspace.
     UnknownWorkspacePath(Utf8PathBuf),
     /// A package specified by name was unknown to this workspace.
@@ -79,8 +79,10 @@ impl Error {
     }
 
     pub(crate) fn unknown_feature_id(feature_id: FeatureId<'_>) -> Self {
-        let (package_id, feature) = feature_id.into();
-        Error::UnknownFeatureId(package_id, feature)
+        Error::UnknownFeatureId(
+            feature_id.package_id().clone(),
+            feature_id.label().to_string(),
+        )
     }
 }
 
@@ -91,11 +93,10 @@ impl fmt::Display for Error {
             MetadataParseError(_) => write!(f, "`cargo metadata` returned invalid JSON output"),
             MetadataSerializeError(_) => write!(f, "failed to serialize `cargo metadata` to JSON"),
             PackageGraphConstructError(s) => write!(f, "failed to construct package graph: {}", s),
-            UnknownPackageId(id) => write!(f, "Unknown package ID: {}", id),
-            UnknownFeatureId(package_id, feature) => match feature {
-                Some(feature) => write!(f, "unknown feature ID: '{}' '{}'", package_id, feature),
-                None => write!(f, "unknown feature ID: '{}' (base)", package_id),
-            },
+            UnknownPackageId(id) => write!(f, "unknown package ID: {}", id),
+            UnknownFeatureId(package_id, feature) => {
+                write!(f, "unknown feature ID: '{}/{}'", package_id, feature)
+            }
             UnknownWorkspacePath(path) => write!(f, "unknown workspace path: {}", path),
             UnknownWorkspaceName(name) => write!(f, "unknown workspace package name: {}", name),
             TargetSpecError(msg, _) => write!(f, "target spec error while {}", msg),

@@ -432,13 +432,19 @@ pub(crate) fn write_toml(
                 }
             };
 
-            if !all_features.contains("default") {
+            if !all_features.contains(&"default") {
                 itable.insert("default-features", false.into());
             }
 
             let feature_array: Array = all_features
                 .iter()
-                .filter_map(|&feature| (feature != "default").then(|| feature))
+                .filter_map(|&label| {
+                    // Only care about named features here.
+                    match label {
+                        x if x == "default" => None,
+                        feature_name => Some(feature_name),
+                    }
+                })
                 .collect();
             if !feature_array.is_empty() {
                 itable.insert("features", feature_array.into());

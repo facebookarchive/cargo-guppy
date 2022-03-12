@@ -13,7 +13,7 @@ use guppy::{
     errors::TargetSpecError,
     graph::{
         cargo::{BuildPlatform, CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform},
-        feature::{FeatureId, FeatureSet, StandardFeatures},
+        feature::{FeatureId, FeatureLabel, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, PackageMetadata,
     },
     platform::{Platform, PlatformSpec, TargetFeatures},
@@ -689,8 +689,7 @@ impl<'g> Hakari<'g> {
                                 continue;
                             }
 
-                            let this_list: BTreeSet<_> =
-                                feature_list.features().iter().copied().collect();
+                            let this_list: BTreeSet<_> = feature_list.named_features().collect();
 
                             let already_present = v_mut.contains(build_platform, &this_list);
                             if !already_present {
@@ -937,7 +936,7 @@ impl<'g, 'b> ComputedMapBuild<'g, 'b> {
                                 }
 
                                 let features: BTreeSet<&'g str> =
-                                    feature_list.features().iter().copied().collect();
+                                    feature_list.named_features().collect();
                                 Some((
                                     idx,
                                     build_platform,
@@ -1362,7 +1361,7 @@ impl<'g> OutputMapBuild<'g> {
             let feature_ids = deps.iter().flat_map(|(&package_id, (_, features))| {
                 features
                     .iter()
-                    .map(move |&feature| FeatureId::new(package_id, feature))
+                    .map(move |&feature| FeatureId::new(package_id, FeatureLabel::Named(feature)))
             });
             (
                 output_key,

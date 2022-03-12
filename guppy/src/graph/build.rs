@@ -4,17 +4,21 @@
 use crate::{
     graph::{
         cargo_version_matches, BuildTargetImpl, BuildTargetKindImpl, DepRequiredOrOptional,
-        DependencyReqImpl, OwnedBuildTargetId, PackageGraph, PackageGraphData, PackageIx,
-        PackageLinkImpl, PackageMetadataImpl, PackagePublishImpl, PackageSourceImpl, WorkspaceImpl,
+        DependencyReqImpl, NamedFeatureDep, OwnedBuildTargetId, PackageGraph, PackageGraphData,
+        PackageIx, PackageLinkImpl, PackageMetadataImpl, PackagePublishImpl, PackageSourceImpl,
+        WorkspaceImpl,
     },
     sorted_set::SortedSet,
     Error, PackageId,
 };
 use camino::{Utf8Path, Utf8PathBuf};
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Node, NodeDep, Package, Target};
+use fixedbitset::FixedBitSet;
+use indexmap::{IndexMap, IndexSet};
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
 use semver::Version;
+use smallvec::SmallVec;
 use std::{
     borrow::Cow,
     collections::{BTreeMap, HashMap, HashSet},
@@ -239,14 +243,13 @@ impl<'a> GraphBuildState<'a> {
         // package, but unresolved dependencies aren't part of the graph so we're going to miss them
         // (and many optional dependencies will be unresolved).
         //
-        // XXX: This might be something to revisit if we start modeling unresolved dependencies in
-        // the graph.
+        // XXX: Consider modeling unresolved dependencies in the graph.
         //
         // A dependency might be listed multiple times (e.g. as a build dependency and as a normal
         // one). Some of them might be optional, some might not be. List a dependency here if *any*
         // of those specifications are optional, since that's how Cargo features work. But also
         // dedup them.
-        let optional_deps = package
+        let optional_deps: IndexSet<_> = package
             .dependencies
             .into_iter()
             .filter_map(|dep| {
@@ -259,15 +262,44 @@ impl<'a> GraphBuildState<'a> {
                     None
                 }
             })
-            .map(|feature| (feature, None));
+            .collect();
+
+        // Has the explicit feature by the name of this optional dep been seen?
+        let mut seen_explicit = FixedBitSet::with_capacity(optional_deps.len());
 
         // The feature map contains both optional deps and named features.
-        let features = package
+        let mut named_features: IndexMap<_, _> = package
             .features
             .into_iter()
-            .map(|(feature, deps)| (feature.into_boxed_str(), Some(deps)))
-            .chain(optional_deps)
-            .collect();
+            .map(|(feature_name, deps)| {
+                let mut parsed_deps = SmallVec::with_capacity(deps.len());
+                for dep in deps {
+                    let dep = NamedFeatureDep::from_cargo_string(dep);
+                    if let NamedFeatureDep::OptionalDependency(d) = &dep {
+                        let index = optional_deps.get_index_of(d.as_ref()).ok_or_else(|| {
+                            Error::PackageGraphConstructError(format!(
+                                "package '{}': named feature {} specifies 'dep:{d}', but {d} is not an optional dependency",
+                                package_id,
+                                feature_name,
+                                d = d))
+                        })?;
+                        seen_explicit.set(index, true);
+                    }
+                    parsed_deps.push(dep);
+                }
+                Ok((feature_name.into_boxed_str(), parsed_deps))
+            })
+            .collect::<Result<_, Error>>()?;
+
+        // If an optional dependency was not seen explicitly, add an implicit named feature for it.
+        for (index, dep) in optional_deps.iter().enumerate() {
+            if !seen_explicit.contains(index) {
+                named_features.insert(
+                    dep.clone(),
+                    std::iter::once(NamedFeatureDep::OptionalDependency(dep.clone())).collect(),
+                );
+            }
+        }
 
         Ok((
             package_id,
@@ -291,7 +323,8 @@ impl<'a> GraphBuildState<'a> {
                 publish: PackagePublishImpl::new(package.publish),
                 default_run: package.default_run.map(|s| s.into()),
                 rust_version: package.rust_version,
-                features,
+                named_features,
+                optional_deps,
 
                 package_ix,
                 source,
@@ -338,6 +371,25 @@ impl<'a> GraphBuildState<'a> {
 
     fn finish(self) -> Graph<PackageId, PackageLinkImpl, Directed, PackageIx> {
         self.dep_graph
+    }
+}
+
+impl NamedFeatureDep {
+    fn from_cargo_string(input: impl Into<String>) -> Self {
+        let input = input.into();
+        match input.split_once('/') {
+            Some((dep_name, feature)) => {
+                if let Some(dep_name_without_q) = dep_name.strip_suffix('?') {
+                    Self::dep_named_feature(dep_name_without_q, feature, true)
+                } else {
+                    Self::dep_named_feature(dep_name, feature, false)
+                }
+            }
+            None => match input.strip_prefix("dep:") {
+                Some(dep_name) => Self::optional_dependency(dep_name),
+                None => Self::named_feature(input),
+            },
+        }
     }
 }
 
@@ -764,6 +816,26 @@ fn convert_forward_slashes<'a>(rel_path: impl Into<Cow<'a, Utf8Path>>) -> Utf8Pa
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_named_feature_dependency() {
+        assert_eq!(
+            NamedFeatureDep::from_cargo_string("dep/bar"),
+            NamedFeatureDep::dep_named_feature("dep", "bar", false),
+        );
+        assert_eq!(
+            NamedFeatureDep::from_cargo_string("dep?/bar"),
+            NamedFeatureDep::dep_named_feature("dep", "bar", true),
+        );
+        assert_eq!(
+            NamedFeatureDep::from_cargo_string("dep:bar"),
+            NamedFeatureDep::optional_dependency("bar"),
+        );
+        assert_eq!(
+            NamedFeatureDep::from_cargo_string("foo-bar"),
+            NamedFeatureDep::named_feature("foo-bar"),
+        );
+    }
 
     #[test]
     fn test_convert_forward_slashes() {

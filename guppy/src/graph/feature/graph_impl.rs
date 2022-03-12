@@ -6,7 +6,8 @@ use crate::{
     errors::FeatureGraphWarning,
     graph::{
         feature::{build::FeatureGraphBuildState, Cycles, FeatureFilter, FeatureList},
-        DependencyDirection, FeatureIx, PackageGraph, PackageIx, PackageLink, PackageMetadata,
+        DependencyDirection, FeatureIndexInPackage, FeatureIx, PackageGraph, PackageIx,
+        PackageLink, PackageMetadata,
     },
     petgraph_support::{scc::Sccs, topo::TopoWithCycles},
     platform::{PlatformStatus, PlatformStatusImpl},
@@ -94,6 +95,12 @@ impl<'g> FeatureGraph<'g> {
     /// Returns the number of links in this graph.
     pub fn link_count(&self) -> usize {
         self.dep_graph().edge_count()
+    }
+
+    /// Returns true if this feature graph contains the specified feature.
+    pub fn contains(&self, feature_id: impl Into<FeatureId<'g>>) -> bool {
+        let feature_id = feature_id.into();
+        FeatureNode::from_id(self, feature_id).is_some()
     }
 
     /// Returns metadata for the given feature ID, or `None` if the feature wasn't found.
@@ -383,25 +390,39 @@ impl<'g> FeatureGraph<'g> {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct FeatureId<'g> {
     package_id: &'g PackageId,
-    feature: Option<&'g str>,
+    label: FeatureLabel<'g>,
 }
 
 assert_covariant!(FeatureId);
 
 impl<'g> FeatureId<'g> {
-    /// Creates a new `FeatureId`.
-    pub fn new(package_id: &'g PackageId, feature: &'g str) -> Self {
+    /// Creates a new `FeatureId` with the given [`PackageId`] and [`FeatureLabel`].
+    pub fn new(package_id: &'g PackageId, label: FeatureLabel<'g>) -> Self {
+        Self { package_id, label }
+    }
+
+    /// Creates a new `FeatureId` representing a named feature in the `[features]` section,
+    /// or an implicit named feature created by an optional dependency.
+    pub fn named(package_id: &'g PackageId, feature_name: &'g str) -> Self {
         Self {
             package_id,
-            feature: Some(feature),
+            label: FeatureLabel::Named(feature_name),
         }
     }
 
-    /// Creates a new `FeatureId` representing the "base" feature for a package.
+    /// Creates a new `FeatureId` representing an optional dependency.
+    pub fn optional_dependency(package_id: &'g PackageId, dep_name: &'g str) -> Self {
+        Self {
+            package_id,
+            label: FeatureLabel::OptionalDependency(dep_name),
+        }
+    }
+
+    /// Creates a new `FeatureId` representing the base feature for a package.
     pub fn base(package_id: &'g PackageId) -> Self {
         Self {
             package_id,
-            feature: None,
+            label: FeatureLabel::Base,
         }
     }
 
@@ -413,15 +434,15 @@ impl<'g> FeatureId<'g> {
         let feature = Self::node_to_feature(metadata, node);
         Self {
             package_id,
-            feature,
+            label: feature,
         }
     }
 
     pub(super) fn node_to_feature(
         metadata: PackageMetadata<'g>,
         node: &FeatureNode,
-    ) -> Option<&'g str> {
-        Some(metadata.feature_idx_to_name(node.feature_idx?))
+    ) -> FeatureLabel<'g> {
+        metadata.feature_idx_to_label(node.feature_idx)
     }
 
     /// Returns the package ID.
@@ -429,42 +450,41 @@ impl<'g> FeatureId<'g> {
         self.package_id
     }
 
-    /// Returns the name of the feature, or `None` if this is the "base" feature for this package.
-    pub fn feature(&self) -> Option<&'g str> {
-        self.feature
+    /// Returns the [`FeatureLabel`] associated with the feature.
+    pub fn label(&self) -> FeatureLabel<'g> {
+        self.label
     }
 
-    /// Returns true if this is the "base" feature for the package.
+    /// Returns true if this is the base feature for the package.
+    #[inline]
     pub fn is_base(&self) -> bool {
-        self.feature.is_none()
+        self.label.kind().is_base()
+    }
+
+    /// Returns true if this is an optional dependency.
+    #[inline]
+    pub fn is_optional_dependency(self) -> bool {
+        self.label.kind().is_optional_dependency()
+    }
+
+    /// Returns true if this is a named feature.
+    #[inline]
+    pub fn is_named(self) -> bool {
+        self.label.kind().is_named()
     }
 }
 
-impl<'g> From<(&'g PackageId, &'g str)> for FeatureId<'g> {
-    fn from((package_id, feature): (&'g PackageId, &'g str)) -> Self {
-        FeatureId::new(package_id, feature)
+impl<'g> From<(&'g PackageId, FeatureLabel<'g>)> for FeatureId<'g> {
+    fn from((package_id, label): (&'g PackageId, FeatureLabel<'g>)) -> Self {
+        FeatureId { package_id, label }
     }
 }
 
-impl<'g> From<(&'g PackageId, Option<&'g str>)> for FeatureId<'g> {
-    fn from((package_id, feature): (&'g PackageId, Option<&'g str>)) -> Self {
-        FeatureId {
-            package_id,
-            feature,
-        }
-    }
-}
-
-impl<'g> From<FeatureId<'g>> for (PackageId, Option<String>) {
-    fn from(feature_id: FeatureId<'g>) -> Self {
-        (
-            feature_id.package_id().clone(),
-            feature_id.feature().map(|feature| feature.to_string()),
-        )
-    }
-}
-
-/// The `Display` impl prints out `{package id}/feature`, or `{package id}/[base]`.
+/// The `Display` impl prints out:
+///
+/// * `{package-id}/[base]` for base features.
+/// * `{package-id}/feature-name` for named features.
+/// * `{package-id}/dep:dep-name` for optional dependencies.
 ///
 /// ## Examples
 ///
@@ -475,19 +495,81 @@ impl<'g> From<FeatureId<'g>> for (PackageId, Option<String>) {
 /// let package_id = PackageId::new("region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)");
 ///
 /// assert_eq!(
-///     format!("{}", FeatureId::new(&package_id, "foo")),
+///     format!("{}", FeatureId::base(&package_id)),
+///     "region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)/[base]"
+/// );
+///
+/// assert_eq!(
+///     format!("{}", FeatureId::named(&package_id, "foo")),
 ///     "region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)/foo"
 /// );
 ///
 /// assert_eq!(
-///     format!("{}", FeatureId::base(&package_id)),
-///     "region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)/[base]"
+///     format!("{}", FeatureId::optional_dependency(&package_id, "bar")),
+///     "region 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)/dep:bar"
 /// );
 /// ```
 impl<'g> fmt::Display for FeatureId<'g> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let feature_name = self.feature.unwrap_or("[base]");
-        write!(f, "{}/{}", self.package_id, feature_name)
+        write!(f, "{}/{}", self.package_id, self.label)
+    }
+}
+
+/// A unique identifier for a feature within a specific package. Forms part of a [`FeatureId`].
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum FeatureLabel<'g> {
+    /// The "base" feature. Every package has one such feature.
+    Base,
+
+    /// This is a named feature in the `[features]` section, or an implicit feature that corresponds to
+    /// an optional dependency.
+    ///
+    /// For versions of Cargo prior to 1.60, optional dependencies always create implicit features
+    /// by the same name. For versions 1.60 and greater, optional dependencies may create implicit
+    /// features if the dependency doesn't exist with the name "dep" in it.
+    Named(&'g str),
+
+    /// This is an optional dependency.
+    OptionalDependency(&'g str),
+}
+
+impl<'g> FeatureLabel<'g> {
+    /// Returns the kind of feature this is.
+    ///
+    /// The kind of a feature is simply the enum variant without any associated data.
+    #[inline]
+    pub fn kind(self) -> FeatureKind {
+        match self {
+            Self::Base => FeatureKind::Base,
+            Self::Named(_) => FeatureKind::Named,
+            Self::OptionalDependency(_) => FeatureKind::OptionalDependency,
+        }
+    }
+}
+
+/// The `Display` impl for `FeatureLabel` prints out:
+///
+/// * `[base]` for base labels.
+/// * `feature-name` for optional dependencies.
+/// * `dep:dep-name` for named features.
+///
+/// ## Examples
+///
+/// ```
+/// use guppy::graph::feature::FeatureLabel;
+///
+/// assert_eq!(format!("{}", FeatureLabel::Base), "[base]");
+/// assert_eq!(format!("{}", FeatureLabel::Named("foo")), "foo");
+/// assert_eq!(format!("{}", FeatureLabel::OptionalDependency("bar")), "dep:bar");
+/// ```
+
+impl<'g> fmt::Display for FeatureLabel<'g> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Base => write!(f, "[base]"),
+            Self::Named(feature_name) => write!(f, "{}", feature_name),
+            Self::OptionalDependency(dep_name) => write!(f, "dep:{}", dep_name),
+        }
     }
 }
 
@@ -520,9 +602,9 @@ impl<'g> FeatureMetadata<'g> {
             .expect("valid package ID")
     }
 
-    /// Returns the type of this feature.
-    pub fn feature_type(&self) -> FeatureType {
-        self.inner.feature_type
+    /// Returns the label for this feature.
+    pub fn label(&self) -> FeatureLabel<'g> {
+        self.feature_id().label()
     }
 
     // ---
@@ -736,30 +818,14 @@ impl<'g> ConditionalLink<'g> {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(in crate::graph) struct FeatureNode {
     package_ix: NodeIndex<PackageIx>,
-    feature_idx: Option<usize>,
+    feature_idx: FeatureIndexInPackage,
 }
 
 impl FeatureNode {
     /// Returns a new feature node.
-    pub(in crate::graph) fn new(package_ix: NodeIndex<PackageIx>, feature_idx: usize) -> Self {
-        Self {
-            package_ix,
-            feature_idx: Some(feature_idx),
-        }
-    }
-
-    /// Returns a new feature node representing the base package with no features enabled.
-    pub(in crate::graph) fn base(package_ix: NodeIndex<PackageIx>) -> Self {
-        Self {
-            package_ix,
-            feature_idx: None,
-        }
-    }
-
-    /// Returns a new feature node, can also be the base.
-    pub(in crate::graph) fn new_opt(
+    pub(in crate::graph) fn new(
         package_ix: NodeIndex<PackageIx>,
-        feature_idx: Option<usize>,
+        feature_idx: FeatureIndexInPackage,
     ) -> Self {
         Self {
             package_ix,
@@ -767,23 +833,57 @@ impl FeatureNode {
         }
     }
 
+    /// Base feature node.
+    pub(in crate::graph) fn base(package_ix: NodeIndex<PackageIx>) -> Self {
+        Self {
+            package_ix,
+            feature_idx: FeatureIndexInPackage::Base,
+        }
+    }
+
+    pub(in crate::graph) fn optional_dep(package_ix: NodeIndex<PackageIx>, dep_idx: usize) -> Self {
+        Self {
+            package_ix,
+            feature_idx: FeatureIndexInPackage::OptionalDependency(dep_idx),
+        }
+    }
+
+    pub(in crate::graph) fn named_feature(
+        package_ix: NodeIndex<PackageIx>,
+        named_idx: usize,
+    ) -> Self {
+        Self {
+            package_ix,
+            feature_idx: FeatureIndexInPackage::Named(named_idx),
+        }
+    }
+
     fn from_id(feature_graph: &FeatureGraph<'_>, id: FeatureId<'_>) -> Option<Self> {
         let metadata = feature_graph.package_graph.metadata(id.package_id()).ok()?;
-        match id.feature() {
-            Some(feature_name) => Some(FeatureNode::new(
-                metadata.package_ix(),
-                metadata.get_feature_idx(feature_name)?,
-            )),
-            None => Some(FeatureNode::base(metadata.package_ix())),
-        }
+        Some(FeatureNode::new(
+            metadata.package_ix(),
+            metadata.get_feature_idx(id.label())?,
+        ))
     }
 
     pub(super) fn named_features(package: PackageMetadata<'_>) -> impl Iterator<Item = Self> + '_ {
         let package_ix = package.package_ix();
-        package.named_features_full().map(move |(n, _, _)| Self {
-            package_ix,
-            feature_idx: Some(n),
-        })
+        package
+            .named_features_full()
+            .map(move |(feature_idx, _, _)| Self {
+                package_ix,
+                feature_idx,
+            })
+    }
+
+    pub(super) fn optional_deps(package: PackageMetadata<'_>) -> impl Iterator<Item = Self> + '_ {
+        let package_ix = package.package_ix();
+        package
+            .optional_deps_full()
+            .map(move |(feature_idx, _)| Self {
+                package_ix,
+                feature_idx,
+            })
     }
 
     pub(in crate::graph) fn package_ix(&self) -> NodeIndex<PackageIx> {
@@ -843,18 +943,44 @@ impl ConditionalLinkImpl {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub(super) struct FeatureMetadataImpl {
     pub(super) feature_ix: NodeIndex<FeatureIx>,
-    pub(super) feature_type: FeatureType,
 }
 
-/// The type of a particular feature within a package.
+/// The kind of a particular feature within a package.
 ///
 /// Returned by `FeatureMetadata`.
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum FeatureType {
-    /// This is a named feature in the `[features]` section.
-    NamedFeature,
+pub enum FeatureKind {
+    /// The "base" feature. Every package has one such feature.
+    Base,
+
+    /// This is a named feature in the `[features]` section, or an implicit feature that corresponds to
+    /// an optional dependency.
+    ///
+    /// For versions of Cargo prior to 1.60, optional dependencies always create implicit features
+    /// by the same name. For versions 1.60 and greater, optional dependencies may create implicit
+    /// features if the dependency doesn't exist with the name "dep" in it.
+    Named,
+
     /// This is an optional dependency.
-    OptionalDep,
-    /// This is the "base" package with no features enabled.
-    BasePackage,
+    OptionalDependency,
+}
+
+impl FeatureKind {
+    /// Returns true if this is the base feature.
+    #[inline]
+    pub fn is_base(self) -> bool {
+        matches!(self, Self::Base)
+    }
+
+    /// Returns true if this is a named feature.
+    #[inline]
+    pub fn is_named(self) -> bool {
+        matches!(self, Self::Named)
+    }
+
+    /// Returns true if this is an optional dependency.
+    #[inline]
+    pub fn is_optional_dependency(self) -> bool {
+        matches!(self, Self::OptionalDependency)
+    }
 }

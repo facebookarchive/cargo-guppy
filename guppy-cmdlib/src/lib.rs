@@ -13,7 +13,7 @@ use color_eyre::eyre::Result;
 use guppy::{
     graph::{
         cargo::{CargoResolverVersion, InitialsPlatform},
-        feature::{feature_filter, FeatureSet, StandardFeatures},
+        feature::{named_feature_filter, FeatureSet, StandardFeatures},
         PackageGraph,
     },
     platform::{Platform, PlatformSpec, TargetFeatures},
@@ -74,7 +74,7 @@ impl PackagesAndFeatures {
         // TODO: support package/feature format
         // TODO: support feature name validation similar to cargo
         let mut feature_filter =
-            feature_filter(base_filter, self.features.iter().map(|s| s.as_str()));
+            named_feature_filter(base_filter, self.features.iter().map(|s| s.as_str()));
 
         Ok((
             package_set.to_feature_set(&mut feature_filter),

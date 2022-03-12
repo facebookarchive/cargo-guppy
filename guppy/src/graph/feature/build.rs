@@ -5,17 +5,18 @@ use crate::{
     errors::{FeatureBuildStage, FeatureGraphWarning},
     graph::{
         feature::{
-            ConditionalLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureMetadataImpl, FeatureNode,
-            FeatureType,
+            ConditionalLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureLabel, FeatureMetadataImpl,
+            FeatureNode,
         },
-        DepRequiredOrOptional, DependencyReq, FeatureIx, PackageGraph, PackageIx, PackageLink,
-        PackageMetadata,
+        DepRequiredOrOptional, DependencyReq, FeatureIndexInPackage, FeatureIx, NamedFeatureDep,
+        PackageGraph, PackageIx, PackageLink, PackageMetadata,
     },
     platform::PlatformStatusImpl,
 };
 use cargo_metadata::DependencyKind;
 use once_cell::sync::OnceCell;
 use petgraph::prelude::*;
+use smallvec::SmallVec;
 use std::{collections::HashMap, iter};
 
 #[derive(Debug)]
@@ -45,22 +46,15 @@ impl FeatureGraphBuildState {
     /// feature to the base package.
     pub(super) fn add_nodes(&mut self, package: PackageMetadata<'_>) {
         let base_node = FeatureNode::base(package.package_ix());
-        let base_ix = self.add_node(base_node, FeatureType::BasePackage);
+        let base_ix = self.add_node(base_node);
         self.base_ixs.push(base_ix);
-        FeatureNode::named_features(package).for_each(|feature_node| {
-            let feature_ix = self.add_node(feature_node, FeatureType::NamedFeature);
-            self.graph
-                .update_edge(feature_ix, base_ix, FeatureEdge::FeatureToBase);
-        });
-
-        package.optional_deps_full().for_each(|(n, _)| {
-            let dep_idx = self.add_node(
-                FeatureNode::new(package.package_ix(), n),
-                FeatureType::OptionalDep,
-            );
-            self.graph
-                .update_edge(dep_idx, base_ix, FeatureEdge::FeatureToBase);
-        });
+        FeatureNode::named_features(package)
+            .chain(FeatureNode::optional_deps(package))
+            .for_each(|feature_node| {
+                let feature_ix = self.add_node(feature_node);
+                self.graph
+                    .update_edge(feature_ix, base_ix, FeatureEdge::FeatureToBase);
+            });
     }
 
     /// Mark the end of adding nodes.
@@ -81,9 +75,9 @@ impl FeatureGraphBuildState {
                 let to_nodes_edges: Vec<_> = feature_deps
                     .iter()
                     .flat_map(|feature_dep| {
-                        self.edges_for_named_feature_dep(
+                        self.nodes_for_named_feature_dep(
                             metadata,
-                            from_feature,
+                            FeatureLabel::Named(from_feature),
                             feature_dep,
                             &dep_name_to_link,
                         )
@@ -98,87 +92,106 @@ impl FeatureGraphBuildState {
             })
     }
 
-    fn edges_for_named_feature_dep(
+    fn nodes_for_named_feature_dep(
         &mut self,
         metadata: PackageMetadata<'_>,
-        from_feature: &str,
-        feature_dep: &str,
+        from_label: FeatureLabel<'_>,
+        feature_dep: &NamedFeatureDep,
         dep_name_to_link: &HashMap<&str, PackageLink>,
-    ) -> impl Iterator<Item = (FeatureNode, FeatureEdge)> {
-        let (dep_name, to_feature) = Self::split_feature_dep(feature_dep);
-        let (cross_node_edge, same_node_edge) = match dep_name {
-            Some(dep_name) => {
-                if let Some(link) = dep_name_to_link.get(dep_name) {
-                    // dependency from (`main`, `a`) to (`dep, `foo`)
-                    let cross_node_edge = self
-                        .make_named_feature_node(
-                            &metadata,
-                            from_feature,
-                            &link.to(),
-                            to_feature,
-                            true,
-                        )
-                        .map(|cross_node| {
-                            // This is a cross-package link. The platform-specific
-                            // requirements still apply, so grab them from the
-                            // PackageLink.
-                            (cross_node, Self::make_named_feature_cross_edge(link))
-                        });
+    ) -> SmallVec<[(FeatureNode, FeatureEdge); 3]> {
+        let mut nodes_edges: SmallVec<[(FeatureNode, FeatureEdge); 3]> = SmallVec::new();
+
+        match feature_dep {
+            NamedFeatureDep::DependencyNamedFeature {
+                dep_name,
+                feature,
+                weak,
+            } => {
+                if let Some(link) = dep_name_to_link.get(dep_name.as_ref()) {
+                    // Dependency from (`main`, `a`) to (`dep, `foo`)
+                    if let Some(cross_node) = self.make_named_feature_node(
+                        &metadata,
+                        from_label,
+                        &link.to(),
+                        FeatureLabel::Named(feature.as_ref()),
+                        true,
+                    ) {
+                        // This is a cross-package link. The platform-specific
+                        // requirements still apply, so grab them from the
+                        // PackageLink.
+                        nodes_edges.push((cross_node, Self::make_named_feature_cross_edge(link)));
+                    };
 
                     // If the package is present as an optional dependency, it is
                     // implicitly activated by the feature:
-                    // from (`main`, `a`) to (`main`, `dep`)
-                    let same_node_edge = self
-                        .make_named_feature_node(
+                    // from (`main`, `a`) to (`main`, `dep:dep`)
+                    if let Some(same_node) = self.make_named_feature_node(
+                        &metadata,
+                        from_label,
+                        &metadata,
+                        FeatureLabel::OptionalDependency(dep_name),
+                        // Don't warn if this dep isn't optional.
+                        false,
+                    ) {
+                        nodes_edges.push((same_node, Self::make_named_feature_cross_edge(link)));
+                    }
+
+                    // Finally, (`main`, `a`) to (`main`, `dep`) -- if this is a non-weak dependency
+                    // and a named feature by this name is present, it also gets activated (even if
+                    // the named feature has no relation to the optional dependency).
+                    if !*weak {
+                        if let Some(same_named_feature_node) = self.make_named_feature_node(
                             &metadata,
-                            from_feature,
+                            from_label,
                             &metadata,
-                            dep_name,
+                            FeatureLabel::Named(dep_name),
                             // Don't warn if this dep isn't optional.
                             false,
-                        )
-                        .map(|same_node| (same_node, Self::make_named_feature_cross_edge(link)));
-                    (cross_node_edge, same_node_edge)
-                } else {
-                    // The destination package was unknown to the graph.
-                    // XXX may need to be revisited if we start modeling unresolved
-                    // dependencies.
-                    (None, None)
+                        ) {
+                            nodes_edges.push((
+                                same_named_feature_node,
+                                Self::make_named_feature_cross_edge(link),
+                            ));
+                        }
+                    }
                 }
             }
-            None => {
-                let same_node_edge = self
-                    .make_named_feature_node(&metadata, from_feature, &metadata, to_feature, true)
-                    .map(|same_node| (same_node, FeatureEdge::FeatureDependency));
-                (None, same_node_edge)
+            NamedFeatureDep::NamedFeature(feature_name) => {
+                if let Some(same_node) = self.make_named_feature_node(
+                    &metadata,
+                    from_label,
+                    &metadata,
+                    FeatureLabel::Named(feature_name.as_ref()),
+                    true,
+                ) {
+                    nodes_edges.push((same_node, FeatureEdge::FeatureDependency));
+                }
+            }
+            NamedFeatureDep::OptionalDependency(dep_name) => {
+                if let Some(same_node) = self.make_named_feature_node(
+                    &metadata,
+                    from_label,
+                    &metadata,
+                    FeatureLabel::OptionalDependency(dep_name.as_ref()),
+                    true,
+                ) {
+                    nodes_edges.push((same_node, FeatureEdge::FeatureDependency));
+                }
             }
         };
-        cross_node_edge.into_iter().chain(same_node_edge)
-    }
 
-    /// Split a feature dep into package and feature names.
-    ///
-    /// "foo" -> (None, "foo")
-    /// "dep/foo" -> (Some("dep"), "foo")
-    fn split_feature_dep(feature_dep: &str) -> (Option<&str>, &str) {
-        let mut rsplit = feature_dep.rsplitn(2, '/');
-        let to_feature_name = rsplit
-            .next()
-            .expect("rsplitn should return at least one element");
-        let dep_name = rsplit.next();
-
-        (dep_name, to_feature_name)
+        nodes_edges
     }
 
     fn make_named_feature_node(
         &mut self,
         from_package: &PackageMetadata<'_>,
-        from_feature: &str,
+        from_label: FeatureLabel<'_>,
         to_package: &PackageMetadata<'_>,
-        to_feature: &str,
+        to_label: FeatureLabel<'_>,
         warn: bool,
     ) -> Option<FeatureNode> {
-        match to_package.get_feature_idx(to_feature) {
+        match to_package.get_feature_idx(to_label) {
             Some(idx) => Some(FeatureNode::new(to_package.package_ix(), idx)),
             None => {
                 // It is possible to specify a feature that doesn't actually exist, and cargo will
@@ -193,10 +206,10 @@ impl FeatureGraphBuildState {
                     self.warnings.push(FeatureGraphWarning::MissingFeature {
                         stage: FeatureBuildStage::AddNamedFeatureEdges {
                             package_id: from_package.id().clone(),
-                            from_feature: from_feature.to_string(),
+                            from_feature: from_label.to_string(),
                         },
                         package_id: to_package.id().clone(),
-                        feature_name: to_feature.to_string(),
+                        feature_name: to_label.to_string(),
                     });
                 }
                 None
@@ -295,31 +308,23 @@ impl FeatureGraphBuildState {
             // package metadata.
             let from_node = FeatureNode::new(
                 from.package_ix(),
-                from.get_feature_idx(link.dep_name()).unwrap_or_else(|| {
-                    panic!(
+                from.get_feature_idx(FeatureLabel::OptionalDependency(link.dep_name()))
+                    .unwrap_or_else(|| {
+                        panic!(
                         "while adding feature edges, for package '{}', optional dep '{}' missing",
                         from.id(),
                         link.dep_name(),
                     );
-                }),
+                    }),
             );
             self.add_edges(from_node, optional_req.finish());
         }
     }
 
-    fn add_node(
-        &mut self,
-        feature_id: FeatureNode,
-        feature_type: FeatureType,
-    ) -> NodeIndex<FeatureIx> {
+    fn add_node(&mut self, feature_id: FeatureNode) -> NodeIndex<FeatureIx> {
         let feature_ix = self.graph.add_node(feature_id);
-        self.map.insert(
-            feature_id,
-            FeatureMetadataImpl {
-                feature_ix,
-                feature_type,
-            },
-        );
+        self.map
+            .insert(feature_id, FeatureMetadataImpl { feature_ix });
         feature_ix
     }
 
@@ -402,9 +407,9 @@ struct FeatureReq<'g> {
     link: PackageLink<'g>,
     to: PackageMetadata<'g>,
     edge_ix: EdgeIndex<PackageIx>,
-    to_default_idx: Option<usize>,
+    to_default_idx: FeatureIndexInPackage,
     // This will contain any build states that aren't empty.
-    features: HashMap<Option<usize>, DependencyBuildState>,
+    features: HashMap<FeatureIndexInPackage, DependencyBuildState>,
 }
 
 impl<'g> FeatureReq<'g> {
@@ -414,7 +419,9 @@ impl<'g> FeatureReq<'g> {
             link,
             to,
             edge_ix: link.edge_ix(),
-            to_default_idx: to.get_feature_idx("default"),
+            to_default_idx: to
+                .get_feature_idx(FeatureLabel::Named("default"))
+                .unwrap_or(FeatureIndexInPackage::Base),
             features: HashMap::new(),
         }
     }
@@ -431,14 +438,14 @@ impl<'g> FeatureReq<'g> {
         warnings: &mut Vec<FeatureGraphWarning>,
     ) {
         // Base feature.
-        self.extend(None, dep_kind, &req.build_if);
+        self.extend(FeatureIndexInPackage::Base, dep_kind, &req.build_if);
         // Default feature (or base if it isn't present).
         self.extend(self.to_default_idx, dep_kind, &req.default_features_if);
 
         for (feature, status) in &req.feature_targets {
-            match self.to.get_feature_idx(feature) {
+            match self.to.get_feature_idx(FeatureLabel::Named(feature)) {
                 Some(feature_idx) => {
-                    self.extend(Some(feature_idx), dep_kind, status);
+                    self.extend(feature_idx, dep_kind, status);
                 }
                 None => {
                     // The destination feature is missing -- this is accepted by cargo
@@ -458,7 +465,7 @@ impl<'g> FeatureReq<'g> {
 
     fn extend(
         &mut self,
-        feature_idx: Option<usize>,
+        feature_idx: FeatureIndexInPackage,
         dep_kind: DependencyKind,
         status: &PlatformStatusImpl,
     ) {
@@ -479,7 +486,7 @@ impl<'g> FeatureReq<'g> {
                 // extend ensures that the build states aren't empty. Double-check that.
                 debug_assert!(!build_state.is_empty(), "build states are always non-empty");
                 (
-                    FeatureNode::new_opt(package_ix, feature_idx),
+                    FeatureNode::new(package_ix, feature_idx),
                     build_state.finish(),
                 )
             })

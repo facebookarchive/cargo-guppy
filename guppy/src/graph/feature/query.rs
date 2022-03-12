@@ -4,7 +4,9 @@
 use crate::{
     debug_ignore::DebugIgnore,
     graph::{
-        feature::{ConditionalLink, FeatureGraph, FeatureId, FeatureMetadata, FeatureSet},
+        feature::{
+            ConditionalLink, FeatureGraph, FeatureId, FeatureLabel, FeatureMetadata, FeatureSet,
+        },
         query_core::QueryParams,
         DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata,
     },
@@ -130,7 +132,7 @@ impl<'g> FeatureFilter<'g> for StandardFeatures {
 /// package.
 ///
 /// For filtering by feature IDs, use `feature_id_filter`.
-pub fn feature_filter<'g: 'a, 'a>(
+pub fn named_feature_filter<'g: 'a, 'a>(
     base: impl FeatureFilter<'g> + 'a,
     features: impl IntoIterator<Item = &'a str>,
 ) -> impl FeatureFilter<'g> + 'a {
@@ -140,9 +142,9 @@ pub fn feature_filter<'g: 'a, 'a>(
         if base.accept(feature_graph, feature_id) {
             return true;
         }
-        match feature_id.feature() {
-            Some(feature) => features.contains(feature),
-            None => {
+        match feature_id.label() {
+            FeatureLabel::Named(feature) => features.contains(feature),
+            _ => {
                 // This is the base feature. Assume that it has already been selected by the base
                 // filter.
                 false

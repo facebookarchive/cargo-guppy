@@ -6,7 +6,7 @@ use crate::{
         cargo::{
             CargoIntermediateSet, CargoOptions, CargoResolverVersion, CargoSet, InitialsPlatform,
         },
-        feature::{ConditionalLink, FeatureQuery, FeatureSet, StandardFeatures},
+        feature::{ConditionalLink, FeatureLabel, FeatureQuery, FeatureSet, StandardFeatures},
         DependencyDirection, PackageGraph, PackageIx, PackageLink, PackageSet,
     },
     platform::{EnabledTernary, PlatformSpec},
@@ -157,7 +157,7 @@ impl<'a> CargoSetBuildState<'a> {
             // Check the complete set to figure out whether we look at required_on or
             // enabled_on.
             let consider_optional = feature_set
-                .contains((from.id(), link.dep_name()))
+                .contains((from.id(), FeatureLabel::OptionalDependency(link.dep_name())))
                 .unwrap_or_else(|_| {
                     // If the feature ID isn't present, it means the dependency wasn't declared
                     // as optional. In that case the value doesn't matter.
