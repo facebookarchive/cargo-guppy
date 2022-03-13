@@ -4,10 +4,11 @@
 use crate::{
     debug_ignore::DebugIgnore,
     graph::{
-        query_core::{all_visit_map, reachable_map, reachable_map_filtered, QueryParams},
+        query_core::{all_visit_map, reachable_map, reachable_map_buffered_filter, QueryParams},
         DependencyDirection, GraphSpec,
     },
     petgraph_support::{
+        dfs::{BufferedEdgeFilter, ReversedBufferedFilter, SimpleEdgeFilterFn},
         scc::{NodeIter, Sccs},
         walk::EdgeDfs,
     },
@@ -67,15 +68,40 @@ impl<G: GraphSpec> ResolveCore<G> {
     pub(super) fn with_edge_filter<'g>(
         graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
         params: QueryParams<G>,
-        mut edge_filter: impl FnMut(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
+        edge_filter: impl FnMut(EdgeReference<'g, G::Edge, G::Ix>) -> bool,
+    ) -> Self {
+        let (included, len) = match params {
+            QueryParams::Forward(initials) => reachable_map_buffered_filter(
+                graph,
+                SimpleEdgeFilterFn(edge_filter),
+                initials.into_inner(),
+            ),
+            QueryParams::Reverse(initials) => reachable_map_buffered_filter(
+                Reversed(graph),
+                ReversedBufferedFilter(SimpleEdgeFilterFn(edge_filter)),
+                initials.into_inner(),
+            ),
+        };
+        Self {
+            included,
+            len,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// The arguments to the edge filter are the (source, target, edge ix), unreversed.
+    pub(super) fn with_buffered_edge_filter<'g>(
+        graph: &'g Graph<G::Node, G::Edge, Directed, G::Ix>,
+        params: QueryParams<G>,
+        filter: impl BufferedEdgeFilter<&'g Graph<G::Node, G::Edge, Directed, G::Ix>>,
     ) -> Self {
         let (included, len) = match params {
             QueryParams::Forward(initials) => {
-                reachable_map_filtered(graph, edge_filter, initials.into_inner())
+                reachable_map_buffered_filter(graph, filter, initials.into_inner())
             }
-            QueryParams::Reverse(initials) => reachable_map_filtered(
+            QueryParams::Reverse(initials) => reachable_map_buffered_filter(
                 Reversed(graph),
-                |edge_ref| edge_filter(edge_ref.into_unreversed()),
+                ReversedBufferedFilter(filter),
                 initials.into_inner(),
             ),
         };

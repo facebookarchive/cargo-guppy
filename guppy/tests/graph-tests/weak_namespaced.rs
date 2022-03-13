@@ -7,12 +7,8 @@ use fixtures::{
     package_id,
 };
 use guppy::graph::{
-    cargo::CargoSet,
-    feature::{named_feature_filter, FeatureLabel, StandardFeatures},
-};
-use guppy::graph::{
-    cargo::{CargoOptions, CargoResolverVersion},
-    feature::FeatureSet,
+    cargo::{CargoOptions, CargoResolverVersion, CargoSet},
+    feature::{named_feature_filter, FeatureLabel, FeatureSet, StandardFeatures},
 };
 
 #[test]

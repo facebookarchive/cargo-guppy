@@ -3,7 +3,7 @@
 
 use crate::{
     graph::{DependencyDirection, GraphSpec},
-    petgraph_support::dfs::dfs_next_filtered,
+    petgraph_support::dfs::{dfs_next_buffered_filter, BufferedEdgeFilter},
     sorted_set::SortedSet,
 };
 use fixedbitset::FixedBitSet;
@@ -103,9 +103,9 @@ where
     (reachable, len)
 }
 
-pub(super) fn reachable_map_filtered<G, Ix>(
+pub(super) fn reachable_map_buffered_filter<G, Ix>(
     graph: G,
-    mut edge_filter: impl FnMut(G::EdgeRef) -> bool,
+    mut filter: impl BufferedEdgeFilter<G>,
     roots: impl Into<Vec<G::NodeId>>,
 ) -> (FixedBitSet, usize)
 where
@@ -116,7 +116,7 @@ where
     // This is DfsPostOrder since that handles cycles while a regular DFS doesn't.
     let mut dfs = DfsPostOrder::empty(graph);
     dfs.stack = roots.into();
-    while dfs_next_filtered(&mut dfs, graph, &mut edge_filter).is_some() {}
+    while dfs_next_buffered_filter(&mut dfs, graph, &mut filter).is_some() {}
 
     // Once the DFS is done, the discovered map (or the finished map) is what's reachable.
     debug_assert_eq!(

@@ -5,7 +5,10 @@ use crate::{
     debug_ignore::DebugIgnore,
     errors::FeatureGraphWarning,
     graph::{
-        feature::{build::FeatureGraphBuildState, Cycles, FeatureFilter, FeatureList},
+        feature::{
+            build::{FeatureGraphBuildState, FeaturePetgraph},
+            Cycles, FeatureFilter, FeatureList,
+        },
         DependencyDirection, FeatureIndexInPackage, FeatureIx, PackageGraph, PackageIx,
         PackageLink, PackageMetadata,
     },
@@ -266,7 +269,7 @@ impl<'g> FeatureGraph<'g> {
         self.inner.map.get(node)
     }
 
-    pub(super) fn dep_graph(&self) -> &'g Graph<FeatureNode, FeatureEdge, Directed, FeatureIx> {
+    pub(super) fn dep_graph(&self) -> &'g FeaturePetgraph {
         &self.inner.graph
     }
 
@@ -625,7 +628,7 @@ impl<'g> FeatureMetadata<'g> {
 /// A graph representing every possible feature of every package, and the connections between them.
 #[derive(Clone, Debug)]
 pub(in crate::graph) struct FeatureGraphImpl {
-    pub(super) graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
+    pub(super) graph: FeaturePetgraph,
     // base ixs consists of the base (start) feature indexes for each package.
     pub(super) base_ixs: Vec<NodeIndex<FeatureIx>>,
     pub(super) map: HashMap<FeatureNode, FeatureMetadataImpl>,
