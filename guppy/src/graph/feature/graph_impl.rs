@@ -7,7 +7,7 @@ use crate::{
     graph::{
         feature::{
             build::{FeatureGraphBuildState, FeaturePetgraph},
-            Cycles, FeatureFilter, FeatureList, WeakIndex,
+            Cycles, FeatureFilter, FeatureList, WeakDependencies, WeakIndex,
         },
         DependencyDirection, FeatureIndexInPackage, FeatureIx, PackageGraph, PackageIx,
         PackageLink, PackageMetadata,
@@ -281,17 +281,20 @@ impl<'g> FeatureGraph<'g> {
         target_ix: NodeIndex<FeatureIx>,
         edge_ix: EdgeIndex<FeatureIx>,
         edge: Option<&'g FeatureEdge>,
-    ) -> Option<ConditionalLink<'g>> {
-        match edge.unwrap_or_else(|| &self.dep_graph()[edge_ix]) {
+    ) -> Option<(ConditionalLink<'g>, Option<WeakIndex>)> {
+        let edge = edge.unwrap_or_else(|| &self.dep_graph()[edge_ix]);
+
+        match edge {
             FeatureEdge::NamedFeature | FeatureEdge::FeatureToBase => None,
-            FeatureEdge::DependenciesSection(link) => Some(ConditionalLink::new(
-                *self, source_ix, target_ix, edge_ix, link,
-            )),
-            FeatureEdge::NamedFeatureWithSlash { link, .. } => {
-                // TODO: handle weak
-                Some(ConditionalLink::new(
-                    *self, source_ix, target_ix, edge_ix, link,
-                ))
+            FeatureEdge::DependenciesSection(link) => {
+                let link = ConditionalLink::new(*self, source_ix, target_ix, edge_ix, link);
+                // Dependency section conditional links are always non-weak.
+                let weak_index = None;
+                Some((link, weak_index))
+            }
+            FeatureEdge::NamedFeatureWithSlash { link, weak_index } => {
+                let link = ConditionalLink::new(*self, source_ix, target_ix, edge_ix, link);
+                Some((link, *weak_index))
             }
         }
     }
@@ -645,6 +648,7 @@ pub(in crate::graph) struct FeatureGraphImpl {
     pub(super) warnings: Vec<FeatureGraphWarning>,
     // The strongly connected components of the feature graph. Computed on demand.
     pub(super) sccs: OnceCell<Sccs<FeatureIx>>,
+    pub(super) weak: WeakDependencies,
 }
 
 impl FeatureGraphImpl {
@@ -815,7 +819,7 @@ impl<'g> ConditionalLink<'g> {
     // ---
 
     #[allow(dead_code)]
-    pub(self) fn edge_ix(&self) -> EdgeIndex<FeatureIx> {
+    pub(super) fn edge_ix(&self) -> EdgeIndex<FeatureIx> {
         self.edge_ix
     }
 
@@ -932,7 +936,6 @@ pub enum FeatureEdge {
     /// ```
     DependenciesSection(ConditionalLinkImpl),
 
-    ///
     /// This edge is from a feature depending on other features within the same package:
     ///
     /// ```toml
