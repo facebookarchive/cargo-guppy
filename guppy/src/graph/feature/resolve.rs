@@ -6,18 +6,21 @@ use crate::{
     graph::{
         cargo::{CargoOptions, CargoSet},
         feature::{
-            ConditionalLink, FeatureEdge, FeatureGraph, FeatureId, FeatureList, FeatureMetadata,
-            FeatureQuery, FeatureResolver,
+            build::FeaturePetgraph, ConditionalLink, FeatureEdge, FeatureGraph, FeatureId,
+            FeatureList, FeatureMetadata, FeatureQuery, FeatureResolver,
         },
         resolve_core::ResolveCore,
         DependencyDirection, FeatureGraphSpec, FeatureIx, PackageIx, PackageMetadata, PackageSet,
     },
-    petgraph_support::IxBitSet,
+    petgraph_support::{dfs::BufferedEdgeFilterFn, IxBitSet},
     sorted_set::SortedSet,
     Error, PackageId,
 };
 use fixedbitset::FixedBitSet;
-use petgraph::{graph::NodeIndex, visit::EdgeRef};
+use petgraph::{
+    graph::NodeIndex,
+    visit::{EdgeRef, IntoEdgeReferences},
+};
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.
@@ -84,23 +87,31 @@ impl<'g> FeatureSet<'g> {
     ) -> Self {
         let graph = query.graph;
         let params = query.params.clone();
-        Self {
-            graph,
-            core: ResolveCore::with_edge_filter(graph.dep_graph(), params, |edge| {
-                match graph.edge_to_conditional_link(
-                    edge.source(),
-                    edge.target(),
-                    edge.id(),
-                    Some(edge.weight()),
-                ) {
-                    Some(conditional_link) => resolver.accept(&query, conditional_link),
-                    None => {
-                        // Feature links within the same package are always followed.
-                        true
+
+        let core = ResolveCore::with_buffered_edge_filter(
+            graph.dep_graph(),
+            params,
+            BufferedEdgeFilterFn(
+                |edge: <&'g FeaturePetgraph as IntoEdgeReferences>::EdgeRef| {
+                    match graph.edge_to_conditional_link(
+                        edge.source(),
+                        edge.target(),
+                        edge.id(),
+                        Some(edge.weight()),
+                    ) {
+                        Some(conditional_link) => {
+                            resolver.accept(&query, conditional_link).then(|| edge)
+                        }
+                        None => {
+                            // Feature links within the same package are always followed.
+                            Some(edge)
+                        }
                     }
-                }
-            }),
-        }
+                },
+            ),
+        );
+
+        Self { graph, core }
     }
 
     #[allow(dead_code)]

@@ -19,9 +19,11 @@ use petgraph::prelude::*;
 use smallvec::SmallVec;
 use std::{collections::HashMap, iter};
 
+pub(super) type FeaturePetgraph = Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>;
+
 #[derive(Debug)]
 pub(super) struct FeatureGraphBuildState {
-    graph: Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>,
+    graph: FeaturePetgraph,
     // Map from package ixs to the base (first) feature for each package.
     base_ixs: Vec<NodeIndex<FeatureIx>>,
     map: HashMap<FeatureNode, FeatureMetadataImpl>,
