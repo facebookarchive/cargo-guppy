@@ -6,7 +6,7 @@ use crate::{
     graph::{
         cargo::{CargoOptions, CargoSet},
         feature::{
-            build::FeaturePetgraph, ConditionalLink, FeatureEdge, FeatureGraph, FeatureId,
+            build::FeatureEdgeReference, ConditionalLink, FeatureEdge, FeatureGraph, FeatureId,
             FeatureList, FeatureMetadata, FeatureQuery, FeatureResolver,
         },
         resolve_core::ResolveCore,
@@ -17,10 +17,8 @@ use crate::{
     Error, PackageId,
 };
 use fixedbitset::FixedBitSet;
-use petgraph::{
-    graph::NodeIndex,
-    visit::{EdgeRef, IntoEdgeReferences},
-};
+use itertools::Either;
+use petgraph::{graph::NodeIndex, visit::EdgeRef};
 
 impl<'g> FeatureGraph<'g> {
     /// Creates a new `FeatureSet` consisting of all members of this feature graph.
@@ -88,27 +86,32 @@ impl<'g> FeatureSet<'g> {
         let graph = query.graph;
         let params = query.params.clone();
 
+        // State used by the callback below.
+        let mut buffer_states = graph
+            .inner
+            .weak
+            .new_buffer_states(|link| resolver.accept(&query, link));
+
+        let filter_fn = |edge_ref: FeatureEdgeReference<'g>| {
+            match graph.edge_to_conditional_link(
+                edge_ref.source(),
+                edge_ref.target(),
+                edge_ref.id(),
+                Some(edge_ref.weight()),
+            ) {
+                Some((link, weak_index)) => buffer_states.track(edge_ref, link, weak_index),
+                None => {
+                    // Feature links within the same package are always followed.
+                    Either::Left(Some(edge_ref))
+                }
+            }
+            .into_iter()
+        };
+
         let core = ResolveCore::with_buffered_edge_filter(
             graph.dep_graph(),
             params,
-            BufferedEdgeFilterFn(
-                |edge: <&'g FeaturePetgraph as IntoEdgeReferences>::EdgeRef| {
-                    match graph.edge_to_conditional_link(
-                        edge.source(),
-                        edge.target(),
-                        edge.id(),
-                        Some(edge.weight()),
-                    ) {
-                        Some(conditional_link) => {
-                            resolver.accept(&query, conditional_link).then(|| edge)
-                        }
-                        None => {
-                            // Feature links within the same package are always followed.
-                            Some(edge)
-                        }
-                    }
-                },
-            ),
+            BufferedEdgeFilterFn(filter_fn),
         );
 
         Self { graph, core }
@@ -515,7 +518,9 @@ impl<'g> FeatureSet<'g> {
         self.core
             .links(graph.dep_graph(), graph.sccs(), direction)
             .filter_map(move |(source_ix, target_ix, edge_ix)| {
-                graph.edge_to_conditional_link(source_ix, target_ix, edge_ix, None)
+                graph
+                    .edge_to_conditional_link(source_ix, target_ix, edge_ix, None)
+                    .map(|(link, _)| link)
             })
     }
 

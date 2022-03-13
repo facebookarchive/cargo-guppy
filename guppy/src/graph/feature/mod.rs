@@ -17,6 +17,7 @@ mod query;
 mod resolve;
 mod weak;
 
+pub(self) use build::*;
 pub use cycles::*;
 pub use feature_list::FeatureList;
 pub use graph_impl::*;

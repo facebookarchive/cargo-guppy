@@ -15,11 +15,12 @@ use crate::{
 };
 use cargo_metadata::DependencyKind;
 use once_cell::sync::OnceCell;
-use petgraph::prelude::*;
+use petgraph::{prelude::*, visit::IntoEdgeReferences};
 use smallvec::SmallVec;
 use std::{collections::HashMap, iter};
 
 pub(super) type FeaturePetgraph = Graph<FeatureNode, FeatureEdge, Directed, FeatureIx>;
+pub(super) type FeatureEdgeReference<'g> = <&'g FeaturePetgraph as IntoEdgeReferences>::EdgeRef;
 
 #[derive(Debug)]
 pub(super) struct FeatureGraphBuildState {
@@ -112,10 +113,7 @@ impl FeatureGraphBuildState {
                 weak,
             } => {
                 if let Some(link) = dep_name_to_link.get(dep_name.as_ref()) {
-                    let weak_ix = weak.then(|| {
-                        self.weak
-                            .insert(link.from().package_ix(), link.to().package_ix())
-                    });
+                    let weak_index = weak.then(|| self.weak.insert(link.edge_ix()));
 
                     // Dependency from (`main`, `a`) to (`dep, `foo`)
                     if let Some(cross_node) = self.make_named_feature_node(
@@ -130,7 +128,7 @@ impl FeatureGraphBuildState {
                         // PackageLink.
                         nodes_edges.push((
                             cross_node,
-                            Self::make_named_feature_cross_edge(link, weak_ix),
+                            Self::make_named_feature_cross_edge(link, weak_index),
                         ));
                     };
 
@@ -147,7 +145,7 @@ impl FeatureGraphBuildState {
                     ) {
                         nodes_edges.push((
                             same_node,
-                            Self::make_named_feature_cross_edge(link, weak_ix),
+                            Self::make_named_feature_cross_edge(link, weak_index),
                         ));
                     }
 
@@ -241,8 +239,8 @@ impl FeatureGraphBuildState {
     ///
     /// (a link (`from`, `a`) to (`dep`, `foo`) is created.
     ///
-    /// If `dep` is optional, the edge (`from`, `a`) to (`from`, `dep`) is also a `CrossPackage`
-    /// edge.
+    /// If `dep` is optional, the edge (`from`, `a`) to (`from`, `dep`) is also a
+    /// `NamedFeatureWithSlash` edge.
     fn make_named_feature_cross_edge(
         link: &PackageLink<'_>,
         weak_index: Option<WeakIndex>,
@@ -442,6 +440,7 @@ impl FeatureGraphBuildState {
             map: self.map,
             warnings: self.warnings,
             sccs: OnceCell::new(),
+            weak: self.weak,
         }
     }
 }

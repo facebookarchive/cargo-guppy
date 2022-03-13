@@ -109,6 +109,8 @@ pub static METADATA_WEAK_NAMESPACED_SMALLVEC: &str =
     "smallvec 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)";
 pub static METADATA_WEAK_NAMESPACED_ARRAYVEC: &str =
     "arrayvec 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)";
+pub static METADATA_WEAK_NAMESPACED_TINYVEC: &str =
+    "tinyvec 1.5.1 (registry+https://github.com/rust-lang/crates.io-index)";
 
 pub static METADATA_LIBRA_PATH: &str = "../large/metadata_libra.json";
 pub static METADATA_LIBRA_ADMISSION_CONTROL_SERVICE: &str =
