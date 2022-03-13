@@ -6,7 +6,7 @@ use crate::{
     graph::{
         feature::{
             ConditionalLinkImpl, FeatureEdge, FeatureGraphImpl, FeatureLabel, FeatureMetadataImpl,
-            FeatureNode,
+            FeatureNode, WeakDependencies, WeakIndex,
         },
         DepRequiredOrOptional, DependencyReq, FeatureIndexInPackage, FeatureIx, NamedFeatureDep,
         PackageGraph, PackageIx, PackageLink, PackageMetadata,
@@ -27,6 +27,7 @@ pub(super) struct FeatureGraphBuildState {
     // Map from package ixs to the base (first) feature for each package.
     base_ixs: Vec<NodeIndex<FeatureIx>>,
     map: HashMap<FeatureNode, FeatureMetadataImpl>,
+    weak: WeakDependencies,
     warnings: Vec<FeatureGraphWarning>,
 }
 
@@ -40,6 +41,7 @@ impl FeatureGraphBuildState {
             // the end.
             base_ixs: Vec::with_capacity(package_count + 1),
             map: HashMap::with_capacity(package_count),
+            weak: WeakDependencies::new(),
             warnings: vec![],
         }
     }
@@ -110,6 +112,11 @@ impl FeatureGraphBuildState {
                 weak,
             } => {
                 if let Some(link) = dep_name_to_link.get(dep_name.as_ref()) {
+                    let weak_ix = weak.then(|| {
+                        self.weak
+                            .insert(link.from().package_ix(), link.to().package_ix())
+                    });
+
                     // Dependency from (`main`, `a`) to (`dep, `foo`)
                     if let Some(cross_node) = self.make_named_feature_node(
                         &metadata,
@@ -121,7 +128,10 @@ impl FeatureGraphBuildState {
                         // This is a cross-package link. The platform-specific
                         // requirements still apply, so grab them from the
                         // PackageLink.
-                        nodes_edges.push((cross_node, Self::make_named_feature_cross_edge(link)));
+                        nodes_edges.push((
+                            cross_node,
+                            Self::make_named_feature_cross_edge(link, weak_ix),
+                        ));
                     };
 
                     // If the package is present as an optional dependency, it is
@@ -135,7 +145,10 @@ impl FeatureGraphBuildState {
                         // Don't warn if this dep isn't optional.
                         false,
                     ) {
-                        nodes_edges.push((same_node, Self::make_named_feature_cross_edge(link)));
+                        nodes_edges.push((
+                            same_node,
+                            Self::make_named_feature_cross_edge(link, weak_ix),
+                        ));
                     }
 
                     // Finally, (`main`, `a`) to (`main`, `dep`) -- if this is a non-weak dependency
@@ -152,7 +165,7 @@ impl FeatureGraphBuildState {
                         ) {
                             nodes_edges.push((
                                 same_named_feature_node,
-                                Self::make_named_feature_cross_edge(link),
+                                Self::make_named_feature_cross_edge(link, None),
                             ));
                         }
                     }
@@ -166,7 +179,7 @@ impl FeatureGraphBuildState {
                     FeatureLabel::Named(feature_name.as_ref()),
                     true,
                 ) {
-                    nodes_edges.push((same_node, FeatureEdge::FeatureDependency));
+                    nodes_edges.push((same_node, FeatureEdge::NamedFeature));
                 }
             }
             NamedFeatureDep::OptionalDependency(dep_name) => {
@@ -177,7 +190,7 @@ impl FeatureGraphBuildState {
                     FeatureLabel::OptionalDependency(dep_name.as_ref()),
                     true,
                 ) {
-                    nodes_edges.push((same_node, FeatureEdge::FeatureDependency));
+                    nodes_edges.push((same_node, FeatureEdge::NamedFeature));
                 }
             }
         };
@@ -230,7 +243,10 @@ impl FeatureGraphBuildState {
     ///
     /// If `dep` is optional, the edge (`from`, `a`) to (`from`, `dep`) is also a `CrossPackage`
     /// edge.
-    fn make_named_feature_cross_edge(link: &PackageLink<'_>) -> FeatureEdge {
+    fn make_named_feature_cross_edge(
+        link: &PackageLink<'_>,
+        weak_index: Option<WeakIndex>,
+    ) -> FeatureEdge {
         // This edge is enabled if the feature is enabled, which means the union of (required,
         // optional) build conditions.
         fn combine_req_opt(req: DependencyReq<'_>) -> PlatformStatusImpl {
@@ -239,12 +255,15 @@ impl FeatureGraphBuildState {
             required
         }
 
-        FeatureEdge::Conditional(ConditionalLinkImpl {
-            package_edge_ix: link.edge_ix(),
-            normal: combine_req_opt(link.normal()),
-            build: combine_req_opt(link.build()),
-            dev: combine_req_opt(link.dev()),
-        })
+        FeatureEdge::NamedFeatureWithSlash {
+            link: ConditionalLinkImpl {
+                package_edge_ix: link.edge_ix(),
+                normal: combine_req_opt(link.normal()),
+                build: combine_req_opt(link.build()),
+                dev: combine_req_opt(link.dev()),
+            },
+            weak_index,
+        }
     }
 
     pub(super) fn add_dependency_edges(&mut self, link: PackageLink<'_>) {
@@ -364,6 +383,11 @@ impl FeatureGraphBuildState {
                     // "dep/feat" causes a cross link to be created from "main/feat" to "main/dep".
                     // However, the "dep" encountered later upgrades this link to a feature
                     // dependency.
+                    //
+                    // This could also be an upgrade from a weak to a non-weak dependency:
+                    //
+                    // [features]
+                    // feat = ["dep?/feat", "dep/feat2"]
                     let old_edge = self
                         .graph
                         .edge_weight_mut(edge_ix)
@@ -371,10 +395,28 @@ impl FeatureGraphBuildState {
                     #[allow(clippy::single_match)]
                     match (old_edge, edge) {
                         (
-                            old_edge @ FeatureEdge::Conditional(_),
-                            edge @ FeatureEdge::FeatureDependency,
+                            FeatureEdge::NamedFeatureWithSlash {
+                                weak_index: old_weak_index,
+                                ..
+                            },
+                            FeatureEdge::NamedFeatureWithSlash { weak_index, .. },
                         ) => {
-                            // Upgrade this edge.
+                            if old_weak_index.is_some() && weak_index.is_some() {
+                                debug_assert_eq!(
+                                    *old_weak_index, weak_index,
+                                    "weak indexes should match if some"
+                                );
+                            }
+                            // Upgrade this edge from weak to non-weak.
+                            if weak_index.is_none() {
+                                *old_weak_index = None;
+                            }
+                        }
+                        (
+                            old_edge @ FeatureEdge::NamedFeatureWithSlash { .. },
+                            edge @ FeatureEdge::NamedFeature,
+                        ) => {
+                            // Upgrade this edge from conditional to unconditional.
                             *old_edge = edge;
                         }
                         _ => {
@@ -527,7 +569,7 @@ impl DependencyBuildState {
     }
 
     fn finish(self) -> FeatureEdge {
-        FeatureEdge::Conditional(ConditionalLinkImpl {
+        FeatureEdge::DependenciesSection(ConditionalLinkImpl {
             package_edge_ix: self.package_edge_ix,
             normal: self.normal,
             build: self.build,
