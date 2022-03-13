@@ -7,7 +7,7 @@ use crate::{
     graph::{
         feature::{
             build::{FeatureGraphBuildState, FeaturePetgraph},
-            Cycles, FeatureFilter, FeatureList,
+            Cycles, FeatureFilter, FeatureList, WeakIndex,
         },
         DependencyDirection, FeatureIndexInPackage, FeatureIx, PackageGraph, PackageIx,
         PackageLink, PackageMetadata,
@@ -229,8 +229,9 @@ impl<'g> FeatureGraph<'g> {
         self.inner.sccs.get_or_init(|| {
             let edge_filtered =
                 EdgeFiltered::from_fn(self.dep_graph(), |edge| match edge.weight() {
-                    FeatureEdge::Conditional(conditional_link) => !conditional_link.dev_only(),
-                    FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => true,
+                    FeatureEdge::DependenciesSection(link)
+                    | FeatureEdge::NamedFeatureWithSlash { link, .. } => !link.dev_only(),
+                    FeatureEdge::NamedFeature | FeatureEdge::FeatureToBase => true,
                 });
             // Sort the entire graph without dev-only edges -- a correct graph would be cycle-free
             // but we don't currently do a consistency check for this so handle cycles.
@@ -282,10 +283,16 @@ impl<'g> FeatureGraph<'g> {
         edge: Option<&'g FeatureEdge>,
     ) -> Option<ConditionalLink<'g>> {
         match edge.unwrap_or_else(|| &self.dep_graph()[edge_ix]) {
-            FeatureEdge::FeatureDependency | FeatureEdge::FeatureToBase => None,
-            FeatureEdge::Conditional(inner) => Some(ConditionalLink::new(
-                *self, source_ix, target_ix, edge_ix, inner,
+            FeatureEdge::NamedFeature | FeatureEdge::FeatureToBase => None,
+            FeatureEdge::DependenciesSection(link) => Some(ConditionalLink::new(
+                *self, source_ix, target_ix, edge_ix, link,
             )),
+            FeatureEdge::NamedFeatureWithSlash { link, .. } => {
+                // TODO: handle weak
+                Some(ConditionalLink::new(
+                    *self, source_ix, target_ix, edge_ix, link,
+                ))
+            }
         }
     }
 
@@ -304,7 +311,10 @@ impl<'g> FeatureGraph<'g> {
     ) -> bool {
         // Filter out conditional edges.
         let edge_filtered = EdgeFiltered::from_fn(self.dep_graph(), |edge_ref| {
-            !matches!(edge_ref.weight(), FeatureEdge::Conditional(_))
+            !matches!(
+                edge_ref.weight(),
+                FeatureEdge::DependenciesSection(_) | FeatureEdge::NamedFeatureWithSlash { .. }
+            )
         });
         has_path_connecting(&edge_filtered, a_ix, b_ix, None)
     }
@@ -902,27 +912,49 @@ impl FeatureNode {
 pub enum FeatureEdge {
     /// This edge is from a feature to its base package.
     FeatureToBase,
-    /// This is a conditional edge, e.g. through:
+
+    /// This is a dependency edge, e.g.:
     ///
     /// ```toml
     /// [dependencies]
     /// foo = { version = "1", features = ["a", "b"] }
     /// ```
     ///
-    /// or through
+    /// (The above is conditional in that it isn't a build dependency. Similarly, it could be
+    /// a target-specific dependency.)
+    ///
+    /// This also includes optional dependencies, for which the "from" node is
+    /// `FeatureLabel::OptionalDependency` rather than `FeatureLabel::Base`.
     ///
     /// ```toml
-    /// [features]
-    /// "a" = ["foo/b"]
+    /// [dependencies]
+    /// foo = { version = "1", features = ["a", "b"], optional = true }
     /// ```
-    Conditional(ConditionalLinkImpl),
+    DependenciesSection(ConditionalLinkImpl),
+
+    ///
     /// This edge is from a feature depending on other features within the same package:
     ///
     /// ```toml
     /// [features]
     /// "a" = ["b"]
+    /// # or
+    /// "a" = ["dep:b"]
     /// ```
-    FeatureDependency,
+    NamedFeature,
+
+    /// This is a named feature line of the form
+    ///
+    /// ```toml
+    /// [features]
+    /// "a" = ["foo/b"]
+    /// # or
+    /// "a" = ["foo?/b"]
+    /// ```
+    NamedFeatureWithSlash {
+        link: ConditionalLinkImpl,
+        weak_index: Option<WeakIndex>,
+    },
 }
 
 /// Not part of the stable API -- only exposed for FeatureSet::links().

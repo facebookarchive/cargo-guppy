@@ -15,9 +15,11 @@ mod graph_impl;
 mod proptest_helpers;
 mod query;
 mod resolve;
+mod weak;
 
 pub use cycles::*;
 pub use feature_list::FeatureList;
 pub use graph_impl::*;
 pub use query::*;
 pub use resolve::*;
+pub use weak::*;
