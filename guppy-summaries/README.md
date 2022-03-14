@@ -97,6 +97,7 @@ assert_eq!(
     * added features: feature-b
     * removed features: feature-c
     * (unchanged features: feature-a)
+    * (unchanged optional dependencies: [none])
 
 host packages:
   R proc-macro 0.1.2 (workspace, path 'proc-macros/macro')
