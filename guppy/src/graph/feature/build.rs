@@ -188,7 +188,14 @@ impl FeatureGraphBuildState {
                     FeatureLabel::OptionalDependency(dep_name.as_ref()),
                     true,
                 ) {
-                    nodes_edges.push((same_node, FeatureEdge::NamedFeature));
+                    if let Some(link) = dep_name_to_link.get(dep_name.as_ref()) {
+                        nodes_edges.push((
+                            same_node,
+                            FeatureEdge::NamedFeatureDepColon(
+                                Self::make_full_conditional_link_impl(link),
+                            ),
+                        ));
+                    }
                 }
             }
         };
@@ -247,20 +254,28 @@ impl FeatureGraphBuildState {
     ) -> FeatureEdge {
         // This edge is enabled if the feature is enabled, which means the union of (required,
         // optional) build conditions.
+        FeatureEdge::NamedFeatureWithSlash {
+            link: Self::make_full_conditional_link_impl(link),
+            weak_index,
+        }
+    }
+
+    // Creates a "full" conditional link, unifying requirements across all dependency lines.
+    // This should not be used in add_dependency_edges below!
+    fn make_full_conditional_link_impl(link: &PackageLink<'_>) -> ConditionalLinkImpl {
+        // This edge is enabled if the feature is enabled, which means the union of (required,
+        // optional) build conditions.
         fn combine_req_opt(req: DependencyReq<'_>) -> PlatformStatusImpl {
             let mut required = req.inner.required.build_if.clone();
             required.extend(&req.inner.optional.build_if);
             required
         }
 
-        FeatureEdge::NamedFeatureWithSlash {
-            link: ConditionalLinkImpl {
-                package_edge_ix: link.edge_ix(),
-                normal: combine_req_opt(link.normal()),
-                build: combine_req_opt(link.build()),
-                dev: combine_req_opt(link.dev()),
-            },
-            weak_index,
+        ConditionalLinkImpl {
+            package_edge_ix: link.edge_ix(),
+            normal: combine_req_opt(link.normal()),
+            build: combine_req_opt(link.build()),
+            dev: combine_req_opt(link.dev()),
         }
     }
 
@@ -412,11 +427,21 @@ impl FeatureGraphBuildState {
                         }
                         (
                             old_edge @ FeatureEdge::NamedFeatureWithSlash { .. },
-                            edge @ FeatureEdge::NamedFeature,
+                            edge @ FeatureEdge::NamedFeature
+                            | edge @ FeatureEdge::NamedFeatureDepColon(_),
                         ) => {
-                            // Upgrade this edge from conditional to unconditional.
+                            // Upgrade this edge from / conditional to dep: conditional or unconditional.
                             *old_edge = edge;
                         }
+                        (
+                            old_edge @ FeatureEdge::NamedFeatureDepColon(_),
+                            edge @ FeatureEdge::NamedFeature,
+                        ) => {
+                            // Upgrade this edge from dep: conditional to unconditional.
+                            // XXX: can this ever happen?
+                            *old_edge = edge;
+                        }
+
                         _ => {
                             // In all other cases, leave the old edge alone.
                         }

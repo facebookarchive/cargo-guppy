@@ -118,7 +118,7 @@ mod small {
 
         let feature_graph = graph.feature_graph();
         assert_eq!(feature_graph.feature_count(), 506, "feature count");
-        assert_eq!(feature_graph.link_count(), 639, "link count");
+        assert_eq!(feature_graph.link_count(), 631, "link count");
         let feature_set = feature_graph
             .query_workspace(StandardFeatures::All)
             .resolve();
@@ -137,7 +137,7 @@ mod small {
 
         let feature_graph = metadata2.graph().feature_graph();
         assert_eq!(feature_graph.feature_count(), 484, "feature count");
-        assert_eq!(feature_graph.link_count(), 597, "link count");
+        assert_eq!(feature_graph.link_count(), 589, "link count");
         let root_ids: Vec<_> = feature_graph
             .query_workspace(StandardFeatures::None)
             .resolve()
@@ -259,7 +259,7 @@ mod small {
             }
         }
 
-        assert_eq!(feature_graph.link_count(), 62, "feature link count");
+        assert_eq!(feature_graph.link_count(), 58, "feature link count");
 
         // Check that resolve_packages + a feature filter works.
         let feature_set = package_set.to_feature_set(named_feature_filter(
