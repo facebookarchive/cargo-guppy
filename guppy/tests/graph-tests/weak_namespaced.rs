@@ -239,18 +239,11 @@ fn disabled_weak_feature_2() {
 fn platform_not_matched_features() {
     fn expected_features_for(name: &'static str) -> Vec<FeatureLabel<'static>> {
         match name {
-            "windows-dep" => vec![
-                FeatureLabel::Base,
-                FeatureLabel::Named(name),
-                // While the optional dependency node is enabled, the actual dependency is not.
-                FeatureLabel::OptionalDependency("tinyvec"),
-            ],
+            "windows-dep" => vec![FeatureLabel::Base, FeatureLabel::Named(name)],
             "windows-named" => vec![
                 FeatureLabel::Base,
                 FeatureLabel::Named("tinyvec"),
                 FeatureLabel::Named(name),
-                // While the optional dependency node is enabled, the actual dependency is not.
-                FeatureLabel::OptionalDependency("tinyvec"),
             ],
             "windows-non-weak" | "windows-weak" => {
                 vec![FeatureLabel::Base, FeatureLabel::Named(name)]

@@ -230,6 +230,7 @@ impl<'g> FeatureGraph<'g> {
             let edge_filtered =
                 EdgeFiltered::from_fn(self.dep_graph(), |edge| match edge.weight() {
                     FeatureEdge::DependenciesSection(link)
+                    | FeatureEdge::NamedFeatureDepColon(link)
                     | FeatureEdge::NamedFeatureWithSlash { link, .. } => !link.dev_only(),
                     FeatureEdge::NamedFeature | FeatureEdge::FeatureToBase => true,
                 });
@@ -286,9 +287,9 @@ impl<'g> FeatureGraph<'g> {
 
         match edge {
             FeatureEdge::NamedFeature | FeatureEdge::FeatureToBase => None,
-            FeatureEdge::DependenciesSection(link) => {
+            FeatureEdge::DependenciesSection(link) | FeatureEdge::NamedFeatureDepColon(link) => {
                 let link = ConditionalLink::new(*self, source_ix, target_ix, edge_ix, link);
-                // Dependency section conditional links are always non-weak.
+                // Dependency section and dep:foo style conditional links are always non-weak.
                 let weak_index = None;
                 Some((link, weak_index))
             }
@@ -940,19 +941,25 @@ pub enum FeatureEdge {
     ///
     /// ```toml
     /// [features]
-    /// "a" = ["b"]
-    /// # or
-    /// "a" = ["dep:b"]
+    /// a = ["b"]
     /// ```
     NamedFeature,
+
+    /// This edge is from a feature to an optional dependency.
+    ///
+    /// ```toml
+    /// [features]
+    /// a = ["dep:foo"]
+    /// ```
+    NamedFeatureDepColon(ConditionalLinkImpl),
 
     /// This is a named feature line of the form
     ///
     /// ```toml
     /// [features]
-    /// "a" = ["foo/b"]
+    /// a = ["foo/b"]
     /// # or
-    /// "a" = ["foo?/b"]
+    /// a = ["foo?/b"]
     /// ```
     NamedFeatureWithSlash {
         link: ConditionalLinkImpl,
