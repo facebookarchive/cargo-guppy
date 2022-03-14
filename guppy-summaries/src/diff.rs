@@ -351,6 +351,18 @@ pub enum SummaryDiffStatus<'a> {
 
         /// The set of features which were enabled both in both the old and new summaries.
         unchanged_features: BTreeSet<&'a str>,
+
+        /// The set of optional dependencies added to the package.
+        #[serde(default)]
+        added_optional_deps: BTreeSet<&'a str>,
+
+        /// The set of optional dependencies removed from the package.
+        #[serde(default)]
+        removed_optional_deps: BTreeSet<&'a str>,
+
+        /// The set of optional dependencies enabled both in both the old and new summaries.
+        #[serde(default)]
+        unchanged_optional_deps: BTreeSet<&'a str>,
     },
 }
 
@@ -367,60 +379,56 @@ impl<'a> SummaryDiffStatus<'a> {
             None
         };
 
-        match old_info.features.diff(&new_info.features) {
-            edit::Edit::Copy(features) => {
-                // No diff between the old and new features, so put everything in unchanged.
-                let unchanged_features = features.iter().map(|feature| feature.as_str()).collect();
-                SummaryDiffStatus::Modified {
-                    old_version,
-                    old_source,
-                    old_status,
-                    new_status: new_info.status,
-                    added_features: BTreeSet::new(),
-                    removed_features: BTreeSet::new(),
-                    unchanged_features,
-                }
-            }
-            edit::Edit::Change(diff) => {
-                Self::make_changed_diff(old_version, old_source, old_status, new_info.status, diff)
-            }
-        }
-    }
+        let [added_features, removed_features, unchanged_features] =
+            Self::make_changed_diff(&old_info.features, &new_info.features);
 
-    fn make_changed_diff(
-        old_version: Option<&'a Version>,
-        old_source: Option<&'a SummarySource>,
-        old_status: Option<PackageStatus>,
-        new_status: PackageStatus,
-        feature_diff: BTreeMap<&'a String, edit::set::Edit<'a, String>>,
-    ) -> Self {
-        let mut added_features = BTreeSet::new();
-        let mut removed_features = BTreeSet::new();
-        let mut unchanged_features = BTreeSet::new();
-
-        for (_, diff) in feature_diff {
-            match diff {
-                edit::set::Edit::Copy(feature) => {
-                    unchanged_features.insert(feature.as_str());
-                }
-                edit::set::Edit::Insert(feature) => {
-                    added_features.insert(feature.as_str());
-                }
-                edit::set::Edit::Remove(feature) => {
-                    removed_features.insert(feature.as_str());
-                }
-            }
-        }
+        let [added_optional_deps, removed_optional_deps, unchanged_optional_deps] =
+            Self::make_changed_diff(&old_info.optional_deps, &new_info.optional_deps);
 
         SummaryDiffStatus::Modified {
             old_version,
             old_source,
             old_status,
-            new_status,
+            new_status: new_info.status,
             added_features,
             removed_features,
             unchanged_features,
+            added_optional_deps,
+            removed_optional_deps,
+            unchanged_optional_deps,
         }
+    }
+
+    fn make_changed_diff(
+        old_features: &'a BTreeSet<String>,
+        new_features: &'a BTreeSet<String>,
+    ) -> [BTreeSet<&'a str>; 3] {
+        let mut added_features = BTreeSet::new();
+        let mut removed_features = BTreeSet::new();
+        let mut unchanged_features = BTreeSet::new();
+
+        match old_features.diff(&new_features) {
+            edit::Edit::Copy(features) => {
+                unchanged_features.extend(features.iter().map(|feature| feature.as_str()));
+            }
+            edit::Edit::Change(diff) => {
+                for (_, diff) in diff {
+                    match diff {
+                        edit::set::Edit::Copy(feature) => {
+                            unchanged_features.insert(feature.as_str());
+                        }
+                        edit::set::Edit::Insert(feature) => {
+                            added_features.insert(feature.as_str());
+                        }
+                        edit::set::Edit::Remove(feature) => {
+                            removed_features.insert(feature.as_str());
+                        }
+                    }
+                }
+            }
+        }
+
+        [added_features, removed_features, unchanged_features]
     }
 
     /// Returns the tag for this status.

@@ -215,6 +215,10 @@ pub struct PackageInfo {
 
     /// The features built for this package.
     pub features: BTreeSet<String>,
+
+    /// The optional dependencies built for this package.
+    #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
+    pub optional_deps: BTreeSet<String>,
 }
 
 /// The status of a package in a summary, such as whether it is part of the initial build set.

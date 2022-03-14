@@ -87,7 +87,7 @@ impl<'g> FeatureList<'g> {
     /// Returns an iterator containing all optional dependencies.
     ///
     /// The iterator is guaranteed to be sorted and unique.
-    pub fn optional_dependencies(&self) -> impl Iterator<Item = &'g str> + '_ {
+    pub fn optional_deps(&self) -> impl Iterator<Item = &'g str> + '_ {
         // XXX: binary search?
         self.labels.iter().filter_map(|label| match label {
             FeatureLabel::OptionalDependency(dep_name) => Some(*dep_name),

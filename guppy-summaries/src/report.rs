@@ -127,6 +127,9 @@ impl<'x> fmt::Display for PackageReport<'x> {
                     added_features,
                     removed_features,
                     unchanged_features,
+                    added_optional_deps,
+                    removed_optional_deps,
+                    unchanged_optional_deps,
                 } => {
                     if let Some(old_version) = old_version {
                         let change_str = if summary_id.version > **old_version {
@@ -142,6 +145,9 @@ impl<'x> fmt::Display for PackageReport<'x> {
                     if let Some(old_status) = old_status {
                         writeln!(f, "    * status changed from {}", old_status)?;
                     }
+
+                    // ---
+
                     if !added_features.is_empty() {
                         write!(f, "    * added features: ")?;
                         display_list(f, added_features.iter().copied())?;
@@ -154,6 +160,22 @@ impl<'x> fmt::Display for PackageReport<'x> {
                     }
                     write!(f, "    * (unchanged features: ")?;
                     display_list(f, unchanged_features.iter().copied())?;
+                    writeln!(f, ")")?;
+
+                    // ---
+
+                    if !added_optional_deps.is_empty() {
+                        write!(f, "    * added optional dependencies: ")?;
+                        display_list(f, added_optional_deps.iter().copied())?;
+                        writeln!(f)?;
+                    }
+                    if !removed_optional_deps.is_empty() {
+                        write!(f, "    * removed optional dependencies: ")?;
+                        display_list(f, removed_optional_deps.iter().copied())?;
+                        writeln!(f)?;
+                    }
+                    write!(f, "    * (unchanged optional dependencies: ")?;
+                    display_list(f, unchanged_optional_deps.iter().copied())?;
                     writeln!(f, ")")?;
                 }
             }

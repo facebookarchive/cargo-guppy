@@ -17,6 +17,7 @@ version = '1.2.3'
 workspace-path = 'foo'
 status = 'initial'
 features = ['default', 'feature1']
+optional-deps = ['dep1', 'dep2']
 
 [[target-package]]
 name = 'dep'
@@ -24,6 +25,7 @@ version = '0.4.2'
 crates-io = true
 status = 'direct'
 features = ['std']
+optional-deps = ['bar']
 
 [[target-package]]
 name = 'no-changes'
@@ -31,6 +33,7 @@ version = '1.5.3'
 crates-io = true
 status = 'transitive'
 features = ['default']
+optional-deps = ['dep2']
 
 [[host-package]]
 name = 'bar'
@@ -45,6 +48,7 @@ version = '1.1.2'
 path = '../local-dep'
 status = 'transitive'
 features = []
+optional-deps = ['dep4']
 "#;
 
 static SUMMARY2: &str = r#"# This is a test @generated summary.
@@ -55,6 +59,7 @@ version = '1.2.3'
 workspace-path = 'foo'
 status = 'initial'
 features = ['default', 'feature1', 'feature2']
+optional-deps = ['dep1', 'dep3']
 
 [[target-package]]
 name = 'dep'
@@ -62,6 +67,7 @@ version = '0.4.3'
 crates-io = true
 status = 'direct'
 features = ['std']
+optional-deps = ['bar']
 
 [[target-package]]
 name = 'dep'
@@ -76,6 +82,7 @@ version = '1.5.3'
 crates-io = true
 status = 'transitive'
 features = ['default']
+optional-deps = ['dep2']
 
 [[host-package]]
 name = 'bar'
@@ -128,11 +135,13 @@ fn basic_roundtrip() {
             ),
             PackageStatus::Initial,
             vec!["default", "feature1"],
+            vec!["dep1", "dep2"],
         ),
         (
             SummaryId::new("dep", Version::new(0, 4, 2), SummarySource::crates_io()),
             PackageStatus::Direct,
             vec!["std"],
+            vec!["bar"],
         ),
         (
             SummaryId::new(
@@ -142,6 +151,7 @@ fn basic_roundtrip() {
             ),
             PackageStatus::Transitive,
             vec!["default"],
+            vec!["dep2"],
         ),
     ];
     let host_packages = vec![
@@ -153,6 +163,7 @@ fn basic_roundtrip() {
             ),
             PackageStatus::Workspace,
             vec!["default", "feature2"],
+            vec![],
         ),
         (
             SummaryId::new(
@@ -162,6 +173,7 @@ fn basic_roundtrip() {
             ),
             PackageStatus::Transitive,
             vec![],
+            vec!["dep4"],
         ),
     ];
 
@@ -194,6 +206,7 @@ fn basic_roundtrip() {
 
     // First, dep 0.4.2.
     let std_feature: BTreeSet<_> = vec!["std".to_string()].into_iter().collect();
+    let bar_dep: BTreeSet<_> = vec!["bar".to_string()].into_iter().collect();
     let (summary_id, status) = iter.next().expect("3 elements left");
     assert_eq!(summary_id.name, "dep");
     assert_eq!(summary_id.version.to_string(), "0.4.2");
@@ -204,6 +217,7 @@ fn basic_roundtrip() {
             old_info: &PackageInfo {
                 status: PackageStatus::Direct,
                 features: std_feature.clone(),
+                optional_deps: bar_dep.clone(),
             },
         },
     );
@@ -219,6 +233,7 @@ fn basic_roundtrip() {
             info: &PackageInfo {
                 status: PackageStatus::Direct,
                 features: std_feature.clone(),
+                optional_deps: bar_dep.clone(),
             },
         },
     );
@@ -234,6 +249,7 @@ fn basic_roundtrip() {
             info: &PackageInfo {
                 status: PackageStatus::Transitive,
                 features: std_feature,
+                optional_deps: BTreeSet::new(),
             },
         }
     );
@@ -253,6 +269,9 @@ fn basic_roundtrip() {
             added_features: vec!["feature2"].into_iter().collect(),
             removed_features: BTreeSet::new(),
             unchanged_features: vec!["default", "feature1"].into_iter().collect(),
+            added_optional_deps: vec!["dep3"].into_iter().collect(),
+            removed_optional_deps: vec!["dep2"].into_iter().collect(),
+            unchanged_optional_deps: vec!["dep1"].into_iter().collect(),
         }
     );
 
@@ -277,6 +296,9 @@ fn basic_roundtrip() {
             added_features: BTreeSet::new(),
             removed_features: BTreeSet::new(),
             unchanged_features: vec!["default", "feature2"].into_iter().collect(),
+            added_optional_deps: BTreeSet::new(),
+            removed_optional_deps: BTreeSet::new(),
+            unchanged_optional_deps: BTreeSet::new(),
         }
     );
 
@@ -295,6 +317,9 @@ fn basic_roundtrip() {
             added_features: vec!["dep-feature"].into_iter().collect(),
             removed_features: BTreeSet::new(),
             unchanged_features: BTreeSet::new(),
+            added_optional_deps: BTreeSet::new(),
+            removed_optional_deps: vec!["dep4"].into_iter().collect(),
+            unchanged_optional_deps: BTreeSet::new(),
         }
     );
 
@@ -309,6 +334,7 @@ fn basic_roundtrip() {
             info: &PackageInfo {
                 status: PackageStatus::Transitive,
                 features: BTreeSet::new(),
+                optional_deps: BTreeSet::new(),
             },
         },
     );
@@ -322,81 +348,228 @@ fn test_serialization() {
 
     let to_serialize = &diff;
 
-    static EXPECTED_JSON: &str = r#"{"target-packages":{"changed":[{"name":"dep","version":"0.4.3","crates-io":true,"change":"added","status":"direct","features":["std"]},{"name":"dep","version":"0.5.0","crates-io":true,"change":"added","status":"transitive","features":["std"]},{"name":"foo","version":"1.2.3","workspace-path":"foo","change":"modified","old-version":null,"old-source":null,"old-status":null,"new-status":"initial","added-features":["feature2"],"removed-features":[],"unchanged-features":["default","feature1"]},{"name":"dep","version":"0.4.2","crates-io":true,"change":"removed","old-status":"direct","old-features":["std"]}],"unchanged":[{"name":"no-changes","version":"1.5.3","crates-io":true,"status":"transitive","features":["default"]}]},"host-packages":{"changed":[{"name":"local-dep","version":"2.0.0","path":"../local-dep-2","change":"added","status":"transitive","features":[]},{"name":"bar","version":"0.2.0","workspace-path":"dir/bar","change":"modified","old-version":"0.1.0","old-source":null,"old-status":"workspace","new-status":"initial","added-features":[],"removed-features":[],"unchanged-features":["default","feature2"]},{"name":"local-dep","version":"1.1.2","path":"../local-dep","change":"modified","old-version":null,"old-source":null,"old-status":null,"new-status":"transitive","added-features":["dep-feature"],"removed-features":[],"unchanged-features":[]}]}}"#;
-    let j = serde_json::to_string(&to_serialize).expect("should serialize");
+    static EXPECTED_JSON: &str = indoc::indoc!(
+        r#"{
+        "target-packages": {
+          "changed": [
+            {
+              "name": "dep",
+              "version": "0.4.3",
+              "crates-io": true,
+              "change": "added",
+              "status": "direct",
+              "features": [
+                "std"
+              ],
+              "optional-deps": [
+                "bar"
+              ]
+            },
+            {
+              "name": "dep",
+              "version": "0.5.0",
+              "crates-io": true,
+              "change": "added",
+              "status": "transitive",
+              "features": [
+                "std"
+              ]
+            },
+            {
+              "name": "foo",
+              "version": "1.2.3",
+              "workspace-path": "foo",
+              "change": "modified",
+              "old-version": null,
+              "old-source": null,
+              "old-status": null,
+              "new-status": "initial",
+              "added-features": [
+                "feature2"
+              ],
+              "removed-features": [],
+              "unchanged-features": [
+                "default",
+                "feature1"
+              ],
+              "added-optional-deps": [
+                "dep3"
+              ],
+              "removed-optional-deps": [
+                "dep2"
+              ],
+              "unchanged-optional-deps": [
+                "dep1"
+              ]
+            },
+            {
+              "name": "dep",
+              "version": "0.4.2",
+              "crates-io": true,
+              "change": "removed",
+              "old-status": "direct",
+              "old-features": [
+                "std"
+              ]
+            }
+          ],
+          "unchanged": [
+            {
+              "name": "no-changes",
+              "version": "1.5.3",
+              "crates-io": true,
+              "status": "transitive",
+              "features": [
+                "default"
+              ],
+              "optional-deps": [
+                "dep2"
+              ]
+            }
+          ]
+        },
+        "host-packages": {
+          "changed": [
+            {
+              "name": "local-dep",
+              "version": "2.0.0",
+              "path": "../local-dep-2",
+              "change": "added",
+              "status": "transitive",
+              "features": []
+            },
+            {
+              "name": "bar",
+              "version": "0.2.0",
+              "workspace-path": "dir/bar",
+              "change": "modified",
+              "old-version": "0.1.0",
+              "old-source": null,
+              "old-status": "workspace",
+              "new-status": "initial",
+              "added-features": [],
+              "removed-features": [],
+              "unchanged-features": [
+                "default",
+                "feature2"
+              ],
+              "added-optional-deps": [],
+              "removed-optional-deps": [],
+              "unchanged-optional-deps": []
+            },
+            {
+              "name": "local-dep",
+              "version": "1.1.2",
+              "path": "../local-dep",
+              "change": "modified",
+              "old-version": null,
+              "old-source": null,
+              "old-status": null,
+              "new-status": "transitive",
+              "added-features": [
+                "dep-feature"
+              ],
+              "removed-features": [],
+              "unchanged-features": [],
+              "added-optional-deps": [],
+              "removed-optional-deps": [
+                "dep4"
+              ],
+              "unchanged-optional-deps": []
+            }
+          ]
+        }
+      }"#
+    );
+
+    let j = serde_json::to_string_pretty(&to_serialize).expect("should serialize");
     println!("json output: {}", j);
     assert_eq!(j, EXPECTED_JSON);
 
-    static EXPECTED_TOML: &str = r#"[[target-packages.changed]]
-name = "dep"
-version = "0.4.3"
-crates-io = true
-change = "added"
-status = "direct"
-features = ["std"]
+    static EXPECTED_TOML: &str = indoc::indoc!(
+        r#"[[target-packages.changed]]
+    name = "dep"
+    version = "0.4.3"
+    crates-io = true
+    change = "added"
+    status = "direct"
+    features = ["std"]
+    optional-deps = ["bar"]
 
-[[target-packages.changed]]
-name = "dep"
-version = "0.5.0"
-crates-io = true
-change = "added"
-status = "transitive"
-features = ["std"]
+    [[target-packages.changed]]
+    name = "dep"
+    version = "0.5.0"
+    crates-io = true
+    change = "added"
+    status = "transitive"
+    features = ["std"]
 
-[[target-packages.changed]]
-name = "foo"
-version = "1.2.3"
-workspace-path = "foo"
-change = "modified"
-new-status = "initial"
-added-features = ["feature2"]
-removed-features = []
-unchanged-features = ["default", "feature1"]
+    [[target-packages.changed]]
+    name = "foo"
+    version = "1.2.3"
+    workspace-path = "foo"
+    change = "modified"
+    new-status = "initial"
+    added-features = ["feature2"]
+    removed-features = []
+    unchanged-features = ["default", "feature1"]
+    added-optional-deps = ["dep3"]
+    removed-optional-deps = ["dep2"]
+    unchanged-optional-deps = ["dep1"]
 
-[[target-packages.changed]]
-name = "dep"
-version = "0.4.2"
-crates-io = true
-change = "removed"
-old-status = "direct"
-old-features = ["std"]
+    [[target-packages.changed]]
+    name = "dep"
+    version = "0.4.2"
+    crates-io = true
+    change = "removed"
+    old-status = "direct"
+    old-features = ["std"]
 
-[[target-packages.unchanged]]
-name = "no-changes"
-version = "1.5.3"
-crates-io = true
-status = "transitive"
-features = ["default"]
-[[host-packages.changed]]
-name = "local-dep"
-version = "2.0.0"
-path = "../local-dep-2"
-change = "added"
-status = "transitive"
-features = []
+    [[target-packages.unchanged]]
+    name = "no-changes"
+    version = "1.5.3"
+    crates-io = true
+    status = "transitive"
+    features = ["default"]
+    optional-deps = ["dep2"]
+    [[host-packages.changed]]
+    name = "local-dep"
+    version = "2.0.0"
+    path = "../local-dep-2"
+    change = "added"
+    status = "transitive"
+    features = []
 
-[[host-packages.changed]]
-name = "bar"
-version = "0.2.0"
-workspace-path = "dir/bar"
-change = "modified"
-old-version = "0.1.0"
-old-status = "workspace"
-new-status = "initial"
-added-features = []
-removed-features = []
-unchanged-features = ["default", "feature2"]
+    [[host-packages.changed]]
+    name = "bar"
+    version = "0.2.0"
+    workspace-path = "dir/bar"
+    change = "modified"
+    old-version = "0.1.0"
+    old-status = "workspace"
+    new-status = "initial"
+    added-features = []
+    removed-features = []
+    unchanged-features = ["default", "feature2"]
+    added-optional-deps = []
+    removed-optional-deps = []
+    unchanged-optional-deps = []
 
-[[host-packages.changed]]
-name = "local-dep"
-version = "1.1.2"
-path = "../local-dep"
-change = "modified"
-new-status = "transitive"
-added-features = ["dep-feature"]
-removed-features = []
-unchanged-features = []
-"#;
+    [[host-packages.changed]]
+    name = "local-dep"
+    version = "1.1.2"
+    path = "../local-dep"
+    change = "modified"
+    new-status = "transitive"
+    added-features = ["dep-feature"]
+    removed-features = []
+    unchanged-features = []
+    added-optional-deps = []
+    removed-optional-deps = ["dep4"]
+    unchanged-optional-deps = []
+
+"#
+    );
     let toml_out = toml::to_string(&to_serialize).expect("should serialize");
     println!("toml output: {}", toml_out);
     assert_eq!(toml_out, EXPECTED_TOML);
@@ -408,14 +581,26 @@ unchanged-features = []
     println!("parsed output: {:?}", parsed);
 }
 
-fn make_summary(list: Vec<(SummaryId, PackageStatus, Vec<&str>)>) -> PackageMap {
+fn make_summary(list: Vec<(SummaryId, PackageStatus, Vec<&str>, Vec<&str>)>) -> PackageMap {
     list.into_iter()
-        .map(|(summary_id, status, features)| {
+        .map(|(summary_id, status, features, optional_deps)| {
             let features = features
                 .into_iter()
                 .map(|feature| feature.to_string())
                 .collect();
-            (summary_id, PackageInfo { status, features })
+            let optional_deps = optional_deps
+                .into_iter()
+                .map(|feature| feature.to_string())
+                .collect();
+
+            (
+                summary_id,
+                PackageInfo {
+                    status,
+                    features,
+                    optional_deps,
+                },
+            )
         })
         .collect()
 }

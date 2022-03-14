@@ -70,6 +70,10 @@ impl<'g> FeatureSet<'g> {
                         .named_features()
                         .map(|feature| feature.to_owned())
                         .collect(),
+                    optional_deps: feature_list
+                        .optional_deps()
+                        .map(|dep| dep.to_owned())
+                        .collect(),
                 };
 
                 (feature_list.package().to_summary_id(), info)
@@ -176,11 +180,10 @@ impl CargoOptionsSummary {
                     .named_features()
                     .map(|feature| feature.to_owned())
                     .collect(),
-                // TODO: uncomment out after output is shown to not change
-                // optional_dependencies: features
-                //     .optional_dependencies()
-                //     .map(|feature| feature.to_owned())
-                //     .collect(),
+                optional_deps: features
+                    .optional_deps()
+                    .map(|feature| feature.to_owned())
+                    .collect(),
             })
             .collect::<Vec<_>>();
         features_only.sort_unstable();
@@ -278,10 +281,10 @@ pub struct FeaturesOnlySummary {
 
     /// The named features built for this package.
     pub features: BTreeSet<String>,
-    // TODO: uncomment out after change is shown to be stable
-    // /// The optional dependencies built for this package.
-    // #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
-    // pub optional_dependencies: BTreeSet<String>,
+
+    /// The optional dependencies built for this package.
+    #[serde(skip_serializing_if = "BTreeSet::is_empty", default)]
+    pub optional_deps: BTreeSet<String>,
 }
 
 impl<'g> PackageSource<'g> {
