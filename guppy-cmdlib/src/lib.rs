@@ -36,7 +36,7 @@ pub struct PackagesAndFeatures {
 
     // TODO: support --workspace and --exclude
     /// List of features to activate across all packages
-    #[clap(long = "features", use_delimiter = true)]
+    #[clap(long = "features", use_value_delimiter = true)]
     pub features: Vec<String>,
 
     /// Activate all available features

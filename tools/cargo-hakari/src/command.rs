@@ -7,7 +7,7 @@ use crate::{
     publish::publish_hakari,
 };
 use camino::{Utf8Path, Utf8PathBuf};
-use clap::{AppSettings, Parser};
+use clap::Parser;
 use color_eyre::eyre::{bail, eyre, Result, WrapErr};
 use guppy::{
     graph::{PackageGraph, PackageSet},
@@ -247,7 +247,7 @@ enum CommandWithBuilder {
     /// see {n}https://docs.rs/cargo-hakari/latest/cargo_hakari/publishing.
     ///
     /// Trailing arguments are passed through to cargo publish.
-    #[clap(setting = AppSettings::TrailingVarArg, setting = AppSettings::AllowHyphenValues)]
+    #[clap(trailing_var_arg = true, allow_hyphen_values = true)]
     Publish {
         /// The name of the package to publish.
         #[clap(long, short)]
