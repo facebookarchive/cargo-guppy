@@ -44,8 +44,11 @@
 //!
 //! ## Minimum supported Rust version
 //!
-//! The minimum supported Rust version (MSRV) is **Rust 1.54**. Within the 1.x series, MSRV bumps will
-//! be accompanied by a minor version update.
+//! The minimum supported Rust version (MSRV) is:
+//! * For target-spec 1.0.x: **Rust 1.54**.
+//! * For the version on the main branch (currently unreleased): **Rust 1.56**
+//!
+//! Within the 1.x series, MSRV bumps will be accompanied by a minor version update.
 
 #![warn(missing_docs)]
 #![forbid(unsafe_code)]
