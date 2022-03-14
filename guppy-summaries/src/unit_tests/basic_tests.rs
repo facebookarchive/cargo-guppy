@@ -233,7 +233,7 @@ fn basic_roundtrip() {
             info: &PackageInfo {
                 status: PackageStatus::Direct,
                 features: std_feature.clone(),
-                optional_deps: bar_dep.clone(),
+                optional_deps: bar_dep,
             },
         },
     );

@@ -407,7 +407,7 @@ impl<'a> SummaryDiffStatus<'a> {
         let mut removed_features = BTreeSet::new();
         let mut unchanged_features = BTreeSet::new();
 
-        match old_features.diff(&new_features) {
+        match old_features.diff(new_features) {
             edit::Edit::Copy(features) => {
                 unchanged_features.extend(features.iter().map(|feature| feature.as_str()));
             }
