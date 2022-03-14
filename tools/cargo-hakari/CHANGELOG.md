@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## [0.9.13] - 2022-03-14
 
 ### Changed
 
+- Support for weak and namespaced features.
+- Target platforms updated to Rust 1.59.
 - MSRV updated to Rust 1.56.
 
 ## [0.9.12] - 2022-02-06
@@ -114,6 +116,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.13]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.13
 [0.9.12]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.12
 [0.9.11]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.11
 [0.9.10]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.10

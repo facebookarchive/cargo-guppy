@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- Support for optional dependencies, as part of guppy's support for [namespaced features]:
+  - `PackageInfo` has a new `optional_deps` field.
+  - `SummaryDiffStatus::Modified` has new `added_optional_deps`, `removed_optional_deps` and `unchanged_optional_deps` fields.
+
+[namespaced features]: https://rust-lang.github.io/rfcs/3143-cargo-weak-namespaced-features.html
+
 ### Changed
 
 - MSRV updated to Rust 1.56.
@@ -76,6 +84,7 @@ This is a minor breaking change that should not affect most consumers.
 
 Initial release.
 
+[0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.7.0
 [0.6.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.6.1
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.6.0
 [0.5.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-summaries-0.5.1

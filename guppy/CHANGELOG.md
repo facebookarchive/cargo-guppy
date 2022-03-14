@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## [0.14.0] - 2022-03-14
+
+### Added
+
+Support for [weak dependencies and namespaced features]:
+- Cargo build simulations now take into account weak dependencies and namespaced features.
+- Optional dependencies (`"dep:foo"`) and namespaced features (`"foo"`) are now represented as separate nodes in a `FeatureGraph`, even with Rust versions prior to 1.60.
+- Feature names are now represented as a new `FeatureLabel` enum.
+
+[weak dependencies and namespaced features]: https://rust-lang.github.io/rfcs/3143-cargo-weak-namespaced-features.html
 
 ### Changed
 
@@ -484,6 +493,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.14.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.14.0
 [0.13.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.13.0
 [0.12.6]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.6
 [0.12.5]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.12.5

@@ -1,9 +1,16 @@
 # Changelog
 
-## Unreleased
+## [0.9.0] - 2022-03-14
+
+### Added
+
+Support for [weak dependencies and namespaced features].
+
+[weak dependencies and namespaced features]: https://rust-lang.github.io/rfcs/3143-cargo-weak-namespaced-features.html
 
 ### Changed
 
+- Public dependency version bump: `guppy` updated to 0.14.0.
 - MSRV updated to Rust 1.56.
 
 ## [0.8.0] - 2022-02-13
@@ -83,6 +90,7 @@ Initial release.
 * Path-based and package-based custom rules, including a default set of rules for files like `rust-toolchain` and `Cargo.lock`.
 * A `Paths0` wrapper to make it easier to retrieve changes from source control.
 
+[0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.9.0
 [0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.8.0
 [0.7.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.7.0
 [0.6.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/determinator-0.6.0

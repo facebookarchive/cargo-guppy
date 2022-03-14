@@ -1,9 +1,16 @@
 # Changelog
 
-## Unreleased
+## [0.10.0] - 2022-03-14
+
+### Added
+
+Support for [weak dependencies and namespaced features].
+
+[weak dependencies and namespaced features]: https://rust-lang.github.io/rfcs/3143-cargo-weak-namespaced-features.html
 
 ### Changed
 
+- Public dependency version bump: `guppy` updated to 0.14.0.
 - MSRV updated to Rust 1.56.
 
 ## [0.9.0] - 2022-02-06
@@ -177,6 +184,7 @@ Internal updates for `cargo-hakari 0.9.8`.
 
 Initial release.
 
+[0.10.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.10.0
 [0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.9.0
 [0.8.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.8.1
 [0.8.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/hakari-0.8.0
