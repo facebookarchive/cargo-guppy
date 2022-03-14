@@ -210,8 +210,8 @@ pub fn cmd_resolve_cargo(opts: &ResolveCargoOptions) -> Result<()> {
     let mut cargo_opts = CargoOptions::new();
     cargo_opts
         .set_include_dev(opts.resolver_opts.include_dev)
-        .set_resolver(opts.resolver_opts.resolver_version)
-        .set_initials_platform(opts.resolver_opts.initials_platform)
+        .set_resolver(opts.resolver_opts.resolver_version.to_guppy())
+        .set_initials_platform(opts.resolver_opts.initials_platform.to_guppy())
         .set_target_platform(target_platform)
         .set_host_platform(host_platform)
         .add_omitted_packages(opts.base_filter_opts.omitted_package_ids(&pkg_graph));

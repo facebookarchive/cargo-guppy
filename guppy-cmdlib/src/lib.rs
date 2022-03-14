@@ -85,15 +85,15 @@ impl PackagesAndFeatures {
 
 // Identical to guppy's CargoResolverVersion, except with additional string metadata generated
 // for matching.
-#[derive(ArgEnum, Clone, Copy)]
-enum ResolverVersion {
+#[derive(ArgEnum, Clone, Copy, Debug)]
+pub enum CargoResolverVersionCmd {
     V1,
     V1Install,
     V2,
 }
 
-#[derive(ArgEnum, Clone, Copy)]
-enum InitialsPlatformCmd {
+#[derive(ArgEnum, Clone, Copy, Debug)]
+pub enum InitialsPlatformCmd {
     Host,
     Standard,
     ProcMacrosOnTarget,
@@ -106,34 +106,36 @@ pub struct CargoResolverOpts {
     /// Include dev-dependencies of initial packages (default: false)
     pub include_dev: bool,
 
-    #[clap(long = "initials-platform", parse(try_from_str = parse_initials_platform))]
-    #[clap(possible_values = ResolverVersion::value_variants().iter().filter_map(ArgEnum::to_possible_value), default_value = "standard")]
+    #[clap(long = "initials-platform")]
+    #[clap(arg_enum, default_value_t = InitialsPlatformCmd::Standard)]
     /// Include initial proc-macros on target platform (default: false)
-    pub initials_platform: InitialsPlatform,
+    pub initials_platform: InitialsPlatformCmd,
 
-    #[clap(long = "resolver-version", parse(try_from_str = parse_resolver_version))]
-    #[clap(possible_values = ResolverVersion::value_variants().iter().filter_map(ArgEnum::to_possible_value), default_value = "v1")]
+    #[clap(long = "resolver-version")]
+    #[clap(arg_enum, default_value_t = CargoResolverVersionCmd::V1)]
     /// Cargo resolver version to use
-    pub resolver_version: CargoResolverVersion,
+    pub resolver_version: CargoResolverVersionCmd,
 }
 
-/// Parses a named resolver version into a CargoResolverVersion.
-pub fn parse_resolver_version(s: &str) -> Result<CargoResolverVersion, String> {
-    let version = ResolverVersion::from_str(s, true)?;
-    match version {
-        ResolverVersion::V1 => Ok(CargoResolverVersion::V1),
-        ResolverVersion::V1Install => Ok(CargoResolverVersion::V1Install),
-        ResolverVersion::V2 => Ok(CargoResolverVersion::V2),
+impl CargoResolverVersionCmd {
+    /// Converts to guppy's CargoResolverVersion.
+    pub fn to_guppy(self) -> CargoResolverVersion {
+        match self {
+            CargoResolverVersionCmd::V1 => CargoResolverVersion::V1,
+            CargoResolverVersionCmd::V1Install => CargoResolverVersion::V1Install,
+            CargoResolverVersionCmd::V2 => CargoResolverVersion::V2,
+        }
     }
 }
 
-/// Parses a named initials platform into an InitialsPlatform.
-pub fn parse_initials_platform(s: &str) -> Result<InitialsPlatform, String> {
-    let p = InitialsPlatformCmd::from_str(s, true)?;
-    match p {
-        InitialsPlatformCmd::Host => Ok(InitialsPlatform::Host),
-        InitialsPlatformCmd::Standard => Ok(InitialsPlatform::Standard),
-        InitialsPlatformCmd::ProcMacrosOnTarget => Ok(InitialsPlatform::ProcMacrosOnTarget),
+impl InitialsPlatformCmd {
+    /// Converts to guppy's InitialsPlatform.
+    pub fn to_guppy(self) -> InitialsPlatform {
+        match self {
+            InitialsPlatformCmd::Host => InitialsPlatform::Host,
+            InitialsPlatformCmd::Standard => InitialsPlatform::Standard,
+            InitialsPlatformCmd::ProcMacrosOnTarget => InitialsPlatform::ProcMacrosOnTarget,
+        }
     }
 }
 
