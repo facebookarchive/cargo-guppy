@@ -525,6 +525,87 @@
 <span id="520">520</span>
 <span id="521">521</span>
 <span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -532,25 +613,30 @@
     <span class="ident">errors</span>::{<span class="ident">FeatureBuildStage</span>, <span class="ident">FeatureGraphWarning</span>},
     <span class="ident">graph</span>::{
         <span class="ident">feature</span>::{
-            <span class="ident">ConditionalLinkImpl</span>, <span class="ident">FeatureEdge</span>, <span class="ident">FeatureGraphImpl</span>, <span class="ident">FeatureMetadataImpl</span>, <span class="ident">FeatureNode</span>,
-            <span class="ident">FeatureType</span>,
+            <span class="ident">ConditionalLinkImpl</span>, <span class="ident">FeatureEdge</span>, <span class="ident">FeatureGraphImpl</span>, <span class="ident">FeatureLabel</span>, <span class="ident">FeatureMetadataImpl</span>,
+            <span class="ident">FeatureNode</span>, <span class="ident">WeakDependencies</span>, <span class="ident">WeakIndex</span>,
         },
-        <span class="ident">DepRequiredOrOptional</span>, <span class="ident">DependencyReq</span>, <span class="ident">FeatureIx</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>,
-        <span class="ident">PackageMetadata</span>,
+        <span class="ident">DepRequiredOrOptional</span>, <span class="ident">DependencyReq</span>, <span class="ident">FeatureIndexInPackage</span>, <span class="ident">FeatureIx</span>, <span class="ident">NamedFeatureDep</span>,
+        <span class="ident">PackageGraph</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageLink</span>, <span class="ident">PackageMetadata</span>,
     },
     <span class="ident">platform::PlatformStatusImpl</span>,
 };
 <span class="kw">use</span> <span class="ident">cargo_metadata::DependencyKind</span>;
 <span class="kw">use</span> <span class="ident">once_cell::sync::OnceCell</span>;
-<span class="kw">use</span> <span class="ident">petgraph::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">petgraph</span>::{<span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">visit::IntoEdgeReferences</span>};
+<span class="kw">use</span> <span class="ident">smallvec::SmallVec</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">iter</span>};
+
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type</span> <span class="ident">FeaturePetgraph</span> <span class="op">=</span> <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>, <span class="ident">Directed</span>, <span class="ident">FeatureIx</span><span class="op">&gt;</span>;
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type</span> <span class="ident">FeatureEdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="op">=</span> <span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">FeaturePetgraph</span> <span class="kw">as</span> <span class="ident">IntoEdgeReferences</span><span class="op">&gt;</span><span class="ident">::EdgeRef</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct</span> <span class="ident">FeatureGraphBuildState</span> {
-    <span class="ident">graph</span>: <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>, <span class="ident">Directed</span>, <span class="ident">FeatureIx</span><span class="op">&gt;</span>,
+    <span class="ident">graph</span>: <span class="ident">FeaturePetgraph</span>,
     <span class="comment">// Map from package ixs to the base (first) feature for each package.</span>
     <span class="ident">base_ixs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">FeatureNode</span>, <span class="ident">FeatureMetadataImpl</span><span class="op">&gt;</span>,
+    <span class="ident">weak</span>: <span class="ident">WeakDependencies</span>,
     <span class="ident">warnings</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FeatureGraphWarning</span><span class="op">&gt;</span>,
 }
 
@@ -564,6 +650,7 @@
             <span class="comment">// the end.</span>
             <span class="ident">base_ixs</span>: <span class="ident">Vec::with_capacity</span>(<span class="ident">package_count</span> <span class="op">+</span> <span class="number">1</span>),
             <span class="ident">map</span>: <span class="ident">HashMap::with_capacity</span>(<span class="ident">package_count</span>),
+            <span class="ident">weak</span>: <span class="ident">WeakDependencies::new</span>(),
             <span class="ident">warnings</span>: <span class="macro">vec!</span>[],
         }
     }
@@ -572,22 +659,15 @@
     <span class="doccomment">/// feature to the base package.</span>
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">add_nodes</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">package</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) {
         <span class="kw">let</span> <span class="ident">base_node</span> <span class="op">=</span> <span class="ident">FeatureNode::base</span>(<span class="ident">package</span>.<span class="ident">package_ix</span>());
-        <span class="kw">let</span> <span class="ident">base_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">base_node</span>, <span class="ident">FeatureType::BasePackage</span>);
+        <span class="kw">let</span> <span class="ident">base_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">base_node</span>);
         <span class="self">self</span>.<span class="ident">base_ixs</span>.<span class="ident">push</span>(<span class="ident">base_ix</span>);
-        <span class="ident">FeatureNode::named_features</span>(<span class="ident">package</span>).<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">feature_node</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">feature_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">feature_node</span>, <span class="ident">FeatureType::NamedFeature</span>);
-            <span class="self">self</span>.<span class="ident">graph</span>
-                .<span class="ident">update_edge</span>(<span class="ident">feature_ix</span>, <span class="ident">base_ix</span>, <span class="ident">FeatureEdge::FeatureToBase</span>);
-        });
-
-        <span class="ident">package</span>.<span class="ident">optional_deps_full</span>().<span class="ident">for_each</span>(<span class="op">|</span>(<span class="ident">n</span>, <span class="kw">_</span>)<span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">dep_idx</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(
-                <span class="ident">FeatureNode::new</span>(<span class="ident">package</span>.<span class="ident">package_ix</span>(), <span class="ident">n</span>),
-                <span class="ident">FeatureType::OptionalDep</span>,
-            );
-            <span class="self">self</span>.<span class="ident">graph</span>
-                .<span class="ident">update_edge</span>(<span class="ident">dep_idx</span>, <span class="ident">base_ix</span>, <span class="ident">FeatureEdge::FeatureToBase</span>);
-        });
+        <span class="ident">FeatureNode::named_features</span>(<span class="ident">package</span>)
+            .<span class="ident">chain</span>(<span class="ident">FeatureNode::optional_deps</span>(<span class="ident">package</span>))
+            .<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">feature_node</span><span class="op">|</span> {
+                <span class="kw">let</span> <span class="ident">feature_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">add_node</span>(<span class="ident">feature_node</span>);
+                <span class="self">self</span>.<span class="ident">graph</span>
+                    .<span class="ident">update_edge</span>(<span class="ident">feature_ix</span>, <span class="ident">base_ix</span>, <span class="ident">FeatureEdge::FeatureToBase</span>);
+            });
     }
 
     <span class="doccomment">/// Mark the end of adding nodes.</span>
@@ -608,64 +688,12 @@
                 <span class="kw">let</span> <span class="ident">to_nodes_edges</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">feature_deps</span>
                     .<span class="ident">iter</span>()
                     .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">feature_dep</span><span class="op">|</span> {
-                        <span class="kw">let</span> (<span class="ident">dep_name</span>, <span class="ident">to_feature</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::split_feature_dep</span>(<span class="ident">feature_dep</span>);
-                        <span class="kw">let</span> (<span class="ident">cross_node_edge</span>, <span class="ident">same_node_edge</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">dep_name</span> {
-                            <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>) =&gt; {
-                                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">link</span>) <span class="op">=</span> <span class="ident">dep_name_to_link</span>.<span class="ident">get</span>(<span class="ident">dep_name</span>) {
-                                    <span class="comment">// dependency from (`main`, `a`) to (`dep, `foo`)</span>
-                                    <span class="kw">let</span> <span class="ident">cross_node_edge</span> <span class="op">=</span> <span class="self">self</span>
-                                        .<span class="ident">make_named_feature_node</span>(
-                                            <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
-                                            <span class="ident">from_feature</span>,
-                                            <span class="kw-2">&amp;</span><span class="ident">link</span>.<span class="ident">to</span>(),
-                                            <span class="ident">to_feature</span>,
-                                            <span class="bool-val">true</span>,
-                                        )
-                                        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">cross_node</span><span class="op">|</span> {
-                                            <span class="comment">// This is a cross-package link. The platform-specific</span>
-                                            <span class="comment">// requirements still apply, so grab them from the</span>
-                                            <span class="comment">// PackageLink.</span>
-                                            (<span class="ident">cross_node</span>, <span class="ident"><span class="self">Self</span>::make_named_feature_cross_edge</span>(<span class="ident">link</span>))
-                                        });
-
-                                    <span class="comment">// If the package is present as an optional dependency, it is</span>
-                                    <span class="comment">// implicitly activated by the feature:</span>
-                                    <span class="comment">// from (`main`, `a`) to (`main`, `dep`)</span>
-                                    <span class="kw">let</span> <span class="ident">same_node_edge</span> <span class="op">=</span> <span class="self">self</span>
-                                        .<span class="ident">make_named_feature_node</span>(
-                                            <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
-                                            <span class="ident">from_feature</span>,
-                                            <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
-                                            <span class="ident">dep_name</span>,
-                                            <span class="comment">// Don&#39;t warn if this dep isn&#39;t optional.</span>
-                                            <span class="bool-val">false</span>,
-                                        )
-                                        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">same_node</span><span class="op">|</span> {
-                                            (<span class="ident">same_node</span>, <span class="ident"><span class="self">Self</span>::make_named_feature_cross_edge</span>(<span class="ident">link</span>))
-                                        });
-                                    (<span class="ident">cross_node_edge</span>, <span class="ident">same_node_edge</span>)
-                                } <span class="kw">else</span> {
-                                    <span class="comment">// The destination package was unknown to the graph.</span>
-                                    <span class="comment">// XXX may need to be revisited if we start modeling unresolved</span>
-                                    <span class="comment">// dependencies.</span>
-                                    (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
-                                }
-                            }
-                            <span class="prelude-val">None</span> =&gt; {
-                                <span class="kw">let</span> <span class="ident">same_node_edge</span> <span class="op">=</span> <span class="self">self</span>
-                                    .<span class="ident">make_named_feature_node</span>(
-                                        <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
-                                        <span class="ident">from_feature</span>,
-                                        <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
-                                        <span class="ident">to_feature</span>,
-                                        <span class="bool-val">true</span>,
-                                    )
-                                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">same_node</span><span class="op">|</span> (<span class="ident">same_node</span>, <span class="ident">FeatureEdge::FeatureDependency</span>));
-                                (<span class="prelude-val">None</span>, <span class="ident">same_node_edge</span>)
-                            }
-                        };
-
-                        <span class="ident">cross_node_edge</span>.<span class="ident">into_iter</span>().<span class="ident">chain</span>(<span class="ident">same_node_edge</span>)
+                        <span class="self">self</span>.<span class="ident">nodes_for_named_feature_dep</span>(
+                            <span class="ident">metadata</span>,
+                            <span class="ident">FeatureLabel::Named</span>(<span class="ident">from_feature</span>),
+                            <span class="ident">feature_dep</span>,
+                            <span class="kw-2">&amp;</span><span class="ident">dep_name_to_link</span>,
+                        )
                     })
                     <span class="comment">// The flat_map above holds an &amp;mut reference to self, which is why it needs to</span>
                     <span class="comment">// be collected.</span>
@@ -677,29 +705,121 @@
             })
     }
 
-    <span class="doccomment">/// Split a feature dep into package and feature names.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// &quot;foo&quot; -&gt; (None, &quot;foo&quot;)</span>
-    <span class="doccomment">/// &quot;dep/foo&quot; -&gt; (Some(&quot;dep&quot;), &quot;foo&quot;)</span>
-    <span class="kw">fn</span> <span class="ident">split_feature_dep</span>(<span class="ident">feature_dep</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; (<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rsplit</span> <span class="op">=</span> <span class="ident">feature_dep</span>.<span class="ident">rsplitn</span>(<span class="number">2</span>, <span class="string">&#39;/&#39;</span>);
-        <span class="kw">let</span> <span class="ident">to_feature_name</span> <span class="op">=</span> <span class="ident">rsplit</span>
-            .<span class="ident">next</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;rsplitn should return at least one element&quot;</span>);
-        <span class="kw">let</span> <span class="ident">dep_name</span> <span class="op">=</span> <span class="ident">rsplit</span>.<span class="ident">next</span>();
+    <span class="kw">fn</span> <span class="ident">nodes_for_named_feature_dep</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">metadata</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+        <span class="ident">from_label</span>: <span class="ident">FeatureLabel</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+        <span class="ident">feature_dep</span>: <span class="kw-2">&amp;</span><span class="ident">NamedFeatureDep</span>,
+        <span class="ident">dep_name_to_link</span>: <span class="kw-2">&amp;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">PackageLink</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="ident">SmallVec</span><span class="op">&lt;</span>[(<span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>); <span class="number">3</span>]<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">nodes_edges</span>: <span class="ident">SmallVec</span><span class="op">&lt;</span>[(<span class="ident">FeatureNode</span>, <span class="ident">FeatureEdge</span>); <span class="number">3</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SmallVec::new</span>();
 
-        (<span class="ident">dep_name</span>, <span class="ident">to_feature_name</span>)
+        <span class="kw">match</span> <span class="ident">feature_dep</span> {
+            <span class="ident">NamedFeatureDep::DependencyNamedFeature</span> {
+                <span class="ident">dep_name</span>,
+                <span class="ident">feature</span>,
+                <span class="ident">weak</span>,
+            } =&gt; {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">link</span>) <span class="op">=</span> <span class="ident">dep_name_to_link</span>.<span class="ident">get</span>(<span class="ident">dep_name</span>.<span class="ident">as_ref</span>()) {
+                    <span class="kw">let</span> <span class="ident">weak_index</span> <span class="op">=</span> <span class="ident">weak</span>.<span class="ident">then</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">weak</span>.<span class="ident">insert</span>(<span class="ident">link</span>.<span class="ident">edge_ix</span>()));
+
+                    <span class="comment">// Dependency from (`main`, `a`) to (`dep, `foo`)</span>
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cross_node</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_named_feature_node</span>(
+                        <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                        <span class="ident">from_label</span>,
+                        <span class="kw-2">&amp;</span><span class="ident">link</span>.<span class="ident">to</span>(),
+                        <span class="ident">FeatureLabel::Named</span>(<span class="ident">feature</span>.<span class="ident">as_ref</span>()),
+                        <span class="bool-val">true</span>,
+                    ) {
+                        <span class="comment">// This is a cross-package link. The platform-specific</span>
+                        <span class="comment">// requirements still apply, so grab them from the</span>
+                        <span class="comment">// PackageLink.</span>
+                        <span class="ident">nodes_edges</span>.<span class="ident">push</span>((
+                            <span class="ident">cross_node</span>,
+                            <span class="ident"><span class="self">Self</span>::make_named_feature_cross_edge</span>(<span class="ident">link</span>, <span class="ident">weak_index</span>),
+                        ));
+                    };
+
+                    <span class="comment">// If the package is present as an optional dependency, it is</span>
+                    <span class="comment">// implicitly activated by the feature:</span>
+                    <span class="comment">// from (`main`, `a`) to (`main`, `dep:dep`)</span>
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">same_node</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_named_feature_node</span>(
+                        <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                        <span class="ident">from_label</span>,
+                        <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                        <span class="ident">FeatureLabel::OptionalDependency</span>(<span class="ident">dep_name</span>),
+                        <span class="comment">// Don&#39;t warn if this dep isn&#39;t optional.</span>
+                        <span class="bool-val">false</span>,
+                    ) {
+                        <span class="ident">nodes_edges</span>.<span class="ident">push</span>((
+                            <span class="ident">same_node</span>,
+                            <span class="ident"><span class="self">Self</span>::make_named_feature_cross_edge</span>(<span class="ident">link</span>, <span class="ident">weak_index</span>),
+                        ));
+                    }
+
+                    <span class="comment">// Finally, (`main`, `a`) to (`main`, `dep`) -- if this is a non-weak dependency</span>
+                    <span class="comment">// and a named feature by this name is present, it also gets activated (even if</span>
+                    <span class="comment">// the named feature has no relation to the optional dependency).</span>
+                    <span class="kw">if</span> <span class="op">!</span><span class="kw-2">*</span><span class="ident">weak</span> {
+                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">same_named_feature_node</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_named_feature_node</span>(
+                            <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                            <span class="ident">from_label</span>,
+                            <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                            <span class="ident">FeatureLabel::Named</span>(<span class="ident">dep_name</span>),
+                            <span class="comment">// Don&#39;t warn if this dep isn&#39;t optional.</span>
+                            <span class="bool-val">false</span>,
+                        ) {
+                            <span class="ident">nodes_edges</span>.<span class="ident">push</span>((
+                                <span class="ident">same_named_feature_node</span>,
+                                <span class="ident"><span class="self">Self</span>::make_named_feature_cross_edge</span>(<span class="ident">link</span>, <span class="prelude-val">None</span>),
+                            ));
+                        }
+                    }
+                }
+            }
+            <span class="ident">NamedFeatureDep::NamedFeature</span>(<span class="ident">feature_name</span>) =&gt; {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">same_node</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_named_feature_node</span>(
+                    <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                    <span class="ident">from_label</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                    <span class="ident">FeatureLabel::Named</span>(<span class="ident">feature_name</span>.<span class="ident">as_ref</span>()),
+                    <span class="bool-val">true</span>,
+                ) {
+                    <span class="ident">nodes_edges</span>.<span class="ident">push</span>((<span class="ident">same_node</span>, <span class="ident">FeatureEdge::NamedFeature</span>));
+                }
+            }
+            <span class="ident">NamedFeatureDep::OptionalDependency</span>(<span class="ident">dep_name</span>) =&gt; {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">same_node</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">make_named_feature_node</span>(
+                    <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                    <span class="ident">from_label</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">metadata</span>,
+                    <span class="ident">FeatureLabel::OptionalDependency</span>(<span class="ident">dep_name</span>.<span class="ident">as_ref</span>()),
+                    <span class="bool-val">true</span>,
+                ) {
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">link</span>) <span class="op">=</span> <span class="ident">dep_name_to_link</span>.<span class="ident">get</span>(<span class="ident">dep_name</span>.<span class="ident">as_ref</span>()) {
+                        <span class="ident">nodes_edges</span>.<span class="ident">push</span>((
+                            <span class="ident">same_node</span>,
+                            <span class="ident">FeatureEdge::NamedFeatureDepColon</span>(
+                                <span class="ident"><span class="self">Self</span>::make_full_conditional_link_impl</span>(<span class="ident">link</span>),
+                            ),
+                        ));
+                    }
+                }
+            }
+        };
+
+        <span class="ident">nodes_edges</span>
     }
 
     <span class="kw">fn</span> <span class="ident">make_named_feature_node</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">from_package</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-        <span class="ident">from_feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">from_label</span>: <span class="ident">FeatureLabel</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">to_package</span>: <span class="kw-2">&amp;</span><span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
-        <span class="ident">to_feature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">to_label</span>: <span class="ident">FeatureLabel</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
         <span class="ident">warn</span>: <span class="ident">bool</span>,
     ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FeatureNode</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">to_package</span>.<span class="ident">get_feature_idx</span>(<span class="ident">to_feature</span>) {
+        <span class="kw">match</span> <span class="ident">to_package</span>.<span class="ident">get_feature_idx</span>(<span class="ident">to_label</span>) {
             <span class="prelude-val">Some</span>(<span class="ident">idx</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">FeatureNode::new</span>(<span class="ident">to_package</span>.<span class="ident">package_ix</span>(), <span class="ident">idx</span>)),
             <span class="prelude-val">None</span> =&gt; {
                 <span class="comment">// It is possible to specify a feature that doesn&#39;t actually exist, and cargo will</span>
@@ -714,10 +834,10 @@
                     <span class="self">self</span>.<span class="ident">warnings</span>.<span class="ident">push</span>(<span class="ident">FeatureGraphWarning::MissingFeature</span> {
                         <span class="ident">stage</span>: <span class="ident">FeatureBuildStage::AddNamedFeatureEdges</span> {
                             <span class="ident">package_id</span>: <span class="ident">from_package</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
-                            <span class="ident">from_feature</span>: <span class="ident">from_feature</span>.<span class="ident">to_string</span>(),
+                            <span class="ident">from_feature</span>: <span class="ident">from_label</span>.<span class="ident">to_string</span>(),
                         },
                         <span class="ident">package_id</span>: <span class="ident">to_package</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
-                        <span class="ident">feature_name</span>: <span class="ident">to_feature</span>.<span class="ident">to_string</span>(),
+                        <span class="ident">feature_name</span>: <span class="ident">to_label</span>.<span class="ident">to_string</span>(),
                     });
                 }
                 <span class="prelude-val">None</span>
@@ -734,9 +854,23 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// (a link (`from`, `a`) to (`dep`, `foo`) is created.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// If `dep` is optional, the edge (`from`, `a`) to (`from`, `dep`) is also a `CrossPackage`</span>
-    <span class="doccomment">/// edge.</span>
-    <span class="kw">fn</span> <span class="ident">make_named_feature_cross_edge</span>(<span class="ident">link</span>: <span class="kw-2">&amp;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">FeatureEdge</span> {
+    <span class="doccomment">/// If `dep` is optional, the edge (`from`, `a`) to (`from`, `dep`) is also a</span>
+    <span class="doccomment">/// `NamedFeatureWithSlash` edge.</span>
+    <span class="kw">fn</span> <span class="ident">make_named_feature_cross_edge</span>(
+        <span class="ident">link</span>: <span class="kw-2">&amp;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>,
+        <span class="ident">weak_index</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">WeakIndex</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="ident">FeatureEdge</span> {
+        <span class="comment">// This edge is enabled if the feature is enabled, which means the union of (required,</span>
+        <span class="comment">// optional) build conditions.</span>
+        <span class="ident">FeatureEdge::NamedFeatureWithSlash</span> {
+            <span class="ident">link</span>: <span class="ident"><span class="self">Self</span>::make_full_conditional_link_impl</span>(<span class="ident">link</span>),
+            <span class="ident">weak_index</span>,
+        }
+    }
+
+    <span class="comment">// Creates a &quot;full&quot; conditional link, unifying requirements across all dependency lines.</span>
+    <span class="comment">// This should not be used in add_dependency_edges below!</span>
+    <span class="kw">fn</span> <span class="ident">make_full_conditional_link_impl</span>(<span class="ident">link</span>: <span class="kw-2">&amp;</span><span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">ConditionalLinkImpl</span> {
         <span class="comment">// This edge is enabled if the feature is enabled, which means the union of (required,</span>
         <span class="comment">// optional) build conditions.</span>
         <span class="kw">fn</span> <span class="ident">combine_req_opt</span>(<span class="ident">req</span>: <span class="ident">DependencyReq</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">PlatformStatusImpl</span> {
@@ -745,12 +879,12 @@
             <span class="ident">required</span>
         }
 
-        <span class="ident">FeatureEdge::Conditional</span>(<span class="ident">ConditionalLinkImpl</span> {
+        <span class="ident">ConditionalLinkImpl</span> {
             <span class="ident">package_edge_ix</span>: <span class="ident">link</span>.<span class="ident">edge_ix</span>(),
             <span class="ident">normal</span>: <span class="ident">combine_req_opt</span>(<span class="ident">link</span>.<span class="ident">normal</span>()),
             <span class="ident">build</span>: <span class="ident">combine_req_opt</span>(<span class="ident">link</span>.<span class="ident">build</span>()),
             <span class="ident">dev</span>: <span class="ident">combine_req_opt</span>(<span class="ident">link</span>.<span class="ident">dev</span>()),
-        })
+        }
     }
 
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">add_dependency_edges</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) {
@@ -816,31 +950,23 @@
             <span class="comment">// package metadata.</span>
             <span class="kw">let</span> <span class="ident">from_node</span> <span class="op">=</span> <span class="ident">FeatureNode::new</span>(
                 <span class="ident">from</span>.<span class="ident">package_ix</span>(),
-                <span class="ident">from</span>.<span class="ident">get_feature_idx</span>(<span class="ident">link</span>.<span class="ident">dep_name</span>()).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                    <span class="macro">panic!</span>(
+                <span class="ident">from</span>.<span class="ident">get_feature_idx</span>(<span class="ident">FeatureLabel::OptionalDependency</span>(<span class="ident">link</span>.<span class="ident">dep_name</span>()))
+                    .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                        <span class="macro">panic!</span>(
                         <span class="string">&quot;while adding feature edges, for package &#39;{}&#39;, optional dep &#39;{}&#39; missing&quot;</span>,
                         <span class="ident">from</span>.<span class="ident">id</span>(),
                         <span class="ident">link</span>.<span class="ident">dep_name</span>(),
                     );
-                }),
+                    }),
             );
             <span class="self">self</span>.<span class="ident">add_edges</span>(<span class="ident">from_node</span>, <span class="ident">optional_req</span>.<span class="ident">finish</span>());
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">add_node</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">feature_id</span>: <span class="ident">FeatureNode</span>,
-        <span class="ident">feature_type</span>: <span class="ident">FeatureType</span>,
-    ) -&gt; <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">add_node</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">feature_id</span>: <span class="ident">FeatureNode</span>) -&gt; <span class="ident">NodeIndex</span><span class="op">&lt;</span><span class="ident">FeatureIx</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">feature_ix</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">graph</span>.<span class="ident">add_node</span>(<span class="ident">feature_id</span>);
-        <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">insert</span>(
-            <span class="ident">feature_id</span>,
-            <span class="ident">FeatureMetadataImpl</span> {
-                <span class="ident">feature_ix</span>,
-                <span class="ident">feature_type</span>,
-            },
-        );
+        <span class="self">self</span>.<span class="ident">map</span>
+            .<span class="ident">insert</span>(<span class="ident">feature_id</span>, <span class="ident">FeatureMetadataImpl</span> { <span class="ident">feature_ix</span> });
         <span class="ident">feature_ix</span>
     }
 
@@ -878,6 +1004,11 @@
                     <span class="comment">// &quot;dep/feat&quot; causes a cross link to be created from &quot;main/feat&quot; to &quot;main/dep&quot;.</span>
                     <span class="comment">// However, the &quot;dep&quot; encountered later upgrades this link to a feature</span>
                     <span class="comment">// dependency.</span>
+                    <span class="comment">//</span>
+                    <span class="comment">// This could also be an upgrade from a weak to a non-weak dependency:</span>
+                    <span class="comment">//</span>
+                    <span class="comment">// [features]</span>
+                    <span class="comment">// feat = [&quot;dep?/feat&quot;, &quot;dep/feat2&quot;]</span>
                     <span class="kw">let</span> <span class="ident">old_edge</span> <span class="op">=</span> <span class="self">self</span>
                         .<span class="ident">graph</span>
                         .<span class="ident">edge_weight_mut</span>(<span class="ident">edge_ix</span>)
@@ -885,12 +1016,40 @@
                     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::single_match</span>)]</span>
                     <span class="kw">match</span> (<span class="ident">old_edge</span>, <span class="ident">edge</span>) {
                         (
-                            <span class="ident">old_edge</span> @ <span class="ident">FeatureEdge::Conditional</span>(<span class="kw">_</span>),
-                            <span class="ident">edge</span> @ <span class="ident">FeatureEdge::FeatureDependency</span>,
+                            <span class="ident">FeatureEdge::NamedFeatureWithSlash</span> {
+                                <span class="ident">weak_index</span>: <span class="ident">old_weak_index</span>,
+                                ..
+                            },
+                            <span class="ident">FeatureEdge::NamedFeatureWithSlash</span> { <span class="ident">weak_index</span>, .. },
                         ) =&gt; {
-                            <span class="comment">// Upgrade this edge.</span>
+                            <span class="kw">if</span> <span class="ident">old_weak_index</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">weak_index</span>.<span class="ident">is_some</span>() {
+                                <span class="macro">debug_assert_eq!</span>(
+                                    <span class="kw-2">*</span><span class="ident">old_weak_index</span>, <span class="ident">weak_index</span>,
+                                    <span class="string">&quot;weak indexes should match if some&quot;</span>
+                                );
+                            }
+                            <span class="comment">// Upgrade this edge from weak to non-weak.</span>
+                            <span class="kw">if</span> <span class="ident">weak_index</span>.<span class="ident">is_none</span>() {
+                                <span class="kw-2">*</span><span class="ident">old_weak_index</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+                            }
+                        }
+                        (
+                            <span class="ident">old_edge</span> @ <span class="ident">FeatureEdge::NamedFeatureWithSlash</span> { .. },
+                            <span class="ident">edge</span> @ <span class="ident">FeatureEdge::NamedFeature</span>
+                            <span class="op">|</span> <span class="ident">edge</span> @ <span class="ident">FeatureEdge::NamedFeatureDepColon</span>(<span class="kw">_</span>),
+                        ) =&gt; {
+                            <span class="comment">// Upgrade this edge from / conditional to dep: conditional or unconditional.</span>
                             <span class="kw-2">*</span><span class="ident">old_edge</span> <span class="op">=</span> <span class="ident">edge</span>;
                         }
+                        (
+                            <span class="ident">old_edge</span> @ <span class="ident">FeatureEdge::NamedFeatureDepColon</span>(<span class="kw">_</span>),
+                            <span class="ident">edge</span> @ <span class="ident">FeatureEdge::NamedFeature</span>,
+                        ) =&gt; {
+                            <span class="comment">// Upgrade this edge from dep: conditional to unconditional.</span>
+                            <span class="comment">// XXX: can this ever happen?</span>
+                            <span class="kw-2">*</span><span class="ident">old_edge</span> <span class="op">=</span> <span class="ident">edge</span>;
+                        }
+
                         <span class="kw">_</span> =&gt; {
                             <span class="comment">// In all other cases, leave the old edge alone.</span>
                         }
@@ -914,6 +1073,7 @@
             <span class="ident">map</span>: <span class="self">self</span>.<span class="ident">map</span>,
             <span class="ident">warnings</span>: <span class="self">self</span>.<span class="ident">warnings</span>,
             <span class="ident">sccs</span>: <span class="ident">OnceCell::new</span>(),
+            <span class="ident">weak</span>: <span class="self">self</span>.<span class="ident">weak</span>,
         }
     }
 }
@@ -923,9 +1083,9 @@
     <span class="ident">link</span>: <span class="ident">PackageLink</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     <span class="ident">to</span>: <span class="ident">PackageMetadata</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span>,
     <span class="ident">edge_ix</span>: <span class="ident">EdgeIndex</span><span class="op">&lt;</span><span class="ident">PackageIx</span><span class="op">&gt;</span>,
-    <span class="ident">to_default_idx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+    <span class="ident">to_default_idx</span>: <span class="ident">FeatureIndexInPackage</span>,
     <span class="comment">// This will contain any build states that aren&#39;t empty.</span>
-    <span class="ident">features</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>, <span class="ident">DependencyBuildState</span><span class="op">&gt;</span>,
+    <span class="ident">features</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">FeatureIndexInPackage</span>, <span class="ident">DependencyBuildState</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureReq</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
@@ -935,7 +1095,9 @@
             <span class="ident">link</span>,
             <span class="ident">to</span>,
             <span class="ident">edge_ix</span>: <span class="ident">link</span>.<span class="ident">edge_ix</span>(),
-            <span class="ident">to_default_idx</span>: <span class="ident">to</span>.<span class="ident">get_feature_idx</span>(<span class="string">&quot;default&quot;</span>),
+            <span class="ident">to_default_idx</span>: <span class="ident">to</span>
+                .<span class="ident">get_feature_idx</span>(<span class="ident">FeatureLabel::Named</span>(<span class="string">&quot;default&quot;</span>))
+                .<span class="ident">unwrap_or</span>(<span class="ident">FeatureIndexInPackage::Base</span>),
             <span class="ident">features</span>: <span class="ident">HashMap::new</span>(),
         }
     }
@@ -952,14 +1114,14 @@
         <span class="ident">warnings</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FeatureGraphWarning</span><span class="op">&gt;</span>,
     ) {
         <span class="comment">// Base feature.</span>
-        <span class="self">self</span>.<span class="ident">extend</span>(<span class="prelude-val">None</span>, <span class="ident">dep_kind</span>, <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">build_if</span>);
+        <span class="self">self</span>.<span class="ident">extend</span>(<span class="ident">FeatureIndexInPackage::Base</span>, <span class="ident">dep_kind</span>, <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">build_if</span>);
         <span class="comment">// Default feature (or base if it isn&#39;t present).</span>
         <span class="self">self</span>.<span class="ident">extend</span>(<span class="self">self</span>.<span class="ident">to_default_idx</span>, <span class="ident">dep_kind</span>, <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">default_features_if</span>);
 
         <span class="kw">for</span> (<span class="ident">feature</span>, <span class="ident">status</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">feature_targets</span> {
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">to</span>.<span class="ident">get_feature_idx</span>(<span class="ident">feature</span>) {
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">to</span>.<span class="ident">get_feature_idx</span>(<span class="ident">FeatureLabel::Named</span>(<span class="ident">feature</span>)) {
                 <span class="prelude-val">Some</span>(<span class="ident">feature_idx</span>) =&gt; {
-                    <span class="self">self</span>.<span class="ident">extend</span>(<span class="prelude-val">Some</span>(<span class="ident">feature_idx</span>), <span class="ident">dep_kind</span>, <span class="ident">status</span>);
+                    <span class="self">self</span>.<span class="ident">extend</span>(<span class="ident">feature_idx</span>, <span class="ident">dep_kind</span>, <span class="ident">status</span>);
                 }
                 <span class="prelude-val">None</span> =&gt; {
                     <span class="comment">// The destination feature is missing -- this is accepted by cargo</span>
@@ -979,7 +1141,7 @@
 
     <span class="kw">fn</span> <span class="ident">extend</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">feature_idx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
+        <span class="ident">feature_idx</span>: <span class="ident">FeatureIndexInPackage</span>,
         <span class="ident">dep_kind</span>: <span class="ident">DependencyKind</span>,
         <span class="ident">status</span>: <span class="kw-2">&amp;</span><span class="ident">PlatformStatusImpl</span>,
     ) {
@@ -1000,7 +1162,7 @@
                 <span class="comment">// extend ensures that the build states aren&#39;t empty. Double-check that.</span>
                 <span class="macro">debug_assert!</span>(<span class="op">!</span><span class="ident">build_state</span>.<span class="ident">is_empty</span>(), <span class="string">&quot;build states are always non-empty&quot;</span>);
                 (
-                    <span class="ident">FeatureNode::new_opt</span>(<span class="ident">package_ix</span>, <span class="ident">feature_idx</span>),
+                    <span class="ident">FeatureNode::new</span>(<span class="ident">package_ix</span>, <span class="ident">feature_idx</span>),
                     <span class="ident">build_state</span>.<span class="ident">finish</span>(),
                 )
             })
@@ -1039,7 +1201,7 @@
     }
 
     <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) -&gt; <span class="ident">FeatureEdge</span> {
-        <span class="ident">FeatureEdge::Conditional</span>(<span class="ident">ConditionalLinkImpl</span> {
+        <span class="ident">FeatureEdge::DependenciesSection</span>(<span class="ident">ConditionalLinkImpl</span> {
             <span class="ident">package_edge_ix</span>: <span class="self">self</span>.<span class="ident">package_edge_ix</span>,
             <span class="ident">normal</span>: <span class="self">self</span>.<span class="ident">normal</span>,
             <span class="ident">build</span>: <span class="self">self</span>.<span class="ident">build</span>,

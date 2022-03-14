@@ -48,19 +48,139 @@
 <span id="43">43</span>
 <span id="44">44</span>
 <span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="ident">petgraph</span>::{
     <span class="ident">prelude</span>::<span class="kw-2">*</span>,
-    <span class="ident">visit</span>::{<span class="ident">DfsPostOrder</span>, <span class="ident">IntoEdges</span>, <span class="ident">VisitMap</span>},
+    <span class="ident">visit</span>::{
+        <span class="ident">DfsPostOrder</span>, <span class="ident">IntoEdgeReferences</span>, <span class="ident">IntoEdges</span>, <span class="ident">IntoEdgesDirected</span>, <span class="ident">Reversed</span>,
+        <span class="ident">ReversedEdgeReference</span>, <span class="ident">VisitMap</span>,
+    },
 };
 
-<span class="doccomment">/// `DfsPostOrder::next`, adapted for a filter that&#39;s a `FnMut`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dfs_next_filtered</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">VM</span>, <span class="ident">G</span><span class="op">&gt;</span>(
+<span class="doccomment">/// `DfsPostOrder::next`, adapted for a buffered filter that&#39;s also FnMut.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dfs_next_buffered_filter</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">VM</span>, <span class="ident">G</span><span class="op">&gt;</span>(
     <span class="ident">dfs</span>: <span class="kw-2">&amp;mut</span> <span class="ident">DfsPostOrder</span><span class="op">&lt;</span><span class="ident">N</span>, <span class="ident">VM</span><span class="op">&gt;</span>,
     <span class="ident">graph</span>: <span class="ident">G</span>,
-    <span class="kw-2">mut</span> <span class="ident">edge_filter</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">G::EdgeRef</span>) -&gt; <span class="ident">bool</span>,
+    <span class="kw-2">mut</span> <span class="ident">buffered_filter</span>: <span class="kw">impl</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
 ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">N</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">N</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span>,
@@ -71,12 +191,11 @@
     <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">nx</span>) <span class="op">=</span> <span class="ident">dfs</span>.<span class="ident">stack</span>.<span class="ident">last</span>() {
         <span class="kw">if</span> <span class="ident">dfs</span>.<span class="ident">discovered</span>.<span class="ident">visit</span>(<span class="ident">nx</span>) {
             <span class="comment">// First time visiting `nx`: Push neighbors, don&#39;t pop `nx`</span>
-            <span class="kw">let</span> <span class="ident">neighbors</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">edges</span>(<span class="ident">nx</span>).<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">edge</span><span class="op">|</span> {
-                <span class="kw">if</span> <span class="ident">edge_filter</span>(<span class="ident">edge</span>) {
-                    <span class="prelude-val">Some</span>(<span class="ident">edge</span>.<span class="ident">target</span>())
-                } <span class="kw">else</span> {
-                    <span class="prelude-val">None</span>
-                }
+            <span class="kw">let</span> <span class="ident">neighbors</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">edges</span>(<span class="ident">nx</span>).<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">edge</span><span class="op">|</span> {
+                <span class="ident">buffered_filter</span>
+                    .<span class="ident">filter</span>(<span class="ident">edge</span>)
+                    .<span class="ident">into_iter</span>()
+                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">edge</span><span class="op">|</span> <span class="ident">edge</span>.<span class="ident">target</span>())
             });
             <span class="kw">for</span> <span class="ident">succ</span> <span class="kw">in</span> <span class="ident">neighbors</span> {
                 <span class="kw">if</span> <span class="op">!</span><span class="ident">dfs</span>.<span class="ident">discovered</span>.<span class="ident">is_visited</span>(<span class="kw-2">&amp;</span><span class="ident">succ</span>) {
@@ -93,6 +212,121 @@
     }
     <span class="prelude-val">None</span>
 }
+
+<span class="doccomment">/// A buffered filter is a graph traversal edge filter that can buffer up some edges to be</span>
+<span class="doccomment">/// returned later.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">G</span>: <span class="ident">IntoEdges</span>,
+{
+    <span class="doccomment">/// Returns a list of edge references to follow.</span>
+    <span class="kw">type</span> <span class="ident">Iter</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">G::EdgeRef</span><span class="op">&gt;</span>;
+
+    <span class="kw">fn</span> <span class="ident">filter</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">edge</span>: <span class="ident">G::EdgeRef</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span>;
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">G</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">T</span>: <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
+    <span class="ident">G</span>: <span class="ident">IntoEdges</span>,
+{
+    <span class="doccomment">/// Returns a list of node IDs to follow.</span>
+    <span class="kw">type</span> <span class="ident">Iter</span> <span class="op">=</span> <span class="ident">T::Iter</span>;
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">filter</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">edge</span>: <span class="ident">G::EdgeRef</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span> {
+        (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">filter</span>(<span class="ident">edge</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SimpleEdgeFilterFn</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw">pub</span> <span class="ident">F</span>);
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">G</span><span class="op">&gt;</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SimpleEdgeFilterFn</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">G::EdgeRef</span>) -&gt; <span class="ident">bool</span>,
+    <span class="ident">G</span>: <span class="ident">IntoEdges</span>,
+{
+    <span class="kw">type</span> <span class="ident">Iter</span> <span class="op">=</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">G::EdgeRef</span><span class="op">&gt;</span>;
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">filter</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">edge</span>: <span class="ident">G::EdgeRef</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span> {
+        <span class="kw">if</span> (<span class="self">self</span>.<span class="number">0</span>)(<span class="ident">edge</span>) {
+            <span class="prelude-val">Some</span>(<span class="ident">edge</span>)
+        } <span class="kw">else</span> {
+            <span class="prelude-val">None</span>
+        }
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BufferedEdgeFilterFn</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw">pub</span> <span class="ident">F</span>);
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">G</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">BufferedEdgeFilterFn</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">G::EdgeRef</span>) -&gt; <span class="ident">I</span>,
+    <span class="ident">G</span>: <span class="ident">IntoEdges</span>,
+    <span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">G::EdgeRef</span><span class="op">&gt;</span>,
+{
+    <span class="kw">type</span> <span class="ident">Iter</span> <span class="op">=</span> <span class="ident">I</span>;
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">filter</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">edge</span>: <span class="ident">G::EdgeRef</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span> {
+        (<span class="self">self</span>.<span class="number">0</span>)(<span class="ident">edge</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ReversedBufferedFilter</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw">pub</span> <span class="ident">T</span>);
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">G</span><span class="op">&gt;</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">Reversed</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ReversedBufferedFilter</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">T</span>: <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
+    <span class="ident">G</span>: <span class="ident">IntoEdgesDirected</span>,
+{
+    <span class="kw">type</span> <span class="ident">Iter</span> <span class="op">=</span>
+        <span class="ident">ReversedEdgeReferences</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::Iter</span> <span class="kw">as</span> <span class="ident">IntoIterator</span><span class="op">&gt;</span><span class="ident">::IntoIter</span><span class="op">&gt;</span>;
+
+    <span class="kw">fn</span> <span class="ident">filter</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">edge</span>: <span class="op">&lt;</span><span class="ident">Reversed</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span> <span class="kw">as</span> <span class="ident">IntoEdgeReferences</span><span class="op">&gt;</span><span class="ident">::EdgeRef</span>) -&gt; <span class="ident"><span class="self">Self</span>::Iter</span> {
+        <span class="ident">ReversedEdgeReferences</span> {
+            <span class="ident">iter</span>: <span class="self">self</span>.<span class="number">0</span>.<span class="ident">filter</span>(<span class="ident">edge</span>.<span class="ident">into_unreversed</span>()).<span class="ident">into_iter</span>(),
+        }
+    }
+}
+
+<span class="comment">// TODO: replace with upstream impl</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ReversedEdgeReferences</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> {
+    <span class="ident">iter</span>: <span class="ident">I</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">ReversedEdgeReferences</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">I</span>: <span class="ident">Iterator</span>,
+{
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">ReversedEdgeReference</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span>;
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
+        <span class="comment">// Ugh this sucks! Should be supported upstream.</span>
+        <span class="comment">// SAFETY: this is just a newtype. This is SUCH a horrible hack.</span>
+        <span class="kw">let</span> <span class="ident">item</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">next</span>()<span class="question-mark">?</span>;
+        <span class="prelude-val">Some</span>(<span class="kw">unsafe</span> { <span class="ident">horrible_transmute</span>::<span class="op">&lt;</span><span class="ident">I::Item</span>, <span class="ident">ReversedEdgeReference</span><span class="op">&lt;</span><span class="ident">I::Item</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">item</span>) })
+    }
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
+        <span class="self">self</span>.<span class="ident">iter</span>.<span class="ident">size_hint</span>()
+    }
+}
+
+<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">horrible_transmute</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">B</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="ident">A</span>) -&gt; <span class="ident">B</span> {
+    <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">::core::ptr::read</span>(<span class="kw-2">&amp;</span><span class="ident">a</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">A</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">B</span>);
+    <span class="ident">::core::mem::forget</span>(<span class="ident">a</span>);
+    <span class="ident">b</span>
+}
+
+<span class="comment">// Check that the above transmute is actually safe.</span>
+<span class="macro">static_assertions::assert_eq_size!</span>((), <span class="ident">ReversedEdgeReference</span><span class="op">&lt;</span>()<span class="op">&gt;</span>);
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="guppy" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0-nightly (e95b10ba4 2022-03-13)" ></div>
 </body></html>

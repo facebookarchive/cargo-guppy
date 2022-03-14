@@ -779,23 +779,99 @@
 <span id="774">774</span>
 <span id="775">775</span>
 <span id="776">776</span>
+<span id="777">777</span>
+<span id="778">778</span>
+<span id="779">779</span>
+<span id="780">780</span>
+<span id="781">781</span>
+<span id="782">782</span>
+<span id="783">783</span>
+<span id="784">784</span>
+<span id="785">785</span>
+<span id="786">786</span>
+<span id="787">787</span>
+<span id="788">788</span>
+<span id="789">789</span>
+<span id="790">790</span>
+<span id="791">791</span>
+<span id="792">792</span>
+<span id="793">793</span>
+<span id="794">794</span>
+<span id="795">795</span>
+<span id="796">796</span>
+<span id="797">797</span>
+<span id="798">798</span>
+<span id="799">799</span>
+<span id="800">800</span>
+<span id="801">801</span>
+<span id="802">802</span>
+<span id="803">803</span>
+<span id="804">804</span>
+<span id="805">805</span>
+<span id="806">806</span>
+<span id="807">807</span>
+<span id="808">808</span>
+<span id="809">809</span>
+<span id="810">810</span>
+<span id="811">811</span>
+<span id="812">812</span>
+<span id="813">813</span>
+<span id="814">814</span>
+<span id="815">815</span>
+<span id="816">816</span>
+<span id="817">817</span>
+<span id="818">818</span>
+<span id="819">819</span>
+<span id="820">820</span>
+<span id="821">821</span>
+<span id="822">822</span>
+<span id="823">823</span>
+<span id="824">824</span>
+<span id="825">825</span>
+<span id="826">826</span>
+<span id="827">827</span>
+<span id="828">828</span>
+<span id="829">829</span>
+<span id="830">830</span>
+<span id="831">831</span>
+<span id="832">832</span>
+<span id="833">833</span>
+<span id="834">834</span>
+<span id="835">835</span>
+<span id="836">836</span>
+<span id="837">837</span>
+<span id="838">838</span>
+<span id="839">839</span>
+<span id="840">840</span>
+<span id="841">841</span>
+<span id="842">842</span>
+<span id="843">843</span>
+<span id="844">844</span>
+<span id="845">845</span>
+<span id="846">846</span>
+<span id="847">847</span>
+<span id="848">848</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">graph</span>::{
         <span class="ident">cargo_version_matches</span>, <span class="ident">BuildTargetImpl</span>, <span class="ident">BuildTargetKindImpl</span>, <span class="ident">DepRequiredOrOptional</span>,
-        <span class="ident">DependencyReqImpl</span>, <span class="ident">OwnedBuildTargetId</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageGraphData</span>, <span class="ident">PackageIx</span>,
-        <span class="ident">PackageLinkImpl</span>, <span class="ident">PackageMetadataImpl</span>, <span class="ident">PackagePublishImpl</span>, <span class="ident">PackageSourceImpl</span>, <span class="ident">WorkspaceImpl</span>,
+        <span class="ident">DependencyReqImpl</span>, <span class="ident">NamedFeatureDep</span>, <span class="ident">OwnedBuildTargetId</span>, <span class="ident">PackageGraph</span>, <span class="ident">PackageGraphData</span>,
+        <span class="ident">PackageIx</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">PackageMetadataImpl</span>, <span class="ident">PackagePublishImpl</span>, <span class="ident">PackageSourceImpl</span>,
+        <span class="ident">WorkspaceImpl</span>,
     },
     <span class="ident">sorted_set::SortedSet</span>,
     <span class="ident">Error</span>, <span class="ident">PackageId</span>,
 };
 <span class="kw">use</span> <span class="ident">camino</span>::{<span class="ident">Utf8Path</span>, <span class="ident">Utf8PathBuf</span>};
 <span class="kw">use</span> <span class="ident">cargo_metadata</span>::{<span class="ident">Dependency</span>, <span class="ident">DependencyKind</span>, <span class="ident">Metadata</span>, <span class="ident">Node</span>, <span class="ident">NodeDep</span>, <span class="ident">Package</span>, <span class="ident">Target</span>};
+<span class="kw">use</span> <span class="ident">fixedbitset::FixedBitSet</span>;
+<span class="kw">use</span> <span class="ident">indexmap</span>::{<span class="ident">IndexMap</span>, <span class="ident">IndexSet</span>};
 <span class="kw">use</span> <span class="ident">once_cell::sync::OnceCell</span>;
 <span class="kw">use</span> <span class="ident">petgraph::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">semver::Version</span>;
+<span class="kw">use</span> <span class="ident">smallvec::SmallVec</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">borrow::Cow</span>,
     <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>},
@@ -1020,14 +1096,13 @@
         <span class="comment">// package, but unresolved dependencies aren&#39;t part of the graph so we&#39;re going to miss them</span>
         <span class="comment">// (and many optional dependencies will be unresolved).</span>
         <span class="comment">//</span>
-        <span class="comment">// XXX: This might be something to revisit if we start modeling unresolved dependencies in</span>
-        <span class="comment">// the graph.</span>
+        <span class="comment">// XXX: Consider modeling unresolved dependencies in the graph.</span>
         <span class="comment">//</span>
         <span class="comment">// A dependency might be listed multiple times (e.g. as a build dependency and as a normal</span>
         <span class="comment">// one). Some of them might be optional, some might not be. List a dependency here if *any*</span>
         <span class="comment">// of those specifications are optional, since that&#39;s how Cargo features work. But also</span>
         <span class="comment">// dedup them.</span>
-        <span class="kw">let</span> <span class="ident">optional_deps</span> <span class="op">=</span> <span class="ident">package</span>
+        <span class="kw">let</span> <span class="ident">optional_deps</span>: <span class="ident">IndexSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">package</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">dep</span><span class="op">|</span> {
@@ -1040,15 +1115,44 @@
                     <span class="prelude-val">None</span>
                 }
             })
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">feature</span><span class="op">|</span> (<span class="ident">feature</span>, <span class="prelude-val">None</span>));
+            .<span class="ident">collect</span>();
+
+        <span class="comment">// Has the explicit feature by the name of this optional dep been seen?</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">seen_explicit</span> <span class="op">=</span> <span class="ident">FixedBitSet::with_capacity</span>(<span class="ident">optional_deps</span>.<span class="ident">len</span>());
 
         <span class="comment">// The feature map contains both optional deps and named features.</span>
-        <span class="kw">let</span> <span class="ident">features</span> <span class="op">=</span> <span class="ident">package</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">named_features</span>: <span class="ident">IndexMap</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">package</span>
             .<span class="ident">features</span>
             .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">feature</span>, <span class="ident">deps</span>)<span class="op">|</span> (<span class="ident">feature</span>.<span class="ident">into_boxed_str</span>(), <span class="prelude-val">Some</span>(<span class="ident">deps</span>)))
-            .<span class="ident">chain</span>(<span class="ident">optional_deps</span>)
-            .<span class="ident">collect</span>();
+            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">feature_name</span>, <span class="ident">deps</span>)<span class="op">|</span> {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">parsed_deps</span> <span class="op">=</span> <span class="ident">SmallVec::with_capacity</span>(<span class="ident">deps</span>.<span class="ident">len</span>());
+                <span class="kw">for</span> <span class="ident">dep</span> <span class="kw">in</span> <span class="ident">deps</span> {
+                    <span class="kw">let</span> <span class="ident">dep</span> <span class="op">=</span> <span class="ident">NamedFeatureDep::from_cargo_string</span>(<span class="ident">dep</span>);
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="ident">NamedFeatureDep::OptionalDependency</span>(<span class="ident">d</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">dep</span> {
+                        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">optional_deps</span>.<span class="ident">get_index_of</span>(<span class="ident">d</span>.<span class="ident">as_ref</span>()).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                            <span class="ident">Error::PackageGraphConstructError</span>(<span class="macro">format!</span>(
+                                <span class="string">&quot;package &#39;{}&#39;: named feature {} specifies &#39;dep:{d}&#39;, but {d} is not an optional dependency&quot;</span>,
+                                <span class="ident">package_id</span>,
+                                <span class="ident">feature_name</span>,
+                                <span class="ident">d</span> <span class="op">=</span> <span class="ident">d</span>))
+                        })<span class="question-mark">?</span>;
+                        <span class="ident">seen_explicit</span>.<span class="ident">set</span>(<span class="ident">index</span>, <span class="bool-val">true</span>);
+                    }
+                    <span class="ident">parsed_deps</span>.<span class="ident">push</span>(<span class="ident">dep</span>);
+                }
+                <span class="prelude-val">Ok</span>((<span class="ident">feature_name</span>.<span class="ident">into_boxed_str</span>(), <span class="ident">parsed_deps</span>))
+            })
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+
+        <span class="comment">// If an optional dependency was not seen explicitly, add an implicit named feature for it.</span>
+        <span class="kw">for</span> (<span class="ident">index</span>, <span class="ident">dep</span>) <span class="kw">in</span> <span class="ident">optional_deps</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">seen_explicit</span>.<span class="ident">contains</span>(<span class="ident">index</span>) {
+                <span class="ident">named_features</span>.<span class="ident">insert</span>(
+                    <span class="ident">dep</span>.<span class="ident">clone</span>(),
+                    <span class="ident">std::iter::once</span>(<span class="ident">NamedFeatureDep::OptionalDependency</span>(<span class="ident">dep</span>.<span class="ident">clone</span>())).<span class="ident">collect</span>(),
+                );
+            }
+        }
 
         <span class="prelude-val">Ok</span>((
             <span class="ident">package_id</span>,
@@ -1072,7 +1176,8 @@
                 <span class="ident">publish</span>: <span class="ident">PackagePublishImpl::new</span>(<span class="ident">package</span>.<span class="ident">publish</span>),
                 <span class="ident">default_run</span>: <span class="ident">package</span>.<span class="ident">default_run</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()),
                 <span class="ident">rust_version</span>: <span class="ident">package</span>.<span class="ident">rust_version</span>,
-                <span class="ident">features</span>,
+                <span class="ident">named_features</span>,
+                <span class="ident">optional_deps</span>,
 
                 <span class="ident">package_ix</span>,
                 <span class="ident">source</span>,
@@ -1119,6 +1224,25 @@
 
     <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) -&gt; <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">NamedFeatureDep</span> {
+    <span class="kw">fn</span> <span class="ident">from_cargo_string</span>(<span class="ident">input</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">into</span>();
+        <span class="kw">match</span> <span class="ident">input</span>.<span class="ident">split_once</span>(<span class="string">&#39;/&#39;</span>) {
+            <span class="prelude-val">Some</span>((<span class="ident">dep_name</span>, <span class="ident">feature</span>)) =&gt; {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dep_name_without_q</span>) <span class="op">=</span> <span class="ident">dep_name</span>.<span class="ident">strip_suffix</span>(<span class="string">&#39;?&#39;</span>) {
+                    <span class="ident"><span class="self">Self</span>::dep_named_feature</span>(<span class="ident">dep_name_without_q</span>, <span class="ident">feature</span>, <span class="bool-val">true</span>)
+                } <span class="kw">else</span> {
+                    <span class="ident"><span class="self">Self</span>::dep_named_feature</span>(<span class="ident">dep_name</span>, <span class="ident">feature</span>, <span class="bool-val">false</span>)
+                }
+            }
+            <span class="prelude-val">None</span> =&gt; <span class="kw">match</span> <span class="ident">input</span>.<span class="ident">strip_prefix</span>(<span class="string">&quot;dep:&quot;</span>) {
+                <span class="prelude-val">Some</span>(<span class="ident">dep_name</span>) =&gt; <span class="ident"><span class="self">Self</span>::optional_dependency</span>(<span class="ident">dep_name</span>),
+                <span class="prelude-val">None</span> =&gt; <span class="ident"><span class="self">Self</span>::named_feature</span>(<span class="ident">input</span>),
+            },
+        }
     }
 }
 
@@ -1545,6 +1669,26 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_parse_named_feature_dependency</span>() {
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">NamedFeatureDep::from_cargo_string</span>(<span class="string">&quot;dep/bar&quot;</span>),
+            <span class="ident">NamedFeatureDep::dep_named_feature</span>(<span class="string">&quot;dep&quot;</span>, <span class="string">&quot;bar&quot;</span>, <span class="bool-val">false</span>),
+        );
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">NamedFeatureDep::from_cargo_string</span>(<span class="string">&quot;dep?/bar&quot;</span>),
+            <span class="ident">NamedFeatureDep::dep_named_feature</span>(<span class="string">&quot;dep&quot;</span>, <span class="string">&quot;bar&quot;</span>, <span class="bool-val">true</span>),
+        );
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">NamedFeatureDep::from_cargo_string</span>(<span class="string">&quot;dep:bar&quot;</span>),
+            <span class="ident">NamedFeatureDep::optional_dependency</span>(<span class="string">&quot;bar&quot;</span>),
+        );
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">NamedFeatureDep::from_cargo_string</span>(<span class="string">&quot;foo-bar&quot;</span>),
+            <span class="ident">NamedFeatureDep::named_feature</span>(<span class="string">&quot;foo-bar&quot;</span>),
+        );
+    }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_convert_forward_slashes</span>() {

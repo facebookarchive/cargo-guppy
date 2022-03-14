@@ -137,7 +137,7 @@
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">graph</span>::{<span class="ident">DependencyDirection</span>, <span class="ident">GraphSpec</span>},
-    <span class="ident">petgraph_support::dfs::dfs_next_filtered</span>,
+    <span class="ident">petgraph_support::dfs</span>::{<span class="ident">dfs_next_buffered_filter</span>, <span class="ident">BufferedEdgeFilter</span>},
     <span class="ident">sorted_set::SortedSet</span>,
 };
 <span class="kw">use</span> <span class="ident">fixedbitset::FixedBitSet</span>;
@@ -237,9 +237,9 @@
     (<span class="ident">reachable</span>, <span class="ident">len</span>)
 }
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">reachable_map_filtered</span><span class="op">&lt;</span><span class="ident">G</span>, <span class="ident">Ix</span><span class="op">&gt;</span>(
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">reachable_map_buffered_filter</span><span class="op">&lt;</span><span class="ident">G</span>, <span class="ident">Ix</span><span class="op">&gt;</span>(
     <span class="ident">graph</span>: <span class="ident">G</span>,
-    <span class="kw-2">mut</span> <span class="ident">edge_filter</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="ident">G::EdgeRef</span>) -&gt; <span class="ident">bool</span>,
+    <span class="kw-2">mut</span> <span class="ident">filter</span>: <span class="kw">impl</span> <span class="ident">BufferedEdgeFilter</span><span class="op">&lt;</span><span class="ident">G</span><span class="op">&gt;</span>,
     <span class="ident">roots</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">G::NodeId</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 ) -&gt; (<span class="ident">FixedBitSet</span>, <span class="ident">usize</span>)
 <span class="kw">where</span>
@@ -250,7 +250,7 @@
     <span class="comment">// This is DfsPostOrder since that handles cycles while a regular DFS doesn&#39;t.</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dfs</span> <span class="op">=</span> <span class="ident">DfsPostOrder::empty</span>(<span class="ident">graph</span>);
     <span class="ident">dfs</span>.<span class="ident">stack</span> <span class="op">=</span> <span class="ident">roots</span>.<span class="ident">into</span>();
-    <span class="kw">while</span> <span class="ident">dfs_next_filtered</span>(<span class="kw-2">&amp;mut</span> <span class="ident">dfs</span>, <span class="ident">graph</span>, <span class="kw-2">&amp;mut</span> <span class="ident">edge_filter</span>).<span class="ident">is_some</span>() {}
+    <span class="kw">while</span> <span class="ident">dfs_next_buffered_filter</span>(<span class="kw-2">&amp;mut</span> <span class="ident">dfs</span>, <span class="ident">graph</span>, <span class="kw-2">&amp;mut</span> <span class="ident">filter</span>).<span class="ident">is_some</span>() {}
 
     <span class="comment">// Once the DFS is done, the discovered map (or the finished map) is what&#39;s reachable.</span>
     <span class="macro">debug_assert_eq!</span>(

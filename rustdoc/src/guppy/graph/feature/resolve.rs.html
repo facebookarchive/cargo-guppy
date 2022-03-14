@@ -592,6 +592,22 @@
 <span id="587">587</span>
 <span id="588">588</span>
 <span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -600,17 +616,18 @@
     <span class="ident">graph</span>::{
         <span class="ident">cargo</span>::{<span class="ident">CargoOptions</span>, <span class="ident">CargoSet</span>},
         <span class="ident">feature</span>::{
-            <span class="ident">ConditionalLink</span>, <span class="ident">FeatureEdge</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>, <span class="ident">FeatureList</span>, <span class="ident">FeatureMetadata</span>,
-            <span class="ident">FeatureQuery</span>, <span class="ident">FeatureResolver</span>,
+            <span class="ident">build::FeatureEdgeReference</span>, <span class="ident">ConditionalLink</span>, <span class="ident">FeatureEdge</span>, <span class="ident">FeatureGraph</span>, <span class="ident">FeatureId</span>,
+            <span class="ident">FeatureList</span>, <span class="ident">FeatureMetadata</span>, <span class="ident">FeatureQuery</span>, <span class="ident">FeatureResolver</span>,
         },
         <span class="ident">resolve_core::ResolveCore</span>,
         <span class="ident">DependencyDirection</span>, <span class="ident">FeatureGraphSpec</span>, <span class="ident">FeatureIx</span>, <span class="ident">PackageIx</span>, <span class="ident">PackageMetadata</span>, <span class="ident">PackageSet</span>,
     },
-    <span class="ident">petgraph_support::IxBitSet</span>,
+    <span class="ident">petgraph_support</span>::{<span class="ident">dfs::BufferedEdgeFilterFn</span>, <span class="ident">IxBitSet</span>},
     <span class="ident">sorted_set::SortedSet</span>,
     <span class="ident">Error</span>, <span class="ident">PackageId</span>,
 };
 <span class="kw">use</span> <span class="ident">fixedbitset::FixedBitSet</span>;
+<span class="kw">use</span> <span class="ident">itertools::Either</span>;
 <span class="kw">use</span> <span class="ident">petgraph</span>::{<span class="ident">graph::NodeIndex</span>, <span class="ident">visit::EdgeRef</span>};
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> <span class="ident">FeatureGraph</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span> {
@@ -678,23 +695,36 @@
     ) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">graph</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">graph</span>;
         <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">query</span>.<span class="ident">params</span>.<span class="ident">clone</span>();
-        <span class="self">Self</span> {
-            <span class="ident">graph</span>,
-            <span class="ident">core</span>: <span class="ident">ResolveCore::with_edge_filter</span>(<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">params</span>, <span class="op">|</span><span class="ident">edge</span><span class="op">|</span> {
-                <span class="kw">match</span> <span class="ident">graph</span>.<span class="ident">edge_to_conditional_link</span>(
-                    <span class="ident">edge</span>.<span class="ident">source</span>(),
-                    <span class="ident">edge</span>.<span class="ident">target</span>(),
-                    <span class="ident">edge</span>.<span class="ident">id</span>(),
-                    <span class="prelude-val">Some</span>(<span class="ident">edge</span>.<span class="ident">weight</span>()),
-                ) {
-                    <span class="prelude-val">Some</span>(<span class="ident">conditional_link</span>) =&gt; <span class="ident">resolver</span>.<span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="ident">query</span>, <span class="ident">conditional_link</span>),
-                    <span class="prelude-val">None</span> =&gt; {
-                        <span class="comment">// Feature links within the same package are always followed.</span>
-                        <span class="bool-val">true</span>
-                    }
+
+        <span class="comment">// State used by the callback below.</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer_states</span> <span class="op">=</span> <span class="ident">graph</span>
+            .<span class="ident">inner</span>
+            .<span class="ident">weak</span>
+            .<span class="ident">new_buffer_states</span>(<span class="op">|</span><span class="ident">link</span><span class="op">|</span> <span class="ident">resolver</span>.<span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="ident">query</span>, <span class="ident">link</span>));
+
+        <span class="kw">let</span> <span class="ident">filter_fn</span> <span class="op">=</span> <span class="op">|</span><span class="ident">edge_ref</span>: <span class="ident">FeatureEdgeReference</span><span class="op">&lt;</span><span class="lifetime">&#39;g</span><span class="op">&gt;</span><span class="op">|</span> {
+            <span class="kw">match</span> <span class="ident">graph</span>.<span class="ident">edge_to_conditional_link</span>(
+                <span class="ident">edge_ref</span>.<span class="ident">source</span>(),
+                <span class="ident">edge_ref</span>.<span class="ident">target</span>(),
+                <span class="ident">edge_ref</span>.<span class="ident">id</span>(),
+                <span class="prelude-val">Some</span>(<span class="ident">edge_ref</span>.<span class="ident">weight</span>()),
+            ) {
+                <span class="prelude-val">Some</span>((<span class="ident">link</span>, <span class="ident">weak_index</span>)) =&gt; <span class="ident">buffer_states</span>.<span class="ident">track</span>(<span class="ident">edge_ref</span>, <span class="ident">link</span>, <span class="ident">weak_index</span>),
+                <span class="prelude-val">None</span> =&gt; {
+                    <span class="comment">// Feature links within the same package are always followed.</span>
+                    <span class="ident">Either::Left</span>(<span class="prelude-val">Some</span>(<span class="ident">edge_ref</span>))
                 }
-            }),
-        }
+            }
+            .<span class="ident">into_iter</span>()
+        };
+
+        <span class="kw">let</span> <span class="ident">core</span> <span class="op">=</span> <span class="ident">ResolveCore::with_buffered_edge_filter</span>(
+            <span class="ident">graph</span>.<span class="ident">dep_graph</span>(),
+            <span class="ident">params</span>,
+            <span class="ident">BufferedEdgeFilterFn</span>(<span class="ident">filter_fn</span>),
+        );
+
+        <span class="self">Self</span> { <span class="ident">graph</span>, <span class="ident">core</span> }
     }
 
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
@@ -1098,7 +1128,9 @@
         <span class="self">self</span>.<span class="ident">core</span>
             .<span class="ident">links</span>(<span class="ident">graph</span>.<span class="ident">dep_graph</span>(), <span class="ident">graph</span>.<span class="ident">sccs</span>(), <span class="ident">direction</span>)
             .<span class="ident">filter_map</span>(<span class="kw">move</span> <span class="op">|</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge_ix</span>)<span class="op">|</span> {
-                <span class="ident">graph</span>.<span class="ident">edge_to_conditional_link</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge_ix</span>, <span class="prelude-val">None</span>)
+                <span class="ident">graph</span>
+                    .<span class="ident">edge_to_conditional_link</span>(<span class="ident">source_ix</span>, <span class="ident">target_ix</span>, <span class="ident">edge_ix</span>, <span class="prelude-val">None</span>)
+                    .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">link</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">link</span>)
             })
     }
 
