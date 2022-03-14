@@ -7,7 +7,7 @@ use guppy::graph::PackageGraph;
 use include_dir::{include_dir, Dir, DirEntry};
 use std::{borrow::Cow, convert::TryInto, error, fmt, io};
 
-const CRATE_TEMPLATE_DIR: Dir = include_dir!("templates/crate");
+const CRATE_TEMPLATE_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/templates/crate");
 const CONFIG_TEMPLATE: &str = include_str!("../../templates/hakari.toml-in");
 
 /// Manages initialization of a workspace-hack package.
