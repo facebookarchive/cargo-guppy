@@ -25,6 +25,13 @@ mod small {
         metadata1.verify();
 
         let graph = metadata1.graph();
+
+        assert_eq!(
+            graph.workspace().target_directory(),
+            "/fakepath/testcrate/target",
+            "target directory matches"
+        );
+
         let testcrate = graph
             .metadata(&package_id(json::METADATA1_TESTCRATE))
             .expect("root crate should exist");

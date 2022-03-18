@@ -494,6 +494,11 @@ impl<'g> Workspace<'g> {
         &self.inner.root
     }
 
+    /// Returns the target directory in which output artifacts are stored.
+    pub fn target_directory(&self) -> &'g Utf8Path {
+        &self.inner.target_directory
+    }
+
     /// Returns the number of packages in this workspace.
     pub fn member_count(&self) -> usize {
         self.inner.members_by_path.len()
@@ -604,6 +609,14 @@ impl<'g> Workspace<'g> {
             .map(|name| self.member_by_name(name.as_ref()))
             .collect()
     }
+
+    /// Returns the freeform metadata table for this workspace.
+    ///
+    /// This is the same as the `workspace.metadata` section of `Cargo.toml`. This section is
+    /// typically used by tools which would like to store workspace configuration in `Cargo.toml`.
+    pub fn metadata_table(&self) -> &'g JsonValue {
+        &self.inner.metadata_table
+    }
 }
 
 #[cfg(feature = "rayon1")]
@@ -660,6 +673,8 @@ mod workspace_rayon {
 #[derive(Clone, Debug)]
 pub(super) struct WorkspaceImpl {
     pub(super) root: Utf8PathBuf,
+    pub(super) target_directory: Utf8PathBuf,
+    pub(super) metadata_table: JsonValue,
     // This is a BTreeMap to allow presenting data in sorted order.
     pub(super) members_by_path: BTreeMap<Utf8PathBuf, PackageId>,
     pub(super) members_by_name: BTreeMap<Box<str>, PackageId>,

@@ -54,7 +54,13 @@ impl PackageGraph {
 
         let dep_graph = build_state.finish();
 
-        let workspace = WorkspaceImpl::new(workspace_root, &packages, workspace_members)?;
+        let workspace = WorkspaceImpl::new(
+            workspace_root,
+            metadata.target_directory,
+            metadata.workspace_metadata,
+            &packages,
+            workspace_members,
+        )?;
 
         Ok(Self {
             dep_graph,
@@ -72,6 +78,8 @@ impl WorkspaceImpl {
     /// Indexes and creates a new workspace.
     fn new(
         workspace_root: impl Into<Utf8PathBuf>,
+        target_directory: impl Into<Utf8PathBuf>,
+        metadata_table: serde_json::Value,
         packages: &HashMap<PackageId, PackageMetadataImpl>,
         members: impl IntoIterator<Item = PackageId>,
     ) -> Result<Self, Error> {
@@ -116,6 +124,8 @@ impl WorkspaceImpl {
 
         Ok(Self {
             root: workspace_root,
+            target_directory: target_directory.into(),
+            metadata_table,
             members_by_path,
             members_by_name,
             #[cfg(feature = "proptest1")]
