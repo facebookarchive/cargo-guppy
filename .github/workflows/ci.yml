@@ -46,16 +46,10 @@ jobs:
 
   build:
     name: Build and test core crates
-    runs-on: ${{ matrix.os.runs-on }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          - runs-on: ubuntu-latest
-            nextest-url: https://get.nexte.st/latest/linux
-          - runs-on: macos-latest
-            nextest-url: https://get.nexte.st/latest/mac
-          - runs-on: windows-latest
-            nextest-url: https://get.nexte.st/latest/windows-tar
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         rust-version: [ 1.56, stable ]
       fail-fast: false
     env:
@@ -99,9 +93,7 @@ jobs:
           command: build
           args: --all-targets --package hakari
       - name: Install latest nextest release
-        shell: bash
-        run: |
-          curl -LsSf ${{ matrix.os.nextest-url }} | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+        uses: taiki-e/install-action@nextest
       - name: Run tests for core crates
         uses: actions-rs/cargo@v1
         with:
@@ -110,16 +102,10 @@ jobs:
 
   build-all-features:
     name: Build and test (all features)
-    runs-on: ${{ matrix.os.runs-on }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          - runs-on: ubuntu-latest
-            nextest-url: https://get.nexte.st/latest/linux
-          - runs-on: macos-latest
-            nextest-url: https://get.nexte.st/latest/mac
-          - runs-on: windows-latest
-            nextest-url: https://get.nexte.st/latest/windows-tar
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         rust-version: [ 1.56, stable ]
       fail-fast: false
     env:
@@ -146,9 +132,7 @@ jobs:
           command: test
           args: --doc --all-features --workspace --exclude cargo-compare
       - name: Install latest nextest release
-        shell: bash
-        run: |
-          curl -LsSf ${{ matrix.os.nextest-url }} | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+        uses: taiki-e/install-action@nextest
       - name: Run all other tests
         uses: actions-rs/cargo@v1
         with:

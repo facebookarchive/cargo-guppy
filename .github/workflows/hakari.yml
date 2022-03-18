@@ -26,36 +26,11 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-
-      # Caching adapted from
-      # https://github.com/unicode-org/icu4x/blob/2d64d81d4661090c0d446b7bd700e65035840a5e/.github/workflows/build-test.yml#L32-L50.
-      - name: Install cargo-search2
-        id: install-cargo-search2
-        run: |
-          curl -LsSf https://github.com/sunshowers/cargo-search2/releases/latest/download/cargo-search2-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
-        shell: bash
-      - name: Get cargo-hakari version
-        id: cargo-hakari-version
-        # In this example we grab the latest version in the 0.9 series. Drop the --req parameter to get the
-        # latest version in the repo.
-        run: |
-          cargo search2 cargo-hakari --req 0.9 --message-format github
-        shell: bash
-      - name: Attempt to load cached cargo-hakari
-        uses: actions/cache@v2
-        id: cargo-hakari-cache
-        with:
-          path: |
-            ~/.cargo/bin/cargo-hakari
-            ~/.cargo/bin/cargo-hakari.exe
-          key: ${{ runner.os }}-${{ steps.cargo-hakari-version.outputs.hash }}
       - name: Install cargo-hakari
-        if: steps.cargo-hakari-cache.outputs.cache-hit != 'true'
-        uses: actions-rs/install@v0.1.2
+        uses: baptiste0928/cargo-install@v1
         with:
           crate: cargo-hakari
-          version: ${{ steps.cargo-hakari-version.outputs.version }}
-
+          version: 0.9
       - name: Check workspace-hack Cargo.toml is up-to-date
         uses: actions-rs/cargo@v1
         with:
