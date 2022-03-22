@@ -607,6 +607,29 @@
 <span id="602">602</span>
 <span id="603">603</span>
 <span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -901,6 +924,29 @@
         <span class="comment">// Don&#39;t sort because the order returned by all_cycles (both the outer and inner vecs) is</span>
         <span class="comment">// significant.</span>
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">cycles</span>, <span class="kw-2">&amp;</span><span class="ident">actual</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">msg</span>);
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cache</span> <span class="op">=</span> <span class="ident">graph</span>.<span class="ident">new_depends_cache</span>();
+
+        <span class="kw">for</span> <span class="ident">cycle</span> <span class="kw">in</span> <span class="ident">actual</span> {
+            <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">id1</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">cycle</span> {
+                <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">id2</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">cycle</span> {
+                    <span class="macro">assert!</span>(
+                        <span class="ident">graph</span>.<span class="ident">depends_on</span>(<span class="ident">id1</span>, <span class="ident">id2</span>).<span class="ident">expect</span>(<span class="string">&quot;valid package IDs&quot;</span>),
+                        <span class="string">&quot;{}: within cycle, {} depends on {}&quot;</span>,
+                        <span class="ident">msg</span>,
+                        <span class="ident">id1</span>,
+                        <span class="ident">id2</span>
+                    );
+                    <span class="macro">assert!</span>(
+                        <span class="ident">cache</span>.<span class="ident">depends_on</span>(<span class="ident">id1</span>, <span class="ident">id2</span>).<span class="ident">expect</span>(<span class="string">&quot;valid package IDs&quot;</span>),
+                        <span class="string">&quot;{}: within cycle, {} depends on {} (using cache)&quot;</span>,
+                        <span class="ident">msg</span>,
+                        <span class="ident">id1</span>,
+                        <span class="ident">id2</span>
+                    )
+                }
+            }
+        }
     }
 }
 
