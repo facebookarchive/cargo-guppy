@@ -156,6 +156,8 @@ pub static METADATA_LIBRA_BACKTRACE: &str =
 pub static METADATA_LIBRA_CFG_IF: &str =
     "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)";
 
+pub static METADATA_CARGO_NEXTEST_PATH: &str = "../small/metadata-cargo-nextest.json";
+
 pub static METADATA_LIBRA_F0091A4_PATH: &str = "../large/metadata_libra_f0091a4.json";
 
 pub static METADATA_LIBRA_9FFD93B_PATH: &str = "../large/metadata_libra_9ffd93b.json";
@@ -220,6 +222,7 @@ define_fixtures! {
     metadata_guppy_869476c => METADATA_GUPPY_869476C_PATH,
     metadata_guppy_c9b4f76 => METADATA_GUPPY_C9B4F76_PATH,
     metadata_guppy_44b62fa => METADATA_GUPPY_44B62FA_PATH,
+    metadata_cargo_nextest => METADATA_CARGO_NEXTEST_PATH,
 }
 
 pub struct JsonFixture {
@@ -580,6 +583,12 @@ impl FixtureDetails {
             ("testcrate", METADATA2_TESTCRATE),
             ("walkdir", METADATA2_WALKDIR),
         ])
+    }
+
+    pub(crate) fn metadata_cargo_nextest() -> Self {
+        let details = HashMap::new();
+
+        Self::new(details)
     }
 
     pub(crate) fn metadata_builddep() -> Self {

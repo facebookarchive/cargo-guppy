@@ -135,6 +135,42 @@ mod small {
         assert_eq!(root_ids, expected, "feature graph root IDs match");
     }
 
+    // Test specific details extracted from metadata1.json.
+    #[test]
+    fn metadata_cargo_nextest_depends() {
+        let metadata1 = JsonFixture::metadata_cargo_nextest();
+        metadata1.verify();
+
+        let graph = metadata1.graph();
+        let runner = graph
+            .packages()
+            .find(|p| p.name() == "nextest-runner")
+            .unwrap();
+        let junit = graph
+            .packages()
+            .find(|p| p.name() == "quick-junit")
+            .unwrap();
+        let nextest = graph
+            .packages()
+            .find(|p| p.name() == "cargo-nextest")
+            .unwrap();
+        println!("{}", nextest.id());
+        println!("{}", runner.id());
+        println!("{}", junit.id());
+        assert!(
+            matches!(graph.depends_on(runner.id(), junit.id()), Ok(true)),
+            "nextest-runner does depends on quick-junit"
+        );
+        assert!(
+            matches!(graph.depends_on(nextest.id(), runner.id()), Ok(true)),
+            "cargo-nextest does depends on nextest-runner"
+        );
+        assert!(
+            matches!(graph.depends_on(nextest.id(), junit.id()), Ok(true)),
+            "cargo-nextest does depends on nextest-runner which depends on quick-junit"
+        );
+    }
+
     proptest_suite!(metadata1);
 
     #[test]
