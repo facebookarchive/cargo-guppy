@@ -135,6 +135,30 @@ mod small {
         assert_eq!(root_ids, expected, "feature graph root IDs match");
     }
 
+    // Test specific details extracted from metadata1.json.
+    #[test]
+    fn metadata1_depends() {
+        let metadata1 = JsonFixture::metadata1();
+        metadata1.verify();
+
+        let graph = metadata1.graph();
+        let regex = graph.packages().find(|p| p.name() == "regex").unwrap();
+        let memchr = graph.packages().find(|p| p.name() == "memchr").unwrap();
+        let libc = graph.packages().find(|p| p.name() == "libc").unwrap();
+        assert!(
+            matches!(graph.depends_on(regex.id(), memchr.id()), Ok(true)),
+            "regex does depends on memchr"
+        );
+        assert!(
+            matches!(graph.depends_on(memchr.id(), libc.id()), Ok(true)),
+            "memchr does depends on libc"
+        );
+        assert!(
+            matches!(graph.depends_on(regex.id(), libc.id()), Ok(true)),
+            "regex does depends on memchr which depends on libc"
+        );
+    }
+
     proptest_suite!(metadata1);
 
     #[test]
