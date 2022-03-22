@@ -314,12 +314,13 @@ impl<'g> FeatureGraph<'g> {
         b_ix: NodeIndex<FeatureIx>,
     ) -> bool {
         // Filter out conditional edges.
-        let edge_filtered = EdgeFiltered::from_fn(self.dep_graph(), |edge_ref| {
-            !matches!(
-                edge_ref.weight(),
-                FeatureEdge::DependenciesSection(_) | FeatureEdge::NamedFeatureWithSlash { .. }
-            )
-        });
+        let edge_filtered =
+            EdgeFiltered::from_fn(self.dep_graph(), |edge_ref| match edge_ref.weight() {
+                FeatureEdge::FeatureToBase | FeatureEdge::NamedFeature => true,
+                FeatureEdge::DependenciesSection(_)
+                | FeatureEdge::NamedFeatureDepColon(_)
+                | FeatureEdge::NamedFeatureWithSlash { .. } => false,
+            });
         has_path_connecting(&edge_filtered, a_ix, b_ix, None)
     }
 
