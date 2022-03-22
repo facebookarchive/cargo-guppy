@@ -292,6 +292,29 @@ impl FixtureDetails {
         // Don't sort because the order returned by all_cycles (both the outer and inner vecs) is
         // significant.
         assert_eq!(&self.cycles, &actual, "{}", msg);
+
+        let mut cache = graph.new_depends_cache();
+
+        for cycle in actual {
+            for &id1 in &cycle {
+                for &id2 in &cycle {
+                    assert!(
+                        graph.depends_on(id1, id2).expect("valid package IDs"),
+                        "{}: within cycle, {} depends on {}",
+                        msg,
+                        id1,
+                        id2
+                    );
+                    assert!(
+                        cache.depends_on(id1, id2).expect("valid package IDs"),
+                        "{}: within cycle, {} depends on {} (using cache)",
+                        msg,
+                        id1,
+                        id2
+                    )
+                }
+            }
+        }
     }
 }
 
