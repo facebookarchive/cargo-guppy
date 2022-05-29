@@ -214,9 +214,7 @@ impl<'a> GraphBuildState<'a> {
                     )));
                 }
             };
-            let rel_path = pathdiff::diff_utf8_paths(dirname, self.workspace_root)
-                .expect("workspace root is absolute");
-            PackageSourceImpl::Path(convert_forward_slashes(rel_path).into_boxed_path())
+            PackageSourceImpl::create_path(dirname, self.workspace_root)
         };
 
         let mut build_targets = BuildTargets::new(&package_id);
@@ -381,6 +379,21 @@ impl<'a> GraphBuildState<'a> {
 
     fn finish(self) -> Graph<PackageId, PackageLinkImpl, Directed, PackageIx> {
         self.dep_graph
+    }
+}
+
+impl PackageSourceImpl {
+    fn create_path(path: &Utf8Path, workspace_root: &Utf8Path) -> Self {
+        let path_diff =
+            pathdiff::diff_utf8_paths(path, workspace_root).expect("workspace root is absolute");
+        // On Windows, the directory name and the workspace root might be on different drives,
+        // in which case the path can't be relative.
+        let path_diff = if path_diff.is_absolute() {
+            path_diff
+        } else {
+            convert_forward_slashes(path_diff)
+        };
+        Self::Path(path_diff.into_boxed_path())
     }
 }
 
@@ -806,6 +819,7 @@ impl PackagePublishImpl {
 }
 
 /// Replace backslashes in a relative path with forward slashes on Windows.
+#[track_caller]
 fn convert_forward_slashes<'a>(rel_path: impl Into<Cow<'a, Utf8Path>>) -> Utf8PathBuf {
     let rel_path = rel_path.into();
     debug_assert!(
@@ -844,6 +858,33 @@ mod tests {
         assert_eq!(
             NamedFeatureDep::from_cargo_string("foo-bar"),
             NamedFeatureDep::named_feature("foo-bar"),
+        );
+    }
+
+    #[test]
+    fn test_create_path() {
+        assert_eq!(
+            PackageSourceImpl::create_path("/data/foo".as_ref(), "/data/bar".as_ref()),
+            PackageSourceImpl::Path("../foo".into())
+        );
+        assert_eq!(
+            PackageSourceImpl::create_path("/tmp/foo".as_ref(), "/data/bar".as_ref()),
+            PackageSourceImpl::Path("../../tmp/foo".into())
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_create_path_windows() {
+        // Ensure that relative paths are stored with forward slashes.
+        assert_eq!(
+            PackageSourceImpl::create_path("C:\\data\\foo".as_ref(), "C:\\data\\bar".as_ref()),
+            PackageSourceImpl::Path("../foo".into())
+        );
+        // Paths that span drives cannot be stored as relative.
+        assert_eq!(
+            PackageSourceImpl::create_path("D:\\tmp\\foo".as_ref(), "C:\\data\\bar".as_ref()),
+            PackageSourceImpl::Path("D:\\tmp\\foo".into())
         );
     }
 
