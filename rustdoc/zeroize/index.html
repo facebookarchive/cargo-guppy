@@ -4,11 +4,11 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../zeroize/index.html"><div class="logo-container">
                     <img src="https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg" alt="logo"></div>
-        </a><h2 class="location"><a href="#">Crate zeroize</a></h2><div class="sidebar-elems"><div class="block"><ul><li class="version">Version 1.5.3</li><li><a id="all-types" href="all.html">All Items</a></li></div></ul><section><div class="block"><ul><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></div></section><div id="sidebar-vars" data-name="zeroize" data-ty="mod" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../zeroize/index.html">
+        </a><h2 class="location"><a href="#">Crate zeroize</a></h2><div class="sidebar-elems"><div class="block"><ul><li class="version">Version 1.5.5</li><li><a id="all-types" href="all.html">All Items</a></li></div></ul><section><div class="block"><ul><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></div></section><div id="sidebar-vars" data-name="zeroize" data-ty="mod" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../zeroize/index.html">
                         <img src="https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><div id="settings-menu" tabindex="-1">
                                 <a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../wheel.svg"></a></div>
                         </div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Crate <a class="mod" href="#">zeroize</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../src/zeroize/lib.rs.html#1-867">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Securely zero memory with a simple trait (<a href="trait.Zeroize.html" title="Zeroize"><code>Zeroize</code></a>) built on stable Rust
+    <h1 class="fqn"><span class="in-band">Crate <a class="mod" href="#">zeroize</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../src/zeroize/lib.rs.html#1-960">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Securely zero memory with a simple trait (<a href="trait.Zeroize.html" title="Zeroize"><code>Zeroize</code></a>) built on stable Rust
 primitives which guarantee the operation will not be “optimized away”.</p>
 <h3 id="about"><a href="#about">About</a></h3>
 <p><a href="http://www.daemonology.net/blog/2014-09-04-how-to-zero-a-buffer.html">Zeroing memory securely is hard</a> - compilers optimize for performance, and
@@ -50,8 +50,12 @@ integers, floats, <code>bool</code>, and <code>char</code>.</p>
 <p>When the <code>alloc</code> feature is enabled (which it is by default), it’s also
 impl’d for <code>Vec&lt;T&gt;</code> for the above types as well as <code>String</code>, where it provides
 <a href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html#method.clear" title="Vec::clear"><code>Vec::clear</code></a> / <a href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html#method.clear" title="String::clear"><code>String::clear</code></a>-like behavior (truncating to zero-length)
-but ensures the backing memory is securely zeroed with some caveats.
-(NOTE: see “Stack/Heap Zeroing Notes” for important <code>Vec</code>/<code>String</code> details)</p>
+but ensures the backing memory is securely zeroed with some caveats.</p>
+<p>With the <code>std</code> feature enabled (which it is <strong>not</strong> by default), <a href="trait.Zeroize.html" title="Zeroize"><code>Zeroize</code></a>
+is also implemented for [<code>CString</code>]. After calling <code>zeroize()</code> on a <code>CString</code>,
+it will its internal buffer will contain exactly one nul byte. The backing
+memory is zeroed by converting it to a <code>Vec&lt;u8&gt;</code> and back into a <code>CString</code>.
+(NOTE: see “Stack/Heap Zeroing Notes” for important <code>Vec</code>/<code>String</code>/<code>CString</code> details)</p>
 <p>The <a href="trait.DefaultIsZeroes.html" title="DefaultIsZeroes"><code>DefaultIsZeroes</code></a> marker trait can be impl’d on types which also
 impl <a href="https://doc.rust-lang.org/nightly/core/default/trait.Default.html" title="Default"><code>Default</code></a>, which implements <a href="trait.Zeroize.html" title="Zeroize"><code>Zeroize</code></a> by overwriting a value with
 the default value.</p>
@@ -149,10 +153,10 @@ copies of data in memory. This includes but is not limited to:</p>
 </ul>
 <p><a href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="core::pin::Pin"><code>Pin</code></a> can be leveraged in conjunction with this crate
 to ensure data kept on the stack isn’t moved.</p>
-<p>The <code>Zeroize</code> impls for <code>Vec</code> and <code>String</code> zeroize the entire capacity of
-their backing buffer, but cannot guarantee copies of the data were not
-previously made by buffer reallocation. It’s therefore important when
-attempting to zeroize such buffers to initialize them to the correct
+<p>The <code>Zeroize</code> impls for <code>Vec</code>, <code>String</code> and <code>CString</code> zeroize the entire
+capacity of their backing buffer, but cannot guarantee copies of the data
+were not previously made by buffer reallocation. It’s therefore important
+when attempting to zeroize such buffers to initialize them to the correct
 capacity, and take care to prevent subsequent reallocation.</p>
 <p>The <code>secrecy</code> crate provides higher-level abstractions for eliminating
 usage patterns which can cause reallocations:</p>
