@@ -141,9 +141,11 @@ pub enum SummarySource {
 
     /// A non-workspace path.
     ///
-    /// The path is expected to be relative to the workspace root.
+    /// The path is usually relative to the workspace root, but on Windows a path that spans drives
+    /// (e.g. a path on D:\ when the workspace root is on C:\) cannot be relative. In those cases,
+    /// this will be the absolute path of the package.
     Path {
-        /// The path of this package, relative to the workspace root.
+        /// The path of this package.
         #[serde(serialize_with = "serialize_forward_slashes")]
         path: Utf8PathBuf,
     },

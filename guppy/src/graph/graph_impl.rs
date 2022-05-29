@@ -1594,7 +1594,7 @@ pub enum GitReq<'g> {
 }
 
 /// Internal representation of the source of a package.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) enum PackageSourceImpl {
     Workspace(Box<Utf8Path>),
     Path(Box<Utf8Path>),
