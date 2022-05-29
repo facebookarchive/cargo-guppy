@@ -863,6 +863,47 @@
 <span id="856">856</span>
 <span id="857">857</span>
 <span id="858">858</span>
+<span id="859">859</span>
+<span id="860">860</span>
+<span id="861">861</span>
+<span id="862">862</span>
+<span id="863">863</span>
+<span id="864">864</span>
+<span id="865">865</span>
+<span id="866">866</span>
+<span id="867">867</span>
+<span id="868">868</span>
+<span id="869">869</span>
+<span id="870">870</span>
+<span id="871">871</span>
+<span id="872">872</span>
+<span id="873">873</span>
+<span id="874">874</span>
+<span id="875">875</span>
+<span id="876">876</span>
+<span id="877">877</span>
+<span id="878">878</span>
+<span id="879">879</span>
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright (c) The cargo-guppy Contributors</span>
 <span class="comment">// SPDX-License-Identifier: MIT OR Apache-2.0</span>
 
@@ -1079,9 +1120,7 @@
                     )));
                 }
             };
-            <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">pathdiff::diff_utf8_paths</span>(<span class="ident">dirname</span>, <span class="self">self</span>.<span class="ident">workspace_root</span>)
-                .<span class="ident">expect</span>(<span class="string">&quot;workspace root is absolute&quot;</span>);
-            <span class="ident">PackageSourceImpl::Path</span>(<span class="ident">convert_forward_slashes</span>(<span class="ident">rel_path</span>).<span class="ident">into_boxed_path</span>())
+            <span class="ident">PackageSourceImpl::create_path</span>(<span class="ident">dirname</span>, <span class="self">self</span>.<span class="ident">workspace_root</span>)
         };
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">build_targets</span> <span class="op">=</span> <span class="ident">BuildTargets::new</span>(<span class="kw-2">&amp;</span><span class="ident">package_id</span>);
@@ -1246,6 +1285,21 @@
 
     <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) -&gt; <span class="ident">Graph</span><span class="op">&lt;</span><span class="ident">PackageId</span>, <span class="ident">PackageLinkImpl</span>, <span class="ident">Directed</span>, <span class="ident">PackageIx</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dep_graph</span>
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">PackageSourceImpl</span> {
+    <span class="kw">fn</span> <span class="ident">create_path</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Utf8Path</span>, <span class="ident">workspace_root</span>: <span class="kw-2">&amp;</span><span class="ident">Utf8Path</span>) -&gt; <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">path_diff</span> <span class="op">=</span>
+            <span class="ident">pathdiff::diff_utf8_paths</span>(<span class="ident">path</span>, <span class="ident">workspace_root</span>).<span class="ident">expect</span>(<span class="string">&quot;workspace root is absolute&quot;</span>);
+        <span class="comment">// On Windows, the directory name and the workspace root might be on different drives,</span>
+        <span class="comment">// in which case the path can&#39;t be relative.</span>
+        <span class="kw">let</span> <span class="ident">path_diff</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">path_diff</span>.<span class="ident">is_absolute</span>() {
+            <span class="ident">path_diff</span>
+        } <span class="kw">else</span> {
+            <span class="ident">convert_forward_slashes</span>(<span class="ident">path_diff</span>)
+        };
+        <span class="ident"><span class="self">Self</span>::Path</span>(<span class="ident">path_diff</span>.<span class="ident">into_boxed_path</span>())
     }
 }
 
@@ -1671,6 +1725,7 @@
 }
 
 <span class="doccomment">/// Replace backslashes in a relative path with forward slashes on Windows.</span>
+<span class="attribute">#[<span class="ident">track_caller</span>]</span>
 <span class="kw">fn</span> <span class="ident">convert_forward_slashes</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">rel_path</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Utf8Path</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="ident">Utf8PathBuf</span> {
     <span class="kw">let</span> <span class="ident">rel_path</span> <span class="op">=</span> <span class="ident">rel_path</span>.<span class="ident">into</span>();
     <span class="macro">debug_assert!</span>(
@@ -1709,6 +1764,33 @@
         <span class="macro">assert_eq!</span>(
             <span class="ident">NamedFeatureDep::from_cargo_string</span>(<span class="string">&quot;foo-bar&quot;</span>),
             <span class="ident">NamedFeatureDep::named_feature</span>(<span class="string">&quot;foo-bar&quot;</span>),
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_create_path</span>() {
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">PackageSourceImpl::create_path</span>(<span class="string">&quot;/data/foo&quot;</span>.<span class="ident">as_ref</span>(), <span class="string">&quot;/data/bar&quot;</span>.<span class="ident">as_ref</span>()),
+            <span class="ident">PackageSourceImpl::Path</span>(<span class="string">&quot;../foo&quot;</span>.<span class="ident">into</span>())
+        );
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">PackageSourceImpl::create_path</span>(<span class="string">&quot;/tmp/foo&quot;</span>.<span class="ident">as_ref</span>(), <span class="string">&quot;/data/bar&quot;</span>.<span class="ident">as_ref</span>()),
+            <span class="ident">PackageSourceImpl::Path</span>(<span class="string">&quot;../../tmp/foo&quot;</span>.<span class="ident">into</span>())
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_create_path_windows</span>() {
+        <span class="comment">// Ensure that relative paths are stored with forward slashes.</span>
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">PackageSourceImpl::create_path</span>(<span class="string">&quot;C:\\data\\foo&quot;</span>.<span class="ident">as_ref</span>(), <span class="string">&quot;C:\\data\\bar&quot;</span>.<span class="ident">as_ref</span>()),
+            <span class="ident">PackageSourceImpl::Path</span>(<span class="string">&quot;../foo&quot;</span>.<span class="ident">into</span>())
+        );
+        <span class="comment">// Paths that span drives cannot be stored as relative.</span>
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">PackageSourceImpl::create_path</span>(<span class="string">&quot;D:\\tmp\\foo&quot;</span>.<span class="ident">as_ref</span>(), <span class="string">&quot;C:\\data\\bar&quot;</span>.<span class="ident">as_ref</span>()),
+            <span class="ident">PackageSourceImpl::Path</span>(<span class="string">&quot;D:\\tmp\\foo&quot;</span>.<span class="ident">into</span>())
         );
     }
 
