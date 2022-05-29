@@ -57,7 +57,7 @@ impl<Ix: IndexType> TopoWithCycles<Ix> {
 
     /// Sort nodes based on the topo order in self.
     #[inline]
-    pub fn sort_nodes(&self, nodes: &mut Vec<NodeIndex<Ix>>) {
+    pub fn sort_nodes(&self, nodes: &mut [NodeIndex<Ix>]) {
         nodes.sort_unstable_by_key(|node_ix| self.topo_ix(*node_ix))
     }
 
