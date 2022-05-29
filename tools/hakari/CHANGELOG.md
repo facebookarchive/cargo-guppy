@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.1] - 2022-05-29
+
+### Changed
+
+- Dependency updates: in particular, guppy updated to 0.14.2.
+
 ## [0.10.0] - 2022-03-14
 
 ### Added

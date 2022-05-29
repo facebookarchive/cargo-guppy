@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.2] - 2022-05-29
+
+### Fixed
+
+- On Windows, guppy now behaves correctly when a path dependency is on a different drive from the workspace ([#642]).
+
+[#642]: https://github.com/facebookincubator/cargo-guppy/issues/642
+
+### Changed
+
+- Internal dependency updates.
+
 ## [0.14.1] - 2022-03-18
 
 ### Added
@@ -500,6 +512,7 @@ lazy_static = "0.2"
 ### Added
 - Initial release.
 
+[0.14.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.14.2
 [0.14.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.14.1
 [0.14.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.14.0
 [0.13.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/guppy-0.13.0

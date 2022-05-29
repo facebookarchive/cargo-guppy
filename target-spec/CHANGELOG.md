@@ -1,10 +1,11 @@
 
 # Changelog
 
-## Unreleased
+## [1.0.2] - 2022-05-29
 
 ### Changed
 
+- Internal dependency updates.
 - MSRV updated to Rust 1.56.
 
 ## [1.0.1] - 2022-02-07
@@ -160,6 +161,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[1.0.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.2
 [1.0.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.1
 [1.0.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.0
 [0.9.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-0.9.0

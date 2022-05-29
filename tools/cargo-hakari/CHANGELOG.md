@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.9.14] - 2022-05-29
+
+### Changed
+
+- Dependency updates: in particular, guppy updated to 0.14.2.
+
 ## [0.9.13] - 2022-03-14
 
 ### Changed
@@ -116,6 +122,7 @@ This was tagged, but never released due to
 
 Initial release.
 
+[0.9.14]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.14
 [0.9.13]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.13
 [0.9.12]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.12
 [0.9.11]: https://github.com/facebookincubator/cargo-guppy/releases/tag/cargo-hakari-0.9.11
