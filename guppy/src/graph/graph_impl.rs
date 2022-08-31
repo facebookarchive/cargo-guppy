@@ -1481,9 +1481,8 @@ impl<'g> ExternalSource<'g> {
         } else if let Some(rest) = source.strip_prefix(Self::GIT_PLUS) {
             // A Git source.
             // Look for a trailing #, which indicates the resolved revision.
-            let mut split_rev = rest.rsplitn(2, '#');
-            let resolved = split_rev.next()?;
-            let rest = split_rev.next()?;
+            let (rest, resolved) = rest.rsplit_once('#')?;
+
             let (repository, req) = if let Some(idx) = rest.find(Self::BRANCH_EQ) {
                 (
                     &rest[..idx],

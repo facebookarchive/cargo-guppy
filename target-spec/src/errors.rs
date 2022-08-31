@@ -77,7 +77,7 @@ impl error::Error for ExpressionParseError {
 /// An error returned while parsing a single target.
 ///
 /// This is caused by a triple not being understood by either `cfg-expr` or `target-lexicon`.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct TripleParseError {
     triple_str: Cow<'static, str>,
     lexicon_err: cfg_expr::target_lexicon::ParseError,
