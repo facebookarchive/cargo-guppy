@@ -16,6 +16,9 @@ pub enum Error {
     /// The provided platform triple was unknown.
     UnknownPlatformTriple(TripleParseError),
     /// The provided `cfg()` expression parsed correctly, but it had an unknown predicate.
+    ///
+    /// This is no longer used, but is kept for backwards compatibility.
+    #[deprecated(since = "1.1.0", note = "this variant is no longer in use")]
     UnknownPredicate(String),
 }
 
@@ -27,6 +30,7 @@ impl fmt::Display for Error {
             Error::UnknownPlatformTriple(_) => {
                 write!(f, "unknown platform triple")
             }
+            #[allow(deprecated)]
             Error::UnknownPredicate(pred) => {
                 write!(f, "cfg() expression has unknown predicate: {}", pred)
             }
@@ -40,6 +44,7 @@ impl error::Error for Error {
             Error::InvalidExpression(err) => Some(err),
             Error::UnknownTargetTriple(err) => Some(err),
             Error::UnknownPlatformTriple(err) => Some(err),
+            #[allow(deprecated)]
             Error::UnknownPredicate(_) => None,
         }
     }

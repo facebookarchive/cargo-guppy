@@ -94,7 +94,9 @@ impl TargetExpression {
     pub fn new(input: &str) -> Result<Self, Error> {
         let expr = Expression::parse(input)
             .map_err(|err| Error::InvalidExpression(ExpressionParseError::new(err)))?;
-        Self::verify_expr(expr)
+        Ok(Self {
+            inner: Arc::new(expr),
+        })
     }
 
     /// Returns the string that was parsed into `self`.
@@ -127,23 +129,10 @@ impl TargetExpression {
                     Some(platform.has_flag(flag))
                 }
                 Predicate::KeyValue { .. } => {
-                    unreachable!("these predicates are disallowed in TargetExpression::verify_expr")
+                    // This is always interpreted by Cargo as false.
+                    Some(false)
                 }
             }
-        })
-    }
-
-    /// Verify this `cfg()` expression.
-    fn verify_expr(expr: Expression) -> Result<Self, Error> {
-        // Error out on unknown key-value pairs. Everything else is recognized (though
-        // DebugAssertions/ProcMacro etc always returns false, and flags return false by default).
-        for pred in expr.predicates() {
-            if let Predicate::KeyValue { key, .. } = pred {
-                return Err(Error::UnknownPredicate(key.to_string()));
-            }
-        }
-        Ok(Self {
-            inner: Arc::new(expr),
         })
     }
 }
@@ -237,9 +226,30 @@ mod tests {
 
     #[test]
     fn test_unknown_predicate() {
-        let err =
-            TargetSpec::new("cfg(bogus_key = \"bogus_value\")").expect_err("unknown predicate");
-        assert_eq!(err, Error::UnknownPredicate("bogus_key".to_string()));
+        let expr = match TargetSpec::new("cfg(bogus_key = \"bogus_value\")")
+            .expect("unknown predicate should parse")
+        {
+            TargetSpec::Triple(triple) => {
+                panic!("expected spec, got triple: {:?}", triple)
+            }
+            TargetSpec::Expression(expr) => expr,
+        };
+        assert_eq!(
+            expr.inner.predicates().collect::<Vec<_>>(),
+            vec![Predicate::KeyValue {
+                key: "bogus_key",
+                val: "bogus_value"
+            }],
+        );
+
+        let platform = Platform::current().unwrap();
+        // This should always evaluate to false.
+        assert_eq!(expr.eval(&platform), Some(false));
+
+        let expr = TargetSpec::new("cfg(not(bogus_key = \"bogus_value\"))")
+            .expect("unknown predicate should parse");
+        // This is a cfg(not()), so it should always evaluate to true.
+        assert_eq!(expr.eval(&platform), Some(true));
     }
 
     #[test]

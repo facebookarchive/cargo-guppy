@@ -1,6 +1,13 @@
 
 # Changelog
 
+## [1.1.0] - 2022-08-30
+
+### Fixed
+
+- Unknown predicates now evaluate to false, matching Cargo's behavior.
+  - As a result, `Error::UnknownPredicate` is no longer in use and has been deprecated.
+
 ## [1.0.2] - 2022-05-29
 
 ### Changed
@@ -161,6 +168,7 @@ This was mistakenly published and was yanked.
 ## [0.1.0] - 2020-03-20
 - Initial release.
 
+[1.1.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.1.0
 [1.0.2]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.2
 [1.0.1]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.1
 [1.0.0]: https://github.com/facebookincubator/cargo-guppy/releases/tag/target-spec-1.0.0
